@@ -67,6 +67,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
 static bool lbutton_down = false;
+static bool rbutton_down = false;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
@@ -75,6 +76,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         std::cout << "mouse_button_callback() called GLFW_MOUSE_BUTTON_LEFT GLFW_PRESS!!! \n";
 
         camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if(GLFW_PRESS == action)
+            rbutton_down = true;
+        else if(GLFW_RELEASE == action)
+            rbutton_down = false;
     }
 
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -310,6 +318,10 @@ int main(int, char**)
 
     if(lbutton_down) {
          camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+
+    if(rbutton_down){
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     }
 
         // create transformations

@@ -40,10 +40,12 @@ public:
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
+    
     // euler Angles
     float Yaw  = 0.f;
     float Pitch  = 0.f;
     float Roll  = 0.f;
+
     // camera options
     float MovementSpeed;
     float MouseSensitivity;
@@ -70,13 +72,10 @@ public:
     {
         std::cout << "Roll " << Roll << "\n";
 
-        glm::mat4 transformZ = glm::rotate(glm::mat4(1.f), glm::radians(Roll), glm::vec3(0.f, 0.f, 1.f));
-
         return glm::lookAt(
             Position, 
-            Position + glm::normalize(glm::vec3(transformZ * glm::vec4(Front, 1.f))), 
-            glm::normalize(glm::vec3(transformZ * glm::vec4(Up, 1.f)))
-        );
+            Position + Front, 
+            Up);
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -95,6 +94,9 @@ public:
             Roll += 5.f * velocity;
         if (direction == COUNTERCLOCKWISE) 
             Roll -= 5.f * velocity;
+
+        // update Front, Right and Up Vectors using the updated Euler angles
+        updateCameraVectors();
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -133,6 +135,7 @@ private:
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors()
     {
+        // rotate aroung X/Y axix
         glm::mat4 uinitMatrix = glm::mat4(1.f);
         glm::mat4 transformX  = glm::rotate(uinitMatrix, glm::radians(Pitch), glm::vec3(1.f, 0.f, 0.f));
         glm::mat4 transformY  = glm::rotate(uinitMatrix, -(glm::radians(Yaw) + glm::half_pi<float>()), glm::vec3(0.f, 1.f, 0.f));
@@ -140,5 +143,10 @@ private:
         Front = glm::normalize(direction);
         Right = glm::normalize(glm::cross(Front, WorldUp));
         Up    = glm::normalize(glm::cross(Right, Front));
+
+        // rotate aroung Z axis
+        glm::mat4 transformZ = glm::rotate(glm::mat4(1.f), glm::radians(Roll), glm::vec3(0.f, 0.f, 1.f));
+        Front = glm::normalize(glm::vec3(transformZ * glm::vec4(Front, 1.f)));
+        Up = glm::normalize(glm::vec3(transformZ * glm::vec4(Up, 1.f)));
     }
 };
