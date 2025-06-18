@@ -7,3 +7,7 @@
 [submodule "tools/fmt"]
 	path = tools/fmt
 	url = https://github.com/Alexey-cpu/fmt.git
+[submodule "tools/imgui"]
+	path = tools/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking

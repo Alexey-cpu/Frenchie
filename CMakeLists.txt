@@ -17,33 +17,11 @@ endif()
 #--------------------------------------------------------------
 # include CMake utilities
 #--------------------------------------------------------------
-include(cmake/collect_source_code_and_resources.cmake)
-#--------------------------------------------------------------
-# add and configure subdirectories
-#--------------------------------------------------------------
-# GLFW
-#--------------------------------------------------------------
-set(GLFW_BUILD_DOCS OFF)
-set(GLFW_BUILD_TESTS OFF)
-set(GLFW_BUILD_EXAMPLES OFF)
-add_subdirectory("tools/glfw/")
-#--------------------------------------------------------------
-# GLM
-#--------------------------------------------------------------
-add_subdirectory("tools/glm/")
-#--------------------------------------------------------------
-# GLM
-#--------------------------------------------------------------
-set(FMT_DOC OFF)
-set(FMT_INSTALL OFF)
-set(FMT_TEST OFF)
-set(FMT_FUZZ OFF)
-set(FMT_CUDA_TEST OFF)
-set(FMT_UNICODE ON)
-set(FMT_PEDANTIC OFF)
-set(FMT_WERROR OFF)
-add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
-add_subdirectory("tools/fmt/")
+include("cmake/collect_source_code_and_resources.cmake")
+include("tools/fmt.cmake")
+include("tools/glfw.cmake")
+include("tools/glm.cmake")
+
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
@@ -55,7 +33,7 @@ cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 add_executable(OpenGL ${HEADERS} ${SOURCES})
 target_link_libraries(OpenGL glfw glm::glm fmt::fmt)
 
-target_include_directories(OpenGL PUBLIC ${DIRECTORIES} "source/glad/include/")
+target_include_directories(OpenGL PUBLIC ${DIRECTORIES} "source/opengl/glad/include/")
 
 #--------------------------------------------------------------
 # configure CPack
