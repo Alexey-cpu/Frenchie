@@ -1,0 +1,9 @@
+[submodule "tools/glfw"]
+	path = tools/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "build/tools/glm"]
+	path = tools/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "tools/fmt"]
+	path = tools/fmt
+	url = https://github.com/Alexey-cpu/fmt.git
