@@ -15,10 +15,10 @@ namespace Frenchie
     {
     public:
 
-        static Logger & instance()
+        static Logger* instance()
         {
             static Logger s;
-            return s;
+            return &s;
         }
 
         Logger(const Logger &) = delete;
