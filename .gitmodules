@@ -11,3 +11,6 @@
 	path = tools/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "tools/spdlog"]
+	path = tools/spdlog
+	url = https://github.com/Alexey-cpu/spdlog.git

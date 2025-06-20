@@ -21,6 +21,7 @@ include("cmake/collect_source_code_and_resources.cmake")
 include("tools/fmt.cmake")
 include("tools/glfw.cmake")
 include("tools/glm.cmake")
+include("tools/spdlog.cmake")
 
 #--------------------------------------------------------------
 # add executable
@@ -31,7 +32,7 @@ list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 
 add_executable(OpenGL ${HEADERS} ${SOURCES})
-target_link_libraries(OpenGL glfw glm::glm fmt::fmt)
+target_link_libraries(OpenGL glfw glm::glm fmt::fmt spdlog::spdlog)
 
 target_include_directories(OpenGL PUBLIC ${DIRECTORIES} "source/opengl/glad/include/")
 

@@ -13,8 +13,9 @@
 #include <memory>
 
 // Custom
-#include <OpenGLShader.hpp>
 #include <OpenGLCamera.hpp>
+#include <FrenchieShader.hpp>
+#include <FrenchieLogger.hpp>
 
 // STB
 #include <stb_image.h>
@@ -32,6 +33,9 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+
+// lighting
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -121,6 +125,74 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
+void displayCone(void)
+{
+    // clear the drawing buffer.
+    glClear(GL_COLOR_BUFFER_BIT);  // <---- add
+
+    // set matrix mode
+    glMatrixMode(GL_MODELVIEW);
+    // clear model view matrix
+    glLoadIdentity();
+    // multiply view matrix to current matrix
+    //gluLookAt(3.0, 3.0, 3.0-4.5, 0.0, 0.0,-4.5,0,1,0);
+
+    // ******
+    glPushMatrix();
+
+    // glLoadIdentity(); <---- delete
+
+    glTranslatef(0.0, 0.0, -4.5);
+
+    glBegin(GL_LINES);
+
+    glColor3f (1.0, 1.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(2.0, 0.0, 0.0);
+
+    glColor3f (1.0, 1.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 2.0, 0.0);
+
+    glColor3f (1.0, 1.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, 2.0);
+    glEnd();
+
+    glPopMatrix();
+
+    // clear the drawing buffer.
+    // glClear(GL_COLOR_BUFFER_BIT);  // <---- delete
+
+    // traslate the draw by z = -4.0
+    // Note this when you decrease z like -8.0 the drawing will looks far , or smaller.
+    glTranslatef(0.0,0.0,-4.5);
+    // Red color used to draw.
+    glColor3f(0.8, 0.2, 0.1);
+    // changing in transformation matrix.
+    // rotation about X axis
+    //glRotatef(xRotated,1.0,0.0,0.0);
+    // rotation about Y axis
+    //glRotatef(yRotated,0.0,1.0,0.0);
+    // rotation about Z axis
+    //glRotatef(zRotated,0.0,0.0,1.0);
+
+    // scaling transfomation
+    glScalef(1.0,1.0,1.0);
+    // built-in (glut library) function , draw you a Cone.
+
+    // move the peak of the cone to the origin
+    //glTranslatef(0.0, 0.0, -height);
+
+    //glutSolidCone(base,height,slices,stacks);
+    // Flush buffers to screen
+    // gluLookAt(3,3,3,0,0,-4.5,0,1,0); <----------------------- delete
+
+    glFlush();
+    // sawp buffers called because we are using double buffering
+    // glutSwapBuffers();
+}
+
 int main(int, char**)
 {
     // configure GLFW
@@ -130,7 +202,7 @@ int main(int, char**)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_Bulldog::OpenGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -140,13 +212,13 @@ int main(int, char**)
     //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     //glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
 
-    // create OpenGL window using GLFW
+    // create Bulldog::OpenGL window using GLFW
     GLFWwindow* window = 
-        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL", nullptr, nullptr);
+        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Bulldog::OpenGL", nullptr, nullptr);
 
     if(window == nullptr)
     {
-        std::cout << "Could not create OpenGL window \n";
+        std::cout << "Could not create Bulldog::OpenGL window \n";
         glfwTerminate();
         return -1;
     }
@@ -157,9 +229,9 @@ int main(int, char**)
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    // initialize GLAD that gives us an interface to OpenGL function pointers
+    // initialize GLAD that gives us an interface to Bulldog::OpenGL function pointers
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD \n";
@@ -175,47 +247,47 @@ int main(int, char**)
     //---------------------------------------------------------
 
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  0.0f,  0.0f,  1.0f,
+         -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f,  0.0f,  1.0f,
 
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f,  0.0f,  0.0f,
 
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f,  1.0f,  0.0f
     };
 
     // world space positions of our cubes
@@ -235,14 +307,23 @@ int main(int, char**)
     //-------------------------------------------------------------------------------------
     // Load and compile shaders and then create shader program and attach shaders to it
     //-------------------------------------------------------------------------------------
-    OpenGL::ShaderProgram program(
+    Frenchie::OpenGL::ShaderProgram defaultShader(
         {
-            OpenGL::Create<OpenGL::VertexShader>(L"C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default.vert"),
-            OpenGL::Create<OpenGL::FragmetShader>(L"C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default.frag")
+            Frenchie::Create<Frenchie::OpenGL::VertexShader>(L"C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert"),
+            Frenchie::Create<Frenchie::OpenGL::FragmetShader>(L"C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")
         }
     );
 
-    std::cout << program.get_status_message();
+    Frenchie::OpenGL::ShaderProgram lightShader(
+        {
+            Frenchie::Create<Frenchie::OpenGL::VertexShader>(L"C:/SDK/Qt_Projects/OpenGL/shared/shaders/Light/Light.vert"),
+            Frenchie::Create<Frenchie::OpenGL::FragmetShader>(L"C:/SDK/Qt_Projects/OpenGL/shared/shaders/Light/Light.frag")
+        }
+    );
+
+    std::cout << defaultShader.get_status_message();
+    std::cout << lightShader.get_status_message();
+
     //-------------------------------------------------------------------------------------
     // save geometry to graphics card memory 
     //-------------------------------------------------------------------------------------
@@ -254,15 +335,27 @@ int main(int, char**)
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    unsigned int lightCubeVAO;
+    glGenVertexArrays(1, &lightCubeVAO);
+    glBindVertexArray(lightCubeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -298,6 +391,25 @@ int main(int, char**)
 
     glEnable(GL_DEPTH_TEST); 
 
+    // create logger
+    std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>("Main");
+    
+    //logger->sinks().push_back(spdlog::stdout_color_mt("console"));
+
+    //spdlog::init_thread_pool(8192, 1);
+    auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    //auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("mylog.txt", 1024*1024*10, 3);
+    //std::vector<spdlog::sink_ptr> sinks {stdout_sink, rotating_sink};
+    logger->sinks().push_back(stdout_sink);
+    // auto logger = std::make_shared<spdlog::async_logger>("err_logger", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+    spdlog::register_logger(logger); //<-- this line registers logger for spdlog::get
+
+    
+    Frenchie::Logger::instance().register_sink<spdlog::sinks::stdout_color_sink_mt>();
+    Frenchie::Logger::instance().info("Welcome to spdlog!");
+    Frenchie::Logger::instance().warn("This is a warning message.");
+    Frenchie::Logger::instance().error("An error occurred.");
+
     while(!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -315,25 +427,23 @@ int main(int, char**)
         //------------------------------------------------------------------------------------------
         // drawing is done here...
         //-----------------------------------------------------------------------------------------
+        if(lbutton_down) {
+            camera.ProcessKeyboard(FORWARD, deltaTime);
+        }
 
-    if(lbutton_down) {
-         camera.ProcessKeyboard(FORWARD, deltaTime);
-    }
+        if(rbutton_down){
+            camera.ProcessKeyboard(BACKWARD, deltaTime);
+        }
 
-    if(rbutton_down){
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    }
-
-        // create transformations
+        // draw cubes
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)2048 / (float)1024, 0.1f, 100.0f);
         
-        // pass transformation matrices to the shader
-        program.set_mat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        program.set_mat4("view", camera.GetViewMatrix());
-
-        // draw our first triangle
-        glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+
+        float angle = 2.f * glm::pi<float>() * 0.1 * (float)glfwGetTime();
+        float radius = 5.f;
+        auto light = glm::vec3(cos(angle), 0.f, sin(angle)) * radius;
 
         for (unsigned int i = 0; i < 10; i++)
         {
@@ -342,12 +452,32 @@ int main(int, char**)
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            program.set_mat4("model", model);
 
-            glUseProgram(program.get_adress());
-            glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+            glUseProgram(defaultShader.get_id());
+            defaultShader.set_vec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
+            defaultShader.set_vec3("lightPos", light);
+            defaultShader.set_vec3("viewPos", camera.Position);
+
+            defaultShader.set_mat4("projection", projection);
+            defaultShader.set_mat4("view", camera.GetViewMatrix());
+            defaultShader.set_mat4("model", model);
+            glBindVertexArray(VAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+        // draw light source
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, light);
+        model = glm::scale(model, glm::vec3(0.2f));
+
+        glUseProgram(lightShader.get_id());
+        lightShader.set_mat4("projection", projection);
+        lightShader.set_mat4("view", camera.GetViewMatrix());
+        lightShader.set_mat4("model", model);
+
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         //------------------------------------------------------------------------------------------
 
         // swap buffers

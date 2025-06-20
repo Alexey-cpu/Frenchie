@@ -74,6 +74,23 @@
         "span": "cpp",
         "unordered_map": "cpp",
         "variant": "cpp",
-        "xhash": "cpp"
+        "xhash": "cpp",
+        "complex": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "cfenv": "cpp",
+        "condition_variable": "cpp",
+        "coroutine": "cpp",
+        "expected": "cpp",
+        "map": "cpp",
+        "mutex": "cpp",
+        "set": "cpp",
+        "source_location": "cpp",
+        "stack": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "typeindex": "cpp",
+        "xtree": "cpp",
+        "regex": "cpp"
     }
 }

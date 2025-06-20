@@ -142,6 +142,6 @@ private:
         // rotate aroung Z axis
         glm::mat4 transformZ = glm::rotate(glm::mat4(1.f), glm::radians(Roll), glm::vec3(0.f, 0.f, 1.f));
         Front = glm::normalize(glm::vec3(transformZ * glm::vec4(Front, 1.f)));
-        Up = glm::normalize(glm::vec3(transformZ * glm::vec4(Up, 1.f)));
+        Up    = glm::normalize(glm::vec3(transformZ * glm::vec4(Up, 1.f)));
     }
 };
