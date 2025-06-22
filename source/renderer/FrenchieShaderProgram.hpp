@@ -14,7 +14,7 @@ namespace Frenchie
 
             ShaderProgram(
                 unsigned int _ID, 
-                const std::vector<std::shared_ptr<Shader<IShaderProgram::template shader_type>>>& _Shaders) : m_IShaderProgram(IShaderProgram(_ID, _Shaders)){}
+                const std::vector<std::shared_ptr<Shader<typename IShaderProgram::shader_type>>>& _Shaders) : m_IShaderProgram(IShaderProgram(_ID, _Shaders)){}
             
             ~ShaderProgram(){}
 
@@ -38,7 +38,7 @@ namespace Frenchie
             template<typename T>
             void set_uniform(const std::string& _Name, const T& _Value)
             {
-                m_IShaderProgram->set<T>(_Name,  _Value);
+                m_IShaderProgram->template set_uniform<T>(_Name,  _Value);
             }
 
             protected:
