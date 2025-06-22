@@ -12,6 +12,9 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
+// FMT
+#include <fmt/format.h>
+
 namespace Frenchie
 {
     namespace Core
