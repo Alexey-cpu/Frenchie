@@ -1,7 +1,26 @@
 #pragma once
 
 // Custom
-#include <FrenchieAbstractShaderProgram.hpp>
+#include <FrenchieShaderProgram.hpp>
+#include <FrenchieOpenGLShader.hpp>
+#include <FrenchieLogger.hpp>
+
+// GLAD
+#include <glad/glad.h> 
+
+// GLFW
+#include <GLFW/glfw3.h>
+
+// STL
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 namespace Frenchie
 {
@@ -9,86 +28,19 @@ namespace Frenchie
     {
         namespace OpenGL
         {
-            class ShaderProgram : public AbstractShaderProgram
+            class GLShaderProgramInterface
             {
                 public:
+                typedef GLShaderInterface shader_type;
+                typedef std::vector<std::shared_ptr<Shader<shader_type>>> shaders_type;
 
-                ShaderProgram() : AbstractShaderProgram(glCreateProgram()){}
-                
-                virtual ~ShaderProgram()
+                GLShaderProgramInterface(unsigned int _ID, const shaders_type& _Shaders) : m_ID(_ID)
                 {
-                    glDeleteProgram(get_id());
-                }
-                
-                virtual void use() override
-                {
-                    glUseProgram(get_id());
-                }
+                    for(auto shader : _Shaders)
+                    {
+                        glAttachShader(get_id(), shader->get_id());
+                    }
 
-                virtual void unuse() override
-                {
-                    glUseProgram(0);
-                }
-
-                // setters
-                virtual void set_bool(const std::string& _Name, bool _Value) const override
-                {
-                    glUniform1i(glGetUniformLocation(get_id(), _Name.c_str()), (int)_Value); 
-                }
-                
-                virtual void set_int(const std::string& _Name, int _Value) const override
-                {
-                    glUniform1i(glGetUniformLocation(get_id(), _Name.c_str()), _Value);
-                }
-                
-                virtual void set_float(const std::string& _Name, float _Value) const override
-                {
-                    glUniform1f(glGetUniformLocation(get_id(), _Name.c_str()), _Value);
-                }
-                
-                virtual void set_vec2(const std::string& _Name, const glm::vec2& _Value) const override
-                {
-                    glUniform2fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, &_Value[0]); 
-                }
-                
-                virtual void set_vec3(const std::string& _Name, const glm::vec3& _Value) const override
-                {
-                    glUniform3fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, &_Value[0]);
-                }
-                
-                virtual void set_vec4(const std::string& _Name, const glm::vec4& _Value) const override
-                {
-                    glUniform4fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, &_Value[0]);
-                }
-                
-                virtual void set_mat2(const std::string& _Name, const glm::mat2& _Value) const override
-                {
-                    glUniformMatrix2fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
-                }
-                
-                virtual void set_mat3(const std::string& _Name, const glm::mat3& _Value) const override
-                {
-                    glUniformMatrix3fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
-                }
-                
-                virtual void set_mat4(const std::string& _Name, const glm::mat4& _Value) const override
-                {
-                    glUniformMatrix4fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
-                }
-
-                protected:
-
-                virtual bool attach_shader(const std::shared_ptr<AbstractShader>& _Shader) override
-                {
-                    if(_Shader == nullptr) 
-                        return false;
-                    
-                    glAttachShader(get_id(), _Shader->get_id());
-                    return true;
-                }
-                
-                virtual bool link_program() override
-                {
                     // link
                     glLinkProgram(get_id());
 
@@ -100,15 +52,47 @@ namespace Frenchie
                     {
                         char infoLog[512];
                         glGetProgramInfoLog(get_id(), 512, NULL, infoLog);
-                        Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_FAILED\n"));
-                        Logger::instance()->error(fmt::format("{}\n", std::string(infoLog)));
-                        return false;
+                        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_FAILED\n"));
+                        Frenchie::Core::Logger::instance()->error(fmt::format("{}\n", std::string(infoLog)));
+                        return;
                     }
 
-                    Logger::instance()->info(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_SUCCEEDED\n"));
-
-                    return true;
+                    Frenchie::Core::Logger::instance()->info(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_SUCCEEDED\n"));
                 }
+                
+                ~GLShaderProgramInterface(){}
+
+                void use()
+                {
+                    glUseProgram(get_id());
+                }
+                
+                void unuse()
+                {
+                    glUseProgram(0);
+                }
+
+                const unsigned int& get_id() const
+                {
+                    return m_ID;
+                }
+
+                template<typename T>
+                void set_uniform(const std::string& _Name, const T& _Value)
+                {
+                    // TODO: add logic here !!!
+                }
+
+                protected:
+
+                unsigned int m_ID;
+            };
+
+            class GLShaderProgram : public ShaderProgram<GLShaderProgramInterface>
+            {
+                public:
+                GLShaderProgram(const GLShaderProgramInterface::shaders_type& _Shaders) : ShaderProgram<GLShaderProgramInterface>(glCreateProgram(), _Shaders){}
+                ~GLShaderProgram(){}
             };
         }
     }

@@ -123,15 +123,21 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-#include <FrenchieOpenGLVertexShader.hpp>
-#include <FrenchieOpenGLFragmentShader.hpp>
+#include <FrenchieOpenGLShader.hpp>
 #include <FrenchieOpenGLShaderProgram.hpp>
 #include <FrenchieOpenGLApplication.hpp>
 
 int main(int, char**)
 {
-    Frenchie::Application::OpenGL::Application application;
+    // test logger
+    Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
+    Frenchie::Core::Logger::instance()->error("MAIN:STARTED");
+    
+    // test shaders
+    Frenchie::Renderer::OpenGL::GLShaderProgram({});
 
+    // test application
+    Frenchie::Application::OpenGL::Application application;
     return application.execute();
 }
 

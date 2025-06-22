@@ -39,11 +39,7 @@ namespace Frenchie
             int execute()
             {
                 if(!awake()) 
-                {
-                    std::cout << "FINISH !!!! \n";
-
                     return -1;
-                }
 
                 while (!is_closed())
                 {
@@ -68,8 +64,6 @@ namespace Frenchie
                 }
 
                 finish();
-
-                std::cout << "FINISH !!!! \n";
 
                 return 1;
             }

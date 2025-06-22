@@ -1,78 +1,77 @@
 #pragma once
 
+// Custom
+#include <FrenchieSingleton.hpp>
+
 // STL
 #include <memory>
 
 // SPDLOG
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h> // or stdout_sinks.h for no color
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
 namespace Frenchie
 {
-    class Logger
+    namespace Core
     {
-    public:
-
-        static Logger* instance()
+        class DebugLog
         {
-            static Logger s;
-            return &s;
-        }
+        public:
 
-        Logger(const Logger &) = delete;
-        Logger & operator = (const Logger &) = delete;
+            DebugLog()
+            {
+                spdlog::register_logger(m_Logger);
+            }
+            
+            virtual ~DebugLog(){}
 
-        template<typename __sink, typename ... __sink_arguments>
-        std::shared_ptr<__sink> register_sink(__sink_arguments... _Parameters)
-        {   
-            auto sink = std::make_shared<__sink>(_Parameters...);
-            get_logger()->sinks().push_back(sink);
-            return sink;
-        }
+            template<typename __sink, typename ... __sink_arguments>
+            std::shared_ptr<__sink> register_sink(__sink_arguments... _Parameters)
+            {   
+                auto sink = std::make_shared<__sink>(_Parameters...);
+                get_logger()->sinks().push_back(sink);
+                return sink;
+            }
 
-        void set_level(spdlog::level::level_enum _Level)
-        {
-            get_logger()->set_level(_Level);
-        }
+            void set_level(spdlog::level::level_enum _Level)
+            {
+                get_logger()->set_level(_Level);
+            }
 
-        void trace(const std::string _Message)
-        {
-            get_logger()->trace(_Message);
-        }
+            void trace(const std::string _Message)
+            {
+                get_logger()->trace(_Message);
+            }
 
-        void info(const std::string _Message)
-        {
-            get_logger()->info(_Message);
-        }
+            void info(const std::string _Message)
+            {
+                get_logger()->info(_Message);
+            }
 
-        void warn(const std::string _Message)
-        {
-            get_logger()->warn(_Message);
-        }
+            void warn(const std::string _Message)
+            {
+                get_logger()->warn(_Message);
+            }
 
-        void error(const std::string _Message)
-        {
-            get_logger()->error(_Message);
-        }
+            void error(const std::string _Message)
+            {
+                get_logger()->error(_Message);
+            }
 
-    private:
+        private:
 
-        Logger()
-        {
-            spdlog::register_logger(m_Logger);
-        }
-        
-        ~Logger(){}
+            const std::string m_Name = "Frenchie::Core::Logger";
+            mutable std::shared_ptr<spdlog::logger> m_Logger = 
+                std::make_shared<spdlog::logger>(m_Name);
 
-        const std::string m_Name = "Bulldog";
-        mutable std::shared_ptr<spdlog::logger> m_Logger = 
-            std::make_shared<spdlog::logger>(m_Name);
+            std::shared_ptr<spdlog::logger>& get_logger() const
+            {
+                return m_Logger;
+            }
+        };
 
-        std::shared_ptr<spdlog::logger>& get_logger() const
-        {
-            return m_Logger;
-        }
-    };
+        typedef Singleton<DebugLog> Logger;
+    }
 }
