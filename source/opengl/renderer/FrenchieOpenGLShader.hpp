@@ -14,29 +14,29 @@ namespace Frenchie
         {
             class Shader
             {
-                public:
+            public:
 
-                    Shader(const unsigned int& _ID, const std::filesystem::path& _Path);
-                    virtual ~Shader();
+                Shader(const unsigned int& _ID, const std::filesystem::path& _Path);
+                virtual ~Shader();
 
-                    const unsigned int& get_id() const;
+                const unsigned int& get_id() const;
 
-                private:
-                    unsigned int m_ID;
+            private:
+                unsigned int m_ID;
             };
 
-            class GLVertexShader : public Shader
+            class VertexShader : public Shader
             {
             public:
-                GLVertexShader(const std::filesystem::path& _Path);
-                ~GLVertexShader();
+                VertexShader(const std::filesystem::path& _Path);
+                virtual ~VertexShader();
             };
 
-            class GLFragmentShader : public Shader
+            class FragmentShader : public Shader
             {
             public:
-                GLFragmentShader(const std::filesystem::path& _Path);
-                ~GLFragmentShader();
+                FragmentShader(const std::filesystem::path& _Path);
+                virtual ~FragmentShader();
             };
         }
     }
