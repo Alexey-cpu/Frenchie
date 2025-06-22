@@ -23,12 +23,8 @@ namespace Frenchie
         {
         public:
 
-            DebugLog()
-            {
-                spdlog::register_logger(m_Logger);
-            }
-            
-            virtual ~DebugLog(){}
+            DebugLog();
+            virtual ~DebugLog();
 
             template<typename __sink, typename ... __sink_arguments>
             std::shared_ptr<__sink> register_sink(__sink_arguments... _Parameters)
@@ -38,30 +34,11 @@ namespace Frenchie
                 return sink;
             }
 
-            void set_level(spdlog::level::level_enum _Level)
-            {
-                get_logger()->set_level(_Level);
-            }
-
-            void trace(const std::string _Message)
-            {
-                get_logger()->trace(_Message);
-            }
-
-            void info(const std::string _Message)
-            {
-                get_logger()->info(_Message);
-            }
-
-            void warn(const std::string _Message)
-            {
-                get_logger()->warn(_Message);
-            }
-
-            void error(const std::string _Message)
-            {
-                get_logger()->error(_Message);
-            }
+            void set_level(spdlog::level::level_enum _Level);
+            void trace(const std::string _Message);
+            void info(const std::string _Message);
+            void warn(const std::string _Message);
+            void error(const std::string _Message);
 
         private:
 
@@ -69,10 +46,7 @@ namespace Frenchie
             mutable std::shared_ptr<spdlog::logger> m_Logger = 
                 std::make_shared<spdlog::logger>(m_Name);
 
-            std::shared_ptr<spdlog::logger>& get_logger() const
-            {
-                return m_Logger;
-            }
+            std::shared_ptr<spdlog::logger>& get_logger() const;
         };
 
         typedef Singleton<DebugLog> Logger;

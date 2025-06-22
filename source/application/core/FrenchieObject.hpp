@@ -14,16 +14,8 @@ namespace Frenchie
         {
         public:
             
-            Object(std::string _Name, Object* _Parent = nullptr)
-            {
-                set_parent(_Parent);
-            }
-            
-            virtual ~Object()
-            {
-                set_parent(nullptr);
-                remove_all_children();
-            }
+            Object(std::string _Name = std::string(), Object* _Parent = nullptr);
+            virtual ~Object();
 
             template<typename T = Object> 
             T* get_parent() const
@@ -49,60 +41,43 @@ namespace Frenchie
                 return nullptr;
             }
 
-            std::list<Object*> get_children() const
-            {
-                return m_Children;
-            }
+            std::list<Object*> get_children() const;
 
-            void set_parent(Object* _Parent)
-            {
-                if(m_Parent != nullptr) 
-                    m_Parent->m_Children.erase(m_SelfIterator);
-                m_Parent = _Parent;
-
-                if(m_Parent == nullptr) 
-                    return;
-                
-                m_Parent->m_Children.push_back(this);
-                m_SelfIterator = std::prev(m_Parent->m_Children.end());
-            }
-
-            void remove_all_children()
-            {
-                auto children = get_children();
-
-                for(auto& child : children) 
-                {
-                    if(child != nullptr) 
-                        delete child;
-                }
-
-                m_Children.clear();
-            }
-
-            void apply_to_children_recursive(const std::function<void(Object* _Object)>& _Callback)
-            {
-                if(_Callback == nullptr) 
-                    return;
-
-                for(auto& child : m_Children) 
-                {
-                    _Callback(child);
-                    child->apply_to_children_recursive(_Callback);
-                }
-            }
+            void set_parent(Object* _Parent);
+            
+            void remove_all_children();
+            void apply_to_children_recursive(const std::function<void(Object* _Object)>& _Callback);
 
         protected:
             
-            Object*                      m_Parent   = nullptr;
-            std::list<Object*>           m_Children = std::list<Object*>();
+            std::string                  m_Name         = std::string();
+            Object*                      m_Parent       = nullptr;
+            std::list<Object*>           m_Children     = std::list<Object*>();
             std::list<Object*>::iterator m_SelfIterator;
         };
     }
+}
 
-    template<typename __type, typename ... __arguments>
-    std::shared_ptr<__type> Create(__arguments... _Parameters)
+namespace Frenchie
+{
+    namespace Core
     {
-        return std::make_shared<__type>(_Parameters ...);
+        template<typename __type, typename ... __arguments>
+        std::shared_ptr<__type> CreateShaderPointer(__arguments... _Parameters)
+        {
+            return std::make_shared<__type>(_Parameters ...);
+        }
+
+        template<typename __type, typename ... __arguments>
+        std::unique_ptr<__type> CreateUniquePointer(__arguments... _Parameters)
+        {
+            return std::make_unique<__type>(_Parameters ...);
+        }
+
+        template<typename __type, typename ... __arguments>
+        __type* CreateRawPointer(__arguments... _Parameters)
+        {
+            return new __type(_Parameters ...);
+        }
     }
 }

@@ -64,9 +64,9 @@ const unsigned int& Shader::get_id() const
 }
 
 // GLVertexShader
-GLVertexShader::GLVertexShader(const std::filesystem::path& _Path) : Shader(glCreateShader(GL_VERTEX_SHADER), _Path){}
-GLVertexShader::~GLVertexShader(){}
+VertexShader::VertexShader(const std::filesystem::path& _Path) : Shader(glCreateShader(GL_VERTEX_SHADER), _Path){}
+VertexShader::~VertexShader(){}
 
 // GLFragmentShader
-GLFragmentShader::GLFragmentShader(const std::filesystem::path& _Path) : Shader(glCreateShader(GL_FRAGMENT_SHADER), _Path){}
-GLFragmentShader::~GLFragmentShader(){}
+FragmentShader::FragmentShader(const std::filesystem::path& _Path) : Shader(glCreateShader(GL_FRAGMENT_SHADER), _Path){}
+FragmentShader::~FragmentShader(){}

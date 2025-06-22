@@ -20,18 +20,18 @@
 
 using namespace Frenchie::Renderer::OpenGL;
 
-ShaderProgram::ShaderProgram(unsigned int _ID, const shaders& _Shaders) : m_ID(_ID)
+ShaderProgram::ShaderProgram(
+    unsigned int _ID, 
+    const std::vector<std::shared_ptr<Shader>>& _Shaders) : m_ID(_ID)
 {
     for(auto shader : _Shaders)
     {
-        glAttachShader(get_id(), shader->get_id());
+        if(shader != nullptr)
+            glAttachShader(get_id(), shader->get_id());
     }
 
-    // link
-    glLinkProgram(get_id());
-
-    // check for linking errors
     int success = true;
+    glLinkProgram(get_id());
     glGetProgramiv(get_id(), GL_LINK_STATUS, &success);
     
     if (!success) 
@@ -40,10 +40,12 @@ ShaderProgram::ShaderProgram(unsigned int _ID, const shaders& _Shaders) : m_ID(_
         glGetProgramInfoLog(get_id(), 512, NULL, infoLog);
         Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_FAILED\n"));
         Frenchie::Core::Logger::instance()->error(fmt::format("{}\n", std::string(infoLog)));
-        return;
     }
 
-    Frenchie::Core::Logger::instance()->info(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_SUCCEEDED\n"));
+    else 
+    {
+        Frenchie::Core::Logger::instance()->info(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER_PROGRAM::LINK_SUCCEEDED\n"));
+    }
 }
 
 ShaderProgram::~ShaderProgram(){}
@@ -63,64 +65,48 @@ const unsigned int& ShaderProgram::get_id() const
     return m_ID;
 }
 
-#define type bool
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const bool& _Value)
 {
     glUniform1i(glGetUniformLocation(get_id(), _Name.c_str()), (int)_Value);
 }
 
-#define type int
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const int& _Value)
 {
     glUniform1i(glGetUniformLocation(get_id(), _Name.c_str()), _Value);
 }
-#undef type
 
-#define type float
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const float& _Value)
 {
-    glUniform1f(glGetUniformLocation(get_id(), _Name.c_str()), (int)_Value);
+    glUniform1f(glGetUniformLocation(get_id(), _Name.c_str()), _Value);
 }
-#undef type
 
-#define type glm::vec2
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const glm::vec2& _Value)
 {
     glUniform2fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, &_Value[0]);
 }
-#undef type
 
-#define type glm::vec3
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const glm::vec3& _Value)
 {
     glUniform3fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, &_Value[0]);
 }
-#undef type
 
-#define type glm::vec4
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const glm::vec4& _Value)
 {
     glUniform4fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, &_Value[0]);
 }
-#undef type
 
-#define type glm::mat2
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const glm::mat2& _Value)
 {
     glUniformMatrix2fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
-#undef type
 
-#define type glm::mat3
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const glm::mat3& _Value)
 {
     glUniformMatrix3fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
-#undef type
 
-#define type glm::mat4
-template<> void ShaderProgram::set_uniform(const std::string& _Name, const type& _Value)
+template<> void ShaderProgram::set_uniform(const std::string& _Name, const glm::mat4& _Value)
 {
     glUniformMatrix4fv(glGetUniformLocation(get_id(), _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
-#undef type
