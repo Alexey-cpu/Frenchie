@@ -19,18 +19,20 @@ namespace Frenchie
             {
                 public:
 
-                    Application(){}
-                    virtual ~Application(){}
+                    Application();
+                    virtual ~Application();
 
-                    virtual bool awake() override;
-                    virtual void frame_start() override;
+                    virtual bool awake()        override;
+                    virtual void frame_start()  override;
                     virtual void frame_update() override;
                     virtual void frame_finish() override;
-                    virtual void finish() override;
-                    virtual bool is_closed() override;
+                    virtual void finish()       override;
+                    virtual bool is_closed()    override;
+                    virtual void close()        override;
 
                 protected:
                     GLFWwindow* m_MainWindow = nullptr;
+                    bool        m_Closed     = false;
             };
         }
     }

@@ -5,7 +5,7 @@ project(OpenGL VERSION 0.1.0 LANGUAGES C CXX)
 # setup common project options
 #==============================================================================================================
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_AUTOMOC ON)
 #set(CMAKE_AUTORCC ON)
@@ -34,7 +34,7 @@ cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
 add_executable(OpenGL ${HEADERS} ${SOURCES})
 target_link_libraries(OpenGL glfw glm::glm fmt::fmt spdlog::spdlog)
 
-target_include_directories(OpenGL PUBLIC ${DIRECTORIES} "source/renderer/opengl/glad/include/")
+target_include_directories(OpenGL PUBLIC ${DIRECTORIES} "source/opengl/glad/include/")
 
 #--------------------------------------------------------------
 # configure CPack

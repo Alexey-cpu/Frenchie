@@ -16,7 +16,7 @@ namespace Frenchie
 
             std::string get_name() const;
 
-            virtual void awake();
+            virtual bool awake();
             virtual void frame_start();
             virtual void frame_update();
             virtual void frame_finish();
