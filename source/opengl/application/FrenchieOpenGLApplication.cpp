@@ -2,6 +2,19 @@
 #include <FrenchieOpenGLApplication.hpp>
 #include <FrenchieLogger.hpp>
 
+// ImGUI
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
+#include <imgui.h>
+#define GL_SILENCE_DEPRECATION
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+#include <GLES2/gl2.h>
+#endif
+#define GLFW_INCLUDE_NONE
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 using namespace Frenchie::Application::OpenGL;
 
 // callbacks
@@ -33,7 +46,11 @@ Application::Application()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
+    // GL 3.2 + GLSL 150
+    const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
+    const char* glsl_version = "#version 130";
 #endif
 
     // setup Window hints
@@ -65,9 +82,45 @@ Application::Application()
         Frenchie::Core::Logger::instance()->error(fmt::format(
             "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_LOAD_GLAD\n"));
     }
+
+    //---------------------------------------------------------------------------------------------------
+    // ImGui::awake
+    //---------------------------------------------------------------------------------------------------
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard |
+            ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad  |
+            ImGuiConfigFlags_::ImGuiConfigFlags_DockingEnable     |
+            ImGuiConfigFlags_::ImGuiConfigFlags_ViewportsEnable;
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    ImGui_ImplGlfw_InitForOpenGL(m_MainWindow, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    //---------------------------------------------------------------------------------------------------
 }
 
-Application::~Application(){}
+Application::~Application()
+{
+    //---------------------------------------------------------------------------------------------------
+    // ImGui::finish
+    //---------------------------------------------------------------------------------------------------
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    //---------------------------------------------------------------------------------------------------
+
+    glfwDestroyWindow(m_MainWindow);
+    glfwTerminate();
+    m_Layers.clear();
+}
 
 glm::u32vec2 Application::get_window_size() const
 {
@@ -119,9 +172,20 @@ bool Application::awake()
 
 void Application::Application::frame_start()
 {
+    // OpenGL
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glfwPollEvents();
+
+    //---------------------------------------------------------------------------------------------------
+    // ImGui::frame_start
+    //---------------------------------------------------------------------------------------------------
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+    //---------------------------------------------------------------------------------------------------
 
     for(auto layer : m_Layers) 
         layer->frame_start();
@@ -135,6 +199,26 @@ void Application::Application::frame_update()
 
 void Application::Application::frame_finish()
 {
+    //---------------------------------------------------------------------------------------------------
+    // ImGui::frame_finish
+    //---------------------------------------------------------------------------------------------------
+    ImGui::Render();
+    int display_w, display_h;
+    glfwGetFramebufferSize(m_MainWindow, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        GLFWwindow* backup_current_context = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup_current_context);
+        gladLoadGL();
+    }
+    //---------------------------------------------------------------------------------------------------
+
     for(auto layer : m_Layers) 
         layer->frame_finish();
 
