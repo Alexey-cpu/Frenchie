@@ -11,49 +11,26 @@ namespace Frenchie
         class Application
         {
         public:
-            Application(){}
-            virtual ~Application(){}
+            Application();
+            virtual ~Application();
+
+            // getters
+            std::string get_name() const;
+
+            // setters
+            void set_name(const std::string& _Name);
 
             virtual bool awake()        = 0;
             virtual void frame_start()  = 0;
             virtual void frame_update() = 0;
             virtual void frame_finish() = 0;
             virtual void finish()       = 0;
-            virtual bool is_closed()    = 0;
-            virtual void close()        = 0;
+            
+            virtual bool is_closed();
+            virtual void close();
             
             // native API
-            int execute()
-            {
-                if(!awake()) 
-                    return -1;
-
-                while (!is_closed())
-                {
-                    // remove layers that are closed
-                    for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
-                    {
-                        if((*it)->is_closed())
-                        {
-                            (*it)->finish();
-                            auto rm = it;
-                            it++;
-                            m_Layers.erase(rm);
-
-                            if(it == m_Layers.end())
-                                break;
-                        }
-                    }
-
-                    frame_start();
-                    frame_update();
-                    frame_finish();
-                }
-
-                finish();
-
-                return 1;
-            }
+            int execute();
 
             template<typename __type, typename ... __parameters>
             std::shared_ptr<__type> push(__parameters... _Parameters)
@@ -78,8 +55,9 @@ namespace Frenchie
             }
 
         protected:
-            std::list<std::shared_ptr<Layer>> m_Layers = 
-                std::list<std::shared_ptr<Layer>>();
+            std::list<std::shared_ptr<Layer>> m_Layers =  std::list<std::shared_ptr<Layer>>();
+            std::string                       m_Name   = "Frenchie::Application";
+            bool                              m_Closed = false;
         };
     };    
 };

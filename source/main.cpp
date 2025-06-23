@@ -125,6 +125,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 #include <FrenchieOpenGLApplication.hpp>
 #include <FrenchieLogger.hpp>
+#include <FrenchieSingleton.hpp>
 
 int main(int, char**)
 {
@@ -132,9 +133,11 @@ int main(int, char**)
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
     Frenchie::Core::Logger::instance()->error("MAIN:STARTED");
 
-    // test application
-    Frenchie::Application::OpenGL::Application application;
-    return application.execute();
+    auto application = Frenchie::Application::OpenGL::GLApplication::instance();
+    application->set_window_size(glm::vec2(2048, 1024));
+    application->set_maximized(true);
+
+    return application->execute();
 }
 
 /*

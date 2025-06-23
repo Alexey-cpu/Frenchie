@@ -4,9 +4,29 @@
 
 using namespace Frenchie::Application::OpenGL;
 
+// callbacks
+void OnWindowResize(GLFWwindow* _Window, int _Width, int _Height)
+{
+    (void)_Window;
+    glViewport(0, 0, _Width, _Height);
+
+    Frenchie::Core::Logger::instance()->info("OnWindowResize");
+}
+
+void OnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
+{
+    int width  = 0;
+    int height = 0;
+    glfwGetWindowSize(_Window, &width, &height);
+    glViewport(0, 0, width, height);
+
+    Frenchie::Core::Logger::instance()->info("OnWindowMaximizedCallback");
+}
+
+// Application
 Application::Application()
 {
-    // create and configure rendering context using GLFW
+    // initialize GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -16,42 +36,64 @@ Application::Application()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    // setup Window hints
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
-    //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-    //glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
 
-    if((m_MainWindow = glfwCreateWindow(
-        2048, 
-        1024,
-        "Frenchie::Application::OpenGL",
-        nullptr,
-        nullptr)) == nullptr)
+    if((m_MainWindow = glfwCreateWindow(800, 600, m_Name.c_str(), nullptr, nullptr)) == nullptr)
     {
         glfwTerminate();
+        Frenchie::Core::Logger::instance()->error(fmt::format(
+            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_CREATE_WINDOW\n"));
         return;
     }
 
     glfwMakeContextCurrent(m_MainWindow);
+
+    // setup callbacks
+    glfwSetWindowSizeCallback(m_MainWindow, &OnWindowResize);
+    glfwSetFramebufferSizeCallback(m_MainWindow, &OnWindowResize);
+    glfwSetWindowMaximizeCallback(m_MainWindow, OnWindowMaximizedCallback);
+
+    // load OpenGL interface using GLAD
+    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        glfwTerminate();
+        m_MainWindow = nullptr;
+        Frenchie::Core::Logger::instance()->error(fmt::format(
+            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_LOAD_GLAD\n"));
+    }
 }
 
 Application::~Application(){}
 
+glm::u32vec2 Application::get_window_size() const
+{
+    int width  = 0;
+    int height = 0;
+    glfwGetWindowSize(m_MainWindow, &width, &height);
+    return glm::u32vec2(width, height);
+}
+
+void Application::set_window_size(const glm::u32vec2& _Value)
+{
+    glfwSetWindowSize(m_MainWindow, _Value.x, _Value.y);
+}
+
+void Application::set_maximized(const bool& _Value)
+{
+    glfwMaximizeWindow(m_MainWindow);
+}
+
 bool Application::awake()
 {
-    // load OpenGL interface using GLAD
-    if(m_MainWindow == nullptr || !gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        glfwTerminate();
-        Frenchie::Core::Logger::instance()->error(fmt::format(
-            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_LOAD_GLAD\n"));
+    if(m_MainWindow == nullptr) 
         return false;
-    }
 
-    // configure viewport
-    glViewport(0, 0, 2048, 1024);
+    // call window callbacks
+    OnWindowMaximizedCallback(m_MainWindow, glfwGetWindowAttrib(m_MainWindow, GLFW_MAXIMIZED));
 
     // awake layers
     for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
@@ -109,9 +151,4 @@ void Application::Application::finish()
 bool Application::Application::is_closed()
 {
     return m_Closed || glfwWindowShouldClose(m_MainWindow);
-}
-
-void Application::Application::close()
-{
-    m_Closed = false;
 }
