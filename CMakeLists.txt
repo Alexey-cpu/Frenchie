@@ -59,7 +59,7 @@ target_include_directories(
     PUBLIC ${DIRECTORIES} 
     
     #GLAD
-    "source/opengl/glad/include/"
+    "source/vendor/glad/include/"
 
     #IMGUI
     "tools/imgui/"
