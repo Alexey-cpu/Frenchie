@@ -1,7 +1,7 @@
 #pragma once
 
 // Custom
-#include <FrenchieSingleton.hpp>
+#include <FrenchieCoreSingleton.hpp>
 
 // STL
 #include <memory>

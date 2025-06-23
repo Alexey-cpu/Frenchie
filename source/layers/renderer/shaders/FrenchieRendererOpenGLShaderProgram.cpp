@@ -1,5 +1,5 @@
-#include <FrenchieOpenGLShaderProgram.hpp>
-#include <FrenchieLogger.hpp>
+#include <FrenchieRendererOpenGLShaderProgram.hpp>
+#include <FrenchieCoreLogger.hpp>
 
 // GLAD
 #include <glad/glad.h> 

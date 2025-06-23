@@ -1,7 +1,7 @@
 #pragma once
 
 // Custom
-#include <FrenchieOpenGLShader.hpp>
+#include <FrenchieRendererOpenGLShader.hpp>
 
 namespace Frenchie
 {

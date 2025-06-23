@@ -1,4 +1,4 @@
-#include <FrenchieLogger.hpp>
+#include <FrenchieCoreLogger.hpp>
 
 using namespace Frenchie::Core;
 

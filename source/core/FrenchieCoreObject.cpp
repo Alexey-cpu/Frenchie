@@ -1,4 +1,4 @@
-#include <FrenchieObject.hpp>
+#include <FrenchieCoreObject.hpp>
 
 using namespace Frenchie::Core;
 
