@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieLogger.hpp>
+#include <FrenchieCoreLogger.hpp>
 
 // STL
 #include <iostream>

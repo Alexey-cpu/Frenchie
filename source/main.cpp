@@ -124,10 +124,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieLogger.hpp>
-#include <FrenchieSingleton.hpp>
-#include <FrenchieObject.hpp>
-#include <FrenchieOpenGLTestLayer.hpp>
+#include <FrenchieImGuiTestLayer.hpp>
 
 int main(int, char**)
 {
@@ -140,7 +137,7 @@ int main(int, char**)
     application->set_maximized(true);
 
     // push application layers
-    application->push<Frenchie::Application::TestLayer>("TestLayer");
+    application->push<Frenchie::Application::Imgui::TestLayer>("TestLayer");
 
     return application->execute();
 }
