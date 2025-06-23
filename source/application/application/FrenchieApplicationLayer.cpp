@@ -14,6 +14,7 @@ bool Layer::awake()
 {
     return true;
 }
+
 void Layer::frame_start(){}
 void Layer::frame_update(){}
 void Layer::frame_finish(){}
