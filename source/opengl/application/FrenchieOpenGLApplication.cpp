@@ -46,11 +46,7 @@ Application::Application()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
-    // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#else
-    const char* glsl_version = "#version 130";
 #endif
 
     // setup Window hints
@@ -86,6 +82,13 @@ Application::Application()
     //---------------------------------------------------------------------------------------------------
     // ImGui::awake
     //---------------------------------------------------------------------------------------------------
+    #ifdef __APPLE__
+        // GL 3.2 + GLSL 150
+        const char* glsl_version = "#version 150";
+    #else
+        const char* glsl_version = "#version 130";
+    #endif
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
