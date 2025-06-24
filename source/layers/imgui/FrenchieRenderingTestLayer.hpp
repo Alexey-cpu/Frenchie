@@ -24,28 +24,28 @@ namespace Frenchie
             using namespace Frenchie::Renderer::OpenGL;
             using namespace Frenchie::Core;
 
-            class ViewPort
+            class World final
             {
-                public:
+            public:
 
-                ViewPort(float _Depth = 100.f, float _Aspect = 1.f, float _Fovy = 90.f, glm::vec3 _Axis = glm::vec3(1.f, 1.f, 1.f)) : 
+                World(float _Depth = 100.f, float _Aspect = 1.f, float _Fovy = 90.f, glm::vec3 _Axis = glm::vec3(1.f, 1.f, 1.f)) : 
                     m_Depth(_Depth), 
                     m_Aspect(_Aspect), 
                     m_Fovy(_Fovy),
                     m_Axis(_Axis){}
 
-                virtual ~ViewPort(){}
+                ~World(){}
 
                 glm::mat4 get_projection_matrix() const
                 {
                     return glm::perspective(glm::radians(m_Fovy), m_Aspect, +0.1f, -m_Depth);
                 }
 
-                virtual glm::vec3 get_viewport_scale() const
+                glm::vec3 get_viewport_scale(const glm::vec2& _WorldSize) const
                 {
-                    auto size = glm::vec2(Frenchie::Application::Application::instance()->get_window_size());
-
-                    return glm::vec3(1.f / (float)size.x, 1.f / (float)size.y, 1.f);
+                    float scaleX = 1.f / std::max<float>((float)_WorldSize.x, 1.f);
+                    float scaleY = 1.f / std::max<float>((float)_WorldSize.y, 1.f);
+                    return glm::vec3(scaleX, scaleY, 1.f);
                 }
 
                 glm::vec3 get_axis() const
@@ -90,10 +90,98 @@ namespace Frenchie
 
                 protected:
 
+                    // info
                     float     m_Depth  = 100.f; 
                     float     m_Aspect = 1.f;
                     float     m_Fovy   = 90.f;
                     glm::vec3 m_Axis   = glm::vec3(1.f, 1.f, 1.f);
+            };
+
+            class Camera final
+            {
+            public:
+                Camera(
+                    glm::vec3 _CameraWorldPosition        = glm::vec3(+0.f, +0.f, +1.f), 
+                    glm::vec3 _CameraWorldUpAxisDirection = glm::vec3(+0.f, +1.f, +0.f)) : 
+                    m_CameraWorldPosition(_CameraWorldPosition), 
+                    m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
+                
+                ~Camera(){}
+
+                glm::vec3 get_position() const
+                {
+                    return m_CameraWorldPosition;
+                }
+
+                float get_pitch() const
+                {
+                    return m_Pitch;
+                }
+
+                float get_yaw() const
+                {
+                    return m_Yaw;
+                }
+
+                float get_roll() const
+                {
+                    return m_Roll;
+                }
+                
+                void get_position(const glm::vec3& _Value)
+                {
+                    m_CameraWorldPosition = _Value;
+                }
+
+                void set_pitch(const float& _Value)
+                {
+                    m_Pitch = _Value;
+                }
+
+                void set_yaw(const float& _Value)
+                {
+                    m_Yaw = _Value;
+                }
+
+                void set_roll(const float& _Value)
+                {
+                    m_Roll = _Value;
+                }
+                
+                glm::mat4 get_view_matrix(const World& _ViewPort) const
+                {
+                    // camera rotation angles
+                    glm::mat4 rotateX  = glm::rotate(glm::mat4(1.f), glm::radians(m_Pitch), glm::vec3(1.f, 0.f, 0.f));
+                    glm::mat4 rotateY  = glm::rotate(glm::mat4(1.f), glm::radians(m_Yaw), glm::vec3(0.f, 1.f, 0.f));
+                    glm::mat4 rotateZ  = glm::rotate(glm::mat4(1.f), glm::radians(m_Roll), glm::vec3(0.f, 0.f, 1.f));
+
+                    // camera local attributes
+                    m_CameraLocalFrontAxisDirection = glm::vec3(0.f, 0.f, -_ViewPort.get_axis().z);
+                    m_CameraLocalFrontAxisDirection = glm::normalize(rotateY * rotateX * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f));
+                    m_CameraLocalRightAxisDirection = glm::normalize(glm::cross(m_CameraLocalFrontAxisDirection, m_CameraWorldUpAxisDirection));
+                    m_CameraLocalUpAxisDirection    = glm::normalize(glm::cross(m_CameraLocalRightAxisDirection, m_CameraLocalFrontAxisDirection));
+
+                    m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
+                    m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
+
+                    return glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection);
+                }
+            
+            protected:
+
+                mutable glm::vec3 m_CameraWorldPosition           = glm::vec3(+0.f, +0.f, +1.f);
+                mutable glm::vec3 m_CameraWorldUpAxisDirection    = glm::vec3(+0.f, +1.f, +0.f);
+                mutable glm::vec3 m_CameraLocalFrontAxisDirection = glm::vec3(0.f);
+                mutable glm::vec3 m_CameraLocalRightAxisDirection = glm::vec3(0.f);
+                mutable glm::vec3 m_CameraLocalUpAxisDirection    = glm::vec3(0.f);
+                mutable float     m_Pitch                         = 0.f;
+                mutable float     m_Yaw                           = 0.f;
+                mutable float     m_Roll                          = 0.f;
+                
+            };
+
+            class Model
+            {
             };
 
             struct Vertex
@@ -133,13 +221,18 @@ namespace Frenchie
                 
                 virtual void frame_finish() override
                 {
-
-                    ViewPort viewport = ViewPort(
+                    // create world
+                    World viewport = World(
                         100.f,
                         1.f,
                         90.f,
                         glm::vec3(1.f, 1.f, 1.f)
                     );
+
+                    // create camera
+                    Camera camera = Camera(
+                        glm::vec3(+0.f, +0.f, +1.f),
+                        glm::vec3(+0.f, +1.f, +0.f));
 
                     glm::mat4 modelMatrix;
                     glm::mat4 viewMatrix;
@@ -153,36 +246,17 @@ namespace Frenchie
 
                     // compute view matrix (camera matrix)
                     {
-                        float velocity = 2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime();
-                        float pitch    = 0.f;
-                        float yaw      = 0.f;
-                        float roll     = 0.f;
-
-                        // camera world attributes
-                        glm::vec3 cameraWorldPosition        = glm::vec3(+0.f, +0.f, +1.f);
-                        glm::vec3 cameraWorldUpAxisDirection = glm::vec3(+0.f, +1.f, +0.f);
-
-                        // camera rotations
-                        glm::mat4 rotateX  = glm::rotate(glm::mat4(1.f), glm::radians(pitch), glm::vec3(1.f, 0.f, 0.f));
-                        glm::mat4 rotateY  = glm::rotate(glm::mat4(1.f), glm::radians(yaw), glm::vec3(0.f, 1.f, 0.f));
-                        glm::mat4 rotateZ  = glm::rotate(glm::mat4(1.f), glm::radians(roll), glm::vec3(0.f, 0.f, 1.f));
-
-                        // camera local attributes
-                        glm::vec3 cameraLocalFrontAxisDirection = glm::vec3(0.f, 0.f, -viewport.get_axis().z);
-                        cameraLocalFrontAxisDirection           = glm::normalize(rotateY * rotateX * glm::vec4(cameraLocalFrontAxisDirection, 1.f));
-                        glm::vec3 cameraLocalRightAxisDirection = glm::normalize(glm::cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
-                        glm::vec3 cameraLocalUpAxisDirection    = glm::normalize(glm::cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
-
-                        cameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(cameraLocalFrontAxisDirection, 1.f)));
-                        cameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(cameraLocalUpAxisDirection, 1.f)));
-
-                        viewMatrix = glm::lookAt(cameraWorldPosition, cameraWorldPosition + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+                        viewMatrix = camera.get_view_matrix(viewport);
                     }
 
                     // compute projection matrix
                     {
                         projectionMatrix = viewport.get_projection_matrix();
-                        viewportScale    = viewport.get_viewport_scale();
+                    }
+
+                    // compute world view port scale
+                    {
+                        viewportScale = viewport.get_viewport_scale(Frenchie::Application::Application::instance()->get_window_size());
                     }
 
                     // draw here
@@ -248,6 +322,8 @@ namespace Frenchie
                         // triangle 2
                         3, 4, 5
                     };
+
+                    glEnable(GL_PROGRAM_POINT_SIZE);
 
                     // generate buffers
                     glGenVertexArrays(1, &m_VAO);

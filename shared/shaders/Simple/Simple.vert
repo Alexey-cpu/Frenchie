@@ -16,4 +16,7 @@ void main()
 
     // setup color
     Color = a_Color;
+
+    // setup point size
+    gl_PointSize = 10.f;
 }
