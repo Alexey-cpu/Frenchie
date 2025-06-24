@@ -1,8 +1,9 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreHelpers.hpp>
-#include <FrenchieRendererOpenGLShaderProgram.hpp>
-#include <FrenchieRendererOpenGLCamera.hpp>
 #include <FrenchieApplication.hpp>
+#include <FrenchieCoreObject.hpp>
+
+#include <FrenchieRendererOpenGLShaderProgram.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -21,30 +22,31 @@ namespace Frenchie
     {
         namespace Test
         {
-            using namespace Frenchie::Renderer::OpenGL;
             using namespace Frenchie::Core;
+            using namespace Frenchie::Application;
+            using namespace Frenchie::Renderer::OpenGL;
 
-            class World final
+            class Viewport final
             {
             public:
 
-                World(float _Depth = 100.f, float _Aspect = 1.f, float _Fovy = 90.f, glm::vec3 _Axis = glm::vec3(1.f, 1.f, 1.f)) : 
+                Viewport(float _Depth = 100.f, float _Aspect = 1.f, float _Fovy = 90.f, glm::vec3 _Axis = glm::vec3(1.f, 1.f, 1.f)) : 
                     m_Depth(_Depth), 
                     m_Aspect(_Aspect), 
                     m_Fovy(_Fovy),
                     m_Axis(_Axis){}
 
-                ~World(){}
+                ~Viewport(){}
 
                 glm::mat4 get_projection_matrix() const
                 {
                     return glm::perspective(glm::radians(m_Fovy), m_Aspect, +0.1f, -m_Depth);
                 }
 
-                glm::vec3 get_viewport_scale(const glm::vec2& _WorldSize) const
+                glm::vec3 get_viewport_scale(const glm::vec2& _ViewportSize) const
                 {
-                    float scaleX = 1.f / std::max<float>((float)_WorldSize.x, 1.f);
-                    float scaleY = 1.f / std::max<float>((float)_WorldSize.y, 1.f);
+                    float scaleX = 1.f / std::max<float>((float)_ViewportSize.x, 1.f);
+                    float scaleY = 1.f / std::max<float>((float)_ViewportSize.y, 1.f);
                     return glm::vec3(scaleX, scaleY, 1.f);
                 }
 
@@ -148,7 +150,7 @@ namespace Frenchie
                     m_Roll = _Value;
                 }
                 
-                glm::mat4 get_view_matrix(const World& _ViewPort) const
+                glm::mat4 get_view_matrix(const Viewport& _ViewPort) const
                 {
                     // camera rotation angles
                     glm::mat4 rotateX  = glm::rotate(glm::mat4(1.f), glm::radians(m_Pitch), glm::vec3(1.f, 0.f, 0.f));
@@ -180,14 +182,152 @@ namespace Frenchie
                 
             };
 
-            class Model
-            {
-            };
-
             struct Vertex
             {
                 glm::vec3 Position;
+                glm::vec3 Normal;
+                glm::vec2 UV;
                 glm::vec4 Color;
+            };
+
+            struct Transform
+            {
+                glm::vec3 Position = glm::vec3(0.f);
+                glm::vec3 Rotation = glm::vec3(0.f);
+                glm::vec3 Scale    = glm::vec3(1.f);
+                glm::vec3 Offset   = glm::vec3(0.f);
+
+                glm::mat4 get_model_matrix() const
+                {
+                    glm::mat4 matrix(1.f);
+
+                    return  glm::translate(matrix, Position + Offset) * 
+                            glm::rotate(matrix, glm::radians(Rotation.x), glm::vec3(1.f, 0.f, 0.f)) * 
+                            glm::rotate(matrix, glm::radians(Rotation.x), glm::vec3(0.f, 1.f, 0.f)) * 
+                            glm::rotate(matrix, glm::radians(Rotation.x), glm::vec3(0.f, 0.f, 1.f)) * 
+                            glm::scale(matrix, Scale);
+                }
+            };
+
+            class IDrawable
+            {
+            public:
+                IDrawable(){}
+                virtual ~IDrawable(){}
+                
+                virtual bool awake()        = 0;
+                virtual void frame_start()  = 0;
+                virtual void frame_update() = 0;
+                virtual void frame_finish() = 0;
+            };
+
+            class Scene : public Layer
+            {
+            public:
+
+                Scene(std::string _Name = std::string()) : Frenchie::Application::Layer(_Name){}
+                virtual ~Scene(){}
+
+                virtual bool awake() override
+                {
+                }
+                
+                virtual void frame_start() override
+                {
+                }
+                
+                virtual void frame_update() override
+                {
+                }
+                
+                virtual void frame_finish() override
+                {
+                }
+
+            protected:
+
+                Object*  m_Root = nullptr;
+                Viewport m_Viewport;
+                Camera   m_Camera;
+            }; 
+
+            class Mesh : public Frenchie::Core::Object, public IDrawable
+            {
+            public:
+                
+                Mesh(std::string _Name = std::string(), Object* _Parent = nullptr) : 
+                    Frenchie::Core::Object(_Name, _Parent){}
+
+                virtual ~Mesh()
+                {
+                    glDeleteVertexArrays(1, &m_VAO);
+                    glDeleteBuffers(1, &m_VBO);
+                    glDeleteBuffers(1, &m_EBO);
+                }
+
+                bool awake() override
+                {
+                    // create buffers and vertex array
+                    glGenBuffers(1, &m_VBO);
+                    glGenBuffers(1, &m_EBO);
+                    glGenVertexArrays(1, &m_VAO);
+
+                    // load data into VBO and EBO
+                    glBindVertexArray(m_VAO);
+                    glBufferData(m_VBO, m_Vertexes.size() * sizeof(Vertex), &m_Vertexes[0], GL_DYNAMIC_DRAW);
+                    glBufferData(m_EBO, m_Indexes.size() * sizeof(int), &m_Indexes[0], GL_DYNAMIC_DRAW);
+
+                    // setup attributes pointers
+                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Position)));
+                    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Normal)));
+                    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::UV)));
+                    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Color)));
+                    glEnableVertexAttribArray(0);
+                    glEnableVertexAttribArray(1);
+                    glEnableVertexAttribArray(2);
+                    glEnableVertexAttribArray(3);
+
+                    return true;
+                }
+                
+                virtual void frame_start()  override{}
+                
+                virtual void frame_update() override{}
+                
+                virtual void frame_finish() override
+                {
+                    glBindVertexArray(m_VAO);
+                    glDrawArrays(GL_POINTS, 0, 6);
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                }
+
+                void updateSelfAndChild()
+                {
+                    if (get_parent<Mesh>() != nullptr)
+                        m_ModelMatrix = get_parent<Mesh>()->m_ModelMatrix * m_Transform.get_model_matrix();
+                    else
+                        m_ModelMatrix = m_Transform.get_model_matrix();
+
+                    for (auto&& child : m_Children)
+                    {
+                        Mesh* object = dynamic_cast<Mesh*>(child);
+
+                        if(object != nullptr)
+                            object->updateSelfAndChild();
+                    }
+                }
+            
+            protected:
+
+                unsigned int                   m_VAO           = 0;    
+                unsigned int                   m_VBO           = 0;
+                unsigned int                   m_EBO           = 0;
+                std::vector<Vertex>            m_Vertexes      = std::vector<Vertex>();
+                std::vector<int>               m_Indexes       = std::vector<int>();
+                std::shared_ptr<ShaderProgram> m_ShaderProgram = nullptr;
+
+                Transform m_Transform   = Transform();
+                glm::mat4 m_ModelMatrix = glm::mat4(1.0f);
             };
 
             class RenderingTest : public Layer
@@ -222,7 +362,7 @@ namespace Frenchie
                 virtual void frame_finish() override
                 {
                     // create world
-                    World viewport = World(
+                    Viewport viewport = Viewport(
                         100.f,
                         1.f,
                         90.f,
@@ -268,7 +408,10 @@ namespace Frenchie
 
                     // draw
                     glBindVertexArray(m_VAO);
+                    glDrawArrays(GL_POINTS, 0, 6);
                     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw the triangle
+
+                    //glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 100);
 
                     m_ShaderProgram->unuse();
                 }
