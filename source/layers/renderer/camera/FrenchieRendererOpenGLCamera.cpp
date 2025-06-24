@@ -102,7 +102,6 @@ void Camera::updateCameraVectors()
     // rotate aroung X/Y axis
     glm::mat4 uinitMatrix = glm::mat4(1.f);
     glm::mat4 transformX  = glm::rotate(uinitMatrix, glm::radians(m_Pitch), glm::vec3(1.f, 0.f, 0.f));
-    //glm::mat4 transformY  = glm::rotate(uinitMatrix, -(glm::radians(Yaw) + glm::half_pi<float>()), glm::vec3(0.f, 1.f, 0.f));
     glm::mat4 transformY  = glm::rotate(uinitMatrix, glm::radians(m_Yaw), glm::vec3(0.f, 1.f, 0.f));
     m_CameraFrontAxisDirection        = glm::normalize(transformY * transformX * glm::vec4(0.f, 0.f, -1.f, 1.f));
     m_CameraRightAxisDirection = glm::normalize(glm::cross(m_CameraFrontAxisDirection, m_WorldUpAxisDirection));

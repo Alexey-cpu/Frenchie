@@ -20,9 +20,8 @@
 
 using namespace Frenchie::Renderer::OpenGL;
 
-ShaderProgram::ShaderProgram(
-    unsigned int _ID, 
-    const std::vector<std::shared_ptr<Shader>>& _Shaders) : m_ID(_ID)
+ShaderProgram::ShaderProgram(const std::vector<std::shared_ptr<Shader>>& _Shaders) : 
+    m_ID(glCreateProgram())
 {
     for(auto shader : _Shaders)
     {
@@ -64,7 +63,6 @@ const unsigned int& ShaderProgram::get_id() const
 {
     return m_ID;
 }
-
 
 template<> void ShaderProgram::set_uniform(const std::string& _Name, const bool& _Value)
 {

@@ -13,7 +13,7 @@ namespace Frenchie
             {
             public:
 
-                ShaderProgram(unsigned int _ID, const std::vector<std::shared_ptr<Shader>>& _Shaders);
+                ShaderProgram(const std::vector<std::shared_ptr<Shader>>& _Shaders);
                 virtual ~ShaderProgram();
 
                 void use();

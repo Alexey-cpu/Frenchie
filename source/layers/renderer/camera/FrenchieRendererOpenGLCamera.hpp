@@ -22,7 +22,7 @@ namespace Frenchie
             public:
 
                 // constructor with vectors
-                Camera(glm::vec3 _WorldPosition, glm::vec3 _WorldUpAxisDirection);
+                Camera(glm::vec3 _WorldPosition = glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3 _WorldUpAxisDirection = glm::vec3(0.f, 0.f, 1.f));
                 virtual ~Camera();
 
                 glm::mat4 get_view_matrix() const;

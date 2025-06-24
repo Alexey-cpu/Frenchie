@@ -15,6 +15,9 @@ using namespace Frenchie::Renderer::OpenGL;
 // Shader
 Shader::Shader(const unsigned int& _ID, const std::filesystem::path& _Path) : m_ID(_ID)
 {
+    Frenchie::Core::Logger::instance()->info("FRENCHIE::RENDERER::OPENGL::SHADER::PROCESSING_SHADER");
+    Frenchie::Core::Logger::instance()->info(fmt::format("\t{}", _Path.string()));
+
     // load
     std::ifstream ifstream(_Path);
     std::string source = std::string(
@@ -23,15 +26,11 @@ Shader::Shader(const unsigned int& _ID, const std::filesystem::path& _Path) : m_
 
     if(source.empty())
     {
-        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER::LOAD_FAILED\n"));
-        Frenchie::Core::Logger::instance()->error(fmt::format("{}\n", _Path.string()));
+        Frenchie::Core::Logger::instance()->error(fmt::format("\tFRENCHIE::RENDERER::OPENGL::SHADER::LOAD_FAILED"));
         return;
     }
-    else
-    {
-        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER::LOAD_SUCCEEDED\n"));
-        Frenchie::Core::Logger::instance()->error(fmt::format("{}\n", _Path.string()));
-    }
+    
+    Frenchie::Core::Logger::instance()->info(fmt::format("\tFRENCHIE::RENDERER::OPENGL::SHADER::LOAD_SUCCEEDED"));
 
     // compile
     int status = 1;
@@ -44,13 +43,11 @@ Shader::Shader(const unsigned int& _ID, const std::filesystem::path& _Path) : m_
     {
         char infoLog[512];
         glGetShaderInfoLog(get_id(), 512, nullptr, infoLog);
-        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER::COMPILATION_FAILED\n"));
-        Frenchie::Core::Logger::instance()->error(fmt::format("{}", std::string(infoLog)));
+        Frenchie::Core::Logger::instance()->error(fmt::format("\tFRENCHIE::RENDERER::OPENGL::SHADER::COMPILATION_FAILED"));
+        return;
     }
-    else
-    {
-        Frenchie::Core::Logger::instance()->info(fmt::format("FRENCHIE::RENDERER::OPENGL::SHADER::COMPILATION_SUCCEEDED\n"));
-    }
+
+    Frenchie::Core::Logger::instance()->info(fmt::format("\tFRENCHIE::RENDERER::OPENGL::SHADER::COMPILATION_SUCCEEDED"));
 }
 
 Shader::~Shader()
