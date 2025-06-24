@@ -31,35 +31,63 @@ namespace Frenchie
                 }
             };
 
-            class TransformObject : public Frenchie::Core::Object
+            struct Vertex
             {
-                public:
+                glm::vec3 Position;
+                glm::vec3 Normal;
+                glm::vec3 Color;
+                glm::vec2 UV;
+            };
 
-                TransformObject(std::string _Name = std::string(), Frenchie::Core::Object* _Parent = nullptr) : 
-                    Frenchie::Core::Object(_Name, _Parent){}
-
-                void updateSelfAndChild()
+            class Model
+            {
+            public:
+                Model(const std::vector<Vertex> _Vertexes)
                 {
-                    if (get_parent<TransformObject>() != nullptr)
-                        m_ModelMatrix = get_parent<TransformObject>()->m_ModelMatrix * m_Transform.get_model_matrix();
-                    else
-                        m_ModelMatrix = m_Transform.get_model_matrix();
+                    // generate vertex array object
+                    glGenVertexArrays(1, &m_VAO);
 
-                    for (auto&& child : m_Children)
-                    {
-                        TransformObject* object = 
-                            dynamic_cast<TransformObject*>(child);
-
-                        if(object != nullptr)
-                            object->updateSelfAndChild();
-                    }
+                    // generate vertex buffer object (VBO) and element buffer object (EBO)
+                    glGenBuffers(1, &m_VBO);
+                    glGenBuffers(1, &m_EBO);
                 }
 
-                protected:
+            protected:
 
-                    Transform m_Transform   = Transform();
-                    glm::mat4 m_ModelMatrix = glm::mat4(1.0f);
+                unsigned int m_VAO;
+                unsigned int m_VBO;
+                unsigned int m_EBO;
             };
+
+            // class TransformObject : public Frenchie::Core::Object
+            // {
+            //     public:
+
+            //     TransformObject(std::string _Name = std::string(), Frenchie::Core::Object* _Parent = nullptr) : 
+            //         Frenchie::Core::Object(_Name, _Parent){}
+
+            //     void updateSelfAndChild()
+            //     {
+            //         if (get_parent<TransformObject>() != nullptr)
+            //             m_ModelMatrix = get_parent<TransformObject>()->m_ModelMatrix * m_Transform.get_model_matrix();
+            //         else
+            //             m_ModelMatrix = m_Transform.get_model_matrix();
+
+            //         for (auto&& child : m_Children)
+            //         {
+            //             TransformObject* object = 
+            //                 dynamic_cast<TransformObject*>(child);
+
+            //             if(object != nullptr)
+            //                 object->updateSelfAndChild();
+            //         }
+            //     }
+
+            //     protected:
+
+            //         Transform m_Transform   = Transform();
+            //         glm::mat4 m_ModelMatrix = glm::mat4(1.0f);
+            // };
         }
     }
 }

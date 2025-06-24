@@ -1,6 +1,7 @@
 // Custom
 #include <FrenchieApplication.hpp>
 #include <FrenchieImGuiTestLayer.hpp>
+#include <FrenchieRenderingTestLayer.hpp>
 
 int main(int, char**)
 {
@@ -13,7 +14,7 @@ int main(int, char**)
     application->set_maximized(true);
 
     // push application layers
-    application->push<Frenchie::Application::Imgui::TestLayer>("TestLayer");
+    application->push<Frenchie::Application::Test::RenderingTest>("RenderingTest");
 
     return application->execute();
 }
