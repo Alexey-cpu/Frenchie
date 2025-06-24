@@ -1,31 +1,29 @@
 #version 330 core
 
 // vertex attributes
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
-layout (location = 2) in vec3 aNormal;
+layout (location = 0) in vec3 a_Position;
+layout (location = 1) in vec3 a_Normal;
+layout (location = 2) in vec2 a_UV;
+layout (location = 3) in vec4 a_Color;
 
-// output variables
-out vec2 TexCoord;
-out vec3 FragPos;
+// outputs
 out vec3 Normal;
+out vec2 UV;
+out vec4 Color;
 
-//uniforms
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+// uniforms
+uniform vec3 u_ViewportScale;
+uniform mat4 u_ModelMatrix;
+uniform mat4 u_ViewMatrix;
+uniform mat4 u_ProjectionMatrix;
 
 void main()
 {
-    // light
-    FragPos = vec3(model * vec4(aPos, 1.0));
-    Normal  = mat3(transpose(inverse(model))) * aNormal;  
+    // setup position
+    gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * vec4(a_Position * u_ViewportScale, 1.0);
 
-    mat3(transpose(inverse(model)));
-
-    // setup model position
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-
-    // do smth. with texture coordinates
-    TexCoord = aTexCoord;
+    // setup outputs
+    Normal = a_Normal;
+    UV     = a_UV;
+    Color  = a_Color;
 }
