@@ -38,7 +38,7 @@ namespace Frenchie
                 virtual bool awake();
                 virtual void frame_start();
                 virtual void frame_update();
-                virtual void frame_finished();
+                virtual void frame_finish();
 
                 protected:
 

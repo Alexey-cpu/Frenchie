@@ -1,40 +1,40 @@
 #include <FrenchieCoreLogger.hpp>
 
-using namespace Frenchie::Core;
+using namespace Frenchie::Core::Debug;
 
-DebugLog::DebugLog()
+Logger::Logger()
 {
     spdlog::register_logger(m_Logger);
 }
 
-DebugLog::~DebugLog(){}
+Logger::~Logger(){}
 
-void DebugLog::set_level(spdlog::level::level_enum _Level)
+void Logger::set_level(spdlog::level::level_enum _Level)
 {
     get_logger()->set_level(_Level);
 }
 
-void DebugLog::trace(const std::string _Message)
+void Logger::trace(const std::string _Message)
 {
     get_logger()->trace(_Message);
 }
 
-void DebugLog::info(const std::string _Message)
+void Logger::info(const std::string _Message)
 {
     get_logger()->info(_Message);
 }
 
-void DebugLog::warn(const std::string _Message)
+void Logger::warn(const std::string _Message)
 {
     get_logger()->warn(_Message);
 }
 
-void DebugLog::error(const std::string _Message)
+void Logger::error(const std::string _Message)
 {
     get_logger()->error(_Message);
 }
 
-std::shared_ptr<spdlog::logger>& DebugLog::get_logger() const
+std::shared_ptr<spdlog::logger>& Logger::get_logger() const
 {
     return m_Logger;
 }

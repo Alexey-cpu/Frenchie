@@ -16,8 +16,8 @@ namespace Frenchie
                 ShaderProgram(const std::vector<std::shared_ptr<Shader>>& _Shaders);
                 virtual ~ShaderProgram();
 
-                void use();
-                void unuse();
+                void begin();
+                void end();
 
                 const unsigned int& get_id() const;
                 template<typename T> void set_uniform(const std::string& _Name, const T& _Value);

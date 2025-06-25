@@ -44,6 +44,7 @@ void Transform::set_scale(const glm::vec3& _Value)
 bool Transform::awake()
 {
     // allocate & bind VAOs, VBOs, EBOs, load and compile shaders e.t.c 
+    return true;
 }
 
 void Transform::frame_start()
@@ -70,7 +71,7 @@ void Transform::frame_update()
     }
 }
 
-void Transform::frame_finished()
+void Transform::frame_finish()
 {
     // render primitive
 }

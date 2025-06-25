@@ -49,12 +49,12 @@ ShaderProgram::ShaderProgram(const std::vector<std::shared_ptr<Shader>>& _Shader
 
 ShaderProgram::~ShaderProgram(){}
 
-void ShaderProgram::use()
+void ShaderProgram::begin()
 {
     glUseProgram(get_id());
 }
 
-void ShaderProgram::unuse()
+void ShaderProgram::end()
 {
     glUseProgram(0);
 }
