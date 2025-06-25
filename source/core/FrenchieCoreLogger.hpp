@@ -19,36 +19,39 @@ namespace Frenchie
 {
     namespace Core
     {
-        class DebugLog
+        namespace Debug
         {
-        public:
+            class Logger
+            {
+            public:
 
-            DebugLog();
-            virtual ~DebugLog();
+                Logger();
+                virtual ~Logger();
 
-            template<typename __sink, typename ... __sink_arguments>
-            std::shared_ptr<__sink> register_sink(__sink_arguments... _Parameters)
-            {   
-                auto sink = std::make_shared<__sink>(_Parameters...);
-                get_logger()->sinks().push_back(sink);
-                return sink;
-            }
+                template<typename __sink, typename ... __sink_arguments>
+                std::shared_ptr<__sink> register_sink(__sink_arguments... _Parameters)
+                {   
+                    auto sink = std::make_shared<__sink>(_Parameters...);
+                    get_logger()->sinks().push_back(sink);
+                    return sink;
+                }
 
-            void set_level(spdlog::level::level_enum _Level);
-            void trace(const std::string _Message);
-            void info(const std::string _Message);
-            void warn(const std::string _Message);
-            void error(const std::string _Message);
+                void set_level(spdlog::level::level_enum _Level);
+                void trace(const std::string _Message);
+                void info(const std::string _Message);
+                void warn(const std::string _Message);
+                void error(const std::string _Message);
 
-        private:
+            private:
 
-            const std::string m_Name = "Frenchie::Core::Logger";
-            mutable std::shared_ptr<spdlog::logger> m_Logger = 
-                std::make_shared<spdlog::logger>(m_Name);
+                const std::string m_Name = "Frenchie::Core::Logger";
+                mutable std::shared_ptr<spdlog::logger> m_Logger = 
+                    std::make_shared<spdlog::logger>(m_Name);
 
-            std::shared_ptr<spdlog::logger>& get_logger() const;
-        };
+                std::shared_ptr<spdlog::logger>& get_logger() const;
+            };
+        }
 
-        typedef Singleton<DebugLog> Logger;
+        typedef Singleton<Debug::Logger> Logger;
     }
 }

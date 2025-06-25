@@ -1,12 +1,8 @@
 #version 330 core
-
-// inputs
-in vec3 Normal;
-in vec2 UV;
-in vec4 Color;
+uniform vec4 u_Color;
 
 void main()
 {
     // setup vertex color
-    gl_FragColor = Color;
+    gl_FragColor = u_Color;
 }
