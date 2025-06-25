@@ -75,8 +75,6 @@ int main(int, char**)
     if(child_2->get_parent())std::cout << "child_2->get_parent " << child_2->get_parent()->get_name() << "\n";
     if(child_3->get_parent())std::cout << "child_3->get_parent " << child_3->get_parent()->get_name() << "\n";
 
-    //delete root;
-
     return 1;
 }
 

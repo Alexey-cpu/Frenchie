@@ -23,9 +23,18 @@ namespace Frenchie
                 Transform(const std::string& _Name = std::string(), Object* _Parent = nullptr);
                 virtual ~Transform();
 
+                // getters
+                glm::vec3 get_position() const;
+                glm::vec3 get_rotation() const;
+                glm::vec3 get_scale() const;
                 glm::mat4 get_model_matrix() const;
 
-                // API
+                // setters
+                void set_position(const glm::vec3&);
+                void set_rotation(const glm::vec3&);
+                void set_scale(const glm::vec3&);
+
+                // virtual API
                 virtual bool awake();
                 virtual void frame_start();
                 virtual void frame_update();
