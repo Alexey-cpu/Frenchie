@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 
 namespace Frenchie
@@ -5,7 +7,7 @@ namespace Frenchie
     namespace Core
     {
         template<typename __type, typename ... __arguments>
-        std::shared_ptr<__type> CreateShaderPointer(__arguments... _Parameters)
+        std::shared_ptr<__type> CreateSharedPointer(__arguments... _Parameters)
         {
             return std::make_shared<__type>(_Parameters ...);
         }

@@ -1,10 +1,10 @@
-#include <FrenchieRendererOpenGLRectTransform.hpp>
+#include <FrenchieRendererOpenGLMeshRenderer.hpp>
 #include <FrenchieCoreFlyweightFactory.hpp>
 
 using namespace Frenchie::Renderer::OpenGL;
 
 // Rect
-Rect::Rect()
+Rect2D::Rect2D()
 {
     m_Vertexes = 
     {
@@ -31,38 +31,4 @@ Rect::Rect()
     setup();
 }
 
-Rect::~Rect(){}
-
-// RectTransform
-RectTransform::RectTransform(const std::string& _Name, Object* _Parent) : 
-    Transform(_Name, _Parent){}
-
-RectTransform::~RectTransform(){}
-
-bool RectTransform::awake()
-{
-    if(!Transform::awake()) 
-        return false;
-
-    // instantiate mesh
-    m_Mesh = Core::FlyweightFactory::instance()->Create<Rect>();
-
-    return m_Mesh != nullptr;
-}
-
-void RectTransform::frame_start()
-{
-    Transform::frame_start();
-}
-
-void RectTransform::frame_update()
-{
-    Transform::frame_update();
-}
-
-void RectTransform::frame_finish()
-{
-    // draw mesh
-    if(m_Mesh != nullptr) 
-        m_Mesh->render();
-}
+Rect2D::~Rect2D(){}
