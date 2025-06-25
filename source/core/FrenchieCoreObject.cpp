@@ -33,7 +33,7 @@ namespace Frenchie
                     m_Objects.erase(_Object);
                 }
 
-                bool is_destroyed() const
+                bool is_being_destroyed() const
                 {
                     return m_IsDestroyed;
                 }
@@ -60,7 +60,7 @@ Object::~Object()
         m_Parent->m_Children.erase(m_SelfIterator);
 
     // detach from root
-    if(!Singleton<Root>::instance()->is_destroyed()) 
+    if(!Singleton<Root>::instance()->is_being_destroyed()) 
         Singleton<Root>::instance()->pop(this);
 
     remove_all_children();
