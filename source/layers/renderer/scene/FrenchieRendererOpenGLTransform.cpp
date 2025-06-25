@@ -1,0 +1,57 @@
+#include <FrenchieRendererOpenGLTransform.hpp>
+
+using namespace Frenchie::Renderer::OpenGL;
+
+Transform::Transform(const std::string& _Name, Object* _Parent) : Object(_Name, _Parent){}
+
+Transform::~Transform(){}
+
+glm::mat4 Transform::get_model_matrix() const
+{
+    return m_ModelMatrix;
+}
+
+bool Transform::awake()
+{
+    // allocate & bind VAOs, VBOs, EBOs, load and compile shaders e.t.c 
+}
+
+void Transform::frame_start()
+{
+    // catch events
+}
+
+void Transform::frame_update()
+{
+    // compute geometry
+    auto parent = get_parent<Transform>();
+
+    m_ModelMatrix = 
+        parent != nullptr ? 
+            parent->m_ModelMatrix * compute_local_model_matrix() : 
+                compute_local_model_matrix();
+
+    for(auto&& child : m_Children)
+    {
+        Transform* childTransform = dynamic_cast<Transform*>(child);
+
+        if(childTransform != nullptr)
+            childTransform->frame_start();
+    }
+}
+
+void Transform::frame_finished()
+{
+    // render primitive
+}
+
+glm::mat4 Transform::compute_local_model_matrix() const
+{
+    glm::mat4 matrix(1.f);
+
+    return glm::translate(matrix, m_Position) * 
+            glm::rotate(matrix, glm::radians(m_Rotation.x), glm::vec3(1.f, 0.f, 0.f)) * 
+            glm::rotate(matrix, glm::radians(m_Rotation.x), glm::vec3(0.f, 1.f, 0.f)) * 
+            glm::rotate(matrix, glm::radians(m_Rotation.x), glm::vec3(0.f, 0.f, 1.f)) * 
+            glm::scale(matrix, m_Scale);
+}

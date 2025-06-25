@@ -103,7 +103,7 @@ void Object::remove_all_children()
 {
     auto children = m_Children;
 
-    for(auto& child : children) 
+    for(auto&& child : children)
     {
         if(child != nullptr) 
             delete child;
@@ -117,7 +117,7 @@ void Object::apply_to_children(const std::function<void(Object* _Object)>& _Call
     if(_Callback == nullptr) 
         return;
 
-    for(auto& child : m_Children) 
+    for(auto&& child : m_Children)
     {
         if(child != nullptr) 
             _Callback(child);
@@ -129,7 +129,7 @@ void Object::apply_to_children_recursive(const std::function<void(Object* _Objec
     if(_Callback == nullptr) 
         return;
 
-    for(auto& child : m_Children) 
+    for(auto&& child : m_Children) 
     {
         if(child == nullptr) 
             continue;
@@ -142,7 +142,7 @@ void Object::apply_to_children_recursive(const std::function<void(Object* _Objec
 
 Object* Object::find_child_recursive(const std::function<bool(Object*)>& _Predicate) const
 {
-    for(auto& child : m_Children) 
+    for(auto&& child : m_Children) 
     {
         if(child == nullptr) 
             continue;
