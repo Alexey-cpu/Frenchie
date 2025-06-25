@@ -14,7 +14,7 @@ namespace Frenchie
         {
         public:
             
-            Object(std::string _Name = std::string(), Object* _Parent = nullptr);
+            Object(const std::string& _Name = std::string(), Object* _Parent = nullptr);
             virtual ~Object();
 
             // getters
@@ -78,7 +78,8 @@ namespace Frenchie
             Object* find_child_recursive(const std::function<bool(Object*)>& _Predicate) const;
             std::list<Object*> find_children_recursive(const std::function<bool(Object*)>& _Predicate) const;
 
-            template<typename T> T* find_child_recursive() const
+            template<typename T> 
+            T* find_child_recursive() const
             {
                 return dynamic_cast<T*>(
                     find_child_recursive(
