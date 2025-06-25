@@ -35,10 +35,10 @@ namespace Frenchie
                 void set_scale(const glm::vec3&);
 
                 // virtual API
-                virtual bool awake();
-                virtual void frame_start();
-                virtual void frame_update();
-                virtual void frame_finish();
+                virtual bool awake() override;
+                virtual void frame_start() override;
+                virtual void frame_update() override;
+                virtual void frame_finish() override;
 
                 // service methods
                 glm::mat4 compute_local_model_matrix() const;

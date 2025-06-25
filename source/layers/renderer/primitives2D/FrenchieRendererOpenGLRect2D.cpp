@@ -1,9 +1,7 @@
-#include <FrenchieRendererOpenGLMeshRenderer.hpp>
-#include <FrenchieCoreFlyweightFactory.hpp>
+#include <FrenchieRendererOpenGLRect2D.hpp>
 
 using namespace Frenchie::Renderer::OpenGL;
 
-// Rect
 Rect2D::Rect2D()
 {
     m_Vertexes = 

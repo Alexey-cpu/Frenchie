@@ -3,47 +3,7 @@
 
 // STL
 #include <set>
-
-namespace Frenchie
-{
-    namespace Core
-    {
-        class Root
-        {
-            public:
-                Root(){}
-
-                ~Root()
-                {
-                    m_IsDestroyed = true;
-
-                    for(auto& object : m_Objects) 
-                        delete object;
-
-                    m_Objects.clear();
-                }
-
-                void push(Object* _Object)
-                {
-                    m_Objects.insert(_Object);
-                }
-
-                void pop(Object* _Object)
-                {
-                    m_Objects.erase(_Object);
-                }
-
-                bool is_being_destroyed() const
-                {
-                    return m_IsDestroyed;
-                }
-
-            private:
-                std::set<Object*> m_Objects;
-                bool m_IsDestroyed = false;
-        };
-    }
-}
+#include <iostream>
 
 using namespace Frenchie::Core;
 
@@ -58,10 +18,6 @@ Object::~Object()
     // detach self from parent
     if(m_Parent != nullptr) 
         m_Parent->m_Children.erase(m_SelfIterator);
-
-    // detach from root
-    if(!Singleton<Root>::instance()->is_being_destroyed()) 
-        Singleton<Root>::instance()->pop(this);
 
     remove_all_children();
 }
@@ -78,14 +34,10 @@ void Object::set_parent(Object* _Parent)
         m_Parent->m_Children.erase(m_SelfIterator);
     m_Parent = _Parent;
 
-    if(m_Parent == nullptr)
-    {
-        Singleton<Root>::instance()->push(this);
+    if(m_Parent == nullptr) 
         return;
-    }
-
-    Singleton<Root>::instance()->pop(this);
     
+    // break cycle
     auto found = m_Parent->get_parent_recursive(
         [this](Object* _Object)->bool
         {
@@ -95,6 +47,7 @@ void Object::set_parent(Object* _Parent)
     if(found != nullptr) 
         m_Parent->set_parent(nullptr);
 
+    // attach to a new parent
     m_Parent->m_Children.push_back(this);
     m_SelfIterator = std::prev(m_Parent->m_Children.end());
 }
@@ -138,6 +91,17 @@ void Object::apply_to_children_recursive(const std::function<void(Object* _Objec
 
         child->apply_to_children_recursive(_Callback);
     }
+}
+
+Object* Object::find_child(const std::function<bool(Object*)>& _Predicate) const
+{
+    for(auto&& child : m_Children) 
+    {
+        if(child != nullptr && _Predicate(child)) 
+            return child;
+    }
+
+    return nullptr;
 }
 
 Object* Object::find_child_recursive(const std::function<bool(Object*)>& _Predicate) const

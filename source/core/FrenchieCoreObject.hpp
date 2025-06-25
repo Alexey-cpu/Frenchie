@@ -11,7 +11,24 @@ namespace Frenchie
 {
     namespace Core
     {
-        class Object
+        class Behaviour
+        {
+        public:
+            Behaviour(){}
+            virtual ~Behaviour(){}
+
+            // virtual API
+            virtual bool awake()
+            {
+                return true;
+            }
+
+            virtual void frame_start(){}
+            virtual void frame_update(){}
+            virtual void frame_finish(){}
+        };
+
+        class Object : public Behaviour
         {
         public:
             
@@ -76,6 +93,20 @@ namespace Frenchie
             void apply_to_children(const std::function<void(Object* _Object)>& _Callback) const;
             void apply_to_children_recursive(const std::function<void(Object* _Object)>& _Callback) const;
 
+            Object* find_child(const std::function<bool(Object*)>& _Predicate) const;
+
+            template<typename T> 
+            T* find_child() const
+            {
+                return dynamic_cast<T*>(
+                    find_child(
+                        [](Object* _Object)->bool
+                        {
+                            return dynamic_cast<T*>(_Object) != nullptr;}
+                        )
+                    );
+            }
+
             Object* find_child_recursive(const std::function<bool(Object*)>& _Predicate) const;
             std::list<Object*> find_children_recursive(const std::function<bool(Object*)>& _Predicate) const;
 
@@ -89,6 +120,45 @@ namespace Frenchie
                             return dynamic_cast<T*>(_Object) != nullptr;}
                         )
                     );
+            }
+
+            // virtual API
+            virtual bool awake() override
+            {
+                for(auto&& child : m_Children)
+                {
+                    if(child != nullptr) 
+                        child->awake();
+                }
+
+                return true;
+            }
+
+            virtual void frame_start() override
+            {
+                for(auto&& child : m_Children)
+                {
+                    if(child != nullptr) 
+                        child->frame_start();
+                }
+            }
+
+            virtual void frame_update() override
+            {
+                for(auto&& child : m_Children)
+                {
+                    if(child != nullptr) 
+                        child->frame_update();
+                }
+            }
+
+            virtual void frame_finish() override
+            {
+                for(auto&& child : m_Children)
+                {
+                    if(child != nullptr) 
+                        child->frame_finish();
+                }
             }
 
         protected:
