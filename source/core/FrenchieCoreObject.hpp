@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <list>
+#include <set>
 
 namespace Frenchie
 {
@@ -91,7 +92,7 @@ namespace Frenchie
             }
 
         protected:
-            
+
             std::string                  m_Name         = std::string();
             Object*                      m_Parent       = nullptr;
             mutable std::list<Object*>   m_Children     = std::list<Object*>();
