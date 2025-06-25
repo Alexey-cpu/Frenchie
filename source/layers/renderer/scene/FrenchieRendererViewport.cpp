@@ -1,6 +1,6 @@
-#include <FrenchieRendererOpenGLViewport.hpp>
+#include <FrenchieRendererViewport.hpp>
 
-using namespace Frenchie::Renderer::OpenGL;
+using namespace Frenchie::Renderer;
 
 Viewport::Viewport(
     const float&            _Depth,

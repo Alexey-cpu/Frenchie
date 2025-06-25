@@ -81,6 +81,6 @@ namespace Frenchie
             };
         }
 
-        typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> Application;
+        typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> GLApplication;
     };
 };

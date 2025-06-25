@@ -7,12 +7,12 @@
 #include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreObject.hpp>
 
-#include <FrenchieRendererOpenGLCamera.hpp>
-#include <FrenchieRendererOpenGLViewport.hpp>
-#include <FrenchieRendererOpenGLScene.hpp>
+#include <FrenchieRendererCamera.hpp>
+#include <FrenchieRendererViewport.hpp>
+#include <FrenchieRendererScene.hpp>
 
 #include <FrenchieRendererOpenGLMeshRenderer.hpp>
-#include <FrenchieRendererOpenGLRect2D.hpp>
+#include <FrenchieRendererOpenGLRectMesh.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -32,6 +32,7 @@ namespace Frenchie
         namespace Test
         {
             using namespace Frenchie::Core;
+            using namespace Frenchie::Renderer;
             using namespace Frenchie::Application;
             using namespace Frenchie::Renderer::OpenGL;
 
@@ -84,7 +85,7 @@ namespace Frenchie
                         )
                     );
 
-                    Rect2D* mesh = FlyweightFactory::instance()->Create<Rect2D>();
+                    RectMesh* mesh = FlyweightFactory::instance()->Create<RectMesh>();
 
                     // create hierarchy
                     auto root    = new MeshRenderer(mesh, shader, "Root", scene);
@@ -112,7 +113,7 @@ namespace Frenchie
                 
                 virtual void frame_finish() override
                 {
-                    m_Viewport->set_size(Frenchie::Application::Application::instance()->get_window_size());
+                    m_Viewport->set_size(Frenchie::Application::GLApplication::instance()->get_window_size());
 
                     m_Viewport->frame_finish();
 

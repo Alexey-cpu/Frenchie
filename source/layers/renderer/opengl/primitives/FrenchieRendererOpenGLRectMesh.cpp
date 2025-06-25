@@ -1,8 +1,8 @@
-#include <FrenchieRendererOpenGLRect2D.hpp>
+#include <FrenchieRendererOpenGLRectMesh.hpp>
 
 using namespace Frenchie::Renderer::OpenGL;
 
-Rect2D::Rect2D()
+RectMesh::RectMesh()
 {
     m_Vertexes = 
     {
@@ -29,4 +29,4 @@ Rect2D::Rect2D()
     setup();
 }
 
-Rect2D::~Rect2D(){}
+RectMesh::~RectMesh(){}

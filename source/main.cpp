@@ -8,7 +8,7 @@ int main(int, char**)
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
 
     // setup application
-    auto application = Frenchie::Application::Application::instance();
+    auto application = Frenchie::Application::GLApplication::instance();
     application->set_window_size(glm::vec2(2048, 1024));
     application->set_maximized(true);
 
