@@ -90,15 +90,10 @@ namespace Frenchie
                     if(!is_instanced()) 
                         return;
 
-                    // Frenchie::Core::Logger::instance()->info("----------------------------------------------------------------");
-                    // Frenchie::Core::Logger::instance()->info("Mesh::render() operates !!!");
-                    // Frenchie::Core::Logger::instance()->info(fmt::format("m_Vertexes.size() {}", m_Vertexes.size()));
-                    // Frenchie::Core::Logger::instance()->info(fmt::format("m_Indexes.size() {}", m_Indexes.size()));
-                    // Frenchie::Core::Logger::instance()->info("----------------------------------------------------------------");
-
                     glBindVertexArray(m_VAO);
                     glDrawArrays(GL_POINTS, 0, (int)m_Indexes.size());
                     glDrawElements(GL_TRIANGLES, (int)m_Indexes.size(), GL_UNSIGNED_INT, 0);
+                    glBindVertexArray(0);
                 }
 
             protected:

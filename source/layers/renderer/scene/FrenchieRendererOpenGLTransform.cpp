@@ -43,13 +43,26 @@ void Transform::set_scale(const glm::vec3& _Value)
 
 bool Transform::awake()
 {
-    // allocate & bind VAOs, VBOs, EBOs, load and compile shaders e.t.c 
+    for(auto&& child : m_Children)
+    {
+        Transform* childTransform = dynamic_cast<Transform*>(child);
+
+        if(childTransform != nullptr)
+            childTransform->awake();
+    }
+
     return true;
 }
 
 void Transform::frame_start()
 {
-    // catch events
+    for(auto&& child : m_Children)
+    {
+        Transform* childTransform = dynamic_cast<Transform*>(child);
+
+        if(childTransform != nullptr)
+            childTransform->frame_start();
+    }
 }
 
 void Transform::frame_update()
@@ -67,13 +80,19 @@ void Transform::frame_update()
         Transform* childTransform = dynamic_cast<Transform*>(child);
 
         if(childTransform != nullptr)
-            childTransform->frame_start();
+            childTransform->frame_update();
     }
 }
 
 void Transform::frame_finish()
 {
-    // render primitive
+    for(auto&& child : m_Children)
+    {
+        Transform* childTransform = dynamic_cast<Transform*>(child);
+
+        if(childTransform != nullptr)
+            childTransform->frame_finish();
+    }
 }
 
 glm::mat4 Transform::compute_local_model_matrix() const

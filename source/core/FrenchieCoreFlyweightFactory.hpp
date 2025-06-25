@@ -35,6 +35,16 @@ namespace Frenchie
                     return instance;
                 }
 
+                template<typename Type> 
+                Type* Request()
+                {
+                    std::type_index typeIndex = std::type_index(typeid(Type));
+
+                    return m_Instances.find(typeIndex) != m_Instances.end() ? 
+                                std::any_cast<Type*>(m_Instances[typeIndex]) : 
+                                    nullptr;
+                }
+
             protected:
                 std::map<std::type_index, std::any> m_Instances;
             };

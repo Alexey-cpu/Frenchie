@@ -3,12 +3,13 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 
+#include <FrenchieCoreFlyweightFactory.hpp>
 #include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreObject.hpp>
 
 #include <FrenchieRendererOpenGLCamera.hpp>
 #include <FrenchieRendererOpenGLShaderProgram.hpp>
-#include <FrenchieRendererOpenGLRectTransform.hpp>
+#include <FrenchieRendererOpenGLMeshRenderer.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -60,13 +61,12 @@ namespace Frenchie
                 
                 virtual void frame_start() override
                 {
-                    m_RectTransform->frame_start();
+                    m_Hierarchy->frame_start();
                 }
                 
                 virtual void frame_update() override
                 {
-                    // compute geometry here
-                    m_RectTransform->frame_update();
+                    m_Hierarchy->frame_update();
                 }
                 
                 virtual void frame_finish() override
@@ -84,15 +84,9 @@ namespace Frenchie
                         glm::vec3(+0.f, +0.f, +1.f),
                         glm::vec3(+0.f, +1.f, +0.f));
 
-                    glm::mat4 modelMatrix;
                     glm::mat4 viewMatrix;
                     glm::mat4 projectionMatrix;
                     glm::vec3 viewportScale;
-
-                    // compute model matrix
-                    {
-                        modelMatrix = m_RectTransform->get_model_matrix();//glm::rotate(glm::mat4(1.0f), 0.f, glm::vec3(1.0f, 0.0f, 0.0f));
-                    }
 
                     // compute view matrix (camera matrix)
                     {
@@ -110,21 +104,23 @@ namespace Frenchie
                     }
 
                     // draw here
-                    m_ShaderProgram->begin();
-                    m_ShaderProgram->set_uniform<glm::vec3>("u_ViewportScale", viewportScale);
-                    m_ShaderProgram->set_uniform<glm::mat4>("u_ModelMatrix", modelMatrix);
-                    m_ShaderProgram->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
-                    m_ShaderProgram->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
+                    auto shader = FlyweightFactory::instance()->Request<ShaderProgram>();
 
-                    m_ShaderProgram->set_uniform<glm::vec4>("u_Color", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
+                    if(shader == nullptr) 
+                        return;
 
-                    m_RectTransform->frame_finish();
+                    shader->begin();
+                    shader->set_uniform<glm::vec3>("u_ViewportScale", viewportScale);
+                    shader->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
+                    shader->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
 
-                    m_ShaderProgram->end();
+                    m_Hierarchy->frame_finish();
 
-                    float angle = 2.f * glm::pi<float>() * 1.f * (float)glfwGetTime();
+                    float angle = glm::degrees(2.f * glm::pi<float>() * 1.f * (float)glfwGetTime());
 
-                    m_RectTransform->set_rotation(glm::vec3(glm::degrees(angle), 0.f, 0.f));
+                    m_Hierarchy->set_rotation(glm::vec3(angle, angle, 0.f));
+
+                    shader->end();
                 }
                 
                 virtual void finish() override
@@ -132,34 +128,45 @@ namespace Frenchie
                 }
 
             protected:
-                std::shared_ptr<ShaderProgram> m_ShaderProgram = nullptr;
-                RectTransform* m_RectTransform = nullptr;
+
+                MeshRenderer* m_Hierarchy = nullptr;
 
                 void setup_mesh(){}
 
                 void load_shaders()
                 {
-                    m_ShaderProgram = 
-                        CreateShaderPointer<ShaderProgram>(
+                    ShaderProgram* shader = 
+                        FlyweightFactory::instance()->Create<ShaderProgram>(
                             std::vector<std::shared_ptr<Shader>>(
                             {
-                                CreateShaderPointer<VertexShader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert")),
-                                CreateShaderPointer<FragmentShader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")),
+                                CreateSharedPointer<VertexShader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert")),
+                                CreateSharedPointer<FragmentShader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")),
                             }
-                            )
-                        );
+                        )
+                    );
 
-                    m_RectTransform = new RectTransform("Transform");
+                    Rect2D* mesh = FlyweightFactory::instance()->Create<Rect2D>();
 
-                    m_RectTransform->awake();
-                }
+                    // create hierarchy
+                    auto root    = new MeshRenderer(mesh, shader, "Root");
+                    auto child_1 = new MeshRenderer(mesh, shader, "Child-1", root);
+                    auto child_2 = new MeshRenderer(mesh, shader, "Child-2", child_1);
+                    auto child_3 = new MeshRenderer(mesh, shader, "Child-3", child_2);
 
-                void load_rect_transform()
-                {
-                }
+                    root->set_position(glm::vec3(-0.1f, -0.1f, 0.f));
+                    child_1->set_position(glm::vec3(0.1f, 0.1f, 0.f));
+                    child_2->set_position(glm::vec3(0.1f, 0.1f, 0.f));
+                    child_3->set_position(glm::vec3(0.1f, 0.1f, 0.f));
+                    
+                    m_Hierarchy = root;
 
-                void setup_camera()
-                {
+                    Frenchie::Core::Logger::instance()->info("Hierarchy");
+                    m_Hierarchy->apply_to_children_recursive([](Object* _Object)
+                    {
+                        Frenchie::Core::Logger::instance()->info(fmt::format("{}", _Object->get_name()));
+                    });
+
+                    m_Hierarchy->awake();
                 }
             };
         }
