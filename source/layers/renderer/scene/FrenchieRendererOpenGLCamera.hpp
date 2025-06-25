@@ -2,20 +2,24 @@
 
 #include <FrenchieRendererOpenGLViewport.hpp>
 
+#include <FrenchieCoreObject.hpp>
+
 namespace Frenchie
 {
     namespace Renderer
     {
         namespace OpenGL
         {
-            class Camera final
+            class Camera : public Frenchie::Core::Object
             {
             public:
 
                 Camera(glm::vec3 _CameraWorldPosition = glm::vec3(+0.f, +0.f, +1.f),
-                        glm::vec3 _CameraWorldUpAxisDirection = glm::vec3(+0.f, +1.f, +0.f));
+                        glm::vec3 _CameraWorldUpAxisDirection = glm::vec3(+0.f, +1.f, +0.f), 
+                        const std::string& _Name = std::string(), 
+                        Frenchie::Core::Object* _Parent = nullptr);
                 
-                ~Camera();
+                virtual ~Camera();
 
                 glm::vec3 get_position() const;
                 float get_pitch() const;
@@ -26,7 +30,7 @@ namespace Frenchie
                 void set_pitch(const float&);
                 void set_yaw(const float&);
                 void set_roll(const float&);
-                glm::mat4 get_view_matrix(const Viewport&) const;
+                glm::mat4 get_view_matrix() const;
 
             protected:
 

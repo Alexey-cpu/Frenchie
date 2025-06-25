@@ -1,10 +1,14 @@
 #include <FrenchieRendererOpenGLCamera.hpp>
+#include <FrenchieRendererOpenGLViewport.hpp>
 
 using namespace Frenchie::Renderer::OpenGL;
 
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
-    glm::vec3 _CameraWorldUpAxisDirection) : 
+    glm::vec3 _CameraWorldUpAxisDirection, 
+    const std::string& _Name, 
+    Frenchie::Core::Object* _Parent) : 
+    Frenchie::Core::Object(_Name, _Parent),
     m_CameraWorldPosition(_CameraWorldPosition), 
     m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
 
@@ -50,15 +54,21 @@ void Camera::set_roll(const float& _Value)
     m_Roll = _Value;
 }
 
-glm::mat4 Camera::get_view_matrix(const Viewport& _ViewPort) const
+glm::mat4 Camera::get_view_matrix() const
 {
+    Viewport* viewport = 
+        get_parent_recursive<Viewport>();
+    
+    if(viewport == nullptr) 
+        return glm::mat4(1.f);
+
     // camera rotation angles
     glm::mat4 rotateX  = glm::rotate(glm::mat4(1.f), glm::radians(m_Pitch), glm::vec3(1.f, 0.f, 0.f));
     glm::mat4 rotateY  = glm::rotate(glm::mat4(1.f), glm::radians(m_Yaw), glm::vec3(0.f, 1.f, 0.f));
     glm::mat4 rotateZ  = glm::rotate(glm::mat4(1.f), glm::radians(m_Roll), glm::vec3(0.f, 0.f, 1.f));
 
     // camera local attributes
-    m_CameraLocalFrontAxisDirection = glm::vec3(0.f, 0.f, -_ViewPort.get_axis().z);
+    m_CameraLocalFrontAxisDirection = glm::vec3(0.f, 0.f, -viewport->get_axis().z);
     m_CameraLocalFrontAxisDirection = glm::normalize(rotateY * rotateX * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f));
     m_CameraLocalRightAxisDirection = glm::normalize(glm::cross(m_CameraLocalFrontAxisDirection, m_CameraWorldUpAxisDirection));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::cross(m_CameraLocalRightAxisDirection, m_CameraLocalFrontAxisDirection));
