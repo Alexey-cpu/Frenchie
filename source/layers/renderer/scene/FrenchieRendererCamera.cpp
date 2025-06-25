@@ -1,7 +1,7 @@
-#include <FrenchieRendererOpenGLCamera.hpp>
-#include <FrenchieRendererOpenGLViewport.hpp>
+#include <FrenchieRendererCamera.hpp>
+#include <FrenchieRendererViewport.hpp>
 
-using namespace Frenchie::Renderer::OpenGL;
+using namespace Frenchie::Renderer;
 
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 

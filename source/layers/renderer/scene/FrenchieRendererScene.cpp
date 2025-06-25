@@ -1,9 +1,16 @@
-#include <FrenchieRendererOpenGLScene.hpp>
-#include <FrenchieRendererOpenGLCamera.hpp>
+
+// SCVFramework
+#include <FrenchieRendererScene.hpp>
+#include <FrenchieRendererCamera.hpp>
+#include <FrenchieRendererViewport.hpp>
+
+// OpenGL
 #include <FrenchieRendererOpenGLShader.hpp>
 
+// Core
 #include <FrenchieCoreFlyweight.hpp>
 
+using namespace Frenchie::Renderer;
 using namespace Frenchie::Renderer::OpenGL;
 
 Scene::Scene(

@@ -21,17 +21,15 @@ namespace Frenchie
 {
     namespace Renderer
     {
+        struct Vertex
+        {
+            glm::vec3 Position;
+            glm::vec3 Normal;
+            glm::vec2 UV;
+        };
+
         namespace OpenGL
         {
-            using namespace Core;
-
-            struct Vertex
-            {
-                glm::vec3 Position;
-                glm::vec3 Normal;
-                glm::vec2 UV;
-            };
-
             class Mesh
             {
             public:

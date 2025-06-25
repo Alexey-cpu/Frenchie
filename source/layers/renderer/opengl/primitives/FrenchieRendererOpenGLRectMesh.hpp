@@ -8,11 +8,11 @@ namespace Frenchie
     {
         namespace OpenGL
         {
-            class Rect2D : public Mesh
+            class RectMesh : public Mesh
             {
             public:
-                Rect2D();
-                virtual ~Rect2D();
+                RectMesh();
+                virtual ~RectMesh();
             };
         }
     }

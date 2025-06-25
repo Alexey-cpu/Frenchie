@@ -1,6 +1,9 @@
 #pragma once
 
-#include <FrenchieRendererOpenGLTransform.hpp>
+// Renderer
+#include <FrenchieRendererTransform.hpp>
+
+// OpenGL
 #include <FrenchieRendererOpenGLShader.hpp>
 #include <FrenchieRendererOpenGLMesh.hpp>
 

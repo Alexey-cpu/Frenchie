@@ -1,5 +1,6 @@
 #include <FrenchieRendererOpenGLMesh.hpp>
 
+using namespace Frenchie::Core;
 using namespace Frenchie::Renderer::OpenGL;
 
 Mesh::Mesh(){}

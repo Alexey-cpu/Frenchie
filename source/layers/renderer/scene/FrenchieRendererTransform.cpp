@@ -1,6 +1,6 @@
-#include <FrenchieRendererOpenGLTransform.hpp>
+#include <FrenchieRendererTransform.hpp>
 
-using namespace Frenchie::Renderer::OpenGL;
+using namespace Frenchie::Renderer;
 
 Transform::Transform(const std::string& _Name, Object* _Parent) : Object(_Name, _Parent){}
 

@@ -36,7 +36,7 @@ namespace Frenchie
                 }
 
                 template<typename Type> 
-                Type* Request()
+                Type* Request(const std::function<Type*()>& _OnFail = nullptr)
                 {
                     std::type_index typeIndex = std::type_index(typeid(Type));
 
