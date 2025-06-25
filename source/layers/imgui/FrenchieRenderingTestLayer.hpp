@@ -1,8 +1,12 @@
+#pragma once
+
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieCoreHelpers.hpp>
 #include <FrenchieApplication.hpp>
+
+#include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreObject.hpp>
 
+#include <FrenchieRendererOpenGLCamera.hpp>
 #include <FrenchieRendererOpenGLShaderProgram.hpp>
 
 // GLAD
@@ -26,162 +30,6 @@ namespace Frenchie
             using namespace Frenchie::Application;
             using namespace Frenchie::Renderer::OpenGL;
 
-            class Viewport final
-            {
-            public:
-
-                Viewport(float _Depth = 100.f, float _Aspect = 1.f, float _Fovy = 90.f, glm::vec3 _Axis = glm::vec3(1.f, 1.f, 1.f)) : 
-                    m_Depth(_Depth), 
-                    m_Aspect(_Aspect), 
-                    m_Fovy(_Fovy),
-                    m_Axis(_Axis){}
-
-                ~Viewport(){}
-
-                glm::mat4 get_projection_matrix() const
-                {
-                    return glm::perspective(glm::radians(m_Fovy), m_Aspect, +0.1f, -m_Depth);
-                }
-
-                glm::vec3 get_viewport_scale(const glm::vec2& _ViewportSize) const
-                {
-                    float scaleX = 1.f / std::max<float>((float)_ViewportSize.x, 1.f);
-                    float scaleY = 1.f / std::max<float>((float)_ViewportSize.y, 1.f);
-                    return glm::vec3(scaleX, scaleY, 1.f);
-                }
-
-                glm::vec3 get_axis() const
-                {
-                    return m_Axis;
-                }
-
-                float get_aspect() const
-                {
-                    return m_Aspect;
-                }
-
-                float get_depth() const
-                {
-                    return m_Depth;
-                }
-
-                float get_fovy() const
-                {
-                    return m_Fovy;
-                }
-
-                void set_axis(const glm::vec3& _Value)
-                {
-                    m_Axis = _Value;
-                }
-
-                void set_aspect(const float& _Value)
-                {
-                    m_Aspect = _Value;
-                }
-
-                void set_depth(const float& _Value)
-                {
-                    m_Depth = _Value;
-                }
-
-                void set_fovy(const float& _Value)
-                {
-                    m_Fovy = _Value;
-                }
-
-                protected:
-
-                    // info
-                    float     m_Depth  = 100.f; 
-                    float     m_Aspect = 1.f;
-                    float     m_Fovy   = 90.f;
-                    glm::vec3 m_Axis   = glm::vec3(1.f, 1.f, 1.f);
-            };
-
-            class Camera final
-            {
-            public:
-                Camera(
-                    glm::vec3 _CameraWorldPosition        = glm::vec3(+0.f, +0.f, +1.f), 
-                    glm::vec3 _CameraWorldUpAxisDirection = glm::vec3(+0.f, +1.f, +0.f)) : 
-                    m_CameraWorldPosition(_CameraWorldPosition), 
-                    m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
-                
-                ~Camera(){}
-
-                glm::vec3 get_position() const
-                {
-                    return m_CameraWorldPosition;
-                }
-
-                float get_pitch() const
-                {
-                    return m_Pitch;
-                }
-
-                float get_yaw() const
-                {
-                    return m_Yaw;
-                }
-
-                float get_roll() const
-                {
-                    return m_Roll;
-                }
-                
-                void get_position(const glm::vec3& _Value)
-                {
-                    m_CameraWorldPosition = _Value;
-                }
-
-                void set_pitch(const float& _Value)
-                {
-                    m_Pitch = _Value;
-                }
-
-                void set_yaw(const float& _Value)
-                {
-                    m_Yaw = _Value;
-                }
-
-                void set_roll(const float& _Value)
-                {
-                    m_Roll = _Value;
-                }
-                
-                glm::mat4 get_view_matrix(const Viewport& _ViewPort) const
-                {
-                    // camera rotation angles
-                    glm::mat4 rotateX  = glm::rotate(glm::mat4(1.f), glm::radians(m_Pitch), glm::vec3(1.f, 0.f, 0.f));
-                    glm::mat4 rotateY  = glm::rotate(glm::mat4(1.f), glm::radians(m_Yaw), glm::vec3(0.f, 1.f, 0.f));
-                    glm::mat4 rotateZ  = glm::rotate(glm::mat4(1.f), glm::radians(m_Roll), glm::vec3(0.f, 0.f, 1.f));
-
-                    // camera local attributes
-                    m_CameraLocalFrontAxisDirection = glm::vec3(0.f, 0.f, -_ViewPort.get_axis().z);
-                    m_CameraLocalFrontAxisDirection = glm::normalize(rotateY * rotateX * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f));
-                    m_CameraLocalRightAxisDirection = glm::normalize(glm::cross(m_CameraLocalFrontAxisDirection, m_CameraWorldUpAxisDirection));
-                    m_CameraLocalUpAxisDirection    = glm::normalize(glm::cross(m_CameraLocalRightAxisDirection, m_CameraLocalFrontAxisDirection));
-
-                    m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
-                    m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
-
-                    return glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection);
-                }
-            
-            protected:
-
-                mutable glm::vec3 m_CameraWorldPosition           = glm::vec3(+0.f, +0.f, +1.f);
-                mutable glm::vec3 m_CameraWorldUpAxisDirection    = glm::vec3(+0.f, +1.f, +0.f);
-                mutable glm::vec3 m_CameraLocalFrontAxisDirection = glm::vec3(0.f);
-                mutable glm::vec3 m_CameraLocalRightAxisDirection = glm::vec3(0.f);
-                mutable glm::vec3 m_CameraLocalUpAxisDirection    = glm::vec3(0.f);
-                mutable float     m_Pitch                         = 0.f;
-                mutable float     m_Yaw                           = 0.f;
-                mutable float     m_Roll                          = 0.f;
-                
-            };
-
             struct Vertex
             {
                 glm::vec3 Position;
@@ -190,145 +38,84 @@ namespace Frenchie
                 glm::vec4 Color;
             };
 
-            struct Transform
-            {
-                glm::vec3 Position = glm::vec3(0.f);
-                glm::vec3 Rotation = glm::vec3(0.f);
-                glm::vec3 Scale    = glm::vec3(1.f);
-                glm::vec3 Offset   = glm::vec3(0.f);
-
-                glm::mat4 get_model_matrix() const
-                {
-                    glm::mat4 matrix(1.f);
-
-                    return  glm::translate(matrix, Position + Offset) * 
-                            glm::rotate(matrix, glm::radians(Rotation.x), glm::vec3(1.f, 0.f, 0.f)) * 
-                            glm::rotate(matrix, glm::radians(Rotation.x), glm::vec3(0.f, 1.f, 0.f)) * 
-                            glm::rotate(matrix, glm::radians(Rotation.x), glm::vec3(0.f, 0.f, 1.f)) * 
-                            glm::scale(matrix, Scale);
-                }
-            };
-
-            class IDrawable
-            {
-            public:
-                IDrawable(){}
-                virtual ~IDrawable(){}
+            // class Mesh : public Frenchie::Core::Object, public IDrawable
+            // {
+            // public:
                 
-                virtual bool awake()        = 0;
-                virtual void frame_start()  = 0;
-                virtual void frame_update() = 0;
-                virtual void frame_finish() = 0;
-            };
+            //     Mesh(std::string _Name = std::string(), Object* _Parent = nullptr) : 
+            //         Frenchie::Core::Object(_Name, _Parent){}
 
-            class Scene : public Layer
-            {
-            public:
+            //     virtual ~Mesh()
+            //     {
+            //         glDeleteVertexArrays(1, &m_VAO);
+            //         glDeleteBuffers(1, &m_VBO);
+            //         glDeleteBuffers(1, &m_EBO);
+            //     }
 
-                Scene(std::string _Name = std::string()) : Frenchie::Application::Layer(_Name){}
-                virtual ~Scene(){}
+            //     bool awake() override
+            //     {
+            //         // create buffers and vertex array
+            //         glGenBuffers(1, &m_VBO);
+            //         glGenBuffers(1, &m_EBO);
+            //         glGenVertexArrays(1, &m_VAO);
 
-                virtual bool awake() override
-                {
-                }
+            //         // load data into VBO and EBO
+            //         glBindVertexArray(m_VAO);
+            //         glBufferData(m_VBO, m_Vertexes.size() * sizeof(Vertex), &m_Vertexes[0], GL_DYNAMIC_DRAW);
+            //         glBufferData(m_EBO, m_Indexes.size() * sizeof(int), &m_Indexes[0], GL_DYNAMIC_DRAW);
+
+            //         // setup attributes pointers
+            //         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Position)));
+            //         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Normal)));
+            //         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::UV)));
+            //         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Color)));
+            //         glEnableVertexAttribArray(0);
+            //         glEnableVertexAttribArray(1);
+            //         glEnableVertexAttribArray(2);
+            //         glEnableVertexAttribArray(3);
+
+            //         return true;
+            //     }
                 
-                virtual void frame_start() override
-                {
-                }
+            //     virtual void frame_start()  override{}
                 
-                virtual void frame_update() override
-                {
-                }
+            //     virtual void frame_update() override{}
                 
-                virtual void frame_finish() override
-                {
-                }
+            //     virtual void frame_finish() override
+            //     {
+            //         glBindVertexArray(m_VAO);
+            //         glDrawArrays(GL_POINTS, 0, 6);
+            //         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            //     }
 
-            protected:
+            //     void updateSelfAndChild()
+            //     {
+            //         if (get_parent<Mesh>() != nullptr)
+            //             m_ModelMatrix = get_parent<Mesh>()->m_ModelMatrix * m_Transform.get_model_matrix();
+            //         else
+            //             m_ModelMatrix = m_Transform.get_model_matrix();
 
-                Object*  m_Root = nullptr;
-                Viewport m_Viewport;
-                Camera   m_Camera;
-            }; 
+            //         for (auto&& child : m_Children)
+            //         {
+            //             Mesh* object = dynamic_cast<Mesh*>(child);
 
-            class Mesh : public Frenchie::Core::Object, public IDrawable
-            {
-            public:
-                
-                Mesh(std::string _Name = std::string(), Object* _Parent = nullptr) : 
-                    Frenchie::Core::Object(_Name, _Parent){}
-
-                virtual ~Mesh()
-                {
-                    glDeleteVertexArrays(1, &m_VAO);
-                    glDeleteBuffers(1, &m_VBO);
-                    glDeleteBuffers(1, &m_EBO);
-                }
-
-                bool awake() override
-                {
-                    // create buffers and vertex array
-                    glGenBuffers(1, &m_VBO);
-                    glGenBuffers(1, &m_EBO);
-                    glGenVertexArrays(1, &m_VAO);
-
-                    // load data into VBO and EBO
-                    glBindVertexArray(m_VAO);
-                    glBufferData(m_VBO, m_Vertexes.size() * sizeof(Vertex), &m_Vertexes[0], GL_DYNAMIC_DRAW);
-                    glBufferData(m_EBO, m_Indexes.size() * sizeof(int), &m_Indexes[0], GL_DYNAMIC_DRAW);
-
-                    // setup attributes pointers
-                    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Position)));
-                    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Normal)));
-                    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::UV)));
-                    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Vertex::Color)));
-                    glEnableVertexAttribArray(0);
-                    glEnableVertexAttribArray(1);
-                    glEnableVertexAttribArray(2);
-                    glEnableVertexAttribArray(3);
-
-                    return true;
-                }
-                
-                virtual void frame_start()  override{}
-                
-                virtual void frame_update() override{}
-                
-                virtual void frame_finish() override
-                {
-                    glBindVertexArray(m_VAO);
-                    glDrawArrays(GL_POINTS, 0, 6);
-                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-                }
-
-                void updateSelfAndChild()
-                {
-                    if (get_parent<Mesh>() != nullptr)
-                        m_ModelMatrix = get_parent<Mesh>()->m_ModelMatrix * m_Transform.get_model_matrix();
-                    else
-                        m_ModelMatrix = m_Transform.get_model_matrix();
-
-                    for (auto&& child : m_Children)
-                    {
-                        Mesh* object = dynamic_cast<Mesh*>(child);
-
-                        if(object != nullptr)
-                            object->updateSelfAndChild();
-                    }
-                }
+            //             if(object != nullptr)
+            //                 object->updateSelfAndChild();
+            //         }
+            //     }
             
-            protected:
+            // protected:
 
-                unsigned int                   m_VAO           = 0;    
-                unsigned int                   m_VBO           = 0;
-                unsigned int                   m_EBO           = 0;
-                std::vector<Vertex>            m_Vertexes      = std::vector<Vertex>();
-                std::vector<int>               m_Indexes       = std::vector<int>();
-                std::shared_ptr<ShaderProgram> m_ShaderProgram = nullptr;
+            //     unsigned int                   m_VAO           = 0;    
+            //     unsigned int                   m_VBO           = 0;
+            //     unsigned int                   m_EBO           = 0;
+            //     std::vector<Vertex>            m_Vertexes      = std::vector<Vertex>();
+            //     std::vector<int>               m_Indexes       = std::vector<int>();
+            //     std::shared_ptr<ShaderProgram> m_ShaderProgram = nullptr;
 
-                Transform m_Transform   = Transform();
-                glm::mat4 m_ModelMatrix = glm::mat4(1.0f);
-            };
+            //     Transform m_Transform   = Transform();
+            //     glm::mat4 m_ModelMatrix = glm::mat4(1.0f);
+            // };
 
             class RenderingTest : public Layer
             {

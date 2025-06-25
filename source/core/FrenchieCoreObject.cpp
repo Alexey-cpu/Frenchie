@@ -7,7 +7,7 @@
 using namespace Frenchie::Core;
 
 // Object
-Object::Object(std::string _Name, Object* _Parent) : m_Name(_Name)
+Object::Object(const std::string& _Name, Object* _Parent) : m_Name(_Name)
 {
     set_parent(_Parent);
 }
