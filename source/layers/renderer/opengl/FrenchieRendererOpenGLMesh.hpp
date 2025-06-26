@@ -2,6 +2,7 @@
 
 // Custom
 #include <FrenchieCoreLogger.hpp>
+#include <FrenchieCoreObject.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -30,15 +31,17 @@ namespace Frenchie
 
         namespace OpenGL
         {
-            class Mesh
+            class Mesh : public Frenchie::Core::IRenderer
             {
             public:
                 Mesh();
                 virtual ~Mesh();
 
-                bool is_instanced() const;
-                void setup();
-                void render();
+                // virtual API
+                virtual bool awake()        override;
+                virtual void frame_start()  override;
+                virtual void frame_update() override;
+                virtual void frame_finish() override;
 
             protected:
                 mutable unsigned int        m_VBO      = 0;
@@ -46,6 +49,8 @@ namespace Frenchie
                 mutable unsigned int        m_VAO      = 0;
                 mutable std::vector<int>    m_Indexes  = std::vector<int>();
                 mutable std::vector<Vertex> m_Vertexes = std::vector<Vertex>();
+
+                bool is_instanced() const;
             };
 
             class Rectangle2D : public Mesh
