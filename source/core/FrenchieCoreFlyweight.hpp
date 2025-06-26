@@ -30,19 +30,15 @@ namespace Frenchie
                     if(m_Instances.find(typeIndex) != m_Instances.end()) 
                         return std::any_cast<Type*>(m_Instances[typeIndex]);
 
-                    Type* instance = Frenchie::Core::CreateRawPointer<Type>(_Args...);
+                    Type* instance = Frenchie::Core::create_raw_pointer<Type>(_Args...);
                     m_Instances[typeIndex] = instance;
                     return instance;
                 }
 
-                template<typename Type> 
-                Type* Request(const std::function<Type*()>& _OnFail = nullptr)
+                void apply_to_all_instances(const std::function<void(std::any& _Instance)>& _Function)
                 {
-                    std::type_index typeIndex = std::type_index(typeid(Type));
-
-                    return m_Instances.find(typeIndex) != m_Instances.end() ? 
-                                std::any_cast<Type*>(m_Instances[typeIndex]) : 
-                                    nullptr;
+                    for (auto&& instance : m_Instances) 
+                        _Function(instance.second);
                 }
 
             protected:

@@ -5,6 +5,7 @@
 
 // STL
 #include <filesystem>
+#include <set>
 
 namespace Frenchie
 {
@@ -12,39 +13,35 @@ namespace Frenchie
     {
         namespace OpenGL
         {
-            class Shader
+            class ShaderLoader
             {
             public:
 
-                Shader(const unsigned int& _ID, const std::filesystem::path& _Path);
-                virtual ~Shader();
+                ShaderLoader(const std::filesystem::path& _Path);
+                virtual ~ShaderLoader();
 
                 const unsigned int& get_id() const;
 
             private:
                 unsigned int m_ID;
+
+                std::set<std::string> m_Extentions = 
+                {
+                    ".vert", 
+                    ".tesc", 
+                    ".tese", 
+                    ".geom", 
+                    ".frag", 
+                    ".comp"
+                };
             };
 
-            class VertexShader : public Shader
-            {
-            public:
-                VertexShader(const std::filesystem::path& _Path);
-                virtual ~VertexShader();
-            };
-
-            class FragmentShader : public Shader
-            {
-            public:
-                FragmentShader(const std::filesystem::path& _Path);
-                virtual ~FragmentShader();
-            };
-
-            class ShaderProgram
+            class Shader
             {
             public:
 
-                ShaderProgram(const std::vector<std::shared_ptr<Shader>>& _Shaders);
-                virtual ~ShaderProgram();
+                Shader(const std::vector<std::shared_ptr<ShaderLoader>>& _Shaders);
+                virtual ~Shader();
 
                 void begin();
                 void end();

@@ -54,14 +54,14 @@ namespace Frenchie
                 virtual bool awake() override
                 {
                     // create viewport
-                    m_Viewport = CreateSharedPointer<Viewport>(
+                    m_Viewport = create_shared_pointer<Viewport>(
                         100.f,
                         1.f,
                         90.f,
                         glm::vec3(1.f, 1.f, 1.f));
 
                     // create camera
-                    CreateRawPointer<Camera>(
+                    create_raw_pointer<Camera>(
                         glm::vec3(+0.f, +0.f, +1.f),
                         glm::vec3(+0.f, +1.f, +0.f),
                         "Camera",
@@ -69,18 +69,18 @@ namespace Frenchie
                     );
 
                     // create scene
-                    Scene* scene = CreateRawPointer<Scene>(
+                    Scene* scene = create_raw_pointer<Scene>(
                         "Scene",
                         m_Viewport.get()
                     );
 
                     // create shader
-                    ShaderProgram* shader = 
-                        FlyweightFactory::instance()->Create<ShaderProgram>(
-                            std::vector<std::shared_ptr<Shader>>(
+                    Shader* shader = 
+                        FlyweightFactory::instance()->Create<Shader>(
+                            std::vector<std::shared_ptr<ShaderLoader>>(
                             {
-                                CreateSharedPointer<VertexShader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert")),
-                                CreateSharedPointer<FragmentShader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")),
+                                create_shared_pointer<ShaderLoader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert")),
+                                create_shared_pointer<ShaderLoader>(std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")),
                             }
                         )
                     );
