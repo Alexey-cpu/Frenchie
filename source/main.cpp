@@ -2,6 +2,8 @@
 #include <FrenchieImGuiTestLayer.hpp>
 #include <FrenchieRenderingTestLayer.hpp>     
 
+#include <FrenchieImGuiOpenGLScene.hpp>
+
 int main(int, char**)
 {
     // setup logger
@@ -13,7 +15,9 @@ int main(int, char**)
     application->set_maximized(true);
 
     // push application layers
-    application->push<Frenchie::Application::Test::RenderingTest>("RenderingTest");
+    //application->push<Frenchie::Application::Test::RenderingTest>("RenderingTest");
+
+    application->push<Frenchie::Application::Scene>("RenderingTest");
 
     return application->execute();
 }

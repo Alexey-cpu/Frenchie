@@ -8,7 +8,7 @@
 #include <FrenchieCoreObject.hpp>
 
 #include <FrenchieRendererCamera.hpp>
-#include <FrenchieRendererViewport.hpp>
+#include <FrenchieRendererScene3D.hpp>
 
 #include <FrenchieRendererOpenGLMeshRenderer.hpp>
 #include <FrenchieRendererOpenGLRectMesh.hpp>
@@ -53,7 +53,7 @@ namespace Frenchie
                 virtual bool awake() override
                 {
                     // create viewport
-                    m_Viewport = create_shared_pointer<Viewport>(
+                    m_Viewport = create_shared_pointer<Scene3D>(
                         100.f,
                         1.f,
                         90.f,
@@ -138,7 +138,7 @@ namespace Frenchie
 
             protected:
 
-                std::shared_ptr<Viewport> m_Viewport = nullptr;
+                std::shared_ptr<Scene3D> m_Viewport = nullptr;
             };
         }
     }
