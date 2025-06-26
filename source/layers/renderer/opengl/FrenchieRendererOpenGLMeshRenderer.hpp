@@ -21,7 +21,7 @@ namespace Frenchie
             public:
                 MeshRenderer(
                     Mesh*              _Mesh,
-                    ShaderProgram*     _Shader,
+                    Shader*            _Shader,
                     const std::string& _Name   = std::string(), 
                     Object*            _Parent = nullptr);
                 
@@ -35,7 +35,7 @@ namespace Frenchie
             protected:
 
                 Mesh*          m_Mesh   = nullptr;
-                ShaderProgram* m_Shader = nullptr;
+                Shader* m_Shader = nullptr;
             };
         }
     }

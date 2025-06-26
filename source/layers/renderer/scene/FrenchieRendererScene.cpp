@@ -10,6 +10,8 @@
 // Core
 #include <FrenchieCoreFlyweight.hpp>
 
+#include <FrenchieCoreLogger.hpp>
+
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Renderer::OpenGL;
 
@@ -39,16 +41,28 @@ void Scene::frame_start()
     if(viewport == nullptr || camera == nullptr) 
         return;
 
-    // setup shader
-    auto shader = Frenchie::Core::FlyweightFactory::instance()->Request<ShaderProgram>();
+    auto projectionMatrix = viewport->get_projection_matrix();
+    auto viewportScale    = viewport->get_viewport_scale();
+    auto viewMatrix       = camera->get_view_matrix();
 
-    auto viewportscale = viewport->get_viewport_scale();
+    Frenchie::Core::FlyweightFactory::instance()->apply_to_all_instances(
+        [&projectionMatrix, &viewportScale, &viewMatrix](std::any _Instance)
+        {
+            try
+            {
+                Shader* shader = std::any_cast<Shader*>(_Instance);
 
-    shader->begin();
-    shader->set_uniform<glm::vec3>("u_ViewportScale", viewport->get_viewport_scale());
-    shader->set_uniform<glm::mat4>("u_ViewMatrix", camera->get_view_matrix());
-    shader->set_uniform<glm::mat4>("u_ProjectionMatrix", viewport->get_projection_matrix());
-    shader->end();
+                shader->begin();
+                shader->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
+                shader->set_uniform<glm::vec3>("u_ViewportScale", viewportScale);
+                shader->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
+                shader->end();
+            }
+            catch(...)
+            {
+            }
+        }
+    );
 
     Frenchie::Core::Object::frame_start();
 }

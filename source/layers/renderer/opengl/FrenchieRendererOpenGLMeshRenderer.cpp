@@ -2,7 +2,7 @@
 
 using namespace Frenchie::Renderer::OpenGL;
 
-MeshRenderer::MeshRenderer(Mesh* _Mesh, ShaderProgram* _Shader, const std::string& _Name, Object* _Parent) : 
+MeshRenderer::MeshRenderer(Mesh* _Mesh, Shader* _Shader, const std::string& _Name, Object* _Parent) : 
     Transform(_Name, _Parent), 
     m_Mesh(_Mesh), m_Shader(_Shader){}
 
