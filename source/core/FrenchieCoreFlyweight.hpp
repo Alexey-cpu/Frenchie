@@ -5,6 +5,7 @@
 #include <FrenchieCoreSingleton.hpp>
 
 // STL
+#include <memory>
 #include <typeindex>
 #include <string>
 #include <map>
@@ -20,20 +21,22 @@ namespace Frenchie
             class Flyweight
             {
             public:
+
                 Flyweight(){}
                 virtual ~Flyweight(){}
 
                 template<typename Type, typename ...Arguments>
                 Type* request(std::string _Key, Arguments ... _Args)
                 {
-                    const auto  typeIndex = std::type_index(typeid(Type));
-                    auto& resources = m_Resources[typeIndex];
+                    const auto typeIndex = std::type_index(typeid(Type));
+                    auto&      resources = m_Resources[typeIndex];
+                    auto       iterator  = resources.find(_Key);
 
-                    if(resources.find(_Key) != resources.end()) 
-                        return std::any_cast<Type*>(resources[_Key]);
+                    if(iterator != resources.end()) 
+                        return std::dynamic_pointer_cast<Wrapper<Type>>(iterator->second)->get_data();
 
-                    Type* instance = Frenchie::Core::create_raw_pointer<Type>(_Args...);
-                    resources[_Key] = instance;
+                    auto instance = create_raw_pointer<Type>(_Args...);
+                    resources[_Key] = std::make_shared<Wrapper<Type>>(instance);
                     return instance;
                 }
 
@@ -46,11 +49,11 @@ namespace Frenchie
                     const auto  typeIndex = std::type_index(typeid(Type));
                     const auto& resources = m_Resources[typeIndex];
 
-                    for (auto&& resource : resources)
+                    for(auto&& resource : resources)
                     {
                         try
                         {
-                            _Function(std::any_cast<Type*>(resource.second));
+                            _Function(std::dynamic_pointer_cast<Wrapper<Type>>(resource.second)->get_data());
                         }
                         catch(...)
                         {
@@ -60,11 +63,40 @@ namespace Frenchie
 
             protected:
 
+                class Data
+                {
+                public:
+                    Data(){}
+                    virtual ~Data(){}
+                };
+
+                template<typename __type>
+                class Wrapper : public Data
+                {
+                public:
+                    
+                    Wrapper(__type* _Data) : m_Data(_Data){}
+                    
+                    virtual ~Wrapper()
+                    {
+                        if(m_Data != nullptr) 
+                            delete m_Data;
+                    }
+                    
+                    __type* get_data() const
+                    {
+                        return m_Data;
+                    }
+                    
+                protected:
+                    __type* m_Data = nullptr;
+                };
+
                 std::map<
-                    std::type_index, 
+                    std::type_index,          // data type
                     std::map<
-                        std::string, 
-                        std::any
+                        std::string,          // data key
+                        std::shared_ptr<Data> // data container
                         >> m_Resources;
             };
         }

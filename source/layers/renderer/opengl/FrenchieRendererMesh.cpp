@@ -125,6 +125,7 @@ Triangle2D::Triangle2D()
 
 Triangle2D::~Triangle2D()
 {
+    Frenchie::Core::Logger::instance()->error("Triangle2D::~Triangle2D()");
 }
 
 // Rectangle2D
