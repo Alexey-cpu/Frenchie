@@ -1,5 +1,5 @@
 #include <FrenchieRendererCamera.hpp>
-#include <FrenchieRendererViewport.hpp>
+#include <FrenchieRendererScene3D.hpp>
 
 using namespace Frenchie::Renderer;
 
@@ -56,8 +56,8 @@ void Camera::set_roll(const float& _Value)
 
 glm::mat4 Camera::get_view_matrix() const
 {
-    Viewport* viewport = 
-        get_parent_recursive<Viewport>();
+    Scene3D* viewport = 
+        get_parent_recursive<Scene3D>();
     
     if(viewport == nullptr) 
         return glm::mat4(1.f);

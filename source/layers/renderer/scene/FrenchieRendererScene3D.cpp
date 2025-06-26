@@ -1,4 +1,4 @@
-#include <FrenchieRendererViewport.hpp>
+#include <FrenchieRendererScene3D.hpp>
 #include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererOpenGLShader.hpp>
 
@@ -7,7 +7,7 @@
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Renderer::OpenGL;
 
-Viewport::Viewport(
+Scene3D::Scene3D(
     const float&            _Depth,
     const float&            _Aspect,
     const float&            _Fovy,
@@ -22,71 +22,71 @@ Viewport::Viewport(
     m_Axis(_Axis), 
     m_Size(_Size){}
 
-Viewport::~Viewport(){}
+Scene3D::~Scene3D(){}
 
-glm::mat4 Viewport::get_projection_matrix() const
+glm::mat4 Scene3D::get_projection_matrix() const
 {
     return glm::perspective(glm::radians(m_Fovy), m_Aspect, +0.1f, -m_Depth);
 }
 
-glm::vec3 Viewport::get_viewport_scale() const
+glm::vec3 Scene3D::get_viewport_scale() const
 {
     float scaleX = 1.f / std::max<float>((float)m_Size.x, 1.f);
     float scaleY = 1.f / std::max<float>((float)m_Size.y, 1.f);
     return glm::vec3(scaleX, scaleY, 1.f / 1e5);
 }
 
-glm::vec3 Viewport::get_axis() const
+glm::vec3 Scene3D::get_axis() const
 {
     return m_Axis;
 }
 
-glm::vec2 Viewport::get_size() const
+glm::vec2 Scene3D::get_size() const
 {
     return m_Size;
 }
 
-float Viewport::get_aspect() const
+float Scene3D::get_aspect() const
 {
     return m_Aspect;
 }
 
-float Viewport::get_depth() const
+float Scene3D::get_depth() const
 {
     return m_Depth;
 }
 
-float Viewport::get_fovy() const
+float Scene3D::get_fovy() const
 {
     return m_Fovy;
 }
 
-void Viewport::set_axis(const glm::vec3& _Value)
+void Scene3D::set_axis(const glm::vec3& _Value)
 {
     m_Axis = _Value;
 }
 
-void Viewport::set_size(const glm::vec2& _Value)
+void Scene3D::set_size(const glm::vec2& _Value)
 {
     m_Size = _Value;
 }
 
-void Viewport::set_aspect(const float& _Value)
+void Scene3D::set_aspect(const float& _Value)
 {
     m_Aspect = _Value;
 }
 
-void Viewport::set_depth(const float& _Value)
+void Scene3D::set_depth(const float& _Value)
 {
     m_Depth = _Value;
 }
 
-void Viewport::set_fovy(const float& _Value)
+void Scene3D::set_fovy(const float& _Value)
 {
     m_Fovy = _Value;
 }
 
-void Viewport::frame_start()
+void Scene3D::frame_start()
 {
     Camera* camera = find_child<Camera>();
 

@@ -11,11 +11,11 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Viewport : public Transform
+        class Scene3D : public Transform
         {
         public:
 
-            Viewport(
+            Scene3D(
                 const float&            _Depth  = 100.f, 
                 const float&            _Aspect = 1.f, 
                 const float&            _Fovy   = 90.f, 
@@ -24,7 +24,7 @@ namespace Frenchie
                 const std::string&      _Name   = std::string(),
                 Frenchie::Core::Object* _Parent = nullptr);
             
-            virtual ~Viewport();
+            virtual ~Scene3D();
 
             glm::mat4 get_projection_matrix() const;
             glm::vec3 get_viewport_scale() const;
