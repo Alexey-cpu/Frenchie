@@ -62,7 +62,8 @@ namespace Frenchie
 
             virtual ~ShaderLoader()
             {
-                glDeleteShader(get_id());
+                if(get_id())
+                    glDeleteShader(get_id());
             }
 
             const unsigned int& get_id() const
@@ -81,9 +82,18 @@ using namespace Frenchie::Renderer;
 // ShaderProgram
 Shader::Shader(const std::filesystem::path& _Vertex, const std::filesystem::path& _Fragment) : 
     m_VertexShaderPath(_Vertex), 
-    m_FragmentShaderPath(_Fragment){}
+    m_FragmentShaderPath(_Fragment)
+    {
+        Frenchie::Core::Logger::instance()->info("Shader::~Shader()");
+    }
 
-Shader::~Shader(){}
+Shader::~Shader()
+{
+    Frenchie::Core::Logger::instance()->error("Shader::~Shader()");
+
+    if(get_id())
+        glDeleteProgram(get_id());
+}
 
 bool Shader::instantiate()
 {
