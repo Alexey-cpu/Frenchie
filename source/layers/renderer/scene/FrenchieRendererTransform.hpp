@@ -42,7 +42,6 @@ namespace Frenchie
             glm::mat4 compute_local_model_matrix() const;
 
             protected:
-
                 glm::vec3 m_Position    = glm::vec3(0.f);
                 glm::vec3 m_Rotation    = glm::vec3(0.f);
                 glm::vec3 m_Scale       = glm::vec3(1.f);

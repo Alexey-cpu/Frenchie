@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrenchieCoreObject.hpp>
+#include <FrenchieRendererTransform.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -11,7 +11,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Viewport : public Frenchie::Core::Object
+        class Viewport : public Transform
         {
         public:
 
@@ -39,6 +39,9 @@ namespace Frenchie
             void set_aspect(const float& _Value);
             void set_depth(const float& _Value);
             void set_fovy(const float& _Value);
+
+            // virtual API override
+            virtual void frame_start() override;
 
             protected:
 

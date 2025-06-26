@@ -1,6 +1,11 @@
 #include <FrenchieRendererViewport.hpp>
+#include <FrenchieRendererCamera.hpp>
+#include <FrenchieRendererOpenGLShader.hpp>
+
+#include <FrenchieCoreFlyweight.hpp>
 
 using namespace Frenchie::Renderer;
+using namespace Frenchie::Renderer::OpenGL;
 
 Viewport::Viewport(
     const float&            _Depth,
@@ -10,7 +15,7 @@ Viewport::Viewport(
     const glm::vec2&        _Size,
     const std::string&      _Name,
     Frenchie::Core::Object* _Parent) : 
-    Frenchie::Core::Object(_Name, _Parent),
+    Transform(_Name, _Parent),
     m_Depth(_Depth), 
     m_Aspect(_Aspect), 
     m_Fovy(_Fovy), 
@@ -79,4 +84,40 @@ void Viewport::set_depth(const float& _Value)
 void Viewport::set_fovy(const float& _Value)
 {
     m_Fovy = _Value;
+}
+
+void Viewport::frame_start()
+{
+    Camera* camera = find_child<Camera>();
+
+    if(camera == nullptr) // no camera --> no rendering 
+        return;
+
+    // configure all shaders that have been loaded
+    auto projectionMatrix = get_projection_matrix();
+    auto viewMatrix       = camera->get_view_matrix();
+
+    Frenchie::Core::FlyweightFactory::instance()->apply_to_all_instances(
+        [&projectionMatrix, &viewMatrix](std::any _Instance)
+        {
+            try
+            {
+                Shader* shader = std::any_cast<Shader*>(_Instance);
+
+                shader->begin();
+                shader->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
+                shader->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
+                shader->end();
+            }
+            catch(...)
+            {
+            }
+        }
+    );
+
+    // setup viewport scale
+    set_scale(Viewport::get_viewport_scale());
+
+    // call base implementation
+    Transform::frame_start();
 }
