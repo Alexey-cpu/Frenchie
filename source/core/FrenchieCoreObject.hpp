@@ -113,9 +113,12 @@ namespace Frenchie
 
         protected:
 
-            std::string                  m_Name         = std::string();
-            Object*                      m_Parent       = nullptr;
-            mutable std::list<Object*>   m_Children     = std::list<Object*>();
+            std::string                  m_Name     = std::string();
+            Object*                      m_Parent   = nullptr;
+            mutable std::list<Object*>   m_Children = std::list<Object*>();
+
+        private:
+            
             std::list<Object*>::iterator m_SelfIterator;
         };
     }
