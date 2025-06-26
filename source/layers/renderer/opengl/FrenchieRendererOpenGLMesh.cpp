@@ -3,6 +3,7 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer::OpenGL;
 
+// Mesh
 Mesh::Mesh(){}
 
 Mesh::~Mesh()
@@ -61,3 +62,33 @@ void Mesh::render()
     glDrawElements(GL_TRIANGLES, (int)m_Indexes.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
+
+// Rectangle2D
+Rectangle2D::Rectangle2D()
+{
+    m_Vertexes = 
+    {
+        // trangle 1
+        { glm::vec3(-100.f, +100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+        { glm::vec3(+100.f, +100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+        { glm::vec3(-100.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+
+        // trangle 2
+        { glm::vec3(+100.f, +100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+        { glm::vec3(+100.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+        { glm::vec3(-100.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) }
+    };
+
+    m_Indexes = 
+    {
+        // triangle 1
+        0, 1, 2,
+
+        // triangle 2
+        3, 4, 5
+    };
+
+    setup();
+}
+
+Rectangle2D::~Rectangle2D(){}

@@ -11,7 +11,7 @@
 #include <FrenchieRendererScene3D.hpp>
 
 #include <FrenchieRendererOpenGLMeshRenderer.hpp>
-#include <FrenchieRendererOpenGLRectMesh.hpp>
+#include <FrenchieRendererOpenGLMesh.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -78,7 +78,7 @@ namespace Frenchie
                         )
                     );
 
-                    RectMesh* mesh = FlyweightFactory::instance()->Create<RectMesh>();
+                    Rectangle2D* mesh = FlyweightFactory::instance()->Create<Rectangle2D>();
 
                     // create hierarchy
                     auto root    = new MeshRenderer(mesh, shader, "Root", m_Viewport.get());

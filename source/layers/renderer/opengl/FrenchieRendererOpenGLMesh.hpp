@@ -47,6 +47,13 @@ namespace Frenchie
                 mutable std::vector<int>    m_Indexes  = std::vector<int>();
                 mutable std::vector<Vertex> m_Vertexes = std::vector<Vertex>();
             };
+
+            class Rectangle2D : public Mesh
+            {
+            public:
+                Rectangle2D();
+                virtual ~Rectangle2D();
+            };
         }
     }
 }
