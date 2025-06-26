@@ -4,7 +4,7 @@
 
 #include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererOpenGLMeshRenderer.hpp>
-#include <FrenchieRendererOpenGLRectMesh.hpp>
+#include <FrenchieRendererOpenGLMesh.hpp>
 
 #include <FrenchieCoreFlyweight.hpp>
 #include <FrenchieCoreHelpers.hpp>
@@ -38,7 +38,7 @@ Scene::~Scene(){}
 
 bool Scene::awake() 
 {
-    RectMesh* mesh = FlyweightFactory::instance()->Create<RectMesh>();
+    Rectangle2D* mesh = FlyweightFactory::instance()->Create<Rectangle2D>();
 
     // create shader
     Shader* shader = 
