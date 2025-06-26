@@ -94,9 +94,9 @@ namespace Frenchie
                     auto child_3 = new MeshRenderer(mesh, shader, "Child-3", child_2);
 
                     root->set_position(glm::vec3(-0.1f, -0.1f, 0.f));
-                    child_1->set_position(glm::vec3(0.1f, 0.1f, 0.f));
-                    child_2->set_position(glm::vec3(0.1f, 0.1f, 0.f));
-                    child_3->set_position(glm::vec3(0.1f, 0.1f, 0.f));
+                    child_1->set_position(glm::vec3(30.f, 30.f, 0.f));
+                    child_2->set_position(glm::vec3(100.f, 100.f, 0.f));
+                    child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
 
                     return m_Viewport->awake();
                 }
