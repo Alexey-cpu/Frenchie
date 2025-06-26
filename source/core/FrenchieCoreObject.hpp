@@ -106,43 +106,10 @@ namespace Frenchie
             }
 
             // virtual API
-            virtual bool awake()
-            {
-                for(auto&& child : m_Children)
-                {
-                    if(child != nullptr) 
-                        child->awake();
-                }
-
-                return true;
-            }
-
-            virtual void frame_start()
-            {
-                for(auto&& child : m_Children)
-                {
-                    if(child != nullptr) 
-                        child->frame_start();
-                }
-            }
-
-            virtual void frame_update()
-            {
-                for(auto&& child : m_Children)
-                {
-                    if(child != nullptr) 
-                        child->frame_update();
-                }
-            }
-
-            virtual void frame_finish()
-            {
-                for(auto&& child : m_Children)
-                {
-                    if(child != nullptr) 
-                        child->frame_finish();
-                }
-            }
+            virtual bool awake();
+            virtual void frame_start();
+            virtual void frame_update();
+            virtual void frame_finish();
 
         protected:
 

@@ -100,8 +100,8 @@ glm::mat4 Transform::compute_local_model_matrix() const
     glm::mat4 matrix(1.f);
 
     return glm::translate(matrix, m_Position) * 
-            glm::rotate(matrix, glm::radians(m_Rotation.y), glm::vec3(1.f, 0.f, 0.f)) * 
-            glm::rotate(matrix, glm::radians(m_Rotation.x), glm::vec3(0.f, 1.f, 0.f)) * 
+            glm::rotate(matrix, glm::radians(m_Rotation.x), glm::vec3(1.f, 0.f, 0.f)) * 
+            glm::rotate(matrix, glm::radians(m_Rotation.y), glm::vec3(0.f, 1.f, 0.f)) * 
             glm::rotate(matrix, glm::radians(m_Rotation.z), glm::vec3(0.f, 0.f, 1.f)) * 
             glm::scale(matrix, m_Scale);
 }

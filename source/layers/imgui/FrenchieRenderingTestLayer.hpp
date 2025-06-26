@@ -86,9 +86,11 @@ namespace Frenchie
                     auto child_2 = new MeshRenderer(mesh, shader, "Child-2", child_1);
                     auto child_3 = new MeshRenderer(mesh, shader, "Child-3", child_2);
 
-                    root->set_position(glm::vec3(-0.1f, -0.1f, 0.f));
-                    child_1->set_position(glm::vec3(30.f, 30.f, 0.f));
-                    child_2->set_position(glm::vec3(100.f, 100.f, 0.f));
+                    root->set_position(glm::vec3(0.1f, 0.0f, 0.f));
+                    root->set_rotation(glm::vec3(0.f, 0.f, 0.f));
+                    
+                    child_1->set_position(glm::vec3(200.f, 200.f, 0.f));
+                    child_2->set_position(glm::vec3(200.f, 200.f, 0.f));
                     child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
 
                     return m_Viewport->awake();
@@ -107,6 +109,26 @@ namespace Frenchie
                 virtual void frame_finish() override
                 {
                     m_Viewport->set_size(Frenchie::Application::GLApplication::instance()->get_window_size());
+
+                    m_Viewport->apply_to_children(
+                        [](Object* _Object)
+                        {
+                            Transform* transform = 
+                                dynamic_cast<Transform*>(_Object);
+
+                            if(transform == nullptr || dynamic_cast<Camera*>(_Object) != nullptr) 
+                                return;
+
+                            transform->set_rotation(
+                                glm::vec3(
+                                    0.f,//glm::degrees(2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime()), 
+                                    glm::degrees(2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime()), 
+                                    0.f//glm::degrees(2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime())
+                                )
+                            );
+                        }
+                    );
+
                     m_Viewport->frame_finish();
                 }
                 
