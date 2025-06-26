@@ -23,7 +23,17 @@ namespace Frenchie
             public:
 
                 Flyweight(){}
-                virtual ~Flyweight(){}
+                virtual ~Flyweight()
+                {
+                    for(auto&& resources : m_Resources)
+                    {
+                        for(auto&& resource : resources.second)
+                        {
+                            if(resource.second != nullptr) 
+                                delete resource.second;
+                        }
+                    }
+                }
 
                 template<typename Type, typename ...Arguments>
                 Type* request(std::string _Key, Arguments ... _Args)
@@ -33,10 +43,10 @@ namespace Frenchie
                     auto       iterator  = resources.find(_Key);
 
                     if(iterator != resources.end()) 
-                        return std::dynamic_pointer_cast<Wrapper<Type>>(iterator->second)->get_data();
+                        return dynamic_cast<Wrapper<Type>*>(iterator->second)->get_data();
 
-                    auto instance = create_raw_pointer<Type>(_Args...);
-                    resources[_Key] = std::make_shared<Wrapper<Type>>(instance);
+                    auto instance   = new Type(_Args...);
+                    resources[_Key] = new Wrapper<Type>(instance);
                     return instance;
                 }
 
@@ -53,7 +63,7 @@ namespace Frenchie
                     {
                         try
                         {
-                            _Function(std::dynamic_pointer_cast<Wrapper<Type>>(resource.second)->get_data());
+                            _Function(dynamic_cast<Wrapper<Type>*>(resource.second)->get_data());
                         }
                         catch(...)
                         {
@@ -93,10 +103,10 @@ namespace Frenchie
                 };
 
                 std::map<
-                    std::type_index,          // data type
+                    std::type_index,   // data type
                     std::map<
-                        std::string,          // data key
-                        std::shared_ptr<Data> // data container
+                        std::string,   // data key
+                        Data*          // data container
                         >> m_Resources;
             };
         }
