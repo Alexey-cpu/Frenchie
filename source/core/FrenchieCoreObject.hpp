@@ -11,24 +11,7 @@ namespace Frenchie
 {
     namespace Core
     {
-        class Behaviour
-        {
-        public:
-            Behaviour(){}
-            virtual ~Behaviour(){}
-
-            // virtual API
-            virtual bool awake()
-            {
-                return true;
-            }
-
-            virtual void frame_start(){}
-            virtual void frame_update(){}
-            virtual void frame_finish(){}
-        };
-
-        class Object : public Behaviour
+        class Object
         {
         public:
             
@@ -123,7 +106,7 @@ namespace Frenchie
             }
 
             // virtual API
-            virtual bool awake() override
+            virtual bool awake()
             {
                 for(auto&& child : m_Children)
                 {
@@ -134,7 +117,7 @@ namespace Frenchie
                 return true;
             }
 
-            virtual void frame_start() override
+            virtual void frame_start()
             {
                 for(auto&& child : m_Children)
                 {
@@ -143,7 +126,7 @@ namespace Frenchie
                 }
             }
 
-            virtual void frame_update() override
+            virtual void frame_update()
             {
                 for(auto&& child : m_Children)
                 {
@@ -152,7 +135,7 @@ namespace Frenchie
                 }
             }
 
-            virtual void frame_finish() override
+            virtual void frame_finish()
             {
                 for(auto&& child : m_Children)
                 {
