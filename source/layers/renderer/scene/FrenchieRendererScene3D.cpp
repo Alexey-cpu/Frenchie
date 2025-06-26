@@ -1,11 +1,10 @@
 #include <FrenchieRendererScene3D.hpp>
 #include <FrenchieRendererCamera.hpp>
-#include <FrenchieRendererOpenGLShader.hpp>
+#include <FrenchieRendererShader.hpp>
 
 #include <FrenchieCoreFlyweight.hpp>
 
 using namespace Frenchie::Renderer;
-using namespace Frenchie::Renderer::OpenGL;
 
 Scene3D::Scene3D(
     const float&            _Depth,
@@ -98,22 +97,14 @@ void Scene3D::frame_start()
     auto viewportScale    = get_viewport_scale();
     auto viewMatrix       = camera->get_view_matrix();
 
-    Frenchie::Core::FlyweightFactory::instance()->apply_to_all_instances(
-        [&projectionMatrix, &viewMatrix, &viewportScale](std::any _Instance)
+    Frenchie::Core::Flyweight::instance()->apply_to_all_instances<Shader>(
+        [&projectionMatrix, &viewMatrix, &viewportScale](Shader* _Instance)
         {
-            try
-            {
-                Shader* shader = std::any_cast<Shader*>(_Instance);
-
-                shader->begin();
-                shader->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
-                shader->set_uniform<glm::vec3>("u_ViewportScale", glm::vec3(1.f));
-                shader->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
-                shader->end();
-            }
-            catch(...)
-            {
-            }
+            _Instance->begin();
+            _Instance->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
+            _Instance->set_uniform<glm::vec3>("u_ViewportScale", glm::vec3(1.f));
+            _Instance->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
+            _Instance->end();
         }
     );
 
