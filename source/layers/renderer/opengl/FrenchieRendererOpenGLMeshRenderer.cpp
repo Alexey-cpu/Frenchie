@@ -31,7 +31,6 @@ void MeshRenderer::frame_finish()
         return;
 
     m_Shader->begin();
-    
     m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", m_ModelMatrix);
     m_Shader->set_uniform<glm::vec4>("u_Color", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
     m_Mesh->render();

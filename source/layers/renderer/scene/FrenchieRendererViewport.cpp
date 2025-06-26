@@ -33,7 +33,7 @@ glm::vec3 Viewport::get_viewport_scale() const
 {
     float scaleX = 1.f / std::max<float>((float)m_Size.x, 1.f);
     float scaleY = 1.f / std::max<float>((float)m_Size.y, 1.f);
-    return glm::vec3(scaleX, scaleY, 1.f);
+    return glm::vec3(scaleX, scaleY, 1.f / 1e5);
 }
 
 glm::vec3 Viewport::get_axis() const
@@ -95,10 +95,11 @@ void Viewport::frame_start()
 
     // configure all shaders that have been loaded
     auto projectionMatrix = get_projection_matrix();
+    auto viewportScale    = get_viewport_scale();
     auto viewMatrix       = camera->get_view_matrix();
 
     Frenchie::Core::FlyweightFactory::instance()->apply_to_all_instances(
-        [&projectionMatrix, &viewMatrix](std::any _Instance)
+        [&projectionMatrix, &viewMatrix, &viewportScale](std::any _Instance)
         {
             try
             {
@@ -106,6 +107,7 @@ void Viewport::frame_start()
 
                 shader->begin();
                 shader->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
+                shader->set_uniform<glm::vec3>("u_ViewportScale", glm::vec3(1.f));
                 shader->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
                 shader->end();
             }
@@ -116,7 +118,7 @@ void Viewport::frame_start()
     );
 
     // setup viewport scale
-    set_scale(Viewport::get_viewport_scale());
+    set_scale(get_viewport_scale());
 
     // call base implementation
     Transform::frame_start();

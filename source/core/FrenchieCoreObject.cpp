@@ -135,3 +135,41 @@ std::list<Object*> Object::find_children_recursive(const std::function<bool(Obje
 
     return result;
 }
+
+bool Object::awake()
+{
+    for(auto&& child : m_Children)
+    {
+        if(child != nullptr) 
+            child->awake();
+    }
+
+    return true;
+}
+
+void Object::frame_start()
+{
+    for(auto&& child : m_Children)
+    {
+        if(child != nullptr) 
+            child->frame_start();
+    }
+}
+
+void Object::frame_update()
+{
+    for(auto&& child : m_Children)
+    {
+        if(child != nullptr) 
+            child->frame_update();
+    }
+}
+
+void Object::frame_finish()
+{
+    for(auto&& child : m_Children)
+    {
+        if(child != nullptr) 
+            child->frame_finish();
+    }
+}

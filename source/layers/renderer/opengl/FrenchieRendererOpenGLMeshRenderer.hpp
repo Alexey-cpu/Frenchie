@@ -34,7 +34,7 @@ namespace Frenchie
 
             protected:
 
-                Mesh*          m_Mesh   = nullptr;
+                Mesh*   m_Mesh   = nullptr;
                 Shader* m_Shader = nullptr;
             };
         }
