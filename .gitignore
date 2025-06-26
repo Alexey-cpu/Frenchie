@@ -4,3 +4,4 @@ dist/
 logs/
 *.pro.user
 *.txt.user
+*.ini
