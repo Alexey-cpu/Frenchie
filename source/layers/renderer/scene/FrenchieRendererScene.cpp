@@ -18,14 +18,14 @@ using namespace Frenchie::Renderer::OpenGL;
 Scene::Scene(
     const std::string&      _Name, 
     Frenchie::Core::Object* _Parent) : 
-    Frenchie::Core::Object(_Name, _Parent){}
+    Transform(_Name, _Parent){}
 
 Scene::~Scene(){}
 
 // virtual API
 bool Scene::awake()
 {
-    return Frenchie::Core::Object::awake();
+    return Transform::awake();
 }
 
 void Scene::frame_start()
@@ -38,7 +38,8 @@ void Scene::frame_start()
             viewport->find_child<Camera>() : 
                 nullptr;
 
-    if(viewport == nullptr || camera == nullptr) 
+    if(viewport == nullptr || 
+            camera == nullptr) 
         return;
 
     auto projectionMatrix = viewport->get_projection_matrix();
@@ -64,15 +65,17 @@ void Scene::frame_start()
         }
     );
 
-    Frenchie::Core::Object::frame_start();
+    m_Scale = viewportScale;
+
+    Transform::frame_start();
 }
 
 void Scene::frame_update()
 {
-    Frenchie::Core::Object::frame_update();
+    Transform::frame_update();
 }
 
 void Scene::frame_finish()
 {
-    Frenchie::Core::Object::frame_finish();
+    Transform::frame_finish();
 }

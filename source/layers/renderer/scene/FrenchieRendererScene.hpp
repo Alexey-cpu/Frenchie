@@ -2,11 +2,13 @@
 
 #include <FrenchieCoreObject.hpp>
 
+#include <FrenchieRendererTransform.hpp>
+
 namespace Frenchie
 {
     namespace Renderer
     {
-        class Scene : public Frenchie::Core::Object
+        class Scene : public Transform
         {
         public:
             Scene(const std::string& _Name = "Frenchie::Renderer::Scene", Frenchie::Core::Object* _Parent = nullptr);
