@@ -18,12 +18,12 @@ bool Mesh::is_instanced() const
     return !m_Vertexes.empty() && !m_Indexes.empty();
 }
 
-void Mesh::setup()
+bool Mesh::awake()
 {
     if(!is_instanced())
     {
         Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPEN_GL::SETUP_FAILED::MESH_IS_NOT_INSTANCED"));
-        return;
+        return false;
     }
 
     // create buffers and vertex array
@@ -47,9 +47,15 @@ void Mesh::setup()
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+
+    return true;
 }
 
-void Mesh::render()
+void Mesh::frame_start(){}
+
+void Mesh::frame_update(){}
+
+void Mesh::frame_finish()
 {
     if(!is_instanced()) 
     {
@@ -62,6 +68,7 @@ void Mesh::render()
     glDrawElements(GL_TRIANGLES, (int)m_Indexes.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
+
 
 // Rectangle2D
 Rectangle2D::Rectangle2D()
@@ -87,8 +94,6 @@ Rectangle2D::Rectangle2D()
         // triangle 2
         3, 4, 5
     };
-
-    setup();
 }
 
 Rectangle2D::~Rectangle2D(){}

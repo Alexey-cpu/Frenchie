@@ -10,7 +10,7 @@ MeshRenderer::~MeshRenderer(){}
 
 bool MeshRenderer::awake()
 {
-    return Transform::awake();
+    return Transform::awake() && m_Mesh != nullptr && m_Mesh->awake();
 }
 
 void MeshRenderer::frame_start()
@@ -33,7 +33,8 @@ void MeshRenderer::frame_finish()
     m_Shader->begin();
     m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", m_ModelMatrix);
     m_Shader->set_uniform<glm::vec4>("u_Color", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
-    m_Mesh->render();
+    
+    m_Mesh->frame_finish();
     
     m_Shader->end();
 }
