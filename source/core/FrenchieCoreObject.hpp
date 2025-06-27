@@ -11,6 +11,28 @@ namespace Frenchie
 {
     namespace Core
     {
+        class Root;
+        class Object;
+
+        class Root
+        {
+        public:
+            Root();
+            ~Root();
+
+            void push(Object* _Object);
+            void pop(Object* _Object);
+            bool is_being_restroyed() const;
+
+        private:
+
+            bool              m_IsBeingDestroed   = false;
+            int               m_ReferenceCounter  = 0;
+            std::set<Object*> m_Objects           = std::set<Object*>();
+
+            friend class Object;
+        };
+
         class Object
         {
         public:
@@ -115,5 +137,5 @@ namespace Frenchie
             
             std::list<Object*>::iterator m_SelfIterator;
         };
-    }
+    };
 }

@@ -23,12 +23,12 @@ namespace Frenchie
     {
         using namespace Frenchie::Renderer;
 
-        class Scene : public Layer
+        class SceneView : public Layer
         {
         public:
 
-            Scene(const std::string& _Name, Scene3D* _Scene3D);
-            virtual ~Scene();
+            SceneView(const std::string& _Name, Scene3D* _Scene3D);
+            virtual ~SceneView();
 
             virtual bool awake() override;
             virtual void frame_start() override;
