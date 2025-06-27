@@ -21,12 +21,12 @@ namespace Frenchie
     {
         using namespace Frenchie::Renderer;
 
-        class SceneView : public Layer
+        class HierarchyView : public Layer
         {
         public:
 
-            SceneView(const std::string& _Name, Scene3D* _Scene3D);
-            virtual ~SceneView();
+            HierarchyView(const std::string& _Name, Scene3D* _Scene3D);
+            virtual ~HierarchyView();
 
             virtual bool awake() override;
             virtual void frame_start() override;
@@ -37,11 +37,10 @@ namespace Frenchie
             virtual bool is_closed() override;
 
         protected:
+            Scene3D* m_Scene = nullptr;
+            char m_TextInput[512]{};
 
-            Scene3D*     m_Scene = nullptr;
-            unsigned int m_Framebuffer;
-            unsigned int m_TextureColorBuffer;
-            unsigned int m_RBO;
+            void DrawTree(Transform*, int&);
         };
     }
-}
+};
