@@ -39,11 +39,10 @@ namespace Frenchie
 
         protected:
 
-            Scene3D* m_Scene = nullptr;
-
-            unsigned int framebuffer;
-            unsigned int textureColorbuffer;
-            unsigned int rbo;
+            Scene3D*     m_Scene = nullptr;
+            unsigned int m_Framebuffer;
+            unsigned int m_TextureColorBuffer;
+            unsigned int m_RBO;
         };
     }
 }

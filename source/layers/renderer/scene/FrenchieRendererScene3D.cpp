@@ -97,12 +97,11 @@ void Scene3D::frame_start()
     auto viewportScale    = get_viewport_scale();
     auto viewMatrix       = camera->get_view_matrix();
 
-    Frenchie::Core::Flyweight::instance()->apply_to_all_instances<Shader>(
+    Frenchie::Core::Flyweight::instance()->apply_function_instances<Shader>(
         [&projectionMatrix, &viewMatrix, &viewportScale](Shader* _Instance)
         {
             _Instance->begin();
             _Instance->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
-            _Instance->set_uniform<glm::vec3>("u_ViewportScale", glm::vec3(1.f));
             _Instance->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
             _Instance->end();
         }
