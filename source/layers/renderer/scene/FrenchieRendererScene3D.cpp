@@ -1,8 +1,7 @@
 #include <FrenchieRendererScene3D.hpp>
 #include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererShader.hpp>
-
-#include <FrenchieCoreFlyweight.hpp>
+#include <FrenchieApplication.hpp>
 
 using namespace Frenchie::Renderer;
 
@@ -19,7 +18,15 @@ Scene3D::Scene3D(
     m_Aspect(_Aspect), 
     m_Fovy(_Fovy), 
     m_Axis(_Axis), 
-    m_Size(_Size){}
+    m_Size(_Size)
+    {
+        create_raw_pointer<Camera>(
+            glm::vec3(+0.f, +0.f, +1.f),
+            glm::vec3(+0.f, +1.f, +0.f),
+            "Camera",
+            this
+        );
+    }
 
 Scene3D::~Scene3D(){}
 
@@ -97,7 +104,7 @@ void Scene3D::frame_start()
     auto viewportScale    = get_viewport_scale();
     auto viewMatrix       = camera->get_view_matrix();
 
-    Frenchie::Core::AssetManager::instance()->apply_function_instances<Shader>(
+    Frenchie::Application::AssetManager::instance()->apply_function_instances<Shader>(
         [&projectionMatrix, &viewMatrix, &viewportScale](Shader* _Instance)
         {
             _Instance->begin();

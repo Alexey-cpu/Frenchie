@@ -1,70 +1,61 @@
 #include <FrenchieCoreObject.hpp>
-//#include <FrenchieCoreSingleton.hpp>
-#include <FrenchieCoreFlyweight.hpp>
+#include <FrenchieCoreLogger.hpp>
+#include <FrenchieCoreSingleton.hpp>
 
 // STL
 #include <set>
 #include <iostream>
 
-namespace Frenchie
+using namespace Frenchie::Core;
+
+// Root
+Root::Root(){}
+
+Root::~Root()
 {
-    namespace Core
+    Logger::instance()->info("---------------------------------------------------------");
+    Logger::instance()->info("FRENCHIE::CORE::OBJECT_MANAGER");
+    Logger::instance()->info("---------------------------------------------------------");
+
+    m_IsBeingDestroed = true;
+
+    for(auto&& object : m_Objects)
     {
-        class ObjectManager
-        {
-        public:
-            ObjectManager(){}
+        if(object == nullptr) 
+            continue;
             
-            ~ObjectManager()
-            {
-                Logger::instance()->info("FRENCHIE::CORE::OBJECT_MANAGER::RELEASE");
-
-                m_IsBeingDestroying = true;
-
-                for(auto&& object : m_Objects)
-                {
-                    if(object == nullptr) 
-                        continue;
-                        
-                    Logger::instance()->info(fmt::format("{}", object->get_name()));
-                    delete object;
-                }
-            }
-
-            void push(Object* _Object)
-            {
-                m_Objects.insert(_Object);
-            }
-
-            void pop(Object* _Object)
-            {
-                m_Objects.erase(_Object);
-            }
-
-            bool is_being_restroyed() const
-            {
-                return m_IsBeingDestroying;
-            }
-
-            static ObjectManager* instance()
-            {
-                return Frenchie::Core::ResourceManager::instance()
-                        ->request<ObjectManager>(Frenchie::Core::Priority::LOW);
-            }
-
-        protected:
-            bool              m_IsBeingDestroying = false;
-            std::set<Object*> m_Objects      = std::set<Object*>();
-        };
+        Logger::instance()->info(fmt::format("{}", object->get_name()));
+        delete object;
     }
+
+    Logger::instance()->info(fmt::format("Reference count: {}", m_ReferenceCounter));
 }
 
-using namespace Frenchie::Core;
+void Root::push(Object* _Object)
+{
+    m_Objects.insert(_Object);
+}
+
+void Root::pop(Object* _Object)
+{
+    m_Objects.erase(_Object);
+}
+
+bool Root::is_being_restroyed() const
+{
+    return m_IsBeingDestroed;
+}
 
 // Object
 Object::Object(const std::string& _Name, Object* _Parent) : m_Name(_Name)
 {
     set_parent(_Parent);
+
+    Logger::instance()->info(fmt::format("Reference count: {} {}", 
+        Singleton<Root>::instance()->m_ReferenceCounter, 
+        get_name()));
+
+    Singleton<Root>::instance()->m_ReferenceCounter++;
 }
 
 Object::~Object()
@@ -74,10 +65,12 @@ Object::~Object()
         m_Parent->m_Children.erase(m_SelfIterator);
 
     // pop self from object manager
-    if(!ObjectManager::instance()->is_being_restroyed()) 
-        ObjectManager::instance()->pop(this);
+    if(!Singleton<Root>::instance()->is_being_restroyed()) 
+        Singleton<Root>::instance()->pop(this);
 
     remove_all_children();
+
+    Singleton<Root>::instance()->m_ReferenceCounter--;
 }
 
 std::list<Object*> Object::get_children() const
@@ -95,11 +88,12 @@ void Object::set_parent(Object* _Parent)
     if(m_Parent == nullptr)
     {
         // push all orphant objects to the object manager
-        ObjectManager::instance()->push(this);
+        Singleton<Root>::instance()->push(this);
         return;
     }
 
-    ObjectManager::instance()->pop(this);
+    // if the object has parent --> pop it from object manager
+    Singleton<Root>::instance()->pop(this);
     
     // break cycle
     auto found = m_Parent->get_parent_recursive(

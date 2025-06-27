@@ -18,13 +18,6 @@ namespace Frenchie
 {
     namespace Core
     {
-        enum Priority
-        {
-            HIGH,
-            MEDIUM,
-            LOW
-        };
-
         template<typename Key>
         class Flyweight
         {
@@ -124,8 +117,5 @@ namespace Frenchie
                     Data*          // data container
                     >> m_Resources;
         };
-
-        typedef Frenchie::Core::Singleton<Frenchie::Core::Flyweight<std::string>> AssetManager;
-        typedef Frenchie::Core::Singleton<Frenchie::Core::Flyweight<Priority>> ResourceManager;
     }
 };

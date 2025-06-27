@@ -2,8 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreFlyweight.hpp>
-#include <FrenchieCoreLogger.hpp>
-
+#include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreObject.hpp>
 
 // STL
@@ -82,17 +81,9 @@ namespace Frenchie
                 bool                              m_Closed     = false;
                 GLFWwindow*                       m_MainWindow = nullptr;
             };
-        }
-
-        class Application
-        {
-        public:
-
-            static Frenchie::Application::OpenGL::Application* instance()
-            {
-                return Frenchie::Core::ResourceManager::instance()
-                        ->request<Frenchie::Application::OpenGL::Application>(Frenchie::Core::Priority::HIGH);
-            }
         };
+
+        typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> Application;
+        typedef Frenchie::Core::Singleton<Frenchie::Core::Flyweight<std::string>> AssetManager;
     };
 };

@@ -14,27 +14,16 @@
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
-Scene::Scene(const std::string& _Name, Scene3D* _Scene3D) : Layer(_Name), m_Scene(_Scene3D)
-{
-    if(m_Scene == nullptr) 
-        return;
+SceneView::SceneView(const std::string& _Name, Scene3D* _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
 
-    create_raw_pointer<Camera>(
-        glm::vec3(+0.f, +0.f, +1.f),
-        glm::vec3(+0.f, +1.f, +0.f),
-        "Camera",
-        m_Scene
-    );
-}
-
-Scene::~Scene()
+SceneView::~SceneView()
 {
     glDeleteBuffers(1, &m_Framebuffer);
     glDeleteBuffers(1, &m_RBO);
     glDeleteTextures(1, &m_TextureColorBuffer);
 }
 
-bool Scene::awake() 
+bool SceneView::awake() 
 {
     if(m_Scene == nullptr || !m_Scene->awake()) 
         return false;
@@ -75,7 +64,7 @@ bool Scene::awake()
     return true;
 }
 
-void Scene::frame_start()
+void SceneView::frame_start()
 {
     if(m_Scene == nullptr) 
         return;
@@ -83,7 +72,7 @@ void Scene::frame_start()
     m_Scene->frame_start();
 }
 
-void Scene::frame_update()
+void SceneView::frame_update()
 {
     if(m_Scene == nullptr) 
         return;
@@ -114,7 +103,7 @@ void Scene::frame_update()
     m_Scene->frame_update();
 }
 
-void Scene::frame_finish()
+void SceneView::frame_finish()
 {
     if(m_Scene == nullptr) 
         return;
@@ -171,17 +160,17 @@ void Scene::frame_finish()
     glDisable(GL_STENCIL_TEST);
 }
 
-void Scene::finish()
+void SceneView::finish()
 {
     Layer::finish();
 }
 
-void Scene::close()
+void SceneView::close()
 {
     Layer::close();
 }
 
-bool Scene::is_closed()
+bool SceneView::is_closed()
 {
     return Layer::is_closed();
 }
