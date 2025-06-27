@@ -2,6 +2,7 @@
 
 // Custom
 #include <FrenchieCoreObject.hpp>
+#include <FrenchieRendererInterfaces.hpp>
 
 // GLM
 #include <glm/glm.hpp>
