@@ -54,7 +54,7 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::DrawTree(Transform* _Transform, int& _ID)
+void HierarchyView::DrawTree(Object* _Transform, int& _ID)
 {
     if(_Transform == nullptr || m_Scene == nullptr) 
         return;
@@ -75,11 +75,7 @@ void HierarchyView::DrawTree(Transform* _Transform, int& _ID)
             m_Scene->apply_to_children_recursive(
                 [](Object* _Object)
                 {
-                    Transform* transform =
-                        dynamic_cast<Transform*>(_Object);
-                    
-                    if(transform != nullptr) 
-                        transform->set_selected(false);
+                    _Object->set_selected(false);
                 }
             );
 
@@ -117,10 +113,7 @@ void HierarchyView::DrawTree(Transform* _Transform, int& _ID)
 
         for(auto&& child : children)
         {
-            Transform* transform = 
-                dynamic_cast<Transform*>(child);
-
-            DrawTree(transform, _ID);
+            DrawTree(child, _ID);
         }
 
         ImGui::TreePop();
