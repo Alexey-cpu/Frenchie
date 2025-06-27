@@ -28,7 +28,9 @@ namespace Frenchie
 
             ShaderLoader(const unsigned int _ID, const std::filesystem::path& _Path) : m_ID(_ID)
             {
+                Frenchie::Core::Logger::instance()->info("------------------------------------------------------------------------------");
                 Frenchie::Core::Logger::instance()->info(fmt::format("FRENCHIE::RENDERER::SHADER"));
+                Frenchie::Core::Logger::instance()->info("------------------------------------------------------------------------------");
                 Frenchie::Core::Logger::instance()->info(fmt::format("Processing: {}", _Path.string()));
 
                 // load
@@ -82,15 +84,10 @@ using namespace Frenchie::Renderer;
 // ShaderProgram
 Shader::Shader(const std::filesystem::path& _Vertex, const std::filesystem::path& _Fragment) : 
     m_VertexShaderPath(_Vertex), 
-    m_FragmentShaderPath(_Fragment)
-    {
-        Frenchie::Core::Logger::instance()->info("Shader::~Shader()");
-    }
+    m_FragmentShaderPath(_Fragment){}
 
 Shader::~Shader()
 {
-    Frenchie::Core::Logger::instance()->error("Shader::~Shader()");
-
     if(get_id())
         glDeleteProgram(get_id());
 }
