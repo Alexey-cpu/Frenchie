@@ -34,9 +34,11 @@ namespace Frenchie
                 Frenchie::Core::Logger::instance()->info(fmt::format("Processing: {}", _Path.string()));
 
                 // load
+                std::ifstream ifsream(_Path);
+
                 std::string source = 
                     std::string(
-                        (std::istreambuf_iterator<char>(std::ifstream(_Path))), 
+                        (std::istreambuf_iterator<char>(ifsream)), 
                         (std::istreambuf_iterator<char>()));
 
                 if(source.empty())

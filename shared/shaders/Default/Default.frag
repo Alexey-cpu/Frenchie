@@ -1,8 +1,13 @@
 #version 330 core
+
+//outputs
+out vec4 fragColor;
+
+//uniforms
 uniform vec4 u_Color;
 
 void main()
 {
     // setup vertex color
-    gl_FragColor = u_Color;
+    fragColor = u_Color;
 }
