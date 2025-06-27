@@ -84,6 +84,16 @@ namespace Frenchie
 
             std::list<Object*> get_children() const;
 
+            bool is_selected() const
+            {
+                return (bool)(m_Flags | Flags::Selected);
+            }
+
+            bool is_focused() const
+            {
+                return (bool)(m_Flags | Flags::Focused);
+            }
+
             // setters
             void set_name(const std::string& _Value)
             {
@@ -91,6 +101,24 @@ namespace Frenchie
             }
 
             void set_parent(Object* _Parent);
+
+                        void set_selected(bool _Value)
+            {
+                set_flag(Flags::Selected, _Value);
+            }
+
+            void set_focused(bool _Value)
+            {
+                set_flag(Flags::Focused, _Value);
+            }
+
+            void set_flag(int _N, bool _Value)
+            {
+                if(_Value)
+                    m_Flags |= ((unsigned int)1 << _N);
+                else 
+                    m_Flags &= ~((unsigned int)1 << _N);
+            }
             
             // API
             void remove_all_children();
@@ -132,6 +160,21 @@ namespace Frenchie
             std::string                  m_Name     = std::string();
             Object*                      m_Parent   = nullptr;
             mutable std::list<Object*>   m_Children = std::list<Object*>();
+
+            enum Flags
+            {
+                Selected,
+                Hovered,
+                Focused,
+                LeftMouseClicked,
+                RightMouseClicked,
+                MiddleMouseClicked,
+                LeftMouseDoubleClicked,
+                RightMouseDoubleClicked,
+                MiddleMouseDoubleClicked,
+            };
+
+            unsigned int m_Flags;
 
         private:
             
