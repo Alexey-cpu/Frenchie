@@ -51,7 +51,7 @@ namespace Frenchie
                 }
 
                 template<typename Type>
-                void apply_to_all_instances(const std::function<void(Type* _Instance)>& _Function)
+                void apply_function_instances(const std::function<void(Type* _Instance)>& _Function)
                 {
                     if(_Function == nullptr) 
                         return;
@@ -61,13 +61,11 @@ namespace Frenchie
 
                     for(auto&& resource : resources)
                     {
-                        try
-                        {
-                            _Function(dynamic_cast<Wrapper<Type>*>(resource.second)->get_data());
-                        }
-                        catch(...)
-                        {
-                        }
+                        Wrapper<Type>* object = 
+                            dynamic_cast<Wrapper<Type>*>(resource.second);
+
+                        if(object != nullptr)
+                            _Function(object->get_data());
                     }
                 }
 
