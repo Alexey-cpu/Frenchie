@@ -1,9 +1,63 @@
 #include <FrenchieCoreObject.hpp>
-#include <FrenchieCoreSingleton.hpp>
+//#include <FrenchieCoreSingleton.hpp>
+#include <FrenchieCoreFlyweight.hpp>
 
 // STL
 #include <set>
 #include <iostream>
+
+namespace Frenchie
+{
+    namespace Core
+    {
+        class ObjectManager
+        {
+        public:
+            ObjectManager(){}
+            
+            ~ObjectManager()
+            {
+                Logger::instance()->info("FRENCHIE::CORE::OBJECT_MANAGER::RELEASE");
+
+                m_IsBeingDestroying = true;
+
+                for(auto&& object : m_Objects)
+                {
+                    if(object == nullptr) 
+                        continue;
+                        
+                    Logger::instance()->info(fmt::format("{}", object->get_name()));
+                    delete object;
+                }
+            }
+
+            void push(Object* _Object)
+            {
+                m_Objects.insert(_Object);
+            }
+
+            void pop(Object* _Object)
+            {
+                m_Objects.erase(_Object);
+            }
+
+            bool is_being_restroyed() const
+            {
+                return m_IsBeingDestroying;
+            }
+
+            static ObjectManager* instance()
+            {
+                return Frenchie::Core::ResourceManager::instance()
+                        ->request<ObjectManager>(Frenchie::Core::Priority::LOW);
+            }
+
+        protected:
+            bool              m_IsBeingDestroying = false;
+            std::set<Object*> m_Objects      = std::set<Object*>();
+        };
+    }
+}
 
 using namespace Frenchie::Core;
 
@@ -18,6 +72,10 @@ Object::~Object()
     // detach self from parent
     if(m_Parent != nullptr) 
         m_Parent->m_Children.erase(m_SelfIterator);
+
+    // pop self from object manager
+    if(!ObjectManager::instance()->is_being_restroyed()) 
+        ObjectManager::instance()->pop(this);
 
     remove_all_children();
 }
@@ -34,8 +92,14 @@ void Object::set_parent(Object* _Parent)
         m_Parent->m_Children.erase(m_SelfIterator);
     m_Parent = _Parent;
 
-    if(m_Parent == nullptr) 
+    if(m_Parent == nullptr)
+    {
+        // push all orphant objects to the object manager
+        ObjectManager::instance()->push(this);
         return;
+    }
+
+    ObjectManager::instance()->pop(this);
     
     // break cycle
     auto found = m_Parent->get_parent_recursive(

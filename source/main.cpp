@@ -29,14 +29,14 @@ int main(int, char**)
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
 
     // setup application
-    auto application = Frenchie::Application::GLApplication::instance();
+    auto application = Frenchie::Application::Application::instance();
     application->set_window_size(glm::vec2(2048, 1024));
     application->set_maximized(true);
 
     // push application layers
-    auto scene = create_shared_pointer<Scene3D>();
+    auto scene = create_raw_pointer<Scene3D>();
 
-    Mesh* mesh = Flyweight::instance()->request<Triangle2D>("Frenchie/Mesh/Triangle2D");
+    Mesh* mesh = AssetManager::instance()->request<Triangle2D>("Frenchie/Mesh/Triangle2D");
 
     // create shader
     Shader* shader = nullptr;
@@ -44,7 +44,7 @@ int main(int, char**)
     for(int i = 0; i < 1e3; i++)
     {
         shader = 
-            Flyweight::instance()->request<Shader>(
+            AssetManager::instance()->request<Shader>(
                 "Frenchie/Shader/Default",
                 std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert"),
                 std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")
@@ -52,7 +52,7 @@ int main(int, char**)
     }
 
     // create hierarchy
-    auto root    = new MeshRenderer(mesh, shader, "Root", scene.get());
+    auto root    = new MeshRenderer(mesh, shader, "Root", scene);
     auto child_1 = new MeshRenderer(mesh, shader, "Child-1", root);
     auto child_2 = new MeshRenderer(mesh, shader, "Child-2", child_1);
     auto child_3 = new MeshRenderer(mesh, shader, "Child-3", child_2);
@@ -63,7 +63,7 @@ int main(int, char**)
     child_2->set_position(glm::vec3(200.f, 200.f, 0.f));
     child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
 
-    application->push<Scene>("RenderingTest", scene.get());
+    application->push<Scene>("RenderingTest", scene);
 
     return application->execute();
 }

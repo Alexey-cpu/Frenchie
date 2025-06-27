@@ -26,6 +26,7 @@ namespace Frenchie
         class Scene : public Layer
         {
         public:
+
             Scene(const std::string& _Name, Scene3D* _Scene3D);
             virtual ~Scene();
 

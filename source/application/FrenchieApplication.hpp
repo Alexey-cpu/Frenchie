@@ -1,7 +1,10 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieCoreFlyweight.hpp>
 #include <FrenchieCoreLogger.hpp>
+
+#include <FrenchieCoreObject.hpp>
 
 // STL
 #include <iostream>
@@ -81,6 +84,15 @@ namespace Frenchie
             };
         }
 
-        typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> GLApplication;
+        class Application
+        {
+        public:
+
+            static Frenchie::Application::OpenGL::Application* instance()
+            {
+                return Frenchie::Core::ResourceManager::instance()
+                        ->request<Frenchie::Application::OpenGL::Application>(Frenchie::Core::Priority::HIGH);
+            }
+        };
     };
 };
