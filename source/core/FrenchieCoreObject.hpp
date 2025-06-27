@@ -14,7 +14,7 @@ namespace Frenchie
         class Root;
         class Object;
 
-        class Root
+        class Root final
         {
         public:
             Root();

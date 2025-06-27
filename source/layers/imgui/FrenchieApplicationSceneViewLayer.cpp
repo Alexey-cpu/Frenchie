@@ -32,12 +32,10 @@ bool SceneView::awake()
     int SCR_HEIGHT = 1024;
 
     // create frame buffer
-    m_Framebuffer;
     glGenFramebuffers(1, &m_Framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
     
     // create a color attachment texture
-    m_TextureColorBuffer;
     glGenTextures(1, &m_TextureColorBuffer);
     glBindTexture(GL_TEXTURE_2D, m_TextureColorBuffer);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
@@ -46,7 +44,6 @@ bool SceneView::awake()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_TextureColorBuffer, 0);
     
     // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-    m_RBO;
     glGenRenderbuffers(1, &m_RBO);
     glBindRenderbuffer(GL_RENDERBUFFER, m_RBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.

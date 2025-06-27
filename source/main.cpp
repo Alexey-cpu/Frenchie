@@ -1,5 +1,6 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationSceneViewLayer.hpp>
+#include <FrenchieApplicationHierarchyViewLayer.hpp>
 
 #include <FrenchieCoreFlyweight.hpp>
 
@@ -73,7 +74,8 @@ int main(int, char**)
     child_2->set_position(glm::vec3(200.f, 200.f, 0.f));
     child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
 
-    application->push<SceneView>("RenderingTest", scene);
+    application->push<SceneView>("SceneView", scene);
+    application->push<HierarchyView>("HierarchyView", scene);
 
     return application->execute();
 }
