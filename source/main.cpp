@@ -41,13 +41,19 @@ int main(int, char**)
     // create shader
     Shader* shader = nullptr;
 
+    auto shaderPath = std::filesystem::path(std::filesystem::current_path().string().append("/shared"));
+
+    Logger::instance()->info("---------------------------------------------------------------------------------");
+    Logger::instance()->info(fmt::format("shader path: {}", shaderPath.string()));
+    Logger::instance()->info("---------------------------------------------------------------------------------");
+
     for(int i = 0; i < 1e3; i++)
     {
         shader = 
             AssetManager::instance()->request<Shader>(
                 "Frenchie/Shader/Default",
-                std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert"),
-                std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")
+                shaderPath.string().append("/shaders/Default/Default.vert"),
+                shaderPath.string().append("/shaders/Default/Default.frag")
             );
     }
 
