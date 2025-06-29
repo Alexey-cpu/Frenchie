@@ -61,7 +61,7 @@ namespace Frenchie
             }
 
             template<typename Type>
-            void apply_function_instances(const std::function<void(Type* _Instance)>& _Function)
+            void apply_function_to_instances(const std::function<void(Type* _Instance)>& _Function)
             {
                 if(_Function == nullptr) 
                     return;

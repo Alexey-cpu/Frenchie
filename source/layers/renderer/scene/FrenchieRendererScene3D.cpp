@@ -98,7 +98,7 @@ void Scene3D::frame_start()
     auto viewportScale    = get_viewport_scale();
     auto viewMatrix       = camera->get_view_matrix();
 
-    Frenchie::Application::AssetManager::instance()->apply_function_instances<Shader>(
+    Frenchie::Application::AssetManager::instance()->apply_function_to_instances<Shader>(
         [&projectionMatrix, &viewMatrix, &viewportScale](Shader* _Instance)
         {
             _Instance->begin();
