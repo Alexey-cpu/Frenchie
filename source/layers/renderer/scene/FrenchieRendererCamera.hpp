@@ -10,7 +10,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Frenchie::Core::Hierarchy
+        class Camera : public Frenchie::Core::Object
         {
         public:
 

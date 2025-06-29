@@ -1,6 +1,7 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationSceneViewLayer.hpp>
 #include <FrenchieApplicationHierarchyViewLayer.hpp>
+#include <FrenchieApplicationInspectorViewLayer.hpp>
 
 #include <FrenchieCoreFlyweight.hpp>
 
@@ -9,37 +10,6 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
-
-// create_child()
-// remove_child()
-// move_child()
-
-// int main(int, char**)
-// {
-//     std::list<std::unique_ptr<int>> list;
-//     std::list<std::unique_ptr<int>> other;
-
-//     list.push_back(std::make_unique<int>(1));
-//     list.push_back(std::make_unique<int>(2));
-//     list.push_back(std::make_unique<int>(3));
-
-//     std::cout << "before \n";
-//     std::cout << "list \n";
-//     for(auto&& child : list) std::cout << (*child) << "\n";
-//     std::cout << "other \n";
-//     for(auto&& child : other) std::cout << (*child) << "\n";
-
-//     other.push_back(std::move(list.front()));
-//     list.erase(list.begin());
-
-//     std::cout << "after \n";
-//     std::cout << "list \n";
-//     for(auto&& child : list) std::cout << (*child) << "\n";
-//     std::cout << "other \n";
-//     for(auto&& child : other) std::cout << (*child) << "\n";
-
-//     return 0;
-// }
 
 int main(int, char**)
 {
@@ -89,8 +59,8 @@ int main(int, char**)
     child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
 
     application->push<SceneView>("SceneView-1", scene);
-    application->push<SceneView>("SceneView-2", scene);
     application->push<HierarchyView>("HierarchyView", scene);
+    application->push<InspectorView>("InspectorView", scene);
 
     return application->execute();
 }

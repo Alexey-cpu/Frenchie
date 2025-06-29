@@ -7,7 +7,7 @@ Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
     glm::vec3 _CameraWorldUpAxisDirection, 
     const std::string& _Name) : 
-    Frenchie::Core::Hierarchy(_Name),
+    Frenchie::Core::Object(_Name),
     m_CameraWorldPosition(_CameraWorldPosition), 
     m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
 

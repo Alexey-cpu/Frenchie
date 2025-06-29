@@ -38,7 +38,7 @@ namespace Frenchie
 
         protected:
 
-            std::shared_ptr<Scene3D>     m_Scene = nullptr;
+            std::shared_ptr<Scene3D> m_Scene = nullptr;
             unsigned int m_Framebuffer;
             unsigned int m_TextureColorBuffer;
             unsigned int m_RBO;

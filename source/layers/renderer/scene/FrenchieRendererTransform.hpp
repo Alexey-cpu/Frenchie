@@ -15,7 +15,7 @@ namespace Frenchie
     {
         using namespace Frenchie::Core;
 
-        class Transform : public Hierarchy, public IRenderer
+        class Transform : public Object, public IRenderer, public IEditor
         {
             public:
 
@@ -33,11 +33,14 @@ namespace Frenchie
             void set_rotation(const glm::vec3&);
             void set_scale(const glm::vec3&);
 
-            // virtual API
+            // IRenderer
             virtual bool awake() override;
             virtual void frame_start() override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
+
+            // IEditor
+            virtual void draw() override;
 
             // service methods
             glm::mat4 compute_local_model_matrix() const;
@@ -48,6 +51,14 @@ namespace Frenchie
                 glm::vec3 m_Rotation    = glm::vec3(0.f);
                 glm::vec3 m_Scale       = glm::vec3(1.f);
                 glm::mat4 m_ModelMatrix = glm::mat4(1.f);
+
+                class Editor
+                {
+                public:
+                    char m_PositionX[64]{};
+                    char m_PositionY[64]{};
+                    char m_PositionZ[64]{};
+                } m_Editor;
         };
     }   
 }

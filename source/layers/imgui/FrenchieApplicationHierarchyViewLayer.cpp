@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include <iostream>
+
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
@@ -54,35 +56,31 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::DrawTree(Hierarchy* _Transform, int& _ID)
+void HierarchyView::DrawTree(Object* _Transform, int& _ID)
 {
     if(_Transform == nullptr || m_Scene == nullptr) 
         return;
 
     ImGui::PushID(_ID++);
 
-    if (ImGui::TreeNodeEx((_Transform->is_selected() ? "" : _Transform->get_name()).c_str(),
+    if (ImGui::TreeNodeEx((_Transform->check_flag(Object::Flags::Selected) ? "" : _Transform->get_name()).c_str(),
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
     {
+        // select item on double click
         if(ImGui::IsItemHovered() && 
             ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
-            m_Scene->set_selected(false);
-            m_Scene->apply_to_children_recursive(
-                [](Hierarchy* _Object)
-                {
-                    _Object->set_selected(false);
-                }
-            );
-
-            _Transform->set_selected(true);
+            m_Scene->set_flag(Object::Flags::Selected, false);
+            m_Scene->apply_to_children_recursive([](Object* _Object){_Object->set_flag(Object::Flags::Selected, false);});
+            _Transform->set_flag(Object::Flags::Selected, true);
         }
 
-        if (_Transform->is_selected())
+        // rename selected item
+        if (_Transform->check_flag(Object::Flags::Selected))
         {
             ImGui::SameLine();
             ImGui::PushID(_ID++);
@@ -101,23 +99,58 @@ void HierarchyView::DrawTree(Hierarchy* _Transform, int& _ID)
             if(ImGui::InputText("", m_TextInput, 512, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
             {
                 auto newName = std::string(m_TextInput);
-                _Transform->set_selected(false);
-                _Transform->set_focused(false);
+                _Transform->set_flag(Object::Flags::Selected, false);
                 _Transform->set_name((newName.empty() ? "empty" : newName));
             }
 
             ImGui::PopID();
         }
 
-        const auto& children = _Transform->get_children();
-
-        for(auto&& child : children)
+        // focus item on a single click
+        if(ImGui::IsItemHovered() && 
+            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle))
         {
-            DrawTree(child.get(), _ID);
+            m_Scene->set_flag(Object::Flags::Focused, false);
+            m_Scene->apply_to_children_recursive([](Object* _Object){_Object->set_flag(Object::Flags::Focused, false);});
+            _Transform->set_flag(Object::Flags::Focused, true);
         }
 
+        // recursivelly draw children
+        const auto& children = _Transform->get_children();
+
+        for(auto&& child : children) 
+            DrawTree(child.get(), _ID);
         ImGui::TreePop();
     }
 
     ImGui::PopID();
+
+    // deselect all items on click
+    Object* selectedItem = m_Scene->check_flag(Object::Flags::Selected) ? m_Scene.get() : nullptr;
+    Object* focusedItem  = m_Scene->check_flag(Object::Flags::Selected) ? m_Scene.get() : nullptr;
+
+    m_Scene->apply_to_children_recursive(
+        [&selectedItem, &focusedItem](Object* _Object)
+        {
+            if(_Object->check_flag(Object::Flags::Selected)) 
+                selectedItem = _Object;
+
+            if(_Object->check_flag(Object::Flags::Focused)) 
+                focusedItem = _Object;
+        }
+    );
+
+    if(focusedItem != nullptr && 
+        focusedItem != selectedItem)
+    {
+        m_Scene->set_flag(Object::Flags::Selected, false);
+        m_Scene->apply_to_children_recursive(
+            [](Object* _Object)
+            {
+                _Object->set_flag(Object::Flags::Selected, false);
+            }
+        );
+    }
 }
