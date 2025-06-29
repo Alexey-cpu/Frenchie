@@ -11,21 +11,15 @@ Scene3D::Scene3D(
     const float&            _Fovy,
     const glm::vec3&        _Axis,
     const glm::vec2&        _Size,
-    const std::string&      _Name,
-    Frenchie::Core::Hierarchy* _Parent) : 
-    Transform(_Name, _Parent),
+    const std::string&      _Name) : 
+    Transform(_Name),
     m_Depth(_Depth), 
     m_Aspect(_Aspect), 
     m_Fovy(_Fovy), 
     m_Axis(_Axis), 
     m_Size(_Size)
     {
-        create_raw_pointer<Camera>(
-            glm::vec3(+0.f, +0.f, +1.f),
-            glm::vec3(+0.f, +1.f, +0.f),
-            "Camera",
-            this
-        );
+        create_child<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f), "Camera");
     }
 
 Scene3D::~Scene3D(){}

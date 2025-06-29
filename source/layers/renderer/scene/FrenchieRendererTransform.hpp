@@ -19,7 +19,7 @@ namespace Frenchie
         {
             public:
 
-            Transform(const std::string& _Name = std::string(), Hierarchy* _Parent = nullptr);
+            Transform(const std::string& _Name = std::string());
             virtual ~Transform();
 
             // getters

@@ -25,7 +25,7 @@ namespace Frenchie
         {
         public:
 
-            HierarchyView(const std::string& _Name, Scene3D* _Scene3D);
+            HierarchyView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D);
             virtual ~HierarchyView();
 
             virtual bool awake() override;
@@ -37,7 +37,7 @@ namespace Frenchie
             virtual bool is_closed() override;
 
         protected:
-            Scene3D* m_Scene = nullptr;
+            std::shared_ptr<Scene3D> m_Scene = nullptr;
             char m_TextInput[512]{};
 
             void DrawTree(Hierarchy*, int&);

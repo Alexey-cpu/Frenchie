@@ -11,7 +11,7 @@
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
-HierarchyView::HierarchyView(const std::string& _Name, Scene3D* _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
+HierarchyView::HierarchyView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
 HierarchyView::~HierarchyView(){}
 
 bool HierarchyView::awake()
@@ -29,7 +29,7 @@ void HierarchyView::frame_update()
     ImGui::Begin(get_name().c_str());
 
     int id = 0;
-    DrawTree(m_Scene, id);
+    DrawTree(m_Scene.get(), id);
 
     ImGui::End();
 }
@@ -113,7 +113,7 @@ void HierarchyView::DrawTree(Hierarchy* _Transform, int& _ID)
 
         for(auto&& child : children)
         {
-            DrawTree(child, _ID);
+            DrawTree(child.get(), _ID);
         }
 
         ImGui::TreePop();

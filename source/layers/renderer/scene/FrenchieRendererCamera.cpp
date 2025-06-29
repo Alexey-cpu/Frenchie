@@ -6,9 +6,8 @@ using namespace Frenchie::Renderer;
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
     glm::vec3 _CameraWorldUpAxisDirection, 
-    const std::string& _Name, 
-    Frenchie::Core::Hierarchy* _Parent) : 
-    Frenchie::Core::Hierarchy(_Name, _Parent),
+    const std::string& _Name) : 
+    Frenchie::Core::Hierarchy(_Name),
     m_CameraWorldPosition(_CameraWorldPosition), 
     m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
 

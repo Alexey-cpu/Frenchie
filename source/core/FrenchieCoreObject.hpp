@@ -11,9 +11,9 @@ namespace Frenchie
 {
     namespace Core
     {
-        class Root;
-        class Hierarchy;
         class Object;
+        class Component;
+        class Hierarchy;
 
         class NonCopyable 
         {
@@ -31,9 +31,21 @@ namespace Frenchie
         class Component : public NonCopyable
         {
         public:
-            // add some interface here ...
+
+            bool is_enabled() const
+            {
+                return m_Enabled;
+            }
+
+            void set_enabled(bool _Value)
+            {
+                m_Enabled = _Value;
+            }
+            
         protected:
-            Object* m_Object = nullptr;
+            Object* m_Object  = nullptr;
+            bool    m_Enabled = true;
+
             friend class Object;
         };
 
@@ -41,14 +53,14 @@ namespace Frenchie
         {
         public:
 
-            template<typename Type, typename ... Arguments>
-            Type add_component(Arguments ... _Arguments)
+            template<typename T, typename ... Arguments>
+            T add_component(Arguments ... _Arguments)
             {
-                m_Components.push_back(std::make_unique<Type>(_Arguments));
-                return m_Components.last().last();
+                m_Components.push_back(std::make_unique<T>(_Arguments));
+                return dynamic_cast<T*>(m_Components.back().get());
             }
 
-            template<typename Type>
+            template<typename T>
             void remove_component()
             {
                 auto iterator = 
@@ -57,7 +69,7 @@ namespace Frenchie
                         m_Components.end(), 
                         [](std::unique_ptr<Component> _Component)->bool
                         { 
-                            return dynamic_cast<Type*>(_Component.get());
+                            return dynamic_cast<T*>(_Component.get());
                         }
                     );
 
@@ -65,36 +77,16 @@ namespace Frenchie
                     m_Components.erase(iterator);
             }
 
-
         protected:
             std::list<std::unique_ptr<Component>> m_Components = 
                 std::list<std::unique_ptr<Component>>();
-        };
-
-        class Root final
-        {
-        public:
-            Root();
-            ~Root();
-
-            void push(Hierarchy* _Object);
-            void pop(Hierarchy* _Object);
-            bool is_being_restroyed() const;
-
-        private:
-
-            bool              m_IsBeingDestroed   = false;
-            int               m_ReferenceCounter  = 0;
-            std::set<Hierarchy*> m_Objects           = std::set<Hierarchy*>();
-
-            friend class Hierarchy;
         };
 
         class Hierarchy
         {
         public:
             
-            Hierarchy(const std::string& _Name = std::string(), Hierarchy* _Parent = nullptr);
+            Hierarchy(const std::string& _Name = std::string());
             virtual ~Hierarchy();
 
             // getters
@@ -120,18 +112,15 @@ namespace Frenchie
             std::string get_name() const;
             bool is_selected() const;
             bool is_focused() const;
-            std::list<Hierarchy*> get_children() const;
+            std::list<std::unique_ptr<Hierarchy>>& get_children() const;
 
             // setters
             void set_name(const std::string& _Value);
-            void set_parent(Hierarchy* _Parent);
             void set_selected(bool _Value);
             void set_focused(bool _Value);
             void set_flag(int _N, bool _Value);
             
             // API
-            void remove_all_children();
-            
             void apply_to_children(const std::function<void(Hierarchy* _Object)>& _Callback) const;
             void apply_to_children_recursive(const std::function<void(Hierarchy* _Object)>& _Callback) const;
 
@@ -164,6 +153,32 @@ namespace Frenchie
                     );
             }
 
+            template<typename T, typename ...Arguments> 
+            T* create_child(Arguments ... _Args)
+            {
+                m_Children.push_back(std::make_unique<T>( _Args ...));
+                T* child = dynamic_cast<T*>(m_Children.back().get());
+                child->m_Parent = this;
+                return child;
+            }
+
+            template<typename T> 
+            void remove_child()
+            {
+                auto iterator = 
+                    std::find_if(
+                        m_Components.begin(), 
+                        m_Components.end(), 
+                        [](std::unique_ptr<Hierarchy> _Component)->bool
+                        { 
+                            return dynamic_cast<T*>(_Component.get());
+                        }
+                    );
+
+                if(iterator != m_Components.end()) 
+                    m_Components.erase(iterator);
+            }
+
         protected:
 
             enum Flags
@@ -174,14 +189,12 @@ namespace Frenchie
                 Focused
             };
 
-            std::string                   m_Name     = std::string();
-            Hierarchy*                    m_Parent   = nullptr;
-            mutable std::list<Hierarchy*> m_Children = std::list<Hierarchy*>();
-            unsigned int                  m_Flags    = 0;
+            std::string  m_Name  = std::string();
+            Hierarchy*   m_Parent = nullptr;
+            unsigned int m_Flags  = 0;
 
-        private:
-            
-            std::list<Hierarchy*>::iterator m_SelfIterator;
+            mutable std::list<std::unique_ptr<Hierarchy>> m_Children = 
+                std::list<std::unique_ptr<Hierarchy>>();
         };
     };
 }
