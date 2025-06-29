@@ -174,7 +174,7 @@ namespace Frenchie
                 MiddleMouseDoubleClicked,
             };
 
-            unsigned int m_Flags;
+            unsigned int m_Flags = 0;
 
         private:
             
