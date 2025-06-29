@@ -1,8 +1,10 @@
 #include <FrenchieRendererTransform.hpp>
 
+#include <imgui.h>
+
 using namespace Frenchie::Renderer;
 
-Transform::Transform(const std::string& _Name) : Hierarchy(_Name){}
+Transform::Transform(const std::string& _Name) : Object(_Name){}
 
 Transform::~Transform(){}
 
@@ -93,6 +95,53 @@ void Transform::frame_finish()
         if(childTransform != nullptr)
             childTransform->frame_finish();
     }
+}
+
+void Transform::draw()
+{
+    ImGui::LabelText("Transform", "");
+
+    // write X
+    auto positionX = std::to_string(get_position().x);
+    for(int i = 0; i < 64; i++) 
+        m_Editor.m_PositionX[i] = i < positionX.size() ? positionX[i] : '\0';
+
+    // write Y
+    auto positionY = std::to_string(get_position().y);
+    for(int i = 0; i < 64; i++) 
+        m_Editor.m_PositionY[i] = i < positionY.size() ? positionY[i] : '\0'; 
+
+    // write Z
+    auto positionZ = std::to_string(get_position().z);
+    for(int i = 0; i < 64; i++) 
+        m_Editor.m_PositionZ[i] = i < positionZ.size() ? positionZ[i] : '\0'; 
+
+    int id = 0;
+
+    ImGui::PushID(id++); 
+    ImGui::Text("X"); 
+    ImGui::SameLine();
+    ImGui::InputText("##", m_Editor.m_PositionX, 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
+    ImGui::PopID();
+    
+    ImGui::PushID(id++);
+    ImGui::Text("Y"); 
+    ImGui::SameLine(); 
+    ImGui::InputText("###", m_Editor.m_PositionY, 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
+    ImGui::PopID();
+    
+    ImGui::PushID(id++);
+    ImGui::Text("Z");
+    ImGui::SameLine();
+    ImGui::InputText("####", m_Editor.m_PositionZ, 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
+    ImGui::PopID();
+
+    // setup new parameters
+    auto x = std::stod(std::string(m_Editor.m_PositionX));
+    auto y = std::stod(std::string(m_Editor.m_PositionY));
+    auto z = std::stod(std::string(m_Editor.m_PositionZ));
+
+    set_position(glm::vec3(x, y, z));
 }
 
 glm::mat4 Transform::compute_local_model_matrix() const

@@ -40,7 +40,7 @@ namespace Frenchie
             std::shared_ptr<Scene3D> m_Scene = nullptr;
             char m_TextInput[512]{};
 
-            void DrawTree(Hierarchy*, int&);
+            void DrawTree(Object*, int&);
         };
     }
 };
