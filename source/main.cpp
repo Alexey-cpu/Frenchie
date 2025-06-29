@@ -10,20 +10,6 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
 
-// int main(int, char**)
-// {
-//     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
-
-//     auto shader = 
-//     Flyweight::instance()->request<Shader>(
-//         "Frenchie/Shader/Default",
-//         std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.vert"),
-//         std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/shaders/Default/Default.frag")
-//     );
-
-//     return 0;
-// }
-
 int main(int, char**)
 {
     // setup logger
