@@ -15,11 +15,11 @@ namespace Frenchie
     {
         using namespace Frenchie::Core;
 
-        class Transform : public Object, public IRenderer
+        class Transform : public Hierarchy, public IRenderer
         {
             public:
 
-            Transform(const std::string& _Name = std::string(), Object* _Parent = nullptr);
+            Transform(const std::string& _Name = std::string(), Hierarchy* _Parent = nullptr);
             virtual ~Transform();
 
             // getters

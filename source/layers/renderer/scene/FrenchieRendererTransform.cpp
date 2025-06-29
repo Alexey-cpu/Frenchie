@@ -2,7 +2,7 @@
 
 using namespace Frenchie::Renderer;
 
-Transform::Transform(const std::string& _Name, Object* _Parent) : Object(_Name, _Parent){}
+Transform::Transform(const std::string& _Name, Hierarchy* _Parent) : Hierarchy(_Name, _Parent){}
 
 Transform::~Transform(){}
 
