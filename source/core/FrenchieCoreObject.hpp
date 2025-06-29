@@ -14,6 +14,21 @@ namespace Frenchie
         class Root;
         class Object;
 
+        /**
+         * @brief Class that removes the copy constructor and operator from derived classes, while leaving move.
+         */
+        class NonCopyable {
+        protected:
+            NonCopyable() = default;
+            virtual ~NonCopyable() = default;
+
+        public:
+            NonCopyable(const NonCopyable &) = delete;
+            NonCopyable(NonCopyable &&) noexcept = default;
+            NonCopyable &operator=(const NonCopyable &) = delete;
+            NonCopyable &operator=(NonCopyable &&) noexcept = default;
+        };
+
         class Root final
         {
         public:
@@ -59,66 +74,18 @@ namespace Frenchie
                     );
             }
 
-            Object* get_parent_recursive(const std::function<bool(Object*)>& _Predicate) const
-            {
-                if(_Predicate == nullptr) 
-                    return nullptr;
-
-                auto parent = get_parent();
-
-                while (parent != nullptr)
-                {
-                    if(_Predicate(parent)) 
-                        return parent;
-
-                    parent = parent->get_parent();
-                }
-                
-                return nullptr;    
-            }
-
-            std::string get_name() const
-            {
-                return m_Name;
-            }
-
+            Object* get_parent_recursive(const std::function<bool(Object*)>& _Predicate) const;
+            std::string get_name() const;
+            bool is_selected() const;
+            bool is_focused() const;
             std::list<Object*> get_children() const;
 
-            bool is_selected() const
-            {
-                return (bool)(m_Flags | Flags::Selected);
-            }
-
-            bool is_focused() const
-            {
-                return (bool)(m_Flags | Flags::Focused);
-            }
-
             // setters
-            void set_name(const std::string& _Value)
-            {
-                m_Name = _Value;
-            }
-
+            void set_name(const std::string& _Value);
             void set_parent(Object* _Parent);
-
-                        void set_selected(bool _Value)
-            {
-                set_flag(Flags::Selected, _Value);
-            }
-
-            void set_focused(bool _Value)
-            {
-                set_flag(Flags::Focused, _Value);
-            }
-
-            void set_flag(int _N, bool _Value)
-            {
-                if(_Value)
-                    m_Flags |= ((unsigned int)1 << _N);
-                else 
-                    m_Flags &= ~((unsigned int)1 << _N);
-            }
+            void set_selected(bool _Value);
+            void set_focused(bool _Value);
+            void set_flag(int _N, bool _Value);
             
             // API
             void remove_all_children();
@@ -157,24 +124,18 @@ namespace Frenchie
 
         protected:
 
+            enum Flags
+            {
+                Marked,
+                Selected,
+                Hovered,
+                Focused
+            };
+
             std::string                  m_Name     = std::string();
             Object*                      m_Parent   = nullptr;
             mutable std::list<Object*>   m_Children = std::list<Object*>();
-
-            enum Flags
-            {
-                Selected,
-                Hovered,
-                Focused,
-                LeftMouseClicked,
-                RightMouseClicked,
-                MiddleMouseClicked,
-                LeftMouseDoubleClicked,
-                RightMouseDoubleClicked,
-                MiddleMouseDoubleClicked,
-            };
-
-            unsigned int m_Flags = 0;
+            unsigned int                 m_Flags    = 0;
 
         private:
             

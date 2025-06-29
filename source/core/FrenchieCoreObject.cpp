@@ -73,9 +73,48 @@ Object::~Object()
     Singleton<Root>::instance()->m_ReferenceCounter--;
 }
 
+Object* Object::get_parent_recursive(const std::function<bool(Object*)>& _Predicate) const
+{
+    if(_Predicate == nullptr) 
+        return nullptr;
+
+    auto parent = get_parent();
+
+    while (parent != nullptr)
+    {
+        if(_Predicate(parent)) 
+            return parent;
+
+        parent = parent->get_parent();
+    }
+    
+    return nullptr;    
+}
+
+std::string Object::get_name() const
+{
+    return m_Name;
+}
+
+bool Object::is_selected() const
+{
+    // TODO: move to utils
+    return (bool)((m_Flags >> Flags::Selected) & 1);
+}
+
+bool Object::is_focused() const
+{
+    return (bool)((m_Flags >> Flags::Focused) & 1);
+}
+
 std::list<Object*> Object::get_children() const
 {
     return m_Children;
+}
+
+void Object::set_name(const std::string& _Value)
+{
+    m_Name = _Value;
 }
 
 void Object::set_parent(Object* _Parent)
@@ -102,12 +141,31 @@ void Object::set_parent(Object* _Parent)
             return _Object == this;
         });
 
+    // TODO: this is bug !!!
     if(found != nullptr) 
         m_Parent->set_parent(nullptr);
 
     // attach to a new parent
     m_Parent->m_Children.push_back(this);
     m_SelfIterator = std::prev(m_Parent->m_Children.end());
+}
+
+void Object::set_selected(bool _Value)
+{
+    set_flag(Flags::Selected, _Value);
+}
+
+void Object::set_focused(bool _Value)
+{
+    set_flag(Flags::Focused, _Value);
+}
+
+void Object::set_flag(int _N, bool _Value)
+{
+    if(_Value)
+        m_Flags |= ((unsigned int)1 << _N);
+    else 
+        m_Flags &= ~((unsigned int)1 << _N);
 }
 
 void Object::remove_all_children()
