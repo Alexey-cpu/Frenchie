@@ -14,7 +14,7 @@
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
-SceneView::SceneView(const std::string& _Name, Scene3D* _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
+SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
 
 SceneView::~SceneView()
 {

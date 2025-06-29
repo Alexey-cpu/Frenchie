@@ -25,7 +25,7 @@ namespace Frenchie
         {
         public:
 
-            SceneView(const std::string& _Name, Scene3D* _Scene3D);
+            SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D);
             virtual ~SceneView();
 
             virtual bool awake() override;
@@ -38,7 +38,7 @@ namespace Frenchie
 
         protected:
 
-            Scene3D*     m_Scene = nullptr;
+            std::shared_ptr<Scene3D>     m_Scene = nullptr;
             unsigned int m_Framebuffer;
             unsigned int m_TextureColorBuffer;
             unsigned int m_RBO;

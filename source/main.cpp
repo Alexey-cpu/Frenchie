@@ -52,7 +52,7 @@ int main(int, char**)
     application->set_maximized(true);
 
     // push application layers
-    auto scene = create_raw_pointer<Scene3D>();
+    auto scene = std::make_shared<Scene3D>();
 
     Mesh* mesh = AssetManager::instance()->request<Triangle2D>("Frenchie/Mesh/Triangle2D");
 
@@ -76,14 +76,11 @@ int main(int, char**)
     }
 
     // create hierarchy
-    auto root    = new MeshRenderer(mesh, shader, "Root", scene);
-    auto child_1 = new MeshRenderer(mesh, shader, "Child-1", root);
-    auto child_2 = new MeshRenderer(mesh, shader, "Child-2", child_1);
-    auto child_3 = new MeshRenderer(mesh, shader, "Child-3", child_2);
 
-    auto child_4 = new MeshRenderer(mesh, shader, "Child-4");
-    auto child_5 = new MeshRenderer(mesh, shader, "Child-5");
-    auto child_6 = new MeshRenderer(mesh, shader, "Child-6");
+    auto root    = scene->create_child<MeshRenderer>(mesh, shader, "Root");
+    auto child_1 = root->create_child<MeshRenderer>(mesh, shader, "Child-1");
+    auto child_2 = child_1->create_child<MeshRenderer>(mesh, shader, "Child-2");
+    auto child_3 = child_2->create_child<MeshRenderer>(mesh, shader, "Child-3");
 
     root->set_position(glm::vec3(0.1f, 0.0f, 0.f));
     root->set_rotation(glm::vec3(0.f, 0.f, 0.f));
@@ -91,7 +88,8 @@ int main(int, char**)
     child_2->set_position(glm::vec3(200.f, 200.f, 0.f));
     child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
 
-    application->push<SceneView>("SceneView", scene);
+    application->push<SceneView>("SceneView-1", scene);
+    application->push<SceneView>("SceneView-2", scene);
     application->push<HierarchyView>("HierarchyView", scene);
 
     return application->execute();

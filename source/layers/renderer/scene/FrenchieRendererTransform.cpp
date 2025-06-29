@@ -2,7 +2,7 @@
 
 using namespace Frenchie::Renderer;
 
-Transform::Transform(const std::string& _Name, Hierarchy* _Parent) : Hierarchy(_Name, _Parent){}
+Transform::Transform(const std::string& _Name) : Hierarchy(_Name){}
 
 Transform::~Transform(){}
 
@@ -45,7 +45,7 @@ bool Transform::awake()
 {
     for(auto&& child : m_Children)
     {
-        Transform* childTransform = dynamic_cast<Transform*>(child);
+        Transform* childTransform = dynamic_cast<Transform*>(child.get());
 
         if(childTransform != nullptr)
             childTransform->awake();
@@ -58,7 +58,7 @@ void Transform::frame_start()
 {
     for(auto&& child : m_Children)
     {
-        Transform* childTransform = dynamic_cast<Transform*>(child);
+        Transform* childTransform = dynamic_cast<Transform*>(child.get());
 
         if(childTransform != nullptr)
             childTransform->frame_start();
@@ -77,7 +77,7 @@ void Transform::frame_update()
 
     for(auto&& child : m_Children)
     {
-        Transform* childTransform = dynamic_cast<Transform*>(child);
+        Transform* childTransform = dynamic_cast<Transform*>(child.get());
 
         if(childTransform != nullptr)
             childTransform->frame_update();
@@ -88,7 +88,7 @@ void Transform::frame_finish()
 {
     for(auto&& child : m_Children)
     {
-        Transform* childTransform = dynamic_cast<Transform*>(child);
+        Transform* childTransform = dynamic_cast<Transform*>(child.get());
 
         if(childTransform != nullptr)
             childTransform->frame_finish();

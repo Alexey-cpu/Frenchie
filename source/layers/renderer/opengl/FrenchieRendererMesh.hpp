@@ -62,8 +62,7 @@ namespace Frenchie
             MeshRenderer(
                 Mesh*              _Mesh,
                 Shader*            _Shader,
-                const std::string& _Name   = std::string(), 
-                Hierarchy*            _Parent = nullptr);
+                const std::string& _Name = std::string());
             
             virtual ~MeshRenderer();
 

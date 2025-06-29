@@ -21,8 +21,7 @@ namespace Frenchie
                 const float&            _Fovy   = 90.f, 
                 const glm::vec3&        _Axis   = glm::vec3(1.f, 1.f, 1.f),
                 const glm::vec2&        _Size   = glm::vec2(2048.f, 1024.f),
-                const std::string&      _Name   = "Scene3D",
-                Frenchie::Core::Hierarchy* _Parent = nullptr);
+                const std::string&      _Name   = "Scene3D");
             
             virtual ~Scene3D();
 
