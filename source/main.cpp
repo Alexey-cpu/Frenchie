@@ -10,6 +10,37 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
 
+// create_child()
+// remove_child()
+// move_child()
+
+// int main(int, char**)
+// {
+//     std::list<std::unique_ptr<int>> list;
+//     std::list<std::unique_ptr<int>> other;
+
+//     list.push_back(std::make_unique<int>(1));
+//     list.push_back(std::make_unique<int>(2));
+//     list.push_back(std::make_unique<int>(3));
+
+//     std::cout << "before \n";
+//     std::cout << "list \n";
+//     for(auto&& child : list) std::cout << (*child) << "\n";
+//     std::cout << "other \n";
+//     for(auto&& child : other) std::cout << (*child) << "\n";
+
+//     other.push_back(std::move(list.front()));
+//     list.erase(list.begin());
+
+//     std::cout << "after \n";
+//     std::cout << "list \n";
+//     for(auto&& child : list) std::cout << (*child) << "\n";
+//     std::cout << "other \n";
+//     for(auto&& child : other) std::cout << (*child) << "\n";
+
+//     return 0;
+// }
+
 int main(int, char**)
 {
     // setup logger
