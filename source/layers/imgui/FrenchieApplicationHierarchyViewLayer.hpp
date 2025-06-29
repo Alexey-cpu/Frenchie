@@ -40,7 +40,7 @@ namespace Frenchie
             Scene3D* m_Scene = nullptr;
             char m_TextInput[512]{};
 
-            void DrawTree(Object*, int&);
+            void DrawTree(Hierarchy*, int&);
         };
     }
 };

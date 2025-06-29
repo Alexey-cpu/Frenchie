@@ -54,7 +54,7 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::DrawTree(Object* _Transform, int& _ID)
+void HierarchyView::DrawTree(Hierarchy* _Transform, int& _ID)
 {
     if(_Transform == nullptr || m_Scene == nullptr) 
         return;
@@ -73,7 +73,7 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID)
         {
             m_Scene->set_selected(false);
             m_Scene->apply_to_children_recursive(
-                [](Object* _Object)
+                [](Hierarchy* _Object)
                 {
                     _Object->set_selected(false);
                 }

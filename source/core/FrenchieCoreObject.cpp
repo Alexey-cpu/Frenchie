@@ -31,12 +31,12 @@ Root::~Root()
     Logger::instance()->info(fmt::format("Reference count: {}", m_ReferenceCounter));
 }
 
-void Root::push(Object* _Object)
+void Root::push(Hierarchy* _Object)
 {
     m_Objects.insert(_Object);
 }
 
-void Root::pop(Object* _Object)
+void Root::pop(Hierarchy* _Object)
 {
     m_Objects.erase(_Object);
 }
@@ -47,7 +47,7 @@ bool Root::is_being_restroyed() const
 }
 
 // Object
-Object::Object(const std::string& _Name, Object* _Parent) : m_Name(_Name)
+Hierarchy::Hierarchy(const std::string& _Name, Hierarchy* _Parent) : m_Name(_Name)
 {
     set_parent(_Parent);
 
@@ -58,7 +58,7 @@ Object::Object(const std::string& _Name, Object* _Parent) : m_Name(_Name)
     Singleton<Root>::instance()->m_ReferenceCounter++;
 }
 
-Object::~Object()
+Hierarchy::~Hierarchy()
 {
     // detach self from parent
     if(m_Parent != nullptr) 
@@ -73,7 +73,7 @@ Object::~Object()
     Singleton<Root>::instance()->m_ReferenceCounter--;
 }
 
-Object* Object::get_parent_recursive(const std::function<bool(Object*)>& _Predicate) const
+Hierarchy* Hierarchy::get_parent_recursive(const std::function<bool(Hierarchy*)>& _Predicate) const
 {
     if(_Predicate == nullptr) 
         return nullptr;
@@ -91,33 +91,33 @@ Object* Object::get_parent_recursive(const std::function<bool(Object*)>& _Predic
     return nullptr;    
 }
 
-std::string Object::get_name() const
+std::string Hierarchy::get_name() const
 {
     return m_Name;
 }
 
-bool Object::is_selected() const
+bool Hierarchy::is_selected() const
 {
     // TODO: move to utils
     return (bool)((m_Flags >> Flags::Selected) & 1);
 }
 
-bool Object::is_focused() const
+bool Hierarchy::is_focused() const
 {
     return (bool)((m_Flags >> Flags::Focused) & 1);
 }
 
-std::list<Object*> Object::get_children() const
+std::list<Hierarchy*> Hierarchy::get_children() const
 {
     return m_Children;
 }
 
-void Object::set_name(const std::string& _Value)
+void Hierarchy::set_name(const std::string& _Value)
 {
     m_Name = _Value;
 }
 
-void Object::set_parent(Object* _Parent)
+void Hierarchy::set_parent(Hierarchy* _Parent)
 {
     // detach self from parent
     if(m_Parent != nullptr) 
@@ -136,7 +136,7 @@ void Object::set_parent(Object* _Parent)
     
     // break cycle
     auto found = m_Parent->get_parent_recursive(
-        [this](Object* _Object)->bool
+        [this](Hierarchy* _Object)->bool
         {
             return _Object == this;
         });
@@ -150,17 +150,17 @@ void Object::set_parent(Object* _Parent)
     m_SelfIterator = std::prev(m_Parent->m_Children.end());
 }
 
-void Object::set_selected(bool _Value)
+void Hierarchy::set_selected(bool _Value)
 {
     set_flag(Flags::Selected, _Value);
 }
 
-void Object::set_focused(bool _Value)
+void Hierarchy::set_focused(bool _Value)
 {
     set_flag(Flags::Focused, _Value);
 }
 
-void Object::set_flag(int _N, bool _Value)
+void Hierarchy::set_flag(int _N, bool _Value)
 {
     if(_Value)
         m_Flags |= ((unsigned int)1 << _N);
@@ -168,7 +168,7 @@ void Object::set_flag(int _N, bool _Value)
         m_Flags &= ~((unsigned int)1 << _N);
 }
 
-void Object::remove_all_children()
+void Hierarchy::remove_all_children()
 {
     auto children = m_Children;
 
@@ -181,7 +181,7 @@ void Object::remove_all_children()
     m_Children.clear();
 }
 
-void Object::apply_to_children(const std::function<void(Object* _Object)>& _Callback) const
+void Hierarchy::apply_to_children(const std::function<void(Hierarchy* _Object)>& _Callback) const
 {
     if(_Callback == nullptr) 
         return;
@@ -193,7 +193,7 @@ void Object::apply_to_children(const std::function<void(Object* _Object)>& _Call
     }
 }
 
-void Object::apply_to_children_recursive(const std::function<void(Object* _Object)>& _Callback) const
+void Hierarchy::apply_to_children_recursive(const std::function<void(Hierarchy* _Object)>& _Callback) const
 {
     if(_Callback == nullptr) 
         return;
@@ -209,7 +209,7 @@ void Object::apply_to_children_recursive(const std::function<void(Object* _Objec
     }
 }
 
-Object* Object::find_child(const std::function<bool(Object*)>& _Predicate) const
+Hierarchy* Hierarchy::find_child(const std::function<bool(Hierarchy*)>& _Predicate) const
 {
     for(auto&& child : m_Children) 
     {
@@ -220,7 +220,7 @@ Object* Object::find_child(const std::function<bool(Object*)>& _Predicate) const
     return nullptr;
 }
 
-Object* Object::find_child_recursive(const std::function<bool(Object*)>& _Predicate) const
+Hierarchy* Hierarchy::find_child_recursive(const std::function<bool(Hierarchy*)>& _Predicate) const
 {
     for(auto&& child : m_Children) 
     {
@@ -236,14 +236,14 @@ Object* Object::find_child_recursive(const std::function<bool(Object*)>& _Predic
     return nullptr;
 }
 
-std::list<Object*> Object::find_children_recursive(const std::function<bool(Object*)>& _Predicate) const
+std::list<Hierarchy*> Hierarchy::find_children_recursive(const std::function<bool(Hierarchy*)>& _Predicate) const
 {
     if(_Predicate == nullptr) 
-        return std::list<Object*>();
+        return std::list<Hierarchy*>();
 
-    std::list<Object*> result;
+    std::list<Hierarchy*> result;
 
-    apply_to_children_recursive([&result, &_Predicate](Object* _Object)
+    apply_to_children_recursive([&result, &_Predicate](Hierarchy* _Object)
     {
         if(_Object != nullptr && _Predicate(_Object)) 
             result.push_back(_Object);

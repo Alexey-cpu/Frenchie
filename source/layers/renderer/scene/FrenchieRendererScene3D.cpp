@@ -12,7 +12,7 @@ Scene3D::Scene3D(
     const glm::vec3&        _Axis,
     const glm::vec2&        _Size,
     const std::string&      _Name,
-    Frenchie::Core::Object* _Parent) : 
+    Frenchie::Core::Hierarchy* _Parent) : 
     Transform(_Name, _Parent),
     m_Depth(_Depth), 
     m_Aspect(_Aspect), 

@@ -10,14 +10,14 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Frenchie::Core::Object
+        class Camera : public Frenchie::Core::Hierarchy
         {
         public:
 
             Camera(glm::vec3 _CameraWorldPosition = glm::vec3(+0.f, +0.f, +1.f),
                     glm::vec3 _CameraWorldUpAxisDirection = glm::vec3(+0.f, +1.f, +0.f), 
                     const std::string& _Name = std::string(), 
-                    Frenchie::Core::Object* _Parent = nullptr);
+                    Frenchie::Core::Hierarchy* _Parent = nullptr);
             
             virtual ~Camera();
 

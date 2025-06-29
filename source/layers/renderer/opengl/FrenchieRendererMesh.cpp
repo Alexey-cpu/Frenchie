@@ -68,7 +68,7 @@ void Mesh::render()
 }
 
 // MeshRenderer
-MeshRenderer::MeshRenderer(Mesh* _Mesh, Shader* _Shader, const std::string& _Name, Object* _Parent) : 
+MeshRenderer::MeshRenderer(Mesh* _Mesh, Shader* _Shader, const std::string& _Name, Hierarchy* _Parent) : 
     Transform(_Name, _Parent), 
     m_Mesh(_Mesh), m_Shader(_Shader){}
 
