@@ -1,10 +1,13 @@
 #include <FrenchieRendererScene3D.hpp>
 
+#include <imgui.h>
+
 using namespace Frenchie::Renderer;
 
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
     glm::vec3 _CameraWorldUpAxisDirection) :
+    Component::Registry<Camera>(STRINGIFY(Camera)),
     m_CameraWorldPosition(_CameraWorldPosition), 
     m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
 
@@ -71,5 +74,20 @@ glm::mat4 Camera::get_view_matrix() const
     m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
 
+    // m_CameraLocalRightAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalRightAxisDirection, 1.f)));
+    // m_CameraLocalUpAxisDirection    = glm::normalize(glm::cross(m_CameraLocalRightAxisDirection, m_CameraLocalFrontAxisDirection));
+
     return glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection);
+}
+
+void Camera::draw() 
+{
+    auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
+
+    ImGui::InputFloat3("position XYZ", &m_CameraWorldPosition[0], "%.4f");
+    ImGui::InputFloat3("rotation XYZ", &rotation[0], "%.4f");
+
+    m_Pitch = rotation.x;
+    m_Yaw   = rotation.y;
+    m_Roll  = rotation.z;
 }
