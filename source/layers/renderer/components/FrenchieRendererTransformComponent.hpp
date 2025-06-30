@@ -15,7 +15,7 @@ namespace Frenchie
     {
         using namespace Frenchie::Core;
 
-        class Transform : public Object, public IRenderer
+        class Transform : public Object
         {
             public:
 

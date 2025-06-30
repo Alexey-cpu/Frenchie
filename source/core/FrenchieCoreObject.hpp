@@ -1,5 +1,7 @@
 #pragma once
 
+#include <FrenchieRendererInterfaces.hpp>
+
 // STL
 #include <functional>
 #include <memory>
@@ -27,7 +29,7 @@ namespace Frenchie
             NonCopyable &operator=(NonCopyable &&) noexcept = default;
         };
 
-        class Component : public NonCopyable
+        class Component : public NonCopyable, public Frenchie::Renderer::IRenderer
         {
         public:
 
@@ -36,13 +38,26 @@ namespace Frenchie
 
             bool is_enabled() const;
             void set_enabled(bool _Value);
+
+            virtual bool awake() override
+            {
+                return true;
+            }
+
+            virtual void frame_start()  override{}
+
+            virtual void frame_update() override{}
+
+            virtual void frame_finish() override{}
+
+            virtual void draw() override{}
             
         protected:
             Object* m_Object  = nullptr;
             bool    m_Enabled = true;
         };
 
-        class Object : public NonCopyable
+        class Object : public NonCopyable, public Frenchie::Renderer::IRenderer
         {
         public:
             
@@ -178,6 +193,53 @@ namespace Frenchie
 
                 if(iterator != m_Components.end()) 
                     m_Components.erase(iterator);
+            }
+
+            virtual bool awake() override
+            {
+                for(auto&& component : m_Components)
+                {
+                    if(component->is_enabled()) 
+                        component->awake();
+                }
+
+                return true;
+            }
+
+            virtual void frame_start()  override
+            {
+                for(auto&& component : m_Components)
+                {
+                    if(component->is_enabled()) 
+                        component->frame_start();
+                }
+            }
+
+            virtual void frame_update() override
+            {
+                for(auto&& component : m_Components)
+                {
+                    if(component->is_enabled()) 
+                        component->frame_update();
+                }
+            }
+
+            virtual void frame_finish() override
+            {
+                for(auto&& component : m_Components)
+                {
+                    if(component->is_enabled()) 
+                        component->frame_finish();
+                }
+            }
+
+            virtual void draw() override
+            {
+                for(auto&& component : m_Components)
+                {
+                    if(component->is_enabled()) 
+                        component->draw();
+                }
             }
 
         protected:
