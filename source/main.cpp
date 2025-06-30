@@ -29,7 +29,7 @@ int main(int, char**)
     // create shader
     Shader* shader = nullptr;
 
-    auto shaderPath = std::filesystem::path(std::filesystem::current_path().string().append("/shared"));
+    auto shaderPath = std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared");
 
     Logger::instance()->info("---------------------------------------------------------------------------------");
     Logger::instance()->info(fmt::format("shader path: {}", shaderPath.string()));

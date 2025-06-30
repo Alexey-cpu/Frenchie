@@ -99,49 +99,120 @@ void Transform::frame_finish()
 
 void Transform::draw()
 {
-    ImGui::LabelText("Transform", "");
+    ImGui::Text("Transform");
 
-    // write X
-    auto positionX = std::to_string(get_position().x);
-    for(int i = 0; i < 64; i++) 
-        m_Editor.m_PositionX[i] = i < positionX.size() ? positionX[i] : '\0';
+    auto transformPosition = get_position();
+    auto transformRotation = get_rotation();
+    auto transformScale    = get_scale();
 
-    // write Y
-    auto positionY = std::to_string(get_position().y);
-    for(int i = 0; i < 64; i++) 
-        m_Editor.m_PositionY[i] = i < positionY.size() ? positionY[i] : '\0'; 
+    for (int i = 0; i < 3; i++)
+    {
+        // read position
+        auto position = std::to_string(transformPosition[i]);
+        auto rotation = std::to_string(transformRotation[i]);
+        auto scale = std::to_string(transformScale[i]);
 
-    // write Z
-    auto positionZ = std::to_string(get_position().z);
-    for(int i = 0; i < 64; i++) 
-        m_Editor.m_PositionZ[i] = i < positionZ.size() ? positionZ[i] : '\0'; 
+        for(int j = 0; j < 64; j++)
+        {
+            m_Editor.m_Position[i][j] = j < position.size() ? position[j] : '\0';
+            m_Editor.m_Rotation[i][j] = j < rotation.size() ? rotation[j] : '\0';
+            m_Editor.m_Scale   [i][j] = j < scale.size() ? scale[j] : '\0';
+        }
+    }
 
-    int id = 0;
+    std::vector<std::string> axis    = {"X", "Y", "Z"};
+    std::vector<std::string> labels  = {"##", "###", "####"};
 
-    ImGui::PushID(id++); 
-    ImGui::Text("X"); 
-    ImGui::SameLine();
-    ImGui::InputText("##", m_Editor.m_PositionX, 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
-    ImGui::PopID();
-    
-    ImGui::PushID(id++);
-    ImGui::Text("Y"); 
-    ImGui::SameLine(); 
-    ImGui::InputText("###", m_Editor.m_PositionY, 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
-    ImGui::PopID();
-    
-    ImGui::PushID(id++);
-    ImGui::Text("Z");
-    ImGui::SameLine();
-    ImGui::InputText("####", m_Editor.m_PositionZ, 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
-    ImGui::PopID();
+    int j = 0;
+
+    if(ImGui::BeginTable(
+        "Transform", 
+        3, 
+        ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
+        ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
+        ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
+        ImGuiTableFlags_::ImGuiTableFlags_BordersV     | 
+        ImGuiTableFlags_::ImGuiTableFlags_Resizable    | 
+        ImGuiTableFlags_::ImGuiTableFlags_Reorderable  | 
+        ImGuiTableFlags_::ImGuiTableFlags_Hideable))
+    {
+        ImGui::TableSetupColumn("Position",ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Rotation", ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Scale", ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableHeadersRow();
+        
+        ImGui::TableNextRow();
+
+        for (int i = 0; i < 3; i++)
+        {
+            auto avail = ImGui::GetContentRegionAvail();
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+
+            // position
+            ImGui::PushID(j++);
+            ImGui::Text(axis[i].c_str());
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(avail.x);
+            ImGui::InputText(labels[i].c_str(), m_Editor.m_Position[i], 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
+            ImGui::PopID();
+
+            // rotation
+            ImGui::TableSetColumnIndex(1);
+            ImGui::PushID(j++);
+            ImGui::Text(axis[i].c_str());
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(avail.x);
+            ImGui::InputText(labels[i].c_str(), m_Editor.m_Rotation[i], 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
+            ImGui::PopID();
+
+            // scale
+            ImGui::TableSetColumnIndex(2);
+            ImGui::PushID(j++);
+            ImGui::Text(axis[i].c_str());
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(avail.x);
+            ImGui::InputText(labels[i].c_str(), m_Editor.m_Scale[i], 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
+            ImGui::PopID();
+        }
+
+        ImGui::EndTable();
+    }
 
     // setup new parameters
-    auto x = std::stod(std::string(m_Editor.m_PositionX));
-    auto y = std::stod(std::string(m_Editor.m_PositionY));
-    auto z = std::stod(std::string(m_Editor.m_PositionZ));
+    {    
+        auto x = std::string(m_Editor.m_Position[0]);
+        auto y = std::string(m_Editor.m_Position[1]);
+        auto z = std::string(m_Editor.m_Position[2]);
 
-    set_position(glm::vec3(x, y, z));
+        set_position(glm::vec3(
+            x.empty() ? 0.f : std::stod(x),
+            y.empty() ? 0.f : std::stod(y),
+            z.empty() ? 0.f : std::stod(z)));
+    }
+
+    {
+        auto x = std::string(m_Editor.m_Scale[0]);
+        auto y = std::string(m_Editor.m_Scale[1]);
+        auto z = std::string(m_Editor.m_Scale[2]);
+        
+        set_scale(glm::vec3(
+            x.empty() ? 0.f : std::stod(x),
+            y.empty() ? 0.f : std::stod(y),
+            z.empty() ? 0.f : std::stod(z)));
+    }
+
+    { 
+        auto x = std::string(m_Editor.m_Rotation[0]);
+        auto y = std::string(m_Editor.m_Rotation[1]);
+        auto z = std::string(m_Editor.m_Rotation[2]);
+
+        set_rotation(glm::vec3(
+            x.empty() ? 0.f : std::stod(x),
+            y.empty() ? 0.f : std::stod(y),
+            z.empty() ? 0.f : std::stod(z)));
+    }
 }
 
 glm::mat4 Transform::compute_local_model_matrix() const

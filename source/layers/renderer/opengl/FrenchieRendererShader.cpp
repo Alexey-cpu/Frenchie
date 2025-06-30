@@ -118,12 +118,12 @@ bool Shader::instantiate()
     return false;
 }
 
-void Shader::begin()
+void Shader::use()
 {
     glUseProgram(get_id());
 }
 
-void Shader::end()
+void Shader::unuse()
 {
     glUseProgram(0);
 }

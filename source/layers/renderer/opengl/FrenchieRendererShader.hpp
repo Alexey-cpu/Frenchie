@@ -21,8 +21,8 @@ namespace Frenchie
             virtual ~Shader();
 
             bool instantiate();
-            void begin();
-            void end();
+            void use();
+            void unuse();
 
             const unsigned int& get_id() const;
             template<typename T> void set_uniform(const std::string& _Name, const T& _Value);
