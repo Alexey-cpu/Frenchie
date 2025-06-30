@@ -1,6 +1,6 @@
 #include <FrenchieApplicationHierarchyViewLayer.hpp>
 
-#include <FrenchieRendererTransform.hpp>
+#include <FrenchieRendererTransformComponent.hpp>
 
 #include <FrenchieCoreLogger.hpp>
 

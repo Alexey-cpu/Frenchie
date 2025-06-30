@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrenchieRendererTransform.hpp>
+#include <FrenchieRendererTransformComponent.hpp>
 
 // GLM
 #include <glm/glm.hpp>

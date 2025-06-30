@@ -6,7 +6,7 @@
 
 // Renderer
 #include <FrenchieRendererShader.hpp>
-#include <FrenchieRendererTransform.hpp>
+#include <FrenchieRendererTransformComponent.hpp>
 
 // GLAD
 #include <glad/glad.h> 
