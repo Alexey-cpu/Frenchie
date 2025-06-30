@@ -52,12 +52,12 @@ namespace Frenchie
                 glm::vec3 m_Scale       = glm::vec3(1.f);
                 glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 
-                class Editor
+                static class Editor
                 {
                 public:
-                    char      m_Position[3][64]{{}};
-                    char      m_Rotation[3][64]{{}};
-                    char      m_Scale[3][64]{{}};
+                    char m_Position[3][64]{{}};
+                    char m_Rotation[3][64]{{}};
+                    char m_Scale[3][64]{{}};
                 } m_Editor;
         };
     }   
