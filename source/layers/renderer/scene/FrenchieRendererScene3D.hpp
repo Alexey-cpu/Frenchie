@@ -12,7 +12,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Scene3D : public Core::Object
+        class Scene3D : public Frenchie::Core::Object
         {
         public:
 

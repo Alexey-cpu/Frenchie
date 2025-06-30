@@ -104,8 +104,6 @@ namespace Frenchie
                 };
             };
 
-        protected:
-
             static TRegistry& registry()
             {
                 static TRegistry registry;
