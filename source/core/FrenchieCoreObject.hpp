@@ -204,64 +204,11 @@ namespace Frenchie
                     m_Components.erase(iterator);
             }
 
-            virtual bool awake() override
-            {
-                for(auto&& component : m_Components)
-                {
-                    if(component->is_enabled()) 
-                        component->awake();
-                }
-
-                for(auto&& child : m_Children) 
-                    child->awake();
-
-                return true;
-            }
-
-            virtual void frame_start()  override
-            {
-                for(auto&& component : m_Components)
-                {
-                    if(component->is_enabled()) 
-                        component->frame_start();
-                }
-
-                for(auto&& child : m_Children) 
-                    child->frame_start();
-            }
-
-            virtual void frame_update() override
-            {
-                for(auto&& component : m_Components)
-                {
-                    if(component->is_enabled()) 
-                        component->frame_update();
-                }
-
-                for(auto&& child : m_Children) 
-                    child->frame_update();
-            }
-
-            virtual void frame_finish() override
-            {
-                for(auto&& component : m_Components)
-                {
-                    if(component->is_enabled()) 
-                        component->frame_finish();
-                }
-
-                for(auto&& child : m_Children) 
-                    child->frame_finish();
-            }
-
-            virtual void draw() override
-            {
-                for(auto&& component : m_Components)
-                {
-                    if(component->is_enabled()) 
-                        component->draw();
-                }
-            }
+            virtual bool awake() override;
+            virtual void frame_start()  override;
+            virtual void frame_update() override;
+            virtual void frame_finish() override;
+            virtual void draw() override;
 
         protected:
 
@@ -274,6 +221,12 @@ namespace Frenchie
 
             std::list<std::unique_ptr<Component>> m_Components = 
                 std::list<std::unique_ptr<Component>>();
+
+            static class Editor
+            {
+                public:
+                    char m_Name[512]{};
+            } m_Editor;
         };
     };
 }

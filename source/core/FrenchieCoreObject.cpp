@@ -144,3 +144,62 @@ std::list<Object*> Object::find_children_recursive(const std::function<bool(Obje
 
     return result;
 }
+
+bool Object::awake()
+{
+    for(auto&& component : m_Components)
+    {
+        if(component->is_enabled()) 
+            component->awake();
+    }
+
+    for(auto&& child : m_Children) 
+        child->awake();
+
+    return true;
+}
+
+void Object::frame_start() 
+{
+    for(auto&& component : m_Components)
+    {
+        if(component->is_enabled()) 
+            component->frame_start();
+    }
+
+    for(auto&& child : m_Children) 
+        child->frame_start();
+}
+
+void Object::frame_update()
+{
+    for(auto&& component : m_Components)
+    {
+        if(component->is_enabled()) 
+            component->frame_update();
+    }
+
+    for(auto&& child : m_Children) 
+        child->frame_update();
+}
+
+void Object::frame_finish()
+{
+    for(auto&& component : m_Components)
+    {
+        if(component->is_enabled()) 
+            component->frame_finish();
+    }
+
+    for(auto&& child : m_Children) 
+        child->frame_finish();
+}
+
+void Object::draw()
+{
+    for(auto&& component : m_Components)
+    {
+        if(component->is_enabled()) 
+            component->draw();
+    }
+}
