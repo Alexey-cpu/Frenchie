@@ -22,11 +22,14 @@ void MeshRenderer::frame_update(){}
 
 void MeshRenderer::frame_finish()
 {
-    if(m_Mesh == nullptr || m_Shader == nullptr || get_object<Transform>() == nullptr) 
+    auto object = get_object();
+    auto transform = object != nullptr ? object->get_component<Transform>() : nullptr;
+
+    if(m_Mesh == nullptr || m_Shader == nullptr || transform == nullptr) 
         return;
 
     m_Shader->use();
-    m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", get_object<Transform>()->get_model_matrix());
+    m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", transform->get_model_matrix());
     m_Shader->set_uniform<glm::vec4>("u_Color", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
     m_Mesh->render();
     m_Shader->unuse();

@@ -37,7 +37,7 @@ namespace Frenchie
             virtual ~Component();
 
             template<typename T = Object>
-            T* get_object()
+            T* get_object() const
             {
                 return dynamic_cast<T*>(m_Object);
             }
@@ -45,22 +45,17 @@ namespace Frenchie
             bool is_enabled() const;
             void set_enabled(bool _Value);
 
-            virtual bool awake() override
-            {
-                return true;
-            }
-
-            virtual void frame_start()  override{}
-
-            virtual void frame_update() override{}
-
-            virtual void frame_finish() override{}
-
-            virtual void draw() override{}
+            // IRenderer
+            virtual bool awake() override;
+            virtual void frame_start()  override;
+            virtual void frame_update() override;
+            virtual void frame_finish() override;
+            virtual void draw() override;
             
         protected:
-            Object* m_Object  = nullptr;
-            bool    m_Enabled = true;
+            
+            mutable Object* m_Object  = nullptr;
+            bool            m_Enabled = true;
             friend class Object;
         };
 

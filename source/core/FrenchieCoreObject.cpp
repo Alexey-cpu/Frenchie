@@ -2,6 +2,9 @@
 #include <FrenchieCoreLogger.hpp>
 #include <FrenchieCoreSingleton.hpp>
 
+// IMGUI
+#include <imgui.h>
+
 // STL
 #include <set>
 #include <iostream>
@@ -22,6 +25,19 @@ void Component::set_enabled(bool _Value)
 {
     m_Enabled = _Value;
 }
+
+bool Component::awake()
+{
+    return true;
+}
+
+void Component::frame_start(){}
+
+void Component::frame_update(){}
+
+void Component::frame_finish(){}
+
+void Component::draw(){}
 
 // Object
 Object::Object(const std::string& _Name) : m_Name(_Name){}
@@ -197,9 +213,26 @@ void Object::frame_finish()
 
 void Object::draw()
 {
+    std::string name = get_name();
+    for (int i = 0; i < 512; i++) 
+        Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
+    ImGui::InputText("##", Object::m_Editor.m_Name, 512);
+    set_name(std::string(Object::m_Editor.m_Name));
+
     for(auto&& component : m_Components)
     {
-        if(component->is_enabled()) 
+        if (ImGui::TreeNodeEx("component",
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
+        {
             component->draw();
+
+            ImGui::TreePop();
+        }
     }
 }
+
+Object::Editor Object::m_Editor = Editor();

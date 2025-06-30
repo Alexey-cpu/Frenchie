@@ -12,14 +12,19 @@ Scene3D::Scene3D(
     const glm::vec3&   _Axis,
     const glm::vec2&   _Size,
     const std::string& _Name) : 
-    Transform(_Name),
+    Core::Object(_Name),
     m_Depth(_Depth), 
     m_Aspect(_Aspect), 
     m_Fovy(_Fovy), 
     m_Axis(_Axis), 
     m_Size(_Size)
     {
-        create_child<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f), "Camera");
+        m_Camera =  
+            add_component<Camera>(
+                glm::vec3(+0.f, +0.f, +1.f), 
+                glm::vec3(+0.f, +1.f, +0.f));
+
+        m_Transform = add_component<Transform>();
     }
 
 Scene3D::~Scene3D(){}
@@ -88,15 +93,13 @@ void Scene3D::set_fovy(const float& _Value)
 
 void Scene3D::frame_start()
 {
-    Camera* camera = find_child<Camera>();
-
-    if(camera == nullptr) // no camera --> no rendering 
+    if(m_Camera == nullptr) // no camera --> no rendering 
         return;
 
     // configure all shaders that have been loaded
     auto projectionMatrix = get_projection_matrix();
     auto viewportScale    = get_viewport_scale();
-    auto viewMatrix       = camera->get_view_matrix();
+    auto viewMatrix       = m_Camera->get_view_matrix();
 
     Frenchie::Application::AssetManager::instance()->apply_function_to_instances<Shader>(
         [&projectionMatrix, &viewMatrix, &viewportScale](Shader* _Instance)
@@ -109,8 +112,8 @@ void Scene3D::frame_start()
     );
 
     // setup viewport scale
-    set_scale(get_viewport_scale());
+    m_Transform->set_scale(get_viewport_scale());
 
     // call base implementation
-    Transform::frame_start();
+    Object::frame_start();
 }
