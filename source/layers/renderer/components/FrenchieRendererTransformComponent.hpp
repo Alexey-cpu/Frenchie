@@ -15,9 +15,9 @@ namespace Frenchie
     {
         using namespace Frenchie::Core;
 
-        class Transform : public Component
+        class Transform : public Component::Registry<Transform>
         {
-            public:
+        public:
 
             Transform();
             virtual ~Transform();
@@ -38,9 +38,13 @@ namespace Frenchie
             virtual void frame_start() override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
-
-            // IEditor
             virtual void draw() override;
+
+            // Component::Register<Transform>
+            static TReturnType create()
+            {
+                return std::make_unique<Transform>();
+            }
 
             // service methods
             glm::mat4 compute_local_model_matrix() const;

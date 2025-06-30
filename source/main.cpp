@@ -54,6 +54,11 @@ int main(int, char**)
 
     scene->apply_to_children_recursive([mesh, shader](Object* _Object)
     {
+        auto component = 
+            Factory::create<Component>(STRINGIFY(Transform));
+        
+        if(component) std::cout << "Component created !!! \n";
+
         _Object->add_component<Transform>();
         _Object->add_component<MeshRenderer>(mesh, shader);
     }

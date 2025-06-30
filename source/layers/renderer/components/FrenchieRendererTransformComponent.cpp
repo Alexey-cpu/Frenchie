@@ -6,7 +6,7 @@
 
 using namespace Frenchie::Renderer;
 
-Transform::Transform(){}
+Transform::Transform() : Component::Registry<Transform>(STRINGIFY(Transform)){}
 
 Transform::~Transform(){}
 
@@ -81,8 +81,6 @@ void Transform::frame_finish()
 
 void Transform::draw()
 {
-    ImGui::Text("Transform");
-
     auto transformPosition = get_position();
     auto transformRotation = get_rotation();
     auto transformScale    = get_scale();
@@ -110,7 +108,7 @@ void Transform::draw()
     if(ImGui::BeginTable(
         "Transform", 
         3, 
-        ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
+        //ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
         ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
         ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
         ImGuiTableFlags_::ImGuiTableFlags_BordersV     | 
@@ -137,7 +135,11 @@ void Transform::draw()
             ImGui::Text(axis[i].c_str());
             ImGui::SameLine();
             ImGui::SetNextItemWidth(avail.x);
-            ImGui::InputText(labels[i].c_str(), m_Editor.m_Position[i], 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
+            ImGui::InputText(
+                labels[i].c_str(), 
+                m_Editor.m_Position[i], 
+                64, 
+                ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
             ImGui::PopID();
 
             // rotation
@@ -146,7 +148,11 @@ void Transform::draw()
             ImGui::Text(axis[i].c_str());
             ImGui::SameLine();
             ImGui::SetNextItemWidth(avail.x);
-            ImGui::InputText(labels[i].c_str(), m_Editor.m_Rotation[i], 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
+            ImGui::InputText(
+                labels[i].c_str(), 
+                m_Editor.m_Rotation[i], 
+                64, 
+                ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
             ImGui::PopID();
 
             // scale
@@ -155,7 +161,11 @@ void Transform::draw()
             ImGui::Text(axis[i].c_str());
             ImGui::SameLine();
             ImGui::SetNextItemWidth(avail.x);
-            ImGui::InputText(labels[i].c_str(), m_Editor.m_Scale[i], 64, ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
+            ImGui::InputText(
+                labels[i].c_str(), 
+                m_Editor.m_Scale[i], 
+                64, 
+                ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
             ImGui::PopID();
         }
 
