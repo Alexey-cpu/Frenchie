@@ -71,9 +71,9 @@ int main(int, char**)
     child_3->get_component<Transform>()->set_position(glm::vec3(200.f, 200.f, 0.f));
 
 
-    application->push<SceneView>("SceneView-1", scene);
-    application->push<HierarchyView>("HierarchyView", scene);
-    application->push<InspectorView>("InspectorView", scene);
+    application->push<SceneView>("Scene", scene);
+    application->push<HierarchyView>("Hierarchy", scene);
+    application->push<InspectorView>("Inspector", scene);
 
     return application->execute();
 }
