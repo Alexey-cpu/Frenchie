@@ -213,15 +213,21 @@ void Object::frame_finish()
 
 void Object::draw()
 {
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
     std::string name = get_name();
     for (int i = 0; i < 512; i++) 
         Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
     ImGui::InputText("##", Object::m_Editor.m_Name, 512);
     set_name(std::string(Object::m_Editor.m_Name));
 
+    int id = 0;
+
     for(auto&& component : m_Components)
     {
-        if (ImGui::TreeNodeEx("component",
+        ImGui::PushID(id++);
+
+        if (ImGui::TreeNodeEx(component->get_name().c_str(),
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
@@ -229,9 +235,10 @@ void Object::draw()
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
         {
             component->draw();
-
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 }
 

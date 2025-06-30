@@ -2,6 +2,8 @@
 
 #include <FrenchieRendererInterfaces.hpp>
 
+#include <FrenchieCoreFlyweight.hpp>
+
 // STL
 #include <functional>
 #include <memory>
@@ -29,7 +31,10 @@ namespace Frenchie
             NonCopyable &operator=(NonCopyable &&) noexcept = default;
         };
 
-        class Component : public NonCopyable, public Frenchie::Renderer::IRenderer
+        class Component : 
+            public NonCopyable,
+            public Frenchie::Renderer::IRenderer,
+            public Frenchie::Core::Factory::Creator<Component>
         {
         public:
 
@@ -40,6 +45,11 @@ namespace Frenchie
             T* get_object() const
             {
                 return dynamic_cast<T*>(m_Object);
+            }
+
+            virtual std::string get_name() const
+            {
+                return STRINGIFY(Component);
             }
 
             bool is_enabled() const;
