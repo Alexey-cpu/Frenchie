@@ -81,130 +81,9 @@ void Transform::frame_finish()
 
 void Transform::draw()
 {
-    auto transformPosition = get_position();
-    auto transformRotation = get_rotation();
-    auto transformScale    = get_scale();
-
-    for (int i = 0; i < 3; i++)
-    {
-        // read position
-        auto position = std::to_string(transformPosition[i]);
-        auto rotation = std::to_string(transformRotation[i]);
-        auto scale = std::to_string(transformScale[i]);
-
-        for(int j = 0; j < 64; j++)
-        {
-            m_Editor.m_Position[i][j] = j < position.size() ? position[j] : '\0';
-            m_Editor.m_Rotation[i][j] = j < rotation.size() ? rotation[j] : '\0';
-            m_Editor.m_Scale   [i][j] = j < scale.size() ? scale[j] : '\0';
-        }
-    }
-
-    std::vector<std::string> axis    = {"X", "Y", "Z"};
-    std::vector<std::string> labels  = {"##", "###", "####"};
-
-    int j = 0;
-
-    if(ImGui::BeginTable(
-        "Transform", 
-        3, 
-        //ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
-        ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
-        ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
-        ImGuiTableFlags_::ImGuiTableFlags_BordersV     | 
-        ImGuiTableFlags_::ImGuiTableFlags_Resizable    | 
-        ImGuiTableFlags_::ImGuiTableFlags_Reorderable  | 
-        ImGuiTableFlags_::ImGuiTableFlags_Hideable))
-    {
-        ImGui::TableSetupColumn("Position",ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Rotation", ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Scale", ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableHeadersRow();
-        
-        ImGui::TableNextRow();
-
-        for (int i = 0; i < 3; i++)
-        {
-            auto avail = ImGui::GetContentRegionAvail();
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-
-            // position
-            ImGui::PushID(j++);
-            ImGui::Text(axis[i].c_str());
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(avail.x);
-            ImGui::InputText(
-                labels[i].c_str(), 
-                m_Editor.m_Position[i], 
-                64, 
-                ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
-            ImGui::PopID();
-
-            // rotation
-            ImGui::TableSetColumnIndex(1);
-            ImGui::PushID(j++);
-            ImGui::Text(axis[i].c_str());
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(avail.x);
-            ImGui::InputText(
-                labels[i].c_str(), 
-                m_Editor.m_Rotation[i], 
-                64, 
-                ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
-            ImGui::PopID();
-
-            // scale
-            ImGui::TableSetColumnIndex(2);
-            ImGui::PushID(j++);
-            ImGui::Text(axis[i].c_str());
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(avail.x);
-            ImGui::InputText(
-                labels[i].c_str(), 
-                m_Editor.m_Scale[i], 
-                64, 
-                ImGuiInputTextFlags_::ImGuiInputTextFlags_CharsDecimal);
-            ImGui::PopID();
-        }
-
-        ImGui::EndTable();
-    }
-
-    // setup new parameters
-    {    
-        auto x = std::string(m_Editor.m_Position[0]);
-        auto y = std::string(m_Editor.m_Position[1]);
-        auto z = std::string(m_Editor.m_Position[2]);
-
-        set_position(glm::vec3(
-            x.empty() ? 0.f : std::stod(x),
-            y.empty() ? 0.f : std::stod(y),
-            z.empty() ? 0.f : std::stod(z)));
-    }
-
-    {
-        auto x = std::string(m_Editor.m_Scale[0]);
-        auto y = std::string(m_Editor.m_Scale[1]);
-        auto z = std::string(m_Editor.m_Scale[2]);
-        
-        set_scale(glm::vec3(
-            x.empty() ? 0.f : std::stod(x),
-            y.empty() ? 0.f : std::stod(y),
-            z.empty() ? 0.f : std::stod(z)));
-    }
-
-    { 
-        auto x = std::string(m_Editor.m_Rotation[0]);
-        auto y = std::string(m_Editor.m_Rotation[1]);
-        auto z = std::string(m_Editor.m_Rotation[2]);
-
-        set_rotation(glm::vec3(
-            x.empty() ? 0.f : std::stod(x),
-            y.empty() ? 0.f : std::stod(y),
-            z.empty() ? 0.f : std::stod(z)));
-    }
+    ImGui::InputFloat3("position XYZ", &m_Position[0], "%.4f");
+    ImGui::InputFloat3("rotation XYZ", &m_Rotation[0], "%.4f");
+    ImGui::InputFloat3("scale    XYZ", &m_Scale[0], "%.4f");
 }
 
 glm::mat4 Transform::compute_local_model_matrix() const
@@ -217,5 +96,3 @@ glm::mat4 Transform::compute_local_model_matrix() const
             glm::rotate(matrix, glm::radians(m_Rotation.z), glm::vec3(0.f, 0.f, 1.f)) * 
             glm::scale(matrix, m_Scale);
 }
-
-Transform::Editor Transform::m_Editor = Editor();
