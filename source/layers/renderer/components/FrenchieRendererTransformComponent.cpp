@@ -207,3 +207,5 @@ glm::mat4 Transform::compute_local_model_matrix() const
             glm::rotate(matrix, glm::radians(m_Rotation.z), glm::vec3(0.f, 0.f, 1.f)) * 
             glm::scale(matrix, m_Scale);
 }
+
+Transform::Editor Transform::m_Editor = Editor();
