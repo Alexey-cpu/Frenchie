@@ -6,12 +6,12 @@
 using namespace Frenchie::Renderer;
 
 Scene3D::Scene3D(
-    const float&            _Depth,
-    const float&            _Aspect,
-    const float&            _Fovy,
-    const glm::vec3&        _Axis,
-    const glm::vec2&        _Size,
-    const std::string&      _Name) : 
+    const float&       _Depth,
+    const float&       _Aspect,
+    const float&       _Fovy,
+    const glm::vec3&   _Axis,
+    const glm::vec2&   _Size,
+    const std::string& _Name) : 
     Transform(_Name),
     m_Depth(_Depth), 
     m_Aspect(_Aspect), 
@@ -101,10 +101,10 @@ void Scene3D::frame_start()
     Frenchie::Application::AssetManager::instance()->apply_function_to_instances<Shader>(
         [&projectionMatrix, &viewMatrix, &viewportScale](Shader* _Instance)
         {
-            _Instance->begin();
+            _Instance->use();
             _Instance->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
             _Instance->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
-            _Instance->end();
+            _Instance->unuse();
         }
     );
 

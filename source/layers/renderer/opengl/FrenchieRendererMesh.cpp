@@ -57,7 +57,8 @@ void Mesh::render()
 {
     if(!is_instanced()) 
     {
-        Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPEN_GL::RENDER_FAILED::MESH_IS_NOT_INSTANCED"));
+        Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::MESH"));
+        Logger::instance()->error(fmt::format("Mesh is not instanced"));
         return;
     }
 
@@ -100,11 +101,11 @@ void MeshRenderer::frame_finish()
     if(m_Mesh == nullptr || m_Shader == nullptr) 
         return;
 
-    m_Shader->begin();
+    m_Shader->use();
     m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", m_ModelMatrix);
     m_Shader->set_uniform<glm::vec4>("u_Color", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
     m_Mesh->render();
-    m_Shader->end();
+    m_Shader->unuse();
 }
 
 // Triangle2D

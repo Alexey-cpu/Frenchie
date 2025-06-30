@@ -55,9 +55,9 @@ namespace Frenchie
                 class Editor
                 {
                 public:
-                    char m_PositionX[64]{};
-                    char m_PositionY[64]{};
-                    char m_PositionZ[64]{};
+                    char      m_Position[3][64]{{}};
+                    char      m_Rotation[3][64]{{}};
+                    char      m_Scale[3][64]{{}};
                 } m_Editor;
         };
     }   
