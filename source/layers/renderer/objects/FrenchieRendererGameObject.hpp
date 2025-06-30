@@ -10,7 +10,7 @@ namespace Frenchie
         {
         public:
             GameObject(const std::string _Name);
-            virtual ~GameObject(){}
+            virtual ~GameObject();
         };
     }
 };

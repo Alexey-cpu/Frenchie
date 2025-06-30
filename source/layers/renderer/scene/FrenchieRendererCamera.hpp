@@ -10,7 +10,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Frenchie::Core::Component
+        class Camera : public Component::Registry<Camera>
         {
         public:
 
@@ -29,6 +29,14 @@ namespace Frenchie
             void set_yaw(const float&);
             void set_roll(const float&);
             glm::mat4 get_view_matrix() const;
+
+            virtual void draw() override;
+
+            // Component::Register<Transform>
+            static TReturnType create()
+            {
+                return std::make_unique<Camera>();
+            }
 
         protected:
 

@@ -130,6 +130,7 @@ void SceneView::frame_finish()
     glViewport(0, 0, width, height);
 
     // This is the test code !!!
+    //m_Scene->get_component<Camera>()->set_pitch(glm::degrees(2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime()));
 
     // m_Scene->apply_to_children_recursive(
     // [](Object* _Object)
