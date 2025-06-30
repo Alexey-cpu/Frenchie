@@ -84,8 +84,8 @@ void Camera::draw()
 {
     auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
 
-    ImGui::InputFloat3("position XYZ", &m_CameraWorldPosition[0], "%.4f");
-    ImGui::InputFloat3("rotation XYZ", &rotation[0], "%.4f");
+    ImGui::DragFloat3("position XYZ", &m_CameraWorldPosition[0], 0.5f, -10000.f, 10000.f, "%.4f");
+    ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");
 
     m_Pitch = rotation.x;
     m_Yaw   = rotation.y;
