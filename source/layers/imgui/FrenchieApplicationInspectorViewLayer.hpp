@@ -27,6 +27,16 @@ namespace Frenchie
 
         protected:
             std::shared_ptr<Scene3D> m_Scene = nullptr;
+
+            class SerachPanel
+            {
+            public:
+
+                void draw(bool _Draw);
+
+            protected:
+                char m_Search[512]{};
+            } m_SeachPanel;
         };
     }
 };

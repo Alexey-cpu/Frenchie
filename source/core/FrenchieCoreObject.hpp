@@ -153,21 +153,50 @@ namespace Frenchie
                 return child;
             }
 
+            void remove_child(const std::function<bool(Object*)>& _Predicate)
+            {
+                if(_Predicate == nullptr) 
+                    return;
+
+                for(auto it = m_Children.begin(); it != m_Children.end(); it++)
+                {
+                    if(_Predicate((*it).get()))
+                    {
+                        m_Children.erase(it);
+                        return;
+                    }
+                }
+            }
+
             template<typename T> 
             void remove_child()
             {
-                auto iterator = 
-                    std::find_if(
-                        m_Components.begin(), 
-                        m_Components.end(), 
-                        [](std::unique_ptr<Object> _Component)->bool
-                        { 
-                            return dynamic_cast<T*>(_Component.get());
-                        }
-                    );
+                remove_child([](Object* _Object)->bool
+                {
+                    return dynamic_cast<T>(_Object) != nullptr;
+                }
+                );
+            }
 
-                if(iterator != m_Components.end()) 
-                    m_Components.erase(iterator);
+            void move(Object* _Destination)
+            {
+                if(_Destination == nullptr || 
+                    _Destination->get_parent_recursive([this](Object* _Object)->bool{return _Object == this;})) 
+                    return;
+
+                for(auto it = m_Parent->m_Children.begin(); it != m_Parent->m_Children.end(); it++)
+                {
+                    if((*it).get() == this)
+                    {
+                        auto self = (*it).release();
+
+                        m_Parent->m_Children.erase(it);
+
+                        _Destination->m_Children.push_back(std::unique_ptr<Object>(self));
+                        self->m_Parent = _Destination;
+                        return;
+                    }
+                }
             }
 
             template<typename T>
@@ -199,7 +228,7 @@ namespace Frenchie
                     std::find_if(
                         m_Components.begin(), 
                         m_Components.end(), 
-                        [](std::unique_ptr<Component> _Component)->bool
+                        [](std::unique_ptr<Component>& _Component)->bool
                         { 
                             return dynamic_cast<T*>(_Component.get());
                         }

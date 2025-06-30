@@ -31,7 +31,19 @@ void HierarchyView::frame_update()
     ImGui::Begin(get_name().c_str());
 
     int id = 0;
-    DrawTree(m_Scene.get(), id);
+    Object* itemToRemove = nullptr;
+    DrawTree(m_Scene.get(), id, &itemToRemove);
+
+    if(itemToRemove && 
+        itemToRemove->get_parent())
+    {
+        itemToRemove->get_parent()->remove_child(
+            [itemToRemove](Object* _Object)->bool
+            {
+                return _Object == itemToRemove;
+            }
+        );
+    }
 
     ImGui::End();
 }
@@ -56,7 +68,7 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::DrawTree(Object* _Transform, int& _ID)
+void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemove)
 {
     if(_Transform == nullptr || m_Scene == nullptr) 
         return;
@@ -70,6 +82,51 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID)
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
     {
+        // Drag & Drop
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) 
+        {
+            ImGui::SetDragDropPayload("Frenchie::Core::Object", &_Transform, sizeof(_Transform));
+            ImGui::EndDragDropSource();
+        }
+            
+        if (ImGui::BeginDragDropTarget()) 
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Frenchie::Core::Object"))
+            {
+                Object** receivedPointerAddress = static_cast<Object**>(payload->Data);
+                Object*  receivedPointer        = receivedPointerAddress != nullptr ? *receivedPointerAddress : nullptr;
+
+                if(receivedPointer != nullptr) 
+                    receivedPointer->move(_Transform);
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
+        // right click context menu
+        if(ImGui::IsItemHovered() && 
+            ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
+        {
+            ImGui::OpenPopup("ContextMenu");
+        }
+
+        if(ImGui::BeginPopup("ContextMenu"))
+        {
+            if(ImGui::MenuItem("Rename"))
+            {
+                m_Scene->set_flag(Object::Flags::Selected, false);
+                m_Scene->apply_to_children_recursive([](Object* _Object){_Object->set_flag(Object::Flags::Selected, false);});
+                _Transform->set_flag(Object::Flags::Selected, true);
+            }
+            
+            if(ImGui::MenuItem("Delete"))
+            {
+                *_ItemToRemove = _Transform;
+            }
+
+            ImGui::EndPopup();
+        }
+
         // select item on double click
         if(ImGui::IsItemHovered() && 
             ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
@@ -121,7 +178,7 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID)
         const auto& children = _Transform->get_children();
 
         for(auto&& child : children) 
-            DrawTree(child.get(), _ID);
+            DrawTree(child.get(), _ID, _ItemToRemove);
         ImGui::TreePop();
     }
 

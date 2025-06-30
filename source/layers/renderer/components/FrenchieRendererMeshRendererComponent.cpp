@@ -4,7 +4,10 @@ using namespace Frenchie::Renderer;
 
 // MeshRenderer
 MeshRenderer::MeshRenderer(Mesh* _Mesh, Shader* _Shader) : 
-    m_Mesh(_Mesh), m_Shader(_Shader){}
+    //Component::Registry<MeshRenderer>(STRINGIFY(MeshRenderer)),
+    m_Mesh(_Mesh), 
+    m_Shader(_Shader)
+{}
 
 MeshRenderer::~MeshRenderer(){}
 
@@ -22,8 +25,10 @@ void MeshRenderer::frame_update(){}
 
 void MeshRenderer::frame_finish()
 {
-    auto object = get_object();
-    auto transform = object != nullptr ? object->get_component<Transform>() : nullptr;
+    auto transform = 
+        get_object() != nullptr ? 
+            get_object()->get_component<Transform>() : 
+                nullptr;
 
     if(m_Mesh == nullptr || m_Shader == nullptr || transform == nullptr) 
         return;

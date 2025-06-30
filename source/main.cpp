@@ -8,6 +8,8 @@
 #include <FrenchieRendererMeshRendererComponent.hpp>
 #include <FrenchieRendererTransformComponent.hpp>
 
+#include <FrenchieImGuiDemoLayer.hpp>
+
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
@@ -54,11 +56,6 @@ int main(int, char**)
 
     scene->apply_to_children_recursive([mesh, shader](Object* _Object)
     {
-        auto component = 
-            Factory::create<Component>(STRINGIFY(Transform));
-        
-        if(component) std::cout << "Component created !!! \n";
-
         _Object->add_component<Transform>();
         _Object->add_component<MeshRenderer>(mesh, shader);
     }
@@ -70,10 +67,11 @@ int main(int, char**)
     child_2->get_component<Transform>()->set_position(glm::vec3(200.f, 200.f, 0.f));
     child_3->get_component<Transform>()->set_position(glm::vec3(200.f, 200.f, 0.f));
 
-
     application->push<SceneView>("Scene", scene);
     application->push<HierarchyView>("Hierarchy", scene);
     application->push<InspectorView>("Inspector", scene);
+
+    application->push<ImguiDemo>();
 
     return application->execute();
 }

@@ -17,15 +17,9 @@ Scene3D::Scene3D(
     m_Aspect(_Aspect), 
     m_Fovy(_Fovy), 
     m_Axis(_Axis), 
-    m_Size(_Size)
-    {
-        m_Camera =  
-            add_component<Camera>(
-                glm::vec3(+0.f, +0.f, +1.f), 
-                glm::vec3(+0.f, +1.f, +0.f));
-
-        m_Transform = add_component<Transform>();
-    }
+    m_Size(_Size), 
+    m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f))),
+    m_Transform(add_component<Transform>()){}
 
 Scene3D::~Scene3D(){}
 
@@ -93,7 +87,7 @@ void Scene3D::set_fovy(const float& _Value)
 
 void Scene3D::frame_start()
 {
-    if(m_Camera == nullptr) // no camera --> no rendering 
+    if(m_Camera == nullptr || m_Transform == nullptr) // no camera or no transform --> no rendering 
         return;
 
     // configure all shaders that have been loaded
