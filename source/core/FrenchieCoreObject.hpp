@@ -36,6 +36,12 @@ namespace Frenchie
             Component();
             virtual ~Component();
 
+            template<typename T = Object>
+            T* get_object()
+            {
+                return dynamic_cast<T*>(m_Object);
+            }
+
             bool is_enabled() const;
             void set_enabled(bool _Value);
 
@@ -55,6 +61,7 @@ namespace Frenchie
         protected:
             Object* m_Object  = nullptr;
             bool    m_Enabled = true;
+            friend class Object;
         };
 
         class Object : public NonCopyable, public Frenchie::Renderer::IRenderer
@@ -174,8 +181,10 @@ namespace Frenchie
             template<typename T, typename ... Arguments>
             T* add_component(Arguments ... _Args)
             {
-                m_Components.push_back(std::make_unique<T>(..._Args));
-                return dynamic_cast<T*>(m_Components.back().get());
+                m_Components.push_back(std::make_unique<T>(_Args ...));
+                auto component = dynamic_cast<T*>(m_Components.back().get());
+                component->m_Object = this;
+                return component;
             }
 
             template<typename T>
@@ -203,6 +212,9 @@ namespace Frenchie
                         component->awake();
                 }
 
+                for(auto&& child : m_Children) 
+                    child->awake();
+
                 return true;
             }
 
@@ -213,6 +225,9 @@ namespace Frenchie
                     if(component->is_enabled()) 
                         component->frame_start();
                 }
+
+                for(auto&& child : m_Children) 
+                    child->frame_start();
             }
 
             virtual void frame_update() override
@@ -222,6 +237,9 @@ namespace Frenchie
                     if(component->is_enabled()) 
                         component->frame_update();
                 }
+
+                for(auto&& child : m_Children) 
+                    child->frame_update();
             }
 
             virtual void frame_finish() override
@@ -231,6 +249,9 @@ namespace Frenchie
                     if(component->is_enabled()) 
                         component->frame_finish();
                 }
+
+                for(auto&& child : m_Children) 
+                    child->frame_finish();
             }
 
             virtual void draw() override

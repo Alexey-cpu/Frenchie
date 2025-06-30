@@ -45,26 +45,12 @@ void Transform::set_scale(const glm::vec3& _Value)
 
 bool Transform::awake()
 {
-    for(auto&& child : m_Children)
-    {
-        Transform* childTransform = dynamic_cast<Transform*>(child.get());
-
-        if(childTransform != nullptr)
-            childTransform->awake();
-    }
-
-    return true;
+    return Object::awake();
 }
 
 void Transform::frame_start()
 {
-    for(auto&& child : m_Children)
-    {
-        Transform* childTransform = dynamic_cast<Transform*>(child.get());
-
-        if(childTransform != nullptr)
-            childTransform->frame_start();
-    }
+    Object::frame_start();
 }
 
 void Transform::frame_update()
@@ -84,17 +70,13 @@ void Transform::frame_update()
         if(childTransform != nullptr)
             childTransform->frame_update();
     }
+
+    Object::frame_update();
 }
 
 void Transform::frame_finish()
 {
-    for(auto&& child : m_Children)
-    {
-        Transform* childTransform = dynamic_cast<Transform*>(child.get());
-
-        if(childTransform != nullptr)
-            childTransform->frame_finish();
-    }
+    Object::frame_finish();
 }
 
 void Transform::draw()
