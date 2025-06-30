@@ -157,9 +157,9 @@ namespace Frenchie
             }
 
             template<typename T, typename ... Arguments>
-            T add_component(Arguments ... _Arguments)
+            T* add_component(Arguments ... _Args)
             {
-                m_Components.push_back(std::make_unique<T>(_Arguments));
+                m_Components.push_back(std::make_unique<T>(..._Args));
                 return dynamic_cast<T*>(m_Components.back().get());
             }
 
