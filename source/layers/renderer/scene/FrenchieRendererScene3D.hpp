@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FrenchieRendererTransformComponent.hpp>
+#include <FrenchieRendererCamera.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -11,17 +12,17 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Scene3D : public Transform
+        class Scene3D : public Core::Object
         {
         public:
 
             Scene3D(
-                const float&            _Depth  = 100.f, 
-                const float&            _Aspect = 1.f, 
-                const float&            _Fovy   = 90.f, 
-                const glm::vec3&        _Axis   = glm::vec3(1.f, 1.f, 1.f),
-                const glm::vec2&        _Size   = glm::vec2(2048.f, 1024.f),
-                const std::string&      _Name   = "Scene3D");
+                const float&       _Depth  = 100.f, 
+                const float&       _Aspect = 1.f, 
+                const float&       _Fovy   = 90.f, 
+                const glm::vec3&   _Axis   = glm::vec3(1.f, 1.f, 1.f),
+                const glm::vec2&   _Size   = glm::vec2(2048.f, 1024.f),
+                const std::string& _Name   = "Scene3D");
             
             virtual ~Scene3D();
 
@@ -50,6 +51,9 @@ namespace Frenchie
                 float     m_Fovy   = 90.f;
                 glm::vec3 m_Axis   = glm::vec3(1.f, 1.f, 1.f);
                 glm::vec2 m_Size   = glm::vec2(2048.f, 1024.f);
+
+                Camera*    m_Camera = nullptr;
+                Transform* m_Transform = nullptr;
         };
     }
 }

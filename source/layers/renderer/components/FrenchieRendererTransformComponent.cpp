@@ -2,9 +2,11 @@
 
 #include <imgui.h>
 
+#include <iostream>
+
 using namespace Frenchie::Renderer;
 
-Transform::Transform(const std::string& _Name) : Object(_Name){}
+Transform::Transform(){}
 
 Transform::~Transform(){}
 
@@ -45,38 +47,36 @@ void Transform::set_scale(const glm::vec3& _Value)
 
 bool Transform::awake()
 {
-    return Object::awake();
+    return Component::awake();
 }
 
 void Transform::frame_start()
 {
-    Object::frame_start();
+    Component::frame_start();
 }
 
 void Transform::frame_update()
 {
+    auto object = get_object();
+
+    if(object == nullptr) 
+        return;
+
     // compute geometry
-    auto parent = get_parent<Transform>();
+    auto parent = 
+        object->get_parent() != nullptr ? 
+            object->get_parent()->get_component<Transform>() : 
+                nullptr;
 
     m_ModelMatrix = 
         parent != nullptr ? 
-            parent->m_ModelMatrix * compute_local_model_matrix() : 
+            parent->get_model_matrix() * compute_local_model_matrix() : 
                 compute_local_model_matrix();
-
-    for(auto&& child : m_Children)
-    {
-        Transform* childTransform = dynamic_cast<Transform*>(child.get());
-
-        if(childTransform != nullptr)
-            childTransform->frame_update();
-    }
-
-    Object::frame_update();
 }
 
 void Transform::frame_finish()
 {
-    Object::frame_finish();
+    Component::frame_finish();
 }
 
 void Transform::draw()

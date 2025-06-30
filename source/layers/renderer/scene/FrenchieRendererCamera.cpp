@@ -1,13 +1,10 @@
-#include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererScene3D.hpp>
 
 using namespace Frenchie::Renderer;
 
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
-    glm::vec3 _CameraWorldUpAxisDirection, 
-    const std::string& _Name) : 
-    Frenchie::Core::Object(_Name),
+    glm::vec3 _CameraWorldUpAxisDirection) :
     m_CameraWorldPosition(_CameraWorldPosition), 
     m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
 
@@ -55,8 +52,7 @@ void Camera::set_roll(const float& _Value)
 
 glm::mat4 Camera::get_view_matrix() const
 {
-    Scene3D* viewport = 
-        get_parent_recursive<Scene3D>();
+    Scene3D* viewport = get_object<Scene3D>();
     
     if(viewport == nullptr) 
         return glm::mat4(1.f);

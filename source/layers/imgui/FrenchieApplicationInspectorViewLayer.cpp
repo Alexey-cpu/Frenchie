@@ -31,11 +31,8 @@ void InspectorView::frame_update()
     m_Scene->apply_to_children_recursive(
         [](Object* _Object)
         {
-            if(!_Object->check_flag(Object::Focused)) 
-                return;
-            
-            if(dynamic_cast<Transform*>(_Object))
-                dynamic_cast<Transform*>(_Object)->draw();
+            if(_Object->check_flag(Object::Focused)) 
+                _Object->draw();
         }
     );
 

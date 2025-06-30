@@ -15,11 +15,11 @@ namespace Frenchie
     {
         using namespace Frenchie::Core;
 
-        class Transform : public Object
+        class Transform : public Component
         {
             public:
 
-            Transform(const std::string& _Name = std::string());
+            Transform();
             virtual ~Transform();
 
             // getters
