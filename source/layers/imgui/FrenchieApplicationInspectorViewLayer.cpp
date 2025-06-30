@@ -34,8 +34,8 @@ void InspectorView::frame_update()
             if(!_Object->check_flag(Object::Focused)) 
                 return;
             
-            if(dynamic_cast<IEditor*>(_Object))
-                dynamic_cast<IEditor*>(_Object)->draw();
+            if(dynamic_cast<Transform*>(_Object))
+                dynamic_cast<Transform*>(_Object)->draw();
         }
     );
 

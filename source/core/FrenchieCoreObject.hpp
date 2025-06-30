@@ -144,7 +144,7 @@ namespace Frenchie
             }
 
             template<typename T>
-            T get_component()
+            T* get_component()
             {
                 for(auto&& component : m_Components)
                 {
