@@ -47,16 +47,30 @@ int main(int, char**)
 
     // create hierarchy
 
-    auto root    = scene->create_child<MeshRenderer>(mesh, shader, "Root");
-    auto child_1 = root->create_child<MeshRenderer>(mesh, shader, "Child-1");
-    auto child_2 = child_1->create_child<MeshRenderer>(mesh, shader, "Child-2");
-    auto child_3 = child_2->create_child<MeshRenderer>(mesh, shader, "Child-3");
+    // MeshRenderer
 
-    root->set_position(glm::vec3(0.1f, 0.0f, 0.f));
+    auto root    = scene->create_child<Transform>("Root");
+    auto child_1 = root->create_child<Transform>("Child-1");
+    auto child_2 = child_1->create_child<Transform>("Child-2");
+    auto child_3 = child_2->create_child<Transform>("Child-3");
+
+    root->set_position(glm::vec3(0.f, 0.0f, 0.f));
     root->set_rotation(glm::vec3(0.f, 0.f, 0.f));
     child_1->set_position(glm::vec3(200.f, 200.f, 0.f));
     child_2->set_position(glm::vec3(200.f, 200.f, 0.f));
     child_3->set_position(glm::vec3(200.f, 200.f, 0.f));
+    
+    scene->apply_to_children_recursive([mesh, shader](Object* _Object)
+    {
+        Transform* transform = 
+            dynamic_cast<Transform*>(_Object);
+
+        if(transform == nullptr) 
+            return;
+        
+        transform->add_component<MeshRenderer>(mesh, shader);
+    }
+    );
 
     application->push<SceneView>("SceneView-1", scene);
     application->push<HierarchyView>("HierarchyView", scene);

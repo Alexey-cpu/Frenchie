@@ -8,14 +8,10 @@ namespace Frenchie
     namespace Renderer
     {
         // MeshRenderer
-        class MeshRenderer : public Transform
+        class MeshRenderer : public Component
         {
         public:
-            MeshRenderer(
-                Mesh*              _Mesh,
-                Shader*            _Shader,
-                const std::string& _Name = std::string());
-            
+            MeshRenderer(Mesh* _Mesh, Shader* _Shader);
             virtual ~MeshRenderer();
 
             virtual bool awake() override;
