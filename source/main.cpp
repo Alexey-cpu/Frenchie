@@ -5,7 +5,7 @@
 
 #include <FrenchieCoreFlyweight.hpp>
 
-#include <FrenchieRendererMesh.hpp>
+#include <FrenchieRendererMeshRendererComponent.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
