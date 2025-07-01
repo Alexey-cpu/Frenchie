@@ -15,9 +15,9 @@ Camera::~Camera(){}
 
 glm::mat4 Camera::get_view_matrix() const
 {
-    Scene3D* viewport = get_object<Scene3D>();
+    Scene3D* scene3D = get_object<Scene3D>();
     
-    if(viewport == nullptr) 
+    if(scene3D == nullptr) 
         return glm::mat4(1.f);
 
     // camera rotation angles
@@ -33,7 +33,12 @@ glm::mat4 Camera::get_view_matrix() const
 
     m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
-    
+
+    return glm::scale(
+        glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection), 
+        scene3D->get_viewport_scale()
+        );
+
     return glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection);
 }
 
@@ -135,11 +140,10 @@ void Camera::set_fovy(const float& _Value)
 
 void Camera::draw() 
 {
-    Scene3D* scene3D = get_object<Scene3D>();
-
-    auto scale    = get_object<Scene3D>() ? get_object<Scene3D>()->get_viewport_scale() : glm::vec3(1.f);
-    auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
-    auto position = get_position() / scale;
+    Scene3D* scene3D  = get_object<Scene3D>();
+    auto     scale    = scene3D ? scene3D->get_viewport_scale() : glm::vec3(1.f);
+    auto     rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
+    auto     position = get_position() / scale;
 
     ImGui::DragFloat3("position XYZ", &position[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");

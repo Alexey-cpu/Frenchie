@@ -62,9 +62,6 @@ void Scene3D::frame_start()
     }
     );
 
-    // setup viewport scale
-    m_Transform->set_scale(get_viewport_scale());
-
     // call base implementation
     Object::frame_start();
 }
