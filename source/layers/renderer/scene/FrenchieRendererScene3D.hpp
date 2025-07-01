@@ -23,6 +23,7 @@ namespace Frenchie
             virtual ~Scene3D();
 
             // getters
+            glm::mat4 get_viewport_scale_matrix() const;
             glm::vec3 get_viewport_scale() const;
             glm::vec3 get_cursor_position() const;
             glm::vec2 get_size() const;

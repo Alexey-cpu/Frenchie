@@ -15,11 +15,6 @@ Camera::~Camera(){}
 
 glm::mat4 Camera::get_view_matrix() const
 {
-    Scene3D* scene3D = get_object<Scene3D>();
-    
-    if(scene3D == nullptr) 
-        return glm::mat4(1.f);
-
     // camera rotation angles
     glm::mat4 rotateX  = glm::rotate(glm::mat4(1.f), glm::radians(m_Pitch), glm::vec3(1.f, 0.f, 0.f));
     glm::mat4 rotateY  = glm::rotate(glm::mat4(1.f), glm::radians(m_Yaw), glm::vec3(0.f, 1.f, 0.f));
@@ -33,11 +28,6 @@ glm::mat4 Camera::get_view_matrix() const
 
     m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
-
-    return glm::scale(
-        glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection), 
-        scene3D->get_viewport_scale()
-        );
 
     return glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection);
 }
