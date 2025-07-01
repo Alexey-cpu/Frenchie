@@ -76,27 +76,30 @@ void SceneView::frame_update()
 
     ImGui::Begin(get_name().c_str());
 
-    ImVec2 current_size = ImGui::GetWindowSize();
+    float width  = ImGui::GetContentRegionAvail().x;
+    float height = ImGui::GetContentRegionAvail().y;
 
-    int width  = (int)ImGui::GetContentRegionAvail().x;
-    int height = (int)ImGui::GetContentRegionAvail().y;
-
-    // resize scene
-    m_Scene->set_size(glm::vec2(width, height));
-
-    ImVec2 pos = ImGui::GetCursorScreenPos();
+    // calculate scene NDC cursor position
+    ImVec2 windowScreenPosition = ImGui::GetCursorScreenPos();
+    ImVec2 mouseScreenPosition  = ImGui::GetMousePos();
+    ImVec2 cursorPosition       = mouseScreenPosition - windowScreenPosition; // top left
+    ImVec2 sceneCursorPosition  = 
+        ImVec2(
+            ((cursorPosition.x / (width / 2.0f)) - 1.0f) * width,
+            (1.0f - (cursorPosition.y / (height / 2.0f))) * height
+        );
 
     ImGui::GetWindowDrawList()->AddImage(
         m_TextureColorBuffer, 
-        ImVec2(pos.x, pos.y), 
-        ImVec2(pos.x + width, pos.y + height), 
+        ImVec2(windowScreenPosition.x, windowScreenPosition.y), 
+        ImVec2(windowScreenPosition.x + width, windowScreenPosition.y + height), 
         ImVec2(0, 1), // in ImGUI UV coordinates are flipped
         ImVec2(1, 0)
     );
 
-
     ImGui::End();
 
+    m_Scene->set_size(glm::vec2(width, height));
     m_Scene->frame_update();
 }
 
@@ -124,32 +127,8 @@ void SceneView::frame_finish()
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
-    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    
     glViewport(0, 0, width, height);
-
-    // This is the test code !!!
-    //m_Scene->get_component<Camera>()->set_pitch(glm::degrees(2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime()));
-
-    // m_Scene->apply_to_children_recursive(
-    // [](Object* _Object)
-    // {
-    //     Transform* transform = 
-    //         dynamic_cast<Transform*>(_Object);
-
-    //     if(transform == nullptr || dynamic_cast<Camera*>(_Object) != nullptr) 
-    //         return;
-
-    //     transform->set_rotation(
-    //         glm::vec3(
-    //             0.f,
-    //             glm::degrees(2.f * glm::pi<float>() * 0.1f * (float)glfwGetTime()),
-    //             0.f
-    //         )
-    //     );
-    // }
-    // );
 
     m_Scene->frame_finish();
 
