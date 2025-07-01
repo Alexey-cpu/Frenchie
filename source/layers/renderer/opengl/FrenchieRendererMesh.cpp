@@ -118,11 +118,6 @@ Rectangle2D::Rectangle2D()
         // triangle 2
         3, 4, 5
     };
-
-    std::cout << "Rectangle2D::Rectangle2D() \n";
 }
 
-Rectangle2D::~Rectangle2D()
-{
-    std::cout << "Rectangle2D::~Rectangle2D() \n";
-}
+Rectangle2D::~Rectangle2D(){}
