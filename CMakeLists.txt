@@ -11,6 +11,16 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
+# SET( CMAKE_CXX_FLAGS_DEBUG  "")
+# SET( CMAKE_CXX_FLAGS_RELEASE  "")
+# SET(CMAKE_CXX_FLAGS  "-O3")
+
+# TODO: add different compiler configurations here
+message("===================================================")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
+message(${CMAKE_CXX_FLAGS})
+message("===================================================")
+
 #--------------------------------------------------------------
 # include CMake utilities
 #--------------------------------------------------------------

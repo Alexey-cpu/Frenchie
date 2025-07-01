@@ -22,6 +22,11 @@ glm::vec3 Scene3D::get_viewport_scale() const
     return glm::vec3(scaleX, scaleY, std::max<float>(scaleX, scaleY));
 }
 
+glm::vec3 Scene3D::get_cursor_position() const
+{
+    return m_CursorPosition;
+}
+
 glm::vec2 Scene3D::get_size() const
 {
     return m_Size;
@@ -32,6 +37,11 @@ void Scene3D::set_size(const glm::vec2& _Value)
     m_Size = _Value;
 }
 
+void Scene3D::set_cursor_postion(const glm::vec3& _Value)
+{
+    m_CursorPosition = _Value;
+}
+
 void Scene3D::frame_start()
 {
     if(m_Camera == nullptr || m_Transform == nullptr) // no camera or no transform --> no rendering 
@@ -39,7 +49,7 @@ void Scene3D::frame_start()
 
     apply_to_children_recursive([this](Object* _Objcet)
     {
-        auto component =  _Objcet->get_component<IShader>();
+        auto component = _Objcet->get_component<IShader>();
         auto shader    = component != nullptr ? component->get_shader() : nullptr;
 
         if(shader == nullptr) 
@@ -51,6 +61,8 @@ void Scene3D::frame_start()
         shader->unuse();
     }
     );
+
+    //std::cout << "cursor position: " << get_cursor_position().x << "\t" << get_cursor_position().y << "\n";
 
     // setup viewport scale
     m_Transform->set_scale(get_viewport_scale());
