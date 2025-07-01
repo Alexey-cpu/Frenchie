@@ -15,10 +15,16 @@ Scene3D::Scene3D(
 
 Scene3D::~Scene3D(){}
 
+glm::mat4 Scene3D::get_viewport_scale_matrix() const
+{
+    return glm::scale(glm::mat4(1.f), get_viewport_scale());
+}
+
 glm::vec3 Scene3D::get_viewport_scale() const
 {
     float scaleX = 1.f / std::max<float>((float)m_Size.x, 1.f);
     float scaleY = 1.f / std::max<float>((float)m_Size.y, 1.f);
+
     return glm::vec3(scaleX, scaleY, std::max<float>(scaleX, scaleY));
 }
 
@@ -56,8 +62,9 @@ void Scene3D::frame_start()
             return;
 
         shader->use();
-        shader->set_uniform<glm::mat4>("u_ProjectionMatrix", m_Camera->get_projection_matrix());
+        shader->set_uniform<glm::mat4>("u_ScaleMatrix", get_viewport_scale_matrix());
         shader->set_uniform<glm::mat4>("u_ViewMatrix", m_Camera->get_view_matrix());
+        shader->set_uniform<glm::mat4>("u_ProjectionMatrix", m_Camera->get_projection_matrix());
         shader->unuse();
     }
     );
