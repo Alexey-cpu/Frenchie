@@ -62,8 +62,6 @@ void Scene3D::frame_start()
     }
     );
 
-    //std::cout << "cursor position: " << get_cursor_position().x << "\t" << get_cursor_position().y << "\n";
-
     // setup viewport scale
     m_Transform->set_scale(get_viewport_scale());
 
