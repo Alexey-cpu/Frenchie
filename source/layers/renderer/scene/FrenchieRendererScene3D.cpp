@@ -39,10 +39,8 @@ void Scene3D::frame_start()
 
     apply_to_children_recursive([this](Object* _Objcet)
     {
-        auto component = 
-            _Objcet->get_component<IShader>();
-
-        auto shader = component != nullptr ? component->get_shader() : nullptr;
+        auto component =  _Objcet->get_component<IShader>();
+        auto shader    = component != nullptr ? component->get_shader() : nullptr;
 
         if(shader == nullptr) 
             return;
@@ -53,16 +51,6 @@ void Scene3D::frame_start()
         shader->unuse();
     }
     );
-
-    // Frenchie::Application::AssetManager::instance()->apply_function_to_instances<Shader>(
-    //     [this](Shader* _Instance)
-    //     {
-    //         _Instance->use();
-    //         _Instance->set_uniform<glm::mat4>("u_ProjectionMatrix", m_Camera->get_projection_matrix());
-    //         _Instance->set_uniform<glm::mat4>("u_ViewMatrix", m_Camera->get_view_matrix());
-    //         _Instance->unuse();
-    //     }
-    // );
 
     // setup viewport scale
     m_Transform->set_scale(get_viewport_scale());

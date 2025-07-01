@@ -54,7 +54,7 @@ Application::Application()
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 
-    if((m_MainWindow = glfwCreateWindow(800, 600, m_Name.c_str(), nullptr, nullptr)) == nullptr)
+    if((m_Window = glfwCreateWindow(800, 600, m_Name.c_str(), nullptr, nullptr)) == nullptr)
     {
         glfwTerminate();
         Frenchie::Core::Logger::instance()->error(fmt::format(
@@ -62,18 +62,18 @@ Application::Application()
         return;
     }
 
-    glfwMakeContextCurrent(m_MainWindow);
+    glfwMakeContextCurrent(m_Window);
 
     // setup callbacks
-    glfwSetWindowSizeCallback(m_MainWindow, &OnWindowResize);
-    glfwSetFramebufferSizeCallback(m_MainWindow, &OnWindowResize);
-    glfwSetWindowMaximizeCallback(m_MainWindow, OnWindowMaximizedCallback);
+    glfwSetWindowSizeCallback(m_Window, &OnWindowResize);
+    glfwSetFramebufferSizeCallback(m_Window, &OnWindowResize);
+    glfwSetWindowMaximizeCallback(m_Window, OnWindowMaximizedCallback);
 
     // load OpenGL interface using GLAD
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         glfwTerminate();
-        m_MainWindow = nullptr;
+        m_Window = nullptr;
         Frenchie::Core::Logger::instance()->error(fmt::format(
             "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_LOAD_GLAD\n"));
     }
@@ -104,7 +104,7 @@ Application::Application()
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
-    ImGui_ImplGlfw_InitForOpenGL(m_MainWindow, true);
+    ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     //---------------------------------------------------------------------------------------------------
 }
@@ -119,7 +119,7 @@ Application::~Application()
     ImGui::DestroyContext();
     //---------------------------------------------------------------------------------------------------
 
-    glfwDestroyWindow(m_MainWindow);
+    glfwDestroyWindow(m_Window);
     glfwTerminate();
     m_Layers.clear();
 }
@@ -128,27 +128,32 @@ glm::u32vec2 Application::get_window_size() const
 {
     int width  = 0;
     int height = 0;
-    glfwGetWindowSize(m_MainWindow, &width, &height);
+    glfwGetWindowSize(m_Window, &width, &height);
     return glm::u32vec2(width, height);
+}
+
+GLFWwindow* Application::get_window() const
+{
+    return m_Window;
 }
 
 void Application::set_window_size(const glm::u32vec2& _Value)
 {
-    glfwSetWindowSize(m_MainWindow, _Value.x, _Value.y);
+    glfwSetWindowSize(m_Window, _Value.x, _Value.y);
 }
 
 void Application::set_maximized(const bool& _Value)
 {
-    glfwMaximizeWindow(m_MainWindow);
+    glfwMaximizeWindow(m_Window);
 }
 
 bool Application::awake()
 {
-    if(m_MainWindow == nullptr) 
+    if(m_Window == nullptr) 
         return false;
 
     // call window callbacks
-    OnWindowMaximizedCallback(m_MainWindow, glfwGetWindowAttrib(m_MainWindow, GLFW_MAXIMIZED));
+    OnWindowMaximizedCallback(m_Window, glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED));
 
     // awake layers
     for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
@@ -205,7 +210,7 @@ void Application::Application::frame_finish()
     //---------------------------------------------------------------------------------------------------
     ImGui::Render();
     int display_w, display_h;
-    glfwGetFramebufferSize(m_MainWindow, &display_w, &display_h);
+    glfwGetFramebufferSize(m_Window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -223,7 +228,7 @@ void Application::Application::frame_finish()
     for(auto layer : m_Layers) 
         layer->frame_finish();
 
-    glfwSwapBuffers(m_MainWindow);
+    glfwSwapBuffers(m_Window);
 }
 
 void Application::Application::finish()
@@ -245,7 +250,7 @@ void Application::set_name(const std::string& _Name)
 
 bool Application::is_closed()
 {
-    return m_Closed || glfwWindowShouldClose(m_MainWindow);
+    return m_Closed || glfwWindowShouldClose(m_Window);
 }
 
 void Application::close()

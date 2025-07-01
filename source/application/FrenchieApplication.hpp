@@ -35,6 +35,7 @@ namespace Frenchie
                 // getters
                 std::string get_name() const;
                 glm::u32vec2 get_window_size() const;
+                GLFWwindow*  get_window() const;
 
                 // setters
                 void set_name(const std::string& _Name);
@@ -79,11 +80,10 @@ namespace Frenchie
                 std::list<std::shared_ptr<Layer>> m_Layers     =  std::list<std::shared_ptr<Layer>>();
                 std::string                       m_Name       = "Frenchie::Application";
                 bool                              m_Closed     = false;
-                GLFWwindow*                       m_MainWindow = nullptr;
+                GLFWwindow*                       m_Window = nullptr;
             };
         };
 
         typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> Application;
-        //typedef Frenchie::Core::Singleton<Frenchie::Core::Flyweight<std::string>> AssetManager;
     };
 };
