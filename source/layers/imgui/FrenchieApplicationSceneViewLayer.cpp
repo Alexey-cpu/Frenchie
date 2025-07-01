@@ -100,6 +100,15 @@ void SceneView::frame_update()
     ImGui::End();
 
     m_Scene->set_size(glm::vec2(width, height));
+    
+    m_Scene->set_cursor_postion(
+        glm::vec3(
+            sceneCursorPosition.x, 
+            sceneCursorPosition.y, 
+            0.f // TODO: identify Z-component somehow
+        )
+    );
+    
     m_Scene->frame_update();
 }
 

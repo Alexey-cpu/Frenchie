@@ -16,10 +16,9 @@ using namespace Frenchie::Application;
 
 // int main(int, char**)
 // {
-//     Cache<Frenchie::Renderer::Rectangle2D>::request("Rectangle2D");
-
 //     return 0;
 // }
+
 
 int main(int, char**)
 {
@@ -37,47 +36,38 @@ int main(int, char**)
     auto mesh = Cache<Triangle2D>::request("Frenchie/Mesh/Triangle2D");
 
     // create shader
-    std::shared_ptr<Shader> shader = nullptr;
-
     auto shaderPath = std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared");
 
     Logger::instance()->info("---------------------------------------------------------------------------------");
     Logger::instance()->info(fmt::format("shader path: {}", shaderPath.string()));
     Logger::instance()->info("---------------------------------------------------------------------------------");
 
-    for(int i = 0; i < 1e3; i++)
+    auto shader = 
+        Cache<Shader>::request(
+            "Frenchie/Shader/Default",
+            shaderPath.string().append("/shaders/Default/Default.vert"),
+            shaderPath.string().append("/shaders/Default/Default.frag")
+        );
+
+    // create a root object
+    auto root = scene->create_child<Object>(fmt::format("Root"));
+    root->add_component<Transform>();
+    root->add_component<MeshRenderer>(mesh, shader);
+    root->get_component<Transform>()->set_position(glm::vec3(0.f, 0.f, 0.f));
+
+    // create child objects
+    for(int i = 0; i < 1e1; i++)
     {
-        shader = 
-            Cache<Shader>::request(
-                "Frenchie/Shader/Default",
-                shaderPath.string().append("/shaders/Default/Default.vert"),
-                shaderPath.string().append("/shaders/Default/Default.frag")
-            );
+        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
+        item->add_component<Transform>();
+        item->add_component<MeshRenderer>(mesh, shader);
+        item->get_component<Transform>()->set_position(glm::vec3(i * 200, i * 200, 0.f));
     }
 
-    // create hierarchy
-    auto root    = scene->create_child<Object>("Root");
-    auto child_1 = root->create_child<Object>("Child-1");
-    auto child_2 = child_1->create_child<Object>("Child-2");
-    auto child_3 = child_2->create_child<Object>("Child-3");
-
-    scene->apply_to_children_recursive([mesh, shader](Object* _Object)
-    {
-        _Object->add_component<Transform>();
-        _Object->add_component<MeshRenderer>(mesh, shader);
-    }
-    );
-
-    root->get_component<Transform>()->set_position(glm::vec3(0.f, 0.0f, 0.f));
-    root->get_component<Transform>()->set_rotation(glm::vec3(0.f, 0.f, 0.f));
-    child_1->get_component<Transform>()->set_position(glm::vec3(200.f, 200.f, 0.f));
-    child_2->get_component<Transform>()->set_position(glm::vec3(200.f, 200.f, 0.f));
-    child_3->get_component<Transform>()->set_position(glm::vec3(200.f, 200.f, 0.f));
-
+    // create application layers
     application->push<SceneView>("Scene", scene);
     application->push<HierarchyView>("Hierarchy", scene);
     application->push<InspectorView>("Inspector", scene);
-
     application->push<ImguiDemo>();
 
     return application->execute();
