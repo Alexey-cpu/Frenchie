@@ -8,6 +8,12 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
 // InspectorView
+void InspectorView::SerachPanel::drawRegistryItem(const std::vector<std::string>& _Tree, int& _Index)
+{
+    (void)_Tree;
+    (int)_Index;
+}
+
 void InspectorView::SerachPanel::draw(bool _Draw)
 {
     if(_Draw)
@@ -19,10 +25,30 @@ void InspectorView::SerachPanel::draw(bool _Draw)
 
         for(auto&& registry : Factory::registry())
         {
-            if(ImGui::Selectable(registry.first.c_str()))
-            {
-                // TODO: add a components creation logic here !!!
-            }
+            // if(ImGui::BeginMenu("Menu"))
+            // {
+            //     if(ImGui::BeginMenu("Submenu"))
+            //     {
+            //         ImGui::EndMenu();
+            //     }
+
+            //     ImGui::EndMenu();
+            // }
+
+            // if(ImGui::Selectable(registry.first.c_str()))
+            // {
+            //     if(ImGui::BeginMenu("Menu"))
+            //     {
+            //         if(ImGui::BeginMenu("Submenu"))
+            //         {
+            //             ImGui::EndMenu();
+            //         }
+
+            //         ImGui::EndMenu();
+            //     }
+
+            //     // TODO: add a components creation logic here !!!
+            // }
         }
 
         ImGui::EndPopup();

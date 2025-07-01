@@ -84,6 +84,6 @@ namespace Frenchie
         };
 
         typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> Application;
-        typedef Frenchie::Core::Singleton<Frenchie::Core::Flyweight<std::string>> AssetManager;
+        //typedef Frenchie::Core::Singleton<Frenchie::Core::Flyweight<std::string>> AssetManager;
     };
 };

@@ -4,15 +4,21 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 
 #include <cstddef>
+#include <iostream>
 
 // Mesh
 Mesh::Mesh(){}
 
 Mesh::~Mesh()
 {
-    glDeleteBuffers(1, &m_VBO);
-    glDeleteBuffers(1, &m_EBO);
-    glDeleteVertexArrays(1, &m_VAO);
+    if(m_VBO != 0)
+        glDeleteBuffers(1, &m_VBO);
+    
+    if(m_EBO != 0)
+        glDeleteBuffers(1, &m_EBO);
+    
+    if(m_VAO != 0) 
+        glDeleteVertexArrays(1, &m_VAO);
 }
 
 bool Mesh::is_instanced() const
@@ -112,6 +118,11 @@ Rectangle2D::Rectangle2D()
         // triangle 2
         3, 4, 5
     };
+
+    std::cout << "Rectangle2D::Rectangle2D() \n";
 }
 
-Rectangle2D::~Rectangle2D(){}
+Rectangle2D::~Rectangle2D()
+{
+    std::cout << "Rectangle2D::~Rectangle2D() \n";
+}

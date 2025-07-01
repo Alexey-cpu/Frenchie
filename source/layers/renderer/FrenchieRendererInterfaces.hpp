@@ -1,5 +1,9 @@
 #pragma once
 
+#include <FrenchieRendererShader.hpp>
+
+#include <memory>
+
 namespace Frenchie
 {
     namespace Renderer
