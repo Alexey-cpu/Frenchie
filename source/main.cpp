@@ -33,7 +33,7 @@ int main(int, char**)
     // push application layers
     auto scene = std::make_shared<Scene3D>();
 
-    auto mesh = Cache<Triangle2D>::request("Frenchie/Mesh/Triangle2D");
+    auto mesh = Cache<Rectangle2D>::request("Frenchie/Mesh/Triangle2D");
 
     // create shader
     auto shaderPath = std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared");
