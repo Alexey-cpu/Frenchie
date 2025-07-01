@@ -8,10 +8,10 @@ namespace Frenchie
     namespace Renderer
     {
         // MeshRenderer
-        class MeshRenderer : public Component
+        class MeshRenderer : public Component, public IShader
         {
         public:
-            MeshRenderer(Mesh* _Mesh, Shader* _Shader);
+            MeshRenderer(const std::shared_ptr<Mesh>& _Mesh, const std::shared_ptr<Shader>& _Shader);
             virtual ~MeshRenderer();
 
             virtual bool awake() override;
@@ -19,10 +19,15 @@ namespace Frenchie
             virtual void frame_update() override;
             virtual void frame_finish() override;
 
+            virtual std::shared_ptr<Shader> get_shader() const override
+            {
+                return m_Shader;
+            }
+
         protected:
 
-            Mesh*   m_Mesh   = nullptr;
-            Shader* m_Shader = nullptr;
+            std::shared_ptr<Mesh>   m_Mesh   = nullptr;
+            std::shared_ptr<Shader> m_Shader = nullptr;
         };
     }
 }

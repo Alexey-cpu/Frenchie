@@ -17,7 +17,9 @@ namespace Frenchie
         {
         public:
 
-            Shader(const std::filesystem::path& _Vertex, const std::filesystem::path& _Fragment);
+            Shader(
+                const std::filesystem::path& _Vertex   = std::filesystem::path(), 
+                const std::filesystem::path& _Fragment = std::filesystem::path());
             virtual ~Shader();
 
             bool instantiate();
@@ -33,6 +35,15 @@ namespace Frenchie
 
         private:
             unsigned int m_ID = 0;
+        };
+
+        class IShader
+        {
+        public:
+            IShader(){}
+            virtual ~IShader(){}
+
+            virtual std::shared_ptr<Shader> get_shader() const = 0;
         };
     }
 }

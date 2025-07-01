@@ -3,8 +3,7 @@
 using namespace Frenchie::Renderer;
 
 // MeshRenderer
-MeshRenderer::MeshRenderer(Mesh* _Mesh, Shader* _Shader) : 
-    //Component::Registry<MeshRenderer>(STRINGIFY(MeshRenderer)),
+MeshRenderer::MeshRenderer(const std::shared_ptr<Mesh>& _Mesh, const std::shared_ptr<Shader>& _Shader) :
     m_Mesh(_Mesh), 
     m_Shader(_Shader)
 {}

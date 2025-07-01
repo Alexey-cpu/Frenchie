@@ -14,6 +14,13 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
 
+// int main(int, char**)
+// {
+//     Cache<Frenchie::Renderer::Rectangle2D>::request("Rectangle2D");
+
+//     return 0;
+// }
+
 int main(int, char**)
 {
     // setup logger
@@ -27,10 +34,10 @@ int main(int, char**)
     // push application layers
     auto scene = std::make_shared<Scene3D>();
 
-    Mesh* mesh = AssetManager::instance()->request<Triangle2D>("Frenchie/Mesh/Triangle2D");
+    auto mesh = Cache<Triangle2D>::request("Frenchie/Mesh/Triangle2D");
 
     // create shader
-    Shader* shader = nullptr;
+    std::shared_ptr<Shader> shader = nullptr;
 
     auto shaderPath = std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared");
 
@@ -41,7 +48,7 @@ int main(int, char**)
     for(int i = 0; i < 1e3; i++)
     {
         shader = 
-            AssetManager::instance()->request<Shader>(
+            Cache<Shader>::request(
                 "Frenchie/Shader/Default",
                 shaderPath.string().append("/shaders/Default/Default.vert"),
                 shaderPath.string().append("/shaders/Default/Default.frag")

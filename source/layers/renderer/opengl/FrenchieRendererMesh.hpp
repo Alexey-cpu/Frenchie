@@ -5,7 +5,6 @@
 #include <FrenchieCoreObject.hpp>
 
 // Renderer
-#include <FrenchieRendererShader.hpp>
 #include <FrenchieRendererTransformComponent.hpp>
 
 // GLAD

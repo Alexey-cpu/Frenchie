@@ -31,11 +31,13 @@ namespace Frenchie
             class SerachPanel
             {
             public:
-
                 void draw(bool _Draw);
 
             protected:
                 char m_Search[512]{};
+
+                void drawRegistryItem(const std::vector<std::string>& _Tree, int& _Index);
+
             } m_SeachPanel;
         };
     }
