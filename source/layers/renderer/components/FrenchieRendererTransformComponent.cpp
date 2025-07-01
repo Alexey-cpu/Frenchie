@@ -81,9 +81,9 @@ void Transform::frame_finish()
 
 void Transform::draw()
 {
-    ImGui::InputFloat3("position XYZ", &m_Position[0], "%.4f");
-    ImGui::InputFloat3("rotation XYZ", &m_Rotation[0], "%.4f");
-    ImGui::InputFloat3("scale    XYZ", &m_Scale[0], "%.4f");
+    ImGui::DragFloat3("position XYZ", &m_Position[0], 0.5f, -10000.f, 10000.f, "%.4f");
+    ImGui::DragFloat3("rotation XYZ", &m_Rotation[0], 0.5f, -360.f, 360.f, "%.4f");
+    ImGui::DragFloat3("scale XYZ", &m_Scale[0], 0.5f, 0.f, 10000, "%.4f");
 }
 
 glm::mat4 Transform::compute_local_model_matrix() const

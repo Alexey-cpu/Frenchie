@@ -6,38 +6,20 @@
 using namespace Frenchie::Renderer;
 
 Scene3D::Scene3D(
-    const float&       _Depth,
-    const float&       _Aspect,
-    const float&       _Fovy,
-    const glm::vec3&   _Axis,
     const glm::vec2&   _Size,
     const std::string& _Name) : 
     Core::Object(_Name),
-    m_Depth(_Depth), 
-    m_Aspect(_Aspect), 
-    m_Fovy(_Fovy), 
-    m_Axis(_Axis), 
     m_Size(_Size), 
     m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f))),
     m_Transform(add_component<Transform>()){}
 
 Scene3D::~Scene3D(){}
 
-glm::mat4 Scene3D::get_projection_matrix() const
-{
-    return glm::perspective(glm::radians(m_Fovy), m_Aspect, +0.1f, -m_Depth);
-}
-
 glm::vec3 Scene3D::get_viewport_scale() const
 {
     float scaleX = 1.f / std::max<float>((float)m_Size.x, 1.f);
     float scaleY = 1.f / std::max<float>((float)m_Size.y, 1.f);
-    return glm::vec3(scaleX, scaleY, 1.f / 1e5);
-}
-
-glm::vec3 Scene3D::get_axis() const
-{
-    return m_Axis;
+    return glm::vec3(scaleX, scaleY, std::max<float>(scaleX, scaleY));
 }
 
 glm::vec2 Scene3D::get_size() const
@@ -45,44 +27,9 @@ glm::vec2 Scene3D::get_size() const
     return m_Size;
 }
 
-float Scene3D::get_aspect() const
-{
-    return m_Aspect;
-}
-
-float Scene3D::get_depth() const
-{
-    return m_Depth;
-}
-
-float Scene3D::get_fovy() const
-{
-    return m_Fovy;
-}
-
-void Scene3D::set_axis(const glm::vec3& _Value)
-{
-    m_Axis = _Value;
-}
-
 void Scene3D::set_size(const glm::vec2& _Value)
 {
     m_Size = _Value;
-}
-
-void Scene3D::set_aspect(const float& _Value)
-{
-    m_Aspect = _Value;
-}
-
-void Scene3D::set_depth(const float& _Value)
-{
-    m_Depth = _Value;
-}
-
-void Scene3D::set_fovy(const float& _Value)
-{
-    m_Fovy = _Value;
 }
 
 void Scene3D::frame_start()
@@ -90,23 +37,18 @@ void Scene3D::frame_start()
     if(m_Camera == nullptr || m_Transform == nullptr) // no camera or no transform --> no rendering 
         return;
 
-    // configure all shaders that have been loaded
-    auto projectionMatrix = get_projection_matrix();
-    auto viewportScale    = get_viewport_scale();
-    auto viewMatrix       = m_Camera->get_view_matrix();
-
     Frenchie::Application::AssetManager::instance()->apply_function_to_instances<Shader>(
-        [&projectionMatrix, &viewMatrix](Shader* _Instance)
+        [this](Shader* _Instance)
         {
             _Instance->use();
-            _Instance->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
-            _Instance->set_uniform<glm::mat4>("u_ViewMatrix", viewMatrix);
+            _Instance->set_uniform<glm::mat4>("u_ProjectionMatrix", m_Camera->get_projection_matrix());
+            _Instance->set_uniform<glm::mat4>("u_ViewMatrix", m_Camera->get_view_matrix());
             _Instance->unuse();
         }
     );
 
     // setup viewport scale
-    m_Transform->set_scale(viewportScale);
+    m_Transform->set_scale(get_viewport_scale());
 
     // call base implementation
     Object::frame_start();
