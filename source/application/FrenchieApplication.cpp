@@ -21,8 +21,6 @@ void OnWindowResize(GLFWwindow* _Window, int _Width, int _Height)
 {
     (void)_Window;
     glViewport(0, 0, _Width, _Height);
-
-    Frenchie::Core::Logger::instance()->info("OnWindowResize");
 }
 
 void OnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
@@ -31,8 +29,6 @@ void OnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
     int height = 0;
     glfwGetWindowSize(_Window, &width, &height);
     glViewport(0, 0, width, height);
-
-    Frenchie::Core::Logger::instance()->info("OnWindowMaximizedCallback");
 }
 
 // Application

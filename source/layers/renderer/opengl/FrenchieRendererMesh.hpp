@@ -54,21 +54,5 @@ namespace Frenchie
 
             bool is_instanced() const;
         };
-
-        // Triangle2D
-        class Triangle2D : public Mesh
-        {
-        public:
-            Triangle2D();
-            virtual ~Triangle2D();
-        };
-
-        // Rectangle2D
-        class Rectangle2D : public Mesh
-        {
-        public:
-            Rectangle2D();
-            virtual ~Rectangle2D();
-        };
     }
 }
