@@ -9,6 +9,7 @@
 #include <FrenchieRendererTransformComponent.hpp>
 
 #include <FrenchieImGuiDemoLayer.hpp>
+#include <FrenchieMeshRenderer2D.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
