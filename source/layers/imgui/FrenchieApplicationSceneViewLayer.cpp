@@ -186,6 +186,11 @@ void SceneView::frame_finish()
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+
+    // blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glViewport(0, 0, (int)width, (int)height);
 
@@ -195,6 +200,7 @@ void SceneView::frame_finish()
     glBindRenderbuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_FRAMEBUFFER, 0);
 
+    glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 }

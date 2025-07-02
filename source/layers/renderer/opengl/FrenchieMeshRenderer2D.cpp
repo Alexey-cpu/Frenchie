@@ -3,9 +3,7 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 
-// Mesh2D
-Mesh2D::Mesh2D(){}
-Mesh2D::~Mesh2D(){}
+#include <iostream>
 
 // Triangle2D
 Triangle2D::Triangle2D()
@@ -30,6 +28,7 @@ Triangle2D::~Triangle2D(){}
 // Rectangle2D
 Rectangle2D::Rectangle2D()
 {
+    // setup mesh
     m_Vertexes = 
     {
         // trangle 1
