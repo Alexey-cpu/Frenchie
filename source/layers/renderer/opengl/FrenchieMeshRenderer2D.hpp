@@ -13,16 +13,8 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        // Mesh2D
-        class Mesh2D : public Mesh
-        {
-        public:
-            Mesh2D();
-            virtual ~Mesh2D();
-        };
-
         // Triangle2D
-        class Triangle2D : public Mesh2D
+        class Triangle2D : public Mesh
         {
         public:
             Triangle2D();
@@ -30,7 +22,7 @@ namespace Frenchie
         };
 
         // Rectangle2D
-        class Rectangle2D : public Mesh2D
+        class Rectangle2D : public Mesh
         {
         public:
             Rectangle2D();

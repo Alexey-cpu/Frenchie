@@ -17,6 +17,8 @@ using namespace Frenchie::Application;
 
 // int main(int, char**)
 // {
+//     Rectangle2D rect;
+
 //     return 0;
 // }
 
@@ -56,14 +58,14 @@ int main(int, char**)
     root->add_component<MeshRenderer>(mesh, shader);
     root->get_component<Transform>()->set_position(glm::vec3(0.f, 0.f, 0.f));
 
-    // create child objects
-    for(int i = 0; i < 1e1; i++)
-    {
-        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
-        item->add_component<Transform>();
-        item->add_component<MeshRenderer>(mesh, shader);
-        item->get_component<Transform>()->set_position(glm::vec3(i * 200, i * 200, 0.f));
-    }
+    // // create child objects
+    // for(int i = 1; i < 1e1; i++)
+    // {
+    //     auto item = root->create_child<Object>(fmt::format("Item-{}", i));
+    //     item->add_component<Transform>();
+    //     item->add_component<MeshRenderer>(mesh, shader, aabb);
+    //     item->get_component<Transform>()->set_position(glm::vec3(i * 200, i * 200, 0.f));
+    // }
 
     // create application layers
     application->push<SceneView>("Scene", scene);
