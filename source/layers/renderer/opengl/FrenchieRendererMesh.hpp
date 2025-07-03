@@ -39,14 +39,21 @@ namespace Frenchie
         {
         public:
             
-            Ray(const glm::vec3& _Origin, const glm::vec3& _Direction) : 
+            Ray(const glm::vec3& _Origin = glm::vec3(0.f), const glm::vec3& _Direction = glm::vec3(0.f, 0.f, 1.f)) : 
                 Origin(_Origin), 
-                Direction(_Direction){}
+                Direction(_Direction), 
+                InverseDirection(1.f / Direction.x, 1.f / Direction.y, 1.f / Direction.z){}
             
             ~Ray(){}
 
-            glm::vec3 Origin;
-            glm::vec3 Direction;
+            Ray transform(const glm::mat4& _Transform) const
+            {
+                return Ray(_Transform * glm::vec4(Origin, 1.f), glm::normalize(_Transform * glm::vec4(Direction, 1.f)));
+            }
+
+            glm::vec3 Origin           = glm::vec3(0.f, 0.f, 0.f);
+            glm::vec3 Direction        = glm::vec3(0.f, 0.f, 1.f);
+            glm::vec3 InverseDirection = glm::vec3(0.f, 0.f, 1.f);
         };
 
         // Triangle
@@ -54,7 +61,9 @@ namespace Frenchie
         {
         public:
 
-            Triangle(glm::vec3 _P0, glm::vec3 _P1, glm::vec3 _P2) : 
+            Triangle(glm::vec3 _P0 = glm::vec3(0.f), 
+            glm::vec3 _P1 = glm::vec3(0.f), 
+            glm::vec3 _P2 = glm::vec3(0.f)) : 
                 P0(_P0), P1(_P1), P2(_P2){}
 
             glm::vec3 P0 = glm::vec3(0.f);
@@ -67,13 +76,28 @@ namespace Frenchie
         {
         public:
 
-            Cube(glm::vec3 _Center, float _Width, float _Height, float _Thickness) : 
+            Cube(glm::vec3 _Center = glm::vec3(0.f), float _Width = 100.f, float _Height = 100.f, float _Thickness = 100.f) : 
                 Center(_Center), 
                 Width(_Width), 
                 Height(_Height), 
                 Thickness(_Thickness){}
 
             ~Cube(){}
+
+            std::vector<glm::vec3> get_points() const
+            {
+                return
+                {
+                    Center + glm::vec3(-Width, +Height, Thickness) * 0.5f,
+                    Center + glm::vec3(+Width, +Height, Thickness) * 0.5f,
+                    Center + glm::vec3(+Width, -Height, Thickness) * 0.5f,
+                    Center + glm::vec3(-Width, -Height, Thickness) * 0.5f,
+                    Center + glm::vec3(-Width, +Height, -Thickness) * 0.5f,
+                    Center + glm::vec3(+Width, +Height, -Thickness) * 0.5f,
+                    Center + glm::vec3(+Width, -Height, -Thickness) * 0.5f,
+                    Center + glm::vec3(-Width, -Height, -Thickness) * 0.5f
+                };
+            }
 
             std::vector<Triangle> get_triangles() const
             {
@@ -125,11 +149,50 @@ namespace Frenchie
         {
         public:
 
-            Aabb(glm::vec3 _Min, glm::vec3 _Max) : 
+            Aabb(glm::vec3 _Min = glm::vec3(0.f), glm::vec3 _Max = glm::vec3(16.f)) : 
                 Min(_Min), 
                 Max(_Max){}
 
             ~Aabb(){}
+
+            Aabb transform(const glm::mat4& _Transform) const
+            {
+                // transform all AABB points
+                std::vector<glm::vec3> points = get_points();
+
+                // generate new AABB
+                glm::vec3 max = glm::vec3(0.f);
+                glm::vec3 min = glm::vec3(0.f);
+
+                for(auto&& point : points)
+                {
+                    point = _Transform * glm::vec4(point, 1.f);
+
+                    max = glm::vec3(
+                        std::max<float>(max.x, point.x), 
+                        std::max<float>(max.y, point.y), 
+                        std::max<float>(max.z, point.z));
+
+                    min = glm::vec3(
+                        std::min<float>(min.x, point.x), 
+                        std::min<float>(min.y, point.y), 
+                        std::min<float>(min.z, point.z));
+                }
+
+                return Aabb(min, max);
+            }
+
+            std::vector<glm::vec3> get_points() const
+            {
+                auto center = (Max + Min) * 0.5f;
+                auto size   = (Max - Min);
+                return Cube(
+                    center, 
+                    std::max<float>(size.x, 16.f), 
+                    std::max<float>(size.y, 16.f), 
+                    std::max<float>(size.z, 16.f)
+                ).get_points();
+            }
 
             std::vector<Triangle> get_triangles() const
             {
@@ -151,10 +214,11 @@ namespace Frenchie
         class Mesh
         {
         public:
-            Mesh();
+            Mesh(std::vector<Vertex> _Vertexes);
             virtual ~Mesh();
 
-            bool is_instanced() const;
+            // getters
+            Aabb get_aabb() const;
 
             // API
             bool instantiate();
@@ -168,53 +232,7 @@ namespace Frenchie
             mutable unsigned int        m_VAO      = 0;
             mutable std::vector<int>    m_Indexes  = std::vector<int>();
             mutable std::vector<Vertex> m_Vertexes = std::vector<Vertex>();
-
-            friend class MeshAABB;
-        };
-
-        class MeshAABB : public Mesh
-        {
-        public:
-
-            MeshAABB(const std::shared_ptr<Mesh>& _Mesh)
-            {
-                if(_Mesh == nullptr || 
-                        !_Mesh->is_instanced()) 
-                    return;
-
-                glm::vec3 max = glm::vec3(0.f);
-                glm::vec3 min = glm::vec3(0.f);
-
-                for(auto&& vertex : _Mesh->m_Vertexes)
-                {
-                    max = glm::vec3(
-                        std::max<float>(max.x, vertex.Position.x), 
-                        std::max<float>(max.y, vertex.Position.y), 
-                        std::max<float>(max.z, vertex.Position.z));
-
-                    min = glm::vec3(
-                        std::min<float>(min.x, vertex.Position.x), 
-                        std::min<float>(min.y, vertex.Position.y), 
-                        std::min<float>(min.z, vertex.Position.z));
-                }
-
-                // build AABB cube
-                short counter   = 0;
-                auto  triangles = Aabb(min - glm::vec3(16.f), max + glm::vec3(16.f)).get_triangles();
-
-                for(auto&& triangle : triangles)
-                {
-                    m_Vertexes.push_back({triangle.P0, glm::vec3(0.f), glm::vec2(0.f)});
-                    m_Vertexes.push_back({triangle.P1, glm::vec3(0.f), glm::vec2(0.f)});
-                    m_Vertexes.push_back({triangle.P2, glm::vec3(0.f), glm::vec2(0.f)});
-
-                    m_Indexes.push_back(counter++);
-                    m_Indexes.push_back(counter++);
-                    m_Indexes.push_back(counter++);
-                }
-            }
-
-            virtual ~MeshAABB(){}
+            mutable Aabb                m_AABB     = Aabb(glm::vec3(0.f, 0.f, 0.f), glm::vec3(16.f, 16.f, 16.f));
         };
     }
 }

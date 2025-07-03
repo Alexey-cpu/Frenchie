@@ -12,6 +12,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <FrenchieRendererMeshRendererComponent.hpp>
+
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
@@ -84,81 +86,117 @@ void SceneView::frame_update()
 
     // draw scene
     {
-        ImVec2 windowScreenPosition = ImGui::GetCursorScreenPos();
-        float  width                = ImGui::GetContentRegionAvail().x;
-        float  height               = ImGui::GetContentRegionAvail().y;
+        ImVec2 SceneWidgetPosition = ImGui::GetCursorScreenPos();
+        float  SceneWidgetWidth    = ImGui::GetContentRegionAvail().x;
+        float  sceneWidgetHeight   = ImGui::GetContentRegionAvail().y;
         
         ImGui::GetWindowDrawList()->AddImage(
             m_TextureColorBuffer, 
-            ImVec2(windowScreenPosition.x, windowScreenPosition.y), 
-            ImVec2(windowScreenPosition.x + width, windowScreenPosition.y + height), 
+            ImVec2(SceneWidgetPosition.x, SceneWidgetPosition.y), 
+            ImVec2(SceneWidgetPosition.x + SceneWidgetWidth, SceneWidgetPosition.y + sceneWidgetHeight), 
             ImVec2(0, 1), // in ImGUI UV coordinates are flipped
             ImVec2(1, 0)
         );
 
-        m_Scene->set_size(glm::vec2(width, height));
+        m_Scene->set_size(glm::vec2(SceneWidgetWidth, sceneWidgetHeight));
     }
 
     // draw scene content bounding rectangle
     {
-        // draw scene bounding rectangle
-        ImVec2 vMin = ImGui::GetWindowContentRegionMin();
-        ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+        // draw scene scene viewport rect rectangle
+        ImRect sceneViewportRect = 
+            ImRect(
+                ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos(), 
+                ImGui::GetWindowContentRegionMax() + ImGui::GetWindowPos());
 
-        vMin.x += ImGui::GetWindowPos().x;
-        vMin.y += ImGui::GetWindowPos().y;
-        vMax.x += ImGui::GetWindowPos().x;
-        vMax.y += ImGui::GetWindowPos().y;
-        ImGui::GetForegroundDrawList()->AddRect(vMin, vMax, IM_COL32(255, 255, 0, 255));
-
-        // compute scene cursor position
-        ImRect content           = ImRect(vMin, vMax);
-        ImVec2 mousePos          = ImGui::GetMousePos();
-        ImVec2 windowContentPos  = content.GetTL();
-        ImVec2 windowContentSize = content.GetSize();
-
-        // Adjust mouse coordinates relative to the scene window
-        float adjustedX = mousePos.x - windowContentPos.x;
-        float adjustedY = mousePos.y - windowContentPos.y;
-
-        // Flip Y-coordinate for OpenGL (assuming 0,0 is bottom-left in OpenGL)
-        m_Scene->set_cursor_postion(
-            glm::vec3(
-                adjustedX, 
-                windowContentSize.y - adjustedY - 1, 
-                0.f // TODO: identify Z-component somehow
-            )
+        ImGui::GetForegroundDrawList()->AddRect(
+            sceneViewportRect.Min, 
+            sceneViewportRect.Max, 
+            IM_COL32(255, 255, 0, 255)
         );
 
-        //
-        float width  = m_Scene->get_size().x;
-        float height = m_Scene->get_size().y;
-        auto cursor     = m_Scene->get_cursor_position();
-        auto x_norm     = (2.f * cursor.x / width - 1.f);
-        auto y_norm     = (2.f * cursor.y / height - 1.f);
-        auto projection = m_Scene->get_component<Camera>()->get_projection_matrix();
-        auto view       = m_Scene->get_component<Camera>()->get_view_matrix();
-        auto scale      = m_Scene->get_viewport_scale_matrix();
-        auto axis       = m_Scene->get_component<Camera>()->get_axis();
-        auto ray        = glm::inverse(view) * glm::inverse(projection) * glm::inverse(scale) * glm::vec4(x_norm, y_norm, -axis.z, 1.f);
+        // compute cursor OpenGL position
+        ImVec2 mousePos          = ImGui::GetMousePos();
+        ImVec2 windowContentPos  = sceneViewportRect.GetTL();
+        ImVec2 windowContentSize = sceneViewportRect.GetSize();
+        
+        glm::vec3 cursorOpenGLPosition = glm::vec3(
+            mousePos.x - windowContentPos.x, 
+            windowContentSize.y - mousePos.y + windowContentPos.y - 1, 
+            0.f
+        );
 
-        auto text = fmt::format("{} {}", ray.x, ray.y);
+        // compute cursor scene (world position)
+        auto cursorNDCPosition = glm::vec3(
+            (2.f * cursorOpenGLPosition.x / m_Scene->get_size().x - 1.f),
+            (2.f * cursorOpenGLPosition.y / m_Scene->get_size().y - 1.f),
+            -1.f
+        );
+
+        auto scaleMatrix         = m_Scene->get_viewport_scale_matrix();
+        auto viewMatrix          = m_Scene->get_component<Camera>()->get_view_matrix();
+        auto projectionMatrix    = m_Scene->get_component<Camera>()->get_projection_matrix();
+        auto cursorWorldPosition = glm::inverse(scaleMatrix) * glm::inverse(viewMatrix) * glm::inverse(projectionMatrix) * glm::vec4(cursorNDCPosition, 1.f);
+        
+        auto mouseTrackerText    = fmt::format("{} {} {}", cursorWorldPosition.x, cursorWorldPosition.y, cursorWorldPosition.z);
 
         ImGui::GetWindowDrawList()->AddText(
-            ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(text.c_str()), 
+            ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(mouseTrackerText.c_str()), 
             IM_COL32(255, 255, 0, 255), 
-            fmt::format("{} {}", ray.x, ray.y).c_str()
+            mouseTrackerText.c_str()
         );
-    }
 
-    // Handle scene mouse events
-    if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
-    {
+        m_Scene->set_cursor_postion(cursorWorldPosition);
+
+        m_Scene->frame_update();
+
+        //Handle scene mouse events
+        if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)  && 
+            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+        {
+            float screenWidth   = m_Scene->get_size().x;
+            float screenHeight  = m_Scene->get_size().y;
+
+            // The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
+            glm::vec4 lRayStart_NDC(
+                ((float)cursorOpenGLPosition.x / (float)screenWidth  - 0.5f) * 2.0f, // [0,1024] -> [-1,1]
+                ((float)cursorOpenGLPosition.y / (float)screenHeight - 0.5f) * 2.0f, // [0, 768] -> [-1,1]
+                -1.0, // The near plane maps to Z=-1 in Normalized Device Coordinates
+                1.0f
+            );
+            glm::vec4 lRayEnd_NDC(
+                ((float)cursorOpenGLPosition.x / (float)screenWidth  - 0.5f) * 2.0f,
+                ((float)cursorOpenGLPosition.y / (float)screenHeight - 0.5f) * 2.0f,
+                0.0,
+                1.0f
+            );
+
+            glm::vec3 lRayDir_world   = glm::inverse(scaleMatrix) * glm::inverse(viewMatrix) * glm::inverse(projectionMatrix) * (lRayEnd_NDC - lRayStart_NDC);
+            glm::vec3 lRayStart_world = glm::inverse(scaleMatrix) * glm::inverse(viewMatrix) * glm::inverse(projectionMatrix) * lRayStart_NDC;
+
+            // std::cout << "lRayStart_world " << lRayDir_world.x << "\t" << lRayDir_world.y << "\t" << lRayDir_world.z << "\n";
+
+            Ray rayObj(lRayStart_world, lRayDir_world);
+
+            m_Scene->apply_to_children_recursive(
+                [&rayObj, &scaleMatrix, &viewMatrix, &projectionMatrix](Object* _Object)
+                {
+                    auto meshRenderer = _Object->get_component<MeshRenderer>();
+
+                    if(meshRenderer == nullptr) 
+                        return;
+
+                    std::cout << "checking object " << _Object->get_name() << "\n";
+
+                    _Object->set_flag(
+                        Object::Flags::Marked, 
+                        meshRenderer->collide(rayObj, viewMatrix, projectionMatrix, scaleMatrix));
+                }
+            );
+        }
     }
 
     ImGui::End();
-    
-    m_Scene->frame_update();
 }
 
 void SceneView::frame_finish()

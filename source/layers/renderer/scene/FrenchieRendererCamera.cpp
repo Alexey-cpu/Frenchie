@@ -39,12 +39,19 @@ glm::mat4 Camera::get_projection_matrix() const
 
 glm::vec3 Camera::get_position() const
 {
-    return m_CameraWorldPosition;
+    Scene3D* scene3D = get_object<Scene3D>();
+    auto     scale   = scene3D ? scene3D->get_viewport_scale() : glm::vec3(1.f);
+    return m_CameraWorldPosition / scale;
 }
 
 glm::vec3 Camera::get_axis() const
 {
     return m_Axis;
+}
+
+glm::vec3 Camera::get_front() const
+{
+    return m_CameraLocalFrontAxisDirection;
 }
 
 float Camera::get_aspect() const
@@ -90,7 +97,10 @@ float Camera::get_roll() const
 // settrs
 void Camera::set_position(const glm::vec3& _Value)
 {
-    m_CameraWorldPosition = _Value;
+    Scene3D* scene3D  = get_object<Scene3D>();
+    auto     scale    = scene3D ? scene3D->get_viewport_scale() : glm::vec3(1.f);
+
+    m_CameraWorldPosition = _Value * scale;
 }
 
 void Camera::set_pitch(const float& _Value)
@@ -130,10 +140,8 @@ void Camera::set_fovy(const float& _Value)
 
 void Camera::draw() 
 {
-    Scene3D* scene3D  = get_object<Scene3D>();
-    auto     scale    = scene3D ? scene3D->get_viewport_scale() : glm::vec3(1.f);
-    auto     rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
-    auto     position = get_position() / scale;
+    auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
+    auto position = get_position();
 
     ImGui::DragFloat3("position XYZ", &position[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");
@@ -142,8 +150,8 @@ void Camera::draw()
     ImGui::DragFloat("Near", &m_Near, 1.f, -10000, 10000, "%.4f");
     ImGui::DragFloat("Far", &m_Far, 1.f, -10000, 10000, "%.4f");
 
-    m_CameraWorldPosition = position * scale;
-    m_Pitch = rotation.x;
-    m_Yaw   = rotation.y;
-    m_Roll  = rotation.z;
+    set_position(position);
+    set_pitch(rotation.x);
+    set_yaw(rotation.y);
+    set_roll(rotation.z);
 }

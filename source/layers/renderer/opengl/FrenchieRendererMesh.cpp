@@ -7,7 +7,32 @@ using namespace Frenchie::Renderer;
 #include <iostream>
 
 // Mesh
-Mesh::Mesh(){}
+Mesh::Mesh(std::vector<Vertex> _Vertexes) : 
+    m_Vertexes(_Vertexes)
+{
+    // generate vertexes indexses
+    for(size_t i = 0; i < m_Vertexes.size(); i++) 
+        m_Indexes.push_back((int)i);
+
+    // generate axis aligned bounding box (AABB)
+    glm::vec3 max = glm::vec3(0.f);
+    glm::vec3 min = glm::vec3(0.f);
+
+    for(auto&& vertex : m_Vertexes)
+    {
+        max = glm::vec3(
+            std::max<float>(max.x, vertex.Position.x), 
+            std::max<float>(max.y, vertex.Position.y), 
+            std::max<float>(max.z, vertex.Position.z));
+
+        min = glm::vec3(
+            std::min<float>(min.x, vertex.Position.x), 
+            std::min<float>(min.y, vertex.Position.y), 
+            std::min<float>(min.z, vertex.Position.z));
+    }
+
+    m_AABB = Aabb(min - glm::vec3(0.f), max + glm::vec3(0.f));
+}
 
 Mesh::~Mesh()
 {
@@ -21,19 +46,13 @@ Mesh::~Mesh()
         glDeleteVertexArrays(1, &m_VAO);
 }
 
-bool Mesh::is_instanced() const
+Aabb Mesh::get_aabb() const
 {
-    return !m_Vertexes.empty() && !m_Indexes.empty();
+    return m_AABB;
 }
 
 bool Mesh::instantiate()
 {
-    if(!is_instanced())
-    {
-        Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::OPEN_GL::SETUP_FAILED::MESH_IS_NOT_INSTANCED"));
-        return false;
-    }
-
     // create buffers and vertex array
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
@@ -42,6 +61,7 @@ bool Mesh::instantiate()
     // bind VAO to remember VBO/EBO configuration and layout
     glBindVertexArray(m_VAO);
 
+    // load vertexes and indexes on GPU
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
     glBufferData(GL_ARRAY_BUFFER, m_Vertexes.size() * sizeof(Vertex), &m_Vertexes[0], GL_DYNAMIC_DRAW);
 
@@ -61,15 +81,15 @@ bool Mesh::instantiate()
 
 void Mesh::render()
 {
-    if(!is_instanced()) 
-    {
-        Logger::instance()->error(fmt::format("FRENCHIE::RENDERER::MESH"));
-        Logger::instance()->error(fmt::format("Mesh is not instanced"));
-        return;
-    }
-
+    // bind VAO containing VBO, EBO
     glBindVertexArray(m_VAO);
-    glDrawArrays(GL_POINTS, 0, (int)m_Indexes.size());
-    glDrawElements(GL_TRIANGLES, (int)m_Indexes.size(), GL_UNSIGNED_INT, 0);
+
+    // get EBO size
+    int bufferSize; 
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+
+    // draw EBO
+    glDrawArrays(GL_POINTS, 0, bufferSize);
+    glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
