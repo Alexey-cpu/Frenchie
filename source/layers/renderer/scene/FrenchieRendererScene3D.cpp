@@ -24,8 +24,9 @@ glm::vec3 Scene3D::get_viewport_scale() const
 {
     float scaleX = 1.f / std::max<float>((float)m_Size.x, 1.f);
     float scaleY = 1.f / std::max<float>((float)m_Size.y, 1.f);
+    float scaleZ = 1.f / std::max<float>(std::max<float>((float)m_Size.y, 1.f), std::max<float>((float)m_Size.y, 1.f));
 
-    return glm::vec3(scaleX, scaleY, std::max<float>(scaleX, scaleY));
+    return glm::vec3(scaleX, scaleY, scaleZ);
 }
 
 glm::vec3 Scene3D::get_cursor_position() const

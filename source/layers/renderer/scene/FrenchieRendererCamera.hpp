@@ -23,6 +23,7 @@ namespace Frenchie
             glm::mat4 get_view_matrix() const;
             glm::vec3 get_position() const;
             glm::vec3 get_axis() const;
+            glm::vec3 get_front() const;
             float get_pitch() const;
             float get_yaw() const;
             float get_roll() const;
