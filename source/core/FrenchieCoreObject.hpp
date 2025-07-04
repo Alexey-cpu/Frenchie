@@ -200,7 +200,7 @@ namespace Frenchie
             }
 
             template<typename T>
-            T* get_component()
+            T* get_component() const
             {
                 for(auto&& component : m_Components)
                 {

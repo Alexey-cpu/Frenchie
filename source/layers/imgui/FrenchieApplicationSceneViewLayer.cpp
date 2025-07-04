@@ -14,9 +14,26 @@
 
 #include <FrenchieRendererMeshRendererComponent.hpp>
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
+// SceneViewHelpers
+class SceneViewHelpers
+{
+public:
+    static glm::vec3 to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition)
+    {
+        return glm::vec3(
+            ((float)_OpenGLPosition.x / (float)_ScreenWidth  - 0.5f) * 2.0f,
+            ((float)_OpenGLPosition.y / (float)_ScreenHeight - 0.5f) * 2.0f,
+            +1.0
+        );
+    }
+};
+
+// SceneView
 SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
 
 SceneView::~SceneView()
@@ -82,9 +99,14 @@ void SceneView::frame_update()
     if(m_Scene == nullptr) 
         return;
 
+    auto camera = m_Scene->get_component<Camera>();
+
+    if(camera == nullptr) // no camera --> no rendering
+        return;
+
     ImGui::Begin(get_name().c_str());
 
-    // draw scene
+    // draw scene contents and update scene object geometry
     {
         ImVec2 SceneWidgetPosition = ImGui::GetCursorScreenPos();
         float  SceneWidgetWidth    = ImGui::GetContentRegionAvail().x;
@@ -99,9 +121,10 @@ void SceneView::frame_update()
         );
 
         m_Scene->set_size(glm::vec2(SceneWidgetWidth, sceneWidgetHeight));
+        m_Scene->frame_update();
     }
 
-    // draw scene content bounding rectangle
+    // draw scene content bounding rectangle and cast mouse cursor ray
     {
         // draw scene scene viewport rect rectangle
         ImRect sceneViewportRect = 
@@ -127,18 +150,18 @@ void SceneView::frame_update()
         );
 
         // compute cursor scene (world position)
-        auto cursorNDCPosition = glm::vec3(
-            (2.f * cursorOpenGLPosition.x / m_Scene->get_size().x - 1.f),
-            (2.f * cursorOpenGLPosition.y / m_Scene->get_size().y - 1.f),
-            -1.f
+        auto cursorNDCPosition = SceneViewHelpers::to_ndc(
+            m_Scene->get_size().x, 
+            m_Scene->get_size().y,
+            glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
         );
 
-        auto scaleMatrix         = m_Scene->get_viewport_scale_matrix();
-        auto viewMatrix          = m_Scene->get_component<Camera>()->get_view_matrix();
-        auto projectionMatrix    = m_Scene->get_component<Camera>()->get_projection_matrix();
-        auto cursorWorldPosition = glm::inverse(scaleMatrix) * glm::inverse(viewMatrix) * glm::inverse(projectionMatrix) * glm::vec4(cursorNDCPosition, 1.f);
-        
-        auto mouseTrackerText    = fmt::format("{} {} {}", cursorWorldPosition.x, cursorWorldPosition.y, cursorWorldPosition.z);
+        auto scaleMatrix             = m_Scene->get_viewport_scale_matrix();
+        auto viewMatrix              = camera->get_view_matrix();
+        auto projectionMatrix        = camera->get_projection_matrix();
+        auto inverseConversionMatrix = glm::inverse(scaleMatrix * viewMatrix * projectionMatrix);
+        auto cursorWorldPosition     = inverseConversionMatrix * glm::vec4(cursorNDCPosition, 1.f);
+        auto mouseTrackerText        = fmt::format("{} {} {}", cursorWorldPosition.x, cursorWorldPosition.y, cursorWorldPosition.z);
 
         ImGui::GetWindowDrawList()->AddText(
             ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(mouseTrackerText.c_str()), 
@@ -146,51 +169,42 @@ void SceneView::frame_update()
             mouseTrackerText.c_str()
         );
 
-        m_Scene->set_cursor_postion(cursorWorldPosition);
-
-        m_Scene->frame_update();
-
-        //Handle scene mouse events
+        // Ray cast
         if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)  && 
             ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
-            float screenWidth   = m_Scene->get_size().x;
-            float screenHeight  = m_Scene->get_size().y;
+            glm::vec3 rayStartNDC = 
+                SceneViewHelpers::to_ndc(
+                    m_Scene->get_size().x, 
+                    m_Scene->get_size().y, 
+                    glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f));
 
-            // The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
-            glm::vec4 lRayStart_NDC(
-                ((float)cursorOpenGLPosition.x / (float)screenWidth  - 0.5f) * 2.0f, // [0,1024] -> [-1,1]
-                ((float)cursorOpenGLPosition.y / (float)screenHeight - 0.5f) * 2.0f, // [0, 768] -> [-1,1]
-                -1.0, // The near plane maps to Z=-1 in Normalized Device Coordinates
-                1.0f
-            );
-            glm::vec4 lRayEnd_NDC(
-                ((float)cursorOpenGLPosition.x / (float)screenWidth  - 0.5f) * 2.0f,
-                ((float)cursorOpenGLPosition.y / (float)screenHeight - 0.5f) * 2.0f,
-                0.0,
-                1.0f
-            );
+            glm::vec3 rayEndNDC = 
+                SceneViewHelpers::to_ndc(
+                    m_Scene->get_size().x, 
+                    m_Scene->get_size().y, 
+                    glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, -1.f));
 
-            glm::vec3 lRayDir_world   = glm::inverse(scaleMatrix) * glm::inverse(viewMatrix) * glm::inverse(projectionMatrix) * (lRayEnd_NDC - lRayStart_NDC);
-            glm::vec3 lRayStart_world = glm::inverse(scaleMatrix) * glm::inverse(viewMatrix) * glm::inverse(projectionMatrix) * lRayStart_NDC;
-
-            // std::cout << "lRayStart_world " << lRayDir_world.x << "\t" << lRayDir_world.y << "\t" << lRayDir_world.z << "\n";
-
-            Ray rayObj(lRayStart_world, lRayDir_world);
+            Ray rayObj(inverseConversionMatrix * glm::vec4(rayStartNDC, 1.f), 
+                        inverseConversionMatrix * glm::vec4((rayEndNDC - rayStartNDC), 1.f));
 
             m_Scene->apply_to_children_recursive(
-                [&rayObj, &scaleMatrix, &viewMatrix, &projectionMatrix](Object* _Object)
+                [&rayObj, &camera](Object* _Object)
                 {
                     auto meshRenderer = _Object->get_component<MeshRenderer>();
+                    auto transform    = _Object->get_component<Transform>();
 
-                    if(meshRenderer == nullptr) 
+                    if(meshRenderer == nullptr || 
+                            transform == nullptr) 
                         return;
-
-                    std::cout << "checking object " << _Object->get_name() << "\n";
 
                     _Object->set_flag(
                         Object::Flags::Marked, 
-                        meshRenderer->collide(rayObj, viewMatrix, projectionMatrix, scaleMatrix));
+                        meshRenderer->castRay(
+                            rayObj, 
+                            camera->get_object_perspective_scale(transform->get_model_matrix())
+                        )
+                    );
                 }
             );
         }

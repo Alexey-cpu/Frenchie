@@ -10,7 +10,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Component::Registry<Camera>
+        class Camera : public Core::Component::Registry<Camera>
         {
         public:
 
@@ -22,6 +22,9 @@ namespace Frenchie
             glm::mat4 get_projection_matrix() const;
             glm::mat4 get_view_matrix() const;
             glm::vec3 get_position() const;
+
+            float get_object_perspective_scale(glm::mat4 _Transform) const;
+
             glm::vec3 get_axis() const;
             glm::vec3 get_front() const;
             float get_pitch() const;
@@ -63,7 +66,7 @@ namespace Frenchie
             mutable float     m_Yaw    = 0.f;
             mutable float     m_Roll   = 0.f;
             mutable float     m_Near   = +0.1f;
-            mutable float     m_Far    = -100.f;
+            mutable float     m_Far    = -1.f;
             mutable float     m_Aspect = 1.f;
             mutable float     m_Fovy   = 90.f;
             mutable glm::vec3 m_Axis   = glm::vec3(1.f, 1.f, 1.f);
