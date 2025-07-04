@@ -161,8 +161,8 @@ namespace Frenchie
                 std::vector<glm::vec3> points = get_points();
 
                 // generate new AABB
-                glm::vec3 max = glm::vec3(0.f);
-                glm::vec3 min = glm::vec3(0.f);
+                glm::vec3 max = glm::vec3(-INFINITY);
+                glm::vec3 min = glm::vec3(+INFINITY);
 
                 for(auto&& point : points)
                 {

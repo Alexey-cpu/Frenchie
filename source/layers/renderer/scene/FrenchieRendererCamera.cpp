@@ -1,8 +1,10 @@
+#include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererScene3D.hpp>
-
 #include <imgui.h>
 
 using namespace Frenchie::Renderer;
+
+// All camera coordinates are in clip space [-1 ; + 1]
 
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
@@ -39,9 +41,19 @@ glm::mat4 Camera::get_projection_matrix() const
 
 glm::vec3 Camera::get_position() const
 {
-    Scene3D* scene3D = get_object<Scene3D>();
-    auto     scale   = scene3D ? scene3D->get_viewport_scale() : glm::vec3(1.f);
-    return m_CameraWorldPosition / scale;
+    return m_CameraWorldPosition;
+}
+
+float Camera::get_object_perspective_scale(glm::mat4 _ModelMatrix) const
+{
+    auto scene         = get_object<Scene3D>();
+    auto viewportScale = scene != nullptr ? scene->get_viewport_scale() : glm::vec3(1.f, 1.f, 1.f);
+;
+    glm::vec3 translation      = glm::vec3(_ModelMatrix[3][0], _ModelMatrix[3][1], _ModelMatrix[3][2]);
+    glm::vec3 cameraPos        = get_position() / viewportScale;
+    glm::vec3 cameraDefaultPos = glm::vec3(0.f, 0.f, 1.f) / viewportScale;
+
+    return std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z));
 }
 
 glm::vec3 Camera::get_axis() const
@@ -97,10 +109,7 @@ float Camera::get_roll() const
 // settrs
 void Camera::set_position(const glm::vec3& _Value)
 {
-    Scene3D* scene3D  = get_object<Scene3D>();
-    auto     scale    = scene3D ? scene3D->get_viewport_scale() : glm::vec3(1.f);
-
-    m_CameraWorldPosition = _Value * scale;
+    m_CameraWorldPosition = _Value;
 }
 
 void Camera::set_pitch(const float& _Value)
@@ -141,16 +150,14 @@ void Camera::set_fovy(const float& _Value)
 void Camera::draw() 
 {
     auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
-    auto position = get_position();
 
-    ImGui::DragFloat3("position XYZ", &position[0], 0.5f, -10000.f, 10000.f, "%.4f");
+    ImGui::DragFloat3("position XYZ", &m_CameraWorldPosition[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");
     ImGui::DragFloat("Field of view", &m_Fovy, 0.1f, 0.f, 120.f, "%.4f");
     ImGui::DragFloat("Aspect", &m_Aspect, 0.1f, 0.5f, 2.f, "%.4f");
     ImGui::DragFloat("Near", &m_Near, 1.f, -10000, 10000, "%.4f");
     ImGui::DragFloat("Far", &m_Far, 1.f, -10000, 10000, "%.4f");
 
-    set_position(position);
     set_pitch(rotation.x);
     set_yaw(rotation.y);
     set_roll(rotation.z);
