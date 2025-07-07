@@ -40,7 +40,7 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void draw() override;
 
-            // Component::Register<Transform>
+            // Component::Register<TReturnType>
             static TReturnType create()
             {
                 return std::make_unique<Transform>();

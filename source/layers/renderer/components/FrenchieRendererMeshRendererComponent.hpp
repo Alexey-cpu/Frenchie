@@ -8,12 +8,12 @@ namespace Frenchie
     namespace Renderer
     {
         // MeshRenderer
-        class MeshRenderer : public Component, public IShader
+        class MeshRenderer : public Component::Registry<MeshRenderer>, public IShader
         {
         public:
             MeshRenderer(
-                const std::shared_ptr<Mesh>&   _Mesh, 
-                const std::shared_ptr<Shader>& _Shader);
+                const std::shared_ptr<Mesh>&   _Mesh   = nullptr, 
+                const std::shared_ptr<Shader>& _Shader = nullptr);
 
             virtual ~MeshRenderer();
 
@@ -26,7 +26,13 @@ namespace Frenchie
 
             // IShader
             virtual std::shared_ptr<Shader> get_shader() const override;
-            bool castRay(const Ray& _Ray, float _ZScale);
+            bool cast_ray(const Ray& _Ray, float _ZScale);
+
+            // Component::Register<TReturnType>
+            static TReturnType create()
+            {
+                return std::make_unique<MeshRenderer>();
+            }
 
         protected:
 
@@ -48,9 +54,9 @@ namespace Frenchie
 
                     for(auto&& triangle : triangles)
                     {
-                        vertexes.push_back({triangle.P0, glm::vec3(0.f), glm::vec2(0.f)});
-                        vertexes.push_back({triangle.P1, glm::vec3(0.f), glm::vec2(0.f)});
-                        vertexes.push_back({triangle.P2, glm::vec3(0.f), glm::vec2(0.f)});
+                        vertexes.push_back({triangle.A, glm::vec3(0.f), glm::vec2(0.f)});
+                        vertexes.push_back({triangle.B, glm::vec3(0.f), glm::vec2(0.f)});
+                        vertexes.push_back({triangle.C, glm::vec3(0.f), glm::vec2(0.f)});
                     }
 
                     return vertexes;

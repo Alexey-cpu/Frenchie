@@ -17,7 +17,22 @@ using namespace Frenchie::Application;
 
 // int main(int, char**)
 // {
-//     Rectangle2D rect;
+//     Triangle triangle(
+//         glm::vec3(0.f, 0.f, 0.f), 
+//         glm::vec3(0.f, 2.f, 0.f), 
+//         glm::vec3(2.f, 0.f, 0.f));
+
+//     if(triangle.intersects(
+//         Ray(
+//             glm::vec3(0.3f, 1.f, -10.f),
+//             glm::vec3(0.f, 0.f, 1.f))))
+//     {
+//         std::cout << "intersection found !!! \n";
+//     }
+//     else
+//     {
+//         std::cout << "intersection NOT found !!! \n";
+//     }
 
 //     return 0;
 // }

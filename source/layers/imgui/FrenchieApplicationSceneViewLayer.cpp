@@ -200,7 +200,7 @@ void SceneView::frame_update()
 
                     _Object->set_flag(
                         Object::Flags::Marked, 
-                        meshRenderer->castRay(
+                        meshRenderer->cast_ray(
                             rayObj, 
                             camera->get_object_perspective_scale(transform->get_model_matrix())
                         )
