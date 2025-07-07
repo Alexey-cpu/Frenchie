@@ -16,7 +16,7 @@ MeshRenderer::MeshRenderer(
     Component::Registry<MeshRenderer>(STRINGIFY(MeshRenderer)),
     m_Mesh(_Mesh), 
     m_Shader(_Shader),
-    m_AABB(Cache<MeshBox>::request(
+    m_MeshBox(Cache<MeshBox>::request(
         "Frenchie/Mesh/MeshAABB", 
         m_Mesh->get_aabb()
         )
@@ -28,13 +28,13 @@ MeshRenderer::~MeshRenderer(){}
 
 bool MeshRenderer::awake()
 {
-    if(m_Mesh != nullptr && 
+    if(m_Mesh    != nullptr && 
         m_Shader != nullptr && 
         m_Mesh->instantiate() && 
         m_Shader->instantiate())
     {
 
-        return m_AABB->instantiate();
+        return m_MeshBox->instantiate();
     }
 
     return false;
@@ -61,7 +61,7 @@ void MeshRenderer::frame_finish()
     m_Mesh->render();
     m_Shader->unuse();
 
-    // draw AABB
+    // draw MeshBox
     m_Shader->use();
     m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", transform->get_model_matrix());
     
@@ -69,7 +69,7 @@ void MeshRenderer::frame_finish()
         "u_Color",
         get_object()->check_flag(Object::Flags::Marked) ? glm::vec4(1.f, 0.0f, 0.0f, 0.3f) : glm::vec4(0.f, 1.0f, 0.0f, 0.3f));
     
-    m_AABB->render();
+    m_MeshBox->render();
     m_Shader->unuse();
 
     // update AABB geometry
@@ -132,6 +132,6 @@ bool MeshRenderer::cast_ray(const Ray& _Ray, float _ZScale)
         return false;
 
     // local coordinates transform
-    return m_AABB->get_aabb().transform(
+    return m_MeshBox->get_aabb().transform(
         glm::scale(glm::mat4(1.f), glm::vec3(_ZScale, _ZScale, _ZScale)) * transform->get_model_matrix()).intersects(_Ray);
 }

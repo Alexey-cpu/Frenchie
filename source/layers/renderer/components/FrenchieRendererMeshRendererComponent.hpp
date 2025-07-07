@@ -63,9 +63,9 @@ namespace Frenchie
                 }
             };
 
-            std::shared_ptr<Mesh>    m_Mesh   = nullptr;
-            std::shared_ptr<MeshBox> m_AABB   = nullptr;
-            std::shared_ptr<Shader>  m_Shader = nullptr;
+            std::shared_ptr<Mesh>    m_Mesh    = nullptr;
+            std::shared_ptr<MeshBox> m_MeshBox = nullptr;
+            std::shared_ptr<Shader>  m_Shader  = nullptr;
         };
     }
 }
