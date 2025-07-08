@@ -74,12 +74,44 @@ int main(int, char**)
     root->get_component<Transform>()->set_position(glm::vec3(0.f, 0.f, 0.f));
 
     // create child objects
-    for(int i = 1; i < 2; i++)
+    float radius = 600.f;
+    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
     {
         auto item = root->create_child<Object>(fmt::format("Item-{}", i));
         item->add_component<Transform>();
         item->add_component<MeshRenderer>(mesh, shader);
-        item->get_component<Transform>()->set_position(glm::vec3(i * 200, i * 200, 0.f));
+        item->get_component<Transform>()->set_position(
+            glm::vec3(std::cos(i) * radius, 
+            std::sin(i) * radius, 
+            -200.f
+            )
+        );
+    }
+
+    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
+    {
+        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
+        item->add_component<Transform>();
+        item->add_component<MeshRenderer>(mesh, shader);
+        item->get_component<Transform>()->set_position(
+            glm::vec3(std::cos(i) * radius, 
+            0.f, 
+            std::sin(i) * radius
+            )
+        );
+    }
+
+    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
+    {
+        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
+        item->add_component<Transform>();
+        item->add_component<MeshRenderer>(mesh, shader);
+        item->get_component<Transform>()->set_position(
+            glm::vec3(std::cos(i) * radius, 
+            400.f, 
+            std::sin(i) * radius
+            )
+        );
     }
 
     // create application layers

@@ -53,6 +53,9 @@ Aabb Mesh::get_aabb() const
 
 bool Mesh::instantiate()
 {
+    if(m_VBO != 0 && m_EBO != 0 && m_VAO != 0) 
+        return true;
+
     // create buffers and vertex array
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
