@@ -168,6 +168,14 @@ namespace Frenchie
                 return Aabb(min, max);
             }
 
+            Aabb unite(const Aabb& _Other) const
+            {
+                return Aabb(
+                    glm::vec3(std::min(_Other.Min.x, Min.x), std::min(_Other.Min.y, Min.y), std::min(_Other.Min.z, Min.z)),
+                    glm::vec3(std::max(_Other.Max.x, Max.x), std::max(_Other.Max.y, Max.y), std::max(_Other.Max.z, Max.z))
+                );
+            }
+
             std::vector<glm::vec3> get_points() const
             {
                 auto center = (Max + Min) * 0.5f;
@@ -212,8 +220,6 @@ namespace Frenchie
                         return false;
                     }
                 }
-
-                std::cout << "tmax " << tmax << " tmin " << tmin << "\n";
 
                 return tmax > tmin;
             }
@@ -330,6 +336,15 @@ namespace Frenchie
             mutable std::vector<int>    m_Indexes  = std::vector<int>();
             mutable std::vector<Vertex> m_Vertexes = std::vector<Vertex>();
             mutable Aabb                m_AABB     = Aabb(glm::vec3(0.f, 0.f, 0.f), glm::vec3(16.f, 16.f, 16.f));
+        };
+
+        class IMesh
+        {
+        public:
+            IMesh(){}
+            virtual ~IMesh(){}
+
+            virtual std::shared_ptr<Mesh> get_mesh() const = 0;
         };
     }
 }

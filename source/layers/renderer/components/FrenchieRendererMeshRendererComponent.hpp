@@ -8,7 +8,7 @@ namespace Frenchie
     namespace Renderer
     {
         // MeshRenderer
-        class MeshRenderer : public Component::Registry<MeshRenderer>, public IShader
+        class MeshRenderer : public Component::Registry<MeshRenderer>, public IShader, public IMesh
         {
         public:
             MeshRenderer(
@@ -26,13 +26,20 @@ namespace Frenchie
 
             // IShader
             virtual std::shared_ptr<Shader> get_shader() const override;
-            bool cast_ray(const Ray& _Ray, float _ZScale);
+
+            // IMesh
+            virtual std::shared_ptr<Mesh> get_mesh() const override
+            {
+                return m_Mesh;
+            }
 
             // Component::Register<TReturnType>
             static TReturnType create()
             {
                 return std::make_unique<MeshRenderer>();
             }
+
+            bool cast_ray(const Ray& _Ray, float _ZScale);
 
         protected:
 

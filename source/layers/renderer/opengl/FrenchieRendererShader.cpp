@@ -91,7 +91,7 @@ Shader::Shader(const std::filesystem::path& _Vertex, const std::filesystem::path
 
 Shader::~Shader()
 {
-    if(get_id())
+    if(get_id() != 0)
         glDeleteProgram(get_id());
 }
 
