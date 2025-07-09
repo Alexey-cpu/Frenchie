@@ -28,6 +28,8 @@ namespace Frenchie
             glm::vec3 get_scale() const;
             glm::mat4 get_model_matrix() const;
 
+            glm::mat4 get_parent_model_matrix() const;
+
             // setters
             void set_position(const glm::vec3&);
             void set_rotation(const glm::vec3&);

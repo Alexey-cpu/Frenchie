@@ -54,9 +54,9 @@ glm::vec3 Camera::get_object_perspective_scale(glm::mat4 _ModelMatrix) const
     glm::vec3 cameraDefaultPos = glm::vec3(0.f, 0.f, 1.f) / viewportScale;
 
     return glm::vec3(
-        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z) ), 
-        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z) ),  
-        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z) )
+        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z)), 
+        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z)),  
+        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z))
     );
 }
 
