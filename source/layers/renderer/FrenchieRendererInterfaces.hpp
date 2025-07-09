@@ -15,11 +15,10 @@ namespace Frenchie
             virtual ~IRenderer(){}
 
             // virtual API
-            virtual bool awake()        = 0;
-            virtual void frame_start()  = 0;
-            virtual void frame_update() = 0;
-            virtual void frame_finish() = 0;
-            virtual void draw() = 0;
+            virtual void render() = 0;
+            virtual unsigned int get_texture() const = 0;
         };
+
+        //class IEditor{};
     }
 }

@@ -33,7 +33,7 @@ namespace Frenchie
 
         class Component : 
             public NonCopyable,
-            public Frenchie::Renderer::IRenderer,
+            //public Frenchie::Renderer::IRenderer,
             public Frenchie::Core::Factory::Creator<Component>
         {
         public:
@@ -56,11 +56,11 @@ namespace Frenchie
             void set_enabled(bool _Value);
 
             // IRenderer
-            virtual bool awake() override;
-            virtual void frame_start()  override;
-            virtual void frame_update() override;
-            virtual void frame_finish() override;
-            virtual void draw() override;
+            virtual bool awake();
+            virtual void frame_start();
+            virtual void frame_update();
+            virtual void frame_finish();
+            virtual void draw();
             
         protected:
             
@@ -69,7 +69,7 @@ namespace Frenchie
             friend class Object;
         };
 
-        class Object : public NonCopyable, public Frenchie::Renderer::IRenderer
+        class Object : public NonCopyable//, public Frenchie::Renderer::IRenderer
         {
         public:
             
@@ -238,11 +238,11 @@ namespace Frenchie
                     m_Components.erase(iterator);
             }
 
-            virtual bool awake() override;
-            virtual void frame_start()  override;
-            virtual void frame_update() override;
-            virtual void frame_finish() override;
-            virtual void draw() override;
+            virtual bool awake();
+            virtual void frame_start();
+            virtual void frame_update();
+            virtual void frame_finish();
+            virtual void draw();
 
         protected:
 
