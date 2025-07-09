@@ -41,16 +41,6 @@ glm::vec3 Scene3D::get_cursor_position() const
     return m_CursorPosition;
 }
 
-// glm::vec2 Scene3D::get_size() const
-// {
-//     return m_Size;
-// }
-
-// void Scene3D::set_size(const glm::vec2& _Value)
-// {
-//     m_Size = _Value;
-// }
-
 void Scene3D::set_cursor_position(const glm::vec3& _Value)
 {
     m_CursorPosition = _Value;
