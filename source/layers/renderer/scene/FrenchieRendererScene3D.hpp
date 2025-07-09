@@ -27,10 +27,12 @@ namespace Frenchie
             // getters
             glm::mat4 get_viewport_scale_matrix() const;
             glm::vec3 get_viewport_scale() const;
+            glm::vec3 get_cursor_position() const;
             glm::vec2 get_size() const;
 
             // setters
             void set_size(const glm::vec2& _Value);
+            void set_cursor_position(const glm::vec3& _Value);
 
             // virtual API override
             virtual void frame_start() override;
@@ -39,6 +41,7 @@ namespace Frenchie
 
                 // info
                 glm::vec2  m_Size           = glm::vec2(2048.f, 1024.f);
+                glm::vec3  m_CursorPosition = glm::vec3(0.f, 0.f, +1);
                 Camera*    m_Camera         = nullptr;
                 Transform* m_Transform      = nullptr;
         };
@@ -102,10 +105,11 @@ namespace Frenchie
 
                 auto scaleX =  aabb.get_size() / m_Mesh->get_aabb().get_size();
 
-                auto matrix = 
-                    glm::translate(glm::mat4(1.f), aabb1.get_center()) * 
-                    glm::scale(glm::mat4(1.f), scaleX);
+                // auto matrix = 
+                //     glm::translate(glm::mat4(1.f), aabb1.get_center()) * 
+                //     glm::scale(glm::mat4(1.f), scaleX);
 
+                glm::mat4 matrix(1.f);
 
             // return glm::translate(matrix, m_Position) * 
             //     glm::rotate(matrix, glm::radians(m_Rotation.x), glm::vec3(1.f, 0.f, 0.f)) * 
@@ -114,9 +118,9 @@ namespace Frenchie
             //     glm::scale(matrix, m_Scale);
 
                 m_Shader->use();
-                m_Shader->set_uniform<glm::mat4>("u_ScaleMatrix", scene->get_viewport_scale_matrix());
-                m_Shader->set_uniform<glm::mat4>("u_ViewMatrix", scene->get_component<Camera>()->get_view_matrix());
-                m_Shader->set_uniform<glm::mat4>("u_ProjectionMatrix", scene->get_component<Camera>()->get_projection_matrix());
+                m_Shader->set_uniform<glm::mat4>("u_ScaleMatrix", matrix);
+                m_Shader->set_uniform<glm::mat4>("u_ViewMatrix", matrix);
+                m_Shader->set_uniform<glm::mat4>("u_ProjectionMatrix", matrix);
                 m_Shader->set_uniform<glm::mat4>("u_ModelMatrix", matrix);
                 m_Shader->set_uniform<glm::vec4>("u_Color", glm::vec4(1.f, 0.f, 0.f, 0.1f));
                 m_Mesh->render();
