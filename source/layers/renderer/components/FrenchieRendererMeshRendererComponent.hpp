@@ -39,7 +39,7 @@ namespace Frenchie
                 return std::make_unique<MeshRenderer>();
             }
 
-            bool cast_ray(const Ray& _Ray, float _ZScale);
+            bool cast_ray(const Ray& _Ray, glm::vec3 _ZScale);
 
         protected:
 

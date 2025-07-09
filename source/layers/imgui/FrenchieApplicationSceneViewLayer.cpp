@@ -159,9 +159,9 @@ void SceneView::frame_update()
         auto scaleMatrix             = m_Scene->get_viewport_scale_matrix();
         auto viewMatrix              = camera->get_view_matrix();
         auto projectionMatrix        = camera->get_projection_matrix();
-        auto inverseConversionMatrix = glm::inverse(scaleMatrix * viewMatrix * projectionMatrix);
+        auto inverseConversionMatrix = glm::inverse(projectionMatrix * viewMatrix * scaleMatrix);
         auto cursorWorldPosition     = inverseConversionMatrix * glm::vec4(cursorNDCPosition, 1.f);
-        auto mouseTrackerText        = fmt::format("{} {} {}", cursorWorldPosition.x, cursorWorldPosition.y, cursorWorldPosition.z);
+        auto mouseTrackerText        = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
 
         ImGui::GetWindowDrawList()->AddText(
             ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(mouseTrackerText.c_str()), 
@@ -173,23 +173,19 @@ void SceneView::frame_update()
         if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)  && 
             ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
-            glm::vec3 rayStartNDC = 
-                SceneViewHelpers::to_ndc(
+            glm::vec3 rayOrigin = 
+                inverseConversionMatrix * glm::vec4(
+                    SceneViewHelpers::to_ndc(
                     m_Scene->get_size().x, 
                     m_Scene->get_size().y, 
-                    glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f));
+                    glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)), 
+                    1.f
+                );
 
-            glm::vec3 rayEndNDC = 
-                SceneViewHelpers::to_ndc(
-                    m_Scene->get_size().x, 
-                    m_Scene->get_size().y, 
-                    glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, -1.f));
-
-            Ray rayObj(inverseConversionMatrix * glm::vec4(rayStartNDC, 1.f), 
-                        inverseConversionMatrix * glm::vec4((rayEndNDC - rayStartNDC), 1.f));
+            Ray ray(rayOrigin, glm::vec3(0.f, 0.f, -1.f));
 
             m_Scene->apply_to_children_recursive(
-                [&rayObj, &camera](Object* _Object)
+                [&ray, &camera](Object* _Object)
                 {
                     auto meshRenderer = _Object->get_component<MeshRenderer>();
                     auto transform    = _Object->get_component<Transform>();
@@ -201,7 +197,7 @@ void SceneView::frame_update()
                     _Object->set_flag(
                         Object::Flags::Marked, 
                         meshRenderer->cast_ray(
-                            rayObj, 
+                            ray, 
                             camera->get_object_perspective_scale(transform->get_model_matrix())
                         )
                     );

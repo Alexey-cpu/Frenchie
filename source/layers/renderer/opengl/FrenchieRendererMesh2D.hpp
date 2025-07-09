@@ -28,5 +28,15 @@ namespace Frenchie
             Rectangle2D();
             virtual ~Rectangle2D();
         };
+
+        // Rectangle3D
+        class Rectangle3D : public Mesh
+        {
+        public:
+            Rectangle3D();
+            virtual ~Rectangle3D();
+
+            static std::vector<Vertex> generateVertexes();
+        };
     }
 }
