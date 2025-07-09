@@ -1,7 +1,6 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieCoreFlyweight.hpp>
 #include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreObject.hpp>
 
@@ -76,10 +75,25 @@ namespace Frenchie
                             }) != m_Layers.end();
                 }
 
+                template<typename __type>
+                std::shared_ptr<__type> find()
+                {
+                    auto layer = std::find_if(
+                        m_Layers.begin(),
+                        m_Layers.end(),
+                        [](std::shared_ptr<Layer> _Layer)->bool
+                        {
+                            return std::dynamic_pointer_cast<__type>(_Layer) != nullptr;
+                        }
+                    );
+
+                    return layer != m_Layers.end() ? std::dynamic_pointer_cast<__type>(*layer) : nullptr;
+                }
+
             protected:
-                std::list<std::shared_ptr<Layer>> m_Layers     =  std::list<std::shared_ptr<Layer>>();
-                std::string                       m_Name       = "Frenchie::Application";
-                bool                              m_Closed     = false;
+                std::list<std::shared_ptr<Layer>> m_Layers =  std::list<std::shared_ptr<Layer>>();
+                std::string                       m_Name   = "Frenchie::Application";
+                bool                              m_Closed = false;
                 GLFWwindow*                       m_Window = nullptr;
             };
         };

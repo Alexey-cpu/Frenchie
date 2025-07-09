@@ -3,8 +3,9 @@
 #include <FrenchieRendererTransformComponent.hpp>
 #include <FrenchieRendererSizeComponent.hpp>
 #include <FrenchieRendererCamera.hpp>
-
 #include <FrenchieRendererMesh2D.hpp>
+
+#include <FrenchieCoreCache.hpp>
 
 // GLM
 #include <glm/glm.hpp>

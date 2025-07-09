@@ -1,5 +1,8 @@
 #include <FrenchieApplicationHierarchyViewLayer.hpp>
 
+#include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+
 #include <FrenchieRendererTransformComponent.hpp>
 
 #include <FrenchieCoreLogger.hpp>
@@ -31,19 +34,7 @@ void HierarchyView::frame_update()
     ImGui::Begin(get_name().c_str());
 
     int id = 0;
-    Object* itemToRemove = nullptr;
-    DrawTree(m_Scene.get(), id, &itemToRemove);
-
-    if(itemToRemove && 
-        itemToRemove->get_parent())
-    {
-        itemToRemove->get_parent()->remove_child(
-            [itemToRemove](Object* _Object)->bool
-            {
-                return _Object == itemToRemove;
-            }
-        );
-    }
+    DrawTree(m_Scene.get(), id);
 
     ImGui::End();
 }
@@ -68,9 +59,11 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemove)
+void HierarchyView::DrawTree(Object* _Transform, int& _ID)
 {
-    if(_Transform == nullptr || m_Scene == nullptr) 
+    auto commandsQueue = Application::instance()->find<CommandsQueue>();
+
+    if(_Transform == nullptr || m_Scene == nullptr || commandsQueue == nullptr) 
         return;
 
     ImGui::PushID(_ID++);
@@ -82,7 +75,9 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemov
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
     {
-        // Drag & Drop
+        //------------------------------------------------------------------------------------------------------------------
+        // drag & drop
+        //------------------------------------------------------------------------------------------------------------------
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) 
         {
             ImGui::SetDragDropPayload("Frenchie::Core::Object", &_Transform, sizeof(_Transform));
@@ -97,13 +92,22 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemov
                 Object*  receivedPointer        = receivedPointerAddress != nullptr ? *receivedPointerAddress : nullptr;
 
                 if(receivedPointer != nullptr) 
-                    receivedPointer->move(_Transform);
+                {
+                    commandsQueue->push<CallbackCommand>(
+                        [receivedPointer, _Transform]()
+                        {
+                            receivedPointer->move(_Transform);
+                        }
+                    );
+                }
             }
 
             ImGui::EndDragDropTarget();
         }
 
+        //------------------------------------------------------------------------------------------------------------------
         // right click context menu
+        //------------------------------------------------------------------------------------------------------------------
         if(ImGui::IsItemHovered() && 
             ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
         {
@@ -121,13 +125,28 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemov
             
             if(ImGui::MenuItem("Delete"))
             {
-                *_ItemToRemove = _Transform;
+                commandsQueue->push<CallbackCommand>(
+                    [_Transform]()
+                    {
+                        if(_Transform == nullptr || _Transform->get_parent() == nullptr) 
+                            return;
+
+                        _Transform->get_parent()->remove_child(
+                            [_Transform](Object* _Object)->bool
+                            {
+                                return _Object == _Transform;
+                            }
+                        );
+                    }
+                );
             }
 
             ImGui::EndPopup();
         }
 
+        //------------------------------------------------------------------------------------------------------------------
         // select item on double click
+        //------------------------------------------------------------------------------------------------------------------
         if(ImGui::IsItemHovered() && 
             ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
@@ -136,7 +155,9 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemov
             _Transform->set_flag(Object::Flags::Selected, true);
         }
 
+        //------------------------------------------------------------------------------------------------------------------
         // rename selected item
+        //------------------------------------------------------------------------------------------------------------------
         if (_Transform->check_flag(Object::Flags::Selected))
         {
             ImGui::SameLine();
@@ -178,7 +199,7 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID, Object** _ItemToRemov
         const auto& children = _Transform->get_children();
 
         for(auto&& child : children) 
-            DrawTree(child.get(), _ID, _ItemToRemove);
+            DrawTree(child.get(), _ID);
         ImGui::TreePop();
     }
 

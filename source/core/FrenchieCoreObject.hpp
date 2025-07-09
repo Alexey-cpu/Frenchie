@@ -1,8 +1,9 @@
 #pragma once
 
-#include <FrenchieRendererInterfaces.hpp>
+#include <FrenchieCoreFactory.hpp>
+#include <FrenchieCoreHelpers.hpp>
 
-#include <FrenchieCoreFlyweight.hpp>
+#include <FrenchieRendererInterfaces.hpp>
 
 // STL
 #include <functional>
