@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FrenchieRendererTransformComponent.hpp>
+#include <FrenchieRendererSizeComponent.hpp>
 #include <FrenchieRendererCamera.hpp>
 
 #include <FrenchieRendererMesh2D.hpp>
@@ -28,10 +29,10 @@ namespace Frenchie
             glm::mat4 get_viewport_scale_matrix() const;
             glm::vec3 get_viewport_scale() const;
             glm::vec3 get_cursor_position() const;
-            glm::vec2 get_size() const;
+            //glm::vec2 get_size() const;
 
             // setters
-            void set_size(const glm::vec2& _Value);
+            //void set_size(const glm::vec2& _Value);
             void set_cursor_position(const glm::vec3& _Value);
 
             // virtual API override
@@ -40,8 +41,9 @@ namespace Frenchie
             protected:
 
                 // info
-                glm::vec2  m_Size           = glm::vec2(2048.f, 1024.f);
+                //glm::vec2  m_Size           = glm::vec2(2048.f, 1024.f);
                 glm::vec3  m_CursorPosition = glm::vec3(0.f, 0.f, +1);
+                Size*      m_Size           = nullptr;
                 Camera*    m_Camera         = nullptr;
                 Transform* m_Transform      = nullptr;
         };

@@ -9,7 +9,7 @@ Scene3D::Scene3D(
     const glm::vec2&   _Size,
     const std::string& _Name) : 
     Core::Object(_Name),
-    m_Size(_Size), 
+    m_Size(add_component<Size>(_Size)), 
     m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f))),
     m_Transform(add_component<Transform>()){}
 
@@ -22,9 +22,11 @@ glm::mat4 Scene3D::get_viewport_scale_matrix() const
 
 glm::vec3 Scene3D::get_viewport_scale() const
 {
-    float scaleX = 1.f / std::max<float>((float)m_Size.x, 1.f);
-    float scaleY = 1.f / std::max<float>((float)m_Size.y, 1.f);
-    float scaleZ = 1.f / std::max<float>(std::max<float>((float)m_Size.y, 1.f), std::max<float>((float)m_Size.y, 1.f));
+    auto size = m_Size->get_size();
+
+    float scaleX = 1.f / std::max<float>((float)size.x, 1.f);
+    float scaleY = 1.f / std::max<float>((float)size.y, 1.f);
+    float scaleZ = 1.f / std::max<float>(std::max<float>((float)size.y, 1.f), std::max<float>((float)size.y, 1.f));
 
     return glm::vec3(scaleX, scaleY, scaleZ);
 }
@@ -34,15 +36,15 @@ glm::vec3 Scene3D::get_cursor_position() const
     return m_CursorPosition;
 }
 
-glm::vec2 Scene3D::get_size() const
-{
-    return m_Size;
-}
+// glm::vec2 Scene3D::get_size() const
+// {
+//     return m_Size;
+// }
 
-void Scene3D::set_size(const glm::vec2& _Value)
-{
-    m_Size = _Value;
-}
+// void Scene3D::set_size(const glm::vec2& _Value)
+// {
+//     m_Size = _Value;
+// }
 
 void Scene3D::set_cursor_position(const glm::vec3& _Value)
 {

@@ -6,7 +6,11 @@ using namespace Frenchie::Renderer;
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <glm/glm.hpp>
+
+// STL
 #include <iostream>
+
+// IMGUI
 #include <imgui.h>
 
 // MeshRenderer
