@@ -1,7 +1,6 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
-
 #include <FrenchieRendererScene3D.hpp>
 
 // GLAD
@@ -40,7 +39,7 @@ namespace Frenchie
             std::shared_ptr<Scene3D> m_Scene = nullptr;
             char m_TextInput[512]{};
 
-            void DrawTree(Object*, int&, Object**);
+            void DrawTree(Object*, int&);
         };
     }
 };

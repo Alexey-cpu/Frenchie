@@ -215,31 +215,45 @@ void Object::draw()
 {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-    std::string name = get_name();
-    for (int i = 0; i < 512; i++) 
-        Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
-    ImGui::InputText("##", Object::m_Editor.m_Name, 512);
-    set_name(std::string(Object::m_Editor.m_Name));
-
     int id = 0;
+    
+    ImGui::PushID(id++);
 
-    for(auto&& component : m_Components)
-    {
-        ImGui::PushID(id++);
-
-        if (ImGui::TreeNodeEx(component->get_name().c_str(),
+    if (ImGui::TreeNodeEx(get_name().c_str(),
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
+    {
+        std::string name = get_name();
+        for (int i = 0; i < 512; i++) 
+            Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
+        ImGui::InputText("##", Object::m_Editor.m_Name, 512);
+        set_name(std::string(Object::m_Editor.m_Name));
+
+        for(auto&& component : m_Components)
         {
-            component->draw();
-            ImGui::TreePop();
+            ImGui::PushID(id++);
+
+            if (ImGui::TreeNodeEx(component->get_name().c_str(),
+                ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
+                ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
+                ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
+                ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
+                ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
+            {
+                component->draw();
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
         }
 
-        ImGui::PopID();
+        ImGui::TreePop();
     }
+
+    ImGui::PopID();
 }
 
 Object::Editor Object::m_Editor = Editor();

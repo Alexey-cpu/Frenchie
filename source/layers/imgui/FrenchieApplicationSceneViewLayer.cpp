@@ -4,8 +4,6 @@
 #include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererMesh.hpp>
 
-#include <FrenchieCoreFlyweight.hpp>
-#include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreLogger.hpp>
 
 #include <imgui.h>
@@ -62,6 +60,8 @@ void SceneView::frame_update()
 
     if(camera == nullptr || size == nullptr || renderer == nullptr)
         return;
+
+    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
     ImGui::Begin(get_name().c_str());
 
@@ -131,7 +131,7 @@ void SceneView::frame_update()
         m_Scene->set_cursor_position(cursorWorldPosition);
     }
 
-    process_mouse_events();
+    //process_mouse_events();
 
     ImGui::End();
 }
@@ -164,8 +164,10 @@ void SceneView::process_mouse_events()
 {
     if(!ImGui::IsWindowHovered(
         ImGuiHoveredFlags_::ImGuiHoveredFlags_AnyWindow | 
-        ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) 
-        return;
+        ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+        {
+            return;
+        }
 
     auto camera = 
         m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
@@ -192,7 +194,7 @@ void SceneView::process_mouse_events()
 
                 if(meshRenderer->cast_ray(ray, camera->get_object_perspective_scale(transform->get_model_matrix())))
                 {
-                    _Object->set_flag(Object::Flags::Marked, true);
+                    _Object->set_flag(Object::Flags::Focused, true);
 
                     m_Items.insert({transform, transform->get_position()});
 
@@ -206,23 +208,20 @@ void SceneView::process_mouse_events()
             m_Scene->apply_to_children_recursive(
                 [&camera, this](Object* _Object)
                 {
-                    _Object->set_flag(Object::Flags::Marked, false);
+                    //_Object->set_flag(Object::Flags::Marked, false);
                     _Object->set_flag(Object::Flags::Selected, false);
-                    _Object->set_flag(Object::Flags::Focused, false);
+                    //_Object->set_flag(Object::Flags::Focused, false);
                 }
             );
         }
     }
 
-    if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Left)    || 
-        ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Right)  ||
-        ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Middle) ||
-        ImGui::IsKeyReleased(ImGuiKey::ImGuiKey_LeftCtrl))
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
     {
         m_Scene->apply_to_children_recursive(
             [&camera](Object* _Object)
             {
-                _Object->set_flag(Object::Flags::Marked, false);
+                _Object->set_flag(Object::Flags::Focused, false);
             }
         );
 

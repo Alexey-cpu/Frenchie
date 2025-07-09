@@ -2,6 +2,8 @@
 
 #include <FrenchieRendererScene3D.hpp>
 
+#include <FrenchieCoreCache.hpp>
+
 using namespace Frenchie::Renderer;
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/intersect.hpp>
@@ -71,7 +73,7 @@ void MeshRenderer::frame_finish()
     
     m_Shader->set_uniform<glm::vec4>(
         "u_Color",
-        get_object()->check_flag(Object::Flags::Marked) || 
+        //get_object()->check_flag(Object::Flags::Marked) || 
         get_object()->check_flag(Object::Flags::Focused) ||
         get_object()->check_flag(Object::Flags::Selected) ? glm::vec4(1.f, 0.0f, 0.0f, 0.1f) : glm::vec4(0.f, 1.0f, 0.0f, 0.1f));
     

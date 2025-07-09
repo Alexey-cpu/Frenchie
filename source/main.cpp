@@ -1,42 +1,19 @@
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationSceneViewLayer.hpp>
-#include <FrenchieApplicationHierarchyViewLayer.hpp>
-#include <FrenchieApplicationInspectorViewLayer.hpp>
-
-#include <FrenchieCoreFlyweight.hpp>
 
 #include <FrenchieRendererMeshRendererComponent.hpp>
 #include <FrenchieRendererTransformComponent.hpp>
-
-#include <FrenchieImGuiDemoLayer.hpp>
 #include <FrenchieRendererMesh2D.hpp>
+
+// layers
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationHierarchyViewLayer.hpp>
+#include <FrenchieApplicationInspectorViewLayer.hpp>
+#include <FrenchieApplicationSceneViewLayer.hpp>
+#include <FrenchieImGuiDemoLayer.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
-
-// int main(int, char**)
-// {
-//     Triangle triangle(
-//         glm::vec3(0.f, 0.f, 0.f), 
-//         glm::vec3(0.f, 2.f, 0.f), 
-//         glm::vec3(2.f, 0.f, 0.f));
-
-//     if(triangle.intersects(
-//         Ray(
-//             glm::vec3(0.3f, 1.f, -10.f),
-//             glm::vec3(0.f, 0.f, 1.f))))
-//     {
-//         std::cout << "intersection found !!! \n";
-//     }
-//     else
-//     {
-//         std::cout << "intersection NOT found !!! \n";
-//     }
-
-//     return 0;
-// }
-
 
 int main(int, char**)
 {
@@ -118,7 +95,9 @@ int main(int, char**)
     // }
 
     // create application layers
-    application->push<SceneView>("Scene", scene);
+    application->push<CommandsQueue>();
+
+    application->push<SceneView>("Scene-1", scene);
     application->push<HierarchyView>("Hierarchy", scene);
     application->push<InspectorView>("Inspector", scene);
     application->push<ImguiDemo>();

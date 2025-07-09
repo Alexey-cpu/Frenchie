@@ -3,6 +3,8 @@
 #include <memory>
 #include <filesystem>
 
+#define STRINGIFY(_VALUE) #_VALUE
+
 namespace Frenchie
 {
     namespace Core
