@@ -16,22 +16,71 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
+namespace Frenchie
+{
+    namespace Application
+    {
+        class SceneViewHelpers
+        {
+        public:
+            static glm::vec3 to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition)
+            {
+                return glm::vec3(
+                    ((float)_OpenGLPosition.x / (float)_ScreenWidth  - 0.5f) * 2.0f,
+                    ((float)_OpenGLPosition.y / (float)_ScreenHeight - 0.5f) * 2.0f,
+                    +1.0
+                );
+            }
+        };
+
+        class SceneScreenShoter : public Frenchie::Core::Component
+        {
+        public:
+            
+            SceneScreenShoter(){}
+            virtual ~SceneScreenShoter()
+            {
+                if(m_Framebuffer != 0)
+                    glDeleteBuffers(1, &m_Framebuffer);
+
+                if(m_TextureDepthBuffer != 0)
+                    glDeleteBuffers(1, &m_TextureDepthBuffer);
+                
+                if(m_TextureColorBuffer != 0)
+                    glDeleteTextures(1, &m_TextureColorBuffer);
+            }
+
+            virtual bool awake() override
+            {
+            }
+            
+            virtual void frame_start()  override
+            {
+            }
+            
+            virtual void frame_update() override
+            {
+            }
+            
+            virtual void frame_finish() override
+            {
+            }
+            
+            virtual void draw() override
+            {
+            }
+
+        protected:
+
+            unsigned int m_Framebuffer;
+            unsigned int m_TextureColorBuffer;
+            unsigned int m_TextureDepthBuffer;
+        };
+    }
+}
+
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
-
-// SceneViewHelpers
-class SceneViewHelpers
-{
-public:
-    static glm::vec3 to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition)
-    {
-        return glm::vec3(
-            ((float)_OpenGLPosition.x / (float)_ScreenWidth  - 0.5f) * 2.0f,
-            ((float)_OpenGLPosition.y / (float)_ScreenHeight - 0.5f) * 2.0f,
-            +1.0
-        );
-    }
-};
 
 // SceneView
 SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
@@ -96,17 +145,15 @@ void SceneView::frame_start()
 
 void SceneView::frame_update()
 {
-    if(m_Scene == nullptr) 
-        return;
+    auto camera = 
+        m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
 
-    auto camera = m_Scene->get_component<Camera>();
-
-    if(camera == nullptr) // no camera --> no rendering
+    if(camera == nullptr) // no camera --> no scene --> no rendering
         return;
 
     ImGui::Begin(get_name().c_str());
 
-    // draw scene contents and update scene object geometry
+    // draw scene contents and update scene geometry
     {
         ImVec2 SceneWidgetPosition = ImGui::GetCursorScreenPos();
         float  SceneWidgetWidth    = ImGui::GetContentRegionAvail().x;
@@ -139,17 +186,17 @@ void SceneView::frame_update()
         );
 
         // compute cursor OpenGL position
-        ImVec2 mousePos          = ImGui::GetMousePos();
-        ImVec2 windowContentPos  = sceneViewportRect.GetTL();
-        ImVec2 windowContentSize = sceneViewportRect.GetSize();
+        auto mousePos          = ImGui::GetMousePos();
+        auto windowContentPos  = sceneViewportRect.GetTL();
+        auto windowContentSize = sceneViewportRect.GetSize();
         
-        glm::vec3 cursorOpenGLPosition = glm::vec3(
+        auto cursorOpenGLPosition = glm::vec3(
             mousePos.x - windowContentPos.x, 
             windowContentSize.y - mousePos.y + windowContentPos.y - 1, 
             0.f
         );
 
-        // compute cursor scene (world position)
+        // compute cursor scene (world) position
         auto cursorNDCPosition = SceneViewHelpers::to_ndc(
             m_Scene->get_size().x, 
             m_Scene->get_size().y,
@@ -169,20 +216,13 @@ void SceneView::frame_update()
             mouseTrackerText.c_str()
         );
 
-        // Ray cast
+        m_Scene->set_cursor_position(cursorWorldPosition);
+
+        // Process mouse events ...
         if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)  && 
             ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
-            glm::vec3 rayOrigin = 
-                inverseConversionMatrix * glm::vec4(
-                    SceneViewHelpers::to_ndc(
-                    m_Scene->get_size().x, 
-                    m_Scene->get_size().y, 
-                    glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)), 
-                    1.f
-                );
-
-            Ray ray(rayOrigin, glm::vec3(0.f, 0.f, -1.f));
+            Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
 
             m_Scene->apply_to_children_recursive(
                 [&ray, &camera](Object* _Object)
