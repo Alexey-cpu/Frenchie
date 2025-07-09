@@ -23,11 +23,11 @@ glm::mat4 Camera::get_view_matrix() const
     glm::mat4 rotateZ  = glm::rotate(glm::mat4(1.f), glm::radians(m_Roll), glm::vec3(0.f, 0.f, 1.f));
 
     // camera local attributes
-    m_CameraLocalFrontAxisDirection = glm::vec3(0.f, 0.f, -m_Axis.z);
-    m_CameraLocalFrontAxisDirection = glm::normalize(rotateY * rotateX * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f));
+    m_CameraLocalFrontAxisDirection = glm::normalize(rotateY * rotateX * glm::vec4(glm::vec3(0.f, 0.f, -m_Axis.z), 1.f));
     m_CameraLocalRightAxisDirection = glm::normalize(glm::cross(m_CameraLocalFrontAxisDirection, m_CameraWorldUpAxisDirection));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::cross(m_CameraLocalRightAxisDirection, m_CameraLocalFrontAxisDirection));
-
+    
+    // rotate around Z axis
     m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
 
@@ -44,7 +44,7 @@ glm::vec3 Camera::get_position() const
     return m_CameraWorldPosition;
 }
 
-float Camera::get_object_perspective_scale(glm::mat4 _ModelMatrix) const
+glm::vec3 Camera::get_object_perspective_scale(glm::mat4 _ModelMatrix) const
 {
     auto scene         = get_object<Scene3D>();
     auto viewportScale = scene != nullptr ? scene->get_viewport_scale() : glm::vec3(1.f, 1.f, 1.f);
@@ -53,7 +53,11 @@ float Camera::get_object_perspective_scale(glm::mat4 _ModelMatrix) const
     glm::vec3 cameraPos        = get_position() / viewportScale;
     glm::vec3 cameraDefaultPos = glm::vec3(0.f, 0.f, 1.f) / viewportScale;
 
-    return std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z));
+    return glm::vec3(
+        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z) ), 
+        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z) ),  
+        std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z) )
+    );
 }
 
 glm::vec3 Camera::get_axis() const

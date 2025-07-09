@@ -31,7 +31,7 @@ Mesh::Mesh(std::vector<Vertex> _Vertexes) :
             std::min<float>(min.z, vertex.Position.z));
     }
 
-    m_AABB = Aabb(min - glm::vec3(32.f), max + glm::vec3(32.f));
+    m_AABB = Aabb(min - glm::vec3(16.f), max + glm::vec3(16.f));
 }
 
 Mesh::~Mesh()

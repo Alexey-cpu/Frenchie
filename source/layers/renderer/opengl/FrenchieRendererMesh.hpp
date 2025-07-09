@@ -176,28 +176,33 @@ namespace Frenchie
                 );
             }
 
+            Aabb grow(glm::vec3 _Size) const
+            {
+                return Aabb(Min - _Size, Max + _Size);
+            }
+
             std::vector<glm::vec3> get_points() const
             {
-                auto center = (Max + Min) * 0.5f;
-                auto size   = (Max - Min);
-                return Cube(
-                    center, 
-                    std::max<float>(size.x, 16.f), 
-                    std::max<float>(size.y, 16.f), 
-                    std::max<float>(size.z, 16.f)
-                ).get_points();
+                auto center = get_center();
+                auto size   = get_size();
+                return Cube(center, size.x, size.y, size.z).get_points();
             }
 
             std::vector<Triangle> get_triangles() const
             {
-                auto center = (Max + Min) * 0.5f;
-                auto size   = (Max - Min);
-                return Cube(
-                    center, 
-                    std::max<float>(size.x, 16.f), 
-                    std::max<float>(size.y, 16.f), 
-                    std::max<float>(size.z, 16.f)
-                ).get_triangles();
+                auto center = get_center();
+                auto size   = get_size();
+                return Cube(center, size.x, size.y, size.z).get_triangles();
+            }
+
+            glm::vec3 get_size() const
+            {
+                return (Max - Min);
+            }
+
+            glm::vec3 get_center() const
+            {
+                return (Max + Min) * 0.5f;
             }
 
             bool intersects(Ray _Ray) const
@@ -215,7 +220,7 @@ namespace Frenchie
                         tmin = std::max(tmin, std::min(t1, t2));
                         tmax = std::min(tmax, std::max(t1, t2));
                     } 
-                    else if (_Ray.Origin[i] <= Min[i] || _Ray.Origin[i] >= Max[i]) 
+                    else if (_Ray.Origin[i] < Min[i] || _Ray.Origin[i] > Max[i]) // ray origin is outside the box
                     {
                         return false;
                     }

@@ -23,7 +23,7 @@ namespace Frenchie
             glm::mat4 get_view_matrix() const;
             glm::vec3 get_position() const;
 
-            float get_object_perspective_scale(glm::mat4 _Transform) const;
+            glm::vec3 get_object_perspective_scale(glm::mat4 _Transform) const;
 
             glm::vec3 get_axis() const;
             glm::vec3 get_front() const;

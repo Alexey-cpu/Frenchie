@@ -49,8 +49,6 @@ int main(int, char**)
     application->set_maximized(true);
 
     // push application layers
-    auto scene = std::make_shared<Scene3D>();
-
     auto mesh = Cache<Rectangle2D>::request("Frenchie/Mesh/Triangle2D");
 
     // create shader
@@ -67,52 +65,57 @@ int main(int, char**)
             shaderPath.string().append("/shaders/Default/Default.frag")
         );
 
+    // create scene
+    auto scene = std::make_shared<Scene3D>();
+    //scene->add_component<Scene3DBHV>();
+
     // create a root object
     auto root = scene->create_child<Object>(fmt::format("Root"));
     root->add_component<Transform>();
     root->add_component<MeshRenderer>(mesh, shader);
     root->get_component<Transform>()->set_position(glm::vec3(0.f, 0.f, 0.f));
 
-    // create child objects
-    float radius = 600.f;
+    //create child objects
+    float radius  = 600.f;
+    int   counter = 0;
     for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
     {
-        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
+        auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
         item->add_component<Transform>();
         item->add_component<MeshRenderer>(mesh, shader);
         item->get_component<Transform>()->set_position(
             glm::vec3(std::cos(i) * radius, 
             std::sin(i) * radius, 
-            -200.f
+            0.f
             )
         );
     }
 
-    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
-    {
-        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
-        item->add_component<Transform>();
-        item->add_component<MeshRenderer>(mesh, shader);
-        item->get_component<Transform>()->set_position(
-            glm::vec3(std::cos(i) * radius, 
-            0.f, 
-            std::sin(i) * radius
-            )
-        );
-    }
+    // for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
+    // {
+    //     auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
+    //     item->add_component<Transform>();
+    //     item->add_component<MeshRenderer>(mesh, shader);
+    //     item->get_component<Transform>()->set_position(
+    //         glm::vec3(std::cos(i) * radius, 
+    //         0.f, 
+    //         std::sin(i) * radius
+    //         )
+    //     );
+    // }
 
-    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
-    {
-        auto item = root->create_child<Object>(fmt::format("Item-{}", i));
-        item->add_component<Transform>();
-        item->add_component<MeshRenderer>(mesh, shader);
-        item->get_component<Transform>()->set_position(
-            glm::vec3(std::cos(i) * radius, 
-            400.f, 
-            std::sin(i) * radius
-            )
-        );
-    }
+    // for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
+    // {
+    //     auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
+    //     item->add_component<Transform>();
+    //     item->add_component<MeshRenderer>(Cache<Rectangle2D>::request("Frenchie/Mesh/Triangle2D1"), shader);
+    //     item->get_component<Transform>()->set_position(
+    //         glm::vec3(std::cos(i) * radius, 
+    //         400.f, 
+    //         std::sin(i) * radius
+    //         )
+    //     );
+    // }
 
     // create application layers
     application->push<SceneView>("Scene", scene);
