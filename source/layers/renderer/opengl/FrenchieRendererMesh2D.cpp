@@ -43,8 +43,8 @@ std::vector<Vertex> Rectangle3D::generateVertexes()
     std::vector<Vertex> vertexes;
 
     auto triangles = Aabb(
-        glm::vec3(-100.f, -100.f, -100.f), 
-        glm::vec3(+100.f, +100.f, +100.f)).get_triangles();
+        glm::vec3(-0.1f, -0.1f, -0.1f), 
+        glm::vec3(+0.1f, +0.1f, +0.1f)).get_triangles();
 
     for(auto&& triangle : triangles)
     {

@@ -129,34 +129,9 @@ void SceneView::frame_update()
         );
 
         m_Scene->set_cursor_position(cursorWorldPosition);
-
-        // Process mouse events ...
-        if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)  && 
-            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
-        {
-            Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
-
-            m_Scene->apply_to_children_recursive(
-                [&ray, &camera](Object* _Object)
-                {
-                    auto meshRenderer = _Object->get_component<MeshRenderer>();
-                    auto transform    = _Object->get_component<Transform>();
-
-                    if(meshRenderer == nullptr || 
-                            transform == nullptr) 
-                        return;
-
-                    _Object->set_flag(
-                        Object::Flags::Marked, 
-                        meshRenderer->cast_ray(
-                            ray, 
-                            camera->get_object_perspective_scale(transform->get_model_matrix())
-                        )
-                    );
-                }
-            );
-        }
     }
+
+    process_mouse_events();
 
     ImGui::End();
 }
@@ -183,4 +158,91 @@ void SceneView::close()
 bool SceneView::is_closed()
 {
     return Layer::is_closed();
+}
+
+void SceneView::process_mouse_events()
+{
+    if(!ImGui::IsWindowHovered(
+        ImGuiHoveredFlags_::ImGuiHoveredFlags_AnyWindow | 
+        ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) 
+        return;
+
+    auto camera = 
+        m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
+
+    if(camera == nullptr) 
+        return;
+
+    // get the nearest object
+    if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    {
+        Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
+
+        int counter = 0;
+
+        m_Scene->apply_to_children_recursive(
+            [this, &ray, &camera, &counter](Object* _Object)
+            {
+                auto meshRenderer = _Object->get_component<MeshRenderer>();
+                auto transform    = _Object->get_component<Transform>();
+
+                if(meshRenderer == nullptr || 
+                        transform == nullptr) 
+                    return;
+
+                if(meshRenderer->cast_ray(ray, camera->get_object_perspective_scale(transform->get_model_matrix())))
+                {
+                    _Object->set_flag(Object::Flags::Marked, true);
+
+                    m_Items.insert({transform, transform->get_position()});
+
+                    counter++;
+                }
+            }
+        );
+
+        if(counter <= 0)
+        {
+            m_Scene->apply_to_children_recursive(
+                [&camera, this](Object* _Object)
+                {
+                    _Object->set_flag(Object::Flags::Marked, false);
+                    _Object->set_flag(Object::Flags::Selected, false);
+                    _Object->set_flag(Object::Flags::Focused, false);
+                }
+            );
+        }
+    }
+
+    if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Left)    || 
+        ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Right)  ||
+        ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Middle) ||
+        ImGui::IsKeyReleased(ImGuiKey::ImGuiKey_LeftCtrl))
+    {
+        m_Scene->apply_to_children_recursive(
+            [&camera](Object* _Object)
+            {
+                _Object->set_flag(Object::Flags::Marked, false);
+            }
+        );
+
+        m_Items.clear();
+    }
+
+    for(auto item : m_Items)
+    {
+        glm::vec3 perspectiveScale = camera->get_object_perspective_scale(item.first->get_model_matrix());
+        glm::vec3 translation      = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f) / perspectiveScale;
+
+        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl))
+        {
+            item.first->set_position(
+                item.second + 2.f * glm::vec3(translation.x, 0.f, translation.y));
+        }
+        else
+        {
+            item.first->set_position(
+                item.second + 2.f * translation);
+        }
+    }
 }

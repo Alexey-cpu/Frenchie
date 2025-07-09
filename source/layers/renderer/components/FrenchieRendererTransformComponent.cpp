@@ -30,6 +30,22 @@ glm::mat4 Transform::get_model_matrix() const
     return m_ModelMatrix;
 }
 
+glm::mat4 Transform::get_parent_model_matrix() const
+{
+    auto object = get_object();
+
+    if(object == nullptr) 
+        return glm::mat4(1.f);
+
+    // compute geometry
+    auto parent = 
+        object->get_parent() != nullptr ? 
+            object->get_parent()->get_component<Transform>() : 
+                nullptr;
+
+    return parent == nullptr ? glm::mat4(1.f) : parent->get_model_matrix();
+}
+
 void Transform::set_position(const glm::vec3& _Value)
 {
     m_Position = _Value;
