@@ -2,6 +2,9 @@
 #include <FrenchieCoreLogger.hpp>
 #include <FrenchieCoreSingleton.hpp>
 
+#include <FrenchieRendererIRenderer.hpp>
+#include <FrenchieRendererIEditor.hpp>
+
 // IMGUI
 #include <imgui.h>
 
@@ -36,8 +39,6 @@ void Component::frame_start(){}
 void Component::frame_update(){}
 
 void Component::frame_finish(){}
-
-void Component::draw(){}
 
 // Object
 Object::Object(const std::string& _Name) : m_Name(_Name){}
@@ -234,6 +235,12 @@ void Object::draw()
 
         for(auto&& component : m_Components)
         {
+            Frenchie::Renderer::IEditor* editor = 
+                dynamic_cast<Frenchie::Renderer::IEditor*>(component.get());
+
+            if(editor == nullptr) 
+                continue; 
+
             ImGui::PushID(id++);
 
             if (ImGui::TreeNodeEx(component->get_name().c_str(),
@@ -243,7 +250,7 @@ void Object::draw()
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
             {
-                component->draw();
+                editor->draw();
                 ImGui::TreePop();
             }
 

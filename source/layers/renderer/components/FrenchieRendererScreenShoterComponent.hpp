@@ -1,12 +1,14 @@
 #pragma once
 
 #include <FrenchieCoreObject.hpp>
+#include <FrenchieRendererIEditor.hpp>
+#include <FrenchieRendererIRenderer.hpp>
 
 namespace Frenchie
 {
     namespace Renderer
     {
-        class ScreenShoter : public Core::Component::Registry<ScreenShoter>, public IRenderer
+        class ScreenShoter : public Core::Component::Registry<ScreenShoter>, public IRenderer, public IEditor
         {
         public:
             
@@ -18,6 +20,8 @@ namespace Frenchie
             virtual void frame_start()  override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
+
+            // IEditor
             virtual void draw() override;
 
             // IRenderer

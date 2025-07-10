@@ -41,7 +41,7 @@ namespace Frenchie
             virtual ~Commands(){}
 
             template<typename Type, typename ...Arguments>
-            void add_command(Arguments ... _Args)
+            void push(Arguments ... _Args)
             {
                 m_Commands.push(std::make_unique<Type>(_Args...));
             }
@@ -50,12 +50,9 @@ namespace Frenchie
             {
                 while (!m_Commands.empty())
                 {
-                    // execute command
                     auto& command = m_Commands.front();
                     if(command != nullptr) 
                         command->execute();
-
-                    // pop command out-of queue
                     m_Commands.pop();
                 }
             }

@@ -15,10 +15,10 @@ namespace Frenchie
             CommandsQueue() : Layer(STRINGIFY(CommandsQueue)){}
             virtual ~CommandsQueue(){}
 
-            template<typename __type, typename ... __parameters>
-            void push(__parameters... _Parameters)
+            template<typename Type, typename ... Arguments>
+            void push(Arguments... _Args)
             {
-                m_CommandsQueue.add_command<__type>(std::move(_Parameters...));
+                m_CommandsQueue.push<Type>(std::move(_Args...));
             }
 
             virtual bool awake() override

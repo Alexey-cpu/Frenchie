@@ -113,7 +113,7 @@ std::shared_ptr<Shader> MeshRenderer::get_shader() const
     return m_Shader;
 }
 
-bool MeshRenderer::cast_ray(const Ray& _Ray, glm::vec3 _ZScale)
+bool MeshRenderer::cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform)
 {
     auto transform = 
 		get_object() != nullptr ? 
@@ -125,5 +125,5 @@ bool MeshRenderer::cast_ray(const Ray& _Ray, glm::vec3 _ZScale)
 
     // local coordinates transform
     return m_MeshBox->get_aabb().transform(
-        glm::scale(glm::mat4(1.f), _ZScale) * transform->get_model_matrix()).intersects(_Ray);
+        _AAABTransform * transform->get_model_matrix()).intersects(_Ray);
 }

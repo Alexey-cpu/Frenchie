@@ -1,32 +1,19 @@
 #include <FrenchieApplicationSceneViewLayer.hpp>
 
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplication.hpp>
+
 #include <FrenchieRendererMeshRendererComponent.hpp>
 #include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererMesh.hpp>
 
+#include <FrenchieRendererIRenderer.hpp>
+
 #include <FrenchieCoreLogger.hpp>
 
+// IMGUI
 #include <imgui.h>
 #include <imgui_internal.h>
-
-namespace Frenchie
-{
-    namespace Application
-    {
-        class SceneViewHelpers
-        {
-        public:
-            static glm::vec3 to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition)
-            {
-                return glm::vec3(
-                    ((float)_OpenGLPosition.x / (float)_ScreenWidth  - 0.5f) * 2.0f,
-                    ((float)_OpenGLPosition.y / (float)_ScreenHeight - 0.5f) * 2.0f,
-                    +1.0
-                );
-            }
-        };
-    }
-}
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
@@ -109,7 +96,7 @@ void SceneView::frame_update()
         );
 
         // compute cursor scene (world) position
-        auto cursorNDCPosition = SceneViewHelpers::to_ndc(
+        auto cursorNDCPosition = SceneView::to_ndc(
             size->get_size().x, 
             size->get_size().y,
             glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
@@ -131,7 +118,7 @@ void SceneView::frame_update()
         m_Scene->set_cursor_position(cursorWorldPosition);
     }
 
-    //process_mouse_events();
+    process_mouse_events();
 
     ImGui::End();
 }
@@ -160,14 +147,23 @@ bool SceneView::is_closed()
     return Layer::is_closed();
 }
 
+glm::vec3 SceneView::to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition)
+{
+    return glm::vec3(
+        ((float)_OpenGLPosition.x / (float)_ScreenWidth  - 0.5f) * 2.0f,
+        ((float)_OpenGLPosition.y / (float)_ScreenHeight - 0.5f) * 2.0f,
+        +1.0
+    );
+}
+
 void SceneView::process_mouse_events()
 {
     if(!ImGui::IsWindowHovered(
         ImGuiHoveredFlags_::ImGuiHoveredFlags_AnyWindow | 
         ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
-        {
-            return;
-        }
+    {
+        return;
+    }
 
     auto camera = 
         m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
@@ -175,73 +171,100 @@ void SceneView::process_mouse_events()
     if(camera == nullptr) 
         return;
 
-    // get the nearest object
-    if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
-    {
-        Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
+    auto commandsQueue = Application::instance()->find<CommandsQueue>();
 
-        int counter = 0;
+    Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
 
-        m_Scene->apply_to_children_recursive(
-            [this, &ray, &camera, &counter](Object* _Object)
+    // select/deselect objects
+    m_Scene->apply_to_children_recursive(
+        [this, &ray, &camera, &commandsQueue](Object* _Object)
+        {
+            auto meshRenderer = _Object->get_component<MeshRenderer>();
+            auto transform    = _Object->get_component<Transform>();
+
+            if(meshRenderer == nullptr || 
+                    transform == nullptr) 
+                return;
+
+            glm::vec3 perspectiveScale = 
+                camera->get_object_perspective_scale(transform->get_model_matrix());
+
+            // left mouse events
+            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
             {
-                auto meshRenderer = _Object->get_component<MeshRenderer>();
-                auto transform    = _Object->get_component<Transform>();
-
-                if(meshRenderer == nullptr || 
-                        transform == nullptr) 
-                    return;
-
-                if(meshRenderer->cast_ray(ray, camera->get_object_perspective_scale(transform->get_model_matrix())))
+                if(meshRenderer->cast_ray(ray, glm::scale(glm::mat4(1.f), perspectiveScale)))
                 {
                     _Object->set_flag(Object::Flags::Focused, true);
-
-                    m_Items.insert({transform, transform->get_position()});
-
-                    counter++;
+                    _Object->set_flag(Object::Flags::Selected, true);
                 }
             }
-        );
 
-        if(counter <= 0)
-        {
-            m_Scene->apply_to_children_recursive(
-                [&camera, this](Object* _Object)
+            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Left) &&
+                !ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl)  && 
+                !ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+            {
+                _Object->set_flag(Object::Flags::Selected, false);
+            }
+
+            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
+            {
+                if(_Object->check_flag(Object::Flags::Selected))
                 {
-                    //_Object->set_flag(Object::Flags::Marked, false);
-                    _Object->set_flag(Object::Flags::Selected, false);
-                    //_Object->set_flag(Object::Flags::Focused, false);
-                }
-            );
-        }
-    }
+                    auto cursor = m_Scene->get_cursor_position() / perspectiveScale;
 
-    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
-    {
-        m_Scene->apply_to_children_recursive(
-            [&camera](Object* _Object)
+                    transform->set_world_position(
+                        glm::vec3(cursor.x, cursor.y, transform->get_world_position().z));
+                }
+            }
+
+            // right mouse events
+            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right)){}
+            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right)){}
+            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Right)){}
+
+            // middle mouse events
+            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)){}
+            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)){}
+            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Middle)){}
+
+            // delete
+            if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
+            {
+                if(_Object->check_flag(Object::Flags::Focused))
+                {
+                    commandsQueue->push<CallbackCommand>(
+                        [this]()
+                        {
+                            m_Scene->remove_children(
+                                [](Object* _Object)->bool
+                                {
+                                    return _Object->check_flag(Object::Flags::Focused);
+                                }
+                            );
+                        }
+                    );
+                }
+            }
+
+            // copy
+            if((ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)) && 
+                ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C))
+            {
+                // TODO: add logic here
+            }
+
+            // paste
+            if((ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)) && 
+                ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V))
+            {
+                // TODO: add logic here
+            }
+
+            if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
             {
                 _Object->set_flag(Object::Flags::Focused, false);
+                _Object->set_flag(Object::Flags::Selected, false);
             }
-        );
-
-        m_Items.clear();
-    }
-
-    for(auto item : m_Items)
-    {
-        glm::vec3 perspectiveScale = camera->get_object_perspective_scale(item.first->get_model_matrix());
-        glm::vec3 translation      = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f) / perspectiveScale;
-
-        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl))
-        {
-            item.first->set_position(
-                item.second + 2.f * glm::vec3(translation.x, 0.f, translation.y));
         }
-        else
-        {
-            item.first->set_position(
-                item.second + 2.f * translation);
-        }
-    }
+    );
 }

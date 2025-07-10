@@ -37,12 +37,12 @@ namespace Frenchie
             virtual void close() override;
             virtual bool is_closed() override;
 
+            static glm::vec3 to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition);
+
         protected:
 
             // info
             std::shared_ptr<Scene3D> m_Scene = nullptr;
-
-            std::map<Transform*, glm::vec3> m_Items;
 
             // service methods
             void process_mouse_events();

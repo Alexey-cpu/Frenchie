@@ -53,17 +53,17 @@ namespace Frenchie
                 // native API
                 int execute();
 
-                template<typename __type, typename ... __parameters>
-                std::shared_ptr<__type> push(__parameters... _Parameters)
+                template<typename Type, typename ... Arguments>
+                std::shared_ptr<Type> push(Arguments... _Parameters)
                 {
-                    std::shared_ptr<__type> layer = 
-                        std::make_shared<__type>(_Parameters ...);
+                    std::shared_ptr<Type> layer = 
+                        std::make_shared<Type>(_Parameters ...);
                     layer->awake();
                     m_Layers.push_back(layer);
                     return layer;
                 }
 
-                template<typename __type>
+                template<typename Type>
                 bool contains()
                 {
                     return std::find_if(
@@ -71,23 +71,23 @@ namespace Frenchie
                             m_Layers.end(),
                             [](std::shared_ptr<Layer> _Layer)->bool
                             {
-                                return std::dynamic_pointer_cast<__type>(_Layer) != nullptr;
+                                return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
                             }) != m_Layers.end();
                 }
 
-                template<typename __type>
-                std::shared_ptr<__type> find()
+                template<typename Type>
+                std::shared_ptr<Type> find()
                 {
                     auto layer = std::find_if(
                         m_Layers.begin(),
                         m_Layers.end(),
                         [](std::shared_ptr<Layer> _Layer)->bool
                         {
-                            return std::dynamic_pointer_cast<__type>(_Layer) != nullptr;
+                            return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
                         }
                     );
 
-                    return layer != m_Layers.end() ? std::dynamic_pointer_cast<__type>(*layer) : nullptr;
+                    return layer != m_Layers.end() ? std::dynamic_pointer_cast<Type>(*layer) : nullptr;
                 }
 
             protected:

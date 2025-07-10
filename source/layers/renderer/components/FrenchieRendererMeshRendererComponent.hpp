@@ -1,14 +1,17 @@
 #pragma once
 
 #include <FrenchieRendererTransformComponent.hpp>
+
+#include <FrenchieRendererShader.hpp>
 #include <FrenchieRendererMesh.hpp>
+#include <FrenchieRendererIEditor.hpp>
 
 namespace Frenchie
 {
     namespace Renderer
     {
         // MeshRenderer
-        class MeshRenderer : public Component::Registry<MeshRenderer>, public IShader, public IMesh
+        class MeshRenderer : public Component::Registry<MeshRenderer>, public IShader, public IMesh, public IEditor
         {
         public:
             MeshRenderer(
@@ -39,7 +42,7 @@ namespace Frenchie
                 return std::make_unique<MeshRenderer>();
             }
 
-            bool cast_ray(const Ray& _Ray, glm::vec3 _ZScale);
+            bool cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform = glm::mat4(1.f));
 
         protected:
 
