@@ -81,7 +81,7 @@ void MeshRenderer::frame_finish()
     m_Shader->unuse();
 }
 
-void MeshRenderer::draw()
+void MeshRenderer::draw_editor()
 {
     auto transform = 
         get_object() != nullptr ? 

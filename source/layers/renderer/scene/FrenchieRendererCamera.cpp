@@ -151,7 +151,7 @@ void Camera::set_fovy(const float& _Value)
     m_Fovy = _Value;
 }
 
-void Camera::draw() 
+void Camera::draw_editor() 
 {
     auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
 

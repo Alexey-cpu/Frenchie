@@ -1,6 +1,8 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationTimerLayer.hpp>
 
 #include <FrenchieRendererScene3D.hpp>
 
@@ -37,15 +39,13 @@ namespace Frenchie
             virtual void close() override;
             virtual bool is_closed() override;
 
-            static glm::vec3 to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition);
-
         protected:
+            std::shared_ptr<Scene3D>            m_Scene         = nullptr;
+            std::shared_ptr<CommandsQueueLayer> m_CommandsQueue = nullptr;
+            std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;
 
-            // info
-            std::shared_ptr<Scene3D> m_Scene = nullptr;
-
-            // service methods
-            void process_mouse_events();
+            static glm::vec3 to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition);
+            void process_events();
         };
     }
 }

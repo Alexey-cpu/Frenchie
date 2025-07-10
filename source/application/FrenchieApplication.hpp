@@ -58,7 +58,22 @@ namespace Frenchie
                 {
                     std::shared_ptr<Type> layer = 
                         std::make_shared<Type>(_Parameters ...);
-                    layer->awake();
+                    
+                    if(contains<Type>() && 
+                        !layer->allows_multiple_instances())
+                    {
+                        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
+                        Frenchie::Core::Logger::instance()->error(fmt::format("Application queue already contains {}", layer->get_name()));
+                        return layer;
+                    }
+
+                    if(!layer->awake())
+                    {
+                        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
+                        Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", layer->get_name()));
+                        return layer;
+                    }
+
                     m_Layers.push_back(layer);
                     return layer;
                 }

@@ -131,7 +131,7 @@ namespace Frenchie
                 m_Shader->unuse();
             }
             
-            virtual void draw() override
+            virtual void draw_editor() override
             {
             }
 

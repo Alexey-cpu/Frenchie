@@ -23,6 +23,7 @@ namespace Frenchie
             virtual void finish();
             virtual void close();
             virtual bool is_closed();
+            virtual bool allows_multiple_instances() const;
 
         protected:
             std::string m_Name;

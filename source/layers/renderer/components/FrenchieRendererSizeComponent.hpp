@@ -31,7 +31,7 @@ namespace Frenchie
             virtual void frame_start()  override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
-            virtual void draw() override;
+            virtual void draw_editor() override;
 
             // Component::Register<TReturnType>
             static TReturnType create()

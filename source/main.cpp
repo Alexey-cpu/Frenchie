@@ -9,6 +9,8 @@
 #include <FrenchieApplicationHierarchyViewLayer.hpp>
 #include <FrenchieApplicationInspectorViewLayer.hpp>
 #include <FrenchieApplicationSceneViewLayer.hpp>
+#include <FrenchieApplicationTimerLayer.hpp>
+
 #include <FrenchieImGuiDemoLayer.hpp>
 
 using namespace Frenchie::Core;
@@ -95,7 +97,8 @@ int main(int, char**)
     // }
 
     // create application layers
-    application->push<CommandsQueue>();
+    application->push<CommandsQueueLayer>();
+    application->push<TimeProviderLayer>();
 
     application->push<SceneView>("Scene-1", scene);
     application->push<HierarchyView>("Hierarchy", scene);

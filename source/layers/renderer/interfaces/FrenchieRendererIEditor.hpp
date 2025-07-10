@@ -11,7 +11,7 @@ namespace Frenchie
             virtual ~IEditor(){}
 
             // virtual API
-            virtual void draw() = 0;
+            virtual void draw_editor() = 0;
         };
     }
 }

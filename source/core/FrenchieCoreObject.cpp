@@ -212,7 +212,7 @@ void Object::frame_finish()
         child->frame_finish();
 }
 
-void Object::draw()
+void Object::draw_editor()
 {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
@@ -250,7 +250,7 @@ void Object::draw()
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
             {
-                editor->draw();
+                editor->draw_editor();
                 ImGui::TreePop();
             }
 
