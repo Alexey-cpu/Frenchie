@@ -77,7 +77,7 @@ void ScreenShoter::frame_update(){}
 
 void ScreenShoter::frame_finish(){}
 
-void ScreenShoter::draw()
+void ScreenShoter::draw_editor()
 {
     bool framebufferOk        = m_Framebuffer != 0;
     bool TextureColorBufferOk = m_TextureColorBuffer != 0;

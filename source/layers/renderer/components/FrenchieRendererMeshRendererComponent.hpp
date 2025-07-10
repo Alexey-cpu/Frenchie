@@ -25,7 +25,7 @@ namespace Frenchie
             virtual void frame_start() override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
-            virtual void draw() override;
+            virtual void draw_editor() override;
 
             // IShader
             virtual std::shared_ptr<Shader> get_shader() const override;

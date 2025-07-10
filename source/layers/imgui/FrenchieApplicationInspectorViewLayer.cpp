@@ -80,13 +80,13 @@ void InspectorView::frame_update()
     ImGui::Begin(get_name().c_str());
 
     if(m_Scene->check_flag(Object::Focused))
-        m_Scene->draw();
+        m_Scene->draw_editor();
 
     m_Scene->apply_to_children_recursive(
         [](Object* _Object)
         {
             if(_Object->check_flag(Object::Focused))
-                _Object->draw();
+                _Object->draw_editor();
         }
     );
 

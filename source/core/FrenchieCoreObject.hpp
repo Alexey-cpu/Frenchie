@@ -4,6 +4,8 @@
 #include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreNonCopyable.hpp>
 
+#include <FrenchieRendererIEditor.hpp>
+
 // STL
 #include <functional>
 #include <memory>
@@ -54,7 +56,7 @@ namespace Frenchie
             friend class Object;
         };
 
-        class Object : public NonCopyable
+        class Object : public NonCopyable, public Frenchie::Renderer::IEditor
         {
         public:
             
@@ -266,7 +268,9 @@ namespace Frenchie
             virtual void frame_start();
             virtual void frame_update();
             virtual void frame_finish();
-            virtual void draw();
+
+            // IEditor
+            virtual void draw_editor() override;
 
         protected:
 

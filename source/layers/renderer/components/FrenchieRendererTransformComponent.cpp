@@ -42,8 +42,6 @@ void Transform::set_world_position(const glm::vec3& _Value)
 
     glm::vec3 translation = glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
 
-    std::cout << (_Value - translation).x << "\t" << (_Value - translation).y << "\t" << (_Value - translation).z << "\n";
-
     set_position(get_position() + (_Value - translation));
 }
 
@@ -96,7 +94,7 @@ void Transform::frame_finish()
     Component::frame_finish();
 }
 
-void Transform::draw()
+void Transform::draw_editor()
 {
     ImGui::DragFloat3("position XYZ", &m_Position[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &m_Rotation[0], 0.5f, -360.f, 360.f, "%.4f");

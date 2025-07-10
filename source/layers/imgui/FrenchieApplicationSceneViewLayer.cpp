@@ -1,6 +1,5 @@
 #include <FrenchieApplicationSceneViewLayer.hpp>
 
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
 #include <FrenchieApplication.hpp>
 
 #include <FrenchieRendererMeshRendererComponent.hpp>
@@ -25,7 +24,13 @@ SceneView::~SceneView(){}
 
 bool SceneView::awake() 
 {
-    return m_Scene != nullptr && m_Scene->awake();
+    m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
+    m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
+
+    return m_CommandsQueue != nullptr && 
+           m_TimeProvider  != nullptr && 
+           m_Scene         != nullptr && 
+           m_Scene->awake();
 }
 
 void SceneView::frame_start()
@@ -97,8 +102,7 @@ void SceneView::frame_update()
 
         // compute cursor scene (world) position
         auto cursorNDCPosition = SceneView::to_ndc(
-            size->get_size().x, 
-            size->get_size().y,
+            size->get_size(),
             glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
         );
 
@@ -118,7 +122,7 @@ void SceneView::frame_update()
         m_Scene->set_cursor_position(cursorWorldPosition);
     }
 
-    process_mouse_events();
+    process_events();
 
     ImGui::End();
 }
@@ -147,23 +151,21 @@ bool SceneView::is_closed()
     return Layer::is_closed();
 }
 
-glm::vec3 SceneView::to_ndc(float _ScreenWidth, float _ScreenHeight, glm::vec3 _OpenGLPosition)
+glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition)
 {
     return glm::vec3(
-        ((float)_OpenGLPosition.x / (float)_ScreenWidth  - 0.5f) * 2.0f,
-        ((float)_OpenGLPosition.y / (float)_ScreenHeight - 0.5f) * 2.0f,
+        ((float)_OpenGLPosition.x / (float)_ScreenSize.x  - 0.5f) * 2.0f,
+        ((float)_OpenGLPosition.y / (float)_ScreenSize.y - 0.5f) * 2.0f,
         +1.0
     );
 }
 
-void SceneView::process_mouse_events()
+void SceneView::process_events()
 {
     if(!ImGui::IsWindowHovered(
         ImGuiHoveredFlags_::ImGuiHoveredFlags_AnyWindow | 
-        ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
-    {
+        ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) 
         return;
-    }
 
     auto camera = 
         m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
@@ -171,13 +173,11 @@ void SceneView::process_mouse_events()
     if(camera == nullptr) 
         return;
 
-    auto commandsQueue = Application::instance()->find<CommandsQueue>();
-
     Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
 
     // select/deselect objects
     m_Scene->apply_to_children_recursive(
-        [this, &ray, &camera, &commandsQueue](Object* _Object)
+        [this, &ray, &camera](Object* _Object)
         {
             auto meshRenderer = _Object->get_component<MeshRenderer>();
             auto transform    = _Object->get_component<Transform>();
@@ -212,27 +212,50 @@ void SceneView::process_mouse_events()
                 {
                     auto cursor = m_Scene->get_cursor_position() / perspectiveScale;
 
-                    transform->set_world_position(
-                        glm::vec3(cursor.x, cursor.y, transform->get_world_position().z));
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
+                        ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+                    {
+                        transform->set_world_position(glm::vec3(cursor.x, transform->get_world_position().y, cursor.y));
+                    }
+                    else
+                    {
+                        transform->set_world_position(glm::vec3(cursor.x, cursor.y, transform->get_world_position().z));
+                    }
                 }
             }
 
             // right mouse events
-            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right)){}
-            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right)){}
-            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Right)){}
+            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
+            {
+            }
+
+            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right))
+            {
+            }
+            
+            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Right))
+            {
+            }
 
             // middle mouse events
-            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)){}
-            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)){}
-            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Middle)){}
+            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle))
+            {
+            }
+            
+            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle))
+            {
+            }
+            
+            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Middle))
+            {
+            }
 
             // delete
             if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
             {
                 if(_Object->check_flag(Object::Flags::Focused))
                 {
-                    commandsQueue->push<CallbackCommand>(
+                    m_CommandsQueue->push<CallbackCommand>(
                         [this]()
                         {
                             m_Scene->remove_children(
@@ -260,10 +283,47 @@ void SceneView::process_mouse_events()
                 // TODO: add logic here
             }
 
+            // deselect all
             if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
             {
                 _Object->set_flag(Object::Flags::Focused, false);
                 _Object->set_flag(Object::Flags::Selected, false);
+            }
+
+            // move object
+            // TODO: this MUST be regulated !!!
+            double speed = 0.5f;
+            
+            if(_Object->check_flag(Object::Flags::Focused))
+            {
+                // move object left
+                glm::vec3 movement = glm::vec3(0.f);
+                
+                if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftArrow))
+                    movement = glm::vec3(-speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().x, 0.f, 0.f);
+
+                if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightArrow))
+                    movement = glm::vec3(+speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().x, 0.f, 0.f);
+
+                if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
+                    ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+                {
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow))
+                        movement = glm::vec3(0.f, 0.f, -speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().z);
+
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow))
+                        movement = glm::vec3(0.f, 0.f, +speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().z);
+                }
+                else
+                {
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow))
+                        movement = glm::vec3(0.f, +speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().y, 0.f);
+
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow))
+                        movement = glm::vec3(0.f, -speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().y, 0.f);
+                }
+
+                transform->set_position(transform->get_position() + movement);
             }
         }
     );

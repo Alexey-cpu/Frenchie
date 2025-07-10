@@ -151,25 +151,6 @@ bool Application::awake()
     // call window callbacks
     OnWindowMaximizedCallback(m_Window, glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED));
 
-    // awake layers
-    for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
-    {
-        if(!(*it)->awake())
-        {
-            (*it)->finish();
-            auto rm = it;
-            it++;
-            m_Layers.erase(rm);
-
-            Frenchie::Core::Logger::instance()->error(fmt::format(
-                "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_AWAKE_LAYER {}\n", 
-                (*it)->get_name()));
-
-            if(it == m_Layers.end())
-                break;
-        }
-    }
-
     return true;
 }
 

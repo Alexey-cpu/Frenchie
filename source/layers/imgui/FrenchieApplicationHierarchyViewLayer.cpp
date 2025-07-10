@@ -61,7 +61,7 @@ bool HierarchyView::is_closed()
 
 void HierarchyView::DrawTree(Object* _Transform, int& _ID)
 {
-    auto commandsQueue = Application::instance()->find<CommandsQueue>();
+    auto commandsQueue = Application::instance()->find<CommandsQueueLayer>();
 
     if(_Transform == nullptr || m_Scene == nullptr || commandsQueue == nullptr) 
         return;

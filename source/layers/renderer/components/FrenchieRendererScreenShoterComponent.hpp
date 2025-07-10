@@ -22,7 +22,7 @@ namespace Frenchie
             virtual void frame_finish() override;
 
             // IEditor
-            virtual void draw() override;
+            virtual void draw_editor() override;
 
             // IRenderer
             virtual unsigned int get_texture() const override;

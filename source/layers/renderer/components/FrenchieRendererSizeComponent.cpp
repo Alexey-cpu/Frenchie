@@ -37,7 +37,7 @@ void Size::frame_finish()
 {
 }
 
-void Size::draw()
+void Size::draw_editor()
 {
     ImGui::DragFloat2("min ", &m_Size[0], 0.1f, 0.f, +INFINITY, "%.4f");
 }

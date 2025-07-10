@@ -29,3 +29,8 @@ bool Layer::is_closed()
 {
     return m_Closed;
 }
+
+bool Layer::allows_multiple_instances() const
+{
+    return true;
+}

@@ -49,7 +49,7 @@ namespace Frenchie
             void set_fovy(const float& _Value);
 
             // IEditor
-            virtual void draw() override;
+            virtual void draw_editor() override;
 
             // Component::Register<Transform>
             static TReturnType create()
