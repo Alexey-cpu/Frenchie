@@ -9,7 +9,7 @@
 #include <FrenchieApplicationHierarchyViewLayer.hpp>
 #include <FrenchieApplicationInspectorViewLayer.hpp>
 #include <FrenchieApplicationSceneViewLayer.hpp>
-#include <FrenchieApplicationTimerLayer.hpp>
+#include <FrenchieApplicationTimeProviderLayer.hpp>
 
 #include <FrenchieImGuiDemoLayer.hpp>
 
