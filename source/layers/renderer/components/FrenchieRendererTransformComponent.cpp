@@ -10,11 +10,11 @@ Transform::Transform() : Component::Registry<Transform>(STRINGIFY(Transform)){}
 
 Transform::~Transform(){}
 
-glm::vec3 Transform::get_world_position() const
-{
-    auto modelMatrix = get_model_matrix();
-    return glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
-}
+// glm::vec3 Transform::get_world_position() const
+// {
+//     auto modelMatrix = get_model_matrix();
+//     return glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
+// }
 
 glm::vec3 Transform::get_position() const
 {
@@ -36,14 +36,14 @@ glm::mat4 Transform::get_model_matrix() const
     return m_ModelMatrix;
 }
 
-void Transform::set_world_position(const glm::vec3& _Value)
-{
-    auto modelMatrix = get_model_matrix();
+// void Transform::set_world_position(const glm::vec3& _Value)
+// {
+//     auto modelMatrix = get_model_matrix();
 
-    glm::vec3 translation = glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
+//     glm::vec3 translation = glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
 
-    set_position(get_position() + (_Value - translation));
-}
+//     set_position(get_position() + (_Value - translation));
+// }
 
 void Transform::set_position(const glm::vec3& _Value)
 {

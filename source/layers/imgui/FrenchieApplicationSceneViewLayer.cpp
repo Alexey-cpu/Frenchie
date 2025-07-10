@@ -29,8 +29,7 @@ bool SceneView::awake()
 
     return m_CommandsQueue != nullptr && 
            m_TimeProvider  != nullptr && 
-           m_Scene         != nullptr && 
-           m_Scene->awake();
+           m_Scene         != nullptr;
 }
 
 void SceneView::frame_start()
@@ -174,15 +173,16 @@ void SceneView::process_events()
     Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
 
     // deselect all
-    if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape) || 
+        ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        m_Scene->apply_to_children_recursive(
-            [](Object* _Object)
-            {
-                _Object->set_flag(Object::Flags::Focused, false);
-                _Object->set_flag(Object::Flags::Selected, false);
-            }
-        );
+        for(auto&& item : m_Selection) 
+        {
+            item.first->set_flag(Object::Flags::Selected, false);
+            item.first->set_flag(Object::Flags::Focused, false);
+        }
+        
+        m_Selection.clear();
     }
 
     // process input events
@@ -196,7 +196,10 @@ void SceneView::process_events()
                     transform == nullptr) 
                 return;
 
-            glm::vec3 perspectiveScale = 
+            // move object
+            const double speed = camera->get_movement_speed();
+
+            const glm::vec3 perspectiveScale = 
                 camera->get_object_perspective_scale(transform->get_model_matrix());
 
             // left mouse events
@@ -205,32 +208,13 @@ void SceneView::process_events()
                 if(meshRenderer->cast_ray(ray, glm::scale(glm::mat4(1.f), perspectiveScale)))
                 {
                     _Object->set_flag(Object::Flags::Focused, true);
-                    _Object->set_flag(Object::Flags::Selected, true);
-                }
-            }
 
-            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Left) &&
-                !ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl)  && 
-                !ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
-            {
-                _Object->set_flag(Object::Flags::Selected, false);
-            }
-
-            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
-            {
-                if(_Object->check_flag(Object::Flags::Selected))
-                {
-                    auto cursor = m_Scene->get_cursor_position() / perspectiveScale;
-
-                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
-                        ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
-                    {
-                        transform->set_world_position(glm::vec3(cursor.x, transform->get_world_position().y, cursor.y));
-                    }
-                    else
-                    {
-                        transform->set_world_position(glm::vec3(cursor.x, cursor.y, transform->get_world_position().z));
-                    }
+                    m_Selection.insert(
+                        {
+                            _Object, 
+                            _Object->get_component<Transform>()->get_position()
+                        }
+                    );
                 }
             }
 
@@ -292,16 +276,6 @@ void SceneView::process_events()
             {
                 // TODO: add logic here
             }
-
-            // deselect all
-            if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
-            {
-                _Object->set_flag(Object::Flags::Focused, false);
-                _Object->set_flag(Object::Flags::Selected, false);
-            }
-
-            // move object
-            const double speed = camera->get_movement_speed();
             
             if(_Object->check_flag(Object::Flags::Focused))
             {
@@ -336,4 +310,17 @@ void SceneView::process_events()
             }
         }
     );
+
+    // move items
+    if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    {
+        for(auto&& item : m_Selection)
+        {
+            glm::vec3 delta = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f);
+
+            item.first->get_component<Transform>()->set_position(
+                item.second + delta
+            );
+        }
+    }
 }

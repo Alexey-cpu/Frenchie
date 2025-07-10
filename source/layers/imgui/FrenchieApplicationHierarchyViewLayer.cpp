@@ -26,8 +26,7 @@ bool HierarchyView::awake()
 
     return m_CommandsQueue != nullptr && 
            m_TimeProvider  != nullptr && 
-           m_Scene         != nullptr && 
-           m_Scene->awake();
+           m_Scene         != nullptr;
 }
 
 void HierarchyView::frame_start()

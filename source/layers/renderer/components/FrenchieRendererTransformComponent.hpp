@@ -23,14 +23,14 @@ namespace Frenchie
             virtual ~Transform();
 
             // getters
-            glm::vec3 get_world_position() const;
+            //glm::vec3 get_world_position() const;
             glm::vec3 get_position() const;
             glm::vec3 get_rotation() const;
             glm::vec3 get_scale() const;
             glm::mat4 get_model_matrix() const;
 
             // setters
-            void set_world_position(const glm::vec3&);
+            //void set_world_position(const glm::vec3&);
             void set_position(const glm::vec3&);
             void set_rotation(const glm::vec3&);
             void set_scale(const glm::vec3&);
