@@ -2,8 +2,7 @@
 
 #include <FrenchieCoreFactory.hpp>
 #include <FrenchieCoreHelpers.hpp>
-
-#include <FrenchieRendererInterfaces.hpp>
+#include <FrenchieCoreNonCopyable.hpp>
 
 // STL
 #include <functional>
@@ -19,22 +18,8 @@ namespace Frenchie
         class Object;
         class Component;
 
-        class NonCopyable 
-        {
-        protected:
-            NonCopyable() = default;
-            virtual ~NonCopyable() = default;
-
-        public:
-            NonCopyable(const NonCopyable &) = delete;
-            NonCopyable(NonCopyable &&) noexcept = default;
-            NonCopyable &operator=(const NonCopyable &) = delete;
-            NonCopyable &operator=(NonCopyable &&) noexcept = default;
-        };
-
         class Component : 
             public NonCopyable,
-            //public Frenchie::Renderer::IRenderer,
             public Frenchie::Core::Factory::Creator<Component>
         {
         public:
@@ -61,7 +46,6 @@ namespace Frenchie
             virtual void frame_start();
             virtual void frame_update();
             virtual void frame_finish();
-            virtual void draw();
             
         protected:
             
@@ -70,7 +54,7 @@ namespace Frenchie
             friend class Object;
         };
 
-        class Object : public NonCopyable//, public Frenchie::Renderer::IRenderer
+        class Object : public NonCopyable
         {
         public:
             
@@ -176,6 +160,45 @@ namespace Frenchie
                 {
                     return dynamic_cast<T>(_Object) != nullptr;
                 }
+                );
+            }
+
+            void remove_children(const std::function<bool(Object*)>& _Predicate)
+            {
+                if(_Predicate == nullptr) 
+                    return;
+
+                std::list<Object*> objects = 
+                    find_children_recursive(_Predicate);
+
+                std::set<Object*> objectsToRemove;
+
+                for(auto&& object : objects)
+                {
+                    Object* topMost = object;
+                    Object* parent  = object->get_parent();
+
+                    while (parent != nullptr)
+                    {
+                        if(parent->check_flag(Object::Flags::Focused)) 
+                            topMost = parent;
+                        parent = parent->get_parent();
+                    }
+
+                    objectsToRemove.insert(topMost);
+                }
+
+                for(auto&& objectToRemove : objectsToRemove) 
+                    objectToRemove->remove_self();
+            }
+
+            void remove_self()
+            {
+                get_parent()->remove_child(
+                    [this](Object* _Object)->bool
+                    {
+                        return _Object == this;
+                    }
                 );
             }
 

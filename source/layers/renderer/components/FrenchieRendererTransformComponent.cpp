@@ -10,6 +10,12 @@ Transform::Transform() : Component::Registry<Transform>(STRINGIFY(Transform)){}
 
 Transform::~Transform(){}
 
+glm::vec3 Transform::get_world_position() const
+{
+    auto modelMatrix = get_model_matrix();
+    return glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
+}
+
 glm::vec3 Transform::get_position() const
 {
     return m_Position;
@@ -30,20 +36,15 @@ glm::mat4 Transform::get_model_matrix() const
     return m_ModelMatrix;
 }
 
-glm::mat4 Transform::get_parent_model_matrix() const
+void Transform::set_world_position(const glm::vec3& _Value)
 {
-    auto object = get_object();
+    auto modelMatrix = get_model_matrix();
 
-    if(object == nullptr) 
-        return glm::mat4(1.f);
+    glm::vec3 translation = glm::vec3(modelMatrix[3][0], modelMatrix[3][1], modelMatrix[3][2]);
 
-    // compute geometry
-    auto parent = 
-        object->get_parent() != nullptr ? 
-            object->get_parent()->get_component<Transform>() : 
-                nullptr;
+    std::cout << (_Value - translation).x << "\t" << (_Value - translation).y << "\t" << (_Value - translation).z << "\n";
 
-    return parent == nullptr ? glm::mat4(1.f) : parent->get_model_matrix();
+    set_position(get_position() + (_Value - translation));
 }
 
 void Transform::set_position(const glm::vec3& _Value)

@@ -1,5 +1,7 @@
 #pragma once
+
 #include <FrenchieCoreObject.hpp>
+#include <FrenchieRendererIEditor.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -10,7 +12,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Core::Component::Registry<Camera>
+        class Camera : public Core::Component::Registry<Camera>, public IEditor
         {
         public:
 
@@ -46,6 +48,7 @@ namespace Frenchie
             void set_far(const float& _Value);
             void set_fovy(const float& _Value);
 
+            // IEditor
             virtual void draw() override;
 
             // Component::Register<Transform>

@@ -4,13 +4,17 @@
 #include <FrenchieRendererSizeComponent.hpp>
 #include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererMesh2D.hpp>
+#include <FrenchieRendererShader.hpp>
 
 #include <FrenchieCoreCache.hpp>
+#include <FrenchieRendererIEditor.hpp>
 
 // GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+// STL
 
 namespace Frenchie
 {
@@ -46,7 +50,7 @@ namespace Frenchie
                 Transform* m_Transform      = nullptr;
         };
 
-        class Scene3DBHV : public Frenchie::Core::Component
+        class Scene3DBHV : public Frenchie::Core::Component, public IEditor
         {
         public:
             Scene3DBHV(){}

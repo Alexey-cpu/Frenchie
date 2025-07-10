@@ -2,6 +2,7 @@
 
 // Custom
 #include <FrenchieCoreObject.hpp>
+#include <FrenchieRendererIEditor.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -13,7 +14,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Size : public Frenchie::Core::Component::Registry<Size>
+        class Size : public Frenchie::Core::Component::Registry<Size>, public IEditor
         {
         public:
             Size(const glm::vec2& _Size = glm::vec2(0.f));
