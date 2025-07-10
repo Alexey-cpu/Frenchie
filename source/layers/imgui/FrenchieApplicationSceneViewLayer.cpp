@@ -319,7 +319,7 @@ void SceneView::process_events()
             glm::vec3 delta = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f);
 
             item.first->get_component<Transform>()->set_position(
-                item.second + delta
+                item.second + 2.f * delta
             );
         }
     }
