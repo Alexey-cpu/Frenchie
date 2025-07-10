@@ -70,34 +70,41 @@ int main(int, char**)
         );
     }
 
-    // for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
-    // {
-    //     auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
-    //     item->add_component<Transform>();
-    //     item->add_component<MeshRenderer>(mesh, shader);
-    //     item->get_component<Transform>()->set_position(
-    //         glm::vec3(std::cos(i) * radius, 
-    //         0.f, 
-    //         std::sin(i) * radius
-    //         )
-    //     );
-    // }
+    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
+    {
+        auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
+        item->add_component<Transform>();
+        item->add_component<MeshRenderer>(mesh, shader);
+        item->get_component<Transform>()->set_position(
+            glm::vec3(std::cos(i) * radius, 
+            0.f, 
+            std::sin(i) * radius
+            )
+        );
+    }
 
-    // for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
-    // {
-    //     auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
-    //     item->add_component<Transform>();
-    //     item->add_component<MeshRenderer>(Cache<Rectangle2D>::request("Frenchie/Mesh/Triangle2D1"), shader);
-    //     item->get_component<Transform>()->set_position(
-    //         glm::vec3(std::cos(i) * radius, 
-    //         400.f, 
-    //         std::sin(i) * radius
-    //         )
-    //     );
-    // }
+    for(float i = 0; i < 2.f * glm::pi<float>(); i += 2.f * glm::pi<float>() / 10.f)
+    {
+        auto item = root->create_child<Object>(fmt::format("Item-{}", counter++));
+        item->add_component<Transform>();
+        item->add_component<MeshRenderer>(Cache<Rectangle2D>::request("Frenchie/Mesh/Triangle2D1"), shader);
+        item->get_component<Transform>()->set_position(
+            glm::vec3(std::cos(i) * radius, 
+            400.f, 
+            std::sin(i) * radius
+            )
+        );
+    }
 
     // create application layers
-    application->push<CommandsQueueLayer>();
+    application->push<CommandsQueueLayer>()->push<CallbackCommand>(
+        [scene]()
+        {
+            if(scene != nullptr) 
+                scene->awake();
+        }
+    );
+
     application->push<TimeProviderLayer>();
 
     application->push<SceneView>("Scene-1", scene);

@@ -64,14 +64,14 @@ namespace Frenchie
                     {
                         Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
                         Frenchie::Core::Logger::instance()->error(fmt::format("Application queue already contains {}", layer->get_name()));
-                        return layer;
+                        return nullptr;
                     }
 
                     if(!layer->awake())
                     {
                         Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
                         Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", layer->get_name()));
-                        return layer;
+                        return nullptr;
                     }
 
                     m_Layers.push_back(layer);
