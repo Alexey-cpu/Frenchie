@@ -71,3 +71,9 @@ void Scene3D::frame_start()
     // call base implementation
     Object::frame_start();
 }
+
+void Scene3D::frame_finish()
+{
+    // TODO: do frustrum culling here
+    Object::frame_finish();
+}

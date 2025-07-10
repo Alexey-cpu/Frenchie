@@ -95,6 +95,11 @@ void Camera::set_axis(const glm::vec3& _Value)
     m_Axis = _Value;
 }
 
+float Camera::get_movement_speed() const
+{
+    return m_MovementSpeed;
+}
+
 float Camera::get_pitch() const
 {
     return m_Pitch;
@@ -110,10 +115,14 @@ float Camera::get_roll() const
     return m_Roll;
 }
 
-// settrs
 void Camera::set_position(const glm::vec3& _Value)
 {
     m_CameraWorldPosition = _Value;
+}
+
+void Camera::set_movement_speed(const float& _Value)
+{
+    m_MovementSpeed = _Value;
 }
 
 void Camera::set_pitch(const float& _Value)
@@ -158,6 +167,7 @@ void Camera::draw_editor()
     ImGui::DragFloat3("position XYZ", &m_CameraWorldPosition[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");
     ImGui::DragFloat("Field of view", &m_Fovy, 0.1f, 0.f, 120.f, "%.4f");
+    ImGui::DragFloat("Movement speed", &m_MovementSpeed, 0.1f, 1.0f, 10.f, "%.4f");
     ImGui::DragFloat("Aspect", &m_Aspect, 0.1f, 0.5f, 2.f, "%.4f");
     ImGui::DragFloat("Near", &m_Near, 1.f, -10000, 10000, "%.4f");
     ImGui::DragFloat("Far", &m_Far, 1.f, -10000, 10000, "%.4f");
@@ -165,4 +175,9 @@ void Camera::draw_editor()
     set_pitch(rotation.x);
     set_yaw(rotation.y);
     set_roll(rotation.z);
+}
+
+Component::TReturnType Camera::create()
+{
+    return std::make_unique<Camera>();
 }

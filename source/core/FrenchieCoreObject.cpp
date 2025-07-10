@@ -227,11 +227,14 @@ void Object::draw_editor()
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
     {
+        // draw self editor
         std::string name = get_name();
         for (int i = 0; i < 512; i++) 
             Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
-        ImGui::InputText("##", Object::m_Editor.m_Name, 512);
-        set_name(std::string(Object::m_Editor.m_Name));
+        
+        // draw components editors
+        if(ImGui::InputText("##", Object::m_Editor.m_Name, 512, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) 
+            set_name(std::string(Object::m_Editor.m_Name));
 
         for(auto&& component : m_Components)
         {

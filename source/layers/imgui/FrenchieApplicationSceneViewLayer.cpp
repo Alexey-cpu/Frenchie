@@ -163,19 +163,29 @@ glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _Open
 void SceneView::process_events()
 {
     if(!ImGui::IsWindowHovered(
-        ImGuiHoveredFlags_::ImGuiHoveredFlags_AnyWindow | 
-        ImGuiHoveredFlags_::ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) 
+        ImGuiHoveredFlags_::ImGuiHoveredFlags_None)) 
         return;
 
-    auto camera = 
-        m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
+    auto camera = m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
 
     if(camera == nullptr) 
         return;
 
     Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
 
-    // select/deselect objects
+    // deselect all
+    if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    {
+        m_Scene->apply_to_children_recursive(
+            [](Object* _Object)
+            {
+                _Object->set_flag(Object::Flags::Focused, false);
+                _Object->set_flag(Object::Flags::Selected, false);
+            }
+        );
+    }
+
+    // process input events
     m_Scene->apply_to_children_recursive(
         [this, &ray, &camera](Object* _Object)
         {
@@ -292,7 +302,7 @@ void SceneView::process_events()
 
             // move object
             // TODO: this MUST be regulated !!!
-            double speed = 0.5f;
+            double speed = camera->get_movement_speed();
             
             if(_Object->check_flag(Object::Flags::Focused))
             {
