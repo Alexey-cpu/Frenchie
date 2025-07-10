@@ -21,7 +21,13 @@ HierarchyView::~HierarchyView(){}
 
 bool HierarchyView::awake()
 {
-    return Layer::awake() && m_Scene != nullptr;
+    m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
+    m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
+
+    return m_CommandsQueue != nullptr && 
+           m_TimeProvider  != nullptr && 
+           m_Scene         != nullptr && 
+           m_Scene->awake();
 }
 
 void HierarchyView::frame_start()
@@ -34,7 +40,7 @@ void HierarchyView::frame_update()
     ImGui::Begin(get_name().c_str());
 
     int id = 0;
-    DrawTree(m_Scene.get(), id);
+    draw_tree(m_Scene.get(), id);
 
     ImGui::End();
 }
@@ -59,11 +65,9 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::DrawTree(Object* _Transform, int& _ID)
+void HierarchyView::draw_tree(Object* _Transform, int& _ID)
 {
-    auto commandsQueue = Application::instance()->find<CommandsQueueLayer>();
-
-    if(_Transform == nullptr || m_Scene == nullptr || commandsQueue == nullptr) 
+    if(_Transform == nullptr || m_Scene == nullptr) 
         return;
 
     ImGui::PushID(_ID++);
@@ -93,7 +97,7 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID)
 
                 if(receivedPointer != nullptr) 
                 {
-                    commandsQueue->push<CallbackCommand>(
+                    m_CommandsQueue->push<CallbackCommand>(
                         [receivedPointer, _Transform]()
                         {
                             receivedPointer->move(_Transform);
@@ -125,18 +129,10 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID)
             
             if(ImGui::MenuItem("Delete"))
             {
-                commandsQueue->push<CallbackCommand>(
+                m_CommandsQueue->push<CallbackCommand>(
                     [_Transform]()
                     {
-                        if(_Transform == nullptr || _Transform->get_parent() == nullptr) 
-                            return;
-
-                        _Transform->get_parent()->remove_child(
-                            [_Transform](Object* _Object)->bool
-                            {
-                                return _Object == _Transform;
-                            }
-                        );
+                        _Transform->remove_self();
                     }
                 );
             }
@@ -199,7 +195,7 @@ void HierarchyView::DrawTree(Object* _Transform, int& _ID)
         const auto& children = _Transform->get_children();
 
         for(auto&& child : children) 
-            DrawTree(child.get(), _ID);
+            draw_tree(child.get(), _ID);
         ImGui::TreePop();
     }
 

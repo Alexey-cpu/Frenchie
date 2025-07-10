@@ -52,7 +52,7 @@ namespace Frenchie
         protected:
             
             mutable Object* m_Object  = nullptr;
-            bool            m_Enabled = true;
+            mutable bool    m_Enabled = true;
             friend class Object;
         };
 

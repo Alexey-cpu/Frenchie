@@ -3,6 +3,9 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieRendererScene3D.hpp>
 
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationTimeProviderLayer.hpp>
+
 // GLAD
 #include <glad/glad.h> 
 
@@ -36,10 +39,12 @@ namespace Frenchie
             virtual bool is_closed() override;
 
         protected:
-            std::shared_ptr<Scene3D> m_Scene = nullptr;
-            char m_TextInput[512]{};
+            std::shared_ptr<Scene3D>            m_Scene         = nullptr;
+            std::shared_ptr<CommandsQueueLayer> m_CommandsQueue = nullptr;
+            std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;
+            char                                m_TextInput[512]{};
 
-            void DrawTree(Object*, int&);
+            void draw_tree(Object*, int&);
         };
     }
 };
