@@ -301,8 +301,7 @@ void SceneView::process_events()
             }
 
             // move object
-            // TODO: this MUST be regulated !!!
-            double speed = camera->get_movement_speed();
+            const double speed = camera->get_movement_speed();
             
             if(_Object->check_flag(Object::Flags::Focused))
             {

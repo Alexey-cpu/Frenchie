@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationCommandsQueueLayer.hpp>
-#include <FrenchieApplicationTimerLayer.hpp>
+#include <FrenchieApplicationTimeProviderLayer.hpp>
 
 #include <FrenchieRendererScene3D.hpp>
 
