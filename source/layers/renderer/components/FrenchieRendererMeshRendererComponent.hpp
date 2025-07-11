@@ -42,7 +42,7 @@ namespace Frenchie
                 return std::make_unique<MeshRenderer>();
             }
 
-            bool cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform = glm::mat4(1.f));
+            //bool cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform = glm::mat4(1.f));
 
         protected:
 

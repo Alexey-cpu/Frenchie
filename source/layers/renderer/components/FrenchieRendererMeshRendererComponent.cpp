@@ -91,21 +91,28 @@ void MeshRenderer::draw_editor()
     if(m_Mesh == nullptr || m_Shader == nullptr || transform == nullptr) 
         return;
 
-    //--------------------------------------------------------------------------------------------------------------
-    // local coordinates transform
-    //--------------------------------------------------------------------------------------------------------------
-    auto scale = get_object()->get_parent_recursive<Scene3D>()->get_component<Camera>()->get_object_perspective_scale(transform->get_model_matrix());
+    auto scene  = get_object()->get_parent_recursive<Scene3D>();
+    auto camera = scene->get_component<Camera>();
 
-    // get mesh axis aligned bounding box
-    auto b = m_Mesh->get_aabb().transform(glm::scale(glm::mat4(1.f), scale) * transform->get_model_matrix());
-    //--------------------------------------------------------------------------------------------------------------
+    // retrieve viewport and camera transform matrixes
+    auto viewportScaleMatrix    = scene->get_viewport_scale_matrix();
+    auto cameraViewMatrix       = camera->get_view_matrix();
+    auto cameraProjectionMatrix = camera->get_projection_matrix();
+    auto screenTransformMatrix  = cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix;
+
+    auto modelMatrix         = transform->get_model_matrix();
+    auto aabbTransformMatrix = glm::scale(glm::mat4(1.f), glm::vec3(1.f / (screenTransformMatrix * modelMatrix)[3][3]));
+
+    auto b = get_mesh()->get_aabb().transform(aabbTransformMatrix * modelMatrix);
 
     auto size = (b.Max - b.Min) * 0.5f;
 
     ImGui::DragFloat3("min ", &b.Min[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("max ", &b.Max[0], 0.5f, -360.f, 360.f, "%.4f");
     ImGui::DragFloat3("size ", &size[0], 0.5f, -360.f, 360.f, "%.4f");
-    ImGui::DragFloat3("scale ", &scale[0], 0.5f, -360.f, 360.f, "%.4f");
+
+    // ImGui::DragFloat3("scale ", &scale[0], 0.5f, -360.f, 360.f, "%.4f");
+    // ImGui::DragFloat3("translation ", &translation[0], 0.5f, -360.f, 360.f, "%.4f");
 }
 
 std::shared_ptr<Shader> MeshRenderer::get_shader() const
@@ -113,17 +120,17 @@ std::shared_ptr<Shader> MeshRenderer::get_shader() const
     return m_Shader;
 }
 
-bool MeshRenderer::cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform)
-{
-    auto transform = 
-		get_object() != nullptr ? 
-			get_object()->get_component<Transform>() : 
-				nullptr;
+// bool MeshRenderer::cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform)
+// {
+//     auto transform = 
+// 		get_object() != nullptr ? 
+// 			get_object()->get_component<Transform>() : 
+// 				nullptr;
 
-    if(m_Mesh == nullptr || m_Shader == nullptr || transform == nullptr) 
-        return false;
+//     if(m_Mesh == nullptr || m_Shader == nullptr || transform == nullptr) 
+//         return false;
 
-    // local coordinates transform
-    return m_MeshBox->get_aabb().transform(
-        _AAABTransform * transform->get_model_matrix()).intersects(_Ray);
-}
+//     // local coordinates transform
+//     return m_MeshBox->get_aabb().transform(
+//         _AAABTransform * transform->get_model_matrix()).intersects(_Ray);
+//}

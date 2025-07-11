@@ -3,6 +3,7 @@
 #include <FrenchieRendererTransformComponent.hpp>
 #include <FrenchieRendererSizeComponent.hpp>
 #include <FrenchieRendererCamera.hpp>
+#include <FrenchieRendererScene3DMousePicker.hpp>
 #include <FrenchieRendererMesh2D.hpp>
 #include <FrenchieRendererShader.hpp>
 
@@ -45,10 +46,11 @@ namespace Frenchie
             protected:
 
                 // info
-                glm::vec3  m_CursorPosition = glm::vec3(0.f, 0.f, +1);
-                Size*      m_Size           = nullptr;
-                Camera*    m_Camera         = nullptr;
-                Transform* m_Transform      = nullptr;
+                glm::vec3           m_CursorPosition = glm::vec3(0.f, 0.f, +1);
+                Size*               m_Size           = nullptr;
+                Camera*             m_Camera         = nullptr;
+                Transform*          m_Transform      = nullptr;
+                Scene3DMousePicker* m_MousePicker    = nullptr;
         };
 
         // class Scene3DBHV : public Frenchie::Core::Component, public IEditor

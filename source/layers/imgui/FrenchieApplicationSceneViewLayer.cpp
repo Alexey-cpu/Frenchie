@@ -13,6 +13,7 @@
 // IMGUI
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <glm/gtx/matrix_decompose.hpp>
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
@@ -105,10 +106,10 @@ void SceneView::frame_update()
             glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
         );
 
-        auto scaleMatrix             = m_Scene->get_viewport_scale_matrix();
-        auto viewMatrix              = camera->get_view_matrix();
-        auto projectionMatrix        = camera->get_projection_matrix();
-        auto inverseConversionMatrix = glm::inverse(projectionMatrix * viewMatrix * scaleMatrix);
+        auto viewportScaleMatrix     = m_Scene->get_viewport_scale_matrix();
+        auto cameraViewMatrix        = camera->get_view_matrix();
+        auto cameraProjectionMatrix  = camera->get_projection_matrix();
+        auto inverseConversionMatrix = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix);
         auto cursorWorldPosition     = inverseConversionMatrix * glm::vec4(cursorNDCPosition, 1.f);
         auto mouseTrackerText        = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
 
@@ -170,24 +171,41 @@ void SceneView::process_events()
     if(camera == nullptr) 
         return;
 
-    Ray ray(m_Scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
-
-    // deselect all
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape) || 
         ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        for(auto&& item : m_Selection) 
+        for(auto&& item : m_Selection)
         {
-            item.first->set_flag(Object::Flags::Selected, false);
-            item.first->set_flag(Object::Flags::Focused, false);
+            item.Object->set_flag(Object::Flags::Selected, false);
+            item.Object->set_flag(Object::Flags::Focused, false);
         }
-        
+
         m_Selection.clear();
+    }
+
+    // move items
+    if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    {
+        auto mousePicker = m_Scene->get_component<Scene3DMousePicker>();
+        m_Selection      = mousePicker->pick();
+    }
+
+    if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    {
+        for(auto&& item : m_Selection)
+        {
+            item.Object->set_flag(Object::Flags::Selected, true);
+            item.Object->set_flag(Object::Flags::Focused, true);
+
+            glm::vec3 delta = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f);
+
+            item.Object->get_component<Transform>()->set_position(item.Position + 2.f * delta);
+        }
     }
 
     // process input events
     m_Scene->apply_to_children_recursive(
-        [this, &ray, &camera](Object* _Object)
+        [this, &camera](Object* _Object)
         {
             auto meshRenderer = _Object->get_component<MeshRenderer>();
             auto transform    = _Object->get_component<Transform>();
@@ -199,24 +217,32 @@ void SceneView::process_events()
             // move object
             const double speed = camera->get_movement_speed();
 
-            const glm::vec3 perspectiveScale = 
-                camera->get_object_perspective_scale(transform->get_model_matrix());
+            // const glm::vec3 perspectiveScale = 
+            //     camera->get_object_perspective_scale(transform->get_model_matrix());
 
             // left mouse events
-            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
-            {
-                if(meshRenderer->cast_ray(ray, glm::scale(glm::mat4(1.f), perspectiveScale)))
-                {
-                    _Object->set_flag(Object::Flags::Focused, true);
+            // if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+            // {
+            //     auto modelMatrix      = transform->get_model_matrix();
+            //     auto scaleMatrix      = m_Scene->get_viewport_scale_matrix();
+            //     auto viewMatrix       = camera->get_view_matrix();
+            //     auto projectionMatrix = camera->get_projection_matrix();
+            //     auto shaderMatrix     = projectionMatrix * viewMatrix * scaleMatrix * modelMatrix;
 
-                    m_Selection.insert(
-                        {
-                            _Object, 
-                            _Object->get_component<Transform>()->get_position()
-                        }
-                    );
-                }
-            }
+            //     auto aabb = meshRenderer->get_mesh()->get_aabb().transform(glm::scale(glm::mat4(1.f), glm::vec3(1.f / shaderMatrix[3][3])) * modelMatrix);
+
+            //     if(aabb.intersects(ray))
+            //     {
+            //         _Object->set_flag(Object::Flags::Focused, true);
+
+            //         m_Selection.insert(
+            //             {
+            //                 _Object, 
+            //                 _Object->get_component<Transform>()->get_position()
+            //             }
+            //         );
+            //     }
+            // }
 
             // right mouse events
             if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
@@ -310,17 +336,4 @@ void SceneView::process_events()
             }
         }
     );
-
-    // move items
-    if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
-    {
-        for(auto&& item : m_Selection)
-        {
-            glm::vec3 delta = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f);
-
-            item.first->get_component<Transform>()->set_position(
-                item.second + 2.f * delta
-            );
-        }
-    }
 }
