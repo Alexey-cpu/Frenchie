@@ -109,8 +109,7 @@ void SceneView::frame_update()
         auto viewportScaleMatrix     = m_Scene->get_viewport_scale_matrix();
         auto cameraViewMatrix        = camera->get_view_matrix();
         auto cameraProjectionMatrix  = camera->get_projection_matrix();
-        auto inverseConversionMatrix = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix);
-        auto cursorWorldPosition     = inverseConversionMatrix * glm::vec4(cursorNDCPosition, 1.f);
+        auto cursorWorldPosition     = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix) * glm::vec4(cursorNDCPosition, 1.f);
         auto mouseTrackerText        = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
 
         ImGui::GetWindowDrawList()->AddText(
