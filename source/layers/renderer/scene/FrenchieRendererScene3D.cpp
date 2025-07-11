@@ -13,7 +13,8 @@ Scene3D::Scene3D(
     Core::Object(_Name),
     m_Size(add_component<Size>(_Size)), 
     m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f))),
-    m_Transform(add_component<Transform>())
+    m_Transform(add_component<Transform>()),
+    m_MousePicker(add_component<Scene3DMousePicker>())
     {
         add_component<ScreenShoter>();
     }
