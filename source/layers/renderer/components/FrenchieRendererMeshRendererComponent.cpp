@@ -39,7 +39,6 @@ bool MeshRenderer::awake()
         m_Mesh->instantiate() && 
         m_Shader->instantiate())
     {
-
         return m_MeshBox->instantiate();
     }
 

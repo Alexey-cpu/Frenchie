@@ -1,11 +1,13 @@
 #pragma once
 
-#include <FrenchieRendererTransformComponent.hpp>
-#include <FrenchieRendererSizeComponent.hpp>
 #include <FrenchieRendererCamera.hpp>
-#include <FrenchieRendererScene3DMousePicker.hpp>
 #include <FrenchieRendererMesh2D.hpp>
 #include <FrenchieRendererShader.hpp>
+
+#include <FrenchieRendererScene3DMousePicker.hpp>
+#include <FrenchieRendererScreenShoterComponent.hpp>
+#include <FrenchieRendererTransformComponent.hpp>
+#include <FrenchieRendererSizeComponent.hpp>
 
 #include <FrenchieCoreCache.hpp>
 #include <FrenchieRendererIEditor.hpp>
@@ -33,6 +35,7 @@ namespace Frenchie
 
             // virtual API override
             virtual void frame_start() override;
+            virtual void frame_update() override;
             virtual void frame_finish() override;
 
             protected:
