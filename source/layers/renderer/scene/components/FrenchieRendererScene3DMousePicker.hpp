@@ -43,7 +43,7 @@ namespace Frenchie
             Scene3DMousePicker();
             virtual ~Scene3DMousePicker();
 
-            PickedObjects pick() const;
+            PickedObjects pick(const glm::vec3&) const;
 
             // IEditor
             virtual void draw_editor() override;

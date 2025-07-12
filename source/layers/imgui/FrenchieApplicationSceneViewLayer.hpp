@@ -46,7 +46,7 @@ namespace Frenchie
             Scene3DMousePicker::PickedObjects   m_Selection     = Scene3DMousePicker::PickedObjects();
 
             static glm::vec3 to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition);
-            void process_events();
+            void process_events(const glm::vec3&);
         };
     }
 }

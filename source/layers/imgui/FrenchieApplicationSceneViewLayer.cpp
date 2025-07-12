@@ -118,10 +118,8 @@ void SceneView::frame_update()
             mouseTrackerText.c_str()
         );
 
-        m_Scene->set_cursor_position(cursorWorldPosition);
+        process_events(cursorNDCPosition);
     }
-
-    process_events();
 
     ImGui::End();
 }
@@ -159,7 +157,7 @@ glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _Open
     );
 }
 
-void SceneView::process_events()
+void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 {
     if(!ImGui::IsWindowHovered(
         ImGuiHoveredFlags_::ImGuiHoveredFlags_None)) 
@@ -186,7 +184,7 @@ void SceneView::process_events()
     if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
         auto mousePicker = m_Scene->get_component<Scene3DMousePicker>();
-        m_Selection      = mousePicker->pick();
+        m_Selection      = mousePicker->pick(_CursorNDCPosition);
     }
 
     if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))

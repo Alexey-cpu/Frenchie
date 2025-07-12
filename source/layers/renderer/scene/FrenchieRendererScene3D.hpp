@@ -34,10 +34,6 @@ namespace Frenchie
             // getters
             glm::mat4 get_viewport_scale_matrix() const;
             glm::vec3 get_viewport_scale() const;
-            glm::vec3 get_cursor_position() const;
-
-            // setters
-            void set_cursor_position(const glm::vec3& _Value);
 
             // virtual API override
             virtual void frame_start() override;
@@ -46,7 +42,6 @@ namespace Frenchie
             protected:
 
                 // info
-                glm::vec3           m_CursorPosition = glm::vec3(0.f, 0.f, +1);
                 Size*               m_Size           = nullptr;
                 Camera*             m_Camera         = nullptr;
                 Transform*          m_Transform      = nullptr;
