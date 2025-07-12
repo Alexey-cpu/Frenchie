@@ -62,7 +62,7 @@ namespace Frenchie
             mutable glm::vec3 m_CameraLocalRightAxisDirection = glm::vec3(0.f);
             mutable glm::vec3 m_CameraLocalUpAxisDirection    = glm::vec3(0.f);
             
-            mutable float     m_MovementSpeed = 2.f;
+            mutable float     m_MovementSpeed = 200.f;
             mutable float     m_Pitch         = 0.f;
             mutable float     m_Yaw           = 0.f;
             mutable float     m_Roll          = 0.f;

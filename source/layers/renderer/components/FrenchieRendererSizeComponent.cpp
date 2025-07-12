@@ -5,7 +5,7 @@ using namespace Frenchie::Renderer;
 // IMGUI
 #include <imgui.h>
 
-Size::Size(const glm::vec2& _Size) : Frenchie::Core::Component::Registry<Size>(STRINGIFY(Size)){}
+Size::Size(const glm::vec2& _Size) : Frenchie::Core::Component::Registry<Size>(STRINGIFY(Size)), m_Size(_Size){}
 Size::~Size(){}
 
 // getters
