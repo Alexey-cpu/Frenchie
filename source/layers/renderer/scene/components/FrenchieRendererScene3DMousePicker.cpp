@@ -11,7 +11,7 @@ Scene3DMousePicker::Scene3DMousePicker() :
 
 Scene3DMousePicker::~Scene3DMousePicker(){}
 
-Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick() const
+Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _CursorNDCPosition) const
 {
     auto scene = get_object<Scene3D>();
 
@@ -30,7 +30,7 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick() const
     auto screenTransformMatrix  = cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix;
 
     // create a ray pointing from cursor to the end of the scene
-    Ray ray(scene->get_cursor_position(), glm::vec3(0.f, 0.f, -1.f));
+    Ray ray(glm::inverse(screenTransformMatrix) * glm::vec4(_CursorNDCPosition, 1.f), glm::vec3(0.f, 0.f, -1.f));
     PickedObjects pickedObjects;
 
     // cast ray
