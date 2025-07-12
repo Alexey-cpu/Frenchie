@@ -101,7 +101,8 @@ void MeshRenderer::draw_editor()
     auto screenTransformMatrix  = cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix;
 
     auto modelMatrix         = transform->get_model_matrix();
-    auto aabbTransformMatrix = glm::scale(glm::mat4(1.f), glm::vec3(1.f / (screenTransformMatrix * modelMatrix)[3][3]));
+    auto scale               = glm::vec3(1.f / (screenTransformMatrix * modelMatrix)[3][3]);
+    auto aabbTransformMatrix = glm::scale(glm::mat4(1.f), scale);
 
     auto b = get_mesh()->get_aabb().transform(aabbTransformMatrix * modelMatrix);
 
@@ -111,7 +112,7 @@ void MeshRenderer::draw_editor()
     ImGui::DragFloat3("max ", &b.Max[0], 0.5f, -360.f, 360.f, "%.4f");
     ImGui::DragFloat3("size ", &size[0], 0.5f, -360.f, 360.f, "%.4f");
 
-    // ImGui::DragFloat3("scale ", &scale[0], 0.5f, -360.f, 360.f, "%.4f");
+    ImGui::DragFloat3("scale ", &scale[0], 0.5f, -360.f, 360.f, "%.4f");
     // ImGui::DragFloat3("translation ", &translation[0], 0.5f, -360.f, 360.f, "%.4f");
 }
 
@@ -120,17 +121,13 @@ std::shared_ptr<Shader> MeshRenderer::get_shader() const
     return m_Shader;
 }
 
-// bool MeshRenderer::cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform)
-// {
-//     auto transform = 
-// 		get_object() != nullptr ? 
-// 			get_object()->get_component<Transform>() : 
-// 				nullptr;
+std::shared_ptr<Mesh> MeshRenderer::get_mesh() const
+{
+    return m_Mesh;
+}
 
-//     if(m_Mesh == nullptr || m_Shader == nullptr || transform == nullptr) 
-//         return false;
 
-//     // local coordinates transform
-//     return m_MeshBox->get_aabb().transform(
-//         _AAABTransform * transform->get_model_matrix()).intersects(_Ray);
-//}
+Component::TReturnType MeshRenderer::create()
+{
+    return std::make_unique<MeshRenderer>();
+}

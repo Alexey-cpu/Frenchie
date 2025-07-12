@@ -30,7 +30,6 @@ namespace Frenchie
             glm::mat4 get_model_matrix() const;
 
             // setters
-            //void set_world_position(const glm::vec3&);
             void set_position(const glm::vec3&);
             void set_rotation(const glm::vec3&);
             void set_scale(const glm::vec3&);
@@ -45,20 +44,17 @@ namespace Frenchie
             virtual void draw_editor() override;
 
             // Component::Register<TReturnType>
-            static TReturnType create()
-            {
-                return std::make_unique<Transform>();
-            }
+            static TReturnType create();
+
+        protected:
+
+            glm::vec3 m_Position    = glm::vec3(0.f);
+            glm::vec3 m_Rotation    = glm::vec3(0.f);
+            glm::vec3 m_Scale       = glm::vec3(1.f);
+            glm::mat4 m_ModelMatrix = glm::mat4(1.f);
 
             // service methods
             glm::mat4 compute_local_model_matrix() const;
-
-            protected:
-
-                glm::vec3 m_Position    = glm::vec3(0.f);
-                glm::vec3 m_Rotation    = glm::vec3(0.f);
-                glm::vec3 m_Scale       = glm::vec3(1.f);
-                glm::mat4 m_ModelMatrix = glm::mat4(1.f);
         };
     }   
 }
