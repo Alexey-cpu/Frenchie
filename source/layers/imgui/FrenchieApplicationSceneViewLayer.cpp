@@ -58,26 +58,23 @@ void SceneView::frame_update()
     ImGui::Begin(get_name().c_str());
 
     // draw scene contents and update scene geometry
-    {
-        ImVec2 SceneWidgetPosition = ImGui::GetCursorScreenPos();
-        float  SceneWidgetWidth    = ImGui::GetContentRegionAvail().x;
-        float  sceneWidgetHeight   = ImGui::GetContentRegionAvail().y;
-        
-        ImGui::GetWindowDrawList()->AddImage(
-            renderer->get_texture(), 
-            ImVec2(SceneWidgetPosition.x, SceneWidgetPosition.y), 
-            ImVec2(SceneWidgetPosition.x + SceneWidgetWidth, SceneWidgetPosition.y + sceneWidgetHeight), 
-            ImVec2(0, 1), // in ImGUI UV coordinates are flipped
-            ImVec2(1, 0)
-        );
+    ImVec2 SceneWidgetPosition = ImGui::GetCursorScreenPos();
+    float  SceneWidgetWidth    = ImGui::GetContentRegionAvail().x;
+    float  sceneWidgetHeight   = ImGui::GetContentRegionAvail().y;
+    
+    ImGui::GetWindowDrawList()->AddImage(
+        renderer->get_texture(), 
+        ImVec2(SceneWidgetPosition.x, SceneWidgetPosition.y), 
+        ImVec2(SceneWidgetPosition.x + SceneWidgetWidth, SceneWidgetPosition.y + sceneWidgetHeight), 
+        ImVec2(0, 1), // in ImGUI UV coordinates are flipped
+        ImVec2(1, 0)
+    );
 
-        size->set_size(glm::vec2(SceneWidgetWidth, sceneWidgetHeight));
-        m_Scene->frame_update();
-    }
+    size->set_size(glm::vec2(SceneWidgetWidth, sceneWidgetHeight));
 
     // draw scene content bounding rectangle and cast mouse cursor ray
     {
-        // draw scene scene viewport rect rectangle
+        // draw scene viewport rect rectangle
         ImRect sceneViewportRect = 
             ImRect(
                 ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos(), 
@@ -102,20 +99,15 @@ void SceneView::frame_update()
 
         // compute cursor scene (world) position
         auto cursorNDCPosition = SceneView::to_ndc(
-            size->get_size(),
+            glm::vec2(SceneWidgetWidth, sceneWidgetHeight),
             glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
         );
 
         auto viewportScaleMatrix    = m_Scene->get_component<Transform>()->get_model_matrix();
         auto cameraViewMatrix       = camera->get_view_matrix();
         auto cameraProjectionMatrix = camera->get_projection_matrix();
-        
-        auto cameraWorldPosition    = camera->get_position();
-
-        glm::vec3 cursorWorldPosition    = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix) * glm::vec4(cursorNDCPosition, 1.f);
-        cursorWorldPosition += 2.f * cameraWorldPosition;
-        
-        auto mouseTrackerText             = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
+        auto cursorWorldPosition    = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix) * glm::vec4(cursorNDCPosition, 1.f);
+        auto mouseTrackerText       = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
 
         ImGui::GetWindowDrawList()->AddText(
             ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(mouseTrackerText.c_str()), 
@@ -127,6 +119,8 @@ void SceneView::frame_update()
     }
 
     ImGui::End();
+
+    m_Scene->frame_update();
 }
 
 void SceneView::frame_finish()
@@ -307,10 +301,10 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
                     ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow))
-                        movement = glm::vec3(0.f, 0.f, -speed * m_TimeProvider->get_time_delta());
+                        movement = glm::vec3(0.f, 0.f, -speed * m_TimeProvider->get_time_delta() * 10.f);
 
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow))
-                        movement = glm::vec3(0.f, 0.f, +speed * m_TimeProvider->get_time_delta());
+                        movement = glm::vec3(0.f, 0.f, +speed * m_TimeProvider->get_time_delta() * 10.f);
                 }
                 else
                 {
