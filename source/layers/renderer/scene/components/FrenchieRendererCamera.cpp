@@ -42,22 +42,6 @@ glm::vec3 Camera::get_position() const
     return m_CameraWorldPosition;
 }
 
-// glm::vec3 Camera::get_object_perspective_scale(glm::mat4 _ModelMatrix) const
-// {
-//     auto scene         = get_object<Scene3D>();
-//     auto viewportScale = scene != nullptr ? scene->get_viewport_scale() : glm::vec3(1.f, 1.f, 1.f);
-// ;
-//     glm::vec3 translation      = glm::vec3(_ModelMatrix[3][0], _ModelMatrix[3][1], _ModelMatrix[3][2]);
-//     glm::vec3 cameraPos        = get_position() / viewportScale;
-//     glm::vec3 cameraDefaultPos = glm::vec3(0.f, 0.f, 1.f) / viewportScale;
-
-//     return glm::vec3(
-//         std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z)), 
-//         std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z)),  
-//         std::abs(cameraDefaultPos.z / (translation.z - cameraPos.z))
-//     );
-// }
-
 glm::vec3 Camera::get_axis() const
 {
     return m_Axis;
