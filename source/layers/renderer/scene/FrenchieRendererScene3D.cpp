@@ -12,7 +12,7 @@ Scene3D::Scene3D(
     const std::string& _Name) : 
     Core::Object(_Name),
     m_Size(add_component<Size>(_Size)), 
-    m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +1.f), glm::vec3(+0.f, +1.f, +0.f))),
+    m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +1000.f), glm::vec3(+0.f, +1.f, +0.f))),
     m_Transform(add_component<Transform>()),
     m_MousePicker(add_component<Scene3DMousePicker>())
     {
@@ -21,28 +21,12 @@ Scene3D::Scene3D(
 
 Scene3D::~Scene3D(){}
 
-glm::mat4 Scene3D::get_viewport_scale_matrix() const
-{
-    return glm::scale(glm::mat4(1.f), get_viewport_scale());
-}
-
-glm::vec3 Scene3D::get_viewport_scale() const
-{
-    auto size = m_Size->get_size();
-
-    float scaleX = 1.f / std::max<float>((float)size.x, 1.f);
-    float scaleY = 1.f / std::max<float>((float)size.y, 1.f);
-    float scaleZ = 1.f / std::max<float>(std::max<float>((float)size.y, 1.f), std::max<float>((float)size.y, 1.f));
-
-    return glm::vec3(scaleX, scaleY, scaleZ);
-}
-
 void Scene3D::frame_start()
 {
     if(m_Camera == nullptr || m_Transform == nullptr) // no camera or no transform --> no rendering 
         return;
 
-    auto projectionMatrix = m_Camera->get_projection_matrix() * m_Camera->get_view_matrix() * get_viewport_scale_matrix();
+    auto projectionMatrix = m_Camera->get_projection_matrix() * m_Camera->get_view_matrix();
 
     apply_to_children_recursive(
         [this, &projectionMatrix](Object* _Objcet)
@@ -58,6 +42,13 @@ void Scene3D::frame_start()
             shader->unuse();
         }
     );
+
+    // setup scale
+    auto size = m_Size->get_size();
+    float scaleX = 1.f / std::max<float>((float)size.x, 1.f);
+    float scaleY = 1.f / std::max<float>((float)size.y, 1.f);
+    float scaleZ = 1.f / std::max<float>(std::max<float>((float)size.y, 1.f), std::max<float>((float)size.y, 1.f));
+    get_component<Transform>()->set_scale(glm::vec3(scaleX, scaleY, scaleZ));
 
     // call base implementation
     Object::frame_start();

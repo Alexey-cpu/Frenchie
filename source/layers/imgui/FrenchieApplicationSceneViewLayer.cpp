@@ -106,11 +106,16 @@ void SceneView::frame_update()
             glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
         );
 
-        auto viewportScaleMatrix     = m_Scene->get_viewport_scale_matrix();
-        auto cameraViewMatrix        = camera->get_view_matrix();
-        auto cameraProjectionMatrix  = camera->get_projection_matrix();
-        auto cursorWorldPosition     = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix) * glm::vec4(cursorNDCPosition, 1.f);
-        auto mouseTrackerText        = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
+        auto viewportScaleMatrix    = m_Scene->get_component<Transform>()->get_model_matrix();
+        auto cameraViewMatrix       = camera->get_view_matrix();
+        auto cameraProjectionMatrix = camera->get_projection_matrix();
+        
+        auto cameraWorldPosition    = camera->get_position();
+
+        glm::vec3 cursorWorldPosition    = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix) * glm::vec4(cursorNDCPosition, 1.f);
+        cursorWorldPosition += 2.f * cameraWorldPosition;
+        
+        auto mouseTrackerText             = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
 
         ImGui::GetWindowDrawList()->AddText(
             ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(mouseTrackerText.c_str()), 
@@ -190,7 +195,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
     if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
         auto cameraProjectionMatrix = 
-            camera->get_projection_matrix() * camera->get_view_matrix() * m_Scene->get_viewport_scale_matrix();
+            camera->get_projection_matrix() * camera->get_view_matrix();
 
         for(auto&& item : m_Selection)
         {
@@ -284,27 +289,27 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
                 glm::vec3 movement = glm::vec3(0.f);
                 
                 if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftArrow))
-                    movement = glm::vec3(-speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().x, 0.f, 0.f);
+                    movement = glm::vec3(-speed * m_TimeProvider->get_time_delta(), 0.f, 0.f);
 
                 if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightArrow))
-                    movement = glm::vec3(+speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().x, 0.f, 0.f);
+                    movement = glm::vec3(+speed * m_TimeProvider->get_time_delta(), 0.f, 0.f);
 
                 if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
                     ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
                 {
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow))
-                        movement = glm::vec3(0.f, 0.f, -speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().z);
+                        movement = glm::vec3(0.f, 0.f, -speed * m_TimeProvider->get_time_delta());
 
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow))
-                        movement = glm::vec3(0.f, 0.f, +speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().z);
+                        movement = glm::vec3(0.f, 0.f, +speed * m_TimeProvider->get_time_delta());
                 }
                 else
                 {
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow))
-                        movement = glm::vec3(0.f, +speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().y, 0.f);
+                        movement = glm::vec3(0.f, +speed * m_TimeProvider->get_time_delta(), 0.f);
 
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow))
-                        movement = glm::vec3(0.f, -speed * m_TimeProvider->get_time_delta() / m_Scene->get_viewport_scale().y, 0.f);
+                        movement = glm::vec3(0.f, -speed * m_TimeProvider->get_time_delta(), 0.f);
                 }
 
                 transform->set_position(transform->get_position() + movement);

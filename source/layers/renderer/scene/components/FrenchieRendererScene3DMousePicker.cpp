@@ -24,19 +24,22 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _Cur
         return PickedObjects();
 
     // retrieve viewport and camera transform matrixes
-    auto viewportScaleMatrix    = scene->get_viewport_scale_matrix();
+    //auto viewportScaleMatrix    = scene->get_component<Transform>()->get_model_matrix();
     auto cameraViewMatrix       = camera->get_view_matrix();
     auto cameraProjectionMatrix = camera->get_projection_matrix();
-    auto screenTransformMatrix  = cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix;
+    auto screenTransformMatrix  = cameraProjectionMatrix * cameraViewMatrix;
+    //auto cameraWorldPosition    = glm::vec3(viewportScaleMatrix * glm::vec4(camera->get_position(), 1.f));
 
     // create a ray pointing from cursor to the end of the scene
-    Ray ray(glm::inverse(screenTransformMatrix) * glm::vec4(_CursorNDCPosition, 1.f), glm::vec3(0.f, 0.f, -1.f));
+    Ray ray(
+        glm::vec3(glm::inverse(screenTransformMatrix) * glm::vec4(_CursorNDCPosition, 1.f)), 
+        glm::vec3(0.f, 0.f, -1.f));
+
     PickedObjects pickedObjects;
 
     // cast ray
     scene->apply_to_children_recursive(
-        [&viewportScaleMatrix, 
-            &cameraViewMatrix, 
+        [&cameraViewMatrix, 
             &cameraProjectionMatrix, 
             &screenTransformMatrix, 
             &ray, 
