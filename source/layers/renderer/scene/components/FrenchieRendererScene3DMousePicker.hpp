@@ -19,9 +19,16 @@ namespace Frenchie
         public:
             struct PickedObject
             {
-                Core::Object*   Object          = nullptr;
-                glm::vec3 Position        = glm::vec3(0.f);
-                float     DistanceFromRay = 0.f;
+                PickedObject(Core::Object* _Object, glm::vec3 _Position, float _DistanceFromRay) : 
+                    Object(_Object), 
+                    Position(_Position), 
+                    DistanceFromRay(_DistanceFromRay){}
+                
+                ~PickedObject(){}
+
+                Core::Object* Object          = nullptr;
+                glm::vec3     Position        = glm::vec3(0.f);
+                float         DistanceFromRay = 0.f;
 
                 // nested types
                 struct TransparentComparator

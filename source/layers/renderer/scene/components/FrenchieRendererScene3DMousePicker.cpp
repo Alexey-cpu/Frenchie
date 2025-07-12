@@ -3,8 +3,6 @@
 
 using namespace Frenchie::Renderer;
 
-#include <iostream>
-
 Scene3DMousePicker::Scene3DMousePicker() : 
     Component::Registry<Scene3DMousePicker>(STRINGIFY(Scene3DMousePicker))
 {}
@@ -23,27 +21,18 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _Cur
     if(camera == nullptr) 
         return PickedObjects();
 
-    // retrieve viewport and camera transform matrixes
-    //auto viewportScaleMatrix    = scene->get_component<Transform>()->get_model_matrix();
-    auto cameraViewMatrix       = camera->get_view_matrix();
-    auto cameraProjectionMatrix = camera->get_projection_matrix();
-    auto screenTransformMatrix  = cameraProjectionMatrix * cameraViewMatrix;
-    //auto cameraWorldPosition    = glm::vec3(viewportScaleMatrix * glm::vec4(camera->get_position(), 1.f));
+    // compute projection matrix
+    auto projectionMatrix = 
+        camera->get_projection_matrix() * camera->get_view_matrix();
 
     // create a ray pointing from cursor to the end of the scene
-    Ray ray(
-        glm::vec3(glm::inverse(screenTransformMatrix) * glm::vec4(_CursorNDCPosition, 1.f)), 
-        glm::vec3(0.f, 0.f, -1.f));
+    Ray ray(_CursorNDCPosition, glm::vec3(0.f, 0.f, -1.f));
 
     PickedObjects pickedObjects;
 
     // cast ray
     scene->apply_to_children_recursive(
-        [&cameraViewMatrix, 
-            &cameraProjectionMatrix, 
-            &screenTransformMatrix, 
-            &ray, 
-            &pickedObjects](Object* _Object)
+        [&ray, &pickedObjects, &projectionMatrix](Object* _Object)
         {
             auto transform = _Object->get_component<Transform>();
             auto mesh      = _Object->get_component<IMesh>();
@@ -51,29 +40,26 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _Cur
             if(transform == nullptr || mesh == nullptr) 
                 return;
 
-            auto modelMatrix         = transform->get_model_matrix();
-            auto aabbTransformMatrix = glm::scale(glm::mat4(1.f), glm::vec3(1.f / (screenTransformMatrix * modelMatrix)[3][3]));
+            auto objectTransformMatrix = projectionMatrix * transform->get_model_matrix();
+            objectTransformMatrix = glm::scale(glm::mat4(1.f), glm::vec3(1.f / (objectTransformMatrix)[3][3])) * objectTransformMatrix;
 
-            if(!mesh->get_mesh()->get_aabb().transform(aabbTransformMatrix * modelMatrix).intersects(ray)) 
+            if(!mesh->get_mesh()->get_aabb().transform(objectTransformMatrix).intersects(ray)) 
                 return;
 
-            PickedObject object = 
-            {
-                _Object, 
-                transform->get_position(), 
-                glm::length(transform->get_world_position() - ray.Origin)
-            };
-
-            pickedObjects.insert(object);
+            pickedObjects.insert(
+                PickedObject(
+                    _Object, 
+                    transform->get_position(), 
+                    glm::length(transform->get_world_position() - ray.Origin)
+                )
+            );
         }
     );
 
     return pickedObjects;
 }
 
-void Scene3DMousePicker::draw_editor() 
-{
-}
+void Scene3DMousePicker::draw_editor(){}
 
 Component::TReturnType Scene3DMousePicker::create()
 {

@@ -173,6 +173,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
     if(camera == nullptr) 
         return;
 
+    // clear selection
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape) || 
         ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
@@ -189,24 +190,32 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
     if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
         auto mousePicker = m_Scene->get_component<Scene3DMousePicker>();
-        m_Selection      = mousePicker->pick(_CursorNDCPosition);
+
+        if(mousePicker != nullptr) 
+        {
+            m_Selection = mousePicker->pick(_CursorNDCPosition);
+
+            for(auto&& item : m_Selection) 
+                item.Object->set_flag(Object::Flags::Focused, true);
+        }
     }
 
     if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        auto cameraProjectionMatrix = 
+        auto projectionMatrix = 
             camera->get_projection_matrix() * camera->get_view_matrix();
 
         for(auto&& item : m_Selection)
         {
-            item.Object->set_flag(Object::Flags::Selected, true);
             item.Object->set_flag(Object::Flags::Focused, true);
 
-            auto modelMatrix      = item.Object->get_component<Transform>()->get_model_matrix();
-            auto perspectiveScale = glm::vec3((cameraProjectionMatrix * modelMatrix)[3][3]);
+            auto objectTransformMatrix = item.Object->get_component<Transform>()->get_model_matrix();
+            auto perspectiveScale      = glm::vec3((projectionMatrix * objectTransformMatrix)[3][3]);
 
             item.Object->get_component<Transform>()->set_position(
                 item.Position + 2.f * glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f) * perspectiveScale);
+            
+            break; // move only the nearest to the cursor element
         }
     }
 
