@@ -31,18 +31,10 @@ namespace Frenchie
             virtual std::shared_ptr<Shader> get_shader() const override;
 
             // IMesh
-            virtual std::shared_ptr<Mesh> get_mesh() const override
-            {
-                return m_Mesh;
-            }
+            virtual std::shared_ptr<Mesh> get_mesh() const override;
 
             // Component::Register<TReturnType>
-            static TReturnType create()
-            {
-                return std::make_unique<MeshRenderer>();
-            }
-
-            //bool cast_ray(const Ray& _Ray, glm::mat4 _AAABTransform = glm::mat4(1.f));
+            static TReturnType create();
 
         protected:
 

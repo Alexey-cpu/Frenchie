@@ -214,33 +214,6 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
             // move object
             const double speed = camera->get_movement_speed();
 
-            // const glm::vec3 perspectiveScale = 
-            //     camera->get_object_perspective_scale(transform->get_model_matrix());
-
-            // left mouse events
-            // if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
-            // {
-            //     auto modelMatrix      = transform->get_model_matrix();
-            //     auto scaleMatrix      = m_Scene->get_viewport_scale_matrix();
-            //     auto viewMatrix       = camera->get_view_matrix();
-            //     auto projectionMatrix = camera->get_projection_matrix();
-            //     auto shaderMatrix     = projectionMatrix * viewMatrix * scaleMatrix * modelMatrix;
-
-            //     auto aabb = meshRenderer->get_mesh()->get_aabb().transform(glm::scale(glm::mat4(1.f), glm::vec3(1.f / shaderMatrix[3][3])) * modelMatrix);
-
-            //     if(aabb.intersects(ray))
-            //     {
-            //         _Object->set_flag(Object::Flags::Focused, true);
-
-            //         m_Selection.insert(
-            //             {
-            //                 _Object, 
-            //                 _Object->get_component<Transform>()->get_position()
-            //             }
-            //         );
-            //     }
-            // }
-
             // right mouse events
             if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
             {
