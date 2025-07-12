@@ -52,9 +52,10 @@ void Scene3D::frame_start()
                 return;
 
             shader->use();
-            shader->set_uniform<glm::mat4>("u_ScaleMatrix", get_viewport_scale_matrix());
-            shader->set_uniform<glm::mat4>("u_ViewMatrix", m_Camera->get_view_matrix());
-            shader->set_uniform<glm::mat4>("u_ProjectionMatrix", m_Camera->get_projection_matrix());
+            shader->set_uniform<glm::mat4>(
+                "u_ProjectionMatrix", 
+                m_Camera->get_projection_matrix() * m_Camera->get_view_matrix() * get_viewport_scale_matrix()
+            );
             shader->unuse();
         }
     );
