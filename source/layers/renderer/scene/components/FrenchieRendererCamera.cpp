@@ -29,7 +29,14 @@ glm::mat4 Camera::get_view_matrix() const
     m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
 
-    return glm::lookAt(m_CameraWorldPosition, m_CameraWorldPosition + m_CameraLocalFrontAxisDirection, m_CameraLocalUpAxisDirection);
+    Object*   object          = get_object<Object>();
+    glm::mat4 transformMatrix = object != nullptr ? object->get_component<Transform>()->get_model_matrix() : glm::mat4(1.f);
+    glm::vec3 cameraPosition  = transformMatrix * glm::vec4(m_CameraWorldPosition, 1.f);
+
+    return glm::lookAt(
+        cameraPosition, 
+        cameraPosition + m_CameraLocalFrontAxisDirection, 
+        m_CameraLocalUpAxisDirection);
 }
 
 glm::mat4 Camera::get_projection_matrix() const

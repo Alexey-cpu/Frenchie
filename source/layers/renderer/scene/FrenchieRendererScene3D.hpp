@@ -31,10 +31,6 @@ namespace Frenchie
             
             virtual ~Scene3D();
 
-            // getters
-            glm::mat4 get_viewport_scale_matrix() const;
-            glm::vec3 get_viewport_scale() const;
-
             // virtual API override
             virtual void frame_start() override;
             virtual void frame_finish() override;
