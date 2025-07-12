@@ -189,14 +189,19 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 
     if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
+        auto cameraProjectionMatrix = 
+            camera->get_projection_matrix() * camera->get_view_matrix() * m_Scene->get_viewport_scale_matrix();
+
         for(auto&& item : m_Selection)
         {
             item.Object->set_flag(Object::Flags::Selected, true);
             item.Object->set_flag(Object::Flags::Focused, true);
 
-            glm::vec3 delta = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f);
+            auto modelMatrix      = item.Object->get_component<Transform>()->get_model_matrix();
+            auto perspectiveScale = glm::vec3((cameraProjectionMatrix * modelMatrix)[3][3]);
 
-            item.Object->get_component<Transform>()->set_position(item.Position + 2.f * delta);
+            item.Object->get_component<Transform>()->set_position(
+                item.Position + 2.f * glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f) * perspectiveScale);
         }
     }
 
