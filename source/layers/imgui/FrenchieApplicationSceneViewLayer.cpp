@@ -41,82 +41,52 @@ void SceneView::frame_start()
 
 void SceneView::frame_update()
 {
-    auto camera = 
-        m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
+    if(m_Scene == nullptr) 
+        return;
 
-    auto size = 
-        m_Scene != nullptr ? m_Scene->get_component<Size>() : nullptr;
-
-    auto renderer = 
-        m_Scene != nullptr ? m_Scene->get_component<IRenderer>() : nullptr;
+    auto camera   = m_Scene->get_component<Camera>();
+    auto size     = m_Scene->get_component<Size>();
+    auto renderer = m_Scene->get_component<IRenderer>();
 
     if(camera == nullptr || size == nullptr || renderer == nullptr)
         return;
 
-    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
-
     ImGui::Begin(get_name().c_str());
 
     // draw scene contents and update scene geometry
-    ImVec2 SceneWidgetPosition = ImGui::GetCursorScreenPos();
-    float  SceneWidgetWidth    = ImGui::GetContentRegionAvail().x;
-    float  sceneWidgetHeight   = ImGui::GetContentRegionAvail().y;
+    ImVec2 sceneWidgetPosition = ImGui::GetCursorScreenPos();
+    float  sceneTextureHeight  = ImGui::GetContentRegionAvail().y;
+    float  sceneTextureWidth   = sceneTextureHeight * size->get_aspect();
     
+    if(sceneTextureWidth < ImGui::GetContentRegionAvail().x)
+    {
+        sceneTextureWidth  = ImGui::GetContentRegionAvail().x;
+        sceneTextureHeight = sceneTextureWidth / size->get_aspect();
+    }
+
     ImGui::GetWindowDrawList()->AddImage(
         renderer->get_texture(), 
-        ImVec2(SceneWidgetPosition.x, SceneWidgetPosition.y), 
-        ImVec2(SceneWidgetPosition.x + SceneWidgetWidth, SceneWidgetPosition.y + sceneWidgetHeight), 
+        ImVec2(sceneWidgetPosition.x, sceneWidgetPosition.y), 
+        ImVec2(sceneWidgetPosition.x + sceneTextureWidth, sceneWidgetPosition.y + sceneTextureHeight), 
         ImVec2(0, 1), // in ImGUI UV coordinates are flipped
         ImVec2(1, 0)
     );
 
-    size->set_size(glm::vec2(SceneWidgetWidth, sceneWidgetHeight));
-
     // draw scene content bounding rectangle and cast mouse cursor ray
-    {
-        // draw scene viewport rect rectangle
-        ImRect sceneViewportRect = 
-            ImRect(
-                ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos(), 
-                ImGui::GetWindowContentRegionMax() + ImGui::GetWindowPos());
+    ImRect sceneViewportRect     = ImRect(ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos(), ImGui::GetWindowContentRegionMax() + ImGui::GetWindowPos());
+    ImVec2 mousePosition         = ImGui::GetMousePos();
+    ImVec2 windowContentPosition = sceneViewportRect.GetTL();
+    
+    glm::vec3 cursorOpenGLPosition = glm::vec3(
+        mousePosition.x - windowContentPosition.x, 
+        sceneTextureHeight - mousePosition.y + windowContentPosition.y - 1, 
+        0.f
+    );
 
-        ImGui::GetForegroundDrawList()->AddRect(
-            sceneViewportRect.Min, 
-            sceneViewportRect.Max, 
-            IM_COL32(255, 255, 0, 255)
-        );
-
-        // compute cursor OpenGL position
-        auto mousePos          = ImGui::GetMousePos();
-        auto windowContentPos  = sceneViewportRect.GetTL();
-        auto windowContentSize = sceneViewportRect.GetSize();
-        
-        auto cursorOpenGLPosition = glm::vec3(
-            mousePos.x - windowContentPos.x, 
-            windowContentSize.y - mousePos.y + windowContentPos.y - 1, 
-            0.f
-        );
-
-        // compute cursor scene (world) position
-        auto cursorNDCPosition = SceneView::to_ndc(
-            glm::vec2(SceneWidgetWidth, sceneWidgetHeight),
-            glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)
-        );
-
-        auto viewportScaleMatrix    = m_Scene->get_component<Transform>()->get_model_matrix();
-        auto cameraViewMatrix       = camera->get_view_matrix();
-        auto cameraProjectionMatrix = camera->get_projection_matrix();
-        auto cursorWorldPosition    = glm::inverse(cameraProjectionMatrix * cameraViewMatrix * viewportScaleMatrix) * glm::vec4(cursorNDCPosition, 1.f);
-        auto mouseTrackerText       = fmt::format("X : {}  Y : {}", cursorWorldPosition.x, cursorWorldPosition.y);
-
-        ImGui::GetWindowDrawList()->AddText(
-            ImVec2(mousePos.x, mousePos.y) - ImGui::CalcTextSize(mouseTrackerText.c_str()), 
-            IM_COL32(255, 255, 0, 255), 
-            mouseTrackerText.c_str()
-        );
-
-        process_events(cursorNDCPosition);
-    }
+    // compute cursor scene (world) position
+    process_events(SceneView::to_ndc(
+        glm::vec2(sceneTextureWidth, sceneTextureHeight),
+        glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)));
 
     ImGui::End();
 
@@ -159,12 +129,14 @@ glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _Open
 void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 {
     if(!ImGui::IsWindowHovered(
-        ImGuiHoveredFlags_::ImGuiHoveredFlags_None)) 
+        ImGuiHoveredFlags_::ImGuiHoveredFlags_None) || 
+        m_Scene == nullptr) 
         return;
 
-    auto camera = m_Scene != nullptr ? m_Scene->get_component<Camera>() : nullptr;
+    auto camera      = m_Scene->get_component<Camera>();
+    auto mousePicker = m_Scene->get_component<Scene3DMousePicker>();
 
-    if(camera == nullptr) 
+    if(camera == nullptr || mousePicker == nullptr) 
         return;
 
     // clear selection
@@ -180,35 +152,34 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
         m_Selection.clear();
     }
 
-    // move items
+    // left mouse click
     if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        auto mousePicker = m_Scene->get_component<Scene3DMousePicker>();
-
-        if(mousePicker != nullptr) 
-        {
-            m_Selection = mousePicker->pick(_CursorNDCPosition);
-
-            for(auto&& item : m_Selection) 
-                item.Object->set_flag(Object::Flags::Focused, true);
-        }
+        m_Selection = mousePicker->pick(_CursorNDCPosition);
     }
 
+    // drag objects by the mouse
     if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
         auto projectionMatrix = 
             camera->get_projection_matrix() * camera->get_view_matrix();
 
+        auto viewportScaleMatrix    = m_Scene->get_component<Transform>()->get_model_matrix();
+        auto cameraViewMatrix       = camera->get_view_matrix();
+        auto cameraProjectionMatrix = camera->get_projection_matrix();
+
         for(auto&& item : m_Selection)
         {
             item.Object->set_flag(Object::Flags::Focused, true);
 
-            auto objectTransformMatrix = item.Object->get_component<Transform>()->get_model_matrix();
-            auto perspectiveScale      = glm::vec3((projectionMatrix * objectTransformMatrix)[3][3]);
+            auto perspectiveScale = glm::vec3((projectionMatrix * item.Object->get_component<Transform>()->get_model_matrix())[3][3]);
+            auto mainViewportSize = glm::vec3(ImGui::GetMainViewport()->Size.x, ImGui::GetMainViewport()->Size.y, 1.f);
+            auto thisWindowSize   = glm::vec3(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y, 1.f);
+            auto mouseDelta       = glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f);
+            mouseDelta = mouseDelta / std::max(thisWindowSize.x, thisWindowSize.y) * std::max(mainViewportSize.x, mainViewportSize.y) * perspectiveScale;
 
-            item.Object->get_component<Transform>()->set_position(
-                item.Position + 2.f * glm::vec3(ImGui::GetMouseDragDelta().x, -ImGui::GetMouseDragDelta().y, 0.f) * perspectiveScale);
-            
+            item.Object->get_component<Transform>()->set_position(item.Position + mouseDelta);
+
             break; // move only the nearest to the cursor element
         }
     }
@@ -226,32 +197,6 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 
             // move object
             const double speed = camera->get_movement_speed();
-
-            // right mouse events
-            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
-            {
-            }
-
-            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right))
-            {
-            }
-            
-            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Right))
-            {
-            }
-
-            // middle mouse events
-            if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle))
-            {
-            }
-            
-            if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle))
-            {
-            }
-            
-            if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Middle))
-            {
-            }
 
             // delete
             if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
@@ -285,10 +230,14 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
             {
                 // TODO: add logic here
             }
+
+            // zoom
+
+            // move camera
             
+            // move objects
             if(_Object->check_flag(Object::Flags::Focused))
             {
-                // move object left
                 glm::vec3 movement = glm::vec3(0.f);
                 
                 if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftArrow))

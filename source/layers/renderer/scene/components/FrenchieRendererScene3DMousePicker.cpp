@@ -4,8 +4,7 @@
 using namespace Frenchie::Renderer;
 
 Scene3DMousePicker::Scene3DMousePicker() : 
-    Component::Registry<Scene3DMousePicker>(STRINGIFY(Scene3DMousePicker))
-{}
+    Component::Registry<Scene3DMousePicker>(STRINGIFY(Scene3DMousePicker)){}
 
 Scene3DMousePicker::~Scene3DMousePicker(){}
 

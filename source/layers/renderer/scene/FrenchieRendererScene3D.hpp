@@ -40,7 +40,6 @@ namespace Frenchie
 
             protected:
 
-                // info
                 Size*               m_Size           = nullptr;
                 Camera*             m_Camera         = nullptr;
                 Transform*          m_Transform      = nullptr;

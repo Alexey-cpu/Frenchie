@@ -19,6 +19,11 @@ void Size::set_size(const glm::vec2& _Value)
     m_Size = _Value;
 }
 
+float Size::get_aspect() const
+{
+    return m_Size.x / m_Size.y;
+}
+
 // IRenderer
 bool Size::awake()
 {
