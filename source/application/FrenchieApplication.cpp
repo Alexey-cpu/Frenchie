@@ -92,6 +92,7 @@ Application::Application()
             ImGuiConfigFlags_::ImGuiConfigFlags_DockingEnable     |
             ImGuiConfigFlags_::ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();
+    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)

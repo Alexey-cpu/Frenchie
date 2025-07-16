@@ -22,6 +22,7 @@ namespace Frenchie
 
             // getters
             glm::vec2 get_size() const;
+            float get_aspect() const;
 
             // setters
             void set_size(const glm::vec2& _Value);
