@@ -27,7 +27,10 @@ namespace Frenchie
 
             glm::vec3 get_axis() const;
             glm::vec3 get_front() const;
+            glm::vec3 get_up() const;
+            glm::vec3 get_right() const;
             float get_movement_speed() const;
+            float get_sensitivity() const;
             float get_pitch() const;
             float get_yaw() const;
             float get_roll() const;
@@ -38,6 +41,7 @@ namespace Frenchie
             
             void set_position(const glm::vec3&);
             void set_movement_speed(const float&);
+            void set_sensitivity(const float&);
             void set_pitch(const float&);
             void set_yaw(const float&);
             void set_roll(const float&);
@@ -62,7 +66,8 @@ namespace Frenchie
             mutable glm::vec3 m_CameraLocalRightAxisDirection = glm::vec3(0.f);
             mutable glm::vec3 m_CameraLocalUpAxisDirection    = glm::vec3(0.f);
             
-            mutable float     m_MovementSpeed = 200.f;
+            mutable float     m_MovementSpeed = 1.0f;
+            mutable float     m_Sensitivity   = 0.1f;
             mutable float     m_Pitch         = 0.f;
             mutable float     m_Yaw           = 0.f;
             mutable float     m_Roll          = 0.f;

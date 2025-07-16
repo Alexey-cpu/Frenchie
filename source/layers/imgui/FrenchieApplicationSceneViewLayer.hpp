@@ -40,6 +40,14 @@ namespace Frenchie
             virtual bool is_closed() override;
 
         protected:
+
+            struct SceneCursor
+            {
+                glm::vec3 CurrentPosition;
+                glm::vec3 PreviousPosition;
+                glm::vec3 PositionDelta;
+            } m_SceneCursor;
+
             std::shared_ptr<Scene3D>            m_Scene         = nullptr;
             std::shared_ptr<CommandsQueueLayer> m_CommandsQueue = nullptr;
             std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;

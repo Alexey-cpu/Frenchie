@@ -19,6 +19,11 @@ double TimeProviderLayer::get_time_delta() const
     return m_CurrentFrame - m_PreviousFrame;
 }
 
+double TimeProviderLayer::get_time() const
+{
+    return m_CurrentFrame;
+}
+
 void TimeProviderLayer::frame_update()
 {
     m_PreviousFrame = m_CurrentFrame;

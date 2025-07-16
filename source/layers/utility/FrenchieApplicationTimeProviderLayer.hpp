@@ -15,6 +15,7 @@ namespace Frenchie
 
             // getters
             double get_time_delta() const;
+            double get_time() const;
 
             // Layer
             virtual void frame_update() override;
