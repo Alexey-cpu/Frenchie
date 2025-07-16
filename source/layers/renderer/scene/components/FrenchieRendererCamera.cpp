@@ -9,7 +9,10 @@ Camera::Camera(
     glm::vec3 _CameraWorldUpAxisDirection) :
     Component::Registry<Camera>(STRINGIFY(Camera)),
     m_CameraWorldPosition(_CameraWorldPosition), 
-    m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection){}
+    m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection)
+{
+
+}
 
 Camera::~Camera(){}
 
@@ -41,7 +44,12 @@ glm::mat4 Camera::get_view_matrix() const
 
 glm::mat4 Camera::get_projection_matrix() const
 {
-    return glm::perspective(glm::radians(m_Fovy), m_Aspect, m_Near, m_Far);
+    return glm::perspective(
+        glm::radians(m_Fovy), 
+        m_Aspect, 
+        m_Near, 
+        m_Far
+    );
 }
 
 glm::vec3 Camera::get_position() const
@@ -57,6 +65,16 @@ glm::vec3 Camera::get_axis() const
 glm::vec3 Camera::get_front() const
 {
     return m_CameraLocalFrontAxisDirection;
+}
+
+glm::vec3 Camera::get_up() const
+{
+    return m_CameraLocalUpAxisDirection;
+}
+
+glm::vec3 Camera::get_right() const
+{
+    return m_CameraLocalRightAxisDirection;
 }
 
 float Camera::get_aspect() const
@@ -89,6 +107,11 @@ float Camera::get_movement_speed() const
     return m_MovementSpeed;
 }
 
+float Camera::get_sensitivity() const
+{
+    return m_Sensitivity;
+}
+
 float Camera::get_pitch() const
 {
     return m_Pitch;
@@ -114,9 +137,19 @@ void Camera::set_movement_speed(const float& _Value)
     m_MovementSpeed = _Value;
 }
 
+void Camera::set_sensitivity(const float& _Value)
+{
+    m_Sensitivity = _Value;
+}
+
 void Camera::set_pitch(const float& _Value)
 {
-    m_Pitch = _Value;
+    if(_Value > 89.0f) 
+        m_Pitch = 89.0f;
+    else if(_Value < -89.0f) 
+        m_Pitch = -89.0f;
+    else 
+        m_Pitch = _Value;
 }
 
 void Camera::set_yaw(const float& _Value)
@@ -156,7 +189,8 @@ void Camera::draw_editor()
     ImGui::DragFloat3("position XYZ", &m_CameraWorldPosition[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");
     ImGui::DragFloat("Field of view", &m_Fovy, 0.1f, 0.f, 120.f, "%.4f");
-    ImGui::DragFloat("Movement speed", &m_MovementSpeed, 0.1f, 1.0f, 10.f, "%.4f");
+    ImGui::DragFloat("Movement speed", &m_MovementSpeed, 0.5f, 1.0f, 10.f, "%.4f");
+    ImGui::DragFloat("Sensitivity", &m_Sensitivity, 0.01f, 0.001f, 1.f, "%.4f");
     ImGui::DragFloat("Aspect", &m_Aspect, 0.1f, 0.5f, 2.f, "%.4f");
     ImGui::DragFloat("Near", &m_Near, 1.f, -10000, 10000, "%.4f");
     ImGui::DragFloat("Far", &m_Far, 1.f, -10000, 10000, "%.4f");
