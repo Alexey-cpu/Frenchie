@@ -223,7 +223,6 @@ void Object::draw_editor()
     if (ImGui::TreeNodeEx(get_name().c_str(),
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
-            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
     {
@@ -245,11 +244,12 @@ void Object::draw_editor()
                 continue; 
 
             ImGui::PushID(id++);
+            ImGui::Checkbox("##", &component->m_Enabled);
+            ImGui::SameLine();
 
             if (ImGui::TreeNodeEx(component->get_name().c_str(),
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow   | 
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed        |
-                ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull | 
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen   | 
                 ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
             {

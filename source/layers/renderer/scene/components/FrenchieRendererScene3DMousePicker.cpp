@@ -12,7 +12,7 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _Cur
 {
     auto scene = get_object<Scene3D>();
 
-    if(scene == nullptr) 
+    if(scene == nullptr || !is_enabled()) 
         return PickedObjects();
 
     auto camera = scene->get_component<Camera>();
@@ -40,7 +40,7 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _Cur
                 return;
 
             auto objectTransformMatrix = projectionMatrix * transform->get_model_matrix();
-            objectTransformMatrix = glm::scale(glm::mat4(1.f), glm::vec3(1.f / (objectTransformMatrix)[3][3])) * objectTransformMatrix;
+            objectTransformMatrix      = glm::scale(glm::mat4(1.f), glm::vec3(1.f / (objectTransformMatrix)[3][3])) * objectTransformMatrix;
 
             if(!mesh->get_mesh()->get_aabb().transform(objectTransformMatrix).intersects(ray)) 
                 return;

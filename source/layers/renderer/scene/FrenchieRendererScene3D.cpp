@@ -21,7 +21,7 @@ Scene3D::~Scene3D(){}
 
 void Scene3D::frame_start()
 {
-    if(m_Camera == nullptr || m_Transform == nullptr) // no camera or no transform --> no rendering 
+    if(m_Camera == nullptr) // no camera --> no rendering 
         return;
 
     auto projectionMatrix = m_Camera->get_projection_matrix() * m_Camera->get_view_matrix();
