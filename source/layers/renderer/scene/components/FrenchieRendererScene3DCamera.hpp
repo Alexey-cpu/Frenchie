@@ -2,6 +2,7 @@
 
 #include <FrenchieCoreObject.hpp>
 #include <FrenchieRendererIEditor.hpp>
+#include <FrenchieRendererIRenderer.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -12,7 +13,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Core::Component::Registry<Camera>, public IEditor
+        class Camera : public Core::Component::Registry<Camera>, public IRenderer, public IEditor
         {
         public:
 
@@ -22,7 +23,6 @@ namespace Frenchie
             virtual ~Camera();
 
             glm::mat4 get_projection_matrix() const;
-            glm::mat4 get_view_matrix() const;
             glm::vec3 get_position() const;
 
             glm::vec3 get_axis() const;
@@ -52,13 +52,25 @@ namespace Frenchie
             void set_far(const float&);
             void set_fovy(const float&);
 
+            // public Frenchie::Core::Component
+            virtual bool awake() override;
+            virtual void frame_start()  override;
+            virtual void frame_update() override;
+            virtual void frame_finish() override;
+
             // IEditor
             virtual void draw_editor() override;
+
+            // IRenderer
+            virtual unsigned int get_texture() const override;
+            virtual void render() override;
 
             // Component::Register<Transform>
             static TReturnType create();
 
         protected:
+
+            glm::mat4 get_view_matrix() const;
 
             mutable glm::vec3 m_CameraWorldPosition           = glm::vec3(+0.f, +0.f, +1.f);
             mutable glm::vec3 m_CameraWorldUpAxisDirection    = glm::vec3(+0.f, +1.f, +0.f);
@@ -76,6 +88,11 @@ namespace Frenchie
             mutable float     m_Aspect        = 1.f;
             mutable float     m_Fovy          = 90.f;
             mutable glm::vec3 m_Axis          = glm::vec3(1.f, 1.f, 1.f);
+
+            glm::vec4    m_ClearColor         = glm::vec4(0.25f, 0.25f, 0.25f, 0.5f);
+            unsigned int m_Framebuffer        = 0;
+            unsigned int m_TextureColorBuffer = 0;
+            unsigned int m_TextureDepthBuffer = 0;
         };
     }
 }

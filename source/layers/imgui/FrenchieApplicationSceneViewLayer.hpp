@@ -51,7 +51,7 @@ namespace Frenchie
             std::shared_ptr<Scene3D>            m_Scene         = nullptr;
             std::shared_ptr<CommandsQueueLayer> m_CommandsQueue = nullptr;
             std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;
-            Scene3DMousePicker::PickedObjects   m_Selection     = Scene3DMousePicker::PickedObjects();
+            Scene3DCursor::PickedObjects   m_Selection     = Scene3DCursor::PickedObjects();
 
             static glm::vec3 to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition);
             void process_events(const glm::vec3&);

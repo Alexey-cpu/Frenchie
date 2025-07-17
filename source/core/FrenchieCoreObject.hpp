@@ -44,6 +44,9 @@ namespace Frenchie
             void set_enabled(bool _Value);
 
             // IRenderer
+            virtual void on_enabled();
+            virtual void on_disabled();
+
             virtual bool awake();
             virtual void frame_start();
             virtual void frame_update();
@@ -269,9 +272,14 @@ namespace Frenchie
             template<typename T, typename ... Arguments>
             T* add_component(Arguments ... _Args)
             {
+                // attach component
                 m_Components.push_back(std::make_unique<T>(_Args ...));
                 auto component = dynamic_cast<T*>(m_Components.back().get());
                 component->m_Object = this;
+
+                // enable component
+                component->set_enabled(true);
+
                 return component;
             }
 

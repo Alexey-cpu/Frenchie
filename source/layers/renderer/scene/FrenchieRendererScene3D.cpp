@@ -1,5 +1,4 @@
 #include <FrenchieRendererScene3D.hpp>
-#include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererShader.hpp>
 #include <FrenchieApplication.hpp>
 
@@ -12,36 +11,12 @@ Scene3D::Scene3D(
     m_Size(add_component<Size>(_Size)), 
     m_Camera(add_component<Camera>(glm::vec3(+0.f, +0.f, +10000.f), glm::vec3(+0.f, +1.f, +0.f))),
     m_Transform(add_component<Transform>()),
-    m_MousePicker(add_component<Scene3DMousePicker>())
-    {
-        add_component<SceneCameraOperator>();
-    }
+    m_MousePicker(add_component<Scene3DCursor>()){}
 
 Scene3D::~Scene3D(){}
 
 void Scene3D::frame_start()
 {
-    if(m_Camera == nullptr) // no camera --> no rendering 
-        return;
-
-    auto projectionMatrix = m_Camera->get_projection_matrix() * m_Camera->get_view_matrix();
-
-    apply_to_children_recursive(
-        [this, &projectionMatrix](Object* _Objcet)
-        {
-            auto component = _Objcet->get_component<IShader>();
-            auto shader    = component != nullptr ? component->get_shader() : nullptr;
-
-            if(shader == nullptr) 
-                return;
-
-            shader->use();
-            shader->set_uniform<glm::mat4>("u_ProjectionMatrix", projectionMatrix);
-            shader->unuse();
-        }
-    );
-
-    // call base implementation
     Object::frame_start();
 }
 
