@@ -14,7 +14,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Scene3DMousePicker : public Core::Component::Registry<Scene3DMousePicker>, public IEditor
+        class Scene3DCursor : public Core::Component::Registry<Scene3DCursor>, public IEditor
         {
         public:
             struct PickedObject
@@ -44,11 +44,11 @@ namespace Frenchie
                 };
             };
 
-            typedef std::set<Scene3DMousePicker::PickedObject, 
-                Scene3DMousePicker::PickedObject::TransparentComparator> PickedObjects;
+            typedef std::set<Scene3DCursor::PickedObject, 
+                Scene3DCursor::PickedObject::TransparentComparator> PickedObjects;
 
-            Scene3DMousePicker();
-            virtual ~Scene3DMousePicker();
+            Scene3DCursor();
+            virtual ~Scene3DCursor();
 
             PickedObjects pick(const glm::vec3&) const;
 

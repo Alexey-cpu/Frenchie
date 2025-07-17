@@ -3,7 +3,6 @@
 #include <FrenchieApplication.hpp>
 
 #include <FrenchieRendererMeshRendererComponent.hpp>
-#include <FrenchieRendererCamera.hpp>
 #include <FrenchieRendererMesh.hpp>
 
 #include <FrenchieRendererIRenderer.hpp>
@@ -138,7 +137,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
         return;
 
     auto camera      = m_Scene->get_component<Camera>();
-    auto mousePicker = m_Scene->get_component<Scene3DMousePicker>();
+    auto mousePicker = m_Scene->get_component<Scene3DCursor>();
 
     if(camera == nullptr || mousePicker == nullptr) 
         return;
@@ -165,8 +164,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
     // drag objects
     if(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        auto projectionMatrix = 
-            camera->get_projection_matrix() * camera->get_view_matrix();
+        auto projectionMatrix = camera->get_projection_matrix();
 
         for(auto&& item : m_Selection)
         {

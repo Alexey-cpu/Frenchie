@@ -1,11 +1,10 @@
 #pragma once
 
-#include <FrenchieRendererCamera.hpp>
+#include <FrenchieRendererScene3DCamera.hpp>
 #include <FrenchieRendererMesh2D.hpp>
 #include <FrenchieRendererShader.hpp>
 
-#include <FrenchieRendererScene3DMousePicker.hpp>
-#include <FrenchieRendererSceneCameraOperatorComponent.hpp>
+#include <FrenchieRendererScene3DCursor.hpp>
 #include <FrenchieRendererTransformComponent.hpp>
 #include <FrenchieRendererSizeComponent.hpp>
 
@@ -43,7 +42,7 @@ namespace Frenchie
                 Size*               m_Size           = nullptr;
                 Camera*             m_Camera         = nullptr;
                 Transform*          m_Transform      = nullptr;
-                Scene3DMousePicker* m_MousePicker    = nullptr;
+                Scene3DCursor* m_MousePicker    = nullptr;
         };
 
         // class Scene3DBHV : public Frenchie::Core::Component, public IEditor

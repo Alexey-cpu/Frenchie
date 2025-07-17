@@ -27,6 +27,19 @@ bool Component::is_enabled() const
 void Component::set_enabled(bool _Value)
 {
     m_Enabled = _Value;
+
+    if(m_Enabled) 
+        on_enabled();
+    else 
+        on_disabled();
+}
+
+void Component::on_enabled()
+{
+}
+
+void Component::on_disabled()
+{
 }
 
 bool Component::awake()

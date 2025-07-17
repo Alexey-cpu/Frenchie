@@ -1,28 +1,33 @@
-#include <FrenchieRendererScene3DMousePicker.hpp>
+#include <FrenchieRendererScene3DCursor.hpp>
 #include <FrenchieRendererScene3D.hpp>
 
 using namespace Frenchie::Renderer;
 
-Scene3DMousePicker::Scene3DMousePicker() : 
-    Component::Registry<Scene3DMousePicker>(STRINGIFY(Scene3DMousePicker)){}
+Scene3DCursor::Scene3DCursor() : 
+    Component::Registry<Scene3DCursor>(STRINGIFY(Scene3DCursor)){}
 
-Scene3DMousePicker::~Scene3DMousePicker(){}
+Scene3DCursor::~Scene3DCursor(){}
 
-Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _CursorNDCPosition) const
+Scene3DCursor::PickedObjects Scene3DCursor::pick(const glm::vec3& _CursorNDCPosition) const
 {
-    auto scene = get_object<Scene3D>();
-
-    if(scene == nullptr || !is_enabled()) 
+    if(!is_enabled()) 
         return PickedObjects();
 
-    auto camera = scene->get_component<Camera>();
+    // get scene
+    auto scene = get_object() != nullptr ? get_object()->get_parent_recursive<Scene3D>() : nullptr;
+    if(scene == nullptr) 
+        scene = get_object<Scene3D>();
+
+    if(scene == nullptr) 
+        return PickedObjects();
+
+    auto camera = get_object()->get_component<Camera>();
 
     if(camera == nullptr) 
         return PickedObjects();
 
     // compute projection matrix
-    auto projectionMatrix = 
-        camera->get_projection_matrix() * camera->get_view_matrix();
+    auto projectionMatrix = camera->get_projection_matrix();
 
     // create a ray pointing from cursor to the end of the scene
     Ray ray(_CursorNDCPosition, glm::vec3(0.f, 0.f, -1.f));
@@ -58,9 +63,9 @@ Scene3DMousePicker::PickedObjects Scene3DMousePicker::pick(const glm::vec3& _Cur
     return pickedObjects;
 }
 
-void Scene3DMousePicker::draw_editor(){}
+void Scene3DCursor::draw_editor(){}
 
-Component::TReturnType Scene3DMousePicker::create()
+Component::TReturnType Scene3DCursor::create()
 {
-    return std::make_unique<Scene3DMousePicker>();
+    return std::make_unique<Scene3DCursor>();
 }
