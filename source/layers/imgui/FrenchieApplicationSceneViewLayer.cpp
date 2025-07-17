@@ -44,11 +44,10 @@ void SceneView::frame_update()
     if(m_Scene == nullptr) 
         return;
 
-    auto camera   = m_Scene->get_component<Camera>();
     auto size     = m_Scene->get_component<Size>();
     auto renderer = m_Scene->get_component<IRenderer>();
 
-    if(camera == nullptr || size == nullptr || renderer == nullptr)
+    if(size == nullptr || renderer == nullptr)
         return;
 
     ImGui::Begin(get_name().c_str());
@@ -83,15 +82,12 @@ void SceneView::frame_update()
         0.f
     );
 
-    //-------------------------------------------------------------------------------------------------
-    //
-    //-------------------------------------------------------------------------------------------------
+    // catch cursor
     m_SceneCursor.PreviousPosition = m_SceneCursor.CurrentPosition;
     m_SceneCursor.CurrentPosition  = cursorOpenGLPosition;
-    m_SceneCursor.PositionDelta            = m_SceneCursor.CurrentPosition - m_SceneCursor.PreviousPosition;
-    //-------------------------------------------------------------------------------------------------
+    m_SceneCursor.PositionDelta    = m_SceneCursor.CurrentPosition - m_SceneCursor.PreviousPosition;
 
-    // compute cursor scene (world) position
+    // process evenets
     process_events(SceneView::to_ndc(
         glm::vec2(sceneTextureWidth, sceneTextureHeight),
         glm::vec3(cursorOpenGLPosition.x, cursorOpenGLPosition.y, +1.f)));

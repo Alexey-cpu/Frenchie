@@ -4,6 +4,11 @@
 #include <FrenchieRendererIEditor.hpp>
 #include <FrenchieRendererIRenderer.hpp>
 
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 namespace Frenchie
 {
     namespace Renderer
@@ -36,9 +41,10 @@ namespace Frenchie
 
         protected:
 
-            unsigned int m_Framebuffer;
-            unsigned int m_TextureColorBuffer;
-            unsigned int m_TextureDepthBuffer;
+            glm::vec4    m_ClearColor         = glm::vec4(0.25f, 0.25f, 0.25f, 0.5f);
+            unsigned int m_Framebuffer        = 0;
+            unsigned int m_TextureColorBuffer = 0;
+            unsigned int m_TextureDepthBuffer = 0;
         };
     }
 }

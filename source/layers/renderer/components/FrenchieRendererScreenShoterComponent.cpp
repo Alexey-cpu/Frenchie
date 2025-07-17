@@ -79,24 +79,38 @@ void ScreenShoter::frame_finish(){}
 
 void ScreenShoter::draw_editor()
 {
-    bool framebufferOk        = m_Framebuffer != 0;
-    bool TextureColorBufferOk = m_TextureColorBuffer != 0;
-    bool TextureDepthBufferOk = m_TextureDepthBuffer != 0;
+    ImGui::PushID("Color picker");
+    ImVec4 color(m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a);
+    
+    ImGui::ColorPicker3(
+        "Clear color", 
+        (float*)&color, 
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_PickerHueBar  |
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_NoSidePreview |
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_NoInputs      |
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_NoAlpha
+    );
+    
+    ImGui::ColorEdit4(
+        "RGB",
+        (float*)&color, 
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_DisplayRGB |
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_InputHSV   |
+        ImGuiColorEditFlags_::ImGuiColorEditFlags_Uint8);
 
-    ImGui::Checkbox("Framebuffer", &framebufferOk);
-    ImGui::Checkbox("TextureColorBuffer", &TextureColorBufferOk);
-    ImGui::Checkbox("TextureDepthBuffer", &TextureDepthBufferOk);
+    m_ClearColor = glm::vec4(color.x, color.y, color.z, color.w);
+
+    ImGui::PopID();
 }
 
 void ScreenShoter::render()
 {
-    auto size = get_object() != nullptr ? get_object()->get_component<Size>() : nullptr;
-
-    if(size == nullptr) 
+    if(get_object() == nullptr) 
         return;
 
-    float width  = size->get_size().x;
-    float height = size->get_size().y;
+    auto size    = get_object()->get_component<Size>();
+    float width  = size != nullptr ? size->get_size().x : 2048.f;
+    float height = size != nullptr ? size->get_size().y : 1024.f;
 
     // resize frame buffer
     glBindTexture(GL_TEXTURE_2D, m_TextureColorBuffer);
@@ -111,19 +125,20 @@ void ScreenShoter::render()
 
     // bind frame buffer
     glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a);
     
+    // depth/stencil/blending
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
-
-    // blending
     glEnable(GL_BLEND);
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glViewport(0, 0, (int)width, (int)height);
 
-    get_object()->frame_finish();
+    if(is_enabled())
+        get_object()->frame_finish();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_FRAMEBUFFER, 0);

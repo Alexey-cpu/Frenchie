@@ -238,6 +238,34 @@ namespace Frenchie
                 return nullptr;
             }
 
+            template<typename T>
+            T* get_component_in_children() const
+            {
+                for(auto&& child : m_Children)
+                {
+                    auto component = child->get_component<T>();
+
+                    if(component != nullptr) 
+                        return component;
+                }
+
+                return nullptr;
+            }
+
+            template<typename T>
+            T* get_component_in_children_recursive() const
+            {
+                for(auto&& child : m_Children)
+                {
+                    auto component = child->get_component_in_children_recursive<T>();
+
+                    if(component != nullptr) 
+                        return component;
+                }
+
+                return nullptr;
+            }
+
             template<typename T, typename ... Arguments>
             T* add_component(Arguments ... _Args)
             {
