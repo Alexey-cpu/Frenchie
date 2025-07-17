@@ -14,7 +14,7 @@ Scene3D::Scene3D(
     m_Transform(add_component<Transform>()),
     m_MousePicker(add_component<Scene3DMousePicker>())
     {
-        add_component<ScreenShoter>();
+        add_component<SceneCameraOperator>();
     }
 
 Scene3D::~Scene3D(){}

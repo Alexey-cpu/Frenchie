@@ -5,7 +5,7 @@
 #include <FrenchieRendererShader.hpp>
 
 #include <FrenchieRendererScene3DMousePicker.hpp>
-#include <FrenchieRendererScreenShoterComponent.hpp>
+#include <FrenchieRendererSceneCameraOperatorComponent.hpp>
 #include <FrenchieRendererTransformComponent.hpp>
 #include <FrenchieRendererSizeComponent.hpp>
 
