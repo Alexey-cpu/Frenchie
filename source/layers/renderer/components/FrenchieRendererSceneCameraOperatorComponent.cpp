@@ -1,4 +1,4 @@
-#include <FrenchieRendererScreenShoterComponent.hpp>
+#include <FrenchieRendererSceneCameraOperatorComponent.hpp>
 #include <FrenchieRendererSizeComponent.hpp>
 
 #include <FrenchieCoreLogger.hpp>
@@ -16,10 +16,10 @@ using namespace Frenchie::Core;
 #include <imgui.h>
 #include <imgui_internal.h>
 
-ScreenShoter::ScreenShoter() : 
-    Core::Component::Registry<ScreenShoter>(STRINGIFY(ScreenShoter)){}
+SceneCameraOperator::SceneCameraOperator() : 
+    Core::Component::Registry<SceneCameraOperator>(STRINGIFY(SceneCameraOperator)){}
 
-ScreenShoter::~ScreenShoter()
+SceneCameraOperator::~SceneCameraOperator()
 {
     if(m_Framebuffer != 0)
         glDeleteBuffers(1, &m_Framebuffer);
@@ -31,12 +31,12 @@ ScreenShoter::~ScreenShoter()
         glDeleteTextures(1, &m_TextureColorBuffer);
 }
 
-unsigned int ScreenShoter::get_texture() const
+unsigned int SceneCameraOperator::get_texture() const
 {
     return m_TextureColorBuffer;
 }
 
-bool ScreenShoter::awake()
+bool SceneCameraOperator::awake()
 {
     int width  = 2048;
     int height = 1024;
@@ -71,13 +71,13 @@ bool ScreenShoter::awake()
     return true;
 }
 
-void ScreenShoter::frame_start(){}
+void SceneCameraOperator::frame_start(){}
 
-void ScreenShoter::frame_update(){}
+void SceneCameraOperator::frame_update(){}
 
-void ScreenShoter::frame_finish(){}
+void SceneCameraOperator::frame_finish(){}
 
-void ScreenShoter::draw_editor()
+void SceneCameraOperator::draw_editor()
 {
     ImGui::PushID("Color picker");
     ImVec4 color(m_ClearColor.r, m_ClearColor.g, m_ClearColor.b, m_ClearColor.a);
@@ -103,7 +103,7 @@ void ScreenShoter::draw_editor()
     ImGui::PopID();
 }
 
-void ScreenShoter::render()
+void SceneCameraOperator::render()
 {
     if(get_object() == nullptr) 
         return;

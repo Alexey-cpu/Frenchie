@@ -13,12 +13,12 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class ScreenShoter : public Core::Component::Registry<ScreenShoter>, public IRenderer, public IEditor
+        class SceneCameraOperator : public Core::Component::Registry<SceneCameraOperator>, public IRenderer, public IEditor
         {
         public:
             
-            ScreenShoter();
-            virtual ~ScreenShoter();
+            SceneCameraOperator();
+            virtual ~SceneCameraOperator();
 
             // public Frenchie::Core::Component
             virtual bool awake() override;
@@ -36,7 +36,7 @@ namespace Frenchie
             // Component::Register<TReturnType>
             static TReturnType create()
             {
-                return std::make_unique<ScreenShoter>();
+                return std::make_unique<SceneCameraOperator>();
             }
 
         protected:
