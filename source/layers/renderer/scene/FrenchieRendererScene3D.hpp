@@ -6,7 +6,6 @@
 
 #include <FrenchieRendererScene3DCursor.hpp>
 #include <FrenchieRendererTransformComponent.hpp>
-#include <FrenchieRendererSizeComponent.hpp>
 
 #include <FrenchieCoreCache.hpp>
 #include <FrenchieRendererIEditor.hpp>
@@ -39,9 +38,8 @@ namespace Frenchie
 
             protected:
 
-                Size*               m_Size           = nullptr;
-                Camera*             m_Camera         = nullptr;
-                Transform*          m_Transform      = nullptr;
+                //Camera*        m_Camera         = nullptr;
+                Transform*     m_Transform      = nullptr;
                 Scene3DCursor* m_MousePicker    = nullptr;
         };
 

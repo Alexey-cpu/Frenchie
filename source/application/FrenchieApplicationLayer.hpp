@@ -4,6 +4,12 @@
 #include <memory>
 #include <list>
 
+// GLAD
+#include <glad/glad.h> 
+
+// GLFW
+#include <GLFW/glfw3.h>
+
 namespace Frenchie
 {
     namespace Application
@@ -28,6 +34,14 @@ namespace Frenchie
         protected:
             std::string m_Name;
             bool        m_Closed = false;
+        };
+
+        class IMouseCallbackHandler
+        {
+        public:
+            IMouseCallbackHandler(){}
+            virtual ~IMouseCallbackHandler(){}
+            virtual void mouse_callback(GLFWwindow* _Window, double _X, double _Y) = 0;
         };
     };    
 };

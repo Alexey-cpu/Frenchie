@@ -110,6 +110,8 @@ namespace Frenchie
                 std::string                       m_Name   = "Frenchie::Application";
                 bool                              m_Closed = false;
                 GLFWwindow*                       m_Window = nullptr;
+
+                static void mouse_callback(GLFWwindow* _Window, double _X, double _Y);
             };
         };
 
