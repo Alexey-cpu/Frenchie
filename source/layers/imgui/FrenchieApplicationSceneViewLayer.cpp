@@ -18,7 +18,9 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
 // SceneView
-SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
+SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D)
+{
+}
 
 SceneView::~SceneView(){}
 
@@ -26,9 +28,11 @@ bool SceneView::awake()
 {
     m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
     m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
+    m_CursorWatcher = Application::instance()->find<CursorWatcher>();
 
-    return m_CommandsQueue != nullptr && 
-           m_TimeProvider  != nullptr && 
+    return m_CommandsQueue != nullptr &&
+           m_TimeProvider  != nullptr &&
+           m_CursorWatcher != nullptr &&
            m_Scene         != nullptr;
 }
 
@@ -43,10 +47,10 @@ void SceneView::frame_update()
     if(m_Scene == nullptr) 
         return;
 
-    auto size     = m_Scene->get_component<Size>();
-    auto renderer = m_Scene->get_component<IRenderer>();
+    // look for an active camera
+    auto renderer = m_Scene->get_component<Camera>();
 
-    if(size == nullptr || renderer == nullptr)
+    if(renderer == nullptr)
         return;
 
     ImGui::Begin(get_name().c_str());
@@ -54,19 +58,19 @@ void SceneView::frame_update()
     // draw scene contents and update scene geometry
     ImVec2 sceneWidgetPosition = ImGui::GetCursorScreenPos();
     float  sceneTextureHeight  = ImGui::GetContentRegionAvail().y;
-    float  sceneTextureWidth   = sceneTextureHeight * size->get_aspect();
+    float  sceneTextureWidth   = sceneTextureHeight * renderer->get_aspect();
     
     if(sceneTextureWidth < ImGui::GetContentRegionAvail().x)
     {
         sceneTextureWidth  = ImGui::GetContentRegionAvail().x;
-        sceneTextureHeight = sceneTextureWidth / size->get_aspect();
+        sceneTextureHeight = sceneTextureWidth / renderer->get_aspect();
     }
 
     ImGui::GetWindowDrawList()->AddImage(
         renderer->get_texture(), 
         ImVec2(sceneWidgetPosition.x, sceneWidgetPosition.y), 
-        ImVec2(sceneWidgetPosition.x + sceneTextureWidth, sceneWidgetPosition.y + sceneTextureHeight), 
-        ImVec2(0, 1), // in ImGUI UV coordinates are flipped
+        ImVec2(sceneWidgetPosition.x + sceneTextureWidth, sceneWidgetPosition.y + sceneTextureHeight),
+        ImVec2(0, 1),
         ImVec2(1, 0)
     );
 
@@ -80,11 +84,6 @@ void SceneView::frame_update()
         sceneTextureHeight - mousePosition.y + windowContentPosition.y - 1, 
         0.f
     );
-
-    // catch cursor
-    m_SceneCursor.PreviousPosition = m_SceneCursor.CurrentPosition;
-    m_SceneCursor.CurrentPosition  = cursorOpenGLPosition;
-    m_SceneCursor.PositionDelta    = m_SceneCursor.CurrentPosition - m_SceneCursor.PreviousPosition;
 
     // process evenets
     process_events(SceneView::to_ndc(
@@ -131,15 +130,50 @@ glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _Open
 
 void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 {
-    if(!ImGui::IsWindowHovered(
-        ImGuiHoveredFlags_::ImGuiHoveredFlags_None) || 
-        m_Scene == nullptr) 
+    if(m_Scene == nullptr) 
         return;
 
     auto camera      = m_Scene->get_component<Camera>();
     auto mousePicker = m_Scene->get_component<Scene3DCursor>();
 
     if(camera == nullptr || mousePicker == nullptr) 
+        return;
+
+    // move camera
+    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+    {
+        //glfwSetInputMode(Application::instance()->get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
+
+        // set camera rotation
+        camera->set_pitch(camera->get_pitch() + m_CursorWatcher->m_PositionDelta.y * camera->get_sensitivity());
+        camera->set_yaw(camera->get_yaw() - m_CursorWatcher->m_PositionDelta.x * camera->get_sensitivity());
+
+        // set camera position
+        float     path     = camera->get_movement_speed() * (float)m_TimeProvider->get_time_delta();
+        glm::vec3 position = camera->get_scale_matrix() * glm::vec4(camera->get_position(), 1.f);
+
+        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_W))
+            position += path * camera->get_front();
+
+        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_S))
+            position -= path * camera->get_front();
+
+        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftArrow) ||  ImGui::IsKeyDown(ImGuiKey::ImGuiKey_A))
+            position -= path * glm::normalize(glm::cross(camera->get_front(), camera->get_up()));
+
+        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightArrow) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_D))
+            position += path * glm::normalize(glm::cross(camera->get_front(), camera->get_up()));
+
+        camera->set_position(glm::inverse(camera->get_scale_matrix()) * glm::vec4(position, 1.f));
+    }
+    else
+    {
+        //glfwSetInputMode(Application::instance()->get_window(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+    }
+
+    if(!ImGui::IsWindowHovered(ImGuiHoveredFlags_::ImGuiHoveredFlags_None)) 
         return;
 
     // clear selection
@@ -176,7 +210,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
             glm::vec3 thisWindowSize   = glm::vec3(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y, 1.f);
             
             auto mouseDelta = 
-                m_SceneCursor.PositionDelta / std::max(thisWindowSize.x, thisWindowSize.y) * std::max(mainViewportSize.x, mainViewportSize.y) * perspectiveScale;
+                m_CursorWatcher->m_PositionDelta / std::max(thisWindowSize.x, thisWindowSize.y) * std::max(mainViewportSize.x, mainViewportSize.y) * perspectiveScale;
 
             mouseDelta = 
                 glm::rotate(glm::mat4(1.f), glm::radians(camera->get_pitch()), glm::vec3(1.f, 0.f, 0.f)) * 
@@ -189,32 +223,6 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 
             break; // move only the nearest to the cursor element
         }
-    }
-
-    // move camera
-    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
-    {
-        // set camera rotation
-        camera->set_pitch(camera->get_pitch() + m_SceneCursor.PositionDelta.y * camera->get_sensitivity());
-        camera->set_yaw(camera->get_yaw() - m_SceneCursor.PositionDelta.x * camera->get_sensitivity());
-
-        // set camera position
-        auto path     = camera->get_movement_speed() * (float)m_TimeProvider->get_time_delta();
-        auto position = camera->get_position() * m_Scene->get_component<Transform>()->get_scale();
-
-        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_UpArrow) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_W))
-            position += path * camera->get_front();
-
-        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_DownArrow) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_S))
-            position -= path * camera->get_front();
-
-        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftArrow) ||  ImGui::IsKeyDown(ImGuiKey::ImGuiKey_A))
-            position -= path * glm::normalize(glm::cross(camera->get_front(), camera->get_up()));
-
-        if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightArrow) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_D))
-            position += path * glm::normalize(glm::cross(camera->get_front(), camera->get_up()));
-
-        camera->set_position(position / m_Scene->get_component<Transform>()->get_scale());
     }
 
     // process input events

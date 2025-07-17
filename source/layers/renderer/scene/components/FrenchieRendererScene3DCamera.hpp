@@ -23,7 +23,9 @@ namespace Frenchie
             virtual ~Camera();
 
             glm::mat4 get_projection_matrix() const;
+            glm::mat4 get_scale_matrix() const;
             glm::vec3 get_position() const;
+            glm::vec2 get_resolution() const;
 
             glm::vec3 get_axis() const;
             glm::vec3 get_front() const;
@@ -40,14 +42,13 @@ namespace Frenchie
             float get_fovy() const;
             
             void set_position(const glm::vec3&);
+            void set_resolution(const glm::vec2&);
             void set_movement_speed(const float&);
             void set_sensitivity(const float&);
             void set_pitch(const float&);
             void set_yaw(const float&);
             void set_roll(const float&);
             void set_axis(const glm::vec3&);
-            void set_size(const glm::vec2&);
-            void set_aspect(const float&);
             void set_near(const float&);
             void set_far(const float&);
             void set_fovy(const float&);
@@ -85,9 +86,9 @@ namespace Frenchie
             mutable float     m_Roll          = 0.f;
             mutable float     m_Near          = +0.1f;
             mutable float     m_Far           = -1.f;
-            mutable float     m_Aspect        = 1.f;
             mutable float     m_Fovy          = 90.f;
             mutable glm::vec3 m_Axis          = glm::vec3(1.f, 1.f, 1.f);
+            mutable glm::vec2 m_Resolution    = glm::vec2(2048.f, 1024.f);
 
             glm::vec4    m_ClearColor         = glm::vec4(0.25f, 0.25f, 0.25f, 0.5f);
             unsigned int m_Framebuffer        = 0;

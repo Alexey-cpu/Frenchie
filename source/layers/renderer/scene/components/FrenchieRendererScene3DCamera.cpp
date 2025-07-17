@@ -1,5 +1,14 @@
 #include <FrenchieRendererScene3DCamera.hpp>
+
 #include <FrenchieRendererScene3D.hpp>
+
+// GLAD
+#include <glad/glad.h>
+
+// GLFW
+#include <GLFW/glfw3.h>
+
+// IMGUI
 #include <imgui.h>
 
 using namespace Frenchie::Renderer;
@@ -32,9 +41,7 @@ glm::mat4 Camera::get_view_matrix() const
     m_CameraLocalFrontAxisDirection = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalFrontAxisDirection, 1.f)));
     m_CameraLocalUpAxisDirection    = glm::normalize(glm::vec3(rotateZ * glm::vec4(m_CameraLocalUpAxisDirection, 1.f)));
 
-    Object*   object          = get_object<Object>();
-    glm::mat4 transformMatrix = object != nullptr ? object->get_component<Transform>()->get_model_matrix() : glm::mat4(1.f);
-    glm::vec3 cameraPosition  = transformMatrix * glm::vec4(m_CameraWorldPosition, 1.f);
+    glm::vec3 cameraPosition = get_scale_matrix() * glm::vec4(m_CameraWorldPosition, 1.f);
 
     return glm::lookAt(
         cameraPosition, 
@@ -42,14 +49,31 @@ glm::mat4 Camera::get_view_matrix() const
         m_CameraLocalUpAxisDirection);
 }
 
+glm::mat4 Camera::get_scale_matrix() const
+{
+    return glm::scale(
+        glm::mat4(1.f), 
+        glm::vec3(
+            1.f / std::max<float>(m_Resolution.x, 1.f), 
+            1.f / std::max<float>(m_Resolution.y, 1.f), 
+            1.f / 10000.f
+        )
+    );
+}
+
 glm::mat4 Camera::get_projection_matrix() const
 {
-    return glm::perspective(glm::radians(m_Fovy), m_Aspect, m_Near, m_Far) * get_view_matrix();
+    return glm::perspective(glm::radians(get_fovy()), 1.f, get_near(), get_far()) * get_view_matrix() * get_scale_matrix();
 }
 
 glm::vec3 Camera::get_position() const
 {
     return m_CameraWorldPosition;
+}
+
+glm::vec2 Camera::get_resolution() const
+{
+    return m_Resolution;
 }
 
 glm::vec3 Camera::get_axis() const
@@ -74,7 +98,7 @@ glm::vec3 Camera::get_right() const
 
 float Camera::get_aspect() const
 {
-    return m_Aspect;
+    return m_Resolution.x / m_Resolution.y;
 }
 
 float Camera::get_near() const
@@ -132,6 +156,11 @@ void Camera::set_position(const glm::vec3& _Value)
     m_CameraWorldPosition = _Value;
 }
 
+void Camera::set_resolution(const glm::vec2& _Resolution)
+{
+    m_Resolution = _Resolution;
+}
+
 void Camera::set_movement_speed(const float& _Value)
 {
     m_MovementSpeed = _Value;
@@ -160,11 +189,6 @@ void Camera::set_yaw(const float& _Value)
 void Camera::set_roll(const float& _Value)
 {
     m_Roll = _Value;
-}
-
-void Camera::set_aspect(const float& _Value)
-{
-    m_Aspect = _Value;
 }
 
 void Camera::set_near(const float& _Value)
@@ -228,12 +252,12 @@ void Camera::draw_editor()
     // camera geometry
     auto rotation = glm::vec3(m_Pitch, m_Yaw, m_Roll);
 
+    ImGui::DragFloat2("Resolution", &m_Resolution[0], 1.0f, 16.f, 4096.f, "%.4f");
     ImGui::DragFloat3("position XYZ", &m_CameraWorldPosition[0], 0.5f, -10000.f, 10000.f, "%.4f");
     ImGui::DragFloat3("rotation XYZ", &rotation[0], 0.5f, -360.f, 360.f, "%.4f");
-    ImGui::DragFloat("Field of view", &m_Fovy, 0.1f, 0.f, 120.f, "%.4f");
-    ImGui::DragFloat("Movement speed", &m_MovementSpeed, 0.5f, 1.0f, 10.f, "%.4f");
-    ImGui::DragFloat("Sensitivity", &m_Sensitivity, 0.01f, 0.001f, 1.f, "%.4f");
-    ImGui::DragFloat("Aspect", &m_Aspect, 0.1f, 0.5f, 2.f, "%.4f");
+    ImGui::DragFloat("field of view", &m_Fovy, 0.1f, 0.f, 120.f, "%.4f");
+    ImGui::DragFloat("movement speed", &m_MovementSpeed, 0.5f, 1.0f, 10.f, "%.4f");
+    ImGui::DragFloat("sensitivity", &m_Sensitivity, 0.01f, 0.001f, 1.f, "%.4f");
     ImGui::DragFloat("Near", &m_Near, 1.f, -10000, 10000, "%.4f");
     ImGui::DragFloat("Far", &m_Far, 1.f, -10000, 10000, "%.4f");
 
@@ -290,9 +314,8 @@ void Camera::render()
         return;
     }
 
-    auto size   = scene->get_component<Size>();
-    auto width  = size != nullptr ? size->get_size().x : 2048.f;
-    auto height = size != nullptr ? size->get_size().y : 1024.f;
+    auto width  = m_Resolution.x;
+    auto height = m_Resolution.y;
 
     // resize frame buffer
     glBindTexture(GL_TEXTURE_2D, m_TextureColorBuffer);

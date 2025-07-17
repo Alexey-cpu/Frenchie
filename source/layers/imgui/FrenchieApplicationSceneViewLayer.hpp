@@ -3,6 +3,7 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationCommandsQueueLayer.hpp>
 #include <FrenchieApplicationTimeProviderLayer.hpp>
+#include <FrenchieApplicationCursorWatcherLayer.hpp>
 
 #include <FrenchieRendererScene3D.hpp>
 
@@ -41,17 +42,12 @@ namespace Frenchie
 
         protected:
 
-            struct SceneCursor
-            {
-                glm::vec3 CurrentPosition;
-                glm::vec3 PreviousPosition;
-                glm::vec3 PositionDelta;
-            } m_SceneCursor;
-
+            //Camera*                             m_ActiveCamera  = nullptr;
             std::shared_ptr<Scene3D>            m_Scene         = nullptr;
             std::shared_ptr<CommandsQueueLayer> m_CommandsQueue = nullptr;
             std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;
-            Scene3DCursor::PickedObjects   m_Selection     = Scene3DCursor::PickedObjects();
+            std::shared_ptr<CursorWatcher>      m_CursorWatcher = nullptr;
+            Scene3DCursor::PickedObjects        m_Selection     = Scene3DCursor::PickedObjects();
 
             static glm::vec3 to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition);
             void process_events(const glm::vec3&);
