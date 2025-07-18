@@ -228,6 +228,38 @@ namespace Frenchie
                 }
             }
 
+            // components
+            template<typename T, typename ... Arguments>
+            T* add_component(Arguments ... _Args)
+            {
+                // attach component
+                m_Components.push_back(std::make_unique<T>(_Args ...));
+                auto component = dynamic_cast<T*>(m_Components.back().get());
+                component->m_Object = this;
+
+                // enable component
+                component->set_enabled(true);
+
+                return component;
+            }
+
+            template<typename T>
+            void remove_component()
+            {
+                auto iterator = 
+                    std::find_if(
+                        m_Components.begin(), 
+                        m_Components.end(), 
+                        [](std::unique_ptr<Component>& _Component)->bool
+                        { 
+                            return dynamic_cast<T*>(_Component.get());
+                        }
+                    );
+
+                if(iterator != m_Components.end()) 
+                    m_Components.erase(iterator);
+            }
+
             template<typename T>
             T* get_component() const
             {
@@ -267,37 +299,6 @@ namespace Frenchie
                 }
 
                 return nullptr;
-            }
-
-            template<typename T, typename ... Arguments>
-            T* add_component(Arguments ... _Args)
-            {
-                // attach component
-                m_Components.push_back(std::make_unique<T>(_Args ...));
-                auto component = dynamic_cast<T*>(m_Components.back().get());
-                component->m_Object = this;
-
-                // enable component
-                component->set_enabled(true);
-
-                return component;
-            }
-
-            template<typename T>
-            void remove_component()
-            {
-                auto iterator = 
-                    std::find_if(
-                        m_Components.begin(), 
-                        m_Components.end(), 
-                        [](std::unique_ptr<Component>& _Component)->bool
-                        { 
-                            return dynamic_cast<T*>(_Component.get());
-                        }
-                    );
-
-                if(iterator != m_Components.end()) 
-                    m_Components.erase(iterator);
             }
 
             virtual bool awake();
