@@ -348,7 +348,7 @@ void Camera::render()
         auto projectionMatrix = get_projection_matrix();
 
         scene->apply_to_children_recursive(
-            [this, &projectionMatrix](Object* _Objcet)
+            [this, &projectionMatrix](objectRef _Objcet)
             {
                 auto component = _Objcet->get_component<IShader>();
                 auto shader    = component != nullptr ? component->get_shader() : nullptr;

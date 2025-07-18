@@ -18,9 +18,9 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
 
 // SceneView
-SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D)
-{
-}
+SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : 
+    Layer(_Name), 
+    m_Scene(_Scene3D){}
 
 SceneView::~SceneView(){}
 
@@ -48,9 +48,9 @@ void SceneView::frame_update()
         return;
 
     // look for an active camera
-    auto renderer = m_Scene->get_component<Camera>();
+    auto camera = m_Scene->get_active_camera();
 
-    if(renderer == nullptr)
+    if(camera == nullptr)
         return;
 
     ImGui::Begin(get_name().c_str());
@@ -58,16 +58,16 @@ void SceneView::frame_update()
     // draw scene contents and update scene geometry
     ImVec2 sceneWidgetPosition = ImGui::GetCursorScreenPos();
     float  sceneTextureHeight  = ImGui::GetContentRegionAvail().y;
-    float  sceneTextureWidth   = sceneTextureHeight * renderer->get_aspect();
+    float  sceneTextureWidth   = sceneTextureHeight * camera->get_aspect();
     
     if(sceneTextureWidth < ImGui::GetContentRegionAvail().x)
     {
         sceneTextureWidth  = ImGui::GetContentRegionAvail().x;
-        sceneTextureHeight = sceneTextureWidth / renderer->get_aspect();
+        sceneTextureHeight = sceneTextureWidth / camera->get_aspect();
     }
 
     ImGui::GetWindowDrawList()->AddImage(
-        renderer->get_texture(), 
+        camera->get_texture(), 
         ImVec2(sceneWidgetPosition.x, sceneWidgetPosition.y), 
         ImVec2(sceneWidgetPosition.x + sceneTextureWidth, sceneWidgetPosition.y + sceneTextureHeight),
         ImVec2(0, 1),
@@ -97,11 +97,11 @@ void SceneView::frame_update()
 
 void SceneView::frame_finish()
 {
-    auto renderer = 
-        m_Scene != nullptr ? m_Scene->get_component<IRenderer>() : nullptr;
+    auto camera = 
+        m_Scene != nullptr ? m_Scene->get_active_camera() : nullptr;
 
-    if(renderer != nullptr) 
-        renderer->render();
+    if(camera != nullptr) 
+        camera->render();
 }
 
 void SceneView::finish()
@@ -133,11 +133,15 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
     if(m_Scene == nullptr) 
         return;
 
-    auto camera      = m_Scene->get_component<Camera>();
+    auto camera      = m_Scene->get_active_camera();
     auto mousePicker = m_Scene->get_component<Scene3DCursor>();
 
     if(camera == nullptr || mousePicker == nullptr) 
+    {
+        std::cout << "Active camera is NULLPTR !!!! \n";
+
         return;
+    }
 
     // move camera
     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
@@ -227,7 +231,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
 
     // process input events
     m_Scene->apply_to_children_recursive(
-        [this, &camera](Object* _Object)
+        [this, &camera](objectRef _Object)
         {
             auto meshRenderer = _Object->get_component<MeshRenderer>();
             auto transform    = _Object->get_component<Transform>();
@@ -245,7 +249,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
                         [this]()
                         {
                             m_Scene->remove_children(
-                                [](Object* _Object)->bool
+                                [](objectRef _Object)->bool
                                 {
                                     return _Object->check_flag(Object::Flags::Focused);
                                 }

@@ -19,14 +19,14 @@ namespace Frenchie
         public:
             struct PickedObject
             {
-                PickedObject(Core::Object* _Object, glm::vec3 _Position, float _DistanceFromRay) : 
+                PickedObject(Core::objectRef _Object, glm::vec3 _Position, float _DistanceFromRay) : 
                     Object(_Object), 
                     Position(_Position), 
                     DistanceFromRay(_DistanceFromRay){}
                 
                 ~PickedObject(){}
 
-                Core::Object* Object          = nullptr;
+                Core::objectRef Object          = nullptr;
                 glm::vec3     Position        = glm::vec3(0.f);
                 float         DistanceFromRay = 0.f;
 

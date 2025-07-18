@@ -64,7 +64,7 @@ bool HierarchyView::is_closed()
     return Layer::is_closed();
 }
 
-void HierarchyView::draw_tree(Object* _Transform, int& _ID)
+void HierarchyView::draw_tree(objectRef _Transform, int& _ID)
 {
     if(_Transform == nullptr || m_Scene == nullptr) 
         return;
@@ -91,8 +91,8 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
         {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Frenchie::Core::Object"))
             {
-                Object** receivedPointerAddress = static_cast<Object**>(payload->Data);
-                Object*  receivedPointer        = receivedPointerAddress != nullptr ? *receivedPointerAddress : nullptr;
+                objectRef* receivedPointerAddress = static_cast<objectRef*>(payload->Data);
+                objectRef  receivedPointer        = receivedPointerAddress != nullptr ? *receivedPointerAddress : nullptr;
 
                 if(receivedPointer != nullptr) 
                 {
@@ -122,7 +122,7 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
             if(ImGui::MenuItem("Rename"))
             {
                 m_Scene->set_flag(Object::Flags::Selected, false);
-                m_Scene->apply_to_children_recursive([](Object* _Object){_Object->set_flag(Object::Flags::Selected, false);});
+                m_Scene->apply_to_children_recursive([](objectRef _Object){_Object->set_flag(Object::Flags::Selected, false);});
                 _Transform->set_flag(Object::Flags::Selected, true);
             }
             
@@ -146,7 +146,7 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
             ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
             m_Scene->set_flag(Object::Flags::Selected, false);
-            m_Scene->apply_to_children_recursive([](Object* _Object){_Object->set_flag(Object::Flags::Selected, false);});
+            m_Scene->apply_to_children_recursive([](objectRef _Object){_Object->set_flag(Object::Flags::Selected, false);});
             _Transform->set_flag(Object::Flags::Selected, true);
         }
 
@@ -186,7 +186,7 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
             ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle))
         {
             m_Scene->set_flag(Object::Flags::Focused, false);
-            m_Scene->apply_to_children_recursive([](Object* _Object){_Object->set_flag(Object::Flags::Focused, false);});
+            m_Scene->apply_to_children_recursive([](objectRef _Object){_Object->set_flag(Object::Flags::Focused, false);});
             _Transform->set_flag(Object::Flags::Focused, true);
         }
 
@@ -201,11 +201,11 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
     ImGui::PopID();
 
     // deselect all items on click
-    Object* selectedItem = m_Scene->check_flag(Object::Flags::Selected) ? m_Scene.get() : nullptr;
-    Object* focusedItem  = m_Scene->check_flag(Object::Flags::Selected) ? m_Scene.get() : nullptr;
+    objectRef selectedItem = m_Scene->check_flag(Object::Flags::Selected) ? m_Scene.get() : nullptr;
+    objectRef focusedItem  = m_Scene->check_flag(Object::Flags::Selected) ? m_Scene.get() : nullptr;
 
     m_Scene->apply_to_children_recursive(
-        [&selectedItem, &focusedItem](Object* _Object)
+        [&selectedItem, &focusedItem](objectRef _Object)
         {
             if(_Object->check_flag(Object::Flags::Selected)) 
                 selectedItem = _Object;
@@ -220,7 +220,7 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
     {
         m_Scene->set_flag(Object::Flags::Selected, false);
         m_Scene->apply_to_children_recursive(
-            [](Object* _Object)
+            [](objectRef _Object)
             {
                 _Object->set_flag(Object::Flags::Selected, false);
             }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreObject.hpp>
 
@@ -54,10 +55,9 @@ namespace Frenchie
                 int execute();
 
                 template<typename Type, typename ... Arguments>
-                std::shared_ptr<Type> push(Arguments... _Parameters)
+                Core::Reference<Type> push(Arguments... _Parameters)
                 {
-                    std::shared_ptr<Type> layer = 
-                        std::make_shared<Type>(_Parameters ...);
+                    auto layer = std::make_shared<Type>(_Parameters ...);
                     
                     if(contains<Type>() && 
                         !layer->allows_multiple_instances())
@@ -75,7 +75,7 @@ namespace Frenchie
                     }
 
                     m_Layers.push_back(layer);
-                    return layer;
+                    return Core::Reference<Type>(layer);
                 }
 
                 template<typename Type>

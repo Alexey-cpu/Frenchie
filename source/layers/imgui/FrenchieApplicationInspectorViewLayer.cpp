@@ -83,7 +83,7 @@ void InspectorView::frame_update()
         m_Scene->draw_editor();
 
     m_Scene->apply_to_children_recursive(
-        [](Object* _Object)
+        [](objectRef _Object)
         {
             if(_Object->check_flag(Object::Focused))
                 _Object->draw_editor();

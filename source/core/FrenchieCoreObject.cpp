@@ -58,7 +58,7 @@ Object::Object(const std::string& _Name) : m_Name(_Name){}
 
 Object::~Object(){}
 
-Object* Object::get_parent_recursive(const std::function<bool(Object*)>& _Predicate) const
+objectRef Object::get_parent_recursive(const std::function<bool(objectRef)>& _Predicate) const
 {
     if(_Predicate == nullptr) 
         return nullptr;
@@ -76,6 +76,11 @@ Object* Object::get_parent_recursive(const std::function<bool(Object*)>& _Predic
     return nullptr;    
 }
 
+std::list<object>& Object::get_children() const
+{
+    return m_Children;
+}
+
 std::string Object::get_name() const
 {
     return m_Name;
@@ -84,11 +89,6 @@ std::string Object::get_name() const
 bool Object::check_flag(int _N) const
 {
     return (bool)((m_Flags >> _N) & 1);
-}
-
-std::list<std::unique_ptr<Object>>& Object::get_children() const
-{
-    return m_Children;
 }
 
 void Object::set_name(const std::string& _Value)
@@ -104,7 +104,7 @@ void Object::set_flag(int _N, bool _Value)
         m_Flags &= ~((unsigned int)1 << _N);
 }
 
-void Object::apply_to_children(const std::function<void(Object* _Object)>& _Callback) const
+void Object::apply_to_children(const std::function<void(objectRef _Object)>& _Callback) const
 {
     if(_Callback == nullptr) 
         return;
@@ -116,7 +116,7 @@ void Object::apply_to_children(const std::function<void(Object* _Object)>& _Call
     }
 }
 
-void Object::apply_to_children_recursive(const std::function<void(Object* _Object)>& _Callback) const
+void Object::apply_to_children_recursive(const std::function<void(objectRef _Object)>& _Callback) const
 {
     if(_Callback == nullptr) 
         return;
@@ -132,7 +132,7 @@ void Object::apply_to_children_recursive(const std::function<void(Object* _Objec
     }
 }
 
-Object* Object::find_child(const std::function<bool(Object*)>& _Predicate) const
+objectRef Object::find_child(const std::function<bool(objectRef)>& _Predicate) const
 {
     for(auto&& child : m_Children) 
     {
@@ -143,7 +143,7 @@ Object* Object::find_child(const std::function<bool(Object*)>& _Predicate) const
     return nullptr;
 }
 
-Object* Object::find_child_recursive(const std::function<bool(Object*)>& _Predicate) const
+objectRef Object::find_child_recursive(const std::function<bool(objectRef)>& _Predicate) const
 {
     for(auto&& child : m_Children) 
     {
@@ -159,14 +159,14 @@ Object* Object::find_child_recursive(const std::function<bool(Object*)>& _Predic
     return nullptr;
 }
 
-std::list<Object*> Object::find_children_recursive(const std::function<bool(Object*)>& _Predicate) const
+std::list<objectRef> Object::find_children_recursive(const std::function<bool(objectRef)>& _Predicate) const
 {
     if(_Predicate == nullptr) 
-        return std::list<Object*>();
+        return std::list<objectRef>();
 
-    std::list<Object*> result;
+    std::list<objectRef> result;
 
-    apply_to_children_recursive([&result, &_Predicate](Object* _Object)
+    apply_to_children_recursive([&result, &_Predicate](objectRef _Object)
     {
         if(_Object != nullptr && _Predicate(_Object)) 
             result.push_back(_Object);
@@ -240,14 +240,9 @@ void Object::draw_editor()
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap))
     {
         // draw self editor
-        std::string name = get_name();
-        for (int i = 0; i < 512; i++) 
-            Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
+        draw_self();
         
         // draw components editors
-        if(ImGui::InputText("##", Object::m_Editor.m_Name, 512, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) 
-            set_name(std::string(Object::m_Editor.m_Name));
-
         for(auto&& component : m_Components)
         {
             Frenchie::Renderer::IEditor* editor = 
@@ -277,6 +272,18 @@ void Object::draw_editor()
     }
 
     ImGui::PopID();
+}
+
+void Object::draw_self()
+{
+    // draw self editor
+    std::string name = get_name();
+    for (int i = 0; i < 512; i++) 
+        Object::m_Editor.m_Name[i] = i < name.size() ? name[i] : '\0';
+    
+    if(ImGui::InputText("##", Object::m_Editor.m_Name, 512, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue)) 
+        set_name(std::string(Object::m_Editor.m_Name));
+
 }
 
 Object::Editor Object::m_Editor = Editor();
