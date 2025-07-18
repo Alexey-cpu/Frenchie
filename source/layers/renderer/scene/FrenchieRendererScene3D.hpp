@@ -16,6 +16,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // STL
+#include <iostream>
 
 namespace Frenchie
 {
@@ -31,16 +32,159 @@ namespace Frenchie
             
             virtual ~Scene3D();
 
+            Reference<Camera> get_active_camera() const
+            {
+                // fill cameras
+                if(m_CameraInfos.empty())
+                {
+                    // get self camera
+                    CameraInfo selfCamera =             
+                    {
+                        get_name(),
+                        get_component<Camera>(), 
+                        true
+                    };
+
+                    if(selfCamera.Reference != nullptr)
+                        m_CameraInfos.push_back(selfCamera);
+
+                    // get child cameras
+                    apply_to_children_recursive(
+                        [this](objectRef _Object)
+                        {
+                            auto camera = _Object->get_component<Camera>();
+
+                            if(camera == nullptr) 
+                                return;
+                                
+                            m_CameraInfos.push_back(
+                            {
+                                _Object->get_name(),
+                                camera, 
+                                false
+                            }
+                            );
+                        }
+                    );
+
+                    if(selfCamera.Reference != nullptr) 
+                        return selfCamera.Reference;
+
+                    if(!m_CameraInfos.empty()) 
+                        return m_CameraInfos.begin()->Reference;
+
+                    return nullptr;
+                }
+
+                // remove expired references
+                for(auto it = m_CameraInfos.begin(); it != m_CameraInfos.end(); it++) 
+                {
+                    if(it->Reference == nullptr)
+                    {
+                        auto rm = it;
+                        it++;
+                        m_CameraInfos.erase(rm);
+                    }
+                }
+
+                // update existing cameras
+                auto selfCamera = get_component<Camera>();
+
+                if(selfCamera != nullptr)
+                {
+                    CameraInfo info =             
+                    {
+                        get_name(),
+                        selfCamera, 
+                        false
+                    };
+
+                    if(std::find_if(
+                        m_CameraInfos.begin(), 
+                        m_CameraInfos.end(),
+                        [&info](const CameraInfo& _Info)->bool{return _Info.Reference == info.Reference;}) == m_CameraInfos.end())
+                    {
+                        m_CameraInfos.push_back(info);   
+                    }
+                }
+
+                apply_to_children_recursive(
+                    [this](objectRef _Object)
+                    {
+                        auto camera = _Object->get_component<Camera>();
+
+                        if(camera == nullptr) 
+                            return;
+
+                        CameraInfo info =             
+                        {
+                            _Object->get_name(),
+                            camera, 
+                            false
+                        };
+                            
+                        if(std::find_if(
+                            m_CameraInfos.begin(), 
+                            m_CameraInfos.end(),
+                            [&info](const CameraInfo& _Info)->bool{return _Info.Reference == info.Reference;}) == m_CameraInfos.end())
+                        {
+                            m_CameraInfos.push_back(info);   
+                        }
+                    }
+                );
+
+                // find an active camera
+                for(auto&& cameraInfo : m_CameraInfos)
+                {
+                    if(cameraInfo.Active)
+                    {
+                        return cameraInfo.Reference;
+                    }
+                }
+
+                if(m_CameraInfos.empty()) 
+                    return nullptr;
+
+                auto first = m_CameraInfos.begin();
+                first->Active = true;
+
+                return first->Reference;
+            }
+
+
             // virtual API override
             virtual void frame_start() override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
 
+            virtual void draw_self() override;
+
             protected:
 
-                //Camera*        m_Camera         = nullptr;
-                Transform*     m_Transform      = nullptr;
-                Scene3DCursor* m_MousePicker    = nullptr;
+                Reference<Transform>     m_Transform   = nullptr;
+                Reference<Scene3DCursor> m_MousePicker = nullptr;
+
+                struct CameraInfo
+                {
+                    mutable std::string       Name      = std::string();
+                    mutable Reference<Camera> Reference = nullptr;
+                    mutable bool              Active    = false;
+
+                    // nested types
+                    struct TransparentComparator
+                    {
+                        using is_transparent = CameraInfo;
+
+                    public:
+
+                        bool operator()(const CameraInfo& _A, const CameraInfo& _B) const
+                        {
+                            return  _A.Reference < _B.Reference;
+                        }
+                    };
+                };
+
+                mutable std::list<CameraInfo> m_CameraInfos = std::list<CameraInfo>();
         };
 
         // class Scene3DBHV : public Frenchie::Core::Component, public IEditor

@@ -36,7 +36,7 @@ Scene3DCursor::PickedObjects Scene3DCursor::pick(const glm::vec3& _CursorNDCPosi
 
     // cast ray
     scene->apply_to_children_recursive(
-        [&ray, &pickedObjects, &projectionMatrix](Object* _Object)
+        [&ray, &pickedObjects, &projectionMatrix](objectRef _Object)
         {
             auto transform = _Object->get_component<Transform>();
             auto mesh      = _Object->get_component<IMesh>();

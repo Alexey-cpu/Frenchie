@@ -2,6 +2,10 @@
 #include <FrenchieRendererShader.hpp>
 #include <FrenchieApplication.hpp>
 
+// IMGUI
+#include <imgui.h>
+
+
 using namespace Frenchie::Renderer;
 
 Scene3D::Scene3D(
@@ -28,4 +32,28 @@ void Scene3D::frame_finish()
 {
     // TODO: do frustrum culling here
     Object::frame_finish();
+}
+
+void Scene3D::draw_self()
+{
+    // call base implementation
+    Object::draw_self();
+
+    // customize
+    if(ImGui::TreeNode("Cameras"))
+    {
+        for(auto&& camera : m_CameraInfos)
+        {
+            if(ImGui::Checkbox(camera.Name.c_str(), &camera.Active))
+            {
+                for(auto&& notActiveCamera : m_CameraInfos)
+                {
+                    if(notActiveCamera.Reference != camera.Reference) 
+                        notActiveCamera.Active = false;
+                }
+            }
+        }
+
+        ImGui::TreePop();
+    }
 }
