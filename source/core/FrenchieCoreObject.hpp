@@ -21,8 +21,7 @@ namespace Frenchie
         class Object;
         class Component;
 
-        typedef std::shared_ptr<Object>    object;
-        typedef Reference<Object>          objectRef;
+        typedef std::unique_ptr<Object>    object;
         typedef std::shared_ptr<Component> component;
         typedef Reference<Component>       componentRef;
 
@@ -83,15 +82,10 @@ namespace Frenchie
 
             // getters
             template<typename Type = Object> 
-            Type* get_parent(const std::function<bool(Object*)>& _Predicate = 
-                [](Object* _Parent)->bool
-                {
-                    return dynamic_cast<Type*>(_Parent);
-                }
-            ) const
+            Type* get_parent(const std::function<bool(Object*)>& _Predicate = nullptr) const
             {                
                 if(_Predicate == nullptr) 
-                    return nullptr;
+                    return dynamic_cast<Type*>(m_Parent);
 
                 auto parent = m_Parent;
 
@@ -154,10 +148,10 @@ namespace Frenchie
             template<typename Type, typename ...Arguments> 
             Type* create_child(Arguments ... _Args)
             {
-                auto child = std::make_shared<Type>( _Args ...);
-                m_Children.push_back(child);
+                m_Children.push_back(std::make_unique<Type>( _Args ...));
+                auto& child = m_Children.back();
                 child->m_Parent = this;
-                return child.get();
+                return dynamic_cast<Type*>(child.get());
             }
 
             void remove_child(const std::function<bool(Object*)>& _Predicate)
@@ -236,9 +230,9 @@ namespace Frenchie
                 {
                     if((*it).get() == this)
                     {
-                        auto self = (*it);
+                        auto self = (*it).release();
                         m_Parent->m_Children.erase(it);
-                        _Destination->m_Children.push_back(self);
+                        _Destination->m_Children.push_back(object(self));
                         self->m_Parent = _Destination;
                         return;
                     }
