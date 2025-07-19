@@ -21,10 +21,10 @@ namespace Frenchie
         class Object;
         class Component;
 
-        typedef std::unique_ptr<Object> object;
-        typedef Object* objectRef;
+        typedef std::shared_ptr<Object>    object;
+        typedef Reference<Object>          objectRef;
         typedef std::shared_ptr<Component> component;
-        typedef Reference<Component> componentRef;
+        typedef Reference<Component>       componentRef;
 
         class Component : 
             public NonCopyable,
@@ -60,8 +60,8 @@ namespace Frenchie
             
         protected:
             
-            mutable objectRef m_Object  = nullptr;
-            mutable bool      m_Enabled = true;
+            mutable Object* m_Object  = nullptr;
+            mutable bool    m_Enabled = true;
             friend class Object;
         };
 
@@ -82,25 +82,30 @@ namespace Frenchie
             virtual ~Object();
 
             // getters
-            template<typename T = Object> 
-            T* get_parent() const
-            {
-                return dynamic_cast<T*>(m_Parent);
-            }
-
-            template<typename T> 
-            T* get_parent_recursive() const
+            template<typename Type = Object> 
+            Type* get_parent(const std::function<bool(Object*)>& _Predicate = 
+                [](Object* _Parent)->bool
+                {
+                    return dynamic_cast<Type*>(_Parent);
+                }
+            ) const
             {                
-                return dynamic_cast<T*>(
-                    get_parent_recursive(
-                        [](objectRef _Object)->bool
-                        {
-                            return dynamic_cast<T*>(_Object) != nullptr;}
-                        )
-                    );
+                if(_Predicate == nullptr) 
+                    return nullptr;
+
+                auto parent = m_Parent;
+
+                while (parent != nullptr)
+                {
+                    if(_Predicate(parent)) 
+                        return dynamic_cast<Type*>(parent);
+
+                    parent = parent->m_Parent;
+                }
+                
+                return nullptr;
             }
 
-            objectRef get_parent_recursive(const std::function<bool(objectRef)>& _Predicate) const;
             std::list<object>& get_children() const;
 
             std::string get_name() const;
@@ -111,48 +116,51 @@ namespace Frenchie
             void set_flag(int _N, bool _Value);
             
             // API
-            void apply_to_children(const std::function<void(objectRef _Object)>& _Callback) const;
-            void apply_to_children_recursive(const std::function<void(objectRef _Object)>& _Callback) const;
-
-            objectRef find_child(const std::function<bool(objectRef)>& _Predicate) const;
-
-            template<typename T> 
-            T* find_child() const
+            template<bool _Recursive = true>
+            void apply_to_children(const std::function<void(Object* _Object)>& _Callback) const
             {
-                return dynamic_cast<T*>(
-                    find_child(
-                        [](objectRef _Object)->bool
-                        {
-                            return dynamic_cast<T*>(_Object) != nullptr;}
-                        )
-                    );
+                if(_Callback == nullptr) 
+                    return;
+
+                for(auto&& child : m_Children) 
+                {
+                    if(child == nullptr) 
+                        continue;
+
+                    _Callback(child.get());
+
+                    if(_Recursive)
+                        child->apply_to_children(_Callback);
+                }
             }
 
-            objectRef find_child_recursive(const std::function<bool(objectRef)>& _Predicate) const;
-            std::list<objectRef> find_children_recursive(const std::function<bool(objectRef)>& _Predicate) const;
-
-            template<typename T> 
-            T* find_child_recursive() const
+            template<bool _Recursive = true>
+            std::list<Object*> find_children(const std::function<bool(Object*)>& _Predicate) const
             {
-                return dynamic_cast<T*>(
-                    find_child_recursive(
-                        [](objectRef _Object)->bool
-                        {
-                            return dynamic_cast<T*>(_Object) != nullptr;}
-                        )
-                    );
+                if(_Predicate == nullptr) 
+                    return std::list<Object*>();
+
+                std::list<Object*> result;
+
+                apply_to_children<_Recursive>([&result, &_Predicate](Object* _Object)
+                {
+                    if(_Object != nullptr && _Predicate(_Object)) 
+                        result.push_back(_Object);
+                });
+
+                return result;
             }
 
-            template<typename T, typename ...Arguments> 
-            T* create_child(Arguments ... _Args)
+            template<typename Type, typename ...Arguments> 
+            Type* create_child(Arguments ... _Args)
             {
-                m_Children.push_back(std::make_unique<T>( _Args ...));
-                T* child = dynamic_cast<T*>(m_Children.back().get());
+                auto child = std::make_shared<Type>( _Args ...);
+                m_Children.push_back(child);
                 child->m_Parent = this;
-                return child;
+                return child.get();
             }
 
-            void remove_child(const std::function<bool(objectRef)>& _Predicate)
+            void remove_child(const std::function<bool(Object*)>& _Predicate)
             {
                 if(_Predicate == nullptr) 
                     return;
@@ -167,30 +175,19 @@ namespace Frenchie
                 }
             }
 
-            template<typename T> 
-            void remove_child()
-            {
-                remove_child([](objectRef _Object)->bool
-                {
-                    return dynamic_cast<T>(_Object) != nullptr;
-                }
-                );
-            }
-
-            void remove_children(const std::function<bool(objectRef)>& _Predicate)
+            template<bool _Recursive = true>
+            void remove_children(const std::function<bool(Object*)>& _Predicate)
             {
                 if(_Predicate == nullptr) 
                     return;
 
-                std::list<objectRef> objects = 
-                    find_children_recursive(_Predicate);
-
-                std::set<objectRef> objectsToRemove;
+                std::list<Object*> objects = find_children<_Recursive>(_Predicate);
+                std::set<Object*>  objectsToRemove;
 
                 for(auto&& object : objects)
                 {
-                    objectRef topMost = object;
-                    objectRef parent  = object->get_parent();
+                    auto topMost = object;
+                    auto parent  = object->get_parent();
 
                     while (parent != nullptr)
                     {
@@ -208,18 +205,23 @@ namespace Frenchie
 
             void remove_self()
             {
-                get_parent()->remove_child(
-                    [this](objectRef _Object)->bool
+                auto parent = get_parent();
+
+                if(parent == nullptr) 
+                    return;
+
+                parent->remove_child(
+                    [this](Object* _Object)->bool
                     {
                         return _Object == this;
                     }
                 );
             }
 
-            void move(objectRef _Destination)
+            void move(Object* _Destination)
             {
                 if(_Destination == nullptr || 
-                    _Destination->get_parent_recursive([this](objectRef _Object)->bool{return _Object == this;})) 
+                    _Destination->get_parent([this](Object* _Object)->bool{return _Object == this;})) 
                     return;
 
                 if(m_Parent == nullptr)
@@ -234,11 +236,9 @@ namespace Frenchie
                 {
                     if((*it).get() == this)
                     {
-                        auto self = (*it).release();
-
+                        auto self = (*it);
                         m_Parent->m_Children.erase(it);
-
-                        _Destination->m_Children.push_back(object(self));
+                        _Destination->m_Children.push_back(self);
                         self->m_Parent = _Destination;
                         return;
                     }
@@ -246,12 +246,12 @@ namespace Frenchie
             }
 
             // components
-            template<typename T, typename ... Arguments>
-            Reference<T> add_component(Arguments ... _Args)
+            template<typename Type, typename ... Arguments>
+            Reference<Type> add_component(Arguments ... _Args)
             {
                 // attach component
-                m_Components.push_back(std::make_unique<T>(_Args ...));
-                auto component = Reference<T>(m_Components.back());
+                m_Components.push_back(std::make_unique<Type>(_Args ...));
+                auto component = Reference<Type>(m_Components.back());
                 component->m_Object = this;
 
                 // enable component
@@ -260,12 +260,12 @@ namespace Frenchie
                 return component;
             }
 
-            template<typename T>
-            Reference<T> get_component() const
+            template<typename Type>
+            Reference<Type> get_component() const
             {
                 for(auto&& component : m_Components)
                 {
-                    auto casted = Reference<T>(component);
+                    auto casted = Reference<Type>(component);
 
                     if(casted != nullptr) 
                         return casted;
@@ -273,7 +273,7 @@ namespace Frenchie
                 return nullptr;
             }
 
-            template<typename T>
+            template<typename Type>
             void remove_component()
             {
                 auto iterator = 
@@ -282,41 +282,13 @@ namespace Frenchie
                         m_Components.end(), 
                         [](component& _Component)->bool
                         { 
-                            return Reference<T>(_Component);
+                            return Reference<Type>(_Component);
                         }
                     );
 
                 if(iterator != m_Components.end()) 
                     m_Components.erase(iterator);
             }
-
-            // template<typename T>
-            // T* get_component_in_children() const
-            // {
-            //     for(auto&& child : m_Children)
-            //     {
-            //         auto component = child->get_component<T>();
-
-            //         if(component != nullptr) 
-            //             return component;
-            //     }
-
-            //     return nullptr;
-            // }
-
-            // template<typename T>
-            // T* get_component_in_children_recursive() const
-            // {
-            //     for(auto&& child : m_Children)
-            //     {
-            //         auto component = child->get_component_in_children_recursive<T>();
-
-            //         if(component != nullptr) 
-            //             return component;
-            //     }
-
-            //     return nullptr;
-            // }
 
             virtual bool awake();
             virtual void frame_start();
@@ -330,7 +302,7 @@ namespace Frenchie
         protected:
 
             std::string  m_Name   = std::string();
-            objectRef    m_Parent = nullptr;
+            Object*      m_Parent = nullptr;
             unsigned int m_Flags  = 0;
 
             mutable std::list<object> m_Children   = std::list<object>();

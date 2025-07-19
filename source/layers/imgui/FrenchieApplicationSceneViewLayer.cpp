@@ -230,8 +230,8 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
     }
 
     // process input events
-    m_Scene->apply_to_children_recursive(
-        [this, &camera](objectRef _Object)
+    m_Scene->apply_to_children(
+        [this, &camera](Object* _Object)
         {
             auto meshRenderer = _Object->get_component<MeshRenderer>();
             auto transform    = _Object->get_component<Transform>();
@@ -249,7 +249,7 @@ void SceneView::process_events(const glm::vec3& _CursorNDCPosition)
                         [this]()
                         {
                             m_Scene->remove_children(
-                                [](objectRef _Object)->bool
+                                [](Object* _Object)->bool
                                 {
                                     return _Object->check_flag(Object::Flags::Focused);
                                 }

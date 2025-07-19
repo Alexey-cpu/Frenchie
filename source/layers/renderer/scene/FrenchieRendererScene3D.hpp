@@ -49,8 +49,8 @@ namespace Frenchie
                         m_CameraInfos.push_back(selfCamera);
 
                     // get child cameras
-                    apply_to_children_recursive(
-                        [this](objectRef _Object)
+                    apply_to_children(
+                        [this](Object* _Object)
                         {
                             auto camera = _Object->get_component<Camera>();
 
@@ -108,8 +108,8 @@ namespace Frenchie
                     }
                 }
 
-                apply_to_children_recursive(
-                    [this](objectRef _Object)
+                apply_to_children(
+                    [this](Object* _Object)
                     {
                         auto camera = _Object->get_component<Camera>();
 
