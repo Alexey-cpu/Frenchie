@@ -14,7 +14,7 @@ Scene3DCursor::PickedObjects Scene3DCursor::pick(const glm::vec3& _CursorNDCPosi
         return PickedObjects();
 
     // get scene
-    auto scene = get_object() != nullptr ? get_object()->get_parent_recursive<Scene3D>() : nullptr;
+    auto scene = get_object() != nullptr ? get_object()->get_parent<Scene3D>() : nullptr;
     if(scene == nullptr) 
         scene = get_object<Scene3D>();
 
@@ -35,8 +35,8 @@ Scene3DCursor::PickedObjects Scene3DCursor::pick(const glm::vec3& _CursorNDCPosi
     PickedObjects pickedObjects;
 
     // cast ray
-    scene->apply_to_children_recursive(
-        [&ray, &pickedObjects, &projectionMatrix](objectRef _Object)
+    scene->apply_to_children(
+        [&ray, &pickedObjects, &projectionMatrix](Object* _Object)
         {
             auto transform = _Object->get_component<Transform>();
             auto mesh      = _Object->get_component<IMesh>();

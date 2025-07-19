@@ -304,7 +304,7 @@ void Camera::render()
     }
 
     // try to get scene
-    auto scene = get_object()->get_parent_recursive<Scene3D>();
+    auto scene = get_object()->get_parent<Scene3D>();
     if(scene == nullptr) 
         scene = dynamic_cast<Scene3D*>(get_object());
 
@@ -347,8 +347,8 @@ void Camera::render()
         // setup projection matrix to the scenes shaders
         auto projectionMatrix = get_projection_matrix();
 
-        scene->apply_to_children_recursive(
-            [this, &projectionMatrix](objectRef _Objcet)
+        scene->apply_to_children(
+            [this, &projectionMatrix](Object* _Objcet)
             {
                 auto component = _Objcet->get_component<IShader>();
                 auto shader    = component != nullptr ? component->get_shader() : nullptr;

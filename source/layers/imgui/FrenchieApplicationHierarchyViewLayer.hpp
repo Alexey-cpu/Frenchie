@@ -44,7 +44,7 @@ namespace Frenchie
             std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;
             char                                m_TextInput[512]{};
 
-            void draw_tree(objectRef, int&);
+            void draw_tree(Object*, int&);
         };
     }
 };
