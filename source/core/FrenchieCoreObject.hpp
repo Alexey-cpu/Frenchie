@@ -82,8 +82,9 @@ namespace Frenchie
 
             // getters
             template<typename Type = Object> 
-            Type* get_parent(const std::function<bool(Object*)>& _Predicate = nullptr) const
-            {                
+            Type* get_parent(const std::function<bool(Object*)>& _Predicate = 
+                [](Object* _Object)->bool{return dynamic_cast<Type*>(_Object);}) const
+            {
                 if(_Predicate == nullptr) 
                     return dynamic_cast<Type*>(m_Parent);
 

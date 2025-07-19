@@ -84,6 +84,9 @@ namespace Frenchie
                         auto rm = it;
                         it++;
                         m_CameraInfos.erase(rm);
+
+                        if(it == m_CameraInfos.end()) 
+                            break;
                     }
                 }
 
