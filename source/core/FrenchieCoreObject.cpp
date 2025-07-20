@@ -58,9 +58,17 @@ Object::Object(const std::string& _Name) : m_Name(_Name){}
 
 Object::~Object(){}
 
-std::list<object>& Object::get_children() const
+std::list<Object*> Object::get_children() const
 {
-    return m_Children;
+    if(m_Children.empty()) 
+        return std::list<Object*>();
+
+    std::list<Object*> children;
+
+    for(auto&& child : m_Children) 
+        children.push_back(child.get());
+
+    return children;
 }
 
 std::string Object::get_name() const
