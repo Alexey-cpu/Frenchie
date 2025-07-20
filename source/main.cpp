@@ -14,7 +14,7 @@
 
 #include <FrenchieImGuiDemoLayer.hpp>
 
-#include <FrenchieCoreSerializableObject.hpp>
+#include <FrenchieCoreSerialization.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
@@ -47,7 +47,7 @@ public:
 //
 //---------------------------------------------------------------------------------
 
-void show_children(const Reference<Node>& _Node, std::string _Prefix = "")
+void show_children(const Reference<DocumentNode>& _Node, std::string _Prefix = "")
 {
     std::cout << "\n";
 
@@ -59,7 +59,7 @@ void show_children(const Reference<Node>& _Node, std::string _Prefix = "")
 
         for(auto&& property : child->Properties)
         {
-            std::cout << _Prefix << property.get_name() << "\t" << property.to_string() << "\n";
+            std::cout << _Prefix << property.get_name() << "\n";
         }
 
         show_children(child, _Prefix + "\t");
@@ -68,8 +68,8 @@ void show_children(const Reference<Node>& _Node, std::string _Prefix = "")
 
 int main(int, char**)
 {
-    std::shared_ptr<Node> document = 
-        std::make_shared<Node>("NewDocument");
+    std::shared_ptr<DocumentNode> document = 
+        std::make_shared<DocumentNode>("NewDocument");
 
     document->Properties.insert({"Bool", false});
     document->Properties.insert({"Double", 12341232.123123});
@@ -97,10 +97,10 @@ int main(int, char**)
     // child->Properties.insert({"Float", 1213.1231f});
     // child->Properties.insert({"Int", 101010});
 
-    XML().write(document, "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    XMLDocumentWriter().write(document, "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
 
     std::cout << "document: \n";
-    auto node = XML().read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    auto node = XMLDocumentWriter().read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
 
     show_children(node);
 
