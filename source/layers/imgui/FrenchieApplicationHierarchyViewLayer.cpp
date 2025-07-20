@@ -194,7 +194,7 @@ void HierarchyView::draw_tree(Object* _Transform, int& _ID)
         const auto& children = _Transform->get_children();
 
         for(auto&& child : children) 
-            draw_tree(child.get(), _ID);
+            draw_tree(child, _ID);
         ImGui::TreePop();
     }
 

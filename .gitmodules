@@ -14,3 +14,6 @@
 [submodule "tools/spdlog"]
 	path = tools/spdlog
 	url = https://github.com/Alexey-cpu/spdlog.git
+[submodule "tools/pugixml"]
+	path = tools/pugixml
+	url = https://github.com/zeux/pugixml.git

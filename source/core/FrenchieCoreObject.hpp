@@ -101,7 +101,7 @@ namespace Frenchie
                 return nullptr;
             }
 
-            std::list<object>& get_children() const;
+            std::list<Object*> get_children() const;
 
             std::string get_name() const;
             bool check_flag(int _N) const;
@@ -153,6 +153,13 @@ namespace Frenchie
                 auto& child = m_Children.back();
                 child->m_Parent = this;
                 return dynamic_cast<Type*>(child.get());
+            }
+
+            void attach_child(object& _Object)
+            {
+                m_Children.push_back(std::move(_Object));
+                auto& child = m_Children.back();
+                child->m_Parent = this;
             }
 
             void remove_child(const std::function<bool(Object*)>& _Predicate)
