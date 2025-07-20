@@ -16,10 +16,10 @@ endif()
 # SET(CMAKE_CXX_FLAGS  "-O3")
 
 # TODO: add different compiler configurations here
-message("===================================================")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
-message(${CMAKE_CXX_FLAGS})
-message("===================================================")
+# message("===================================================")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
+# message(${CMAKE_CXX_FLAGS})
+# message("===================================================")
 
 #--------------------------------------------------------------
 # include CMake utilities
@@ -29,6 +29,8 @@ include("tools/fmt.cmake")
 include("tools/glfw.cmake")
 include("tools/glm.cmake")
 include("tools/spdlog.cmake")
+
+add_subdirectory("tools/pugixml/")
 
 #--------------------------------------------------------------
 # add executable
@@ -62,7 +64,7 @@ add_executable(
     ${HEADERS} 
     ${SOURCES}
     )
-target_link_libraries(OpenGL glfw glm::glm fmt::fmt spdlog::spdlog)
+target_link_libraries(OpenGL glfw glm::glm fmt::fmt spdlog::spdlog pugixml::pugixml)
 
 target_include_directories(
     OpenGL 
