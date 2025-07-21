@@ -20,6 +20,11 @@ namespace Frenchie
             
             ~Reference(){}
 
+            T* operator * () const
+            {
+                return m_Reference.lock().get(); 
+            }
+
             template<typename U = T>
             U* operator -> () const
             {
