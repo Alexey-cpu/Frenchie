@@ -75,24 +75,24 @@ public:
 //     return value;
 // }
 
-void show_children(const Reference<Serialization::Node>& _Node, std::string _Prefix = "")
-{
-    //std::cout << "\n";
+// void show_children(const Reference<Serialization::Node>& _Node, std::string _Prefix = "")
+// {
+//     //std::cout << "\n";
 
-    auto children = _Node->get_children_references();
+//     auto children = _Node->get_children_references();
 
-    for(auto&& child : children)
-    {
-        std::cout << _Prefix << child->get_name() << "\n";
+//     for(auto&& child : children)
+//     {
+//         std::cout << _Prefix << child->get_name() << "\n";
 
-        // for(auto&& property : child->Properties)
-        // {
-        //     std::cout << _Prefix << property.get_name() << "\n";
-        // }
+//         // for(auto&& property : child->Properties)
+//         // {
+//         //     std::cout << _Prefix << property.get_name() << "\n";
+//         // }
 
-        show_children(child, _Prefix + "\t");
-    }
-}
+//         show_children(child, _Prefix + "\t");
+//     }
+// }
 
 int main(int, char**)
 {
