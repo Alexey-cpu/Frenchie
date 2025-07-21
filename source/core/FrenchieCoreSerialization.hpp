@@ -21,6 +21,7 @@
 #include <queue>
 #include <any>
 #include <set>
+#include <variant>
 
 #include <cstddef>
 #include <iostream>
@@ -34,54 +35,58 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            // Utility
-            template <typename T> inline const char* type_name() { return "unsupported"; }
-            template <typename T> inline const bool  is_vector() { return false; }
-            template <typename T> inline const bool  is_list() { return false; }
-            template <typename T> inline const bool  is_set() { return false; }
+            template<typename Type> inline std::string get_type_id(){ return "unsupported"; }
+            template<> inline std::string get_type_id<bool>(){return STRINGIFY(bool);}
+            template<> inline std::string get_type_id<char>(){return STRINGIFY(char);}
+            template<> inline std::string get_type_id<short>(){return STRINGIFY(short);}
+            template<> inline std::string get_type_id<unsigned short>(){return STRINGIFY(unsigned short);}
+            template<> inline std::string get_type_id<int>(){return STRINGIFY(int);}
+            template<> inline std::string get_type_id<unsigned int>(){return STRINGIFY(unsigned int);}
+            template<> inline std::string get_type_id<long>(){return STRINGIFY(long);}
+            template<> inline std::string get_type_id<long long>(){return STRINGIFY(long long);}
+            template<> inline std::string get_type_id<unsigned long long>(){return STRINGIFY(unsigned long long);}
+            template<> inline std::string get_type_id<float>(){return STRINGIFY(float);}
+            template<> inline std::string get_type_id<double>(){return STRINGIFY(double);}
+            template<> inline std::string get_type_id<std::string>(){return STRINGIFY(std::string);}
 
-            #define __frenchie_core_support_serialization_of__(__type) \
-            template <> inline const char* type_name<__type>() {return STRINGIFY(__type);} \
-            template <> inline const char* type_name<std::vector<__type>>() {return STRINGIFY(std::vector<__type>);} \
-            template <> inline const bool  is_vector<std::vector<__type>>() { return true; } \
-            template <> inline const char* type_name<std::list<__type>>() {return STRINGIFY(std::list<__type>);} \
-            template <> inline const bool  is_list<std::list<__type>>() { return true; } \
-            template <> inline const char* type_name<std::set<__type>>() {return STRINGIFY(std::set<__type>);} \
-            template <> inline const bool  is_set<std::set<__type>>() { return true; } \
-
-            __frenchie_core_support_serialization_of__(bool)
-            __frenchie_core_support_serialization_of__(char)
-            __frenchie_core_support_serialization_of__(short)
-            __frenchie_core_support_serialization_of__(unsigned short)
-            __frenchie_core_support_serialization_of__(int)
-            __frenchie_core_support_serialization_of__(unsigned int)
-            __frenchie_core_support_serialization_of__(long)
-            __frenchie_core_support_serialization_of__(unsigned long)
-            __frenchie_core_support_serialization_of__(long long)
-            __frenchie_core_support_serialization_of__(unsigned long long)
-            __frenchie_core_support_serialization_of__(float)
-            __frenchie_core_support_serialization_of__(double)
-            __frenchie_core_support_serialization_of__(std::string)
-
-            #undef __frenchie_core_support_serialization_of__
-
-            // Property
-            struct Property
+            class Node
             {
-                Property(const std::string& _Name, const std::any& _Value) :  
-                    m_Name(_Name), m_Value(_Value){}
+                typedef std::variant<
+                    bool, 
+                    char,
+                    unsigned char,
+                    short, 
+                    unsigned short, 
+                    int, 
+                    unsigned int, 
+                    long, 
+                    unsigned long,
+                    long long,
+                    unsigned long long, 
+                    float, 
+                    double,
+                    long double,
+                    std::string> Value;
 
-                std::string get_name() const
-                {
-                    return m_Name;
-                }
+            public:
+
+                Node(const std::string& _Name, const Value& _Value = Value()) : 
+                    m_Name(_Name), 
+                    m_Value(Value(_Value)){}
+                
+                virtual ~Node(){}
+
+                // getters
+                std::string get_name() const;
+                std::vector<Reference<Node>> get_children_references() const;
+                const std::vector<std::shared_ptr<Node>>& get_children() const;
 
                 template<typename Type> 
-                Type get() const
+                Type get_value() const
                 {
                     try
                     {
-                        return std::any_cast<Type>(m_Value);
+                        return std::get<Type>(m_Value);
                     }
                     catch(...)
                     {
@@ -89,39 +94,26 @@ namespace Frenchie
                     } 
                 }
 
-                template<typename Type> 
-                void set(const Type& _Value) const
-                {
-                    m_Value = _Value;
-                }
-
                 template<typename Type>
                 bool is_of_type() const
                 {
-                    return m_Value.type().hash_code() == typeid(Type).hash_code(); 
+                    return std::holds_alternative<Type>(m_Value); 
                 }
 
-            private:
-                const   std::string m_Name;
-                mutable std::any    m_Value;
-            };
-
-            class Node
-            {
-            public:
-
-                Node(const std::string& _Name);
-                virtual ~Node();
-
-                // getters
-                std::string get_name() const;
-                std::vector<Reference<Node>> get_children() const;
-
                 // setters
+                template<typename Type> 
+                void set_value(const Type& _Value) const
+                {
+                    m_Value = Value(_Value);
+                }
+
                 void set_name(const std::string& _Name);
+                std::string to_string() const;
 
                 // API
-                Reference<Node> append_child(const std::string& _Name);
+                Reference<Node> append_child(
+                    const std::string& _Name, 
+                    const Value&       _Value = Value());
 
                 template<bool _Recursive = true>
                 Reference<Node> find_child(const std::function<bool(Reference<Node>)>& _Predicate) const
@@ -140,14 +132,16 @@ namespace Frenchie
                     return Reference<Node>();
                 }
 
-                std::vector<Property> Properties = std::vector<Property>();
-
             protected:
 
-                std::string m_Name = std::string();
+                mutable std::string m_Name = std::string();
 
                 std::vector<std::shared_ptr<Node>> m_Children = 
                     std::vector<std::shared_ptr<Node>>();
+                
+                mutable Value m_Value;
+
+                friend class Format;
             };
 
             class Format
