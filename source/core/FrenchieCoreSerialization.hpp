@@ -1,13 +1,19 @@
 #pragma once
 
 #include <FrenchieCoreReference.hpp>
+#include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreHelpers.hpp>
 
 // PUGIXML
 #include "pugixml.hpp"
 
+// FMT
+#include <fmt/format.h>
+
 // STL
 #include <filesystem>
+#include <iostream>
+#include <functional>
 #include <string>
 #include <vector>
 #include <list>
@@ -16,19 +22,54 @@
 #include <any>
 #include <set>
 
+#include <cstddef>
+#include <iostream>
+#include <memory>
+#include <memory_resource>
+#include <vector>
+
 namespace Frenchie
 {
     namespace Core
     {
-        class DocumentNode
+        namespace Serialization
         {
-        public:
+            // Utility
+            template <typename T> inline const char* type_name() { return "unsupported"; }
+            template <typename T> inline const bool  is_vector() { return false; }
+            template <typename T> inline const bool  is_list() { return false; }
+            template <typename T> inline const bool  is_set() { return false; }
 
+            #define __frenchie_core_support_serialization_of__(__type) \
+            template <> inline const char* type_name<__type>() {return STRINGIFY(__type);} \
+            template <> inline const char* type_name<std::vector<__type>>() {return STRINGIFY(std::vector<__type>);} \
+            template <> inline const bool  is_vector<std::vector<__type>>() { return true; } \
+            template <> inline const char* type_name<std::list<__type>>() {return STRINGIFY(std::list<__type>);} \
+            template <> inline const bool  is_list<std::list<__type>>() { return true; } \
+            template <> inline const char* type_name<std::set<__type>>() {return STRINGIFY(std::set<__type>);} \
+            template <> inline const bool  is_set<std::set<__type>>() { return true; } \
+
+            __frenchie_core_support_serialization_of__(bool)
+            __frenchie_core_support_serialization_of__(char)
+            __frenchie_core_support_serialization_of__(short)
+            __frenchie_core_support_serialization_of__(unsigned short)
+            __frenchie_core_support_serialization_of__(int)
+            __frenchie_core_support_serialization_of__(unsigned int)
+            __frenchie_core_support_serialization_of__(long)
+            __frenchie_core_support_serialization_of__(unsigned long)
+            __frenchie_core_support_serialization_of__(long long)
+            __frenchie_core_support_serialization_of__(unsigned long long)
+            __frenchie_core_support_serialization_of__(float)
+            __frenchie_core_support_serialization_of__(double)
+            __frenchie_core_support_serialization_of__(std::string)
+
+            #undef __frenchie_core_support_serialization_of__
+
+            // Property
             struct Property
             {
-                Property(const std::string& _Name, const std::any& _Value) : 
-                    m_Name(_Name),
-                    m_Value(_Value){}
+                Property(const std::string& _Name, const std::any& _Value) :  
+                    m_Name(_Name), m_Value(_Value){}
 
                 std::string get_name() const
                 {
@@ -48,75 +89,75 @@ namespace Frenchie
                     } 
                 }
 
-                const type_info& get_type() const
-                {
-                    return m_Value.type();
-                }
-
                 template<typename Type> 
                 void set(const Type& _Value) const
                 {
                     m_Value = _Value;
                 }
 
-            private:
+                template<typename Type>
+                bool is_of_type() const
+                {
+                    return m_Value.type().hash_code() == typeid(Type).hash_code(); 
+                }
 
+            private:
                 const   std::string m_Name;
                 mutable std::any    m_Value;
             };
 
-            struct PropertyComparator
+            class Node
             {
-                using is_transparent = Property;
-
             public:
 
-                bool operator()(const Property& _A, const Property& _B) const
+                Node(const std::string& _Name);
+                virtual ~Node();
+
+                // getters
+                std::string get_name() const;
+                std::vector<Reference<Node>> get_children() const;
+
+                // setters
+                void set_name(const std::string& _Name);
+
+                // API
+                Reference<Node> append_child(const std::string& _Name);
+
+                template<bool _Recursive = true>
+                Reference<Node> find_child(const std::function<bool(Reference<Node>)>& _Predicate) const
                 {
-                    return  _A.get_name() < _B.get_name();
+                    if(_Predicate == nullptr) 
+                        return Reference<Node>();
+
+                    for(auto&& child : m_Children)
+                    {
+                        if(_Predicate(child)) 
+                            return Reference<Node>(child);
+
+                        child->find_child(_Predicate);
+                    }
+
+                    return Reference<Node>();
                 }
+
+                std::vector<Property> Properties = std::vector<Property>();
+
+            protected:
+
+                std::string m_Name = std::string();
+
+                std::vector<std::shared_ptr<Node>> m_Children = 
+                    std::vector<std::shared_ptr<Node>>();
             };
 
-            DocumentNode(const std::string& _Name);
-            virtual ~DocumentNode();
-
-            std::string get_name() const;
-            std::vector<Reference<DocumentNode>> get_children() const;
-
-            void set_name(const std::string& _Name);
-
-            Reference<DocumentNode> append_child(const std::string& _Name);
-
-            std::set<Property, PropertyComparator> Properties = 
-                std::set<Property, PropertyComparator>();
-
-        protected:
-
-            std::string m_Name = std::string();
-
-            std::vector<std::shared_ptr<DocumentNode>> m_Children = 
-                std::vector<std::shared_ptr<DocumentNode>>();
-        };
-
-        class IDocumentWriter
-        {
-        public:
-            IDocumentWriter(){}
-            virtual ~IDocumentWriter(){}
-            virtual std::shared_ptr<DocumentNode> read(const std::filesystem::path& _Path) = 0;
-            virtual bool write(const Reference<DocumentNode>& _Node, const std::filesystem::path& _Path) = 0;
-        };
-
-        class XMLDocumentWriter : public IDocumentWriter
-        {
-        public:
-            XMLDocumentWriter();
-            virtual ~XMLDocumentWriter();
-            std::shared_ptr<DocumentNode> read(const std::filesystem::path& _Path);
-            bool write(const Reference<DocumentNode>& _Node, const std::filesystem::path& _Path);
-
-        protected:
-            void write(const Reference<DocumentNode>& _Node, pugi::xml_node& _Document);
-        };
+            class Format
+            {
+            public:
+                Format(){}
+                virtual ~Format(){}
+                virtual std::shared_ptr<Node> read(const std::filesystem::path& _Path) = 0;
+                virtual bool write(const Reference<Node>& _Node, const std::filesystem::path& _Path) = 0;
+            };
+        }
     }
 }
