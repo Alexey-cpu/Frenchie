@@ -133,12 +133,9 @@ namespace Frenchie
 
             protected:
 
-                mutable std::string m_Name = std::string();
-                
-                mutable Value m_Value;
-
-                mutable std::vector<std::shared_ptr<Node>> m_Children = 
-                    std::vector<std::shared_ptr<Node>>();
+                mutable std::string                        m_Name     = std::string();
+                mutable Value                              m_Value    = Value();
+                mutable std::vector<std::shared_ptr<Node>> m_Children = std::vector<std::shared_ptr<Node>>();
             };
 
             class Format

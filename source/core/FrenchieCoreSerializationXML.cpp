@@ -17,7 +17,39 @@ namespace Frenchie
 
                     auto node = _Document.append_child(STRINGIFY(Node));
                     node.append_child("Name").text().set(_Node->get_name().c_str());
-                    node.append_child("Value").text().set(_Node->get_value_as_string());
+                    auto value = node.append_child("Value");
+                    value.text().set(_Node->get_value_as_string());
+
+                    if(_Node->is_of_type<bool>()) 
+                        value.append_attribute("Type").set_value(get_type_id<bool>());
+                    else if(_Node->is_of_type<char>()) 
+                        value.append_attribute("Type").set_value(get_type_id<char>());
+                    else if(_Node->is_of_type<unsigned char>()) 
+                        value.append_attribute("Type").set_value(get_type_id<unsigned char>());
+                    else if(_Node->is_of_type<short>()) 
+                        value.append_attribute("Type").set_value(get_type_id<short>());
+                    else if(_Node->is_of_type<unsigned short>()) 
+                        value.append_attribute("Type").set_value(get_type_id<unsigned short>());
+                    else if(_Node->is_of_type<int>()) 
+                        value.append_attribute("Type").set_value(get_type_id<int>());
+                    else if(_Node->is_of_type<unsigned int>()) 
+                        value.append_attribute("Type").set_value(get_type_id<unsigned int>());
+                    else if(_Node->is_of_type<long>()) 
+                        value.append_attribute("Type").set_value(get_type_id<long>());
+                    else if(_Node->is_of_type<unsigned long>()) 
+                        value.append_attribute("Type").set_value(get_type_id<unsigned long>());
+                    else if(_Node->is_of_type<long long>()) 
+                        value.append_attribute("Type").set_value(get_type_id<long long>());
+                    else if(_Node->is_of_type<unsigned long long>()) 
+                        value.append_attribute("Type").set_value(get_type_id<unsigned long long>());
+                    else if(_Node->is_of_type<float>()) 
+                        value.append_attribute("Type").set_value(get_type_id<float>());
+                    else if(_Node->is_of_type<double>()) 
+                        value.append_attribute("Type").set_value(get_type_id<double>());
+                    else if(_Node->is_of_type<long double>()) 
+                        value.append_attribute("Type").set_value(get_type_id<long double>());
+                    else if(_Node->is_of_type<std::string>()) 
+                        value.append_attribute("Type").set_value(get_type_id<std::string>());
 
                     const auto& children = _Node->get_children();
 
@@ -78,15 +110,59 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
 
         for(auto& element : top.node)
         {
-            // read property
-            //XMLHelpers().read_property<bool>(element, top.object);
-            
-            // go to the next object
-            if(std::string(element.attribute("Type").as_string()) == "Object")
+            if(std::string(element.name()) == STRINGIFY(Node))
+            {
+            }
+
+            if(std::string(element.attribute("Type").as_string()) == get_type_id<bool>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<char>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<unsigned char>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<short>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<unsigned short>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<int>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<unsigned int>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<long>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<unsigned long>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<long long>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<unsigned long long>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<float>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<double>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<long double>())
+            {
+            }
+            else if(std::string(element.attribute("Type").as_string()) == get_type_id<std::string>())
+            {
+            }
+            else
             {
                 auto object = top.object->append_child(element.name());
-
-                queue.push({element, top.object->append_child(element.name())});
+                queue.push({element, object});
             }
         }
     }
