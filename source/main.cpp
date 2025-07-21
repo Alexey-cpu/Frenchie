@@ -15,6 +15,7 @@
 #include <FrenchieImGuiDemoLayer.hpp>
 
 #include <FrenchieCoreSerialization.hpp>
+#include <FrenchieCoreSerializationXML.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
@@ -47,20 +48,47 @@ public:
 //
 //---------------------------------------------------------------------------------
 
-void show_children(const Reference<DocumentNode>& _Node, std::string _Prefix = "")
-{
-    std::cout << "\n";
+// template<typename Type>
+// std::string value_property_to_string(Serialization::Property& _Property, std::string _Prefix = "")
+// {
+//     if(!_Property.is_of_type<Type>()) 
+//         return;
 
-    auto children = _Node->get_children();
+//     return Helpers::to_string<Type>(_Property.get<Type>());
+// }
+
+// template<typename Value, template<typename> typename Container> 
+// std::string vector_property_to_string(Serialization::Property& _Property, std::string _Prefix = "")
+// {
+//     if(!_Property.is_of_type<Container<Value>>()) 
+//         return;
+
+//     std::string value;
+
+//     auto children = _Property.get<Container<Value>>();
+
+//     for(auto&& child : children)
+//     {
+//         value.append(Helpers::to_string<Type>(child));
+//     }
+
+//     return value;
+// }
+
+void show_children(const Reference<Serialization::Node>& _Node, std::string _Prefix = "")
+{
+    //std::cout << "\n";
+
+    auto children = _Node->get_children_references();
 
     for(auto&& child : children)
     {
         std::cout << _Prefix << child->get_name() << "\n";
 
-        for(auto&& property : child->Properties)
-        {
-            std::cout << _Prefix << property.get_name() << "\n";
-        }
+        // for(auto&& property : child->Properties)
+        // {
+        //     std::cout << _Prefix << property.get_name() << "\n";
+        // }
 
         show_children(child, _Prefix + "\t");
     }
@@ -68,41 +96,38 @@ void show_children(const Reference<DocumentNode>& _Node, std::string _Prefix = "
 
 int main(int, char**)
 {
-    std::shared_ptr<DocumentNode> document = 
-        std::make_shared<DocumentNode>("NewDocument");
+    //file write time
+    std::shared_ptr<Serialization::Node> document = 
+        std::make_shared<Serialization::Node>("NewDocument");
 
-    document->Properties.insert({"Bool", false});
-    document->Properties.insert({"Double", 12341232.123123});
-    document->Properties.insert({"Float", 1213.1231f});
-    document->Properties.insert({"Int", 101010});
+    auto start = Helpers::tic();
 
-    auto child = document->append_child("Child");
-    child->Properties.insert({"Bool", false});
-    child->Properties.insert({"Double", 12341232.123123});
-    child->Properties.insert({"Float", 1213.1231f});
-    child->Properties.insert({"Int", 101010});
+    auto child = document;
 
-    for(int i = 0 ; i < 1e1; i++)
+    for(int i = 0 ; i < 5e5; i++)
     {
-        child = child->append_child("Child");
-        child->Properties.insert({"Bool", false});
-        child->Properties.insert({"Double", 12341232.123123});
-        child->Properties.insert({"Float", 1213.1231f});
-        child->Properties.insert({"Int", 101010});
+        child = document->append_child("Child", 1);
     }
 
-    // child = child->append_child("Child");
-    // child->Properties.insert({"Bool", false});
-    // child->Properties.insert({"Double", 12341232.123123});
-    // child->Properties.insert({"Float", 1213.1231f});
-    // child->Properties.insert({"Int", 101010});
+    std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
-    XMLDocumentWriter().write(document, "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    auto start1 = Helpers::tic();
 
-    std::cout << "document: \n";
-    auto node = XMLDocumentWriter().read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    Serialization::XML().write(document, "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
 
-    show_children(node);
+    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
+
+    std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+
+    // std::shared_ptr<Serialization::Node> document = 
+    //     std::make_shared<Serialization::Node>("NewDocument", 1.5f);
+
+    //document->set_value<float>(1.5f);
+    //document->set_value<double>(1.5f);
+
+    // std::cout << document->is_of_type<float>() << "\n";
+    // std::cout << document->is_of_type<double>() << "\n";
 
     return 0;
 }

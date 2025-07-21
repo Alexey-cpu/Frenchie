@@ -4,7 +4,7 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
 
 // DocumentNode
-std::string Node::get_name() const
+std::string& Node::get_name() const
 {
     return m_Name;
 }
@@ -26,12 +26,7 @@ const std::vector<std::shared_ptr<Node>>& Node::get_children() const
     return m_Children;
 }
 
-void Node::set_name(const std::string& _Name) 
-{
-    m_Name = _Name;
-}
-
- std::string Node::to_string() const
+std::string Node::get_value_as_string() const
 {
     if(is_of_type<bool>()) 
         return Helpers::to_string<bool>(get_value<bool>());

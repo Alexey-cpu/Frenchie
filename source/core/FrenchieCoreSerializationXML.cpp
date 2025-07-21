@@ -17,7 +17,7 @@ namespace Frenchie
 
                     auto node = _Document.append_child(STRINGIFY(Node));
                     node.append_child("Name").text().set(_Node->get_name().c_str());
-                    node.append_child("Value").text().set(_Node->to_string());
+                    node.append_child("Value").text().set(_Node->get_value_as_string());
 
                     const auto& children = _Node->get_children();
 

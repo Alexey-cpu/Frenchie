@@ -77,7 +77,7 @@ namespace Frenchie
                 virtual ~Node(){}
 
                 // getters
-                std::string get_name() const;
+                std::string& get_name() const;
                 std::vector<Reference<Node>> get_children_references() const;
                 const std::vector<std::shared_ptr<Node>>& get_children() const;
 
@@ -107,8 +107,7 @@ namespace Frenchie
                     m_Value = Value(_Value);
                 }
 
-                void set_name(const std::string& _Name);
-                std::string to_string() const;
+                std::string get_value_as_string() const;
 
                 // API
                 Reference<Node> append_child(
@@ -135,13 +134,11 @@ namespace Frenchie
             protected:
 
                 mutable std::string m_Name = std::string();
-
-                std::vector<std::shared_ptr<Node>> m_Children = 
-                    std::vector<std::shared_ptr<Node>>();
                 
                 mutable Value m_Value;
 
-                friend class Format;
+                mutable std::vector<std::shared_ptr<Node>> m_Children = 
+                    std::vector<std::shared_ptr<Node>>();
             };
 
             class Format
