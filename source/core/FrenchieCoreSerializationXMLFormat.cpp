@@ -96,15 +96,14 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
 bool XML::write(Node* _Node, const std::filesystem::path& _Path)
 {
     pugi::xml_document   main;
-    std::vector<Element> stack;
-    stack.reserve(4096);
-    stack.push_back({main, _Node});
+    std::queue<Element> stack;
+    stack.push({main, _Node});
 
     while (!stack.empty())
     {
-        auto object   = stack.back().object;
-        auto document = stack.back().node;
-        stack.pop_back();
+        auto object   = stack.front().object;
+        auto document = stack.front().node;
+        stack.pop();
 
         auto node = document.append_child(object->name());
 
@@ -130,7 +129,7 @@ bool XML::write(Node* _Node, const std::filesystem::path& _Path)
         const auto& children = object->children();
 
         for(auto&& child : children) 
-            stack.push_back({node, child});
+            stack.push({node, child});
     }
 
     return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
