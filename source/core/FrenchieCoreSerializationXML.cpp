@@ -24,8 +24,6 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
         if(status != pugi::xml_parse_status::status_ok) 
         {
             // TODO: add log here !!!
-            std::cout << "Could not open file " << _Path << "\n";
-
             return std::make_shared<Node>("EMPTY");
         }
     }
@@ -33,8 +31,6 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
     if(doc.empty()) 
     {
         // TODO: add log here !!!
-        std::cout << "EMPTY file " << _Path << "\n";
-
         return std::make_shared<Node>("EMPTY");
     }
 
@@ -52,94 +48,39 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
             auto object = top.object;
             queue.push({element, object->append_child(element.name())});
 
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<bool>())
+            switch (element.attribute("Type").as_int())
             {
-                object->value() = element.attribute("Value").as_bool();
-                continue;
-            }
+            case Value::supportedTypes::BOOL:
+            object->value() = element.attribute("Value").as_bool();
+                break;
             
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<char>())
-            {
-                object->value() = (char)element.attribute("Value").as_int();
-                continue;
-            }
+            case Value::supportedTypes::DOUBLE:
+            object->value() = element.attribute("Value").as_double();
+                break;
+
+            case Value::supportedTypes::FLOAT:
+            object->value() = element.attribute("Value").as_float();
+                break;
+
+            case Value::supportedTypes::INT:
+            object->value() = element.attribute("Value").as_int();
+                break;
+
+            case Value::supportedTypes::LONG_LONG:
+            object->value() = element.attribute("Value").as_llong();
+                break;
             
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<unsigned char>())
-            {
-                object->value() = (unsigned char)element.attribute("Value").as_uint();
-                continue;
-            }
+            case Value::supportedTypes::UNSIGNED_INT:
+            object->value() = element.attribute("Value").as_uint();
+                break;
 
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<short>())
-            {
-                object->value() = (short)element.attribute("Value").as_int();
-                continue;
-            }
+            case Value::supportedTypes::UNSIGNED_LONG_LONG:
+            object->value() = element.attribute("Value").as_ullong();
+                break;
 
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<unsigned short>())
-            {
-                object->value() = (unsigned short)element.attribute("Value").as_int();
-                continue;
-            }
-
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<int>())
-            {
-                object->value() = element.attribute("Value").as_int();
-                continue;
-            }
-
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<unsigned int>())
-            {
-                object->value() = element.attribute("Value").as_uint();
-                continue;
-            }
-
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<long>())
-            {
-                object->value() = (long)element.attribute("Value").as_llong();
-                continue;
-            }
-            
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<unsigned long>())
-            {
-                object->value() = (unsigned long)element.attribute("Value").as_ullong();
-                continue;
-            }
-            
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<long long>())
-            {
-                object->value() = (long)element.attribute("Value").as_llong();
-                continue;
-            }
-
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<unsigned long long>())
-            {
-                object->value() = (unsigned long)element.attribute("Value").as_ullong();
-                continue;
-            }
-            
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<float>())
-            {
-                object->value() = (unsigned long)element.attribute("Value").as_float();
-                continue;
-            }
-
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<double>())
-            {
-                object->value() = (unsigned long)element.attribute("Value").as_double();
-                continue;
-            }
-            
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<long double>())
-            {
-                object->value() = (long double)element.attribute("Value").as_double();
-                continue;
-            }
-            
-            if(std::string(element.attribute("Type").as_string()) == get_type_name<std::string>())
-            {
-                object->value() = element.attribute("Value").as_string();
-                continue;
+            case Value::supportedTypes::STRING:
+            object->value() = element.attribute("Value").as_string();
+                break;
             }
         }
     }
@@ -162,35 +103,21 @@ bool XML::write(Node* _Node, const std::filesystem::path& _Path)
         auto node = document.append_child(object->name());
 
         if(object->value().is_of_type<bool>()) 
-            node.append_attribute("Type").set_value(get_type_name<bool>());
-        else if(object->value().is_of_type<char>()) 
-            node.append_attribute("Type").set_value(get_type_name<char>());
-        else if(object->value().is_of_type<unsigned char>()) 
-            node.append_attribute("Type").set_value(get_type_name<unsigned char>());
-        else if(object->value().is_of_type<short>()) 
-            node.append_attribute("Type").set_value(get_type_name<short>());
-        else if(object->value().is_of_type<unsigned short>()) 
-            node.append_attribute("Type").set_value(get_type_name<unsigned short>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::BOOL);
         else if(object->value().is_of_type<int>()) 
-            node.append_attribute("Type").set_value(get_type_name<int>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::INT);
         else if(object->value().is_of_type<unsigned int>()) 
-            node.append_attribute("Type").set_value(get_type_name<unsigned int>());
-        else if(object->value().is_of_type<long>()) 
-            node.append_attribute("Type").set_value(get_type_name<long>());
-        else if(object->value().is_of_type<unsigned long>()) 
-            node.append_attribute("Type").set_value(get_type_name<unsigned long>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::UNSIGNED_INT);
         else if(object->value().is_of_type<long long>()) 
-            node.append_attribute("Type").set_value(get_type_name<long long>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::LONG_LONG);
         else if(object->value().is_of_type<unsigned long long>()) 
-            node.append_attribute("Type").set_value(get_type_name<unsigned long long>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::UNSIGNED_LONG_LONG);
         else if(object->value().is_of_type<float>()) 
-            node.append_attribute("Type").set_value(get_type_name<float>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::FLOAT);
         else if(object->value().is_of_type<double>()) 
-            node.append_attribute("Type").set_value(get_type_name<double>());
-        else if(object->value().is_of_type<long double>()) 
-            node.append_attribute("Type").set_value(get_type_name<long double>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::DOUBLE);
         else if(object->value().is_of_type<std::string>()) 
-            node.append_attribute("Type").set_value(get_type_name<std::string>());
+            node.append_attribute("Type").set_value(Value::supportedTypes::STRING);
 
         node.append_attribute("Value").set_value(object->value().as_string());
 

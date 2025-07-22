@@ -48,8 +48,8 @@ public:
 
 int main(int, char**)
 {
-    // Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
-    // tests.run();
+    Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
+    tests.run();
 
     //file write time
     auto document = 
@@ -57,7 +57,7 @@ int main(int, char**)
     auto start = Helpers::tic();
     auto child = document.get();
     
-    for(int i = 0; i < 1e4; i++) 
+    for(int i = 0; i < 1e6; i++) 
     {
         child = child->append_child("Child", 1);
     }

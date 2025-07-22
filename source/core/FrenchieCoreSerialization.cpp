@@ -96,3 +96,13 @@ Node* Node::find_child(const std::function<bool(Node*)>& _Predicate, bool _Recur
 
     return nullptr;
 }
+
+size_t Node::size() const
+{
+    return m_Children.size();
+}
+
+bool Node::empty() const
+{
+    return m_Children.empty();
+}

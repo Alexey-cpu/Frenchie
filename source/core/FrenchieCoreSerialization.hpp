@@ -36,22 +36,10 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            template<typename Type> inline std::string get_type_name(){ return "unsupported"; }
-            template<> inline std::string get_type_name<bool>(){return STRINGIFY(bool);}
-            template<> inline std::string get_type_name<char>(){return STRINGIFY(char);}
-            template<> inline std::string get_type_name<short>(){return STRINGIFY(short);}
-            template<> inline std::string get_type_name<unsigned short>(){return STRINGIFY(unsigned short);}
-            template<> inline std::string get_type_name<int>(){return STRINGIFY(int);}
-            template<> inline std::string get_type_name<unsigned int>(){return STRINGIFY(unsigned int);}
-            template<> inline std::string get_type_name<long>(){return STRINGIFY(long);}
-            template<> inline std::string get_type_name<long long>(){return STRINGIFY(long long);}
-            template<> inline std::string get_type_name<unsigned long long>(){return STRINGIFY(unsigned long long);}
-            template<> inline std::string get_type_name<float>(){return STRINGIFY(float);}
-            template<> inline std::string get_type_name<double>(){return STRINGIFY(double);}
-            template<> inline std::string get_type_name<std::string>(){return STRINGIFY(std::string);}
-
             class Value final
             {
+                public:
+
                 typedef std::variant<
                     bool, 
                     char,
@@ -69,7 +57,24 @@ namespace Frenchie
                     long double,
                     std::string> Type;
 
-                public:
+                enum supportedTypes
+                {
+                    BOOL,
+                    CHAR,
+                    UNSIGNED_CHAR,
+                    SHORT,
+                    UNSIGNED_SHORT,
+                    INT,
+                    UNSIGNED_INT,
+                    LONG,
+                    UNSIGNED_LONG,
+                    LONG_LONG,
+                    UNSIGNED_LONG_LONG,
+                    FLOAT,
+                    DOUBLE,
+                    LONG_DOUBLE,
+                    STRING
+                };
 
                 template<typename T>
                 Value(const T& _Value = T()) : m_Value(_Value){}
@@ -168,6 +173,8 @@ namespace Frenchie
                 const std::vector<Node*>& children() const;
                 Node* append_child(const std::string& _Name, const Value& _Value = Value());
                 Node* find_child(const std::function<bool(Node*)>& _Predicate, bool _Recursive = true) const;
+                size_t size() const;
+                bool empty() const;
 
             protected:
 
@@ -195,6 +202,12 @@ namespace Frenchie
                     return T::write(_Node, _Path);
                 }
             };
+
+            template<typename T> 
+            size_t get_type_index()
+            {
+                return Value::Type(T()).index();
+            }
         }
     }
 }
