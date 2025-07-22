@@ -48,7 +48,7 @@ Value& Node::value()
     return m_Value;
 }
 
-const std::pmr::vector<Node*>& Node::children() const
+const std::vector<Node*>& Node::children() const
 {
     return m_Children;
 }
