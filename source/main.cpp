@@ -48,35 +48,30 @@ public:
 
 int main(int, char**)
 {
-    Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
+    // Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
+    // tests.run();
 
-    tests.run();
+    //file write time
+    auto document = 
+        std::make_shared<Serialization::Node>("NewDocument");
+    auto start = Helpers::tic();
+    auto child = document.get();
+    
+    for(int i = 0; i < 1e4; i++) 
+    {
+        child = child->append_child("Child", 1);
+    }
 
-    // //file write time
-    // auto document = 
-    //     std::make_shared<Serialization::Node>("NewDocument");
-    // auto start = Helpers::tic();
-    // auto child = document.get();
-    // for(int i = 0 ; i < 1e5; i++) 
-    // {
-    //     child = document->append_child("Child", 1);
+    std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    auto start1 = Helpers::tic();
+    Serialization::Format<Serialization::XML>::write(document.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
+    std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
-    //     for(int i = 0 ; i < 3; i++) 
-    //     {
-    //         child = child->append_child("Child", 1);
-    //     }
-    // }
-
-    // std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    // auto start1 = Helpers::tic();
-    // Serialization::Format<Serialization::XML>::write(document.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
-    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
-    // std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-
-    // //file read time
-    // auto start2 = Helpers::tic();
-    // Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
-    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start2, Helpers::tic()) << " ms \n";
+    //file read time
+    auto start2 = Helpers::tic();
+    Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start2, Helpers::tic()) << " ms \n";
 
     return 0;
 }

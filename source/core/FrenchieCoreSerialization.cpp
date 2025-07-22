@@ -11,9 +11,29 @@ Node::Node(const std::string& _Name, const Value& _Value) :
 
 Node::~Node()
 {
-    for(auto&& child : m_Children) 
-        delete child;
-    m_Children.clear();
+    if(m_Parent != nullptr) 
+        return; // is not a root item
+
+    // collect items recursivelly
+    std::stack<Node*, std::vector<Node*>> stack;
+    std::vector<Node*> objects;
+    stack.push(this);
+
+    while(!stack.empty())
+    {
+        auto top = stack.top();
+        stack.pop();
+
+        for(auto&& child : top->m_Children) 
+        {
+            stack.push(child);
+            objects.push_back(child);
+        }
+    }
+
+    // remove items recursivelly
+    for(auto&& object : objects) 
+        delete object;
 }
 
 std::string& Node::name() const
@@ -34,5 +54,7 @@ const std::vector<Node*>& Node::children() const
 Node* Node::append_child(const std::string& _Name, const Value& _Value)
 {
     m_Children.push_back(new Node(_Name, _Value));
-    return m_Children[m_Children.size() - 1];
+    auto child = m_Children[m_Children.size() - 1];
+    child->m_Parent = this;
+    return child;
 }
