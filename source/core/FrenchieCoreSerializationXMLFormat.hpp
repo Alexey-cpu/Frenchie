@@ -1,8 +1,6 @@
 #pragma once
 
-#include <FrenchieCoreSerialization.hpp>
-
-#include <vector>
+#include <FrenchieCoreSerializationNode.hpp>
 
 namespace Frenchie
 {

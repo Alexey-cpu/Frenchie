@@ -1,4 +1,4 @@
-#include <FrenchieCoreSerializationXML.hpp>
+#include <FrenchieCoreSerializationXMLFormat.hpp>
 
 // STLC
 #include <stack>
@@ -35,18 +35,19 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
     }
 
     std::shared_ptr<Node> root = std::make_shared<Node>(doc.name());
-    std::stack<Element, std::vector<Element>> queue;
-    queue.push({doc, root.get()});
+    std::vector<Element>  stack;
+    stack.reserve(4096);
+    stack.push_back({doc, root.get()});
 
-    while(!queue.empty())
+    while(!stack.empty())
     {
-        auto top = queue.top();
-        queue.pop();
+        auto top = stack.back();
+        stack.pop_back();
 
         for(auto& element : top.node)
         {
             auto object = top.object;
-            queue.push({element, object->append_child(element.name())});
+            stack.push_back({element, object->append_child(element.name())});
 
             switch (element.attribute("Type").as_int())
             {
@@ -81,6 +82,10 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
             case Value::supportedTypes::STRING:
             object->value() = element.attribute("Value").as_string();
                 break;
+
+            default:
+            object->value() = element.attribute("Value").as_string();
+                break;
             }
         }
     }
@@ -90,15 +95,16 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
 
 bool XML::write(Node* _Node, const std::filesystem::path& _Path)
 {
-    pugi::xml_document  main;
-    std::stack<Element, std::vector<Element>> stack;
-    stack.push({main, _Node});
+    pugi::xml_document   main;
+    std::vector<Element> stack;
+    stack.reserve(4096);
+    stack.push_back({main, _Node});
 
     while (!stack.empty())
     {
-        auto object   = stack.top().object;
-        auto document = stack.top().node;
-        stack.pop();
+        auto object   = stack.back().object;
+        auto document = stack.back().node;
+        stack.pop_back();
 
         auto node = document.append_child(object->name());
 
@@ -124,7 +130,7 @@ bool XML::write(Node* _Node, const std::filesystem::path& _Path)
         const auto& children = object->children();
 
         for(auto&& child : children) 
-            stack.push({node, child});
+            stack.push_back({node, child});
     }
 
     return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);

@@ -1,4 +1,4 @@
-#include <FrenchieCoreSerialization.hpp>
+#include <FrenchieCoreSerializationNode.hpp>
 
 #include <stack>
 #include <vector>
@@ -11,22 +11,24 @@ Node::Node(const std::string& _Name, const Value& _Value) :
 
 Node::~Node()
 {
+    //std::cout << "Node::~Node() " << name() << "\n";
+
     if(m_Parent != nullptr) 
         return; // is not a root item
 
     // collect items recursivelly
-    std::stack<Node*, std::vector<Node*>> stack;
+    std::vector<Node*> stack;
     std::vector<Node*> objects;
-    stack.push(this);
+    stack.push_back(this);
 
     while(!stack.empty())
     {
-        auto top = stack.top();
-        stack.pop();
+        auto top = stack.back();
+        stack.pop_back();
 
         for(auto&& child : top->m_Children) 
         {
-            stack.push(child);
+            stack.push_back(child);
             objects.push_back(child);
         }
     }
@@ -46,7 +48,7 @@ Value& Node::value()
     return m_Value;
 }
 
-const std::vector<Node*>& Node::children() const
+const std::pmr::vector<Node*>& Node::children() const
 {
     return m_Children;
 }
@@ -77,20 +79,20 @@ Node* Node::find_child(const std::function<bool(Node*)>& _Predicate, bool _Recur
     }
 
     // recursive search
-    std::stack<const Node*, std::vector<const Node*>> stack;
-    stack.push(this);
+    std::vector<const Node*> stack;
+    stack.push_back(this);
 
     while(!stack.empty())
     {
-        auto top = stack.top();
-        stack.pop();
+        auto top = stack.back();
+        stack.pop_back();
 
         for(auto&& child : top->m_Children) 
         {
             if(_Predicate(child)) 
                 return child;
 
-            stack.push(child);
+            stack.push_back(child);
         }
     }
 

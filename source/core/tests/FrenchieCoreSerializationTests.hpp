@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include <FrenchieCoreSerialization.hpp>
+#include <FrenchieCoreSerializationXMLFormat.hpp>
 
 namespace Frenchie
 {
