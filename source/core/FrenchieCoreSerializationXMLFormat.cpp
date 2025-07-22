@@ -35,19 +35,18 @@ std::shared_ptr<Node> XML::read(const std::filesystem::path& _Path)
     }
 
     std::shared_ptr<Node> root = std::make_shared<Node>(doc.name());
-    std::vector<Element>  stack;
-    stack.reserve(4096);
-    stack.push_back({doc, root.get()});
+    std::stack<Element, std::vector<Element>>  stack;
+    stack.push({doc, root.get()});
 
     while(!stack.empty())
     {
-        auto top = stack.back();
-        stack.pop_back();
+        auto top = stack.top();
+        stack.pop();
 
         for(auto& element : top.node)
         {
             auto object = top.object;
-            stack.push_back({element, object->append_child(element.name())});
+            stack.push({element, object->append_child(element.name())});
 
             switch (element.attribute("Type").as_int())
             {
