@@ -191,8 +191,9 @@ namespace Frenchie
 
             protected:
 
-                mutable std::string m_Name;
-                mutable Value       m_Value;
+                mutable std::string m_Name   = std::string();
+                mutable Value       m_Value  = Value();
+                mutable Node*       m_Parent = nullptr;
 
                 mutable std::vector<Node*> m_Children = std::vector<Node*>();
             };
