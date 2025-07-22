@@ -200,5 +200,5 @@ bool XML::write(Node* _Node, const std::filesystem::path& _Path)
             stack.push({node, child});
     }
 
-    return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
+    return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
 }
