@@ -15,7 +15,7 @@ namespace Frenchie
                 class SerializationTests final
                 {
                 public:
-                    SerializationTests(const std::filesystem::path& _Path){}
+                    SerializationTests(const std::filesystem::path& _Path) : m_Path(_Path){}
                     ~SerializationTests(){}
 
                     void run()
@@ -29,10 +29,7 @@ namespace Frenchie
 
                         for(int i = 0; i < 1e1; i++)
                         {
-                            child = child->append_child(
-                                fmt::format("Child-{}", i + 3), 
-                                "Some info"
-                            );
+                            child = child->append_child(fmt::format("Child-{}", i + 3), "Some info");
                         }
 
                         auto found = 
@@ -43,14 +40,21 @@ namespace Frenchie
                             std::cout << found->name() << "\t" << found->value().is_of_type<int>() << "\n";
                         }
 
-                        found = 
-                            document->find_child([](Node* _Node)->bool{return  _Node->name() == "Child-10";});
+                        found = document->find_child([](Node* _Node)->bool{return  _Node->name() == "Child-10";});
 
                         if(found != nullptr)
                         {
                             std::cout << found->name()  << "\t" << found->value().is_of_type<std::string>() << "\n";
                         }
+
+                        Format<XML>::write(document.get(), std::filesystem::path(m_Path.string().append("/NewFile.xml")));
+
+                        document = Format<XML>::read(std::filesystem::path(m_Path.string().append("/NewFile.xml")));
+
+                        Format<XML>::write(document.get(), std::filesystem::path(m_Path.string().append("/NewFile1.xml")));
                     }
+
+                    std::filesystem::path m_Path;
                 };
             }
         }
