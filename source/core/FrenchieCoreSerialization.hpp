@@ -19,6 +19,7 @@
 #include <list>
 #include <memory>
 #include <queue>
+#include <stack>
 #include <any>
 #include <set>
 #include <variant>
@@ -166,36 +167,15 @@ namespace Frenchie
                 Value& value();
                 const std::vector<Node*>& children() const;
                 Node* append_child(const std::string& _Name, const Value& _Value = Value());
-
-                template<bool _Recursive = true>
-                Node* find_child(const std::function<bool(Node*)>& _Predicate) const
-                {
-                    if(_Predicate == nullptr) 
-                        return nullptr;
-
-                    for(auto&& child : m_Children)
-                    {
-                        if(_Predicate(child)) 
-                            return child;
-
-                        if(_Recursive)
-                        {
-                            auto found = child->find_child(_Predicate);
-                            if(found != nullptr) 
-                                return found;
-                        }
-                    }
-
-                    return nullptr;
-                }
+                Node* find_child(const std::function<bool(Node*)>& _Predicate, bool _Recursive = true) const;
 
             protected:
 
                 mutable std::string m_Name   = std::string();
                 mutable Value       m_Value  = Value();
-                mutable Node*       m_Parent = nullptr;
-
-                mutable std::vector<Node*> m_Children = std::vector<Node*>();
+                
+                Node*              m_Parent   = nullptr;
+                std::vector<Node*> m_Children = std::vector<Node*>();
             };
 
             template<typename T>

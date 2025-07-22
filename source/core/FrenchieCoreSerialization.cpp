@@ -58,3 +58,41 @@ Node* Node::append_child(const std::string& _Name, const Value& _Value)
     child->m_Parent = this;
     return child;
 }
+
+Node* Node::find_child(const std::function<bool(Node*)>& _Predicate, bool _Recursive) const
+{
+    if(_Predicate == nullptr) 
+        return nullptr;
+
+    // iterative search
+    if(!_Recursive)
+    {
+        for(auto&& child : m_Children)
+        {
+            if(_Predicate(child)) 
+                return child;
+        }
+
+        return nullptr;
+    }
+
+    // recursive search
+    std::stack<const Node*, std::vector<const Node*>> stack;
+    stack.push(this);
+
+    while(!stack.empty())
+    {
+        auto top = stack.top();
+        stack.pop();
+
+        for(auto&& child : top->m_Children) 
+        {
+            if(_Predicate(child)) 
+                return child;
+
+            stack.push(child);
+        }
+    }
+
+    return nullptr;
+}
