@@ -35,24 +35,7 @@ namespace Frenchie
     namespace Core
     {
         namespace Serialization
-        {
-            class Allocator
-            {
-            public:
-                Allocator() : 
-                    monotonicResource(std::pmr::monotonic_buffer_resource(buffer, sizeof(buffer))),
-                    poolResource(std::pmr::unsynchronized_pool_resource(&monotonicResource))
-                {
-                }
-
-            char buffer[1024];
-            std::pmr::monotonic_buffer_resource monotonicResource;//(buffer, sizeof(buffer));
-
-            // Use an unsynchronized_pool_resource on top of the monotonic_buffer_resource
-            std::pmr::unsynchronized_pool_resource poolResource;//(&monotonicResource);
-            std::pmr::pool_options options{1, 1024 * 1024 * 1024};
-            };
-            
+        {            
             class Value final
             {
                 public:
@@ -182,12 +165,12 @@ namespace Frenchie
             {
             public:
 
-                Node(const std::string& _Name, const Value& _Value = Value());
+                Node(const std::string& _Name = std::string(), const Value& _Value = Value());
                 ~Node();
 
                 std::string& name() const;
                 Value& value();
-                const std::pmr::vector<Node*>& children() const;
+                const std::vector<Node*>& children() const;
                 Node* append_child(const std::string& _Name, const Value& _Value = Value());
                 Node* find_child(const std::function<bool(Node*)>& _Predicate, bool _Recursive = true) const;
                 size_t size() const;
@@ -197,9 +180,8 @@ namespace Frenchie
 
                 mutable std::string m_Name   = std::string();
                 mutable Value       m_Value  = Value();
-                
-                Node*              m_Parent   = nullptr;
-                std::pmr::vector<Node*> m_Children{&Singleton<Allocator>::instance()->monotonicResource};
+                Node*               m_Parent   = nullptr;
+                std::vector<Node*>  m_Children = std::vector<Node*>();
             };
 
             template<typename T>
