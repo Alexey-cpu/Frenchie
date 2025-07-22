@@ -17,6 +17,8 @@
 #include <FrenchieCoreSerialization.hpp>
 #include <FrenchieCoreSerializationXML.hpp>
 
+#include <FrenchieCoreSerializationTests.hpp>
+
 using namespace Frenchie::Core;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
@@ -44,90 +46,37 @@ public:
     }
 };
 
-//---------------------------------------------------------------------------------
-//
-//---------------------------------------------------------------------------------
-
-// template<typename Type>
-// std::string value_property_to_string(Serialization::Property& _Property, std::string _Prefix = "")
-// {
-//     if(!_Property.is_of_type<Type>()) 
-//         return;
-
-//     return Helpers::to_string<Type>(_Property.get<Type>());
-// }
-
-// template<typename Value, template<typename> typename Container> 
-// std::string vector_property_to_string(Serialization::Property& _Property, std::string _Prefix = "")
-// {
-//     if(!_Property.is_of_type<Container<Value>>()) 
-//         return;
-
-//     std::string value;
-
-//     auto children = _Property.get<Container<Value>>();
-
-//     for(auto&& child : children)
-//     {
-//         value.append(Helpers::to_string<Type>(child));
-//     }
-
-//     return value;
-// }
-
-// void show_children(const Reference<Serialization::Node>& _Node, std::string _Prefix = "")
-// {
-//     //std::cout << "\n";
-
-//     auto children = _Node->get_children_references();
-
-//     for(auto&& child : children)
-//     {
-//         std::cout << _Prefix << child->get_name() << "\n";
-
-//         // for(auto&& property : child->Properties)
-//         // {
-//         //     std::cout << _Prefix << property.get_name() << "\n";
-//         // }
-
-//         show_children(child, _Prefix + "\t");
-//     }
-// }
-
 int main(int, char**)
 {
-    //file write time
-    std::shared_ptr<Serialization::Node> document = 
-        std::make_shared<Serialization::Node>("NewDocument");
+    Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
 
-    auto start = Helpers::tic();
+    tests.run();
 
-    auto child = document;
+    // //file write time
+    // auto document = 
+    //     std::make_shared<Serialization::Node>("NewDocument");
+    // auto start = Helpers::tic();
+    // auto child = document.get();
+    // for(int i = 0 ; i < 1e5; i++) 
+    // {
+    //     child = document->append_child("Child", 1);
 
-    for(int i = 0 ; i < 5e5; i++)
-    {
-        child = document->append_child("Child", 1);
-    }
+    //     for(int i = 0 ; i < 3; i++) 
+    //     {
+    //         child = child->append_child("Child", 1);
+    //     }
+    // }
 
-    std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // auto start1 = Helpers::tic();
+    // Serialization::Format<Serialization::XML>::write(document.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
+    // std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
-    auto start1 = Helpers::tic();
-
-    Serialization::XML().write(document, "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
-
-    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
-
-    std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-
-
-    // std::shared_ptr<Serialization::Node> document = 
-    //     std::make_shared<Serialization::Node>("NewDocument", 1.5f);
-
-    //document->set_value<float>(1.5f);
-    //document->set_value<double>(1.5f);
-
-    // std::cout << document->is_of_type<float>() << "\n";
-    // std::cout << document->is_of_type<double>() << "\n";
+    // //file read time
+    // auto start2 = Helpers::tic();
+    // Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start2, Helpers::tic()) << " ms \n";
 
     return 0;
 }

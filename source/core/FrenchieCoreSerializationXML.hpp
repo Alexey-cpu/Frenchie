@@ -2,19 +2,29 @@
 
 #include <FrenchieCoreSerialization.hpp>
 
+#include <vector>
+
 namespace Frenchie
 {
     namespace Core
     {
         namespace Serialization
         {
-            class XML : public Format
+            class XML
             {
             public:
                 XML();
-                virtual ~XML();
-                virtual std::shared_ptr<Node> read(const std::filesystem::path& _Path) override;
-                virtual bool write(const Reference<Node>& _Node, const std::filesystem::path& _Path) override;
+                ~XML();
+                static std::shared_ptr<Node> read(const std::filesystem::path& _Path);
+                static bool write(Node* _Node, const std::filesystem::path& _Path);
+
+            protected:
+            
+                struct Element
+                {
+                    pugi::xml_node node   = pugi::xml_node();
+                    Node*          object = nullptr;
+                };
             };
         }
     }
