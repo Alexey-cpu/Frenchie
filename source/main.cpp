@@ -155,7 +155,7 @@ public:
         std::string name   = std::string();
         std::string value  = std::string();
         int         self   = 0;
-        int         parent = 0;
+        Node*       parent = 0;
 
         Node* append_child(const char* _Name, const char* _Value)
         {
@@ -262,11 +262,11 @@ public:
 
         for(auto&& item : nodes) 
         {
-            if(item->self != item->parent)
-            {
-                pointers[item->parent]++;
-                workspace[item->parent]++;
-            }
+            if(item->parent == nullptr) 
+                continue;
+
+            pointers[item->parent->self]++;
+            workspace[item->parent->self]++;
         }
 
         // cumulative sum
@@ -281,10 +281,10 @@ public:
         // count sort
         for(int i = 0; i < nodes.size(); i++ )
         {
-            if(nodes[i]->self == nodes[i]->parent) 
+            if(nodes[i]->parent == nullptr) 
                 continue;
 
-            int index    = workspace[nodes[i]->parent]++;
+            int index    = workspace[nodes[i]->parent->self]++;
             items[index] = nodes[i];
         }
 
@@ -371,7 +371,7 @@ public:
         item->name   = _Name;
         item->value  = _Value;
         item->self   = std::max<int>((int)nodes.size(), 0);
-        item->parent = _Parent != nullptr ? _Parent->self : 0;
+        item->parent = _Parent;
         nodes.push_back(item);
         return item;
     }
