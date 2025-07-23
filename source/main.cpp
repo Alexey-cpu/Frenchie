@@ -148,28 +148,30 @@ public:
 
     class Node final
     {
-        Node(const Document* _Document) : 
-            document(_Document){}
-
-        friend class Document;
-
     public:
         
         ~Node(){}
 
-        const Document* document  = nullptr;
-        std::string     name      = std::string();
-        std::string     value     = std::string();
-        int             self      = 0;
-        int             parent    = 0;
+        std::string name   = std::string();
+        std::string value  = std::string();
+        int         self   = 0;
+        int         parent = 0;
 
         Node* append_child(const char* _Name, const char* _Value)
         {
             if(document == nullptr) 
                 return nullptr;
 
-            return document->create_node(this, _Name, _Value);
+            return document->append_node(this, _Name, _Value);
         }
+
+    private:
+        Node(const Document* _Document) : 
+            document(_Document){}
+
+        const Document* document = nullptr;
+
+        friend class Document;
     };
 
 
@@ -232,7 +234,7 @@ public:
                 stack.push(
                     {
                         element, 
-                        create_node(top.node, element.name(), element.value())
+                        append_node(top.node, element.name(), element.value())
                     }
                 );
             }
@@ -241,9 +243,9 @@ public:
 
     bool write(const std::filesystem::path& _Path)
     {
-        //------------------------------------------------------------------------------
-        // build children sort
-        //------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------
+        // THIS IS OPTIMIZED IMPLEMENTATION
+        //----------------------------------------------------------------------------------------
         std::vector<Node*> items(nodes.size());
         std::vector<int>   pointers(nodes.size() + 1);
         std::vector<int>   workspace(nodes.size() + 1);
@@ -312,7 +314,9 @@ public:
 
         return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
 
-        // this is the naive implementation:
+        //----------------------------------------------------------------------------------------
+        // THIS IS NAIVE IMPLEMENTATION
+        //----------------------------------------------------------------------------------------
 
         // // retrieve children
         // std::vector<std::vector<Node*>> parents(nodes.size());
@@ -361,7 +365,7 @@ public:
     // info
     mutable std::vector<Node*> nodes;
 
-    Node* create_node(Node* _Parent, const char* _Name, const char* _Value) const
+    Node* append_node(Node* _Parent, const char* _Name, const char* _Value) const
     {
         auto item    = new Node(this);
         item->name   = _Name;
