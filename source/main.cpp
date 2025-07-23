@@ -14,8 +14,7 @@
 
 #include <FrenchieImGuiDemoLayer.hpp>
 
-#include <FrenchieCoreSerialization.hpp>
-#include <FrenchieCoreSerializationXML.hpp>
+#include <FrenchieCoreSerializationXMLFormat.hpp>
 
 #include <FrenchieCoreSerializationTests.hpp>
 
@@ -46,32 +45,183 @@ public:
     }
 };
 
+//------------------------------------------------------------------------------------------------
+// EXPERIMENTAL
+//------------------------------------------------------------------------------------------------
+// char buffer[512];
+// std::pmr::monotonic_buffer_resource monotonicResource(buffer, sizeof(buffer));
+// std::pmr::pool_options options{1, 1024 * 1024 * 1024};
+// std::pmr::unsynchronized_pool_resource poolResource(options, &monotonicResource);
+
+class document;
+class node;
+
+template<typename T>
+class SStack
+{
+public:
+
+    SStack()
+    {
+        container.resize(128);
+    }
+
+    std::vector<T> container;
+
+    void push(const T& _Value)
+    {
+        current           = next;
+        container[next++] = _Value;
+
+        if(next >= container.size()) 
+        {
+            container.resize(growth * container.size());
+            growth *= 2;
+        }
+    }
+    
+    void pop()
+    {
+        next--;
+        current--;
+    }
+
+    T& top()
+    {
+        return container[current];
+    }
+
+    bool empty() const
+    {
+        return current < 0;
+    }
+
+    int current = 0;
+    int next    = 0;
+    int growth  = 2;
+};
+
+class node final
+{
+public:
+    
+    node(){}
+
+    ~node(){}
+
+    std::string name;
+    std::string value;
+    int         self;
+    int         parent;
+};
+
+class document
+{
+public:
+
+    virtual ~document()
+    {
+        for(auto&& node : nodes) 
+            delete node;
+    }
+
+    std::vector<node*> nodes;
+    pugi::xml_document doc;
+
+    node* push(const int& index = 0, const char* name = nullptr, const char* value = nullptr)
+    {
+        nodes.push_back(new node());
+        nodes.back()->name   = name;
+        nodes.back()->value  = value;
+        nodes.back()->self   = std::max<int>((int)nodes.size() - 1, 0);
+        nodes.back()->parent = index;
+
+        return nodes.back();
+    }
+
+    node* push(node* _Parent, const char* name = nullptr, const char* value = nullptr)
+    {
+        return push(_Parent->self, name, value);
+    }
+
+    void read(const std::filesystem::path& _Path)
+    {
+        // load file
+        auto status = doc.load_file(_Path.c_str()).status;
+
+        if(status != pugi::xml_parse_status::status_ok)
+        {
+            status = doc.load_file(&pugi::as_utf8(_Path.wstring())[0]).status;
+
+            if(status != pugi::xml_parse_status::status_ok) 
+                return;
+        }
+
+        if(doc.empty()) 
+            return;
+
+        nodes.clear();
+        auto root = push(0, doc.name(), doc.value());
+            
+        SStack<std::pair<pugi::xml_node, node*>> stack;
+        stack.push({doc, root});
+
+        while(!stack.empty())
+        {
+            auto top = stack.top();
+            stack.pop();
+
+            for(auto&& element : top.first)
+            {
+                stack.push(
+                    {
+                        element,
+                        push(top.second, element.name(), element.text().get())
+                    }
+                );
+            }
+        }
+    }
+};
+//------------------------------------------------------------------------------------------------
+
 int main(int, char**)
 {
     Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
     tests.run();
 
-    //file write time
-    auto document = 
-        std::make_shared<Serialization::Node>("NewDocument");
-    auto start = Helpers::tic();
-    auto child = document.get();
+    // //file write time
+    // auto document = 
+    //     std::make_shared<Serialization::Node>("NewDocument");
+    // auto start = Helpers::tic();
+    // auto child = document.get();
     
-    for(int i = 0; i < 1e6; i++) 
-    {
-        child = child->append_child("Child", 1);
-    }
+    // for(int i = 0; i < 1e6; i++) 
+    // {
+    //     child = child->append_child("Child", 1);
+    // }
 
-    std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    auto start1 = Helpers::tic();
-    Serialization::Format<Serialization::XML>::write(document.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
-    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
-    std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // auto start1 = Helpers::tic();
+    // Serialization::Format<Serialization::XML>::write(document.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
+    // std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
     //file read time
     auto start2 = Helpers::tic();
-    Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
+    
+    // document doc;
+    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
+    // for(auto&& node : doc.nodes) std::cout << node->self << "\t" << node->parent << "\t" << node->name << "\n";
+
+    document doc;
+    doc.read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+    
+    // auto instance = Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
     std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start2, Helpers::tic()) << " ms \n";
+
+    // for(auto node : nodes) 
+    //     delete node;
 
     return 0;
 }
