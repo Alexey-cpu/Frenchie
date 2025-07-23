@@ -49,14 +49,14 @@ public:
 // EXPERIMENTAL
 //------------------------------------------------------------------------------------------------
 
-template<typename T>
+template<typename T, int S = 512>
 class Stack final
 {
 public:
 
     Stack()
     {
-        container.resize(512);
+        container.resize(S);
     }
 
     std::vector<T> container;
@@ -94,14 +94,14 @@ public:
     int growth  = 2;
 };
 
-template<typename T>
+template<typename T, int S = 512>
 class Queue final
 {
 public:
 
     Queue()
     {
-        container.resize(512);
+        container.resize(S);
     }
 
     std::vector<T> container;
@@ -141,91 +141,198 @@ class Document final
 {
 public:
 
-    class NodePtr final
+    class NodePointer final
     {        
-        NodePtr(const Document* _Document) : document(_Document){}
-        ~NodePtr(){}
+        NodePointer(const Document* _Document) : document(_Document){}
+        ~NodePointer(){}
 
         mutable std::string name     = std::string();
         mutable std::string value    = std::string();
         mutable int         self     = 0;
         const Document*     document = nullptr;
-        const NodePtr*      parent   = 0;
+        const NodePointer*      parent   = 0;
 
         friend class Document;
+        friend class Iterator;
         friend class Node;
     };
 
     class Node final
     {
     public:
-        Node(const NodePtr* _Pointer = nullptr) : m_Pointer(_Pointer){}
+
+        class Iterator final
+        {
+        public:
+            Iterator(const Node& _Node) : 
+                m_Document(_Node.m_Pointer->document), 
+                m_Index(_Node.self()){}
+            
+            ~Iterator(){}
+
+            // access
+            Node operator*() const 
+            {
+                if(m_Document == nullptr) 
+                    return Node();
+
+                const auto& hierarchy = m_Document->hierarchy();
+
+                return hierarchy.entry(m_Index);
+            }
+
+            const Node* operator->() const
+            {
+                if(m_Document == nullptr) 
+                    return nullptr;
+
+                const auto& hierarchy = m_Document->hierarchy();
+
+                return &hierarchy.entry(m_Index);
+            }
+
+            // prefix
+            Iterator& operator++() 
+            { 
+                m_Index++; 
+                return *this; 
+            }
+
+            Iterator& operator--() 
+            { 
+                m_Index--; 
+                return *this; 
+            }
+
+            // postfix
+            Iterator operator++(int) 
+            { 
+                Iterator tmp = *this; 
+                ++(*this); 
+                return tmp; 
+            }
+
+            Iterator operator--(int) 
+            { 
+                Iterator tmp = *this; 
+                --(*this); 
+                return tmp; 
+            }
+
+            // comparison
+            friend bool operator==(const Iterator& a, const Iterator& b) 
+            { 
+                return a.m_Index == b.m_Index; 
+            }
+            
+            friend bool operator!=(const Iterator& a, const Iterator& b) 
+            { 
+                return a.m_Index != b.m_Index; 
+            }
+
+            // arithmetics
+            static int distance(const Iterator& _First, const Iterator& _Last)
+            {
+                return _Last.m_Index - _First.m_Index;
+            }
+
+        protected:
+            const Document* m_Document;
+            int             m_Index;
+        };
+
+        Node(const NodePointer* _Pointer = nullptr) : m_Pointer(_Pointer){}
         ~Node(){}
+
+        const Iterator begin() const
+        {
+            return Iterator(*this);
+        }
+
+        const Iterator end() const
+        {
+            if(!valid()) 
+                return Iterator(Node());
+
+            const auto& hierarchy = 
+                m_Pointer->document->hierarchy();
+
+            return Iterator(hierarchy.items[hierarchy.pointers[self() + 1]]);
+        }
 
         std::string& name() const
         {
-            if(m_Pointer == nullptr)
-            {
-                Node::EMPTY_STRING = "";
-                return Node::EMPTY_STRING;
-            }
+            if(valid())
+                return m_Pointer->name;
 
-            return m_Pointer->name;
+            Node::EMPTY_STRING = "";
+            return Node::EMPTY_STRING;
         }
 
         std::string& value() const
         {
-            if(m_Pointer == nullptr)
-            {
-                Node::EMPTY_STRING = "";
-                return Node::EMPTY_STRING;
-            }
+            if(valid())
+                return m_Pointer->value;
 
-            return m_Pointer->value;
+            Node::EMPTY_STRING = "";
+            return Node::EMPTY_STRING;
         }
 
         Node parent() const
         {
-            return m_Pointer == nullptr ? Node() : Node(m_Pointer->parent);
+            return valid() ? Node(m_Pointer->parent) : Node();
         }
 
         int self() const
         {
-            return m_Pointer == nullptr ? 0 : m_Pointer->self; 
+            return valid() ? m_Pointer->self : 0; 
+        }
+
+        bool valid() const
+        {
+            return m_Pointer != nullptr && m_Pointer->document != nullptr;
         }
 
         bool empty() const
         {
-            return m_Pointer == nullptr;
+            return Iterator::distance(begin(), end()) <= 0;
+        }
+
+        int size() const
+        {
+            return Iterator::distance(begin(), end());
         }
 
         void clear()
         {
+            if(m_Pointer == nullptr) 
+                return;
+
             delete m_Pointer;
             m_Pointer = nullptr;
         }
 
         Node append_child(const char* _Name, const char* _Value)
         {
-            if(m_Pointer == nullptr || m_Pointer->document == nullptr) 
-                return Node();
-
-            return m_Pointer->document->append_child(_Name, _Value, *this);
+            return valid() ? m_Pointer->document->append_child(_Name, _Value, *this) : Node();
         }
 
     private:
         inline static std::string EMPTY_STRING = "";
 
-        const NodePtr* m_Pointer = nullptr;
+        const NodePointer* m_Pointer = nullptr;
 
         friend class Document;
     };
 
-    struct TreeHierarchyMatrix
+    struct TreeHierarchyMatrix final
     {
-        std::vector<Node> items      = std::vector<Node>();
-        std::vector<int>  pointers   = std::vector<int>();
-        bool              m_is_dirty = true;
+        TreeHierarchyMatrix(const std::vector<Node>& nodes = std::vector<Node>())
+        {
+            generate(nodes);
+        }
+
+        ~TreeHierarchyMatrix(){}
 
         bool is_dirty() const
         {
@@ -235,11 +342,6 @@ public:
         void set_dirty()
         {
             m_is_dirty = true;
-        }
-
-        TreeHierarchyMatrix(const std::vector<Node>& nodes = std::vector<Node>())
-        {
-            generate(nodes);
         }
 
         void generate(const std::vector<Node>& nodes = std::vector<Node>())
@@ -263,7 +365,7 @@ public:
 
             for(auto&& item : nodes) 
             {
-                if(item.parent().empty()) 
+                if(!item.parent().valid()) 
                     continue;
 
                 pointers[item.parent().self()]++;
@@ -282,7 +384,7 @@ public:
             // count sort
             for(int i = 0; i < nodes.size(); i++ )
             {
-                if(nodes[i].parent().empty()) 
+                if(!nodes[i].parent().valid()) 
                     continue;
 
                 int index    = workspace[nodes[i].parent().self()]++;
@@ -292,6 +394,15 @@ public:
             m_is_dirty = false;
         }
 
+        Node entry(int _Index) const
+        {
+            return _Index >= pointers.size() || pointers[_Index] >= items.size() || is_dirty() ? Node() : items[pointers[_Index]];
+        }
+
+        // info
+        std::vector<Node> items      = std::vector<Node>();
+        std::vector<int>  pointers   = std::vector<int>();
+        bool              m_is_dirty = true;
     };
 
     Document(){}
@@ -312,7 +423,7 @@ public:
         matrix.set_dirty();
 
         // append child
-        auto item    = new NodePtr(this);
+        auto item    = new NodePointer(this);
         item->name   = _Name;
         item->value  = _Value;
         item->self   = std::max<int>((int)nodes.size(), 0);
@@ -472,6 +583,14 @@ int main(int, char**)
     child.append_child("Child-2", "Zero");
     child.append_child("Child-3", "Zero");
 
+    for(auto&& item : root)
+    {
+        std::cout << item.name() << "\n";
+    }
+
+    std::cout << "root.empty() " << root.empty() << "\n";
+    std::cout << "root.size() " << root.size() << "\n";
+
     Format<XML<false>>::write(doc,"C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
     Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
     Format<XML<false>>::write(doc,"C:/SDK/Qt_Projects/OpenGL/logs/TestFile1.xml");
@@ -500,10 +619,10 @@ int main(int, char**)
     // auto start = Helpers::tic();
     // Document doc;
 
-    // Format<XML>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+    // Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
     // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
     // start = Helpers::tic();
-    // Format<XML>::write(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
+    // Format<XML<false>>::write(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
     // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
     return 0;
