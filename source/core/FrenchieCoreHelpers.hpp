@@ -29,6 +29,94 @@ namespace Frenchie
                 return extention;
             }
 
+            template<typename T, int S = 512>
+            class Stack final
+            {
+            public:
+
+                Stack()
+                {
+                    container.resize(S);
+                }
+
+                std::vector<T> container;
+
+                void push(const T& _Value)
+                {
+                    current           = next;
+                    container[next++] = _Value;
+
+                    if(next >= container.size()) 
+                    {
+                        container.resize(growth * container.size());
+                        growth *= 2;
+                    }
+                }
+                
+                void pop()
+                {
+                    next--;
+                    current--;
+                }
+
+                T& top()
+                {
+                    return container[current];
+                }
+
+                bool empty() const
+                {
+                    return current < 0;
+                }
+
+                int current = 0;
+                int next    = 0;
+                int growth  = 2;
+            };
+
+            template<typename T, int S = 512>
+            class Queue final
+            {
+            public:
+
+                Queue()
+                {
+                    container.resize(S);
+                }
+
+                std::vector<T> container;
+
+                void push(const T& _Value)
+                {
+                    container[tail++] = _Value;
+
+                    if(tail >= container.size()) 
+                    {
+                        container.resize(growth * container.size());
+                        growth *= 2;
+                    }
+                }
+                
+                void pop()
+                {
+                    head++;
+                }
+
+                T& front()
+                {
+                    return container[head];
+                }
+
+                bool empty() const
+                {
+                    return head >= tail;
+                }
+
+                int head    = 0;
+                int tail    = 0;
+                int growth  = 2;
+            };
+
             // from string conversion
             template<typename __type>
             inline __type from_string(const std::string& _Input)
