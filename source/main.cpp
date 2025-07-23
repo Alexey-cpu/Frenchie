@@ -53,178 +53,178 @@ public:
 // std::pmr::pool_options options{1, 1024 * 1024 * 1024};
 // std::pmr::unsynchronized_pool_resource poolResource(options, &monotonicResource);
 
+template<typename T>
+class Stack final
+{
+public:
+
+    Stack()
+    {
+        container.resize(512);
+    }
+
+    std::vector<T> container;
+
+    void push(const T& _Value)
+    {
+        current           = next;
+        container[next++] = _Value;
+
+        if(next >= container.size()) 
+        {
+            container.resize(growth * container.size());
+            growth *= 2;
+        }
+    }
+    
+    void pop()
+    {
+        next--;
+        current--;
+    }
+
+    T& top()
+    {
+        return container[current];
+    }
+
+    bool empty() const
+    {
+        return current < 0;
+    }
+
+    int current = 0;
+    int next    = 0;
+    int growth  = 2;
+};
+
+template<typename T>
+class Queue final
+{
+public:
+
+    Queue()
+    {
+        container.resize(512);
+    }
+
+    std::vector<T> container;
+
+    void push(const T& _Value)
+    {
+        container[tail++] = _Value;
+
+        if(tail >= container.size()) 
+        {
+            container.resize(growth * container.size());
+            growth *= 2;
+        }
+    }
+    
+    void pop()
+    {
+        head++;
+    }
+
+    T& front()
+    {
+        return container[head];
+    }
+
+    bool empty() const
+    {
+        return head >= tail;
+    }
+
+    int head    = 0;
+    int tail    = 0;
+    int growth  = 2;
+};
+
 class Document final
 {
 public:
 
     // nested types
-    template<typename T>
-    class Stack final
+    class NodePtr final
     {
     public:
-
-        Stack()
-        {
-            container.resize(512);
-        }
-
-        std::vector<T> container;
-
-        void push(const T& _Value)
-        {
-            current           = next;
-            container[next++] = _Value;
-
-            if(next >= container.size()) 
-            {
-                container.resize(growth * container.size());
-                growth *= 2;
-            }
-        }
         
-        void pop()
-        {
-            next--;
-            current--;
-        }
+        ~NodePtr(){}
 
-        T& top()
-        {
-            return container[current];
-        }
+        const   Document*   document = nullptr;
+        mutable std::string name     = std::string();
+        mutable std::string value    = std::string();
+        mutable int         self     = 0;
+        mutable NodePtr*    parent   = 0;
 
-        bool empty() const
-        {
-            return current < 0;
-        }
-
-        int current = 0;
-        int next    = 0;
-        int growth  = 2;
-    };
-
-    template<typename T>
-    class Queue final
-    {
-    public:
-
-        Queue()
-        {
-            container.resize(512);
-        }
-
-        std::vector<T> container;
-
-        void push(const T& _Value)
-        {
-            container[tail++] = _Value;
-
-            if(tail >= container.size()) 
-            {
-                container.resize(growth * container.size());
-                growth *= 2;
-            }
-        }
-        
-        void pop()
-        {
-            head++;
-        }
-
-        T& front()
-        {
-            return container[head];
-        }
-
-        bool empty() const
-        {
-            return head >= tail;
-        }
-
-        int head    = 0;
-        int tail    = 0;
-        int growth  = 2;
+    private:
+        NodePtr(const Document* _Document) : 
+            document(_Document){}
+        friend class Document;
     };
 
     class Node final
     {
     public:
-        
+        Node(NodePtr* _Pointer = nullptr) : m_Pointer(_Pointer){}
         ~Node(){}
 
-        std::string name   = std::string();
-        std::string value  = std::string();
-        int         self   = 0;
-        Node*       parent = 0;
-
-        Node* append_child(const char* _Name, const char* _Value)
+        std::string& name() const
         {
-            if(document == nullptr) 
-                return nullptr;
+            if(m_Pointer == nullptr)
+            {
+                Node::EMPTY_STRING = "";
+                return Node::EMPTY_STRING;
+            }
 
-            return document->append_node(this, _Name, _Value);
+            return m_Pointer->name;
         }
 
-    private:
-        Node(const Document* _Document) : 
-            document(_Document){}
-
-        const Document* document = nullptr;
-
-        friend class Document;
-    };
-
-    struct TreeMatrix
-    {
-        std::vector<Node*> items;
-        std::vector<int>   pointers;
-
-        TreeMatrix(const std::vector<Node*>& nodes)
+        std::string& value() const
         {
-            items.resize(nodes.size());
-            pointers.resize(nodes.size() + 1);
-            std::vector<int> workspace(nodes.size() + 1);
-
-            for (size_t i = 0; i < nodes.size(); i++)
+            if(m_Pointer == nullptr)
             {
-                items[i]     = nodes[i];
-                pointers [i] = 0;
-                workspace[i] = 0;
+                Node::EMPTY_STRING = "";
+                return Node::EMPTY_STRING;
             }
 
-            pointers[nodes.size()] = 0;
-            workspace[nodes.size()] = 0;
-
-            for(auto&& item : nodes) 
-            {
-                if(item->parent == nullptr) 
-                    continue;
-
-                pointers[item->parent->self]++;
-                workspace[item->parent->self]++;
-            }
-
-            // cumulative sum
-            for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
-            {
-                k += workspace[i];
-                workspace[i] = j;
-                pointers[i] = j;
-                j = k;
-            }
-
-            // count sort
-            for(int i = 0; i < nodes.size(); i++ )
-            {
-                if(nodes[i]->parent == nullptr) 
-                    continue;
-
-                int index    = workspace[nodes[i]->parent->self]++;
-                items[index] = nodes[i];
-            }
+            return m_Pointer->value;
         }
-    };
 
+        Node parent() const
+        {
+            return m_Pointer == nullptr ? Node() : Node(m_Pointer->parent);
+        }
+
+        int self() const
+        {
+            return m_Pointer == nullptr ? 0 : m_Pointer->self; 
+        }
+
+        bool empty() const
+        {
+            return m_Pointer == nullptr;
+        }
+
+        void clear()
+        {
+            delete m_Pointer;
+            m_Pointer = nullptr;
+        }
+
+        Node append_child(const char* _Name, const char* _Value)
+        {
+            if(m_Pointer == nullptr || m_Pointer->document == nullptr) 
+                return Node();
+
+            return m_Pointer->document->append_node(*this, _Name, _Value);
+        }
+
+        inline static std::string EMPTY_STRING = "";
+
+        NodePtr* m_Pointer = nullptr;
+    };
 
     Document(){}
 
@@ -236,13 +236,13 @@ public:
     void clear()
     {
         for(auto&& node : nodes) 
-            delete node;
+            node.clear();
         nodes.clear();
     }
 
-    Node* root() const
+    Node root() const
     {
-        return nodes.empty() ? nullptr : nodes[0];
+        return nodes.empty() ? Node() : nodes[0];
     }
 
     void read(const std::filesystem::path& _Path)
@@ -265,7 +265,7 @@ public:
         struct Element
         {
             pugi::xml_node document;
-            Node*          node;
+            Node           node;
         };
 
         // clear self
@@ -293,15 +293,15 @@ public:
     }
 
     bool write(const std::filesystem::path& _Path)
-    { 
+    {
         // compute matrix
-        TreeMatrix m(nodes);
+        matrix.generate(nodes);
 
         // write a file
         struct Element
         {
             pugi::xml_node xml;
-            Node*          data;
+            Node           data;
         };
 
         pugi::xml_document  main;
@@ -314,10 +314,10 @@ public:
             auto xml  = queue.front().xml;
             queue.pop();
 
-            auto node = xml.append_child(data->name);
+            auto node = xml.append_child(data.name());
 
-            for (size_t i = m.pointers[data->self]; i < m.pointers[data->self+1]; i++) 
-                queue.push({node, m.items[i]});
+            for (size_t i = matrix.pointers[data.self()]; i < matrix.pointers[data.self() + 1]; i++) 
+                queue.push({node, matrix.items[i]});
         }
 
         //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
@@ -327,24 +327,102 @@ public:
 
 //protected:
 
-    enum DirtyFlags
-    {
-        NONE,
-        DIRTY_HIERARCHY
-    };
-
     // info
-    mutable std::vector<Node*> nodes;
+    mutable std::vector<Node> nodes;
+    mutable bool m_is_dirty = true;
 
-    Node* append_node(Node* _Parent, const char* _Name, const char* _Value) const
+    struct TreeMatrix
     {
-        auto item    = new Node(this);
+        std::vector<Node> items;
+        std::vector<int>  pointers;
+
+        TreeMatrix(const std::vector<Node>& nodes = std::vector<Node>())
+        {
+            generate(nodes);
+        }
+
+        void generate(const std::vector<Node>& nodes = std::vector<Node>())
+        {
+            if(nodes.empty()) 
+                return;
+
+            items.resize(nodes.size());
+            pointers.resize(nodes.size() + 1);
+            std::vector<int> workspace(nodes.size() + 1);
+
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                items[i]     = nodes[i];
+                pointers [i] = 0;
+                workspace[i] = 0;
+            }
+
+            pointers[nodes.size()] = 0;
+            workspace[nodes.size()] = 0;
+
+            for(auto&& item : nodes) 
+            {
+                if(item.parent().empty()) 
+                    continue;
+
+                pointers[item.parent().self()]++;
+                workspace[item.parent().self()]++;
+            }
+
+            // cumulative sum
+            for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
+            {
+                k += workspace[i];
+                workspace[i] = j;
+                pointers[i] = j;
+                j = k;
+            }
+
+            // count sort
+            for(int i = 0; i < nodes.size(); i++ )
+            {
+                if(nodes[i].parent().empty()) 
+                    continue;
+
+                int index    = workspace[nodes[i].parent().self()]++;
+                items[index] = nodes[i];
+            }
+        }
+
+    } mutable matrix;
+
+    TreeMatrix& get_tree_matrix() const
+    {
+        if(m_is_dirty) 
+            matrix.generate(nodes);
+        m_is_dirty = false;
+
+        return matrix;
+    }
+
+    // modifiers
+    Node append_node(Node& _Parent, const char* _Name, const char* _Value) const
+    {
+        // setup dirty flag
+        m_is_dirty = true;
+
+        // append child
+        auto item    = new NodePtr(this);
         item->name   = _Name;
         item->value  = _Value;
         item->self   = std::max<int>((int)nodes.size(), 0);
-        item->parent = _Parent;
+        item->parent = _Parent.m_Pointer;
         nodes.push_back(item);
-        return item;
+        return Node(item);
+    }
+
+    void remove_node(std::function<bool(Node&)> _Predicate) const
+    {
+        if(_Predicate == nullptr) 
+            return;
+        
+        // setup dirty flag
+        m_is_dirty = true;
     }
 };
 //------------------------------------------------------------------------------------------------
@@ -369,8 +447,8 @@ int main(int, char**)
     //file read time
     Document doc;
     doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
-    doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile1.xml");
-    for(auto&& node : doc.nodes) std::cout << node->self << "\t" << node->parent << "\t" << node->name << "\n";
+    doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile2.xml");
+    for(auto&& node : doc.nodes) std::cout << node.self() << "\t" << node.parent().self() << "\t" << node.name() << "\n";
 
     // auto start = Helpers::tic();
     // Document doc;
