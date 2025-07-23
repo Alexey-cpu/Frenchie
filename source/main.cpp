@@ -53,16 +53,17 @@ public:
 // std::pmr::pool_options options{1, 1024 * 1024 * 1024};
 // std::pmr::unsynchronized_pool_resource poolResource(options, &monotonicResource);
 
-class document final
+class Document final
 {
 public:
 
+    // nested types
     template<typename T>
-    class stack
+    class Stack final
     {
     public:
 
-        stack()
+        Stack()
         {
             container.resize(512);
         }
@@ -102,24 +103,67 @@ public:
         int growth  = 2;
     };
 
-    class node final
+    template<typename T>
+    class Queue final
     {
-        node(const document* _Document) : 
+    public:
+
+        Queue()
+        {
+            container.resize(512);
+        }
+
+        std::vector<T> container;
+
+        void push(const T& _Value)
+        {
+            container[tail++] = _Value;
+
+            if(tail >= container.size()) 
+            {
+                container.resize(growth * container.size());
+                growth *= 2;
+            }
+        }
+        
+        void pop()
+        {
+            head++;
+        }
+
+        T& front()
+        {
+            return container[head];
+        }
+
+        bool empty() const
+        {
+            return head >= tail;
+        }
+
+        int head    = 0;
+        int tail    = 0;
+        int growth  = 2;
+    };
+
+    class Node final
+    {
+        Node(const Document* _Document) : 
             document(_Document){}
 
-        friend class document;
+        friend class Document;
 
     public:
         
-        ~node(){}
+        ~Node(){}
 
-        const document* document  = nullptr;
+        const Document* document  = nullptr;
         std::string     name      = std::string();
         std::string     value     = std::string();
         int             self      = 0;
         int             parent    = 0;
 
-        node* append_child(const char* _Name, const char* _Value)
+        Node* append_child(const char* _Name, const char* _Value)
         {
             if(document == nullptr) 
                 return nullptr;
@@ -129,14 +173,12 @@ public:
     };
 
 
-    document(){}
+    Document(){}
 
-    ~document()
+    ~Document()
     {
         clear();
     }
-
-    mutable std::vector<node*> nodes;
 
     void clear()
     {
@@ -145,7 +187,7 @@ public:
         nodes.clear();
     }
 
-    node* root() const
+    Node* root() const
     {
         return nodes[0];
     }
@@ -169,15 +211,15 @@ public:
 
         struct Element
         {
-            pugi::xml_node xml;
-            node*          data;
+            pugi::xml_node document;
+            Node*          node;
         };
 
         // clear self
         clear();
 
         // parse in depth
-        stack<Element> stack;
+        Stack<Element> stack;
         stack.push({doc, nullptr});
 
         while(!stack.empty())
@@ -185,12 +227,12 @@ public:
             auto top = stack.top();
             stack.pop();
 
-            for(auto&& element : top.xml)
+            for(auto&& element : top.document)
             {
                 stack.push(
                     {
                         element, 
-                        create_node(top.data, element.name(), element.value())
+                        create_node(top.node, element.name(), element.value())
                     }
                 );
             }
@@ -200,7 +242,7 @@ public:
     bool write(const std::filesystem::path& _Path)
     {
         // retrieve children
-        std::vector<std::vector<node*>> parents(nodes.size());
+        std::vector<std::vector<Node*>> parents(nodes.size());
         for(auto&& item : nodes) 
         {
             if(item->self != item->parent)
@@ -211,11 +253,11 @@ public:
         struct Element
         {
             pugi::xml_node xml;
-            node*          data;
+            Node*          data;
         };
 
         pugi::xml_document  main;
-        std::queue<Element> queue;
+        Queue<Element>      queue;
         queue.push({main, root()});
 
         while (!queue.empty())
@@ -230,14 +272,25 @@ public:
                 queue.push({node, child});
         }
 
+        //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
+
         return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
     }
 
-protected:
+//protected:
 
-    node* create_node(node* _Parent, const char* _Name, const char* _Value) const
+    enum DirtyFlags
     {
-        auto item    = new node(this);
+        NONE,
+        DIRTY_HIERARCHY
+    };
+
+    // info
+    mutable std::vector<Node*> nodes;
+
+    Node* create_node(Node* _Parent, const char* _Name, const char* _Value) const
+    {
+        auto item    = new Node(this);
         item->name   = _Name;
         item->value  = _Value;
         item->self   = std::max<int>((int)nodes.size(), 0);
@@ -250,43 +303,34 @@ protected:
 
 int main(int, char**)
 {
-    Serialization::Tests::SerializationTests tests("C:/SDK/Qt_Projects/OpenGL/logs");
-    tests.run();
-
-    // //file write time
-    // auto document = 
-    //     std::make_shared<Serialization::Node>("NewDocument");
+    //---------------------------------------------------------------------------------------------------------------------
+    // WRAPPER VERSION
+    //---------------------------------------------------------------------------------------------------------------------
     // auto start = Helpers::tic();
-    // auto child = document.get();
-    
-    // for(int i = 0; i < 1e6; i++) 
-    // {
-    //     child = child->append_child("Child", 1);
-    // }
+    // auto doc = Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // start = Helpers::tic();
+    // Serialization::Format<Serialization::XML>::write(doc.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument1.xml");
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    //---------------------------------------------------------------------------------------------------------------------
 
-    // std::cout << "doc generation time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    // auto start1 = Helpers::tic();
-    // Serialization::Format<Serialization::XML>::write(document.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument.xml");
-    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start1, Helpers::tic()) << " ms \n";
-    // std::cout << "total time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
+    //---------------------------------------------------------------------------------------------------------------------
+    // HIGHLY OPTIMIZED VARIANT
+    //---------------------------------------------------------------------------------------------------------------------
     // //file read time
-    // document doc;
+    // Document doc;
     // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
     // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile1.xml");
     // for(auto&& node : doc.nodes) std::cout << node->self << "\t" << node->parent << "\t" << node->name << "\n";
 
     auto start = Helpers::tic();
-    document doc;
+    Document doc;
     doc.read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
     std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
     start = Helpers::tic();
     doc.write("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
     std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    
-
-    // for(auto node : nodes) 
-    //     delete node;
 
     return 0;
 }
