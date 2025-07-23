@@ -48,10 +48,6 @@ public:
 //------------------------------------------------------------------------------------------------
 // EXPERIMENTAL
 //------------------------------------------------------------------------------------------------
-// char buffer[512];
-// std::pmr::monotonic_buffer_resource monotonicResource(buffer, sizeof(buffer));
-// std::pmr::pool_options options{1, 1024 * 1024 * 1024};
-// std::pmr::unsynchronized_pool_resource poolResource(options, &monotonicResource);
 
 template<typename T>
 class Stack final
@@ -145,29 +141,25 @@ class Document final
 {
 public:
 
-    // nested types
     class NodePtr final
-    {
-    public:
-        
+    {        
+        NodePtr(const Document* _Document) : document(_Document){}
         ~NodePtr(){}
 
-        const   Document*   document = nullptr;
         mutable std::string name     = std::string();
         mutable std::string value    = std::string();
         mutable int         self     = 0;
-        mutable NodePtr*    parent   = 0;
+        const Document*     document = nullptr;
+        const NodePtr*      parent   = 0;
 
-    private:
-        NodePtr(const Document* _Document) : 
-            document(_Document){}
         friend class Document;
+        friend class Node;
     };
 
     class Node final
     {
     public:
-        Node(NodePtr* _Pointer = nullptr) : m_Pointer(_Pointer){}
+        Node(const NodePtr* _Pointer = nullptr) : m_Pointer(_Pointer){}
         ~Node(){}
 
         std::string& name() const
@@ -218,125 +210,34 @@ public:
             if(m_Pointer == nullptr || m_Pointer->document == nullptr) 
                 return Node();
 
-            return m_Pointer->document->append_node(*this, _Name, _Value);
+            return m_Pointer->document->append_child(_Name, _Value, *this);
         }
 
+    private:
         inline static std::string EMPTY_STRING = "";
 
-        NodePtr* m_Pointer = nullptr;
+        const NodePtr* m_Pointer = nullptr;
+
+        friend class Document;
     };
 
-    Document(){}
-
-    ~Document()
+    struct TreeHierarchyMatrix
     {
-        clear();
-    }
+        std::vector<Node> items      = std::vector<Node>();
+        std::vector<int>  pointers   = std::vector<int>();
+        bool              m_is_dirty = true;
 
-    void clear()
-    {
-        for(auto&& node : nodes) 
-            node.clear();
-        nodes.clear();
-    }
-
-    Node root() const
-    {
-        return nodes.empty() ? Node() : nodes[0];
-    }
-
-    void read(const std::filesystem::path& _Path)
-    {
-        // load file
-        pugi::xml_document doc;
-        auto status = doc.load_file(_Path.c_str()).status;
-
-        if(status != pugi::xml_parse_status::status_ok)
+        bool is_dirty() const
         {
-            status = doc.load_file(&pugi::as_utf8(_Path.wstring())[0]).status;
-
-            if(status != pugi::xml_parse_status::status_ok) 
-                return;
+            return m_is_dirty || items.empty() || pointers.empty();
         }
 
-        if(doc.empty()) 
-            return;
-
-        struct Element
+        void set_dirty()
         {
-            pugi::xml_node document;
-            Node           node;
-        };
-
-        // clear self
-        clear();
-
-        // parse in depth
-        Stack<Element> stack;
-        stack.push({doc, nullptr});
-
-        while(!stack.empty())
-        {
-            auto top = stack.top();
-            stack.pop();
-
-            for(auto&& element : top.document)
-            {
-                stack.push(
-                    {
-                        element, 
-                        append_node(top.node, element.name(), element.value())
-                    }
-                );
-            }
-        }
-    }
-
-    bool write(const std::filesystem::path& _Path)
-    {
-        // compute matrix
-        matrix.generate(nodes);
-
-        // write a file
-        struct Element
-        {
-            pugi::xml_node xml;
-            Node           data;
-        };
-
-        pugi::xml_document  main;
-        Queue<Element>      queue;
-        queue.push({main, root()});
-
-        while (!queue.empty())
-        {
-            auto data = queue.front().data;
-            auto xml  = queue.front().xml;
-            queue.pop();
-
-            auto node = xml.append_child(data.name());
-
-            for (size_t i = matrix.pointers[data.self()]; i < matrix.pointers[data.self() + 1]; i++) 
-                queue.push({node, matrix.items[i]});
+            m_is_dirty = true;
         }
 
-        //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
-
-        return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
-    }
-
-//protected:
-
-    // info
-    mutable std::vector<Node> nodes;
-    mutable bool m_is_dirty = true;
-
-    struct TreeMatrix
-    {
-        std::vector<Node> items;
-        std::vector<int>  pointers;
-
-        TreeMatrix(const std::vector<Node>& nodes = std::vector<Node>())
+        TreeHierarchyMatrix(const std::vector<Node>& nodes = std::vector<Node>())
         {
             generate(nodes);
         }
@@ -387,24 +288,28 @@ public:
                 int index    = workspace[nodes[i].parent().self()]++;
                 items[index] = nodes[i];
             }
+
+            m_is_dirty = false;
         }
 
-    } mutable matrix;
+    };
 
-    TreeMatrix& get_tree_matrix() const
+    Document(){}
+
+    ~Document()
     {
-        if(m_is_dirty) 
-            matrix.generate(nodes);
-        m_is_dirty = false;
-
-        return matrix;
+        reset();
     }
 
-    // modifiers
-    Node append_node(Node& _Parent, const char* _Name, const char* _Value) const
+    Node root() const
+    {
+        return nodes.empty() ? Node() : nodes[0];
+    }
+
+    Node append_child(const char* _Name, const char* _Value, Node& _Parent = Node()) const
     {
         // setup dirty flag
-        m_is_dirty = true;
+        matrix.set_dirty();
 
         // append child
         auto item    = new NodePtr(this);
@@ -416,19 +321,161 @@ public:
         return Node(item);
     }
 
-    void remove_node(std::function<bool(Node&)> _Predicate) const
+    void remove_child(std::function<bool(Node&)> _Predicate, Node& _Parent = Node()) const
     {
         if(_Predicate == nullptr) 
             return;
         
+        //auto& matrix = get_tree_matrix();
+
         // setup dirty flag
-        m_is_dirty = true;
+        matrix.set_dirty();
+    }
+
+    void reset()
+    {
+        // clear
+        for(auto&& node : nodes) 
+            node.clear();
+        nodes.clear();
+
+        // setup dirty flag
+        matrix.set_dirty();
+    }
+
+    TreeHierarchyMatrix& hierarchy() const
+    {
+        if(matrix.is_dirty()) 
+            matrix.generate(nodes);
+
+        return matrix;
+    }
+
+protected:
+
+    // info
+    mutable std::vector<Node>   nodes;
+    mutable TreeHierarchyMatrix matrix;
+};
+
+template<typename T>
+class Format final
+{
+public:
+    
+    static bool read(Document& _Document, const std::filesystem::path& _Path)
+    {
+        return T::read(_Document, _Path);
+    }
+
+    static bool write(Document& _Document, const std::filesystem::path& _Path)
+    {
+        return T::write(_Document, _Path);
     }
 };
+
+template<bool Compact = false>
+class XML final
+{
+public:
+
+    // write a file
+    struct Element
+    {
+        pugi::xml_node document;
+        Document::Node data;
+    };
+
+    static bool read(Document& _Document, const std::filesystem::path& _Path)
+    {
+        // load file
+        pugi::xml_document doc;
+        auto status = doc.load_file(_Path.c_str()).status;
+
+        if(status != pugi::xml_parse_status::status_ok)
+        {
+            status = doc.load_file(&pugi::as_utf8(_Path.wstring())[0]).status;
+
+            if(status != pugi::xml_parse_status::status_ok) 
+                return false;
+        }
+
+        if(doc.empty()) 
+            return false;
+
+        // clear self
+        _Document.reset();
+
+        // parse in depth
+        Stack<Element> stack;
+        stack.push({doc, nullptr});
+
+        while(!stack.empty())
+        {
+            auto top = stack.top();
+            stack.pop();
+
+            for(auto&& element : top.document)
+            {
+                stack.push(
+                    {
+                        element, 
+                        _Document.append_child(element.name(), element.value(), top.data)
+                    }
+                );
+            }
+        }
+
+        return true;
+    }
+
+    static bool write(Document& _Document, const std::filesystem::path& _Path)
+    {
+        // compute matrix
+        const auto& matrix = _Document.hierarchy();
+
+        pugi::xml_document main;
+        Queue<Element>     queue;
+        queue.push({main, _Document.root()});
+
+        while (!queue.empty())
+        {
+            auto data = queue.front().data;
+            auto xml  = queue.front().document;
+            queue.pop();
+
+            auto node = xml.append_child(data.name());
+
+            for (size_t i = matrix.pointers[data.self()]; i < matrix.pointers[data.self() + 1]; i++) 
+                queue.push({node, matrix.items[i]});
+        }
+
+        return Compact ? 
+                main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw) : 
+                main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
+    }
+};
+
 //------------------------------------------------------------------------------------------------
 
 int main(int, char**)
 {
+    Document doc;
+
+    auto root = doc.append_child("Root", "Zero");
+
+    auto child = 
+        root.append_child("Child-1", "Zero")
+            .append_child("Child-1-1", "Value-1-1")
+            .append_child("Child-1-2", "Value-1-2");
+
+    child.append_child("Child-2", "Zero");
+    child.append_child("Child-3", "Zero");
+
+    Format<XML<false>>::write(doc,"C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
+    Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
+    Format<XML<false>>::write(doc,"C:/SDK/Qt_Projects/OpenGL/logs/TestFile1.xml");
+
     //---------------------------------------------------------------------------------------------------------------------
     // WRAPPER VERSION
     //---------------------------------------------------------------------------------------------------------------------
@@ -444,18 +491,19 @@ int main(int, char**)
     //---------------------------------------------------------------------------------------------------------------------
     // HIGHLY OPTIMIZED VARIANT
     //---------------------------------------------------------------------------------------------------------------------
-    //file read time
-    Document doc;
-    doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
-    doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile2.xml");
-    for(auto&& node : doc.nodes) std::cout << node.self() << "\t" << node.parent().self() << "\t" << node.name() << "\n";
+    // //file read time
+    // Document doc;
+    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
+    // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile2.xml");
+    // for(auto&& node : doc.nodes) std::cout << node.self() << "\t" << node.parent().self() << "\t" << node.name() << "\n";
 
     // auto start = Helpers::tic();
     // Document doc;
-    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+
+    // Format<XML>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
     // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
     // start = Helpers::tic();
-    // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
+    // Format<XML>::write(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
     // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
     return 0;
