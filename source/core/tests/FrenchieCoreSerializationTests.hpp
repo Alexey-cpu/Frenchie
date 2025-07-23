@@ -27,9 +27,9 @@ namespace Frenchie
 
                         auto child = document.get();
 
-                        for(int i = 0; i < 1e1; i++)
+                        for(int i = 4; i < 1e1; i++)
                         {
-                            child = child->append_child(fmt::format("Child-{}", i + 3), "Some info");
+                            child = child->append_child(fmt::format("Child-{}", i), "Some info");
                         }
 
                         auto found = 

@@ -241,14 +241,52 @@ public:
 
     bool write(const std::filesystem::path& _Path)
     {
-        // retrieve children
-        std::vector<std::vector<Node*>> parents(nodes.size());
+        //------------------------------------------------------------------------------
+        // build children sort
+        //------------------------------------------------------------------------------
+        std::vector<Node*> items(nodes.size());
+        std::vector<int>   pointers(nodes.size() + 1);
+        std::vector<int>   workspace(nodes.size() + 1);
+
+        for (size_t i = 0; i < nodes.size(); i++)
+        {
+            items[i]     = nodes[i];
+            pointers [i] = 0;
+            workspace[i] = 0;
+        }
+
+        pointers[nodes.size()] = 0;
+        workspace[nodes.size()] = 0;
+
         for(auto&& item : nodes) 
         {
             if(item->self != item->parent)
-                parents[item->parent].push_back(nodes[item->self]);
+            {
+                pointers[item->parent]++;
+                workspace[item->parent]++;
+            }
         }
 
+        // cumulative sum:
+        for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
+        {
+            k += workspace[i];
+            workspace[i] = j;
+            pointers[i] = j;
+            j = k;
+        }
+
+        // count sort:
+        int j = 0;
+        for(int i = 0; i < nodes.size(); i++ )
+        {
+            if(nodes[i]->self == nodes[i]->parent) continue;
+
+            j        = workspace[nodes[i]->parent]++;
+            items[j] = nodes[i];
+        }
+
+        //------------------------------------------------------------------------------
         // write to file
         struct Element
         {
@@ -268,13 +306,48 @@ public:
 
             auto node = xml.append_child(data->name);
 
-            for(auto&& child : parents[data->self]) 
-                queue.push({node, child});
+            for (size_t i = pointers[data->self]; i < pointers[data->self+1]; i++) 
+                queue.push({node, items[i]});
         }
+
+        return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
+
+        // this is the naive implementation:
+
+        // // retrieve children
+        // std::vector<std::vector<Node*>> parents(nodes.size());
+        // for(auto&& item : nodes) 
+        // {
+        //     if(item->self != item->parent)
+        //         parents[item->parent].push_back(nodes[item->self]);
+        // }
+
+        // // write to file
+        // struct Element
+        // {
+        //     pugi::xml_node xml;
+        //     Node*          data;
+        // };
+
+        // pugi::xml_document  main;
+        // Queue<Element>      queue;
+        // queue.push({main, root()});
+
+        // while (!queue.empty())
+        // {
+        //     auto data = queue.front().data;
+        //     auto xml  = queue.front().xml;
+        //     queue.pop();
+
+        //     auto node = xml.append_child(data->name);
+
+        //     for(auto&& child : parents[data->self]) 
+        //         queue.push({node, child});
+        // }
 
         //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
 
-        return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
+        //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
     }
 
 //protected:
@@ -287,6 +360,12 @@ public:
 
     // info
     mutable std::vector<Node*> nodes;
+
+    struct Pool
+    {
+    };
+    
+
 
     Node* create_node(Node* _Parent, const char* _Name, const char* _Value) const
     {
@@ -318,19 +397,19 @@ int main(int, char**)
     //---------------------------------------------------------------------------------------------------------------------
     // HIGHLY OPTIMIZED VARIANT
     //---------------------------------------------------------------------------------------------------------------------
-    // //file read time
-    // Document doc;
-    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
-    // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile1.xml");
-    // for(auto&& node : doc.nodes) std::cout << node->self << "\t" << node->parent << "\t" << node->name << "\n";
-
-    auto start = Helpers::tic();
+    //file read time
     Document doc;
-    doc.read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-    std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    start = Helpers::tic();
-    doc.write("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
-    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
+    doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile1.xml");
+    for(auto&& node : doc.nodes) std::cout << node->self << "\t" << node->parent << "\t" << node->name << "\n";
+
+    // auto start = Helpers::tic();
+    // Document doc;
+    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // start = Helpers::tic();
+    // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
     return 0;
 }
