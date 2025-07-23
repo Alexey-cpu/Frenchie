@@ -189,7 +189,7 @@ public:
 
     Node* root() const
     {
-        return nodes[0];
+        return nodes.empty() ? nullptr : nodes[0];
     }
 
     void read(const std::filesystem::path& _Path)
@@ -267,7 +267,7 @@ public:
             }
         }
 
-        // cumulative sum:
+        // cumulative sum
         for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
         {
             k += workspace[i];
@@ -276,14 +276,14 @@ public:
             j = k;
         }
 
-        // count sort:
-        int j = 0;
+        // count sort
         for(int i = 0; i < nodes.size(); i++ )
         {
-            if(nodes[i]->self == nodes[i]->parent) continue;
+            if(nodes[i]->self == nodes[i]->parent) 
+                continue;
 
-            j        = workspace[nodes[i]->parent]++;
-            items[j] = nodes[i];
+            int index    = workspace[nodes[i]->parent]++;
+            items[index] = nodes[i];
         }
 
         //------------------------------------------------------------------------------
@@ -360,12 +360,6 @@ public:
 
     // info
     mutable std::vector<Node*> nodes;
-
-    struct Pool
-    {
-    };
-    
-
 
     Node* create_node(Node* _Parent, const char* _Name, const char* _Value) const
     {
