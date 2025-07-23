@@ -174,6 +174,57 @@ public:
         friend class Document;
     };
 
+    struct TreeMatrix
+    {
+        std::vector<Node*> items;
+        std::vector<int>   pointers;
+
+        TreeMatrix(const std::vector<Node*>& nodes)
+        {
+            items.resize(nodes.size());
+            pointers.resize(nodes.size() + 1);
+            std::vector<int> workspace(nodes.size() + 1);
+
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                items[i]     = nodes[i];
+                pointers [i] = 0;
+                workspace[i] = 0;
+            }
+
+            pointers[nodes.size()] = 0;
+            workspace[nodes.size()] = 0;
+
+            for(auto&& item : nodes) 
+            {
+                if(item->parent == nullptr) 
+                    continue;
+
+                pointers[item->parent->self]++;
+                workspace[item->parent->self]++;
+            }
+
+            // cumulative sum
+            for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
+            {
+                k += workspace[i];
+                workspace[i] = j;
+                pointers[i] = j;
+                j = k;
+            }
+
+            // count sort
+            for(int i = 0; i < nodes.size(); i++ )
+            {
+                if(nodes[i]->parent == nullptr) 
+                    continue;
+
+                int index    = workspace[nodes[i]->parent->self]++;
+                items[index] = nodes[i];
+            }
+        }
+    };
+
 
     Document(){}
 
@@ -242,54 +293,11 @@ public:
     }
 
     bool write(const std::filesystem::path& _Path)
-    {
-        //----------------------------------------------------------------------------------------
-        // THIS IS OPTIMIZED IMPLEMENTATION
-        //----------------------------------------------------------------------------------------
-        std::vector<Node*> items(nodes.size());
-        std::vector<int>   pointers(nodes.size() + 1);
-        std::vector<int>   workspace(nodes.size() + 1);
+    { 
+        // compute matrix
+        TreeMatrix m(nodes);
 
-        for (size_t i = 0; i < nodes.size(); i++)
-        {
-            items[i]     = nodes[i];
-            pointers [i] = 0;
-            workspace[i] = 0;
-        }
-
-        pointers[nodes.size()] = 0;
-        workspace[nodes.size()] = 0;
-
-        for(auto&& item : nodes) 
-        {
-            if(item->parent == nullptr) 
-                continue;
-
-            pointers[item->parent->self]++;
-            workspace[item->parent->self]++;
-        }
-
-        // cumulative sum
-        for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
-        {
-            k += workspace[i];
-            workspace[i] = j;
-            pointers[i] = j;
-            j = k;
-        }
-
-        // count sort
-        for(int i = 0; i < nodes.size(); i++ )
-        {
-            if(nodes[i]->parent == nullptr) 
-                continue;
-
-            int index    = workspace[nodes[i]->parent->self]++;
-            items[index] = nodes[i];
-        }
-
-        //------------------------------------------------------------------------------
-        // write to file
+        // write a file
         struct Element
         {
             pugi::xml_node xml;
@@ -308,50 +316,13 @@ public:
 
             auto node = xml.append_child(data->name);
 
-            for (size_t i = pointers[data->self]; i < pointers[data->self+1]; i++) 
-                queue.push({node, items[i]});
+            for (size_t i = m.pointers[data->self]; i < m.pointers[data->self+1]; i++) 
+                queue.push({node, m.items[i]});
         }
 
-        return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
-
-        //----------------------------------------------------------------------------------------
-        // THIS IS NAIVE IMPLEMENTATION
-        //----------------------------------------------------------------------------------------
-
-        // // retrieve children
-        // std::vector<std::vector<Node*>> parents(nodes.size());
-        // for(auto&& item : nodes) 
-        // {
-        //     if(item->self != item->parent)
-        //         parents[item->parent].push_back(nodes[item->self]);
-        // }
-
-        // // write to file
-        // struct Element
-        // {
-        //     pugi::xml_node xml;
-        //     Node*          data;
-        // };
-
-        // pugi::xml_document  main;
-        // Queue<Element>      queue;
-        // queue.push({main, root()});
-
-        // while (!queue.empty())
-        // {
-        //     auto data = queue.front().data;
-        //     auto xml  = queue.front().xml;
-        //     queue.pop();
-
-        //     auto node = xml.append_child(data->name);
-
-        //     for(auto&& child : parents[data->self]) 
-        //         queue.push({node, child});
-        // }
-
-        //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
-
         //return main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw);
+
+        return main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
     }
 
 //protected:
