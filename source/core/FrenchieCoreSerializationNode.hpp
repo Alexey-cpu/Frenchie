@@ -29,6 +29,7 @@
 #include <memory>
 #include <memory_resource>
 #include <vector>
+#include <array>
 
             // class Value final
             // {
@@ -49,7 +50,7 @@
             //         float, 
             //         double,
             //         long double,
-            //         std::string> Type;
+            //         std::pmr::string> Type;
 
             //     enum supportedTypes
             //     {
@@ -101,7 +102,7 @@
             //         m_Value = Value(_Value);
             //     }
 
-            //     std::string as_string() const
+            //     std::pmr::string as_string() const
             //     {
             //         if(is_of_type<bool>()) 
             //             return Helpers::to_string<bool>(get<bool>());
@@ -145,10 +146,10 @@
             //         if(is_of_type<long double>()) 
             //             return Helpers::to_string<long double>(get<long double>());
 
-            //         if(is_of_type<std::string>()) 
-            //             return Helpers::to_string<std::string>(get<std::string>());
+            //         if(is_of_type<std::pmr::string>()) 
+            //             return Helpers::to_string<std::pmr::string>(get<std::pmr::string>());
 
-            //         return std::string();
+            //         return std::pmr::string();
             //     }
 
             // protected:
@@ -167,15 +168,15 @@ namespace Frenchie
 
             // nested types
             class Pointer final
-            {        
-                Pointer(const Document* _Document);
+            {
+                Pointer(const Document* _Document, std::pmr::polymorphic_allocator<char>& _Allocator);
                 ~Pointer();
 
-                mutable std::string Name      = std::string();
-                mutable std::string Value     = std::string();
-                mutable int         Self      = 0;
-                const Document*     Doc       = nullptr;
-                const Pointer*      Parent    = 0;
+                mutable std::pmr::string Name;
+                mutable std::pmr::string Value;
+                mutable int              Self      = 0;
+                const Document*          Doc       = nullptr;
+                const Pointer*           Parent    = 0;
 
                 friend class Document;
                 friend class Iterator;
@@ -228,8 +229,8 @@ namespace Frenchie
                 const Iterator begin() const;
                 const Iterator end() const;
 
-                std::string& name() const;
-                std::string& value() const;
+                std::pmr::string& name() const;
+                std::pmr::string& value() const;
                 Node parent() const;
                 int  self() const;
                 bool valid() const;
@@ -239,7 +240,7 @@ namespace Frenchie
                 Node append_child(const char* _Name, const char* _Value);
 
             private:
-                inline static std::string EMPTY_STRING = "";
+                inline static std::pmr::string EMPTY_STRING = "";
 
                 const Pointer* m_Pointer = nullptr;
 
@@ -281,6 +282,13 @@ namespace Frenchie
                 // info
                 mutable std::vector<Node> m_Nodes;
                 mutable Hierarchy         m_Hierarchy;
+
+                struct StringsAllocator
+                {
+                    std::array<std::byte, 4096>           Buffer;
+                    std::pmr::monotonic_buffer_resource   MonotonicBufferResource{Buffer.data(), Buffer.size()};
+                    std::pmr::polymorphic_allocator<char> PolymorphicAllocator{&MonotonicBufferResource};
+                } mutable m_Allocator;
             };
 
             template<typename T>

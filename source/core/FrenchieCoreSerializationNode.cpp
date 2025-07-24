@@ -7,7 +7,11 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
 
 // Pointer
-Pointer::Pointer(const Document* _Document) : Doc(_Document){}
+Pointer::Pointer(const Document* _Document, std::pmr::polymorphic_allocator<char>& _Allocator) : 
+    Doc(_Document),
+    Name(std::pmr::string(_Allocator)),
+    Value(std::pmr::string(_Allocator)){}
+
 Pointer::~Pointer(){}
 
 // Iterator
@@ -97,7 +101,7 @@ const Iterator Node::end() const
     return Iterator(m_Pointer->Doc, hierarchy.pointers[self() + 1]);
 }
 
-std::string& Node::name() const
+std::pmr::string& Node::name() const
 {
     if(valid())
         return m_Pointer->Name;
@@ -106,7 +110,7 @@ std::string& Node::name() const
     return EMPTY_STRING;
 }
 
-std::string& Node::value() const
+std::pmr::string& Node::value() const
 {
     if(valid())
         return m_Pointer->Value;
@@ -241,7 +245,7 @@ Node Document::append_child(const char* _Name, const char* _Value, Node& _Parent
     m_Hierarchy.set_dirty();
 
     // append child
-    auto item       = new Pointer(this);
+    auto item       = new Pointer(this, m_Allocator.PolymorphicAllocator);
     item->Name      = _Name;
     item->Value     = _Value;
     item->Self      = std::max<int>((int)m_Nodes.size(), 0);
