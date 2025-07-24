@@ -31,135 +31,135 @@
 #include <vector>
 #include <array>
 
-            // class Value final
-            // {
-            //     public:
-
-            //     typedef std::variant<
-            //         bool, 
-            //         char,
-            //         unsigned char,
-            //         short, 
-            //         unsigned short, 
-            //         int, 
-            //         unsigned int, 
-            //         long, 
-            //         unsigned long,
-            //         long long,
-            //         unsigned long long, 
-            //         float, 
-            //         double,
-            //         long double,
-            //         std::pmr::string> Type;
-
-            //     enum supportedTypes
-            //     {
-            //         BOOL,
-            //         CHAR,
-            //         UNSIGNED_CHAR,
-            //         SHORT,
-            //         UNSIGNED_SHORT,
-            //         INT,
-            //         UNSIGNED_INT,
-            //         LONG,
-            //         UNSIGNED_LONG,
-            //         LONG_LONG,
-            //         UNSIGNED_LONG_LONG,
-            //         FLOAT,
-            //         DOUBLE,
-            //         LONG_DOUBLE,
-            //         STRING
-            //     };
-
-            //     template<typename T>
-            //     Value(const T& _Value = T()) : m_Value(_Value){}
-
-            //     Value(const Type& _Value = Type()) : m_Value(_Value){}
-            //     ~Value(){}
-
-            //     template<typename Type> 
-            //     Type get() const
-            //     {
-            //         try
-            //         {
-            //             return std::get<Type>(m_Value);
-            //         }
-            //         catch(...)
-            //         {
-            //             return Type();
-            //         } 
-            //     }
-
-            //     template<typename Type>
-            //     bool is_of_type() const
-            //     {
-            //         return std::holds_alternative<Type>(m_Value); 
-            //     }
-
-            //     template<typename Type> 
-            //     void set(const Type& _Value) const
-            //     {
-            //         m_Value = Value(_Value);
-            //     }
-
-            //     std::pmr::string as_string() const
-            //     {
-            //         if(is_of_type<bool>()) 
-            //             return Helpers::to_string<bool>(get<bool>());
-
-            //         if(is_of_type<char>()) 
-            //             return Helpers::to_string<char>(get<char>());
-
-            //         if(is_of_type<unsigned char>()) 
-            //             return Helpers::to_string<unsigned char>(get<unsigned char>());
-
-            //         if(is_of_type<short>()) 
-            //             return Helpers::to_string<short>(get<short>());
-
-            //         if(is_of_type<unsigned short>()) 
-            //             return Helpers::to_string<unsigned short>(get<unsigned short>());
-
-            //         if(is_of_type<int>()) 
-            //             return Helpers::to_string<int>(get<int>());
-
-            //         if(is_of_type<unsigned int>()) 
-            //             return Helpers::to_string<unsigned int>(get<unsigned int>());
-
-            //         if(is_of_type<long>()) 
-            //             return Helpers::to_string<long>(get<long>());
-
-            //         if(is_of_type<unsigned long>()) 
-            //             return Helpers::to_string<unsigned long>(get<unsigned long>());
-
-            //         if(is_of_type<long long>()) 
-            //             return Helpers::to_string<long long>(get<long long>());
-
-            //         if(is_of_type<unsigned long long>()) 
-            //             return Helpers::to_string<unsigned long long>(get<unsigned long long>());
-
-            //         if(is_of_type<float>()) 
-            //             return Helpers::to_string<float>(get<float>());
-
-            //         if(is_of_type<double>()) 
-            //             return Helpers::to_string<double>(get<double>());
-
-            //         if(is_of_type<long double>()) 
-            //             return Helpers::to_string<long double>(get<long double>());
-
-            //         if(is_of_type<std::pmr::string>()) 
-            //             return Helpers::to_string<std::pmr::string>(get<std::pmr::string>());
-
-            //         return std::pmr::string();
-            //     }
-
-            // protected:
-            //     Type m_Value;
-            // };
-
 namespace Frenchie
 {
     namespace Core
     {
+        // class Value final
+        // {
+        //     public:
+
+        //     typedef std::variant<
+        //         bool, 
+        //         char,
+        //         unsigned char,
+        //         short, 
+        //         unsigned short, 
+        //         int, 
+        //         unsigned int, 
+        //         long, 
+        //         unsigned long,
+        //         long long,
+        //         unsigned long long, 
+        //         float, 
+        //         double,
+        //         long double,
+        //         std::pmr::string> Type;
+
+        //     enum supportedTypes
+        //     {
+        //         BOOL,
+        //         CHAR,
+        //         UNSIGNED_CHAR,
+        //         SHORT,
+        //         UNSIGNED_SHORT,
+        //         INT,
+        //         UNSIGNED_INT,
+        //         LONG,
+        //         UNSIGNED_LONG,
+        //         LONG_LONG,
+        //         UNSIGNED_LONG_LONG,
+        //         FLOAT,
+        //         DOUBLE,
+        //         LONG_DOUBLE,
+        //         STRING
+        //     };
+
+        //     template<typename T>
+        //     Value(const T& _Value = T()) : m_Value(_Value){}
+
+        //     Value(const Type& _Value = Type()) : m_Value(_Value){}
+        //     ~Value(){}
+
+        //     template<typename Type> 
+        //     Type get() const
+        //     {
+        //         try
+        //         {
+        //             return std::get<Type>(m_Value);
+        //         }
+        //         catch(...)
+        //         {
+        //             return Type();
+        //         } 
+        //     }
+
+        //     template<typename Type>
+        //     bool is_of_type() const
+        //     {
+        //         return std::holds_alternative<Type>(m_Value); 
+        //     }
+
+        //     template<typename Type> 
+        //     void set(const Type& _Value) const
+        //     {
+        //         m_Value = Value(_Value);
+        //     }
+
+        //     std::string as_string() const
+        //     {
+        //         if(is_of_type<bool>()) 
+        //             return Helpers::to_string<bool>(get<bool>());
+
+        //         if(is_of_type<char>()) 
+        //             return Helpers::to_string<char>(get<char>());
+
+        //         if(is_of_type<unsigned char>()) 
+        //             return Helpers::to_string<unsigned char>(get<unsigned char>());
+
+        //         if(is_of_type<short>()) 
+        //             return Helpers::to_string<short>(get<short>());
+
+        //         if(is_of_type<unsigned short>()) 
+        //             return Helpers::to_string<unsigned short>(get<unsigned short>());
+
+        //         if(is_of_type<int>()) 
+        //             return Helpers::to_string<int>(get<int>());
+
+        //         if(is_of_type<unsigned int>()) 
+        //             return Helpers::to_string<unsigned int>(get<unsigned int>());
+
+        //         if(is_of_type<long>()) 
+        //             return Helpers::to_string<long>(get<long>());
+
+        //         if(is_of_type<unsigned long>()) 
+        //             return Helpers::to_string<unsigned long>(get<unsigned long>());
+
+        //         if(is_of_type<long long>()) 
+        //             return Helpers::to_string<long long>(get<long long>());
+
+        //         if(is_of_type<unsigned long long>()) 
+        //             return Helpers::to_string<unsigned long long>(get<unsigned long long>());
+
+        //         if(is_of_type<float>()) 
+        //             return Helpers::to_string<float>(get<float>());
+
+        //         if(is_of_type<double>()) 
+        //             return Helpers::to_string<double>(get<double>());
+
+        //         if(is_of_type<long double>()) 
+        //             return Helpers::to_string<long double>(get<long double>());
+
+        //         if(is_of_type<std::pmr::string>()) 
+        //             return Helpers::to_string<std::pmr::string>(get<std::pmr::string>());
+
+        //         return std::string();
+        //     }
+
+        // protected:
+        //     Type m_Value;
+        // };
+
         namespace Serialization
         {
             class Document;
@@ -169,18 +169,18 @@ namespace Frenchie
             // nested types
             class Pointer final
             {
+            public:
+
                 Pointer(const Document* _Document, std::pmr::polymorphic_allocator<char>& _Allocator);
                 ~Pointer();
 
                 mutable std::pmr::string Name;
                 mutable std::pmr::string Value;
-                mutable int              Self      = 0;
-                const Document*          Doc       = nullptr;
-                const Pointer*           Parent    = 0;
+                mutable int              Self   = 0;
+                mutable Pointer*         Parent = nullptr;
+                mutable const Document*  Doc    = nullptr;
 
                 friend class Document;
-                friend class Iterator;
-                friend class Node;
             };
 
             class Iterator final
@@ -222,10 +222,10 @@ namespace Frenchie
             {
             public:
 
-                Node(const Pointer* _Pointer = nullptr);
+                Node(Pointer* _Pointer = nullptr);
                 ~Node();
 
-                const Pointer* data() const;
+                Pointer* const data() const;
                 const Iterator begin() const;
                 const Iterator end() const;
 
@@ -238,13 +238,12 @@ namespace Frenchie
                 int  size() const;
 
                 Node append_child(const char* _Name, const char* _Value);
+                void remove_child(std::function<bool(Node&)> _Predicate);
 
             private:
                 inline static std::pmr::string EMPTY_STRING = "";
 
-                const Pointer* m_Pointer = nullptr;
-
-                void clear();
+                Pointer* m_Pointer = nullptr;
 
                 friend class Document;
             };
@@ -288,7 +287,36 @@ namespace Frenchie
                     std::array<std::byte, 4096>           Buffer;
                     std::pmr::monotonic_buffer_resource   MonotonicBufferResource{Buffer.data(), Buffer.size()};
                     std::pmr::polymorphic_allocator<char> PolymorphicAllocator{&MonotonicBufferResource};
-                } mutable m_Allocator;
+                } mutable m_StringsAllocatorAllocator;
+
+                struct NodesAllocator
+                {
+                    std::array<std::byte, 4096>              Buffer;
+                    std::pmr::monotonic_buffer_resource      MonotonicBufferResource{Buffer.data(), Buffer.size()};
+                    std::pmr::polymorphic_allocator<Pointer> PolymorphicAllocator{&MonotonicBufferResource};
+
+                    Pointer* construct(
+                        const Document*                        _Document, 
+                        std::pmr::polymorphic_allocator<char>& _Allocator)
+                    {
+                        Pointer* pointer = 
+                            PolymorphicAllocator.allocate(1);
+
+                        pointer = new(pointer)Pointer(_Document, _Allocator);
+
+                        return pointer;
+                    }
+
+                    void destroy(Pointer* const _Object)
+                    {
+                        if(_Object == nullptr) 
+                            return;
+
+                        _Object->~Pointer();
+                        PolymorphicAllocator.deallocate(_Object, 1);
+                    }
+
+                } mutable m_NodesAllocator;
             };
 
             template<typename T>

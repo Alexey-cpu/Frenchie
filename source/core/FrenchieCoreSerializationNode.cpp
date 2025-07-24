@@ -71,10 +71,10 @@ int Iterator::distance(const Iterator& _First, const Iterator& _Last)
 }
 
 // Node
-Node::Node(const Pointer* _Pointer) : m_Pointer(_Pointer){}
+Node::Node(Pointer* _Pointer) : m_Pointer(_Pointer){}
 Node::~Node(){}
 
-const Pointer* Node::data() const
+Pointer* const Node::data() const
 {
     return m_Pointer;
 }
@@ -144,18 +144,15 @@ int Node::size() const
     return Iterator::distance(begin(), end());
 }
 
-void Node::clear()
-{
-    if(m_Pointer == nullptr) 
-        return;
-
-    delete m_Pointer;
-    m_Pointer = nullptr;
-}
-
 Node Node::append_child(const char* _Name, const char* _Value)
 {
     return valid() ? m_Pointer->Doc->append_child(_Name, _Value, *this) : Node();
+}
+
+void Node::remove_child(std::function<bool(Node&)> _Predicate)
+{
+    if(valid()) 
+        m_Pointer->Doc->remove_child(_Predicate, *this);
 }
 
 // Hierarchy
@@ -245,7 +242,7 @@ Node Document::append_child(const char* _Name, const char* _Value, Node& _Parent
     m_Hierarchy.set_dirty();
 
     // append child
-    auto item       = new Pointer(this, m_Allocator.PolymorphicAllocator);
+    auto item       = m_NodesAllocator.construct(this, m_StringsAllocatorAllocator.PolymorphicAllocator);
     item->Name      = _Name;
     item->Value     = _Value;
     item->Self      = std::max<int>((int)m_Nodes.size(), 0);
@@ -260,6 +257,37 @@ void Document::remove_child(std::function<bool(Node&)> _Predicate, Node& _Parent
     if(_Predicate == nullptr) 
         return;
 
+    if(!_Parent.valid())
+    {
+        //scan the whole tree
+        for(auto&& child : m_Nodes)
+        {
+            if(!_Predicate(child)) 
+                continue;
+
+            m_NodesAllocator.destroy(child.m_Pointer);
+            m_Nodes.erase(std::next(m_Nodes.begin(), child.self()));
+            break;
+        }
+    }
+    else
+    {
+        // scan concrete subtree
+        for(auto&& child : _Parent)
+        {
+            if(!_Predicate(child)) 
+                continue;
+
+            m_NodesAllocator.destroy(child.m_Pointer);
+            m_Nodes.erase(std::next(m_Nodes.begin(), child.self()));
+            break;
+        }
+    }
+
+    // renumber nodes
+    for(size_t i = 0; i < m_Nodes.size(); i++) 
+        m_Nodes[i].m_Pointer->Self = (int)i;
+
     // setup dirty flag
     m_Hierarchy.set_dirty();
 }
@@ -267,8 +295,8 @@ void Document::remove_child(std::function<bool(Node&)> _Predicate, Node& _Parent
 void Document::reset()
 {
     // clear
-    for(auto&& node : m_Nodes) 
-        node.clear();
+    for(auto&& node : m_Nodes)
+        m_NodesAllocator.destroy(node.data());
     m_Nodes.clear();
 
     // setup dirty flag
