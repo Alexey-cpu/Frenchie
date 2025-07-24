@@ -41,7 +41,7 @@ namespace Frenchie
                     _Document.reset();
 
                     // parse in depth
-                    Helpers::Stack<Element> stack;
+                    std::stack<Element> stack;
                     stack.push({doc, nullptr});
 
                     while(!stack.empty())
@@ -49,12 +49,18 @@ namespace Frenchie
                         auto top = stack.top();
                         stack.pop();
 
+                        if(top.document.children().empty()) 
+                            continue;
+
                         for(auto&& element : top.document)
                         {
+                            if(element.children().empty()) 
+                                continue;
+
                             stack.push(
                                 {
                                     element, 
-                                    _Document.append_child(element.name(), element.value(), top.data)
+                                    _Document.append_child(element.name(), element.text().get(), top.data)
                                 }
                             );
                         }
@@ -66,7 +72,7 @@ namespace Frenchie
                 static bool write(Document& _Document, const std::filesystem::path& _Path)
                 {
                     pugi::xml_document main;
-                    Helpers::Queue<Element>     queue;
+                    Helpers::Queue<Element> queue;
                     queue.push({main, _Document.root()});
 
                     while (!queue.empty())
@@ -76,6 +82,7 @@ namespace Frenchie
                         queue.pop();
 
                         auto node = xml.append_child(data.name());
+                        node.text().set(data.value());
 
                         for(auto item : data) 
                             queue.push({node, item});
