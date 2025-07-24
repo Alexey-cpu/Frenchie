@@ -17,7 +17,7 @@ namespace Frenchie
                 struct Element
                 {
                     pugi::xml_node document;
-                    Document::Node data;
+                    Node data;
                 };
 
                 static bool read(Document& _Document, const std::filesystem::path& _Path)

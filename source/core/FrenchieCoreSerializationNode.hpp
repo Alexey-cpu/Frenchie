@@ -165,115 +165,107 @@ namespace Frenchie
             class Iterator;
             class Node;
 
-            class Document final
+            // nested types
+            class Pointer final
+            {        
+                Pointer(const Document* _Document);
+                ~Pointer();
+
+                mutable std::string Name      = std::string();
+                mutable std::string Value     = std::string();
+                mutable int         Self      = 0;
+                const Document*     Doc       = nullptr;
+                const Pointer*      Parent    = 0;
+
+                friend class Document;
+                friend class Iterator;
+                friend class Node;
+            };
+
+            class Iterator final
+            {
+            public:
+                Iterator(const Document* _Document, int _Index);
+                ~Iterator();
+
+                // access
+                Node operator*() const;
+                const Node* operator->() const;
+                
+                // increments
+                Iterator& operator++();
+                Iterator& operator--();
+                Iterator  operator++(int);
+                Iterator  operator--(int);
+
+                // comparison
+                friend bool operator==(const Iterator& _First, const Iterator& _Second)
+                { 
+                    return _First.m_Index == _Second.m_Index; 
+                }
+
+                friend bool operator!=(const Iterator& _First, const Iterator& _Second)
+                { 
+                    return _First.m_Index != _Second.m_Index; 
+                }
+
+                // arithmetics
+                static int distance(const Iterator& _First, const Iterator& _Last);
+
+            protected:
+                const Document* m_Document;
+                int             m_Index;
+            };
+
+            class Node final
             {
             public:
 
-                class Node final
-                {
-                public:
+                Node(const Pointer* _Pointer = nullptr);
+                ~Node();
 
-                    // nested types
-                    class Pointer final
-                    {        
-                        Pointer(const Document* _Document);
-                        ~Pointer();
+                const Pointer* data() const;
+                const Iterator begin() const;
+                const Iterator end() const;
 
-                        mutable std::string Name      = std::string();
-                        mutable std::string Value     = std::string();
-                        mutable int         Self      = 0;
-                        const Document*     Doc       = nullptr;
-                        const Pointer*      Parent    = 0;
+                std::string& name() const;
+                std::string& value() const;
+                Node parent() const;
+                int  self() const;
+                bool valid() const;
+                bool empty() const;
+                int  size() const;
 
-                        friend class Document;
-                        friend class Iterator;
-                        friend class Node;
-                    };
+                Node append_child(const char* _Name, const char* _Value);
 
-                    class Iterator final
-                    {
-                    public:
-                        Iterator(const Document* _Document, int _Index);
-                        ~Iterator();
+            private:
+                inline static std::string EMPTY_STRING = "";
 
-                        // access
-                        Node operator*() const;
-                        const Node* operator->() const;
-                        
-                        // increments
-                        Iterator& operator++();
-                        Iterator& operator--();
-                        Iterator  operator++(int);
-                        Iterator  operator--(int);
+                const Pointer* m_Pointer = nullptr;
 
-                        // comparison
-                        friend bool operator==(const Iterator& _First, const Iterator& _Second)
-                        { 
-                            return _First.m_Index == _Second.m_Index; 
-                        }
+                void clear();
 
-                        friend bool operator!=(const Iterator& _First, const Iterator& _Second)
-                        { 
-                            return _First.m_Index != _Second.m_Index; 
-                        }
+                friend class Document;
+            };
 
-                        // arithmetics
-                        static int distance(const Iterator& _First, const Iterator& _Last);
+            struct Hierarchy final
+            {
+                Hierarchy(const std::vector<Node>& nodes = std::vector<Node>());
+                ~Hierarchy();
 
-                    protected:
-                        const Document* m_Document;
-                        int             m_Index;
-                    };
+                bool is_dirty() const;
+                void set_dirty();
+                void build(const std::vector<Node>& nodes = std::vector<Node>());
 
-                    Node(const Pointer* _Pointer = nullptr);
-                    ~Node();
+                // info
+                std::vector<Node> items      = std::vector<Node>();
+                std::vector<int>  pointers   = std::vector<int>();
+                bool              m_is_dirty = true;
+            };
 
-                    const Pointer* data() const;
-
-                    const Iterator begin() const;
-
-                    const Iterator end() const;
-
-                    std::string& name() const;
-
-                    std::string& value() const;
-
-                    Node parent() const;
-
-                    int self() const;
-
-                    bool valid() const;
-
-                    bool empty() const;
-
-                    int size() const;
-
-                    Node append_child(const char* _Name, const char* _Value);
-
-                private:
-                    inline static std::string EMPTY_STRING = "";
-
-                    const Pointer* m_Pointer = nullptr;
-
-                    void clear();
-
-                    friend class Document;
-                };
-
-                struct Hierarchy final
-                {
-                    Hierarchy(const std::vector<Node>& nodes = std::vector<Node>());
-                    ~Hierarchy();
-
-                    bool is_dirty() const;
-                    void set_dirty();
-                    void generate(const std::vector<Node>& nodes = std::vector<Node>());
-
-                    // info
-                    std::vector<Node> items      = std::vector<Node>();
-                    std::vector<int>  pointers   = std::vector<int>();
-                    bool              m_is_dirty = true;
-                };
+            class Document final
+            {
+            public:
 
                 Document();
                 ~Document();

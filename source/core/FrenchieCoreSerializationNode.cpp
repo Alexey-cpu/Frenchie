@@ -6,15 +6,15 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
 
-// Document::Node::Pointer
-Document::Node::Pointer::Pointer(const Document* _Document) : Doc(_Document){}
-Document::Node::Pointer::~Pointer(){}
+// Pointer
+Pointer::Pointer(const Document* _Document) : Doc(_Document){}
+Pointer::~Pointer(){}
 
-// Document::Node::Iterator
-Document::Node::Iterator::Iterator(const Document* _Document, int _Index) : m_Document(_Document), m_Index(_Index){}
-Document::Node::Iterator::~Iterator(){}
+// Iterator
+Iterator::Iterator(const Document* _Document, int _Index) : m_Document(_Document), m_Index(_Index){}
+Iterator::~Iterator(){}
 
-Document::Node Document::Node::Iterator::operator*() const 
+Node Iterator::operator*() const 
 {
     if(m_Document == nullptr) 
         return Node();
@@ -24,7 +24,7 @@ Document::Node Document::Node::Iterator::operator*() const
     return hierarchy.items[m_Index];
 }
 
-const Document::Node* Document::Node::Iterator::operator->() const
+const Node* Iterator::operator->() const
 {
     if(m_Document == nullptr) 
         return nullptr;
@@ -35,112 +35,112 @@ const Document::Node* Document::Node::Iterator::operator->() const
 }
 
 // prefix
-Document::Node::Iterator& Document::Node::Iterator::operator++() 
+Iterator& Iterator::operator++() 
 { 
     m_Index++; 
     return *this; 
 }
 
-Document::Node::Iterator& Document::Node::Iterator::operator--() 
+Iterator& Iterator::operator--() 
 { 
     m_Index--; 
     return *this; 
 }
 
-Document::Node::Iterator Document::Node::Iterator::operator++(int) 
+Iterator Iterator::operator++(int) 
 { 
     Iterator tmp = *this; 
     ++(*this); 
     return tmp; 
 }
 
-Document::Node::Iterator Document::Node::Iterator::operator--(int) 
+Iterator Iterator::operator--(int) 
 { 
     Iterator tmp = *this; 
     --(*this); 
     return tmp; 
 }
 
-int Document::Node::Iterator::distance(const Document::Node::Iterator& _First, const Document::Node::Iterator& _Last)
+int Iterator::distance(const Iterator& _First, const Iterator& _Last)
 {
     return _Last.m_Index - _First.m_Index;
 }
 
-// Document::Node
-Document::Node::Node(const Document::Node::Pointer* _Pointer) : m_Pointer(_Pointer){}
-Document::Node::~Node(){}
+// Node
+Node::Node(const Pointer* _Pointer) : m_Pointer(_Pointer){}
+Node::~Node(){}
 
-const Document::Node::Pointer* Document::Node::data() const
+const Pointer* Node::data() const
 {
     return m_Pointer;
 }
 
-const Document::Node::Iterator Document::Node::begin() const
+const Iterator Node::begin() const
 {
     if(!valid()) 
-        return Document::Node::Iterator(nullptr, -1);
+        return Iterator(nullptr, -1);
 
     const auto& hierarchy = 
         m_Pointer->Doc->hierarchy();
 
-    return Document::Node::Iterator(m_Pointer->Doc, hierarchy.pointers[self()]);
+    return Iterator(m_Pointer->Doc, hierarchy.pointers[self()]);
 }
 
-const Document::Node::Iterator Document::Node::end() const
+const Iterator Node::end() const
 {
     if(!valid()) 
-        return Document::Node::Iterator(nullptr, -1);
+        return Iterator(nullptr, -1);
 
     const auto& hierarchy = 
         m_Pointer->Doc->hierarchy();
 
-    return Document::Node::Iterator(m_Pointer->Doc, hierarchy.pointers[self() + 1]);
+    return Iterator(m_Pointer->Doc, hierarchy.pointers[self() + 1]);
 }
 
-std::string& Document::Node::name() const
+std::string& Node::name() const
 {
     if(valid())
         return m_Pointer->Name;
 
-    Document::Node::EMPTY_STRING = "";
-    return Document::Node::EMPTY_STRING;
+    EMPTY_STRING = "";
+    return EMPTY_STRING;
 }
 
-std::string& Document::Node::value() const
+std::string& Node::value() const
 {
     if(valid())
         return m_Pointer->Value;
 
-    Document::Node::EMPTY_STRING = "";
-    return Document::Node::EMPTY_STRING;
+    EMPTY_STRING = "";
+    return EMPTY_STRING;
 }
 
-Document::Node Document::Node::parent() const
+Node Node::parent() const
 {
-    return valid() ? Document::Node(m_Pointer->Parent) : Document::Node();
+    return valid() ? Node(m_Pointer->Parent) : Node();
 }
 
-int Document::Node::self() const
+int Node::self() const
 {
     return valid() ? m_Pointer->Self : 0; 
 }
 
-bool Document::Node::valid() const
+bool Node::valid() const
 {
     return m_Pointer != nullptr && m_Pointer->Doc != nullptr;
 }
 
-bool Document::Node::empty() const
+bool Node::empty() const
 {
     return Iterator::distance(begin(), end()) <= 0;
 }
 
-int Document::Node::size() const
+int Node::size() const
 {
-    return Document::Node::Iterator::distance(begin(), end());
+    return Iterator::distance(begin(), end());
 }
 
-void Document::Node::clear()
+void Node::clear()
 {
     if(m_Pointer == nullptr) 
         return;
@@ -149,30 +149,30 @@ void Document::Node::clear()
     m_Pointer = nullptr;
 }
 
-Document::Node Document::Node::append_child(const char* _Name, const char* _Value)
+Node Node::append_child(const char* _Name, const char* _Value)
 {
     return valid() ? m_Pointer->Doc->append_child(_Name, _Value, *this) : Node();
 }
 
-// Document::Hierarchy
-Document::Hierarchy::Hierarchy(const std::vector<Node>& nodes)
+// Hierarchy
+Hierarchy::Hierarchy(const std::vector<Node>& nodes)
 {
-    generate(nodes);
+    build(nodes);
 }
 
-Document::Hierarchy::~Hierarchy(){}
+Hierarchy::~Hierarchy(){}
 
-bool Document::Hierarchy::is_dirty() const
+bool Hierarchy::is_dirty() const
 {
     return m_is_dirty || items.empty() || pointers.empty();
 }
 
-void Document::Hierarchy::set_dirty()
+void Hierarchy::set_dirty()
 {
     m_is_dirty = true;
 }
 
-void Document::Hierarchy::generate(const std::vector<Document::Node>& nodes)
+void Hierarchy::build(const std::vector<Node>& nodes)
 {
     if(nodes.empty()) 
         return;
@@ -230,18 +230,18 @@ Document::~Document()
     reset();
 }
 
-Document::Node Document::root() const
+Node Document::root() const
 {
-    return m_Nodes.empty() ? Document::Node() : m_Nodes[0];
+    return m_Nodes.empty() ? Node() : m_Nodes[0];
 }
 
-Document::Node Document::append_child(const char* _Name, const char* _Value, Document::Node& _Parent) const
+Node Document::append_child(const char* _Name, const char* _Value, Node& _Parent) const
 {
     // setup dirty flag
     m_Hierarchy.set_dirty();
 
     // append child
-    auto item       = new Node::Pointer(this);
+    auto item       = new Pointer(this);
     item->Name      = _Name;
     item->Value     = _Value;
     item->Self      = std::max<int>((int)m_Nodes.size(), 0);
@@ -251,7 +251,7 @@ Document::Node Document::append_child(const char* _Name, const char* _Value, Doc
     return m_Nodes.back();
 }
 
-void Document::remove_child(std::function<bool(Document::Node&)> _Predicate, Document::Node& _Parent) const
+void Document::remove_child(std::function<bool(Node&)> _Predicate, Node& _Parent) const
 {
     if(_Predicate == nullptr) 
         return;
@@ -271,10 +271,10 @@ void Document::reset()
     m_Hierarchy.set_dirty();
 }
 
-Document::Hierarchy& Document::hierarchy() const
+Hierarchy& Document::hierarchy() const
 {
     if(m_Hierarchy.is_dirty()) 
-        m_Hierarchy.generate(m_Nodes);
+        m_Hierarchy.build(m_Nodes);
 
     return m_Hierarchy;
 }
