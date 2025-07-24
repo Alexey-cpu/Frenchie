@@ -41,7 +41,7 @@ namespace Frenchie
                     _Document.reset();
 
                     // parse in depth
-                    std::stack<Element> stack;
+                    Helpers::Stack<Element> stack;
                     stack.push({doc, nullptr});
 
                     while(!stack.empty())
