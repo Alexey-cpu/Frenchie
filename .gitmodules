@@ -17,3 +17,6 @@
 [submodule "tools/pugixml"]
 	path = tools/pugixml
 	url = https://github.com/zeux/pugixml.git
+[submodule "tools/rapidjson"]
+	path = tools/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
