@@ -273,6 +273,11 @@ namespace Frenchie
                     return Node(m_NodeConstructor.append_child(_Name, _Value, _Parent.m_Info), this);
                 }
 
+                Node first_child() const
+                {
+                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child(), this) : Node();
+                }
+
                 template<typename _Format>
                 bool read(const std::filesystem::path& _Path)
                 {
@@ -283,11 +288,6 @@ namespace Frenchie
                 bool write(const std::filesystem::path& _Path)
                 {
                     return _Format::write(this, _Path);
-                }
-
-                Node first_child() const
-                {
-                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child(), this) : Node();
                 }
 
                 mutable NodeCostructor m_NodeConstructor;
