@@ -37,6 +37,8 @@ namespace Frenchie
     {
         namespace Serialization
         {
+            // TODO: move 'Document* Doc = nullptr;' to 'NodeInfo' for more convenient iterators construction
+
             class Document;
             class Iterator;
             class Node;
@@ -47,8 +49,6 @@ namespace Frenchie
                 char*     Value  = nullptr;
                 size_t    Self   = 0;
                 NodeInfo* Parent = nullptr;
-
-                enum Type {OBJECT, VALUE, ARRAY} Type = Type::OBJECT;
             };
 
             class NodeCostructor
@@ -257,8 +257,16 @@ namespace Frenchie
                 const Iterator begin() const;
                 const Iterator end() const;
 
-                // 
                 Node append_node(const char* _Name, const char* _Value);
+
+                template<typename T>
+                Node append_value_node(const char* _Name, const T& _Value, const Node& _Parent = Node())
+                {
+                    if(m_Document == nullptr) 
+                        return Node();
+
+                    return Node(m_Document->append_value_node<T>(_Name, _Value, *this));
+                }
 
                 NodeInfo*       m_Info     = nullptr;
                 const Document* m_Document = nullptr;
@@ -277,9 +285,9 @@ namespace Frenchie
                 }
 
                 template<typename T>
-                Node append_value(const char* _Name, const T& _Value, const Node& _Parent = Node());
+                Node append_value_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
 
-                Node first_child() const
+                Node first_node() const
                 {
                     return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child(), this) : Node();
                 }

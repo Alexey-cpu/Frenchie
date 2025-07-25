@@ -111,81 +111,77 @@ Node Node::append_node(const char* _Name, const char* _Value)
     return Node(m_Document->append_node(_Name, _Value, *this));
 }
 
-// Document
-template<> Node Document::append_value(const char* _Name, const bool& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<bool>(_Value).c_str(), _Parent.m_Info));
-}
 
-template<> Node Document::append_value(const char* _Name, const float& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<float>(_Value).c_str(), _Parent.m_Info));
-}
+// utility functions
+#define __support_scalar__(__type)\
+template<> Node Document::append_value_node(const char* _Name, const __type& _Value, const Node& _Parent) const\
+{\
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info));\
+}\
 
-template<> Node Document::append_value(const char* _Name, const double& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<double>(_Value).c_str(), _Parent.m_Info));
-}
+#define __support_vector__(__type)\
+template<> Node Document::append_value_node(const char* _Name, const std::vector<__type>& _Values, const Node& _Parent) const\
+{\
+    auto container = Document::append_node(_Name, STRINGIFY(std::vector<__type>), _Parent);\
+    for(auto&& value : _Values) append_value_node<__type>("item", value, container);\
+    return container;\
+}\
 
-template<> Node Document::append_value(const char* _Name, const int& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<int>(_Value).c_str(), _Parent.m_Info));
-}
+#define __support_list__(__type)\
+template<> Node Document::append_value_node(const char* _Name, const std::list<__type>& _Values, const Node& _Parent) const\
+{\
+    auto container = Document::append_node(_Name, STRINGIFY(std::list<__type>), _Parent);\
+    for(auto&& value : _Values) append_value_node<__type>("item", value, container);\
+    return container;\
+}\
 
-template<> Node Document::append_value(const char* _Name, const unsigned int& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<unsigned int>(_Value).c_str(), _Parent.m_Info));
-}
+#define __support_set__(__type)\
+template<> Node Document::append_value_node(const char* _Name, const std::set<__type>& _Values, const Node& _Parent) const\
+{\
+    auto container = Document::append_node(_Name, STRINGIFY(std::set<__type>), _Parent);\
+    for(auto&& value : _Values) append_value_node<__type>("item", value, container);\
+    return container;\
+}\
 
-template<> Node Document::append_value(const char* _Name, const long& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<long>(_Value).c_str(), _Parent.m_Info));
-}
+__support_scalar__(bool)
+__support_scalar__(float)
+__support_scalar__(double)
+__support_scalar__(int)
+__support_scalar__(unsigned int)
+__support_scalar__(long)
+__support_scalar__(unsigned long)
+__support_scalar__(long long)
+__support_scalar__(unsigned long long)
 
-template<> Node Document::append_value(const char* _Name, const unsigned long& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<unsigned long>(_Value).c_str(), _Parent.m_Info));
-}
+__support_vector__(bool)
+__support_vector__(float)
+__support_vector__(double)
+__support_vector__(int)
+__support_vector__(unsigned int)
+__support_vector__(long)
+__support_vector__(unsigned long)
+__support_vector__(long long)
+__support_vector__(unsigned long long)
 
-template<> Node Document::append_value(const char* _Name, const long long& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<long long>(_Value).c_str(), _Parent.m_Info));
-}
+__support_list__(bool)
+__support_list__(float)
+__support_list__(double)
+__support_list__(int)
+__support_list__(unsigned int)
+__support_list__(long)
+__support_list__(unsigned long)
+__support_list__(long long)
+__support_list__(unsigned long long)
 
-template<> Node Document::append_value(const char* _Name, const unsigned long long& _Value, const Node& _Parent)
-{
-    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<unsigned long long>(_Value).c_str(), _Parent.m_Info));
-}
+__support_set__(bool)
+__support_set__(float)
+__support_set__(double)
+__support_set__(int)
+__support_set__(unsigned int)
+__support_set__(long)
+__support_set__(unsigned long)
+__support_set__(long long)
+__support_set__(unsigned long long)
 
-// template<>
-// Node Document::append_value(const char* _Name, const std::vector<bool>& _Values, const Node& _Parent)
-// {
-//     auto container = append_value(_Name, "", _Parent);
-
-//     for(auto&& value : _Values) 
-//         append_value<bool>(_Name, value, container);
-
-//     return container;
-// }
-
-// template<>
-// Node Document::append_value(const char* _Name, const std::vector<float>& _Values, const Node& _Parent)
-// {
-//     auto container = append_value(_Name, "", _Parent);
-
-//     for(auto&& value : _Values) 
-//         append_value<float>(_Name, value, container);
-
-//     return container;
-// }
-
-template<>
-Node Document::append_value(const char* _Name, const std::vector<double>& _Values, const Node& _Parent)
-{
-    auto container = Document::append_node(_Name, "", _Parent);
-
-    for(auto&& value : _Values) 
-        append_value<double>("", value, container);
-
-    return container;
-}
+#undef __support_scalar__
+#undef __support_vector__
