@@ -59,108 +59,112 @@ public:
 #include <iostream>
 #include <sstream>
 
+void walk(const Node& _Node)
+{
+    Helpers::Queue<Node> queue;
+    queue.push(_Node);
+
+    while (!queue.empty())
+    {
+        auto root = queue.front();
+        queue.pop();
+
+        std::cout << root.name() << "\t" << root.value() << "\n";
+
+        for(auto&& child : root)
+        {
+            queue.push(child);
+        }
+    }
+}
+
 int main(int, char**)
 {
-    // auto start = Helpers::tic();
+    Document document;
 
-    // Document doc;
+    auto root    = document.append_node("Name", "Root");
+    auto scalars = root.append_node("Scalars", "");
+    auto vectors = root.append_node("Vectors", "");
+    auto lists   = root.append_node("Lists", "");
+    auto sets    = root.append_node("Sets", "");
 
-    // auto root = doc.append_child("Root", "Zero");
-    // doc.append_child("Root", "Zero");
-    // doc.append_child("Root", "Zero");
-    // doc.append_child("Root", "Zero");
+    #define __test_append_value__(__node, __type, __value) __node.append_value_node<__type>("Value", __value);
+    #define __test_append_vector__(__node, __type, __value) __node.append_value_node<std::vector<__type>>("Value", std::vector<__type>({__value, __value, __value}));
+    #define __test_append_list__(__node, __type, __value) __node.append_value_node<std::list<__type>>("Value", std::list<__type>({__value, __value, __value}));
+    #define __test_append_set__(__node, __type, __value) __node.append_value_node<std::set<__type>>("Value", std::set<__type>({__value, __value, __value}));
 
-    // int N = 3;
+    __test_append_value__(scalars, bool, false)
+    __test_append_value__(scalars, float, 1.5f)
+    __test_append_value__(scalars, double, 1.12313)
+    __test_append_value__(scalars, int, 1000)
+    __test_append_value__(scalars, unsigned int, 2000)
+    __test_append_value__(scalars, long, 2000)
+    __test_append_value__(scalars, unsigned long, 2000)
+    __test_append_value__(scalars, long long, 2000)
+    __test_append_value__(scalars, unsigned long long, 2000)
 
-    // for (int i = 0; i < N; i++)
-    // {
-    //     auto child = root.append_child(
-    //         fmt::format("Child_{}", i).c_str(), 
-    //         Helpers::to_string<int>(i).c_str());
+    __test_append_vector__(vectors, bool, false)
+    __test_append_vector__(vectors, float, 1.5f)
+    __test_append_vector__(vectors, double, 1.12313)
+    __test_append_vector__(vectors, int, 1000)
+    __test_append_vector__(vectors, unsigned int, 2000)
+    __test_append_vector__(vectors, long, 2000)
+    __test_append_vector__(vectors, unsigned long, 2000)
+    __test_append_vector__(vectors, long long, 2000)
+    __test_append_vector__(vectors, unsigned long long, 2000)
 
-    //     for (int j = 0; j < N; j++)
-    //     {
-    //         child = child.append_child(
-    //             fmt::format("Child_{}_{}", i, j).c_str(), 
-    //             Helpers::to_string<int>(i).c_str());
-    //     } 
-    // }
+    __test_append_list__(lists, bool, false)
+    __test_append_list__(lists, float, 1.5f)
+    __test_append_list__(lists, double, 1.12313)
+    __test_append_list__(lists, int, 1000)
+    __test_append_list__(lists, unsigned int, 2000)
+    __test_append_list__(lists, long, 2000)
+    __test_append_list__(lists, unsigned long, 2000)
+    __test_append_list__(lists, long long, 2000)
+    __test_append_list__(lists, unsigned long long, 2000)
 
-    // std::cout << "file build time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    __test_append_set__(sets, bool, false)
+    __test_append_set__(sets, float, 1.5f)
+    __test_append_set__(sets, double, 1.12313)
+    __test_append_set__(sets, int, 1000)
+    __test_append_set__(sets, unsigned int, 2000)
+    __test_append_set__(sets, long, 2000)
+    __test_append_set__(sets, unsigned long, 2000)
+    __test_append_set__(sets, long long, 2000)
+    __test_append_set__(sets, unsigned long long, 2000)
 
-    // start = Helpers::tic();
+    #undef __append_value__
+    #undef __append_vector__
+    #undef __test_append_set__
+    #undef __test_append_list__
+        
+    for(auto&& node : scalars) 
+        std::cout << node.name() << "\t" << node.value() << "\n";
 
-    // doc.write<XML<false>>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
+    for(auto&& vector : vectors) 
+    {
+        std::cout << vector.name() << "\t" << vector.value() << "\n";
+        for(auto&& item : vector) 
+            std::cout << item.name() << "\t" << item.value() << "\n";
+    }
 
-    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    for(auto&& vector : lists) 
+    {
+        std::cout << vector.name() << "\t" << vector.value() << "\n";
+        for(auto&& item : vector) 
+            std::cout << item.name() << "\t" << item.value() << "\n";
+    }
 
-    // start = Helpers::tic();
+    for(auto&& vector : sets) 
+    {
+        std::cout << vector.name() << "\t" << vector.value() << "\n";
+        for(auto&& item : vector) 
+            std::cout << item.name() << "\t" << item.value() << "\n";
+    }
 
-    // doc.read<XML<false>>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
-
-    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-
-    // doc.write<XML<false>>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile1.xml");
-
-    // //---------------------------------------------------------------------------------------------------------------------
-    // WRAPPER VERSION
-    //---------------------------------------------------------------------------------------------------------------------
-    // auto start = Helpers::tic();
-    // auto doc = Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    // start = Helpers::tic();
-    // Serialization::Format<Serialization::XML>::write(doc.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument1.xml");
-    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    //---------------------------------------------------------------------------------------------------------------------
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // HIGHLY OPTIMIZED VARIANT
-    //---------------------------------------------------------------------------------------------------------------------
-    // //file read time
-    // Document doc;
-    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
-    // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile2.xml");
-    // for(auto&& node : doc.nodes) std::cout << node.self() << "\t" << node.parent().self() << "\t" << node.name() << "\n";
-
-    // auto start = Helpers::tic();
-    // Document doc;
-
-    // Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    // start = Helpers::tic();
-    // Format<XML<false>>::write(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
-    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-
-    //---------------------------------------------------------------------------------------------------------------------
-    // FAST FILE READ
-    //---------------------------------------------------------------------------------------------------------------------
-    // read the whole file
-    // auto start = Helpers::tic();
-
-    // std::ifstream t("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-
-    // t.seekg(0, std::ios::end);
-    // size_t size = t.tellg();
-    // std::string buffer(size, ' ');
-    // t.seekg(0);
-    // t.read(&buffer[0], size);
-
-    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-    //---------------------------------------------------------------------------------------------------------------------
-
-    Document pool;
-
-    auto start = Helpers::tic();
-
-    pool.read<Format<XML_COMPACT>>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-
-    std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-
-    start = Helpers::tic();
-
-    pool.write<Format<XML_COMPACT>>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML_Copy.pwrct");
-
-    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
+    document.read<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
+    document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test_copy.xml");
 
     return 0;
 }

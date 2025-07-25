@@ -90,6 +90,8 @@ namespace Frenchie
 
                     pugi::xml_document main;
 
+                    const auto& tree = _Document->m_NodeConstructor.hierarchy();
+
                     for(auto&& singleton : singletons)
                     {
                         Helpers::Queue<Element> queue;
@@ -103,8 +105,6 @@ namespace Frenchie
 
                             auto node = xml.append_child(data->Name);
                             node.text().set(data->Value);
-
-                            const auto& tree = _Document->m_NodeConstructor.hierarchy();
 
                             for (size_t i = tree.m_Pointers[data->Self]; i < tree.m_Pointers[data->Self + 1]; i++)
                             {
