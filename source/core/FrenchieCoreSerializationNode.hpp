@@ -47,6 +47,8 @@ namespace Frenchie
                 char*     Value  = nullptr;
                 size_t    Self   = 0;
                 NodeInfo* Parent = nullptr;
+
+                enum Type {OBJECT, VALUE, ARRAY} Type = Type::OBJECT;
             };
 
             class NodeCostructor
@@ -146,7 +148,7 @@ namespace Frenchie
 
                 ~NodeCostructor(){}
 
-                inline NodeInfo* append_child(const char* _Name, const char* _Value, NodeInfo* _Parent = nullptr)
+                inline NodeInfo* append_node(const char* _Name, const char* _Value, NodeInfo* _Parent = nullptr)
                 {
                     NodeInfo* node = m_NodeAllocator.PolymorphicAllocator.allocate(1);
                     node->Name     = m_StringAllocator.copy(_Name);
@@ -255,7 +257,8 @@ namespace Frenchie
                 const Iterator begin() const;
                 const Iterator end() const;
 
-                Node append_child(const char* _Name, const char* _Value);
+                // 
+                Node append_node(const char* _Name, const char* _Value);
 
                 NodeInfo*       m_Info     = nullptr;
                 const Document* m_Document = nullptr;
@@ -268,10 +271,13 @@ namespace Frenchie
                 Document(){}
                 ~Document() = default;
 
-                Node append_child(const char* _Name, const char* _Value, const Node& _Parent = Node()) const
+                Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node()) const
                 {
-                    return Node(m_NodeConstructor.append_child(_Name, _Value, _Parent.m_Info), this);
+                    return Node(m_NodeConstructor.append_node(_Name, _Value, _Parent.m_Info), this);
                 }
+
+                template<typename T>
+                Node append_value(const char* _Name, const T& _Value, const Node& _Parent = Node());
 
                 Node first_child() const
                 {

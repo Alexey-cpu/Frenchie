@@ -67,7 +67,7 @@ namespace Frenchie
                             stack.push(
                                 {
                                     element, 
-                                    _Document->m_NodeConstructor.append_child(element.name(), element.text().get(), top.data)
+                                    _Document->m_NodeConstructor.append_node(element.name(), element.text().get(), top.data)
                                 }
                             );
                         }
