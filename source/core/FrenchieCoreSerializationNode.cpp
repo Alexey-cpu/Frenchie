@@ -103,9 +103,89 @@ const Iterator Node::end() const
     return Iterator(m_Document, hierarchy.m_Pointers[m_Info->Self + 1]);
 }
 
-Node Node::append_child(const char* _Name, const char* _Value)
+Node Node::append_node(const char* _Name, const char* _Value)
 {
-    if(m_Document == nullptr) return Node();
+    if(m_Document == nullptr) 
+        return Node();
 
-    return Node(m_Document->append_child(_Name, _Value, *this));
+    return Node(m_Document->append_node(_Name, _Value, *this));
+}
+
+// Document
+template<> Node Document::append_value(const char* _Name, const bool& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<bool>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const float& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<float>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const double& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<double>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const int& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<int>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const unsigned int& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<unsigned int>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const long& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<long>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const unsigned long& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<unsigned long>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const long long& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<long long>(_Value).c_str(), _Parent.m_Info));
+}
+
+template<> Node Document::append_value(const char* _Name, const unsigned long long& _Value, const Node& _Parent)
+{
+    return Node(m_NodeConstructor.append_node(_Name, Helpers::to_string<unsigned long long>(_Value).c_str(), _Parent.m_Info));
+}
+
+// template<>
+// Node Document::append_value(const char* _Name, const std::vector<bool>& _Values, const Node& _Parent)
+// {
+//     auto container = append_value(_Name, "", _Parent);
+
+//     for(auto&& value : _Values) 
+//         append_value<bool>(_Name, value, container);
+
+//     return container;
+// }
+
+// template<>
+// Node Document::append_value(const char* _Name, const std::vector<float>& _Values, const Node& _Parent)
+// {
+//     auto container = append_value(_Name, "", _Parent);
+
+//     for(auto&& value : _Values) 
+//         append_value<float>(_Name, value, container);
+
+//     return container;
+// }
+
+template<>
+Node Document::append_value(const char* _Name, const std::vector<double>& _Values, const Node& _Parent)
+{
+    auto container = Document::append_node(_Name, "", _Parent);
+
+    for(auto&& value : _Values) 
+        append_value<double>("", value, container);
+
+    return container;
 }
