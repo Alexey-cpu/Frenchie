@@ -8,59 +8,66 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            template<bool Compact = false>
+            template<bool Compact>
             class XML final
             {
             public:
 
-                // write a file
                 struct Element
                 {
                     pugi::xml_node document;
-                    Node data;
+                    NodeInfo*      data;
                 };
 
-                static bool read(Document& _Document, const std::filesystem::path& _Path)
+                static bool read(Document* _Document, const std::filesystem::path& _Path)
                 {
-                    // load file
-                    pugi::xml_document doc;
-                    auto status = doc.load_file(_Path.c_str()).status;
+                    // check document pointer
+                    if(_Document == nullptr) 
+                        return false;
+
+                    // check path
+                    if(!std::filesystem::exists(_Path)) 
+                        return false;
+
+                    auto parse_options = 
+                        pugi::parse_embed_pcdata    | 
+                        pugi::parse_trim_pcdata     | 
+                        pugi::parse_cdata           | 
+                        pugi::parse_escapes         | 
+                        pugi::parse_wconv_attribute | 
+                        pugi::parse_eol;
+
+                    pugi::xml_document document;
+                    auto status = document.load_file(_Path.c_str(), parse_options).status;
 
                     if(status != pugi::xml_parse_status::status_ok)
                     {
-                        status = doc.load_file(&pugi::as_utf8(_Path.wstring())[0]).status;
+                        status = document.load_file(&pugi::as_utf8(_Path.wstring())[0], parse_options).status;
 
                         if(status != pugi::xml_parse_status::status_ok) 
                             return false;
                     }
 
-                    if(doc.empty()) 
+                    if(document.empty()) 
                         return false;
 
-                    // clear self
-                    _Document.reset();
+                    _Document->m_NodeConstructor.reset();
 
                     // parse in depth
                     Helpers::Stack<Element> stack;
-                    stack.push({doc, nullptr});
+                    stack.push({document, nullptr});
 
                     while(!stack.empty())
                     {
                         auto top = stack.top();
                         stack.pop();
 
-                        if(top.document.children().empty()) 
-                            continue;
-
                         for(auto&& element : top.document)
                         {
-                            if(element.children().empty()) 
-                                continue;
-
                             stack.push(
                                 {
                                     element, 
-                                    _Document.append_child(element.name(), element.text().get(), top.data)
+                                    _Document->m_NodeConstructor.append_child(element.name(), element.text().get(), top.data)
                                 }
                             );
                         }
@@ -69,23 +76,41 @@ namespace Frenchie
                     return true;
                 }
 
-                static bool write(Document& _Document, const std::filesystem::path& _Path)
+                static bool write(Document* _Document, const std::filesystem::path& _Path)
                 {
+                    // check document pointer
+                    if(_Document == nullptr) 
+                        return false;
+
+                    // check path
+                    if(!std::filesystem::exists(_Path)) 
+                        return false;
+
+                    std::vector<NodeInfo*> singletons = _Document->m_NodeConstructor.singletons();
+
                     pugi::xml_document main;
-                    Helpers::Queue<Element> queue;
-                    queue.push({main, _Document.root()});
 
-                    while (!queue.empty())
+                    for(auto&& singleton : singletons)
                     {
-                        auto data = queue.front().data;
-                        auto xml  = queue.front().document;
-                        queue.pop();
+                        Helpers::Queue<Element> queue;
+                        queue.push({main, singleton});
 
-                        auto node = xml.append_child(data.name());
-                        node.text().set(data.value());
+                        while (!queue.empty())
+                        {
+                            auto data = queue.front().data;
+                            auto xml  = queue.front().document;
+                            queue.pop();
 
-                        for(auto item : data) 
-                            queue.push({node, item});
+                            auto node = xml.append_child(data->Name);
+                            node.text().set(data->Value);
+
+                            const auto& tree = _Document->m_NodeConstructor.hierarchy();
+
+                            for (size_t i = tree.m_Pointers[data->Self]; i < tree.m_Pointers[data->Self + 1]; i++)
+                            {
+                                queue.push({node, tree.m_Items[i]});
+                            }
+                        }
                     }
 
                     return Compact ? 
@@ -93,6 +118,9 @@ namespace Frenchie
                             main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
                 }
             };
+
+            typedef XML<false> XML_BEAUTIFUL;
+            typedef XML<true>  XML_COMPACT;
         }
     }
 }

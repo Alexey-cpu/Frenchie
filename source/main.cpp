@@ -23,209 +23,21 @@ using namespace Frenchie::Core::Serialization;
 using namespace Frenchie::Renderer;
 using namespace Frenchie::Application;
 
-//------------------------------------------------------------------------------------------------
-// EXPERIMENTAL
-//------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------
-
-struct Chunk
-{
-    typedef size_t Index;
-
-    void allocate(size_t _Size = 2048)
-    {
-        Size   = _Size * ChunkAttriburtes::CHUNK_SIZE * sizeof(Index);
-        Memory = reinterpret_cast<char*>(malloc(Size));
-        Busy   = 0;
-    }
-
-    void deallocate()
-    {
-        // free memory
-        if(Memory) 
-            free(Memory);
-
-        // deinitialize
-        Memory = nullptr;
-        Size = 0;
-        Busy = 0;
-    }
-
-    void* request(size_t _Size)
-    {
-        auto totalSize = _Size + ChunkAttriburtes::CHUNK_SIZE * sizeof(Index);
-
-        if(Busy + totalSize >= Size) 
-            return nullptr; // out of memory
-
-        void*  buffer    = reinterpret_cast<char*>(Memory) + Busy + ChunkAttriburtes::CHUNK_SIZE * sizeof(Index);
-        Index* chunkID   = reinterpret_cast<Index*>(reinterpret_cast<char*>(buffer) - ChunkAttriburtes::CHUNK_ID * sizeof(Index));
-        Index* chunkSize = reinterpret_cast<Index*>(reinterpret_cast<char*>(buffer) - ChunkAttriburtes::CHUNK_SIZE * sizeof(Index));
-        *chunkID         = ID;
-        *chunkSize       = totalSize;
-        Busy += totalSize;
-    
-        return buffer;
-    }
-
-    void release(void* _Pointer)
-    {
-        if(_Pointer != nullptr) 
-            Busy = std::max<Index>(Busy - retrieve_chunk_size(_Pointer), 0);
-
-        //std::cout << "release: bytes left " << (Size - Busy) << "\n";
-    }
-
-    static Index retrieve_chunk_id(void* _Pointer)
-    {
-        return *(reinterpret_cast<Index*>(reinterpret_cast<char*>(_Pointer) - ChunkAttriburtes::CHUNK_ID * sizeof(Index)));
-    }
-
-    static Index retrieve_chunk_size(void* _Pointer)
-    {
-        return *(reinterpret_cast<Index*>(reinterpret_cast<char*>(_Pointer) - ChunkAttriburtes::CHUNK_SIZE * sizeof(Index)));
-    }
-
-    enum ChunkAttriburtes
-    {
-        CHUNK_ID   = 1,
-        CHUNK_SIZE = 2,
-    };
-
-    char* Memory = nullptr;
-    Index Size   = 0;
-    Index Busy   = 0;
-    Index ID     = 0;
-};
-
-template<size_t _ChunkSize = 2048, size_t _MaxChunksCount = std::numeric_limits<size_t>::max()>
-struct ChunkAllocator
-{
-    ChunkAllocator()
-    {
-        (void)append_chunk();
-    }
-
-    ~ChunkAllocator()
-    {
-        for(auto&& chunk : chunks)
-            chunk.deallocate();
-    }
-
-    template<typename T>
-    T* allocate(size_t _Size = 1)
-    {
-        while (chunks.size() < _MaxChunksCount)
-        {
-            for(auto&& chunk : chunks)
-            {
-                auto memory = chunk.request(_Size * sizeof(T));
-
-                if(memory != nullptr) 
-                    return reinterpret_cast<T*>(memory);
-            }
-
-            //std::cout << "appending new chunk !!! \n";
-
-            auto memory = append_chunk().request(_Size * sizeof(T));
-
-            if(memory != nullptr) 
-                return reinterpret_cast<T*>(memory);
-        }
-
-        return nullptr; // out of memory
-    }
-
-    void deallocate(void* _Pointer)
-    {
-        if(_Pointer == nullptr) 
-            return;
-
-        chunks[Chunk::retrieve_chunk_id(_Pointer)].release(_Pointer);
-    }
-
-    Chunk append_chunk()
-    {
-        chunks.push_back(Chunk());
-        chunks.back().allocate(_ChunkSize);
-        chunks.back().ID = std::max<size_t>(chunks.size() - 1, 0);
-        return chunks.back();
-    }
-
-    std::vector<Chunk> chunks;
-};
-
-int main(int, char**)
-{
-    return 0;
-}
-
-// int main(int, char**)
-// {
-//     Document doc;
-
-//     auto root = doc.append_child("Root", "Zero");
-
-//     root.append_child("Child-2", "Zero");
-//     root.append_child("Child-3", "Zero");
-//     root.append_child("Child-4", "Zero");
-
-//     auto child = 
-//         root.append_child("Child-5", "Zero")
-//             .append_child("Child-5-1", "Value-1-1")
-//             .append_child("Child-5-2", "Value-1-2");
-
-//     child.append_child("Child-6", "Zero");
-//     child.append_child("Child-7", "Zero").append_child("Child-8", "Zero");
-
-//     Format<XML<false>>::write(doc,"C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
-//     Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
-//     Format<XML<false>>::write(doc,"C:/SDK/Qt_Projects/OpenGL/logs/TestFile1.xml");
-
-//     //---------------------------------------------------------------------------------------------------------------------
-//     // WRAPPER VERSION
-//     //---------------------------------------------------------------------------------------------------------------------
-//     // auto start = Helpers::tic();
-//     // auto doc = Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-//     // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-//     // start = Helpers::tic();
-//     // Serialization::Format<Serialization::XML>::write(doc.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument1.xml");
-//     // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-//     //---------------------------------------------------------------------------------------------------------------------
-
-
-//     //---------------------------------------------------------------------------------------------------------------------
-//     // HIGHLY OPTIMIZED VARIANT
-//     //---------------------------------------------------------------------------------------------------------------------
-//     // //file read time
-//     // Document doc;
-//     // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
-//     // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile2.xml");
-//     // for(auto&& node : doc.nodes) std::cout << node.self() << "\t" << node.parent().self() << "\t" << node.name() << "\n";
-
-//     // auto start = Helpers::tic();
-//     // Document doc;
-
-//     // Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
-//     // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-//     // start = Helpers::tic();
-//     // Format<XML<false>>::write(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
-//     // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
-
-//     return 0;
-// }
-
 class CameraObject : public Object
 {
 public:
     CameraObject(const std::string& _Name) : Object(_Name)
     {
-        add_component<Camera>();
-        add_component<Transform>();
+        // add_component<Camera>();
+        // add_component<Transform>();
+
+        //std::cout << "CameraObject::CameraObject " << get_name() << "\n";
     }
 
-    virtual ~CameraObject(){}
+    virtual ~CameraObject()
+    {
+        //std::cout << "CameraObject::~CameraObject " << get_name() << "\n";
+    }
 
     virtual void frame_update() override
     {
@@ -238,6 +50,120 @@ public:
             camera->set_position(transform->get_world_position());
     }
 };
+
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+int main(int, char**)
+{
+    // auto start = Helpers::tic();
+
+    // Document doc;
+
+    // auto root = doc.append_child("Root", "Zero");
+    // doc.append_child("Root", "Zero");
+    // doc.append_child("Root", "Zero");
+    // doc.append_child("Root", "Zero");
+
+    // int N = 3;
+
+    // for (int i = 0; i < N; i++)
+    // {
+    //     auto child = root.append_child(
+    //         fmt::format("Child_{}", i).c_str(), 
+    //         Helpers::to_string<int>(i).c_str());
+
+    //     for (int j = 0; j < N; j++)
+    //     {
+    //         child = child.append_child(
+    //             fmt::format("Child_{}_{}", i, j).c_str(), 
+    //             Helpers::to_string<int>(i).c_str());
+    //     } 
+    // }
+
+    // std::cout << "file build time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    // start = Helpers::tic();
+
+    // doc.write<XML<false>>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
+
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    // start = Helpers::tic();
+
+    // doc.read<XML<false>>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
+
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    // doc.write<XML<false>>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile1.xml");
+
+    // //---------------------------------------------------------------------------------------------------------------------
+    // WRAPPER VERSION
+    //---------------------------------------------------------------------------------------------------------------------
+    // auto start = Helpers::tic();
+    // auto doc = Serialization::Format<Serialization::XML>::read("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // start = Helpers::tic();
+    // Serialization::Format<Serialization::XML>::write(doc.get(), "C:/SDK/Qt_Projects/OpenGL/logs/NewDocument1.xml");
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    //---------------------------------------------------------------------------------------------------------------------
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // HIGHLY OPTIMIZED VARIANT
+    //---------------------------------------------------------------------------------------------------------------------
+    // //file read time
+    // Document doc;
+    // doc.read("C:/SDK/Qt_Projects/OpenGL/logs/NewFile.xml");
+    // doc.write("C:/SDK/Qt_Projects/OpenGL/logs/NewFile2.xml");
+    // for(auto&& node : doc.nodes) std::cout << node.self() << "\t" << node.parent().self() << "\t" << node.name() << "\n";
+
+    // auto start = Helpers::tic();
+    // Document doc;
+
+    // Format<XML<false>>::read(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    // start = Helpers::tic();
+    // Format<XML<false>>::write(doc, "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML1.pwrct");    
+    // std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // FAST FILE READ
+    //---------------------------------------------------------------------------------------------------------------------
+    // read the whole file
+    // auto start = Helpers::tic();
+
+    // std::ifstream t("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+
+    // t.seekg(0, std::ios::end);
+    // size_t size = t.tellg();
+    // std::string buffer(size, ' ');
+    // t.seekg(0);
+    // t.read(&buffer[0], size);
+
+    // std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+    //---------------------------------------------------------------------------------------------------------------------
+
+    Document pool;
+
+    auto start = Helpers::tic();
+
+    pool.read<Format<XML_COMPACT>>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.pwrct");
+
+    std::cout << "file read time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    start = Helpers::tic();
+
+    pool.write<Format<XML_COMPACT>>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML_Copy.pwrct");
+
+    std::cout << "file write time " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    return 0;
+}
 
 // int main(int, char**)
 // {
