@@ -6,13 +6,13 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
 
-// Pointer
-Pointer::Pointer(const Document* _Document, std::pmr::polymorphic_allocator<char>& _Allocator) : 
-    Doc(_Document),
-    Name(std::pmr::string(_Allocator)),
-    Value(std::pmr::string(_Allocator)){}
+// // Pointer
+// Pointer::Pointer(const Document* _Document, std::pmr::polymorphic_allocator<char>& _Allocator) : 
+//     Doc(_Document),
+//     Name(std::pmr::string(_Allocator)),
+//     Value(std::pmr::string(_Allocator)){}
 
-Pointer::~Pointer(){}
+// Pointer::~Pointer(){}
 
 // Iterator
 Iterator::Iterator(const Document* _Document, int _Index) : m_Document(_Document), m_Index(_Index){}
@@ -23,19 +23,19 @@ Node Iterator::operator*() const
     if(m_Document == nullptr) 
         return Node();
 
-    const auto& hierarchy = m_Document->hierarchy();
+    const auto& hierarchy = m_Document->m_NodeConstructor.hierarchy();
 
-    return hierarchy.items[m_Index];
+    return Node(hierarchy.m_Items[m_Index]);
 }
 
-const Node* Iterator::operator->() const
+const NodeInfo* Iterator::operator->() const
 {
     if(m_Document == nullptr) 
         return nullptr;
 
-    const auto& hierarchy = m_Document->hierarchy();
+    const auto& hierarchy = m_Document->m_NodeConstructor.hierarchy();
 
-    return &hierarchy.items[m_Index];
+    return hierarchy.m_Items[m_Index];
 }
 
 // prefix
@@ -71,12 +71,22 @@ int Iterator::distance(const Iterator& _First, const Iterator& _Last)
 }
 
 // Node
-Node::Node(Pointer* _Pointer) : m_Pointer(_Pointer){}
-Node::~Node(){}
+Node::Node(NodeInfo* _Info, const Document* _Document) : 
+    m_Info(_Info), m_Document(_Document){}
 
-Pointer* const Node::data() const
+bool Node::valid() const
 {
-    return m_Pointer;
+    return m_Info != nullptr && m_Document != nullptr;
+}
+
+const char* Node::name() const
+{
+    return m_Info != nullptr ? m_Info->Name : m_EmptyNode.Name;
+}
+
+const char* Node::value() const
+{
+    return m_Info != nullptr ? m_Info->Value : m_EmptyNode.Value;
 }
 
 const Iterator Node::begin() const
@@ -85,9 +95,9 @@ const Iterator Node::begin() const
         return Iterator(nullptr, -1);
 
     const auto& hierarchy = 
-        m_Pointer->Doc->hierarchy();
+        m_Document->m_NodeConstructor.hierarchy();
 
-    return Iterator(m_Pointer->Doc, hierarchy.pointers[self()]);
+    return Iterator(m_Document, hierarchy.m_Pointers[m_Info->Self]);
 }
 
 const Iterator Node::end() const
@@ -96,217 +106,224 @@ const Iterator Node::end() const
         return Iterator(nullptr, -1);
 
     const auto& hierarchy = 
-        m_Pointer->Doc->hierarchy();
+        m_Document->m_NodeConstructor.hierarchy();
 
-    return Iterator(m_Pointer->Doc, hierarchy.pointers[self() + 1]);
-}
-
-std::pmr::string& Node::name() const
-{
-    if(valid())
-        return m_Pointer->Name;
-
-    EMPTY_STRING = "";
-    return EMPTY_STRING;
-}
-
-std::pmr::string& Node::value() const
-{
-    if(valid())
-        return m_Pointer->Value;
-
-    EMPTY_STRING = "";
-    return EMPTY_STRING;
-}
-
-Node Node::parent() const
-{
-    return valid() ? Node(m_Pointer->Parent) : Node();
-}
-
-int Node::self() const
-{
-    return valid() ? m_Pointer->Self : 0; 
-}
-
-bool Node::valid() const
-{
-    return m_Pointer != nullptr && m_Pointer->Doc != nullptr;
-}
-
-bool Node::empty() const
-{
-    return Iterator::distance(begin(), end()) <= 0;
-}
-
-int Node::size() const
-{
-    return Iterator::distance(begin(), end());
+    return Iterator(m_Document, hierarchy.m_Pointers[m_Info->Self + 1]);
 }
 
 Node Node::append_child(const char* _Name, const char* _Value)
 {
-    return valid() ? m_Pointer->Doc->append_child(_Name, _Value, *this) : Node();
+    if(m_Document == nullptr) return Node();
+
+    return Node(m_Document->append_child(_Name, _Value, *this));
 }
 
-void Node::remove_child(std::function<bool(Node&)> _Predicate)
-{
-    if(valid()) 
-        m_Pointer->Doc->remove_child(_Predicate, *this);
-}
+// std::pmr::string& Node::name() const
+// {
+//     if(valid())
+//         return m_Pointer->Name;
 
-// Hierarchy
-Hierarchy::Hierarchy(const std::vector<Node>& nodes)
-{
-    build(nodes);
-}
+//     EMPTY_STRING = "";
+//     return EMPTY_STRING;
+// }
 
-Hierarchy::~Hierarchy(){}
+// std::pmr::string& Node::value() const
+// {
+//     if(valid())
+//         return m_Pointer->Value;
 
-bool Hierarchy::is_dirty() const
-{
-    return m_is_dirty || items.empty() || pointers.empty();
-}
+//     EMPTY_STRING = "";
+//     return EMPTY_STRING;
+// }
 
-void Hierarchy::set_dirty()
-{
-    m_is_dirty = true;
-}
+// Node Node::parent() const
+// {
+//     return valid() ? Node(m_Pointer->Parent) : Node();
+// }
 
-void Hierarchy::build(const std::vector<Node>& nodes)
-{
-    if(nodes.empty()) 
-        return;
+// int Node::self() const
+// {
+//     return valid() ? m_Pointer->Self : 0; 
+// }
 
-    items.resize(nodes.size());
-    pointers.resize(nodes.size() + 1);
-    std::vector<int> workspace(nodes.size() + 1);
+// bool Node::valid() const
+// {
+//     return m_Pointer != nullptr && m_Pointer->Doc != nullptr;
+// }
 
-    for (size_t i = 0; i < nodes.size(); i++)
-    {
-        items[i]     = nodes[i];
-        pointers [i] = 0;
-        workspace[i] = 0;
-    }
+// bool Node::empty() const
+// {
+//     return Iterator::distance(begin(), end()) <= 0;
+// }
 
-    pointers[nodes.size()] = 0;
-    workspace[nodes.size()] = 0;
+// int Node::size() const
+// {
+//     return Iterator::distance(begin(), end());
+// }
 
-    for(auto&& item : nodes) 
-    {
-        if(!item.parent().valid()) 
-            continue;
+// Node Node::append_child(const char* _Name, const char* _Value)
+// {
+//     return valid() ? m_Pointer->Doc->append_child(_Name, _Value, *this) : Node();
+// }
 
-        pointers[item.parent().self()]++;
-        workspace[item.parent().self()]++;
-    }
+// void Node::remove_child(std::function<bool(Node&)> _Predicate)
+// {
+//     if(valid()) 
+//         m_Pointer->Doc->remove_child(_Predicate, *this);
+// }
 
-    // cumulative sum
-    for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
-    {
-        k += workspace[i];
-        workspace[i] = j;
-        pointers[i] = j;
-        j = k;
-    }
+// // Hierarchy
+// Hierarchy::Hierarchy(const std::vector<Node>& nodes)
+// {
+//     build(nodes);
+// }
 
-    // count sort
-    for(int i = 0; i < nodes.size(); i++ )
-    {
-        if(!nodes[i].parent().valid()) 
-            continue;
+// Hierarchy::~Hierarchy(){}
 
-        int index    = workspace[nodes[i].parent().self()]++;
-        items[index] = nodes[i];
-    }
+// bool Hierarchy::is_dirty() const
+// {
+//     return m_is_dirty || items.empty() || pointers.empty();
+// }
 
-    m_is_dirty = false;
-}
+// void Hierarchy::set_dirty()
+// {
+//     m_is_dirty = true;
+// }
 
-// Document
-Document::Document(){}
+// void Hierarchy::build(const std::vector<Node>& nodes)
+// {
+//     if(nodes.empty()) 
+//         return;
 
-Document::~Document()
-{
-    reset();
-}
+//     items.resize(nodes.size());
+//     pointers.resize(nodes.size() + 1);
+//     std::vector<int> workspace(nodes.size() + 1);
 
-Node Document::root() const
-{
-    return m_Nodes.empty() ? Node() : m_Nodes[0];
-}
+//     for (size_t i = 0; i < nodes.size(); i++)
+//     {
+//         items[i]     = nodes[i];
+//         pointers [i] = 0;
+//         workspace[i] = 0;
+//     }
 
-Node Document::append_child(const char* _Name, const char* _Value, Node& _Parent) const
-{
-    // setup dirty flag
-    m_Hierarchy.set_dirty();
+//     pointers[nodes.size()] = 0;
+//     workspace[nodes.size()] = 0;
 
-    // append child
-    auto item       = m_NodesAllocator.construct(this, m_StringsAllocatorAllocator.PolymorphicAllocator);
-    item->Name      = _Name;
-    item->Value     = _Value;
-    item->Self      = std::max<int>((int)m_Nodes.size(), 0);
-    item->Parent    = _Parent.data();
+//     for(auto&& item : nodes) 
+//     {
+//         if(!item.parent().valid()) 
+//             continue;
+
+//         pointers[item.parent().self()]++;
+//         workspace[item.parent().self()]++;
+//     }
+
+//     // cumulative sum
+//     for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
+//     {
+//         k += workspace[i];
+//         workspace[i] = j;
+//         pointers[i] = j;
+//         j = k;
+//     }
+
+//     // count sort
+//     for(int i = 0; i < nodes.size(); i++ )
+//     {
+//         if(!nodes[i].parent().valid()) 
+//             continue;
+
+//         int index    = workspace[nodes[i].parent().self()]++;
+//         items[index] = nodes[i];
+//     }
+
+//     m_is_dirty = false;
+// }
+
+// // Document
+// Document::Document(){}
+
+// Document::~Document()
+// {
+//     reset();
+// }
+
+// Node Document::root() const
+// {
+//     return m_Nodes.empty() ? Node() : m_Nodes[0];
+// }
+
+// Node Document::append_child(const char* _Name, const char* _Value, Node& _Parent) const
+// {
+//     // setup dirty flag
+//     m_Hierarchy.set_dirty();
+
+//     // append child
+//     auto item       = m_NodesAllocator.construct(this, m_StringsAllocatorAllocator.PolymorphicAllocator);
+//     item->Name      = _Name;
+//     item->Value     = _Value;
+//     item->Self      = std::max<int>((int)m_Nodes.size(), 0);
+//     item->Parent    = _Parent.data();
     
-    m_Nodes.push_back(Node(item));
-    return m_Nodes.back();
-}
+//     m_Nodes.push_back(Node(item));
+//     return m_Nodes.back();
+// }
 
-void Document::remove_child(std::function<bool(Node&)> _Predicate, Node& _Parent) const
-{
-    if(_Predicate == nullptr) 
-        return;
+// void Document::remove_child(std::function<bool(Node&)> _Predicate, Node& _Parent) const
+// {
+//     if(_Predicate == nullptr) 
+//         return;
 
-    if(!_Parent.valid())
-    {
-        //scan the whole tree
-        for(auto&& child : m_Nodes)
-        {
-            if(!_Predicate(child)) 
-                continue;
+//     if(!_Parent.valid())
+//     {
+//         //scan the whole tree
+//         for(auto&& child : m_Nodes)
+//         {
+//             if(!_Predicate(child)) 
+//                 continue;
 
-            m_NodesAllocator.destroy(child.m_Pointer);
-            m_Nodes.erase(std::next(m_Nodes.begin(), child.self()));
-            break;
-        }
-    }
-    else
-    {
-        // scan concrete subtree
-        for(auto&& child : _Parent)
-        {
-            if(!_Predicate(child)) 
-                continue;
+//             m_NodesAllocator.destroy(child.m_Pointer);
+//             m_Nodes.erase(std::next(m_Nodes.begin(), child.self()));
+//             break;
+//         }
+//     }
+//     else
+//     {
+//         // scan concrete subtree
+//         for(auto&& child : _Parent)
+//         {
+//             if(!_Predicate(child)) 
+//                 continue;
 
-            m_NodesAllocator.destroy(child.m_Pointer);
-            m_Nodes.erase(std::next(m_Nodes.begin(), child.self()));
-            break;
-        }
-    }
+//             m_NodesAllocator.destroy(child.m_Pointer);
+//             m_Nodes.erase(std::next(m_Nodes.begin(), child.self()));
+//             break;
+//         }
+//     }
 
-    // renumber nodes
-    for(size_t i = 0; i < m_Nodes.size(); i++) 
-        m_Nodes[i].m_Pointer->Self = (int)i;
+//     // renumber nodes
+//     for(size_t i = 0; i < m_Nodes.size(); i++) 
+//         m_Nodes[i].m_Pointer->Self = (int)i;
 
-    // setup dirty flag
-    m_Hierarchy.set_dirty();
-}
+//     // setup dirty flag
+//     m_Hierarchy.set_dirty();
+// }
 
-void Document::reset()
-{
-    // clear
-    for(auto&& node : m_Nodes)
-        m_NodesAllocator.destroy(node.data());
-    m_Nodes.clear();
+// void Document::reset()
+// {
+//     // clear
+//     for(auto&& node : m_Nodes)
+//         m_NodesAllocator.destroy(node.data());
+//     m_Nodes.clear();
 
-    // setup dirty flag
-    m_Hierarchy.set_dirty();
-}
+//     // setup dirty flag
+//     m_Hierarchy.set_dirty();
+// }
 
-Hierarchy& Document::hierarchy() const
-{
-    if(m_Hierarchy.is_dirty()) 
-        m_Hierarchy.build(m_Nodes);
+// Hierarchy& Document::hierarchy() const
+// {
+//     if(m_Hierarchy.is_dirty()) 
+//         m_Hierarchy.build(m_Nodes);
 
-    return m_Hierarchy;
-}
+//     return m_Hierarchy;
+// }
