@@ -47,25 +47,6 @@ namespace Frenchie
                 char*     Value  = nullptr;
                 size_t    Self   = 0;
                 NodeInfo* Parent = nullptr;
-
-                // enum Type
-                // {
-                //     BOOL,
-                //     CHAR,
-                //     UNSIGNED_CHAR,
-                //     SHORT,
-                //     UNSIGNED_SHORT,
-                //     INT,
-                //     UNSIGNED_INT,
-                //     LONG,
-                //     UNSIGNED_LONG,
-                //     LONG_LONG,
-                //     UNSIGNED_LONG_LONG,
-                //     FLOAT,
-                //     DOUBLE,
-                //     LONG_DOUBLE,
-                //     STRING
-                // } m_Type;
             };
 
             class NodeCostructor
@@ -187,7 +168,7 @@ namespace Frenchie
                     return m_Hierarchy;
                 }
 
-                NodeInfo* root() const
+                NodeInfo* first_child() const
                 {
                     return m_Nodes[0];
                 }
@@ -304,9 +285,9 @@ namespace Frenchie
                     return _Format::write(this, _Path);
                 }
 
-                Node root() const
+                Node first_child() const
                 {
-                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.root(), this) : Node();
+                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child(), this) : Node();
                 }
 
                 mutable NodeCostructor m_NodeConstructor;

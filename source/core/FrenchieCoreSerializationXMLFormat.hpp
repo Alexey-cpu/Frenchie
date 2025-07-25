@@ -83,7 +83,7 @@ namespace Frenchie
                         return false;
 
                     // check path
-                    if(!std::filesystem::exists(_Path)) 
+                    if(!std::filesystem::exists(_Path.parent_path())) 
                         return false;
 
                     std::vector<NodeInfo*> singletons = _Document->m_NodeConstructor.singletons();
