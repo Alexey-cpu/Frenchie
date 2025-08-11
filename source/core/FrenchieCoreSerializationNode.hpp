@@ -37,18 +37,18 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            // TODO: move 'Document* Doc = nullptr;' to 'NodeInfo' for more convenient iterators construction
-
             class Document;
             class Iterator;
             class Node;
 
             struct NodeInfo
             {
-                char*     Name   = nullptr;
-                char*     Value  = nullptr;
-                size_t    Self   = 0;
-                NodeInfo* Parent = nullptr;
+                char*           Name      = nullptr;
+                char*           Value     = nullptr;
+                size_t          Self      = 0;
+                const NodeInfo* Parent    = nullptr;
+                const Document* Document  = nullptr;
+                bool            Attribute = false;
             };
 
             class NodeCostructor
@@ -140,21 +140,24 @@ namespace Frenchie
                     bool                   m_IsDirty  = true;
                 } mutable m_Hierarchy;
 
+                mutable const Document*        m_Document;
                 mutable std::vector<NodeInfo*> m_Nodes;
 
             public:
 
-                NodeCostructor(){}
+                NodeCostructor(const Document* _Document) : m_Document(_Document){}
 
                 ~NodeCostructor(){}
 
                 inline NodeInfo* append_node(const char* _Name, const char* _Value, NodeInfo* _Parent = nullptr)
                 {
-                    NodeInfo* node = m_NodeAllocator.PolymorphicAllocator.allocate(1);
-                    node->Name     = m_StringAllocator.copy(_Name);
-                    node->Value    = m_StringAllocator.copy(_Value);
-                    node->Self     = m_Nodes.size();
-                    node->Parent   = _Parent;
+                    NodeInfo* node   = m_NodeAllocator.PolymorphicAllocator.allocate(1);
+                    node->Name       = m_StringAllocator.copy(_Name);
+                    node->Value      = m_StringAllocator.copy(_Value);
+                    node->Self       = m_Nodes.size();
+                    node->Parent     = _Parent;
+                    node->Document   = m_Document;
+                    node->Attribute = false;
                     
                     m_Nodes.push_back(node);
                     m_Hierarchy.m_IsDirty = true;
@@ -205,7 +208,7 @@ namespace Frenchie
             class Iterator final
             {
             public:
-                Iterator(const Document* _Document, int _Index);
+                Iterator(const Node& _Node, int _Index);
                 ~Iterator();
 
                 // access
@@ -246,7 +249,7 @@ namespace Frenchie
                 } m_EmptyNode;
 
             public:
-                Node(NodeInfo* _Info = nullptr, const Document* _Document = nullptr);
+                Node(NodeInfo* _Info = nullptr);
                 ~Node() = default;
                 
                 bool valid() const;
@@ -262,14 +265,13 @@ namespace Frenchie
                 template<typename T>
                 Node append_value_node(const char* _Name, const T& _Value, const Node& _Parent = Node())
                 {
-                    if(m_Document == nullptr) 
+                    if(!valid()) 
                         return Node();
 
-                    return Node(m_Document->append_value_node<T>(_Name, _Value, *this));
+                    return Node(m_Info->Document->append_value_node<T>(_Name, _Value, *this));
                 }
 
-                NodeInfo*       m_Info     = nullptr;
-                const Document* m_Document = nullptr;
+                NodeInfo* m_Info = nullptr;
             };
 
             class Document
@@ -281,7 +283,7 @@ namespace Frenchie
 
                 Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node()) const
                 {
-                    return Node(m_NodeConstructor.append_node(_Name, _Value, _Parent.m_Info), this);
+                    return Node(m_NodeConstructor.append_node(_Name, _Value, _Parent.m_Info));
                 }
 
                 template<typename T>
@@ -289,7 +291,7 @@ namespace Frenchie
 
                 Node first_node() const
                 {
-                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child(), this) : Node();
+                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child()) : Node();
                 }
 
                 template<typename _Format>
@@ -304,7 +306,7 @@ namespace Frenchie
                     return _Format::write(this, _Path);
                 }
 
-                mutable NodeCostructor m_NodeConstructor;
+                mutable NodeCostructor m_NodeConstructor = NodeCostructor(this);
             };
 
             template<typename _Format>

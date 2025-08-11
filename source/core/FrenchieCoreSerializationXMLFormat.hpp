@@ -67,12 +67,27 @@ namespace Frenchie
                             if(std::strlen(element.name()) <= 0) // don't read nameless (anonymous) tags
                                 continue;
 
-                            stack.push(
-                                {
-                                    element, 
-                                    _Document->m_NodeConstructor.append_node(element.name(), element.text().get(), top.data)
-                                }
+                            // append node
+                            auto data = _Document->m_NodeConstructor.append_node(
+                                element.name(), 
+                                element.text().get(), 
+                                top.data
                             );
+
+                            // read node attributes
+                            if(!element.attributes().empty())
+                            {
+                                for(auto it = element.attributes_begin(); it != element.attributes_end(); it++)
+                                {
+                                    _Document->m_NodeConstructor.append_node(
+                                        (*it).name(), 
+                                        (*it).value(), 
+                                        data
+                                    )->Attribute = true;
+                                }
+                            }
+
+                            stack.push({element, data});
                         }
                     }
 
@@ -111,7 +126,14 @@ namespace Frenchie
 
                             for (size_t i = tree.m_Pointers[data->Self]; i < tree.m_Pointers[data->Self + 1]; i++)
                             {
-                                queue.push({node, tree.m_Items[i]});
+                                if(tree.m_Items[i]->Attribute)
+                                {
+                                    node.append_attribute(tree.m_Items[i]->Name).set_value(tree.m_Items[i]->Value);
+                                }
+                                else
+                                {
+                                    queue.push({node, tree.m_Items[i]});
+                                }
                             }
                         }
                     }
