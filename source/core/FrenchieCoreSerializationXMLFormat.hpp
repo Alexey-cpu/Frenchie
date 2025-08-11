@@ -64,6 +64,9 @@ namespace Frenchie
 
                         for(auto&& element : top.document)
                         {
+                            if(std::strlen(element.name()) <= 0) // don't read nameless (anonymous) tags
+                                continue;
+
                             stack.push(
                                 {
                                     element, 
