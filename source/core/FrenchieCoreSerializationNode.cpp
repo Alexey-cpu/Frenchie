@@ -7,7 +7,10 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
 
 // Iterator
-Iterator::Iterator(const Document* _Document, int _Index) : m_Document(_Document), m_Index(_Index){}
+Iterator::Iterator(const Node& _Node, int _Index) : 
+    m_Document(_Node.valid() ? _Node.m_Info->Document : nullptr), 
+    m_Index(_Index){}
+
 Iterator::~Iterator(){}
 
 Node Iterator::operator*() const 
@@ -17,7 +20,7 @@ Node Iterator::operator*() const
 
     const auto& hierarchy = m_Document->m_NodeConstructor.hierarchy();
 
-    return Node(hierarchy.m_Items[m_Index], m_Document);
+    return Node(hierarchy.m_Items[m_Index]);
 }
 
 const NodeInfo* Iterator::operator->() const
@@ -63,22 +66,21 @@ int Iterator::distance(const Iterator& _First, const Iterator& _Last)
 }
 
 // Node
-Node::Node(NodeInfo* _Info, const Document* _Document) : 
-    m_Info(_Info), m_Document(_Document){}
+Node::Node(NodeInfo* _Info) : m_Info(_Info){}
 
 bool Node::valid() const
 {
-    return m_Info != nullptr && m_Document != nullptr;
+    return m_Info != nullptr && m_Info->Document != nullptr;
 }
 
 const char* Node::name() const
 {
-    return m_Info != nullptr ? m_Info->Name : m_EmptyNode.Name;
+    return m_Info != nullptr ? m_Info->Name : Node::m_EmptyNode.Name;
 }
 
 const char* Node::value() const
 {
-    return m_Info != nullptr ? m_Info->Value : m_EmptyNode.Value;
+    return m_Info != nullptr ? m_Info->Value : Node::m_EmptyNode.Value;
 }
 
 const Iterator Node::begin() const
@@ -87,9 +89,9 @@ const Iterator Node::begin() const
         return Iterator(nullptr, -1);
 
     const auto& hierarchy = 
-        m_Document->m_NodeConstructor.hierarchy();
+        m_Info->Document->m_NodeConstructor.hierarchy();
 
-    return Iterator(m_Document, hierarchy.m_Pointers[m_Info->Self]);
+    return Iterator(*this, hierarchy.m_Pointers[m_Info->Self]);
 }
 
 const Iterator Node::end() const
@@ -98,17 +100,17 @@ const Iterator Node::end() const
         return Iterator(nullptr, -1);
 
     const auto& hierarchy = 
-        m_Document->m_NodeConstructor.hierarchy();
+        m_Info->Document->m_NodeConstructor.hierarchy();
 
-    return Iterator(m_Document, hierarchy.m_Pointers[m_Info->Self + 1]);
+    return Iterator(*this, hierarchy.m_Pointers[m_Info->Self + 1]);
 }
 
 Node Node::append_node(const char* _Name, const char* _Value)
 {
-    if(m_Document == nullptr) 
+    if(!valid()) 
         return Node();
 
-    return Node(m_Document->append_node(_Name, _Value, *this));
+    return Node(m_Info->Document->append_node(_Name, _Value, *this));
 }
 
 
