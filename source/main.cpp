@@ -18,6 +18,8 @@
 
 #include <FrenchieCoreSerializationTests.hpp>
 
+#include <FrenchieCoreChunkAllocator.hpp>
+
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
 using namespace Frenchie::Renderer;
@@ -59,115 +61,144 @@ public:
 #include <iostream>
 #include <sstream>
 
-void walk(const Node& _Node)
-{
-    Helpers::Queue<Node> queue;
-    queue.push(_Node);
-
-    while (!queue.empty())
-    {
-        auto root = queue.front();
-        queue.pop();
-
-        std::cout << root.name() << "\t" << root.value() << "\n";
-
-        for(auto&& child : root)
-        {
-            queue.push(child);
-        }
-    }
-}
-
+// Memory pool test
 int main(int, char**)
 {
-    Document document;
+    // 4-element allocator
+    const int CunkSize   = 4;
+    const int CunksCount = 10000;
 
-    auto root    = document.append_node("Name", "Root");
-    auto scalars = root.append_node("Scalars", "");
-    auto vectors = root.append_node("Vectors", "");
-    auto lists   = root.append_node("Lists", "");
-    auto sets    = root.append_node("Sets", "");
+    Frenchie::Core::MemoryChunkAllocator<int, CunkSize> allocator;
 
-    #define __test_append_value__(__node, __type, __value) __node.append_value_node<__type>("Value", __value);
-    #define __test_append_vector__(__node, __type, __value) __node.append_value_node<std::vector<__type>>("Value", std::vector<__type>({__value, __value, __value}));
-    #define __test_append_list__(__node, __type, __value) __node.append_value_node<std::list<__type>>("Value", std::list<__type>({__value, __value, __value}));
-    #define __test_append_set__(__node, __type, __value) __node.append_value_node<std::set<__type>>("Value", std::set<__type>({__value, __value, __value}));
+    // allocate 4 element
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
 
-    __test_append_value__(scalars, bool, false)
-    __test_append_value__(scalars, float, 1.5f)
-    __test_append_value__(scalars, double, 1.12313)
-    __test_append_value__(scalars, int, 1000)
-    __test_append_value__(scalars, unsigned int, 2000)
-    __test_append_value__(scalars, long, 2000)
-    __test_append_value__(scalars, unsigned long, 2000)
-    __test_append_value__(scalars, long long, 2000)
-    __test_append_value__(scalars, unsigned long long, 2000)
+    // allocate 4 element
+    auto p0 = allocator.allocate(1);
+    auto p1 = allocator.allocate(1);
+    auto p2 = allocator.allocate(1);
+    auto p3 = allocator.allocate(1);
 
-    __test_append_vector__(vectors, bool, false)
-    __test_append_vector__(vectors, float, 1.5f)
-    __test_append_vector__(vectors, double, 1.12313)
-    __test_append_vector__(vectors, int, 1000)
-    __test_append_vector__(vectors, unsigned int, 2000)
-    __test_append_vector__(vectors, long, 2000)
-    __test_append_vector__(vectors, unsigned long, 2000)
-    __test_append_vector__(vectors, long long, 2000)
-    __test_append_vector__(vectors, unsigned long long, 2000)
+    // allocate 4 element
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
 
-    __test_append_list__(lists, bool, false)
-    __test_append_list__(lists, float, 1.5f)
-    __test_append_list__(lists, double, 1.12313)
-    __test_append_list__(lists, int, 1000)
-    __test_append_list__(lists, unsigned int, 2000)
-    __test_append_list__(lists, long, 2000)
-    __test_append_list__(lists, unsigned long, 2000)
-    __test_append_list__(lists, long long, 2000)
-    __test_append_list__(lists, unsigned long long, 2000)
+    // allocate 4 element
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
 
-    __test_append_set__(sets, bool, false)
-    __test_append_set__(sets, float, 1.5f)
-    __test_append_set__(sets, double, 1.12313)
-    __test_append_set__(sets, int, 1000)
-    __test_append_set__(sets, unsigned int, 2000)
-    __test_append_set__(sets, long, 2000)
-    __test_append_set__(sets, unsigned long, 2000)
-    __test_append_set__(sets, long long, 2000)
-    __test_append_set__(sets, unsigned long long, 2000)
+    // allocate 4 element
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
+    allocator.allocate(1);
 
-    #undef __append_value__
-    #undef __append_vector__
-    #undef __test_append_set__
-    #undef __test_append_list__
-        
-    for(auto&& node : scalars) 
-        std::cout << node.name() << "\t" << node.value() << "\n";
-
-    for(auto&& vector : vectors) 
-    {
-        std::cout << vector.name() << "\t" << vector.value() << "\n";
-        for(auto&& item : vector) 
-            std::cout << item.name() << "\t" << item.value() << "\n";
-    }
-
-    for(auto&& vector : lists) 
-    {
-        std::cout << vector.name() << "\t" << vector.value() << "\n";
-        for(auto&& item : vector) 
-            std::cout << item.name() << "\t" << item.value() << "\n";
-    }
-
-    for(auto&& vector : sets) 
-    {
-        std::cout << vector.name() << "\t" << vector.value() << "\n";
-        for(auto&& item : vector) 
-            std::cout << item.name() << "\t" << item.value() << "\n";
-    }
-
-    document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
-    document.read<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
-    document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test_copy.xml");
+    allocator.deallocate(p0);
+    allocator.deallocate(p1);
+    allocator.deallocate(p2);
+    allocator.deallocate(p3);
 
     return 0;
 }
+
+// Serialiation tool test
+// int main(int, char**)
+// {
+//     Document document;
+
+//     auto root    = document.append_node("Name", "Root");
+//     auto scalars = root.append_node("Scalars", "");
+//     auto vectors = root.append_node("Vectors", "");
+//     auto lists   = root.append_node("Lists", "");
+//     auto sets    = root.append_node("Sets", "");
+
+//     #define __test_append_value__(__node, __type, __value) __node.append_value_node<__type>("Value", __value);
+//     #define __test_append_vector__(__node, __type, __value) __node.append_value_node<std::vector<__type>>("Value", std::vector<__type>({__value, __value, __value}));
+//     #define __test_append_list__(__node, __type, __value) __node.append_value_node<std::list<__type>>("Value", std::list<__type>({__value, __value, __value}));
+//     #define __test_append_set__(__node, __type, __value) __node.append_value_node<std::set<__type>>("Value", std::set<__type>({__value, __value, __value}));
+
+//     __test_append_value__(scalars, bool, false)
+//     __test_append_value__(scalars, float, 1.5f)
+//     __test_append_value__(scalars, double, 1.12313)
+//     __test_append_value__(scalars, int, 1000)
+//     __test_append_value__(scalars, unsigned int, 2000)
+//     __test_append_value__(scalars, long, 2000)
+//     __test_append_value__(scalars, unsigned long, 2000)
+//     __test_append_value__(scalars, long long, 2000)
+//     __test_append_value__(scalars, unsigned long long, 2000)
+
+//     __test_append_vector__(vectors, bool, false)
+//     __test_append_vector__(vectors, float, 1.5f)
+//     __test_append_vector__(vectors, double, 1.12313)
+//     __test_append_vector__(vectors, int, 1000)
+//     __test_append_vector__(vectors, unsigned int, 2000)
+//     __test_append_vector__(vectors, long, 2000)
+//     __test_append_vector__(vectors, unsigned long, 2000)
+//     __test_append_vector__(vectors, long long, 2000)
+//     __test_append_vector__(vectors, unsigned long long, 2000)
+
+//     __test_append_list__(lists, bool, false)
+//     __test_append_list__(lists, float, 1.5f)
+//     __test_append_list__(lists, double, 1.12313)
+//     __test_append_list__(lists, int, 1000)
+//     __test_append_list__(lists, unsigned int, 2000)
+//     __test_append_list__(lists, long, 2000)
+//     __test_append_list__(lists, unsigned long, 2000)
+//     __test_append_list__(lists, long long, 2000)
+//     __test_append_list__(lists, unsigned long long, 2000)
+
+//     __test_append_set__(sets, bool, false)
+//     __test_append_set__(sets, float, 1.5f)
+//     __test_append_set__(sets, double, 1.12313)
+//     __test_append_set__(sets, int, 1000)
+//     __test_append_set__(sets, unsigned int, 2000)
+//     __test_append_set__(sets, long, 2000)
+//     __test_append_set__(sets, unsigned long, 2000)
+//     __test_append_set__(sets, long long, 2000)
+//     __test_append_set__(sets, unsigned long long, 2000)
+
+//     #undef __append_value__
+//     #undef __append_vector__
+//     #undef __test_append_set__
+//     #undef __test_append_list__
+        
+//     for(auto&& node : scalars) 
+//         std::cout << node.name() << "\t" << node.value() << "\n";
+
+//     for(auto&& vector : vectors) 
+//     {
+//         std::cout << vector.name() << "\t" << vector.value() << "\n";
+//         for(auto&& item : vector) 
+//             std::cout << item.name() << "\t" << item.value() << "\n";
+//     }
+
+//     for(auto&& vector : lists) 
+//     {
+//         std::cout << vector.name() << "\t" << vector.value() << "\n";
+//         for(auto&& item : vector) 
+//             std::cout << item.name() << "\t" << item.value() << "\n";
+//     }
+
+//     for(auto&& vector : sets) 
+//     {
+//         std::cout << vector.name() << "\t" << vector.value() << "\n";
+//         for(auto&& item : vector) 
+//             std::cout << item.name() << "\t" << item.value() << "\n";
+//     }
+
+//     document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
+//     document.read<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
+//     document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test_copy.xml");
+
+//     return 0;
+// }
 
 // int main(int, char**)
 // {
