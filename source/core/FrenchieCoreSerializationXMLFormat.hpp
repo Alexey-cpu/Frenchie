@@ -16,7 +16,7 @@ namespace Frenchie
                 struct Element
                 {
                     pugi::xml_node document;
-                    NodeInfo*      data;
+                    Node           data;
                 };
 
                 static bool read(Document* _Document, const std::filesystem::path& _Path)
@@ -51,7 +51,8 @@ namespace Frenchie
                     if(document.empty()) 
                         return false;
 
-                    _Document->m_NodeConstructor.reset();
+                    // reset document
+                    _Document->reset();
 
                     // parse in depth
                     Helpers::Stack<Element> stack;
@@ -68,7 +69,7 @@ namespace Frenchie
                                 continue;
 
                             // append node
-                            auto data = _Document->m_NodeConstructor.append_node(
+                            auto data = _Document->append_node(
                                 element.name(), 
                                 element.text().get(), 
                                 top.data
@@ -79,11 +80,12 @@ namespace Frenchie
                             {
                                 for(auto it = element.attributes_begin(); it != element.attributes_end(); it++)
                                 {
-                                    _Document->m_NodeConstructor.append_node(
+                                    _Document->append_node(
                                         (*it).name(), 
                                         (*it).value(), 
-                                        data
-                                    )->Attribute = true;
+                                        data,
+                                        true
+                                    );
                                 }
                             }
 
@@ -104,13 +106,9 @@ namespace Frenchie
                     if(!std::filesystem::exists(_Path.parent_path())) 
                         return false;
 
-                    std::vector<NodeInfo*> singletons = _Document->m_NodeConstructor.singletons();
-
                     pugi::xml_document main;
 
-                    const auto& tree = _Document->m_NodeConstructor.hierarchy();
-
-                    for(auto&& singleton : singletons)
+                    for(auto&& singleton : *_Document)
                     {
                         Helpers::Queue<Element> queue;
                         queue.push({main, singleton});
@@ -121,18 +119,18 @@ namespace Frenchie
                             auto xml  = queue.front().document;
                             queue.pop();
 
-                            auto node = xml.append_child(data->Name);
-                            node.text().set(data->Value);
+                            auto node = xml.append_child(data.name());
+                            node.text().set(data.value());
 
-                            for (size_t i = tree.m_Pointers[data->Self]; i < tree.m_Pointers[data->Self + 1]; i++)
+                            for(auto&& child : data)
                             {
-                                if(tree.m_Items[i]->Attribute)
+                                if(child.is_attribute())
                                 {
-                                    node.append_attribute(tree.m_Items[i]->Name).set_value(tree.m_Items[i]->Value);
+                                    node.append_attribute(child.name()).set_value(child.value());
                                 }
                                 else
                                 {
-                                    queue.push({node, tree.m_Items[i]});
+                                    queue.push({node, child});
                                 }
                             }
                         }

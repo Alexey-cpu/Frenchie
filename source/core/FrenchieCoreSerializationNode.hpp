@@ -2,6 +2,7 @@
 
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
+#include <FrenchieCoreNonCopyable.hpp>
 #include <FrenchieCoreHelpers.hpp>
 
 // PUGIXML
@@ -38,10 +39,10 @@ namespace Frenchie
         namespace Serialization
         {
             class Document;
-            class Iterator;
+            class NodeIterator;
             class Node;
 
-            struct NodeInfo
+            struct NodeInfo final
             {
                 char*           Name      = nullptr;
                 char*           Value     = nullptr;
@@ -51,7 +52,129 @@ namespace Frenchie
                 bool            Attribute = false;
             };
 
-            class NodeCostructor
+            struct NodeHierarchy final
+            {
+                void build(const std::vector<NodeInfo*>& = std::vector<NodeInfo*>());
+
+                // info
+                std::vector<NodeInfo*> m_Items       = std::vector<NodeInfo*>();
+                std::vector<NodeInfo*> m_Singletones = std::vector<NodeInfo*>();
+                std::vector<int>       m_Pointers    = std::vector<int>();
+                bool                   m_IsDirty     = true;
+            };
+
+            class NodeIterator final
+            {
+            public:
+                NodeIterator(const Node& _Node, int _Index);
+                ~NodeIterator();
+
+                // access
+                Node operator*() const;
+                const NodeInfo* operator->() const;
+                
+                // increments
+                NodeIterator& operator++();
+                NodeIterator& operator--();
+                NodeIterator  operator++(int);
+                NodeIterator  operator--(int);
+
+                // comparison
+                friend bool operator==(const NodeIterator& _First, const NodeIterator& _Second)
+                { 
+                    return _First.m_Index == _Second.m_Index; 
+                }
+
+                friend bool operator!=(const NodeIterator& _First, const NodeIterator& _Second)
+                { 
+                    return _First.m_Index != _Second.m_Index; 
+                }
+
+                // arithmetics
+                static int distance(const NodeIterator& _First, const NodeIterator& _Last);
+
+            protected:
+                const Document* m_Document;
+                int             m_Index;
+            };
+
+            class DocumentIterator
+            {
+            public:
+                DocumentIterator(const Document* _Document, int _Index);
+                ~DocumentIterator();
+
+                // access
+                Node operator*() const;
+                const NodeInfo* operator->() const;
+                
+                // increments
+                DocumentIterator& operator++();
+                DocumentIterator& operator--();
+                DocumentIterator  operator++(int);
+                DocumentIterator  operator--(int);
+
+                // comparison
+                friend bool operator==(const DocumentIterator& _First, const DocumentIterator& _Second)
+                { 
+                    return _First.m_Index == _Second.m_Index; 
+                }
+
+                friend bool operator!=(const DocumentIterator& _First, const DocumentIterator& _Second)
+                { 
+                    return _First.m_Index != _Second.m_Index; 
+                }
+
+                // arithmetics
+                static int distance(const DocumentIterator& _First, const DocumentIterator& _Last);
+
+            protected:
+                const Document* m_Document;
+                int             m_Index;
+            };
+
+            class Node
+            {
+                inline static struct EmptyNode
+                {
+                    char Name [1] = {'\0'};
+                    char Value[1] = {'\0'};
+                } m_EmptyNode;
+
+                NodeInfo* m_Info = nullptr;
+
+                friend class NodeIterator;
+                friend class Document;
+
+            public:
+                Node(NodeInfo* _Info = nullptr);
+                ~Node() = default;
+                
+                bool is_valid() const;
+                bool is_attribute() const;
+
+                const char* name() const;
+                const char* value() const;
+
+                const NodeIterator begin() const;
+                const NodeIterator end() const;
+
+                Node append_node(
+                    const char* _Name, 
+                    const char* _Value, 
+                    const bool& _Attribute = false);
+
+                template<typename T>
+                Node append_node(const char* _Name, const T& _Value)
+                {
+                    if(!is_valid()) 
+                        return Node();
+
+                    return Node(m_Info->Document->append_node<T>(_Name, _Value, *this));
+                }
+            };
+
+            class Document : public NonCopyable
             {
                 class StringAllocator
                 {
@@ -72,7 +195,7 @@ namespace Frenchie
                         std::memcpy(buffer, _Source, length);
                         return buffer;
                     }
-                } m_StringAllocator;
+                } mutable m_StringAllocator;
 
                 class NodeAllocator
                 {
@@ -80,92 +203,17 @@ namespace Frenchie
                     std::array<std::byte, 4096>               Buffer;
                     std::pmr::monotonic_buffer_resource       MonotonicBufferResource{Buffer.data(), Buffer.size()};
                     std::pmr::polymorphic_allocator<NodeInfo> PolymorphicAllocator{&MonotonicBufferResource};
-                } m_NodeAllocator;
+                } mutable m_NodeAllocator;
 
-                struct Hierarchy final
-                {
-                    void build(const std::vector<NodeInfo*>& nodes = std::vector<NodeInfo*>())
-                    {
-                        if(nodes.empty()) 
-                            return;
-
-                        m_Items.resize(nodes.size());
-                        m_Pointers.resize(nodes.size() + 1);
-                        std::vector<int> workspace(nodes.size() + 1);
-
-                        for (size_t i = 0; i < nodes.size(); i++)
-                        {
-                            m_Items   [i]     = nodes[i];
-                            m_Pointers[i] = 0;
-                            workspace [i] = 0;
-                        }
-
-                        m_Pointers[nodes.size()] = 0;
-                        workspace[nodes.size()] = 0;
-
-                        for(auto&& item : nodes) 
-                        {
-                            if(!item->Parent) 
-                                continue;
-
-                            m_Pointers[item->Parent->Self]++;
-                            workspace[item->Parent->Self]++;
-                        }
-
-                        // cumulative sum
-                        for( int i = 0, j = 0, k = 0 ; i < nodes.size() + 1; i++ )
-                        {
-                            k += workspace[i];
-                            workspace[i] = j;
-                            m_Pointers[i] = j;
-                            j = k;
-                        }
-
-                        // count sort
-                        for(int i = 0; i < nodes.size(); i++ )
-                        {
-                            if(!nodes[i]->Parent) 
-                                continue;
-
-                            int index    = workspace[nodes[i]->Parent->Self]++;
-                            m_Items[index] = nodes[i];
-                        }
-
-                        m_IsDirty = false;
-                    }
-
-                    // info
-                    std::vector<NodeInfo*> m_Items    = std::vector<NodeInfo*>();
-                    std::vector<int>       m_Pointers = std::vector<int>();
-                    bool                   m_IsDirty  = true;
-                } mutable m_Hierarchy;
-
-                mutable const Document*        m_Document;
+                mutable NodeHierarchy          m_Hierarchy;
                 mutable std::vector<NodeInfo*> m_Nodes;
 
-            public:
+                friend class  Node;
+                friend class  NodeIterator;
+                friend class  DocumentIterator;
+                friend struct NodeInfo;
 
-                NodeCostructor(const Document* _Document) : m_Document(_Document){}
-
-                ~NodeCostructor(){}
-
-                inline NodeInfo* append_node(const char* _Name, const char* _Value, NodeInfo* _Parent = nullptr)
-                {
-                    NodeInfo* node   = m_NodeAllocator.PolymorphicAllocator.allocate(1);
-                    node->Name       = m_StringAllocator.copy(_Name);
-                    node->Value      = m_StringAllocator.copy(_Value);
-                    node->Self       = m_Nodes.size();
-                    node->Parent     = _Parent;
-                    node->Document   = m_Document;
-                    node->Attribute = false;
-                    
-                    m_Nodes.push_back(node);
-                    m_Hierarchy.m_IsDirty = true;
-
-                    return node;
-                }
-
-                Hierarchy& hierarchy() const
+                NodeHierarchy& hierarchy() const
                 {
                     if(m_Hierarchy.m_IsDirty) 
                         m_Hierarchy.build(m_Nodes);
@@ -173,126 +221,28 @@ namespace Frenchie
                     return m_Hierarchy;
                 }
 
-                NodeInfo* first_child() const
-                {
-                    return m_Nodes[0];
-                }
-
-                bool empty() const
-                {
-                    return m_Nodes.empty();
-                }
-
-                std::vector<NodeInfo*> singletons() const
-                {
-                    std::vector<NodeInfo*> singletons{};
-
-                    for(auto&& node : m_Nodes)
-                    {
-                        if(node->Parent == nullptr) 
-                            singletons.push_back(node);
-                    }
-
-                    return singletons;
-                }
-
-                void reset()
-                {
-                    m_Nodes.clear();
-                    m_NodeAllocator.MonotonicBufferResource.release();
-                    m_StringAllocator.MonotonicBufferResource.release();
-                    m_Hierarchy.m_IsDirty = true;
-                }
-            };
-
-            class Iterator final
-            {
-            public:
-                Iterator(const Node& _Node, int _Index);
-                ~Iterator();
-
-                // access
-                Node operator*() const;
-                const NodeInfo* operator->() const;
-                
-                // increments
-                Iterator& operator++();
-                Iterator& operator--();
-                Iterator  operator++(int);
-                Iterator  operator--(int);
-
-                // comparison
-                friend bool operator==(const Iterator& _First, const Iterator& _Second)
-                { 
-                    return _First.m_Index == _Second.m_Index; 
-                }
-
-                friend bool operator!=(const Iterator& _First, const Iterator& _Second)
-                { 
-                    return _First.m_Index != _Second.m_Index; 
-                }
-
-                // arithmetics
-                static int distance(const Iterator& _First, const Iterator& _Last);
-
-            protected:
-                const Document* m_Document;
-                int             m_Index;
-            };
-
-            class Node
-            {
-                inline static struct EmptyNode
-                {
-                    char Name [1] = {'\0'};
-                    char Value[1] = {'\0'};
-                } m_EmptyNode;
-
-            public:
-                Node(NodeInfo* _Info = nullptr);
-                ~Node() = default;
-                
-                bool valid() const;
-
-                const char* name() const;
-                const char* value() const;
-
-                const Iterator begin() const;
-                const Iterator end() const;
-
-                Node append_node(const char* _Name, const char* _Value);
-
-                template<typename T>
-                Node append_value_node(const char* _Name, const T& _Value, const Node& _Parent = Node())
-                {
-                    if(!valid()) 
-                        return Node();
-
-                    return Node(m_Info->Document->append_value_node<T>(_Name, _Value, *this));
-                }
-
-                NodeInfo* m_Info = nullptr;
-            };
-
-            class Document
-            {
             public:
 
                 Document(){}
                 ~Document() = default;
 
-                Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node()) const
-                {
-                    return Node(m_NodeConstructor.append_node(_Name, _Value, _Parent.m_Info));
-                }
+                Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node(), const bool& _Attribute = false) const;
 
-                template<typename T>
-                Node append_value_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
+                template<typename T> 
+                Node append_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
 
-                Node first_node() const
-                {
-                    return !m_NodeConstructor.empty() ? Node(m_NodeConstructor.first_child()) : Node();
-                }
+                // TODO: implement this API
+                // void remove_node(std::function<bool(const Node& _Node)> _Predicate);
+                // void remove_node(const char* _Name);
+                // void find_node(std::function<bool(const Node& _Node)> _Predicate);
+                // void find_node(const char* _Name);
+                // void find_attribute(const char* _Name);
+
+                DocumentIterator begin() const;
+                DocumentIterator end() const;
+
+                bool empty() const;
+                void reset(); // TODO: refactor this function when 'remove node' is implemented
 
                 template<typename _Format>
                 bool read(const std::filesystem::path& _Path)
@@ -305,8 +255,6 @@ namespace Frenchie
                 {
                     return _Format::write(this, _Path);
                 }
-
-                mutable NodeCostructor m_NodeConstructor = NodeCostructor(this);
             };
 
             template<typename _Format>
