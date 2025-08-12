@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <stdlib.h>
 #include <algorithm>
+#include <iostream>
 
 namespace Frenchie
 {
@@ -56,7 +57,7 @@ namespace Frenchie
                 if(Head + amount > Size) 
                     return nullptr; // out-of memory
                 
-                char* buffer         = Memory + Head + amount;
+                char* buffer         = Memory + Head + sizeof(AllocationInfo);
                 AllocationInfo* info = reinterpret_cast<AllocationInfo*>(buffer - sizeof(AllocationInfo));
                 info->Chunk          = reinterpret_cast<uintptr_t>(this);
                 info->Amount         = amount;
@@ -90,12 +91,14 @@ namespace Frenchie
             }
         };
 
-        template<typename Type, size_t ChunkSize>
+        template<typename Type>
         class MemoryChunkAllocator final
         {
         public:
-            MemoryChunkAllocator() : 
-                m_Head(new MemoryChunk(sizeof(Type), ChunkSize)), m_Tail(m_Head){}
+            MemoryChunkAllocator(size_t _ChunkSize) : 
+                m_ChunkSize(std::max<size_t>(_ChunkSize, 1024)), 
+                m_Head(new MemoryChunk(sizeof(Type), m_ChunkSize)), 
+                m_Tail(m_Head){}
 
             ~MemoryChunkAllocator()
             {
@@ -109,7 +112,9 @@ namespace Frenchie
                 if(buffer != nullptr) 
                     return reinterpret_cast<Type*>(buffer);
 
-                MemoryChunk* chunk  = new MemoryChunk(sizeof(Type), ChunkSize);
+                m_ChunkSize = std::max<size_t>(m_ChunkSize, _Size);
+
+                MemoryChunk* chunk  = new MemoryChunk(sizeof(Type), m_ChunkSize);
                 chunk->Next = nullptr;
                 chunk->Prev = m_Head;
 
@@ -158,20 +163,36 @@ namespace Frenchie
 
             void release()
             {
+                if(m_Tail->Next == nullptr) 
+                    return;
+
                 // remove all chunks
+                size_t count = 0;
+                size_t totalMemory = 0;
+
                 auto next = m_Tail;
 
                 while (next)
                 {
                     auto current = next;
+
+                    count++;
+                    totalMemory += current->Size;
+
                     next = next->Next;
                     delete current;
                 }
+
+                std::cout << "removed chunks number " << count << "\n";
+                std::cout << "maximum chunk size " << m_ChunkSize << "\n";
+                std::cout << "total memory consumption " << (totalMemory / 1000) << " kB \n";
             }
 
         private:
-            MemoryChunk* m_Head = nullptr;
-            MemoryChunk* m_Tail = nullptr;
+            
+            size_t       m_ChunkSize = 1024;
+            MemoryChunk* m_Head      = nullptr;
+            MemoryChunk* m_Tail      = nullptr;
         };
     }
 }
