@@ -52,7 +52,7 @@ namespace Frenchie
                 BOOL,
                 NULLPTR,
                 ARRAY,
-                XML_ATTRIBUTE
+                ATTRIBUTE
             };
 
             struct NodeInfo final
