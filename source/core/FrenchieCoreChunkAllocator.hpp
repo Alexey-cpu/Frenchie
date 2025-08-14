@@ -167,25 +167,59 @@ namespace Frenchie
                     return;
 
                 // remove all chunks
-                size_t count = 0;
-                size_t totalMemory = 0;
-
                 auto next = m_Tail;
 
                 while (next)
                 {
                     auto current = next;
-
-                    count++;
-                    totalMemory += current->Size;
-
                     next = next->Next;
                     delete current;
                 }
+            }
 
-                std::cout << "removed chunks number " << count << "\n";
-                std::cout << "maximum chunk size " << m_ChunkSize << "\n";
-                std::cout << "total memory consumption " << (totalMemory / 1000) << " kB \n";
+            size_t get_total_memory_size() const
+            {
+                size_t freeMemory = 0;
+
+                auto next = m_Tail;
+
+                while (next)
+                {
+                    freeMemory  += next->Size;
+                    next = next->Next;
+                }
+
+                return freeMemory;
+            }
+
+            size_t get_free_memory_amount() const
+            {
+                size_t freeMemory = 0;
+
+                auto next = m_Tail;
+
+                while (next)
+                {
+                    freeMemory  += next->Free;
+                    next = next->Next;
+                }
+
+                return freeMemory;
+            }
+
+            size_t get_busy_memory_amount() const
+            {
+                size_t freeMemory = 0;
+
+                auto next = m_Tail;
+
+                while (next)
+                {
+                    freeMemory += next->Head;
+                    next = next->Next;
+                }
+
+                return freeMemory;
             }
 
         private:

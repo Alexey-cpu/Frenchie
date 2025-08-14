@@ -234,6 +234,27 @@ Node Node::append_node(const char* _Name, const char* _Value, const bool& _Attri
     return Node(m_Info->Document->append_node(_Name, _Value, *this, _Attribute));
 }
 
+void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate)
+{
+    if(is_valid())
+        m_Info->Document->remove_node(_Predicate, *this);
+}
+
+void Node::remove_node(const char* _Name)
+{
+    if(is_valid())
+        m_Info->Document->remove_node(_Name);
+}
+
+Node Node::find_node(std::function<bool(const Node& _Node)> _Predicate)
+{
+    return is_valid() ? m_Info->Document->find_node(_Predicate, *this) : Node();
+}
+
+Node Node::find_node(const char* _Name)
+{
+    return is_valid() ? m_Info->Document->find_node(_Name, *this) : Node(); 
+}
 
 // Document
 Node Document::append_node(const char* _Name, const char* _Value, const Node& _Parent, const bool& _Attribute) const
@@ -250,6 +271,106 @@ Node Document::append_node(const char* _Name, const char* _Value, const Node& _P
     m_Hierarchy.m_IsDirty = true;
 
     return Node(node);
+}
+
+void Document::remove_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent) const
+{
+    if(_Predicate == nullptr) 
+        return;
+
+    Node toBeRemoved;
+
+    if(!_Parent.is_valid())
+    {
+        for(auto&& child : *this)
+        {
+            if(_Predicate(child)) 
+                toBeRemoved = child;
+        }
+    }
+    else
+    {
+        for(auto&& child : _Parent)
+        {
+            if(_Predicate(child)) 
+                toBeRemoved = child;
+        }
+    }
+
+    if(!toBeRemoved.is_valid()) 
+        return;
+
+    // TODO: this must be a recursive !!!
+    Helpers::Queue<Node> queue;
+    queue.push(toBeRemoved);
+
+    size_t minIndex = toBeRemoved.m_Info->Self;
+    size_t maxIndex = toBeRemoved.m_Info->Self;
+
+    while (!queue.empty())
+    {
+        auto data = queue.front();
+        queue.pop();
+
+        maxIndex = std::max(maxIndex, data.m_Info->Self);
+
+        for(auto&& child : data)
+            queue.push(child);
+
+        // deallocate node
+        m_StringAllocator.PolymorphicAllocator.deallocate(data.m_Info->Name);
+        m_StringAllocator.PolymorphicAllocator.deallocate(data.m_Info->Value);
+        m_NodeAllocator.PolymorphicAllocator.deallocate(data.m_Info);
+    }
+
+    // erase a range of nodes from list
+    m_Nodes.erase(
+        m_Nodes.begin() + std::max<int>((int)minIndex - 1, 0), 
+        m_Nodes.begin() + std::min<int>((int)maxIndex + 1, (int)m_Nodes.size() - 1));
+
+    // make hierarchy dirty
+    m_Hierarchy.m_IsDirty = true;
+
+    // renumber nodes
+    for(size_t i = 0; i < m_Nodes.size(); i++) 
+        m_Nodes[i]->Self = i;
+}
+
+void Document::remove_node(const char* _Name, const Node& _Parent) const
+{
+    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.name(), _Name) == 0;}, _Parent);
+}
+
+Node Document::find_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent) const
+{
+    if(_Predicate == nullptr) 
+        return Node();
+
+    Node found;
+
+    if(!_Parent.is_valid())
+    {
+        for(auto&& child : *this)
+        {
+            if(_Predicate(child)) 
+                found = child;
+        }
+    }
+    else
+    {
+        for(auto&& child : _Parent)
+        {
+            if(_Predicate(child)) 
+                found = child;
+        }
+    }
+
+    return found;
+}
+
+Node Document::find_node(const char* _Name, const Node& _Parent) const
+{
+    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.name(), _Name) == 0;}, _Parent);
 }
 
 DocumentIterator Document::begin() const
@@ -270,8 +391,8 @@ bool Document::empty() const
 void Document::reset()
 {
     m_Nodes.clear();
-    m_NodeAllocator.MonotonicBufferResource.release();
-    m_StringAllocator.MonotonicBufferResource.release();
+    m_NodeAllocator.PolymorphicAllocator.release();
+    m_StringAllocator.PolymorphicAllocator.release();
     m_Hierarchy.m_IsDirty = true;
 }
 

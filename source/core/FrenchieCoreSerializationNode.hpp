@@ -5,6 +5,8 @@
 #include <FrenchieCoreNonCopyable.hpp>
 #include <FrenchieCoreHelpers.hpp>
 
+#include <FrenchieCoreChunkAllocator.hpp>
+
 // PUGIXML
 #include "pugixml.hpp"
 
@@ -159,10 +161,7 @@ namespace Frenchie
                 const NodeIterator begin() const;
                 const NodeIterator end() const;
 
-                Node append_node(
-                    const char* _Name, 
-                    const char* _Value, 
-                    const bool& _Attribute = false);
+                Node append_node(const char* _Name, const char* _Value, const bool& _Attribute = false);
 
                 template<typename T>
                 Node append_node(const char* _Name, const T& _Value)
@@ -172,16 +171,41 @@ namespace Frenchie
 
                     return Node(m_Info->Document->append_node<T>(_Name, _Value, *this));
                 }
+
+                void remove_node(std::function<bool(const Node& _Node)> _Predicate);
+                void remove_node(const char* _Name);
+                Node find_node(std::function<bool(const Node& _Node)> _Predicate);
+                Node find_node(const char* _Name);
             };
 
             class Document : public NonCopyable
             {
+                template<typename T>
+                class Allocator
+                {
+                public:
+                    MemoryChunkAllocator<T> ChunkAllocator{4096};
+
+                    T* allocate(const size_t _Count)
+                    {
+                        return ChunkAllocator.allocate(_Count);
+                    }
+
+                    void deallocate(T* _Pointer)
+                    {
+                        ChunkAllocator.deallocate(_Pointer);
+                    }
+
+                    void release()
+                    {
+                        ChunkAllocator.release();
+                    }
+                };
+
                 class StringAllocator
                 {
                 public:
-                    std::array<std::byte, 4096>           Buffer;
-                    std::pmr::monotonic_buffer_resource   MonotonicBufferResource{Buffer.data(), Buffer.size()};
-                    std::pmr::polymorphic_allocator<char> PolymorphicAllocator{&MonotonicBufferResource};
+                    Allocator<char> PolymorphicAllocator;
 
                     inline char* copy(const char* _Source)
                     {
@@ -197,12 +221,12 @@ namespace Frenchie
                     }
                 } mutable m_StringAllocator;
 
+            public:
+
                 class NodeAllocator
                 {
-                    public:
-                    std::array<std::byte, 4096>               Buffer;
-                    std::pmr::monotonic_buffer_resource       MonotonicBufferResource{Buffer.data(), Buffer.size()};
-                    std::pmr::polymorphic_allocator<NodeInfo> PolymorphicAllocator{&MonotonicBufferResource};
+                public:
+                    Allocator<NodeInfo> PolymorphicAllocator;
                 } mutable m_NodeAllocator;
 
                 mutable NodeHierarchy          m_Hierarchy;
@@ -221,8 +245,6 @@ namespace Frenchie
                     return m_Hierarchy;
                 }
 
-            public:
-
                 Document(){}
                 ~Document() = default;
 
@@ -230,19 +252,23 @@ namespace Frenchie
 
                 template<typename T> 
                 Node append_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
-
-                // TODO: implement this API
-                // void remove_node(std::function<bool(const Node& _Node)> _Predicate);
-                // void remove_node(const char* _Name);
-                // void find_node(std::function<bool(const Node& _Node)> _Predicate);
-                // void find_node(const char* _Name);
-                // void find_attribute(const char* _Name);
+                
+                void remove_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent = Node()) const;
+                void remove_node(const char* _Name, const Node& _Parent = Node()) const;
+                Node find_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent = Node()) const;
+                Node find_node(const char* _Name, const Node& _Parent = Node()) const;
 
                 DocumentIterator begin() const;
                 DocumentIterator end() const;
 
                 bool empty() const;
-                void reset(); // TODO: refactor this function when 'remove node' is implemented
+                void reset();
+
+                size_t get_free_memory_amount() const
+                {
+                    return m_NodeAllocator.PolymorphicAllocator.ChunkAllocator.get_free_memory_amount() + 
+                           m_StringAllocator.PolymorphicAllocator.ChunkAllocator.get_free_memory_amount();
+                }
 
                 template<typename _Format>
                 bool read(const std::filesystem::path& _Path)
