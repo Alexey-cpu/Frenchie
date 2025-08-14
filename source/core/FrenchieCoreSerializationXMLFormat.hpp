@@ -84,7 +84,7 @@ namespace Frenchie
                                         (*it).name(), 
                                         (*it).value(), 
                                         data,
-                                        true
+                                        NodeValueType::XML_ATTRIBUTE
                                     );
                                 }
                             }
@@ -124,7 +124,7 @@ namespace Frenchie
 
                             for(auto&& child : data)
                             {
-                                if(child.is_attribute())
+                                if(child.type() == NodeValueType::XML_ATTRIBUTE)
                                 {
                                     node.append_attribute(child.name()).set_value(child.value());
                                 }

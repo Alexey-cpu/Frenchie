@@ -2,9 +2,46 @@
 
 #include <stack>
 #include <vector>
+#include <type_traits>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Serialization;
+
+namespace Frenchie
+{
+    namespace Core
+    {
+        namespace Helpers
+        {
+            template<typename __type>
+            bool is_number(const __type& _Value)
+            {
+                return std::is_same<decltype(_Value), short>::value           || 
+                    std::is_same<decltype(_Value), int>::value                ||
+                    std::is_same<decltype(_Value), long>::value               ||
+                    std::is_same<decltype(_Value), long long>::value          ||
+                    std::is_same<decltype(_Value), unsigned short>::value     ||
+                    std::is_same<decltype(_Value), unsigned int>::value       ||
+                    std::is_same<decltype(_Value), unsigned long>::value      ||
+                    std::is_same<decltype(_Value), unsigned long long>::value ||
+                    std::is_same<decltype(_Value), float>::value              ||
+                    std::is_same<decltype(_Value), double>::value;
+            }
+
+            template<typename __type>
+            bool is_bool(const __type& _Value)
+            {
+                return std::is_same<decltype(_Value), bool>::value;
+            }
+
+            template<typename __type>
+            bool is_null(const __type& _Value)
+            {
+                return std::is_same<decltype(_Value), nullptr_t>::value;
+            }
+        }
+    }
+}
 
 // NodeHierarchy
 void NodeHierarchy::build(const std::vector<NodeInfo*>& _Nodes)
@@ -189,9 +226,9 @@ bool Node::is_valid() const
     return m_Info != nullptr && m_Info->Document != nullptr;
 }
 
-bool Node::is_attribute() const
+size_t Node::type() const
 {
-    return m_Info != nullptr && m_Info->Attribute;
+    return m_Info != nullptr ? m_Info->Type : NodeValueType::OBJECT;
 }
 
 const char* Node::name() const
@@ -226,12 +263,12 @@ const NodeIterator Node::end() const
     return NodeIterator(*this, hierarchy.m_Pointers[m_Info->Self + 1]);
 }
 
-Node Node::append_node(const char* _Name, const char* _Value, const bool& _Attribute)
+Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Type)
 {
     if(!is_valid()) 
         return Node();
 
-    return Node(m_Info->Document->append_node(_Name, _Value, *this, _Attribute));
+    return Node(m_Info->Document->append_node(_Name, _Value, *this, _Type));
 }
 
 void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate)
@@ -257,7 +294,7 @@ Node Node::find_node(const char* _Name)
 }
 
 // Document
-Node Document::append_node(const char* _Name, const char* _Value, const Node& _Parent, const bool& _Attribute) const
+Node Document::append_node(const char* _Name, const char* _Value, const Node& _Parent, const size_t& _Type) const
 {
     NodeInfo* node   = m_NodeAllocator.PolymorphicAllocator.allocate(1);
     node->Name       = m_StringAllocator.copy(_Name);
@@ -265,7 +302,7 @@ Node Document::append_node(const char* _Name, const char* _Value, const Node& _P
     node->Self       = m_Nodes.size();
     node->Parent     = _Parent.m_Info;
     node->Document   = this;
-    node->Attribute  = _Attribute;
+    node->Type       = _Type;
     
     m_Nodes.push_back(node);
     m_Hierarchy.m_IsDirty = true;
@@ -399,13 +436,27 @@ void Document::reset()
 #define __support_scalar__(__type)\
 template<> Node Document::append_node(const char* _Name, const __type& _Value, const Node& _Parent) const\
 {\
-    return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info));\
+    if(Helpers::is_number(_Value))\
+    {\
+        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::NUMBER));\
+    }\
+    \
+    if(Helpers::is_bool(_Value))\
+    {\
+        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::BOOL));\
+    }\
+    \
+    if(Helpers::is_null(_Value))\
+    {\
+        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::NULLPTR));\
+    }\
+    return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::OBJECT));\
 }\
 
 #define __support_vector__(__type)\
 template<> Node Document::append_node(const char* _Name, const std::vector<__type>& _Values, const Node& _Parent) const\
 {\
-    auto container = Document::append_node(_Name, STRINGIFY(std::vector<__type>), _Parent);\
+    auto container = Document::append_node(_Name, STRINGIFY(std::vector<__type>), _Parent, NodeValueType::ARRAY);\
     for(auto&& value : _Values) append_node<__type>("item", value, container);\
     return container;\
 }\
@@ -413,7 +464,7 @@ template<> Node Document::append_node(const char* _Name, const std::vector<__typ
 #define __support_list__(__type)\
 template<> Node Document::append_node(const char* _Name, const std::list<__type>& _Values, const Node& _Parent) const\
 {\
-    auto container = Document::append_node(_Name, STRINGIFY(std::list<__type>), _Parent);\
+    auto container = Document::append_node(_Name, STRINGIFY(std::list<__type>), _Parent, NodeValueType::ARRAY);\
     for(auto&& value : _Values) append_node<__type>("item", value, container);\
     return container;\
 }\
@@ -421,7 +472,7 @@ template<> Node Document::append_node(const char* _Name, const std::list<__type>
 #define __support_set__(__type)\
 template<> Node Document::append_node(const char* _Name, const std::set<__type>& _Values, const Node& _Parent) const\
 {\
-    auto container = Document::append_node(_Name, STRINGIFY(std::set<__type>), _Parent);\
+    auto container = Document::append_node(_Name, STRINGIFY(std::set<__type>), _Parent, NodeValueType::ARRAY);\
     for(auto&& value : _Values) append_node<__type>("item", value, container);\
     return container;\
 }\
