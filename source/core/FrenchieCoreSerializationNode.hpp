@@ -44,6 +44,17 @@ namespace Frenchie
             class NodeIterator;
             class Node;
 
+            enum NodeValueType
+            {
+                OBJECT,
+                STRING,
+                NUMBER,
+                BOOL,
+                NULLPTR,
+                ARRAY,
+                XML_ATTRIBUTE
+            };
+
             struct NodeInfo final
             {
                 char*           Name      = nullptr;
@@ -51,7 +62,7 @@ namespace Frenchie
                 size_t          Self      = 0;
                 const NodeInfo* Parent    = nullptr;
                 const Document* Document  = nullptr;
-                bool            Attribute = false;
+                size_t          Type      = NodeValueType::OBJECT;
             };
 
             struct NodeHierarchy final
@@ -153,15 +164,15 @@ namespace Frenchie
                 ~Node() = default;
                 
                 bool is_valid() const;
-                bool is_attribute() const;
 
+                size_t type() const;
                 const char* name() const;
                 const char* value() const;
 
                 const NodeIterator begin() const;
                 const NodeIterator end() const;
 
-                Node append_node(const char* _Name, const char* _Value, const bool& _Attribute = false);
+                Node append_node(const char* _Name, const char* _Value, const size_t& _Type = NodeValueType::OBJECT);
 
                 template<typename T>
                 Node append_node(const char* _Name, const T& _Value)
@@ -248,7 +259,7 @@ namespace Frenchie
                 Document(){}
                 ~Document() = default;
 
-                Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node(), const bool& _Attribute = false) const;
+                Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node(), const size_t& _Type = NodeValueType::OBJECT)const;
 
                 template<typename T> 
                 Node append_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
