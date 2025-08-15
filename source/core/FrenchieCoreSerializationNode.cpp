@@ -232,19 +232,31 @@ bool Node::has_value() const
     return m_Info != nullptr && std::strlen(m_Info->Value) > 0;
 }
 
-size_t Node::type() const
+size_t Node::get_type() const
 {
     return m_Info != nullptr ? m_Info->Type : NodeValueType::OBJECT;
 }
 
-const char* Node::name() const
+const char* Node::get_name() const
 {
     return m_Info != nullptr ? m_Info->Name : Node::m_EmptyNode.Name;
 }
 
-const char* Node::value() const
+const char* Node::get_value() const
 {
     return m_Info != nullptr ? m_Info->Value : Node::m_EmptyNode.Value;
+}
+
+void Node::set_name(const char* _Value)
+{
+    if(is_valid())
+        m_Info->Name = m_Info->Document->m_StringAllocator.copy(_Value, m_Info->Name);
+}
+
+void Node::set_value(const char* _Value)
+{
+    if(is_valid()) 
+        m_Info->Value = m_Info->Document->m_StringAllocator.copy(_Value, m_Info->Value);
 }
 
 const NodeIterator Node::begin() const
@@ -353,7 +365,7 @@ void Document::remove_node(std::function<bool(const Node& _Node)> _Predicate, co
 
     std::set<size_t> nodesToRemove;
 
-    while (!queue.empty())
+    while(!queue.empty())
     {
         auto data = queue.front();
         queue.pop();
@@ -393,7 +405,7 @@ void Document::remove_node(std::function<bool(const Node& _Node)> _Predicate, co
 
 void Document::remove_node(const char* _Name, const Node& _Parent) const
 {
-    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.name(), _Name) == 0;}, _Parent);
+    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;}, _Parent);
 }
 
 Node Document::find_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent) const
@@ -425,7 +437,7 @@ Node Document::find_node(std::function<bool(const Node& _Node)> _Predicate, cons
 
 Node Document::find_node(const char* _Name, const Node& _Parent) const
 {
-    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.name(), _Name) == 0;}, _Parent);
+    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;}, _Parent);
 }
 
 DocumentIterator Document::begin() const

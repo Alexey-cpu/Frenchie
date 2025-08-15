@@ -117,14 +117,14 @@ namespace Frenchie
                             auto xml  = queue.front().document;
                             queue.pop();
 
-                            auto node = xml.append_child(data.name());
-                            node.text().set(data.value());
+                            auto node = xml.append_child(data.get_name());
+                            node.text().set(data.get_value());
 
                             for(auto&& child : data)
                             {
-                                if(child.type() == NodeValueType::ATTRIBUTE)
+                                if(child.get_type() == NodeValueType::ATTRIBUTE)
                                 {
-                                    node.append_attribute(child.name()).set_value(child.value());
+                                    node.append_attribute(child.get_name()).set_value(child.get_value());
                                 }
                                 else
                                 {

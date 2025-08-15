@@ -34,7 +34,7 @@ namespace Frenchie
                             auto top = stack.top();
                             stack.pop();
 
-                            std::cout << top.Padding <<  top.Node.name() << "\t" <<  top.Node.value() << "\n";
+                            std::cout << top.Padding <<  top.Node.get_name() << "\t" <<  top.Node.get_value() << "\n";
 
                             for (auto&& child : top.Node) 
                                 stack.push({child, top.Padding + "\t"});
@@ -53,9 +53,13 @@ namespace Frenchie
                         const int M    = 3;
                         auto      tree = document.append_node("Tree");
 
-                        document.append_node("Child_1");
-                        document.append_node("Child_2");
-                        document.append_node("Child_3");
+                        auto child_1 = document.append_node("Child_1");
+                        auto child_2 = document.append_node("Child_2");
+                        auto child_3 = document.append_node("Child_3");
+
+                        child_1.set_value("Value_1");
+                        child_2.set_value("Value_2");
+                        child_3.set_value("Value_3");
 
                         std::cout << "------------------------------------------------------------------------------\n";
                         std::cout << "before removal: \n";
@@ -63,7 +67,9 @@ namespace Frenchie
                         auto next = tree;
 
                         for(int i = 0; i < N; i++)
-                        {
+                        {   
+                            next = tree;
+
                             for(int j = 0; j < M; j++) 
                                 next = next.append_node(fmt::format("Node_{}_{}", i, j).c_str(), "");
                         }
@@ -74,9 +80,17 @@ namespace Frenchie
                         std::cout << "after removal: \n";
                         std::cout << "------------------------------------------------------------------------------\n";
                         document.remove_node("Tree");
+
+                        child_1.set_value("v_1");
+                        child_2.set_value("v_2");
+                        child_3.set_value("v_3");
+
+                        child_1.set_name("c_1");
+                        child_2.set_name("c_2");
+                        child_3.set_name("c_3");
+
                         std::cout << "------------------------------------------------------------------------------\n";
 
-                        //for(auto node : document.m_Nodes) std::cout << node->Name << "\n";
                         print_document(document);
                     }
                 };
