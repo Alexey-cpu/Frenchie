@@ -166,7 +166,7 @@ namespace Frenchie
                 const NodeIterator end() const;
                 bool empty() const;
 
-                Node append_node(const char* _Name, const char* _Value, const size_t& _Type = NodeValueType::OBJECT);
+                Node append_node(const char* _Name, const char* _Value = "", const size_t& _Type = NodeValueType::OBJECT);
 
                 template<typename T>
                 Node append_node(const char* _Name, const T& _Value)
@@ -253,7 +253,7 @@ namespace Frenchie
                 Document(){}
                 ~Document() = default;
 
-                Node append_node(const char* _Name, const char* _Value, const Node& _Parent = Node(), const size_t& _Type = NodeValueType::OBJECT)const;
+                Node append_node(const char* _Name, const char* _Value = "", const Node& _Parent = Node(), const size_t& _Type = NodeValueType::OBJECT)const;
 
                 template<typename T> 
                 Node append_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
