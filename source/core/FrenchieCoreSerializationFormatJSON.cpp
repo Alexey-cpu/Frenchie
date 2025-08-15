@@ -26,7 +26,7 @@ namespace Frenchie
 
                 static rapidjson::Value write_value(const Node& _Node)
                 {
-                    switch ((NodeValueType)_Node.type())
+                    switch ((NodeValueType)_Node.get_type())
                     {
                         case NodeValueType::ATTRIBUTE:
                         {
@@ -37,14 +37,14 @@ namespace Frenchie
                         case NodeValueType::NUMBER: // write number
                         {
                             rapidjson::Value value(rapidjson::kNumberType);
-                            value.SetDouble(Helpers::from_string<double>(_Node.value()));
+                            value.SetDouble(Helpers::from_string<double>(_Node.get_value()));
                             return value;
                         }
                         break;
                     }
 
                     rapidjson::Value value(rapidjson::kStringType);
-                    value.SetString(_Node.value(), (int)strlen(_Node.value()));
+                    value.SetString(_Node.get_value(), (int)strlen(_Node.get_value()));
                     return value;
                 }
 
@@ -151,7 +151,7 @@ namespace Frenchie
                     for(auto&& singleton : *_Document)
                     {
                         rapidjson::Value name(rapidjson::kStringType);
-                        name.SetString(singleton.name(), (int)strlen(singleton.name()));
+                        name.SetString(singleton.get_name(), (int)strlen(singleton.get_name()));
                         root.AddMember(name, rapidjson::Value(rapidjson::kObjectType), doc.GetAllocator());
 
                         Helpers::Stack<Element> queue;
@@ -168,7 +168,7 @@ namespace Frenchie
                             queue.pop();
 
                             rapidjson::Value name(rapidjson::kStringType);
-                            name.SetString(data.name(), (int)strlen(data.name()));
+                            name.SetString(data.get_name(), (int)strlen(data.get_name()));
 
                             if(data.has_value())
                             {

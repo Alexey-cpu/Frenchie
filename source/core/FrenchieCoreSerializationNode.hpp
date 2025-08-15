@@ -57,12 +57,12 @@ namespace Frenchie
 
             struct NodeInfo final
             {
-                char*           Name      = nullptr;
-                char*           Value     = nullptr;
-                size_t          Self      = 0;
-                const NodeInfo* Parent    = nullptr;
-                const Document* Document  = nullptr;
-                size_t          Type      = NodeValueType::OBJECT;
+                char*           Name     = nullptr;
+                char*           Value    = nullptr;
+                size_t          Self     = 0;
+                const NodeInfo* Parent   = nullptr;
+                const Document* Document = nullptr;
+                size_t          Type     = NodeValueType::OBJECT;
             };
 
             struct NodeHierarchy final
@@ -155,12 +155,18 @@ namespace Frenchie
                 Node(NodeInfo* _Info = nullptr);
                 ~Node() = default;
                 
+                // checkers
                 bool is_valid() const;
                 bool has_value() const;
 
-                size_t type() const;
-                const char* name() const;
-                const char* value() const;
+                // getters
+                size_t get_type() const;
+                const char* get_name() const;
+                const char* get_value() const;
+
+                // setters
+                void set_name(const char* _Value);
+                void set_value(const char* _Value);
 
                 const NodeIterator begin() const;
                 const NodeIterator end() const;
@@ -212,9 +218,25 @@ namespace Frenchie
                 public:
                     Allocator<char> PolymorphicAllocator;
 
-                    inline char* copy(const char* _Source)
+                    inline char* copy(const char* _Source, char* _Destination)
                     {
                         size_t length  = strlen(_Source);
+
+                        if(length <= strlen(_Destination))
+                        {
+                            std::memcpy(_Destination, _Source, length);
+                            return _Destination;
+                        }
+                        else
+                        {
+                            PolymorphicAllocator.deallocate(_Destination);
+                            return copy(_Source);
+                        }
+                    }
+
+                    inline char* copy(const char* _Source)
+                    {
+                        size_t length  = _Source != nullptr ? strlen(_Source) : 0;
                         char*  buffer  = PolymorphicAllocator.allocate(length + 1);
                         buffer[length] = '\0';
 
