@@ -46,13 +46,13 @@ namespace Frenchie
 
             enum NodeValueType
             {
+                ATTRIBUTE,
+                NULLPTR,
                 OBJECT,
                 STRING,
                 NUMBER,
-                BOOL,
-                NULLPTR,
                 ARRAY,
-                ATTRIBUTE
+                BOOL
             };
 
             struct NodeInfo final
@@ -82,17 +82,14 @@ namespace Frenchie
                 NodeIterator(const Node& _Node, int _Index);
                 ~NodeIterator();
 
-                // access
                 Node operator*() const;
                 const NodeInfo* operator->() const;
                 
-                // increments
                 NodeIterator& operator++();
                 NodeIterator& operator--();
                 NodeIterator  operator++(int);
                 NodeIterator  operator--(int);
 
-                // comparison
                 friend bool operator==(const NodeIterator& _First, const NodeIterator& _Second)
                 { 
                     return _First.m_Index == _Second.m_Index; 
@@ -103,7 +100,6 @@ namespace Frenchie
                     return _First.m_Index != _Second.m_Index; 
                 }
 
-                // arithmetics
                 static int distance(const NodeIterator& _First, const NodeIterator& _Last);
 
             protected:
@@ -117,17 +113,14 @@ namespace Frenchie
                 DocumentIterator(const Document* _Document, int _Index);
                 ~DocumentIterator();
 
-                // access
                 Node operator*() const;
                 const NodeInfo* operator->() const;
                 
-                // increments
                 DocumentIterator& operator++();
                 DocumentIterator& operator--();
                 DocumentIterator  operator++(int);
                 DocumentIterator  operator--(int);
 
-                // comparison
                 friend bool operator==(const DocumentIterator& _First, const DocumentIterator& _Second)
                 { 
                     return _First.m_Index == _Second.m_Index; 
@@ -138,7 +131,6 @@ namespace Frenchie
                     return _First.m_Index != _Second.m_Index; 
                 }
 
-                // arithmetics
                 static int distance(const DocumentIterator& _First, const DocumentIterator& _Last);
 
             protected:
@@ -164,6 +156,7 @@ namespace Frenchie
                 ~Node() = default;
                 
                 bool is_valid() const;
+                bool has_value() const;
 
                 size_t type() const;
                 const char* name() const;
@@ -171,6 +164,7 @@ namespace Frenchie
 
                 const NodeIterator begin() const;
                 const NodeIterator end() const;
+                bool empty() const;
 
                 Node append_node(const char* _Name, const char* _Value, const size_t& _Type = NodeValueType::OBJECT);
 
@@ -281,32 +275,16 @@ namespace Frenchie
                            m_StringAllocator.PolymorphicAllocator.ChunkAllocator.get_free_memory_amount();
                 }
 
-                template<typename _Format>
+                template<typename Reader>
                 bool read(const std::filesystem::path& _Path)
                 {
-                    return _Format::read(this, _Path);
+                    return Reader::read(this, _Path);
                 }
 
-                template<typename _Format>
+                template<typename Writer>
                 bool write(const std::filesystem::path& _Path)
                 {
-                    return _Format::write(this, _Path);
-                }
-            };
-
-            template<typename _Format>
-            class Format
-            {
-            public:
-
-                static bool read(Document* _Document, const std::filesystem::path& _Path)
-                {
-                    return _Format::read(_Document, _Path);
-                }
-
-                static bool write(Document* _Document, const std::filesystem::path& _Path)
-                {
-                    return _Format::write(_Document, _Path);
+                    return Writer::write(this, _Path);
                 }
             };
         }

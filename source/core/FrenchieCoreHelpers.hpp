@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <codecvt>
 #include <filesystem>
 
 #define STRINGIFY(_VALUE) #_VALUE
@@ -27,6 +28,23 @@ namespace Frenchie
                 }
 
                 return extention;
+            }
+
+            inline FILE* open_file(std::string _Path, std::string _Mode)
+            {
+                auto to_wstring = [](const std::string _Value)->std::wstring
+                {
+                    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_Value);
+                };
+
+                FILE* file = std::fopen(_Path.c_str(), _Mode.c_str() );
+
+                #if defined(_WIN32) || defined(WIN32) // try to do something on Windows
+                    if(file == nullptr)
+                        file = _wfopen(&to_wstring(_Path)[0], &to_wstring(_Mode)[0] );
+                #endif
+
+                return file;
             }
 
             template<typename T, int S = 512>

@@ -8,17 +8,21 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            class XMLCompact
+            class XMLReader
             {
             public:
                 static bool read(Document* _Document, const std::filesystem::path& _Path);
+            };
+
+            class XMLCompactWriter
+            {
+            public:
                 static bool write(Document* _Document, const std::filesystem::path& _Path);
             };
 
-            class XMLBeautiful
+            class XMLBeautifulWriter
             {
             public:
-                static bool read(Document* _Document, const std::filesystem::path& _Path);
                 static bool write(Document* _Document, const std::filesystem::path& _Path);
             };
         }
