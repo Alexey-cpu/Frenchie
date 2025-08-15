@@ -2,6 +2,7 @@
 
 #include <stack>
 #include <vector>
+#include <set>
 #include <type_traits>
 
 using namespace Frenchie::Core;
@@ -347,33 +348,40 @@ void Document::remove_node(std::function<bool(const Node& _Node)> _Predicate, co
     if(!toBeRemoved.is_valid()) 
         return;
 
-    // TODO: this must be a recursive !!!
     Helpers::Queue<Node> queue;
     queue.push(toBeRemoved);
 
-    size_t minIndex = toBeRemoved.m_Info->Self;
-    size_t maxIndex = toBeRemoved.m_Info->Self;
+    std::set<size_t> nodesToRemove;
 
     while (!queue.empty())
     {
         auto data = queue.front();
         queue.pop();
 
-        maxIndex = std::max(maxIndex, data.m_Info->Self);
+        nodesToRemove.insert(data.m_Info->Self);
 
         for(auto&& child : data)
             queue.push(child);
-
-        // deallocate node
-        m_StringAllocator.PolymorphicAllocator.deallocate(data.m_Info->Name);
-        m_StringAllocator.PolymorphicAllocator.deallocate(data.m_Info->Value);
-        m_NodeAllocator.PolymorphicAllocator.deallocate(data.m_Info);
     }
 
     // erase a range of nodes from list
-    m_Nodes.erase(
-        m_Nodes.begin() + std::max<int>((int)minIndex - 1, 0), 
-        m_Nodes.begin() + std::min<int>((int)maxIndex + 1, (int)m_Nodes.size() - 1));
+    std::vector<NodeInfo*> nodesThatAreAlive;
+
+    for(size_t i = 0; i < m_Nodes.size(); i++)
+    {
+        if(nodesToRemove.find(m_Nodes[i]->Self) == nodesToRemove.end()) 
+        {
+            nodesThatAreAlive.push_back(m_Nodes[i]);
+        }
+        else
+        {
+            m_StringAllocator.PolymorphicAllocator.deallocate(m_Nodes[i]->Name);
+            m_StringAllocator.PolymorphicAllocator.deallocate(m_Nodes[i]->Value);
+            m_NodeAllocator.PolymorphicAllocator.deallocate(m_Nodes[i]);
+        }
+    }
+
+    m_Nodes = nodesThatAreAlive;
 
     // make hierarchy dirty
     m_Hierarchy.m_IsDirty = true;
