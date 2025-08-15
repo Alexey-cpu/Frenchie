@@ -103,6 +103,8 @@
         "__verbose_abort": "cpp",
         "execution": "cpp",
         "print": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "*.rh": "cpp",
+        "memory_resource": "cpp"
     }
 }

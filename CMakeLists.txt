@@ -11,13 +11,9 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-# SET( CMAKE_CXX_FLAGS_DEBUG  "")
-# SET( CMAKE_CXX_FLAGS_RELEASE  "")
-# SET(CMAKE_CXX_FLAGS  "-O3")
-
-# TODO: add different compiler configurations here
 # message("===================================================")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3")
+# set(CMAKE_CX_FLAGS "${CMAKE_CXX_FLAGS} /O3")
 # message(${CMAKE_CXX_FLAGS})
 # message("===================================================")
 
@@ -29,6 +25,7 @@ include("tools/fmt.cmake")
 include("tools/glfw.cmake")
 include("tools/glm.cmake")
 include("tools/spdlog.cmake")
+include("tools/rapidjson.cmake")
 
 add_subdirectory("tools/pugixml/")
 
@@ -76,7 +73,11 @@ target_include_directories(
     #IMGUI
     "tools/imgui/"
     "tools/imgui/backends/"
-    "tools/glad/include/")
+    "tools/glad/include/"
+    
+    #RAPIDJSON
+    "tools/rapidjson/include"
+    )
 
 #--------------------------------------------------------------
 # configure CPack
