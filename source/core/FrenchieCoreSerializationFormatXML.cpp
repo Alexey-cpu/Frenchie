@@ -1,4 +1,4 @@
-#include <FrenchieCoreSerializationXMLFormat.hpp>
+#include <FrenchieCoreSerializationFormatXML.hpp>
 
 namespace Frenchie
 {

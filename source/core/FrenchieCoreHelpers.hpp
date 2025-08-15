@@ -37,7 +37,7 @@ namespace Frenchie
                     return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_Value);
                 };
 
-                FILE* file = std::fopen(_Path.c_str(), _Mode.c_str() );
+                FILE* file = std::fopen(_Path.c_str(), _Mode.c_str());
 
                 #if defined(_WIN32) || defined(WIN32) // try to do something on Windows
                     if(file == nullptr)
