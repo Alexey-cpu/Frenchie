@@ -6,7 +6,6 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            template<bool Compact>
             class XML final
             {
             public:
@@ -94,6 +93,7 @@ namespace Frenchie
                     return true;
                 }
 
+                template<bool Compact>
                 static bool write(Document* _Document, const std::filesystem::path& _Path)
                 {
                     // check document pointer
@@ -147,22 +147,17 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Core::Helpers;
 using namespace Frenchie::Core::Serialization;
 
-bool XMLCompact::read(Document* _Document, const std::filesystem::path& _Path)
+bool XMLReader::read(Document* _Document, const std::filesystem::path& _Path)
 {
-    return XML<true>::read(_Document, _Path);
+    return XML::read(_Document, _Path);
 }
 
-bool XMLCompact::write(Document* _Document, const std::filesystem::path& _Path)
+bool XMLCompactWriter::write(Document* _Document, const std::filesystem::path& _Path)
 {
-    return XML<true>::write(_Document, _Path);
+    return XML::write<true>(_Document, _Path);
 }
 
-bool XMLBeautiful::read(Document* _Document, const std::filesystem::path& _Path)
+bool XMLBeautifulWriter::write(Document* _Document, const std::filesystem::path& _Path)
 {
-    return XML<true>::read(_Document, _Path);
-}
-
-bool XMLBeautiful::write(Document* _Document, const std::filesystem::path& _Path)
-{
-    return XML<true>::write(_Document, _Path);
+    return XML::write<false>(_Document, _Path);
 }

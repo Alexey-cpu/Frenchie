@@ -14,30 +14,30 @@ namespace Frenchie
         namespace Helpers
         {
             template<typename __type>
-            bool is_number(const __type& _Value)
+            bool is_number()
             {
-                return std::is_same<decltype(_Value), short>::value           || 
-                    std::is_same<decltype(_Value), int>::value                ||
-                    std::is_same<decltype(_Value), long>::value               ||
-                    std::is_same<decltype(_Value), long long>::value          ||
-                    std::is_same<decltype(_Value), unsigned short>::value     ||
-                    std::is_same<decltype(_Value), unsigned int>::value       ||
-                    std::is_same<decltype(_Value), unsigned long>::value      ||
-                    std::is_same<decltype(_Value), unsigned long long>::value ||
-                    std::is_same<decltype(_Value), float>::value              ||
-                    std::is_same<decltype(_Value), double>::value;
+                return std::is_same<__type, short>::value           || 
+                    std::is_same<__type, int>::value                ||
+                    std::is_same<__type, long>::value               ||
+                    std::is_same<__type, long long>::value          ||
+                    std::is_same<__type, unsigned short>::value     ||
+                    std::is_same<__type, unsigned int>::value       ||
+                    std::is_same<__type, unsigned long>::value      ||
+                    std::is_same<__type, unsigned long long>::value ||
+                    std::is_same<__type, float>::value              ||
+                    std::is_same<__type, double>::value;
             }
 
             template<typename __type>
-            bool is_bool(const __type& _Value)
+            bool is_bool()
             {
-                return std::is_same<decltype(_Value), bool>::value;
+                return std::is_same<__type, bool>::value;
             }
 
             template<typename __type>
-            bool is_null(const __type& _Value)
+            bool is_null()
             {
-                return std::is_same<decltype(_Value), nullptr_t>::value;
+                return std::is_same<__type, nullptr_t>::value;
             }
         }
     }
@@ -226,6 +226,11 @@ bool Node::is_valid() const
     return m_Info != nullptr && m_Info->Document != nullptr;
 }
 
+bool Node::has_value() const
+{
+    return m_Info != nullptr && std::strlen(m_Info->Value) > 0;
+}
+
 size_t Node::type() const
 {
     return m_Info != nullptr ? m_Info->Type : NodeValueType::OBJECT;
@@ -261,6 +266,11 @@ const NodeIterator Node::end() const
         m_Info->Document->hierarchy();
 
     return NodeIterator(*this, hierarchy.m_Pointers[m_Info->Self + 1]);
+}
+
+bool Node::empty() const
+{
+    return NodeIterator::distance(begin(), end()) <= 0;
 }
 
 Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Type)
@@ -436,17 +446,17 @@ void Document::reset()
 #define __support_scalar__(__type)\
 template<> Node Document::append_node(const char* _Name, const __type& _Value, const Node& _Parent) const\
 {\
-    if(Helpers::is_number(_Value))\
+    if(Helpers::is_number<__type>())\
     {\
         return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::NUMBER));\
     }\
     \
-    if(Helpers::is_bool(_Value))\
+    else if(Helpers::is_bool<__type>())\
     {\
         return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::BOOL));\
     }\
     \
-    if(Helpers::is_null(_Value))\
+    else if(Helpers::is_null<__type>())\
     {\
         return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::NULLPTR));\
     }\
@@ -486,6 +496,7 @@ __support_scalar__(long)
 __support_scalar__(unsigned long)
 __support_scalar__(long long)
 __support_scalar__(unsigned long long)
+__support_scalar__(nullptr_t)
 
 __support_vector__(bool)
 __support_vector__(float)
@@ -496,6 +507,7 @@ __support_vector__(long)
 __support_vector__(unsigned long)
 __support_vector__(long long)
 __support_vector__(unsigned long long)
+__support_vector__(nullptr_t)
 
 __support_list__(bool)
 __support_list__(float)
@@ -506,6 +518,7 @@ __support_list__(long)
 __support_list__(unsigned long)
 __support_list__(long long)
 __support_list__(unsigned long long)
+__support_list__(nullptr_t)
 
 __support_set__(bool)
 __support_set__(float)
@@ -516,6 +529,9 @@ __support_set__(long)
 __support_set__(unsigned long)
 __support_set__(long long)
 __support_set__(unsigned long long)
+__support_set__(nullptr_t)
 
 #undef __support_scalar__
 #undef __support_vector__
+#undef __support_list__
+#undef __support_set__
