@@ -45,10 +45,15 @@ namespace Frenchie
                 class APITests
                 {
                 public:
+
+                    APITests(const std::filesystem::path& _Path) : 
+                        m_Path(_Path){}
+
                     void run()
                     {
                         Document document;
 
+                        // test that API works
                         const int N    = 3;
                         const int M    = 3;
                         auto      tree = document.append_node("Tree");
@@ -56,10 +61,14 @@ namespace Frenchie
                         auto child_1 = document.append_node("Child_1");
                         auto child_2 = document.append_node("Child_2");
                         auto child_3 = document.append_node("Child_3");
+                        auto child_4 = document.append_node("Child_4");
+                        auto child_5 = document.append_node("Child_5");
 
                         child_1.set_value("Value_1");
                         child_2.set_value("Value_2");
                         child_3.set_value("Value_3");
+                        child_4.set_value("Value_4");
+                        child_5.set_value("Value_5");
 
                         std::cout << "------------------------------------------------------------------------------\n";
                         std::cout << "before modifying: \n";
@@ -80,74 +89,20 @@ namespace Frenchie
                         std::cout << "after modifying: \n";
                         std::cout << "------------------------------------------------------------------------------\n";
                         document.remove_node("Tree");
+                        document.remove_node("Child_1");
+                        document.remove_node("Child_2");
+                        document.remove_node("Child_5");
 
                         child_1.set_value("v_1");
                         child_2.set_value("v_2");
                         child_3.set_value("v_3");
-
-                        child_1.set_name("c_1");
-                        child_2.set_name("c_2");
-                        child_3.set_name("c_3");
+                        child_4.set_value("SomeVeryLongLongLongLongLongLongLongString");
 
                         print_document(document);
                     }
 
-                    void run1()
-                    {
-                        Document document;
-
-                        auto tree = document.append_node("Tree");
-                        
-                        auto child_1 = tree.append_node("Child_1");
-                        child_1.append_node("Child_1_1");
-
-                        auto child_2 = tree.append_node("Child_2");
-                        child_2.append_node("Child_2_1");
-
-                        auto child_3 = tree.append_node("Child_3");
-                        child_3.append_node("Child_3_1");
-
-                        auto print_children = [](const Node& _Node)
-                        {
-                            std::cout << "---------------------------------------------------------------\n";
-                            std::cout << _Node.get_name() << " children: " << "\n";
-                            std::cout << "---------------------------------------------------------------\n";
-
-                            for(auto&& child : _Node)  std::cout << child.get_name() << "\n";
-
-                            // auto head = _Node.m_Info->FirstChild;
-
-                            // while(head)
-                            // {
-                            //     std::cout << head->Name << "\n";
-
-                            //     head = head->NextSibling;
-                            // }
-                        };
-                        
-                        // print_children(tree);
-                        // print_children(child_1);
-                        // print_children(child_2);
-                        // print_children(child_3);
-
-                        //print_children(document);
-
-                        print_document(document);
-                    }
-                };
-
-                class SerializationTests final
-                {
-                public:
-                    SerializationTests(const std::filesystem::path& _Path) : m_Path(_Path){}
-                    ~SerializationTests(){}
-
-                    void run()
-                    {
-                        //TODO: add tests here...
-                    }
-
-                    std::filesystem::path m_Path;
+                protected:
+                    std::filesystem::path m_Path = std::filesystem::path();
                 };
             }
         }
