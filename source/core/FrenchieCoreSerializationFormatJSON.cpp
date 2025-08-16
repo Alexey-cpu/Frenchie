@@ -26,15 +26,15 @@ namespace Frenchie
 
                 static rapidjson::Value write_value(const Node& _Node)
                 {
-                    switch ((NodeValueType)_Node.get_type())
+                    switch ((NodeType)_Node.get_type())
                     {
-                        case NodeValueType::ATTRIBUTE:
+                        case NodeType::ATTRIBUTE:
                         {
 
                         }
                         break;
 
-                        case NodeValueType::NUMBER: // write number
+                        case NodeType::NUMBER: // write number
                         {
                             rapidjson::Value value(rapidjson::kNumberType);
                             value.SetDouble(Helpers::from_string<double>(_Node.get_value()));
@@ -59,32 +59,44 @@ namespace Frenchie
                         return false;
 
                     // open JSON file
-                    FILE* fp = Helpers::open_file(_Path.string(), "rb");
+                    FILE* file = Helpers::open_file(_Path.string(), "rb");
 
                     // check that file has been opened
-                    if(fp == nullptr) 
+                    if(file == nullptr) 
                         return false;
 
-                    // read file
-                    char readBuffer[65536];
-                    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
-                    
-                    // parse file
                     rapidjson::Document document;
-                    document.ParseStream(is);
-                    fclose(fp);
 
-                    // parse in depth
+                    // try to read file
+                    try
+                    {
+                        // read file
+                        char readBuffer[65536];                    
+                        rapidjson::FileReadStream fileStream(file, readBuffer, sizeof(readBuffer));
+
+                        // parse file
+                        document.ParseStream(fileStream);
+                        fclose(file);
+                    }
+                    catch(...)
+                    {
+                        return false;
+                    }
+
                     if(!document.IsObject())
                     {
                         // TODO: write here another logic
                         return true;
                     }
 
+                    // reset document
+                    _Document->reset();
+
+                    // parse in depth
                     for(auto it = document.MemberBegin(); it != document.MemberEnd(); it++)
                     {
                         Helpers::Stack<Element> stack;
-                        stack.push({it, nullptr});
+                        stack.push({it, *_Document});
 
                         while(!stack.empty())
                         {
@@ -97,27 +109,27 @@ namespace Frenchie
                             // parse value
                             if(value.IsNull())
                             {
-                                _Document->append_node<nullptr_t>(name.GetString(), nullptr, top.data);
+                                top.data.append_node<nullptr_t>(name.GetString(), nullptr);
                             }
                             if(value.IsBool())
                             {
-                                _Document->append_node<bool>(name.GetString(), value.GetBool(), top.data);
+                                top.data.append_node<bool>(name.GetString(), value.GetBool());
                             }
                             else if(value.IsNumber())
                             {
-                                _Document->append_node<double>(name.GetString(), value.GetDouble(), top.data);
+                                top.data.append_node<double>(name.GetString(), value.GetDouble());
                             }
                             else if(value.IsArray())
                             {
                             }
                             else if(value.IsString())
                             {
-                                _Document->append_node(name.GetString(), value.GetString(), top.data, NodeValueType::STRING);
+                                top.data.append_node(name.GetString(), value.GetString(), NodeType::STRING);
                             }
                             else if(value.IsObject())
                             {
                                 auto object = 
-                                    _Document->append_node(name.GetString(), "", top.data, NodeValueType::OBJECT);
+                                    top.data.append_node(name.GetString(), "", NodeType::OBJECT);
 
                                 for (rapidjson::Value::MemberIterator it = value.GetObject().MemberBegin();
                                     it != value.GetObject().MemberEnd(); ++it)

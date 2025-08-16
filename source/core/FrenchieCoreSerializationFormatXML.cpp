@@ -53,7 +53,7 @@ namespace Frenchie
 
                     // parse in depth
                     Helpers::Stack<Element> stack;
-                    stack.push({document, nullptr});
+                    stack.push({document, *_Document});
 
                     while(!stack.empty())
                     {
@@ -66,10 +66,9 @@ namespace Frenchie
                                 continue;
 
                             // append node
-                            auto data = _Document->append_node(
+                            auto data = top.data.append_node(
                                 element.name(), 
-                                element.text().get(), 
-                                top.data
+                                element.text().get()
                             );
 
                             // read node attributes
@@ -77,11 +76,10 @@ namespace Frenchie
                             {
                                 for(auto it = element.attributes_begin(); it != element.attributes_end(); it++)
                                 {
-                                    _Document->append_node(
+                                    data.append_node(
                                         (*it).name(), 
-                                        (*it).value(), 
-                                        data,
-                                        NodeValueType::ATTRIBUTE
+                                        (*it).value(),
+                                        NodeType::ATTRIBUTE
                                     );
                                 }
                             }
@@ -122,7 +120,7 @@ namespace Frenchie
 
                             for(auto&& child : data)
                             {
-                                if(child.get_type() == NodeValueType::ATTRIBUTE)
+                                if(child.get_type() == NodeType::ATTRIBUTE)
                                 {
                                     node.append_attribute(child.get_name()).set_value(child.get_value());
                                 }
