@@ -12,8 +12,52 @@ namespace Frenchie
 {
     namespace Core
     {
-        namespace Helpers
+        namespace Serialization
         {
+            struct NodeInfo final
+            {
+                char*           Name     = nullptr;
+                char*           Value    = nullptr;
+                NodeInfo*       Parent   = nullptr;
+                const Document* Document = nullptr;
+                size_t          Type     = NodeType::OBJECT;
+
+                NodeInfo* FirstChild  = nullptr;
+                NodeInfo* LastChild   = nullptr;
+                NodeInfo* NextSibling = nullptr;
+                NodeInfo* PrevSibling = nullptr;
+            };
+
+            inline char* copy(const char* _Source, const MemoryChunkAllocator<char>& PolymorphicAllocator)
+            {
+                size_t length  = _Source != nullptr ? strlen(_Source) : 0;
+                char*  buffer  = PolymorphicAllocator.allocate(length + 1);
+                buffer[length] = '\0';
+
+                if(!length) 
+                    return buffer;
+
+                std::memcpy(buffer, _Source, length);
+                return buffer;
+            }
+
+            inline char* copy(const char* _Source, char* _Destination, const MemoryChunkAllocator<char>& PolymorphicAllocator)
+            {
+                size_t length  = strlen(_Source);
+
+                if(length <= strlen(_Destination))
+                {
+                    std::memcpy(_Destination, _Source, length);
+                    _Destination[length] = '\0';
+                    return _Destination;
+                }
+                else
+                {
+                    PolymorphicAllocator.deallocate(_Destination);
+                    return copy(_Source, PolymorphicAllocator);
+                }
+            }
+
             template<typename __type>
             bool is_number()
             {
@@ -44,106 +88,40 @@ namespace Frenchie
     }
 }
 
-// NodeHierarchy
-void NodeHierarchy::build(const std::vector<NodeInfo*>& _Nodes)
-{
-    if(_Nodes.empty()) 
-        return;
-
-    m_Items.resize(_Nodes.size());
-    m_Pointers.resize(_Nodes.size() + 1);
-    m_Singletones.clear();
-    std::vector<int> workspace(_Nodes.size() + 1);
-
-    for (size_t i = 0; i < _Nodes.size(); i++)
-    {
-        m_Items   [i]     = _Nodes[i];
-        m_Pointers[i] = 0;
-        workspace [i] = 0;
-    }
-
-    m_Pointers[_Nodes.size()] = 0;
-    workspace[_Nodes.size()] = 0;
-
-    for(auto&& item : _Nodes) 
-    {
-        if(!item->Parent) 
-            continue;
-
-        m_Pointers[item->Parent->Self]++;
-        workspace[item->Parent->Self]++;
-    }
-
-    // cumulative sum
-    for( int i = 0, j = 0, k = 0 ; i < _Nodes.size() + 1; i++ )
-    {
-        k += workspace[i];
-        workspace[i] = j;
-        m_Pointers[i] = j;
-        j = k;
-    }
-
-    // count sort
-    for(int i = 0; i < _Nodes.size(); i++ )
-    {
-        if(!_Nodes[i]->Parent) 
-            continue;
-
-        int index      = workspace[_Nodes[i]->Parent->Self]++;
-        m_Items[index] = _Nodes[i];
-    }
-
-    // collect singletones
-    for(auto node : _Nodes)
-    {
-        if(node->Parent == nullptr) 
-            m_Singletones.push_back(node);
-    }
-
-    m_IsDirty = false;
-}
-
 // NodeIterator
-NodeIterator::NodeIterator(const Node& _Node, int _Index) : 
-    m_Document(_Node.is_valid() ? _Node.m_Info->Document : nullptr), 
-    m_Index(_Index){}
+NodeIterator::NodeIterator(const Node& _Node) : 
+    m_Info(_Node.m_Info){}
 
 NodeIterator::~NodeIterator(){}
 
 Node NodeIterator::operator*() const 
 {
-    if(m_Document == nullptr) 
-        return Node();
-
-    const auto& hierarchy = m_Document->hierarchy();
-
-    return Node(hierarchy.m_Items[m_Index]);
+    return Node(m_Info);
 }
 
 const NodeInfo* NodeIterator::operator->() const
 {
-    if(m_Document == nullptr) 
-        return nullptr;
-
-    const auto& hierarchy = m_Document->hierarchy();
-
-    return hierarchy.m_Items[m_Index];
+    return m_Info;
 }
 
 NodeIterator& NodeIterator::operator++() 
-{ 
-    m_Index++; 
+{
+    if(m_Info != nullptr) 
+        m_Info = m_Info->NextSibling;
+    
     return *this; 
 }
 
 NodeIterator& NodeIterator::operator--() 
 { 
-    m_Index--; 
+    if(m_Info != nullptr) 
+        m_Info = m_Info->PrevSibling;
+
     return *this; 
 }
 
 NodeIterator NodeIterator::operator++(int) 
-{ 
+{
     NodeIterator tmp = *this; 
     ++(*this); 
     return tmp; 
@@ -154,69 +132,6 @@ NodeIterator NodeIterator::operator--(int)
     NodeIterator tmp = *this; 
     --(*this); 
     return tmp; 
-}
-
-int NodeIterator::distance(const NodeIterator& _First, const NodeIterator& _Last)
-{
-    return _Last.m_Index - _First.m_Index;
-}
-
-// DocumentIterator
-DocumentIterator::DocumentIterator(const Document* _Document, int _Index) : 
-    m_Document(_Document), 
-    m_Index(_Index){}
-
-DocumentIterator::~DocumentIterator(){}
-
-Node DocumentIterator::operator*() const 
-{
-    if(m_Document == nullptr) 
-        return Node();
-
-    const auto& hierarchy = m_Document->hierarchy();    
-
-    return Node(hierarchy.m_Singletones[m_Index]);
-}
-
-const NodeInfo* DocumentIterator::operator->() const
-{
-    if(m_Document == nullptr) 
-        return nullptr;
-
-    const auto& hierarchy = m_Document->hierarchy();
-
-    return hierarchy.m_Singletones[m_Index];
-}
-
-DocumentIterator& DocumentIterator::operator++() 
-{ 
-    m_Index++; 
-    return *this; 
-}
-
-DocumentIterator& DocumentIterator::operator--() 
-{ 
-    m_Index--; 
-    return *this; 
-}
-
-DocumentIterator DocumentIterator::operator++(int) 
-{ 
-    DocumentIterator tmp = *this; 
-    ++(*this); 
-    return tmp; 
-}
-
-DocumentIterator DocumentIterator::operator--(int) 
-{ 
-    DocumentIterator tmp = *this; 
-    --(*this); 
-    return tmp; 
-}
-
-int DocumentIterator::distance(const DocumentIterator& _First, const DocumentIterator& _Last)
-{
-    return _Last.m_Index - _First.m_Index;
 }
 
 // Node
@@ -234,276 +149,212 @@ bool Node::has_value() const
 
 size_t Node::get_type() const
 {
-    return m_Info != nullptr ? m_Info->Type : NodeValueType::OBJECT;
+    return m_Info != nullptr ? m_Info->Type : NodeType::OBJECT;
 }
 
 const char* Node::get_name() const
 {
-    return m_Info != nullptr ? m_Info->Name : Node::m_EmptyNode.Name;
+    return m_Info != nullptr ? m_Info->Name : "";
 }
 
 const char* Node::get_value() const
 {
-    return m_Info != nullptr ? m_Info->Value : Node::m_EmptyNode.Value;
+    return m_Info != nullptr ? m_Info->Value : "";
 }
 
 void Node::set_name(const char* _Value)
 {
     if(is_valid())
-        m_Info->Name = m_Info->Document->m_StringAllocator.copy(_Value, m_Info->Name);
+        m_Info->Name = copy(_Value, m_Info->Name, m_Info->Document->m_StringAllocator);
 }
 
 void Node::set_value(const char* _Value)
 {
-    if(is_valid()) 
-        m_Info->Value = m_Info->Document->m_StringAllocator.copy(_Value, m_Info->Value);
+    if(is_valid())
+        m_Info->Value = copy(_Value, m_Info->Value, m_Info->Document->m_StringAllocator);
 }
 
 const NodeIterator Node::begin() const
 {
-    if(!is_valid()) 
-        return NodeIterator(nullptr, -1);
-
-    const auto& hierarchy = 
-        m_Info->Document->hierarchy();
-
-    return NodeIterator(*this, hierarchy.m_Pointers[m_Info->Self]);
+    return is_valid() ? NodeIterator(Node(m_Info->FirstChild)) : end();
 }
 
 const NodeIterator Node::end() const
 {
-    if(!is_valid()) 
-        return NodeIterator(nullptr, -1);
-
-    const auto& hierarchy = 
-        m_Info->Document->hierarchy();
-
-    return NodeIterator(*this, hierarchy.m_Pointers[m_Info->Self + 1]);
+    return NodeIterator(Node());
 }
 
 bool Node::empty() const
 {
-    return NodeIterator::distance(begin(), end()) <= 0;
+    return begin() == end();
 }
 
-Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Type)
+Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Type) const
 {
     if(!is_valid()) 
         return Node();
 
-    return Node(m_Info->Document->append_node(_Name, _Value, *this, _Type));
-}
+    const Document* document = m_Info->Document;
 
-void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate)
-{
-    if(is_valid())
-        m_Info->Document->remove_node(_Predicate, *this);
-}
-
-void Node::remove_node(const char* _Name)
-{
-    if(is_valid())
-        m_Info->Document->remove_node(_Name);
-}
-
-Node Node::find_node(std::function<bool(const Node& _Node)> _Predicate)
-{
-    return is_valid() ? m_Info->Document->find_node(_Predicate, *this) : Node();
-}
-
-Node Node::find_node(const char* _Name)
-{
-    return is_valid() ? m_Info->Document->find_node(_Name, *this) : Node(); 
-}
-
-// Document
-Node Document::append_node(const char* _Name, const char* _Value, const Node& _Parent, const size_t& _Type) const
-{
-    NodeInfo* node   = m_NodeAllocator.PolymorphicAllocator.allocate(1);
-    node->Name       = m_StringAllocator.copy(_Name);
-    node->Value      = m_StringAllocator.copy(_Value);
-    node->Self       = m_Nodes.size();
-    node->Parent     = _Parent.m_Info;
-    node->Document   = this;
+    NodeInfo* node   = document->m_NodeAllocator.allocate(1);
+    node->Name       = copy(_Name, document->m_StringAllocator);
+    node->Value      = copy(_Value, document->m_StringAllocator);
+    node->Parent     = m_Info;
+    node->Document   = document;
     node->Type       = _Type;
     
-    m_Nodes.push_back(node);
-    m_Hierarchy.m_IsDirty = true;
+    node->FirstChild  = nullptr;
+    node->LastChild   = nullptr;
+    node->PrevSibling = nullptr;
+    node->NextSibling = nullptr;
+
+    // append to a parent
+    if(m_Info)
+    {
+        if(m_Info->FirstChild == nullptr)
+        {
+            m_Info->FirstChild = node;
+            m_Info->LastChild  = node;
+            node->PrevSibling  = nullptr;
+            node->NextSibling  = nullptr;
+        }
+        else
+        {
+            // go to the end
+            auto head = m_Info->LastChild;
+
+            // append node to the end
+            head->NextSibling = node;
+            node->PrevSibling = head;
+            node->NextSibling = nullptr;
+
+            m_Info->LastChild = node;
+        }
+    }
 
     return Node(node);
 }
 
-void Document::remove_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent) const
+void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
 {
-    if(_Predicate == nullptr) 
+    if(_Predicate == nullptr || !is_valid()) 
         return;
 
-    Node toBeRemoved;
-
-    if(!_Parent.is_valid())
-    {
-        for(auto&& child : *this)
-        {
-            if(_Predicate(child)) 
-                toBeRemoved = child;
-        }
-    }
-    else
-    {
-        for(auto&& child : _Parent)
-        {
-            if(_Predicate(child)) 
-                toBeRemoved = child;
-        }
-    }
+    auto toBeRemoved = find_node(_Predicate);
 
     if(!toBeRemoved.is_valid()) 
         return;
 
-    Helpers::Queue<Node> queue;
-    queue.push(toBeRemoved);
+    //recursivelly deallocate children
+    auto document = m_Info->Document;
+    Helpers::Stack<Node> stack;
+    stack.push(toBeRemoved);
 
-    std::set<size_t> nodesToRemove;
-
-    while(!queue.empty())
+    while(!stack.empty())
     {
-        auto data = queue.front();
-        queue.pop();
+        auto top = stack.top();
+        stack.pop();
 
-        nodesToRemove.insert(data.m_Info->Self);
-
-        for(auto&& child : data)
-            queue.push(child);
+        for(auto&& child : top) 
+            stack.push(child);
+        
+        // deallocate
+        document->m_NodeAllocator.deallocate(top.m_Info);
+        document->m_StringAllocator.deallocate(top.m_Info->Name);
+        document->m_StringAllocator.deallocate(top.m_Info->Value);
     }
 
-    // erase a range of nodes from list
-    std::vector<NodeInfo*> nodesThatAreAlive;
+    // deallocate the removed node
+    document->m_NodeAllocator.deallocate(toBeRemoved.m_Info);
+    document->m_StringAllocator.deallocate(toBeRemoved.m_Info->Name);
+    document->m_StringAllocator.deallocate(toBeRemoved.m_Info->Value);
 
-    for(size_t i = 0; i < m_Nodes.size(); i++)
+    // update links
+    auto info = toBeRemoved.m_Info;
+
+    if(info->PrevSibling != nullptr)
     {
-        if(nodesToRemove.find(m_Nodes[i]->Self) == nodesToRemove.end()) 
-        {
-            nodesThatAreAlive.push_back(m_Nodes[i]);
-        }
-        else
-        {
-            m_StringAllocator.PolymorphicAllocator.deallocate(m_Nodes[i]->Name);
-            m_StringAllocator.PolymorphicAllocator.deallocate(m_Nodes[i]->Value);
-            m_NodeAllocator.PolymorphicAllocator.deallocate(m_Nodes[i]);
-        }
+        info->PrevSibling->NextSibling = info->NextSibling;
+    }
+    else
+    {
+        if(info->Parent != nullptr)
+            info->Parent->FirstChild = info->NextSibling;
     }
 
-    m_Nodes = nodesThatAreAlive;
-
-    // make hierarchy dirty
-    m_Hierarchy.m_IsDirty = true;
-
-    // renumber nodes
-    for(size_t i = 0; i < m_Nodes.size(); i++) 
-        m_Nodes[i]->Self = i;
+    if(info->NextSibling != nullptr)
+    {
+        info->NextSibling->PrevSibling = info->PrevSibling;
+    }
 }
 
-void Document::remove_node(const char* _Name, const Node& _Parent) const
+void Node::remove_node(const char* _Name) const
 {
-    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;}, _Parent);
+    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;});
 }
 
-Node Document::find_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent) const
+Node Node::find_node(std::function<bool(const Node& _Node)> _Predicate) const
 {
     if(_Predicate == nullptr) 
         return Node();
 
     Node found;
 
-    if(!_Parent.is_valid())
+    for(auto&& child : *this)
     {
-        for(auto&& child : *this)
-        {
-            if(_Predicate(child)) 
-                found = child;
-        }
-    }
-    else
-    {
-        for(auto&& child : _Parent)
-        {
-            if(_Predicate(child)) 
-                found = child;
-        }
+        if(_Predicate(child)) 
+            found = child;
     }
 
     return found;
 }
 
-Node Document::find_node(const char* _Name, const Node& _Parent) const
+Node Node::find_node(const char* _Name) const
 {
-    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;}, _Parent);
-}
-
-DocumentIterator Document::begin() const
-{
-    return DocumentIterator(this, 0);
-}
-
-DocumentIterator Document::end() const
-{
-    return DocumentIterator(this, (int)hierarchy().m_Singletones.size());
-}
-
-bool Document::empty() const
-{
-    return m_Nodes.empty();
-}
-
-void Document::reset()
-{
-    m_Nodes.clear();
-    m_NodeAllocator.PolymorphicAllocator.release();
-    m_StringAllocator.PolymorphicAllocator.release();
-    m_Hierarchy.m_IsDirty = true;
+    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;});
 }
 
 #define __support_scalar__(__type)\
-template<> Node Document::append_node(const char* _Name, const __type& _Value, const Node& _Parent) const\
+template<> Node Node::append_node(const char* _Name, const __type& _Value) const\
 {\
-    if(Helpers::is_number<__type>())\
+    if(is_number<__type>())\
     {\
-        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::NUMBER));\
+        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::NUMBER));\
     }\
     \
-    else if(Helpers::is_bool<__type>())\
+    else if(is_bool<__type>())\
     {\
-        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::BOOL));\
+        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::BOOL));\
     }\
     \
-    else if(Helpers::is_null<__type>())\
+    else if(is_null<__type>())\
     {\
-        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::NULLPTR));\
+        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::NULLPTR));\
     }\
-    return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), _Parent.m_Info, NodeValueType::OBJECT));\
+    return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::OBJECT));\
 }\
 
 #define __support_vector__(__type)\
-template<> Node Document::append_node(const char* _Name, const std::vector<__type>& _Values, const Node& _Parent) const\
+template<> Node Node::append_node(const char* _Name, const std::vector<__type>& _Values) const\
 {\
-    auto container = Document::append_node(_Name, STRINGIFY(std::vector<__type>), _Parent, NodeValueType::ARRAY);\
-    for(auto&& value : _Values) append_node<__type>("item", value, container);\
+    auto container = Node::append_node(_Name, STRINGIFY(std::vector<__type>), NodeType::ARRAY);\
+    for(auto&& value : _Values) container.append_node<__type>("item", value);\
     return container;\
 }\
 
 #define __support_list__(__type)\
-template<> Node Document::append_node(const char* _Name, const std::list<__type>& _Values, const Node& _Parent) const\
+template<> Node Node::append_node(const char* _Name, const std::list<__type>& _Values) const\
 {\
-    auto container = Document::append_node(_Name, STRINGIFY(std::list<__type>), _Parent, NodeValueType::ARRAY);\
-    for(auto&& value : _Values) append_node<__type>("item", value, container);\
+    auto container = Node::append_node(_Name, STRINGIFY(std::list<__type>), NodeType::ARRAY);\
+    for(auto&& value : _Values) container.append_node<__type>("item", value);\
     return container;\
 }\
 
 #define __support_set__(__type)\
-template<> Node Document::append_node(const char* _Name, const std::set<__type>& _Values, const Node& _Parent) const\
+template<> Node Node::append_node(const char* _Name, const std::set<__type>& _Values) const\
 {\
-    auto container = Document::append_node(_Name, STRINGIFY(std::set<__type>), _Parent, NodeValueType::ARRAY);\
-    for(auto&& value : _Values) append_node<__type>("item", value, container);\
+    auto container = Node::append_node(_Name, STRINGIFY(std::set<__type>), NodeType::ARRAY);\
+    for(auto&& value : _Values) container.append_node<__type>("item", value);\
     return container;\
 }\
 
@@ -555,3 +406,54 @@ __support_set__(nullptr_t)
 #undef __support_vector__
 #undef __support_list__
 #undef __support_set__
+
+// Document
+Document::Document()
+{
+    m_Info             = m_NodeAllocator.allocate(1);
+    m_Info->Name       = "";
+    m_Info->Value      = "";
+    m_Info->Parent     = nullptr;
+    m_Info->Document   = this;
+    m_Info->Type       = NodeType::OBJECT;
+    
+    m_Info->FirstChild  = nullptr;
+    m_Info->LastChild   = nullptr;
+    m_Info->PrevSibling = nullptr;
+    m_Info->NextSibling = nullptr;
+}
+
+size_t Document::get_total_memory_size() const
+{
+    return m_NodeAllocator.get_total_memory_size() + 
+           m_StringAllocator.get_total_memory_size();
+}
+
+size_t Document::get_free_memory_amount() const
+{
+    return m_NodeAllocator.get_free_memory_amount() + 
+           m_StringAllocator.get_free_memory_amount();
+}
+
+size_t Document::get_busy_memory_amount() const
+{
+    return m_NodeAllocator.get_busy_memory_amount() + 
+           m_StringAllocator.get_busy_memory_amount();
+}
+
+void Document::reset()
+{
+    // clear list
+    m_Info->FirstChild  = nullptr;
+    m_Info->LastChild   = nullptr;
+    m_Info->PrevSibling = nullptr;
+    m_Info->NextSibling = nullptr;
+
+    // clear memory
+    m_NodeAllocator.release();
+    m_StringAllocator.release();
+
+    // reset allocators
+    // m_StringAllocator(MemoryChunkAllocator<char>(std::max<size_t>(_StringBufferSize, 128))),
+    // m_NodeAllocator(MemoryChunkAllocator<NodeInfo>(std::max<size_t>(_NodesBufferSize, 8)))
+}

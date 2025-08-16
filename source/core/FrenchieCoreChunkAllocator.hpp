@@ -18,14 +18,14 @@ namespace Frenchie
         struct MemoryChunk final
         {
             // info
-            size_t       ElementSize   = 0;
-            size_t       ElementsCount = 0;
-            size_t       Free          = 0;
-            size_t       Head          = 0;
-            size_t       Size          = 0;
-            char*        Memory        = nullptr;
-            MemoryChunk* Next          = nullptr;
-            MemoryChunk* Prev          = nullptr;
+            mutable size_t       ElementSize   = 0;
+            mutable size_t       ElementsCount = 0;
+            mutable size_t       Free          = 0;
+            mutable size_t       Head          = 0;
+            mutable size_t       Size          = 0;
+            mutable char*        Memory        = nullptr;
+            mutable MemoryChunk* Next          = nullptr;
+            mutable MemoryChunk* Prev          = nullptr;
 
             MemoryChunk(size_t _ChunkElementSize, size_t _ChunkSize)
             {
@@ -96,7 +96,7 @@ namespace Frenchie
         {
         public:
             MemoryChunkAllocator(size_t _ChunkSize) : 
-                m_ChunkSize(std::max<size_t>(_ChunkSize, 1024)), 
+                m_ChunkSize(std::max<size_t>(_ChunkSize, 16)), 
                 m_Head(new MemoryChunk(sizeof(Type), m_ChunkSize)), 
                 m_Tail(m_Head){}
 
@@ -105,7 +105,7 @@ namespace Frenchie
                 release();
             }
 
-            Type* allocate(size_t _Size)
+            Type* allocate(size_t _Size) const
             {
                 auto buffer = m_Head->request(_Size);
 
@@ -124,7 +124,7 @@ namespace Frenchie
                 return reinterpret_cast<Type*>(m_Head->request(_Size));
             }
 
-            void deallocate(Type* _Pointer)
+            void deallocate(Type* _Pointer) const
             {
                 // clear pointer and retrieve allocation info
                 auto info  = MemoryChunk::release(_Pointer);
@@ -224,9 +224,9 @@ namespace Frenchie
 
         private:
             
-            size_t       m_ChunkSize = 1024;
-            MemoryChunk* m_Head      = nullptr;
-            MemoryChunk* m_Tail      = nullptr;
+            mutable  size_t       m_ChunkSize = 1024;
+            mutable  MemoryChunk* m_Head      = nullptr;
+            mutable  MemoryChunk* m_Tail      = nullptr;
         };
     }
 }

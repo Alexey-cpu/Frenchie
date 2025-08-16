@@ -62,7 +62,7 @@ namespace Frenchie
                         child_3.set_value("Value_3");
 
                         std::cout << "------------------------------------------------------------------------------\n";
-                        std::cout << "before removal: \n";
+                        std::cout << "before modifying: \n";
                         std::cout << "------------------------------------------------------------------------------\n";
                         auto next = tree;
 
@@ -77,7 +77,7 @@ namespace Frenchie
                         print_document(document);
 
                         std::cout << "------------------------------------------------------------------------------\n";
-                        std::cout << "after removal: \n";
+                        std::cout << "after modifying: \n";
                         std::cout << "------------------------------------------------------------------------------\n";
                         document.remove_node("Tree");
 
@@ -89,7 +89,48 @@ namespace Frenchie
                         child_2.set_name("c_2");
                         child_3.set_name("c_3");
 
-                        std::cout << "------------------------------------------------------------------------------\n";
+                        print_document(document);
+                    }
+
+                    void run1()
+                    {
+                        Document document;
+
+                        auto tree = document.append_node("Tree");
+                        
+                        auto child_1 = tree.append_node("Child_1");
+                        child_1.append_node("Child_1_1");
+
+                        auto child_2 = tree.append_node("Child_2");
+                        child_2.append_node("Child_2_1");
+
+                        auto child_3 = tree.append_node("Child_3");
+                        child_3.append_node("Child_3_1");
+
+                        auto print_children = [](const Node& _Node)
+                        {
+                            std::cout << "---------------------------------------------------------------\n";
+                            std::cout << _Node.get_name() << " children: " << "\n";
+                            std::cout << "---------------------------------------------------------------\n";
+
+                            for(auto&& child : _Node)  std::cout << child.get_name() << "\n";
+
+                            // auto head = _Node.m_Info->FirstChild;
+
+                            // while(head)
+                            // {
+                            //     std::cout << head->Name << "\n";
+
+                            //     head = head->NextSibling;
+                            // }
+                        };
+                        
+                        // print_children(tree);
+                        // print_children(child_1);
+                        // print_children(child_2);
+                        // print_children(child_3);
+
+                        //print_children(document);
 
                         print_document(document);
                     }

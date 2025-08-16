@@ -40,11 +40,12 @@ namespace Frenchie
     {
         namespace Serialization
         {
-            class Document;
-            class NodeIterator;
-            class Node;
+            class  Node;
+            class  Document;
+            class  NodeIterator;
+            struct NodeInfo;
 
-            enum NodeValueType
+            enum NodeType
             {
                 ATTRIBUTE,
                 NULLPTR,
@@ -55,31 +56,10 @@ namespace Frenchie
                 BOOL
             };
 
-            struct NodeInfo final
-            {
-                char*           Name     = nullptr;
-                char*           Value    = nullptr;
-                size_t          Self     = 0;
-                const NodeInfo* Parent   = nullptr;
-                const Document* Document = nullptr;
-                size_t          Type     = NodeValueType::OBJECT;
-            };
-
-            struct NodeHierarchy final
-            {
-                void build(const std::vector<NodeInfo*>& = std::vector<NodeInfo*>());
-
-                // info
-                std::vector<NodeInfo*> m_Items       = std::vector<NodeInfo*>();
-                std::vector<NodeInfo*> m_Singletones = std::vector<NodeInfo*>();
-                std::vector<int>       m_Pointers    = std::vector<int>();
-                bool                   m_IsDirty     = true;
-            };
-
             class NodeIterator final
             {
             public:
-                NodeIterator(const Node& _Node, int _Index);
+                NodeIterator(const Node& _Node);
                 ~NodeIterator();
 
                 Node operator*() const;
@@ -92,66 +72,25 @@ namespace Frenchie
 
                 friend bool operator==(const NodeIterator& _First, const NodeIterator& _Second)
                 { 
-                    return _First.m_Index == _Second.m_Index; 
+                    return _First.m_Info == _Second.m_Info; 
                 }
 
                 friend bool operator!=(const NodeIterator& _First, const NodeIterator& _Second)
                 { 
-                    return _First.m_Index != _Second.m_Index; 
+                    return _First.m_Info != _Second.m_Info; 
                 }
-
-                static int distance(const NodeIterator& _First, const NodeIterator& _Last);
 
             protected:
-                const Document* m_Document;
-                int             m_Index;
-            };
-
-            class DocumentIterator
-            {
-            public:
-                DocumentIterator(const Document* _Document, int _Index);
-                ~DocumentIterator();
-
-                Node operator*() const;
-                const NodeInfo* operator->() const;
-                
-                DocumentIterator& operator++();
-                DocumentIterator& operator--();
-                DocumentIterator  operator++(int);
-                DocumentIterator  operator--(int);
-
-                friend bool operator==(const DocumentIterator& _First, const DocumentIterator& _Second)
-                { 
-                    return _First.m_Index == _Second.m_Index; 
-                }
-
-                friend bool operator!=(const DocumentIterator& _First, const DocumentIterator& _Second)
-                { 
-                    return _First.m_Index != _Second.m_Index; 
-                }
-
-                static int distance(const DocumentIterator& _First, const DocumentIterator& _Last);
-
-            protected:
-                const Document* m_Document;
-                int             m_Index;
+                NodeInfo* m_Info;
             };
 
             class Node
             {
-                inline static struct EmptyNode
-                {
-                    char Name [1] = {'\0'};
-                    char Value[1] = {'\0'};
-                } m_EmptyNode;
-
-                NodeInfo* m_Info = nullptr;
+            public:
 
                 friend class NodeIterator;
                 friend class Document;
 
-            public:
                 Node(NodeInfo* _Info = nullptr);
                 ~Node() = default;
                 
@@ -172,130 +111,40 @@ namespace Frenchie
                 const NodeIterator end() const;
                 bool empty() const;
 
-                Node append_node(const char* _Name, const char* _Value = "", const size_t& _Type = NodeValueType::OBJECT);
+                Node append_node(
+                    const char*   _Name, 
+                    const char*   _Value = "", 
+                    const size_t& _Type  = NodeType::OBJECT) const;
 
-                template<typename T>
-                Node append_node(const char* _Name, const T& _Value)
-                {
-                    if(!is_valid()) 
-                        return Node();
+                template<typename T> 
+                Node append_node(const char* _Name, const T& _Value) const;
+                
+                void remove_node(std::function<bool(const Node& _Node)> _Predicate) const;
+                void remove_node(const char* _Name) const;
+                Node find_node(std::function<bool(const Node& _Node)> _Predicate) const;
+                Node find_node(const char* _Name) const;
 
-                    return Node(m_Info->Document->append_node<T>(_Name, _Value, *this));
-                }
-
-                void remove_node(std::function<bool(const Node& _Node)> _Predicate);
-                void remove_node(const char* _Name);
-                Node find_node(std::function<bool(const Node& _Node)> _Predicate);
-                Node find_node(const char* _Name);
+            private:
+                NodeInfo* m_Info = nullptr;
             };
 
-            class Document : public NonCopyable
+            class Document : public Node, public NonCopyable
             {
-                template<typename T>
-                class Allocator
-                {
-                public:
-                    MemoryChunkAllocator<T> ChunkAllocator{4096};
-
-                    T* allocate(const size_t _Count)
-                    {
-                        return ChunkAllocator.allocate(_Count);
-                    }
-
-                    void deallocate(T* _Pointer)
-                    {
-                        ChunkAllocator.deallocate(_Pointer);
-                    }
-
-                    void release()
-                    {
-                        ChunkAllocator.release();
-                    }
-                };
-
-                class StringAllocator
-                {
-                public:
-                    Allocator<char> PolymorphicAllocator;
-
-                    inline char* copy(const char* _Source, char* _Destination)
-                    {
-                        size_t length  = strlen(_Source);
-
-                        if(length <= strlen(_Destination))
-                        {
-                            std::memcpy(_Destination, _Source, length);
-                            return _Destination;
-                        }
-                        else
-                        {
-                            PolymorphicAllocator.deallocate(_Destination);
-                            return copy(_Source);
-                        }
-                    }
-
-                    inline char* copy(const char* _Source)
-                    {
-                        size_t length  = _Source != nullptr ? strlen(_Source) : 0;
-                        char*  buffer  = PolymorphicAllocator.allocate(length + 1);
-                        buffer[length] = '\0';
-
-                        if(!length) 
-                            return buffer;
-
-                        std::memcpy(buffer, _Source, length);
-                        return buffer;
-                    }
-                } mutable m_StringAllocator;
-
             public:
-
-                class NodeAllocator
-                {
-                public:
-                    Allocator<NodeInfo> PolymorphicAllocator;
-                } mutable m_NodeAllocator;
-
-                mutable NodeHierarchy          m_Hierarchy;
-                mutable std::vector<NodeInfo*> m_Nodes;
 
                 friend class  Node;
                 friend class  NodeIterator;
                 friend class  DocumentIterator;
                 friend struct NodeInfo;
 
-                NodeHierarchy& hierarchy() const
-                {
-                    if(m_Hierarchy.m_IsDirty) 
-                        m_Hierarchy.build(m_Nodes);
-
-                    return m_Hierarchy;
-                }
-
-                Document(){}
+                Document();
                 ~Document() = default;
 
-                Node append_node(const char* _Name, const char* _Value = "", const Node& _Parent = Node(), const size_t& _Type = NodeValueType::OBJECT)const;
+                size_t get_total_memory_size() const;
+                size_t get_free_memory_amount() const;
+                size_t get_busy_memory_amount() const;
 
-                template<typename T> 
-                Node append_node(const char* _Name, const T& _Value, const Node& _Parent = Node()) const;
-                
-                void remove_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent = Node()) const;
-                void remove_node(const char* _Name, const Node& _Parent = Node()) const;
-                Node find_node(std::function<bool(const Node& _Node)> _Predicate, const Node& _Parent = Node()) const;
-                Node find_node(const char* _Name, const Node& _Parent = Node()) const;
-
-                DocumentIterator begin() const;
-                DocumentIterator end() const;
-
-                bool empty() const;
                 void reset();
-
-                size_t get_free_memory_amount() const
-                {
-                    return m_NodeAllocator.PolymorphicAllocator.ChunkAllocator.get_free_memory_amount() + 
-                           m_StringAllocator.PolymorphicAllocator.ChunkAllocator.get_free_memory_amount();
-                }
 
                 template<typename Reader>
                 bool read(const std::filesystem::path& _Path)
@@ -308,6 +157,11 @@ namespace Frenchie
                 {
                     return Writer::write(this, _Path);
                 }
+
+            private:
+
+                MemoryChunkAllocator<char>     m_StringAllocator{128};
+                MemoryChunkAllocator<NodeInfo> m_NodeAllocator  {8};
             };
         }
     }
