@@ -52,6 +52,14 @@ namespace Frenchie
 
             Type* allocate(size_t _Size) const
             {
+                // create chunks list
+                if(m_Head == nullptr && m_Tail == nullptr)
+                {
+                    m_Head = new MemoryChunk(sizeof(Type), m_ChunkSize);
+                    m_Tail= m_Head;
+                }
+
+                // allocate buffer
                 auto buffer = m_Head->request(_Size);
 
                 if(buffer != nullptr) 
@@ -71,6 +79,9 @@ namespace Frenchie
 
             void deallocate(Type* _Pointer) const
             {
+                if(m_Head == nullptr && m_Tail == nullptr) 
+                    return;
+
                 // clear pointer and retrieve allocation info
                 auto info  = MemoryChunk::release(_Pointer);
                 auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
@@ -109,20 +120,7 @@ namespace Frenchie
 
             void release()
             {
-                if(m_Tail->Next == nullptr) 
-                {
-                    // clean up tail
-                    m_Tail->Prev = nullptr;
-                    m_Tail->Next = nullptr;
-                    m_Head       = m_Tail;
-                    m_Tail->Head = 0;
-                    m_Tail->Free = m_Tail->Size;
-
-                    return;
-                }
-
-                // remove all chunks besides the first one !!!
-                auto next = m_Tail->Next;
+                auto next = m_Tail;
 
                 while (next)
                 {
@@ -132,11 +130,8 @@ namespace Frenchie
                 }
 
                 // clean up tail
-                m_Tail->Prev = nullptr;
-                m_Tail->Next = nullptr;
-                m_Head       = m_Tail;
-                m_Tail->Head = 0;
-                m_Tail->Free = m_Tail->Size;
+                m_Tail = nullptr;
+                m_Head = nullptr;
             }
 
             size_t get_total_memory_size() const
@@ -184,7 +179,7 @@ namespace Frenchie
                 return freeMemory;
             }
 
-        //private:
+        private:
             
             mutable  size_t       m_ChunkSize = 1024;
             mutable  MemoryChunk* m_Head      = nullptr;

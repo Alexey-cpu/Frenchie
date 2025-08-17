@@ -24,28 +24,69 @@ namespace Frenchie
                     Node                             data;
                 };
 
-                static rapidjson::Value write_value(const Node& _Node)
+                // readers
+                static void read_array(const Node& _Node, rapidjson::Value& _Name, rapidjson::Value& _Value)
                 {
-                    switch ((NodeType)_Node.get_type())
+                    if(!_Value.IsArray()) 
+                        return;
+
+                    auto array = _Node.append_node(_Name.GetString(), "", NodeType::ARRAY);
+
+                    for (rapidjson::Value::ValueIterator i = _Value.Begin(); i != _Value.End(); ++i)
                     {
-                        case NodeType::ATTRIBUTE:
-                        {
-
-                        }
-                        break;
-
-                        case NodeType::NUMBER: // write number
-                        {
-                            rapidjson::Value value(rapidjson::kNumberType);
-                            value.SetDouble(Helpers::from_string<double>(_Node.get_value()));
-                            return value;
-                        }
-                        break;
+                        if(i->IsObject()) 
+                            read_object(array.append_node("", "", NodeType::OBJECT), i->GetObject());
                     }
+                }
 
-                    rapidjson::Value value(rapidjson::kStringType);
-                    value.SetString(_Node.get_value(), (int)strlen(_Node.get_value()));
-                    return value;
+                static void read_object(const Node& _Node, rapidjson::Value& _Value)
+                {
+                    if(!_Value.IsObject()) 
+                        return;
+
+                    for(auto it = _Value.MemberBegin(); it != _Value.MemberEnd(); it++)
+                    {
+                        Helpers::Stack<Element> stack;
+                        stack.push({it, _Node});
+
+                        while(!stack.empty())
+                        {
+                            auto top = stack.top();
+                            stack.pop();
+
+                            auto& name  = top.document->name;
+                            auto& value = top.document->value;
+
+                            // parse value
+                            if(value.IsNull())
+                            {
+                                top.data.append_node<nullptr_t>(name.GetString(), nullptr);
+                            }
+                            if(value.IsBool())
+                            {
+                                top.data.append_node<bool>(name.GetString(), value.GetBool());
+                            }
+                            else if(value.IsNumber())
+                            {
+                                top.data.append_node<double>(name.GetString(), value.GetDouble());
+                            }
+                            else if(value.IsString())
+                            {
+                                top.data.append_node(name.GetString(), value.GetString(), NodeType::STRING);
+                            }
+                            else if(value.IsArray())
+                            {
+                                JSON::read_array(top.data, name, value);
+                            }
+                            else if(value.IsObject())
+                            {
+                                auto object = top.data.append_node(name.GetString(), "", NodeType::OBJECT);
+
+                                for(auto i = value.GetObject().MemberBegin(); i != value.GetObject().MemberEnd(); ++i) 
+                                    stack.push({it, object});
+                            }
+                        }
+                    }
                 }
 
                 static bool read(Document* _Document, const std::filesystem::path& _Path)
@@ -85,7 +126,6 @@ namespace Frenchie
 
                     if(!document.IsObject())
                     {
-                        // TODO: write here another logic
                         return true;
                     }
 
@@ -106,7 +146,6 @@ namespace Frenchie
                             auto& name  = top.document->name;
                             auto& value = top.document->value;
 
-                            // parse value
                             if(value.IsNull())
                             {
                                 top.data.append_node<nullptr_t>(name.GetString(), nullptr);
@@ -121,6 +160,7 @@ namespace Frenchie
                             }
                             else if(value.IsArray())
                             {
+                                JSON::read_array(top.data, name, value);
                             }
                             else if(value.IsString())
                             {
@@ -128,19 +168,112 @@ namespace Frenchie
                             }
                             else if(value.IsObject())
                             {
-                                auto object = 
-                                    top.data.append_node(name.GetString(), "", NodeType::OBJECT);
+                                auto object = top.data.append_node(name.GetString(), "", NodeType::OBJECT);
 
-                                for (rapidjson::Value::MemberIterator it = value.GetObject().MemberBegin();
-                                    it != value.GetObject().MemberEnd(); ++it)
-                                {
-                                    stack.push({it, object});
-                                }
+                                for(auto i = value.GetObject().MemberBegin(); i != value.GetObject().MemberEnd(); ++i) 
+                                    stack.push({i, object});
                             }
                         }
                     }
 
                     return true;
+                }
+
+                static rapidjson::Value write_object(const Node& _Node, rapidjson::Document& _Document)
+                {
+                    std::cout << "write_object called !!!! \n";
+
+                    rapidjson::Value root(rapidjson::kObjectType);
+
+                    for(auto&& singleton : _Node)
+                    {
+                        rapidjson::Value name(rapidjson::kStringType);
+                        name.SetString(singleton.get_name(), (int)strlen(singleton.get_name()));
+                        root.AddMember(name, rapidjson::Value(rapidjson::kObjectType), _Document.GetAllocator());
+
+                        Helpers::Stack<Element> queue;
+
+                        for(auto&& child : singleton) 
+                        {
+                            queue.push({std::prev(root.MemberEnd()), child});
+                        }
+
+                        while (!queue.empty())
+                        {
+                            auto data   = queue.top().data;
+                            auto parent = queue.top().document->value.GetObject();
+                            queue.pop();
+
+                            rapidjson::Value name(rapidjson::kStringType);
+                            name.SetString(data.get_name(), (int)strlen(data.get_name()));
+
+                            if(data.has_value())
+                            {
+                                // write value
+                                if(data.empty())
+                                {
+                                    rapidjson::Value value(rapidjson::kStringType);
+                                    value.SetString(data.get_value(), (int)strlen(data.get_value()));
+                                    parent.AddMember(name, value, _Document.GetAllocator());
+                                }
+                                else
+                                {
+                                    // create value
+                                    rapidjson::Value value(rapidjson::kStringType);
+                                    value.SetString(data.get_value(), (int)strlen(data.get_value()));
+
+                                    // create object
+                                    rapidjson::Value object(rapidjson::kObjectType);
+                                    
+                                    // add value to object
+                                    object.AddMember("Value", value, _Document.GetAllocator());
+
+                                    // add object to parent
+                                    parent.AddMember(name, object, _Document.GetAllocator());
+
+                                    for(auto&& child : data) 
+                                        queue.push({std::prev(parent.MemberEnd()), child});
+                                }
+
+                                continue;
+                            }
+                            
+                            if(data.get_type() == NodeType::OBJECT)
+                            {
+                                parent.AddMember(name, rapidjson::Value(rapidjson::kObjectType), _Document.GetAllocator());
+
+                                for(auto&& child : data) 
+                                    queue.push({std::prev(parent.MemberEnd()), child});
+
+                                continue;
+                            }
+
+                            if(data.get_type() == NodeType::ARRAY)
+                            {
+                                //write_array();
+                            }
+                        }
+                    }
+
+                    return root;
+                }
+
+                static rapidjson::Value write_array(const Node& _Node, rapidjson::Document& _Document)
+                {
+                    rapidjson::Value root(rapidjson::kArrayType);
+
+                    for(auto&& node : _Node)
+                    {
+                        if(node.get_type() == NodeType::OBJECT)
+                        {
+                            rapidjson::Value name(rapidjson::kStringType);
+                            name.SetString(node.get_name(), (int)strlen(node.get_name()));
+                            
+                            root.PushBack(write_object(node, _Document), _Document.GetAllocator());
+                        }
+                    }
+
+                    return root;
                 }
 
                 template<bool Compact>
@@ -184,26 +317,48 @@ namespace Frenchie
 
                             if(data.has_value())
                             {
+                                // write value
                                 if(data.empty())
                                 {
-                                    parent.AddMember(name, write_value(data), doc.GetAllocator());
+                                    rapidjson::Value value(rapidjson::kStringType);
+                                    value.SetString(data.get_value(), (int)strlen(data.get_value()));
+                                    parent.AddMember(name, value, doc.GetAllocator());
                                 }
                                 else
                                 {
-                                    rapidjson::Value object = rapidjson::Value(rapidjson::kObjectType);
-                                    object.AddMember("Value", write_value(data), doc.GetAllocator());
+                                    // create value
+                                    rapidjson::Value value(rapidjson::kStringType);
+                                    value.SetString(data.get_value(), (int)strlen(data.get_value()));
+
+                                    // create object
+                                    rapidjson::Value object(rapidjson::kObjectType);
+                                    
+                                    // add value to object
+                                    object.AddMember("Value", value, doc.GetAllocator());
+
+                                    // add object to parent
                                     parent.AddMember(name, object, doc.GetAllocator());
 
                                     for(auto&& child : data) 
                                         queue.push({std::prev(parent.MemberEnd()), child});
                                 }
+
+                                continue;
                             }
-                            else
+                            
+                            if(data.get_type() == NodeType::OBJECT)
                             {
                                 parent.AddMember(name, rapidjson::Value(rapidjson::kObjectType), doc.GetAllocator());
 
                                 for(auto&& child : data) 
                                     queue.push({std::prev(parent.MemberEnd()), child});
+
+                                continue;
+                            }
+
+                            if(data.get_type() == NodeType::ARRAY)
+                            {
+                                parent.AddMember(name, JSON::write_array(data, doc), doc.GetAllocator());
                             }
                         }
                     }

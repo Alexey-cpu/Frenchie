@@ -87,7 +87,7 @@ namespace Frenchie
                     return current < 0;
                 }
 
-                int current = 0;
+                int current = -1;
                 int next    = 0;
                 int growth  = 2;
             };
