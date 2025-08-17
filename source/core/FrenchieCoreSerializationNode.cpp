@@ -255,10 +255,12 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
     if(!toBeRemoved.is_valid()) 
         return;
 
-    // recursive deallocate
+    // collect deallocated nodes
     auto document = m_Info->Document;
     Helpers::Stack<Node> stack;
     stack.push(toBeRemoved);
+
+    std::vector<Node> nodesToBeRemoved;
 
     while(!stack.empty())
     {
@@ -268,12 +270,10 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
         for(auto&& child : top) 
             stack.push(child);
         
-        document->m_NodeAllocator.deallocate(top.m_Info);
-        document->m_StringAllocator.deallocate(top.m_Info->Name);
-        document->m_StringAllocator.deallocate(top.m_Info->Value);
+        nodesToBeRemoved.push_back(top);
     }
 
-    // update links (toBeRemoved.m_Info still exists as it resides inside a memory pool)
+    // update linken list
     auto info = toBeRemoved.m_Info;
 
     if(info->PrevSibling != nullptr)
@@ -288,6 +288,14 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
 
     if(info->NextSibling != nullptr) 
         info->NextSibling->PrevSibling = info->PrevSibling;
+
+    // deallocate nodes
+    for(auto&& node : nodesToBeRemoved)
+    {
+        document->m_StringAllocator.deallocate(node.m_Info->Name);
+        document->m_StringAllocator.deallocate(node.m_Info->Value);
+        document->m_NodeAllocator.deallocate(node.m_Info);
+    }
 }
 
 #define __support_scalar__(__type)\
