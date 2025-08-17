@@ -159,7 +159,6 @@ namespace Frenchie
                 }
 
             private:
-
                 MemoryChunkAllocator<char>     m_StringAllocator{128};
                 MemoryChunkAllocator<NodeInfo> m_NodeAllocator  {8};
             };

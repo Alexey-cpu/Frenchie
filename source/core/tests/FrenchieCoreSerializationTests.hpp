@@ -51,9 +51,16 @@ namespace Frenchie
 
                     void run()
                     {
+                        std::cout << "------------------------------------------------------------------------------\n";
+                        std::cout << "this is clean document: \n";
+                        std::cout << "------------------------------------------------------------------------------\n";
+                        
                         Document document;
+                        print_document(document);
 
-                        // test that API works
+                        std::cout << "------------------------------------------------------------------------------\n";
+                        std::cout << "before modifying: \n";
+                        std::cout << "------------------------------------------------------------------------------\n";
                         const int N    = 3;
                         const int M    = 3;
                         auto      tree = document.append_node("Tree");
@@ -70,9 +77,6 @@ namespace Frenchie
                         child_4.set_value("Value_4");
                         child_5.set_value("Value_5");
 
-                        std::cout << "------------------------------------------------------------------------------\n";
-                        std::cout << "before modifying: \n";
-                        std::cout << "------------------------------------------------------------------------------\n";
                         auto next = tree;
 
                         for(int i = 0; i < N; i++)
@@ -93,8 +97,11 @@ namespace Frenchie
                         document.remove_node("Child_2");
                         document.remove_node("Child_5");
 
+                        child_3.set_name("c_3");
                         child_3.set_value("v_3");
-                        child_4.set_value("SomeVeryLongLongLongLongLongLongLongString");
+
+                        child_4.set_name("Child_4_SomeVeryLongLongLongLongLongLongLongName");
+                        child_4.set_value("Value_4_SomeVeryLongLongLongLongLongLongLongString");
 
                         print_document(document);
 
@@ -102,9 +109,15 @@ namespace Frenchie
                         std::cout << "after next modifying: \n";
                         std::cout << "------------------------------------------------------------------------------\n";
 
-                        child_3.set_value("value_3");
+                        child_3.set_value("Value_3_SomeVeryLongLongLongLongLongLongLongString");
                         child_4.set_value("value_4");
 
+                        print_document(document);
+
+                        std::cout << "------------------------------------------------------------------------------\n";
+                        std::cout << "reset document: \n";
+                        std::cout << "------------------------------------------------------------------------------\n";
+                        document.reset();
                         print_document(document);
                     }
 

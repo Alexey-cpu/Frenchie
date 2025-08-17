@@ -16,50 +16,59 @@ namespace Frenchie
         {
             struct NodeInfo final
             {
-                char*           Name     = nullptr;
-                char*           Value    = nullptr;
-                NodeInfo*       Parent   = nullptr;
-                const Document* Document = nullptr;
-                size_t          Type     = NodeType::OBJECT;
-
-                NodeInfo* FirstChild  = nullptr;
-                NodeInfo* LastChild   = nullptr;
-                NodeInfo* NextSibling = nullptr;
-                NodeInfo* PrevSibling = nullptr;
+                char*           Name        = nullptr;
+                char*           Value       = nullptr;
+                NodeInfo*       Parent      = nullptr;
+                const Document* Document    = nullptr;
+                size_t          Type        = NodeType::OBJECT;
+                NodeInfo*       FirstChild  = nullptr;
+                NodeInfo*       LastChild   = nullptr;
+                NodeInfo*       NextSibling = nullptr;
+                NodeInfo*       PrevSibling = nullptr;
             };
 
-            inline char* copy(const char* _Source, const MemoryChunkAllocator<char>& PolymorphicAllocator)
+            class StringUtility
             {
-                size_t length  = _Source != nullptr ? strlen(_Source) : 0;
-                char*  buffer  = PolymorphicAllocator.allocate(length + 1);
-                buffer[length] = '\0';
+            public:
 
-                if(!length) 
+                static char* copy(
+                    const char*                       _Source, 
+                    const MemoryChunkAllocator<char>& _PolymorphicAllocator)
+                {
+                    size_t length  = _Source != nullptr ? strlen(_Source) : 0;
+                    char*  buffer  = _PolymorphicAllocator.allocate(length + 1);
+                    buffer[length] = '\0';
+
+                    if(!length) 
+                        return buffer;
+
+                    std::memcpy(buffer, _Source, length);
                     return buffer;
-
-                std::memcpy(buffer, _Source, length);
-                return buffer;
-            }
-
-            inline char* copy(const char* _Source, char* _Destination, const MemoryChunkAllocator<char>& PolymorphicAllocator)
-            {
-                size_t sourceLength = strlen(_Source);
-
-                AllocationInfo* info = reinterpret_cast<AllocationInfo*>(_Destination - sizeof(AllocationInfo));
-                size_t destinationLength = info->Amount - sizeof(AllocationInfo);
-
-                if(sourceLength <= destinationLength)
-                {
-                    std::memcpy(_Destination, _Source, sourceLength);
-                    _Destination[sourceLength] = '\0';
-                    return _Destination;
                 }
-                else
+
+                static char* copy(
+                    const char*                       _Source,
+                    char*                             _Destination, 
+                    const MemoryChunkAllocator<char>& _PolymorphicAllocator)
                 {
-                    PolymorphicAllocator.deallocate(_Destination);
-                    return copy(_Source, PolymorphicAllocator);
-                }
-            }
+                    size_t sourceLength = strlen(_Source);
+
+                    AllocationInfo* info = reinterpret_cast<AllocationInfo*>(_Destination - sizeof(AllocationInfo));
+                    size_t destinationLength = info->Amount - sizeof(AllocationInfo);
+
+                    if(sourceLength <= destinationLength)
+                    {
+                        std::memcpy(_Destination, _Source, sourceLength);
+                        _Destination[sourceLength] = '\0';
+                        return _Destination;
+                    }
+                    else
+                    {
+                        _PolymorphicAllocator.deallocate(_Destination);
+                        return StringUtility::copy(_Source, _PolymorphicAllocator);
+                    }
+                }  
+            };
 
             template<typename __type>
             bool is_number()
@@ -168,13 +177,13 @@ const char* Node::get_value() const
 void Node::set_name(const char* _Value)
 {
     if(is_valid())
-        m_Info->Name = copy(_Value, m_Info->Name, m_Info->Document->m_StringAllocator);
+        m_Info->Name = StringUtility::copy(_Value, m_Info->Name, m_Info->Document->m_StringAllocator);
 }
 
 void Node::set_value(const char* _Value)
 {
     if(is_valid())
-        m_Info->Value = copy(_Value, m_Info->Value, m_Info->Document->m_StringAllocator);
+        m_Info->Value = StringUtility::copy(_Value, m_Info->Value, m_Info->Document->m_StringAllocator);
 }
 
 const NodeIterator Node::begin() const
@@ -199,13 +208,12 @@ Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Typ
 
     const Document* document = m_Info->Document;
 
-    NodeInfo* node   = document->m_NodeAllocator.allocate(1);
-    node->Name       = copy(_Name, document->m_StringAllocator);
-    node->Value      = copy(_Value, document->m_StringAllocator);
-    node->Parent     = m_Info;
-    node->Document   = document;
-    node->Type       = _Type;
-    
+    NodeInfo* node    = document->m_NodeAllocator.allocate(1);
+    node->Name        = StringUtility::copy(_Name, document->m_StringAllocator);
+    node->Value       = StringUtility::copy(_Value, document->m_StringAllocator);
+    node->Parent      = m_Info;
+    node->Document    = document;
+    node->Type        = _Type;
     node->FirstChild  = nullptr;
     node->LastChild   = nullptr;
     node->PrevSibling = nullptr;
@@ -247,7 +255,7 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
     if(!toBeRemoved.is_valid()) 
         return;
 
-    //recursivelly deallocate children
+    // recursive deallocate
     auto document = m_Info->Document;
     Helpers::Stack<Node> stack;
     stack.push(toBeRemoved);
@@ -260,18 +268,12 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
         for(auto&& child : top) 
             stack.push(child);
         
-        // deallocate
         document->m_NodeAllocator.deallocate(top.m_Info);
         document->m_StringAllocator.deallocate(top.m_Info->Name);
         document->m_StringAllocator.deallocate(top.m_Info->Value);
     }
 
-    // deallocate the removed node
-    document->m_NodeAllocator.deallocate(toBeRemoved.m_Info);
-    document->m_StringAllocator.deallocate(toBeRemoved.m_Info->Name);
-    document->m_StringAllocator.deallocate(toBeRemoved.m_Info->Value);
-
-    // update links
+    // update links (toBeRemoved.m_Info still exists as it resides inside a memory pool)
     auto info = toBeRemoved.m_Info;
 
     if(info->PrevSibling != nullptr)
@@ -284,36 +286,8 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
             info->Parent->FirstChild = info->NextSibling;
     }
 
-    if(info->NextSibling != nullptr)
-    {
+    if(info->NextSibling != nullptr) 
         info->NextSibling->PrevSibling = info->PrevSibling;
-    }
-}
-
-void Node::remove_node(const char* _Name) const
-{
-    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;});
-}
-
-Node Node::find_node(std::function<bool(const Node& _Node)> _Predicate) const
-{
-    if(_Predicate == nullptr) 
-        return Node();
-
-    Node found;
-
-    for(auto&& child : *this)
-    {
-        if(_Predicate(child)) 
-            found = child;
-    }
-
-    return found;
-}
-
-Node Node::find_node(const char* _Name) const
-{
-    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;});
 }
 
 #define __support_scalar__(__type)\
@@ -409,16 +383,42 @@ __support_set__(nullptr_t)
 #undef __support_list__
 #undef __support_set__
 
+void Node::remove_node(const char* _Name) const
+{
+    remove_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;});
+}
+
+Node Node::find_node(std::function<bool(const Node& _Node)> _Predicate) const
+{
+    if(_Predicate == nullptr) 
+        return Node();
+
+    Node found;
+
+    for(auto&& child : *this)
+    {
+        if(_Predicate(child)) 
+            found = child;
+    }
+
+    return found;
+}
+
+Node Node::find_node(const char* _Name) const
+{
+    return find_node([_Name](const Node& _Node)->bool{return std::strcmp(_Node.get_name(), _Name) == 0;});
+}
+
 // Document
 Document::Document()
 {
-    m_Info             = m_NodeAllocator.allocate(1);
-    m_Info->Name       = "";
-    m_Info->Value      = "";
-    m_Info->Parent     = nullptr;
-    m_Info->Document   = this;
-    m_Info->Type       = NodeType::OBJECT;
-    
+    // create new root node
+    m_Info              = m_NodeAllocator.allocate(1);
+    m_Info->Name        = StringUtility::copy("", m_StringAllocator);
+    m_Info->Value       = StringUtility::copy("", m_StringAllocator);
+    m_Info->Parent      = nullptr;
+    m_Info->Document    = this;
+    m_Info->Type        = NodeType::OBJECT;
     m_Info->FirstChild  = nullptr;
     m_Info->LastChild   = nullptr;
     m_Info->PrevSibling = nullptr;
@@ -445,13 +445,19 @@ size_t Document::get_busy_memory_amount() const
 
 void Document::reset()
 {
-    // clear list
+    // clear memory
+    m_NodeAllocator.release();
+    m_StringAllocator.release();
+    
+    // create new root node
+    m_Info              = m_NodeAllocator.allocate(1);
+    m_Info->Name        = StringUtility::copy("", m_StringAllocator);
+    m_Info->Value       = StringUtility::copy("", m_StringAllocator);
+    m_Info->Parent      = nullptr;
+    m_Info->Document    = this;
+    m_Info->Type        = NodeType::OBJECT;
     m_Info->FirstChild  = nullptr;
     m_Info->LastChild   = nullptr;
     m_Info->PrevSibling = nullptr;
     m_Info->NextSibling = nullptr;
-
-    // clear memory
-    m_NodeAllocator.release();
-    m_StringAllocator.release();
 }
