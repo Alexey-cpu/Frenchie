@@ -26,8 +26,8 @@ include("tools/glfw.cmake")
 include("tools/glm.cmake")
 include("tools/spdlog.cmake")
 include("tools/rapidjson.cmake")
-
-add_subdirectory("tools/pugixml/")
+include("tools/ryml.cmake")
+include("tools/pugixml.cmake")
 
 #--------------------------------------------------------------
 # add executable
@@ -61,7 +61,14 @@ add_executable(
     ${HEADERS} 
     ${SOURCES}
     )
-target_link_libraries(OpenGL glfw glm::glm fmt::fmt spdlog::spdlog pugixml::pugixml)
+target_link_libraries(
+    OpenGL 
+    glfw
+    fmt::fmt
+    glm::glm
+    ryml::ryml
+    spdlog::spdlog
+    pugixml::pugixml)
 
 target_include_directories(
     OpenGL 

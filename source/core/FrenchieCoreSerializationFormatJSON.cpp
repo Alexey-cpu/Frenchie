@@ -121,8 +121,6 @@ namespace Frenchie
                 template<bool Compact>
                 static bool write(Document* _Document, const std::filesystem::path& _Path)
                 {
-                    //return true;
-
                     // check document pointer
                     if(_Document == nullptr) 
                         return false;
@@ -131,15 +129,13 @@ namespace Frenchie
                     if(!std::filesystem::exists(_Path.parent_path())) 
                         return false;
 
-                    rapidjson::Document json;
-                    //auto& root = json.SetObject();
-
-                    JSON::write_object(*_Document, json.SetObject(), json);
-
                     FILE* file = Helpers::open_file(_Path.string(), "wb");
  
                     if(file == nullptr) 
                         return false;
+
+                    rapidjson::Document json;
+                    JSON::write_object(*_Document, json.SetObject(), json);
 
                     char writeBuffer[65536];
                     rapidjson::FileWriteStream ofstream(file, writeBuffer, sizeof(writeBuffer));
@@ -161,6 +157,8 @@ namespace Frenchie
                     return true;
                 }
 
+            protected:
+
                 static void write_array(const Node& _Node, rapidjson::Value& _Parent, rapidjson::Document& _JSON)
                 {
                     rapidjson::Value array(rapidjson::kArrayType);
@@ -170,21 +168,22 @@ namespace Frenchie
                         // write object
                         if(data.get_type() == NodeType::BOOL)
                         {
-                            rapidjson::Value value;
-                            value.SetBool(Helpers::from_string<bool>(data.get_value()));
-                            array.PushBack(value, _JSON.GetAllocator());
+                            array.PushBack(
+                                rapidjson::Value().Set<bool>(Helpers::from_string<bool>(data.get_value())), 
+                                _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::NUMBER)
                         {
-                            rapidjson::Value value;
-                            value.SetDouble(Helpers::from_string<double>(data.get_value()));
-                            array.PushBack(value, _JSON.GetAllocator());
+                            array.PushBack(
+                                rapidjson::Value().Set<double>(Helpers::from_string<double>(data.get_value())), 
+                                _JSON.GetAllocator());
                         }
-                        else if(data.get_type() == NodeType::STRING)
+                        else if(data.get_type() == NodeType::STRING || 
+                                data.get_type() == NodeType::ATTRIBUTE)
                         {
-                            rapidjson::Value value;
-                            value.SetString(data.get_value(), (int)strlen(data.get_value()));
-                            array.PushBack(value, _JSON.GetAllocator());
+                            array.PushBack(
+                                rapidjson::Value().SetString(data.get_value(), (int)strlen(data.get_value())), 
+                                _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::ARRAY)
                         {
@@ -208,9 +207,10 @@ namespace Frenchie
                     
                     if(_Parent.IsObject())
                     {
-                        rapidjson::Value name;
-                        name.SetString(_Node.get_name(), (int)strlen(_Node.get_name()));
-                        _Parent.AddMember(name, array, _JSON.GetAllocator());
+                        _Parent.AddMember(
+                            rapidjson::Value().SetString(_Node.get_name(), (int)strlen(_Node.get_name())), 
+                            array, 
+                            _JSON.GetAllocator());
                     }
                     else
                     {
@@ -257,31 +257,26 @@ namespace Frenchie
 
                             // write object
                             if(data.get_type() == NodeType::BOOL)
-                            {
-                                rapidjson::Value name;
-                                name.SetString(data.get_name(), (int)strlen(data.get_name()));
-
-                                rapidjson::Value value;
-                                value.SetBool(Helpers::from_string<bool>(data.get_value()));
-                                parent.AddMember(name, value, _JSON.GetAllocator());
+                            {                                
+                                parent.AddMember(
+                                    rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
+                                    rapidjson::Value().Set<bool>(Helpers::from_string<bool>(data.get_value())), 
+                                    _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::NUMBER)
                             {
-                                rapidjson::Value name;
-                                name.SetString(data.get_name(), (int)strlen(data.get_name()));
-
-                                rapidjson::Value value;
-                                value.SetDouble(Helpers::from_string<double>(data.get_value()));
-                                parent.AddMember(name, value, _JSON.GetAllocator());
+                                parent.AddMember(
+                                    rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
+                                    rapidjson::Value().Set<double>(Helpers::from_string<double>(data.get_value())), 
+                                    _JSON.GetAllocator());
                             }
-                            else if(data.get_type() == NodeType::STRING)
+                            else if(data.get_type() == NodeType::STRING || 
+                                    data.get_type() == NodeType::ATTRIBUTE)
                             {
-                                rapidjson::Value name;
-                                name.SetString(data.get_name(), (int)strlen(data.get_name()));
-
-                                rapidjson::Value value;
-                                value.SetString(data.get_value(), (int)strlen(data.get_value()));
-                                parent.AddMember(name, value, _JSON.GetAllocator());
+                                parent.AddMember(
+                                    rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
+                                    rapidjson::Value().SetString(data.get_value(), (int)strlen(data.get_value())), 
+                                    _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::ARRAY)
                             {
@@ -289,12 +284,43 @@ namespace Frenchie
                             }
                             else if(data.get_type() == NodeType::OBJECT)
                             {
-                                rapidjson::Value name;
-                                name.SetString(data.get_name(), (int)strlen(data.get_name()));
-                                parent.AddMember(name, rapidjson::Value(rapidjson::kObjectType), _JSON.GetAllocator());
+                                if(data.has_value())
+                                {
+                                    if(!data.empty())
+                                    {
+                                        rapidjson::Value object(rapidjson::kObjectType);
+                                        object.AddMember(
+                                            rapidjson::Value(rapidjson::kStringType).SetString("Value"), 
+                                            rapidjson::Value(rapidjson::kStringType).SetString(data.get_value(), (int)strlen(data.get_value())),
+                                            _JSON.GetAllocator()
+                                        );
 
-                                for(auto&& child : data) 
-                                    stack.push({std::prev(parent.MemberEnd()), child});
+                                        parent.AddMember(
+                                            rapidjson::Value(rapidjson::kStringType).SetString(data.get_name(), (int)strlen(data.get_name())), 
+                                            object, 
+                                            _JSON.GetAllocator());
+
+                                        for(auto&& child : data) 
+                                            stack.push({std::prev(parent.MemberEnd()), child});
+                                    }
+                                    else
+                                    {
+                                        parent.AddMember(
+                                            rapidjson::Value(rapidjson::kStringType).SetString(data.get_name(), (int)strlen(data.get_name())), 
+                                            rapidjson::Value(rapidjson::kStringType).SetString(data.get_value(), (int)strlen(data.get_value())),
+                                            _JSON.GetAllocator());
+                                    }
+                                }
+                                else
+                                {                                    
+                                    parent.AddMember(
+                                        rapidjson::Value(rapidjson::kStringType).SetString(data.get_name(), (int)strlen(data.get_name())), 
+                                        rapidjson::Value(rapidjson::kObjectType), 
+                                        _JSON.GetAllocator());
+
+                                    for(auto&& child : data) 
+                                        stack.push({std::prev(parent.MemberEnd()), child});
+                                }
                             }
                         }
                     }
