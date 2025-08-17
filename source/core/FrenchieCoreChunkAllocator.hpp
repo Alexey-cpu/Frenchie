@@ -130,6 +130,7 @@ namespace Frenchie
                 auto info  = MemoryChunk::release(_Pointer);
                 auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
 
+                // check that this is the first chunk
                 if(chunk == nullptr || 
                     (chunk->Prev == nullptr && chunk->Next == nullptr) || !chunk->is_free()) 
                 {
@@ -164,10 +165,19 @@ namespace Frenchie
             void release()
             {
                 if(m_Tail->Next == nullptr) 
-                    return;
+                {
+                    // clean up tail
+                    m_Tail->Prev = nullptr;
+                    m_Tail->Next = nullptr;
+                    m_Head       = m_Tail;
+                    m_Tail->Head = 0;
+                    m_Tail->Free = m_Tail->Size;
 
-                // remove all chunks
-                auto next = m_Tail;
+                    return;
+                }
+
+                // remove all chunks besides the first one !!!
+                auto next = m_Tail->Next;
 
                 while (next)
                 {
@@ -175,6 +185,13 @@ namespace Frenchie
                     next = next->Next;
                     delete current;
                 }
+
+                // clean up tail
+                m_Tail->Prev = nullptr;
+                m_Tail->Next = nullptr;
+                m_Head       = m_Tail;
+                m_Tail->Head = 0;
+                m_Tail->Free = m_Tail->Size;
             }
 
             size_t get_total_memory_size() const
@@ -222,7 +239,7 @@ namespace Frenchie
                 return freeMemory;
             }
 
-        private:
+        //private:
             
             mutable  size_t       m_ChunkSize = 1024;
             mutable  MemoryChunk* m_Head      = nullptr;
