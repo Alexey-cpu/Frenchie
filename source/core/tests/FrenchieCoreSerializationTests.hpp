@@ -34,7 +34,7 @@ namespace Frenchie
                             auto top = stack.top();
                             stack.pop();
 
-                            std::cout << top.Padding <<  top.Node.get_name() << "\t" <<  top.Node.get_value() << "\n";
+                            std::cout << top.Padding <<  top.Node.get_name() << "\t" <<  top.Node.get_value() << "\t" <<  top.Node.get_type() << "\n";
 
                             for (auto&& child : top.Node) 
                                 stack.push({child, top.Padding + "\t"});

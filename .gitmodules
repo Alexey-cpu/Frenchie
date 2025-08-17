@@ -20,3 +20,6 @@
 [submodule "tools/rapidjson"]
 	path = tools/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
+[submodule "tools/ryml"]
+	path = tools/ryml
+	url = https://github.com/biojppm/rapidyaml.git
