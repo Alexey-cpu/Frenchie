@@ -47,13 +47,13 @@ namespace Frenchie
 
             enum NodeType
             {
-                ATTRIBUTE,
-                NULLPTR,
-                OBJECT,
-                STRING,
-                NUMBER,
-                ARRAY,
-                BOOL
+                ATTRIBUTE = 0,
+                NULLPTR   = 1,
+                OBJECT    = 2,
+                STRING    = 3,
+                NUMBER    = 4,
+                ARRAY     = 5,
+                BOOL      = 6
             };
 
             class NodeIterator final

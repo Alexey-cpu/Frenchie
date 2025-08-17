@@ -14,7 +14,8 @@
 
 #include <FrenchieImGuiDemoLayer.hpp>
 
-#include <FrenchieCoreSerializationXMLFormat.hpp>
+#include <FrenchieCoreSerializationFormatXML.hpp>
+#include <FrenchieCoreSerializationFormatJSON.hpp>
 
 #include <FrenchieCoreSerializationTests.hpp>
 
@@ -56,149 +57,237 @@ public:
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/filewritestream.h"
+#include <rapidjson/writer.h>
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-// Memory pool test
-int main(int, char**)
-{
-    // 4-element allocator
-    const int CunkSize   = 4;
-    const int CunksCount = 10000;
-
-    Frenchie::Core::MemoryChunkAllocator<int, CunkSize> allocator;
-
-    // allocate 4 element
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-
-    // allocate 4 element
-    auto p0 = allocator.allocate(1);
-    auto p1 = allocator.allocate(1);
-    auto p2 = allocator.allocate(1);
-    auto p3 = allocator.allocate(1);
-
-    // allocate 4 element
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-
-    // allocate 4 element
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-
-    // allocate 4 element
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-    allocator.allocate(1);
-
-    allocator.deallocate(p0);
-    allocator.deallocate(p1);
-    allocator.deallocate(p2);
-    allocator.deallocate(p3);
-
-    return 0;
-}
-
-// Serialiation tool test
 // int main(int, char**)
 // {
-//     Document document;
+//     auto start = Helpers::tic();
 
-//     auto root    = document.append_node("Name", "Root");
-//     auto scalars = root.append_node("Scalars", "");
-//     auto vectors = root.append_node("Vectors", "");
-//     auto lists   = root.append_node("Lists", "");
-//     auto sets    = root.append_node("Sets", "");
+//     //--------------------------------------------------------------------------------
+//     // load a file into a buffer
+//     //--------------------------------------------------------------------------------
+//     char* path = "C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml";
+//     //char* path = "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml";
 
-//     #define __test_append_value__(__node, __type, __value) __node.append_value_node<__type>("Value", __value);
-//     #define __test_append_vector__(__node, __type, __value) __node.append_value_node<std::vector<__type>>("Value", std::vector<__type>({__value, __value, __value}));
-//     #define __test_append_list__(__node, __type, __value) __node.append_value_node<std::list<__type>>("Value", std::list<__type>({__value, __value, __value}));
-//     #define __test_append_set__(__node, __type, __value) __node.append_value_node<std::set<__type>>("Value", std::set<__type>({__value, __value, __value}));
+//     std::ifstream t(path);
+//     //std::ifstream t("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml");
+//     t.seekg(0, std::ios::end);
+//     size_t size = t.tellg();
+//     std::string buffer(size, ' ');
+//     t.seekg(0);
+//     t.read(&buffer[0], size); 
 
-//     __test_append_value__(scalars, bool, false)
-//     __test_append_value__(scalars, float, 1.5f)
-//     __test_append_value__(scalars, double, 1.12313)
-//     __test_append_value__(scalars, int, 1000)
-//     __test_append_value__(scalars, unsigned int, 2000)
-//     __test_append_value__(scalars, long, 2000)
-//     __test_append_value__(scalars, unsigned long, 2000)
-//     __test_append_value__(scalars, long long, 2000)
-//     __test_append_value__(scalars, unsigned long long, 2000)
+//     //--------------------------------------------------------------------------------
+//     // parse buffer
+//     //--------------------------------------------------------------------------------    
+//     // XML tree
+//     char* buff = buffer.data();
 
-//     __test_append_vector__(vectors, bool, false)
-//     __test_append_vector__(vectors, float, 1.5f)
-//     __test_append_vector__(vectors, double, 1.12313)
-//     __test_append_vector__(vectors, int, 1000)
-//     __test_append_vector__(vectors, unsigned int, 2000)
-//     __test_append_vector__(vectors, long, 2000)
-//     __test_append_vector__(vectors, unsigned long, 2000)
-//     __test_append_vector__(vectors, long long, 2000)
-//     __test_append_vector__(vectors, unsigned long long, 2000)
+//     // stack
+//     Helpers::Stack<char*> tails;
 
-//     __test_append_list__(lists, bool, false)
-//     __test_append_list__(lists, float, 1.5f)
-//     __test_append_list__(lists, double, 1.12313)
-//     __test_append_list__(lists, int, 1000)
-//     __test_append_list__(lists, unsigned int, 2000)
-//     __test_append_list__(lists, long, 2000)
-//     __test_append_list__(lists, unsigned long, 2000)
-//     __test_append_list__(lists, long long, 2000)
-//     __test_append_list__(lists, unsigned long long, 2000)
+//     // Allocator
+//     MemoryChunkAllocator<char> allocator(4096);
 
-//     __test_append_set__(sets, bool, false)
-//     __test_append_set__(sets, float, 1.5f)
-//     __test_append_set__(sets, double, 1.12313)
-//     __test_append_set__(sets, int, 1000)
-//     __test_append_set__(sets, unsigned int, 2000)
-//     __test_append_set__(sets, long, 2000)
-//     __test_append_set__(sets, unsigned long, 2000)
-//     __test_append_set__(sets, long long, 2000)
-//     __test_append_set__(sets, unsigned long long, 2000)
+//     // constants
+//     const char END_OF_FILE               = '\0';
+//     const char XML_TAG_START             =  '<';
+//     const char XML_TAG_FINISH            =  '>';
+//     const char XML_TAG_POP               =  '/';
+//     const char XML_ATTRIBUTE_SEPARATOR   =  ' ';
+//     const char XML_ATTRIBUTE_VALUE_FRAME =  '"';
 
-//     #undef __append_value__
-//     #undef __append_vector__
-//     #undef __test_append_set__
-//     #undef __test_append_list__
-        
-//     for(auto&& node : scalars) 
-//         std::cout << node.name() << "\t" << node.value() << "\n";
-
-//     for(auto&& vector : vectors) 
+//     // walk a tree
+//     while(*buff != END_OF_FILE)
 //     {
-//         std::cout << vector.name() << "\t" << vector.value() << "\n";
-//         for(auto&& item : vector) 
-//             std::cout << item.name() << "\t" << item.value() << "\n";
-//     }
+//         if(*buff == XML_TAG_START)
+//         {
+//             buff++; // next
 
-//     for(auto&& vector : lists) 
-//     {
-//         std::cout << vector.name() << "\t" << vector.value() << "\n";
-//         for(auto&& item : vector) 
-//             std::cout << item.name() << "\t" << item.value() << "\n";
-//     }
+//             if(*buff == XML_TAG_POP)
+//             {
+//                 tails.pop();
+//             }
+//             else
+//             {
+//                 // push node
+//                 tails.push(buff);
 
-//     for(auto&& vector : sets) 
-//     {
-//         std::cout << vector.name() << "\t" << vector.value() << "\n";
-//         for(auto&& item : vector) 
-//             std::cout << item.name() << "\t" << item.value() << "\n";
-//     }
+//                 // read tag
+//                 while(*buff != XML_TAG_FINISH && *buff != XML_TAG_POP) buff++;
 
-//     document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
-//     document.read<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
-//     document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test_copy.xml");
+//                 // parse tag
+//                 // char* tail = tails.top();
+//                 // allocator.allocate(buff - tail);
+
+//                 //---------------------------------------------------------------------------------------
+//                 // print tag
+//                 //---------------------------------------------------------------------------------------
+//                 if(buffer.size() < 4096)
+//                 {
+//                     char* tail = tails.top();
+
+//                     while(tail != buff)
+//                     {
+//                         std::cout << *tail;
+//                         tail++;
+//                     }
+
+//                     std::cout << "\n";
+//                 }
+//                 //---------------------------------------------------------------------------------------
+//             }
+//         }
+
+//         buff++; // next
+//     }
+    
+//     std::cout << "elapsed " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+//     // pugi benchmark
+//     start = Helpers::tic();
+
+//     pugi::xml_document doc;
+//     doc.load_file(path);
+
+//     std::cout << "pugi elapsed " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
 
 //     return 0;
 // }
+
+// int main(int, char**)
+// {
+//     Tests::APITests apiTest("");
+//     apiTest.run();
+//     return 0;
+// }
+
+//Serialiation tool test
+int main(int, char**)
+{
+    //---------------------------------------------------------------------------------------------------------
+    // Benchmarking
+    //---------------------------------------------------------------------------------------------------------
+
+    Document document;
+
+    auto start = Helpers::tic();
+
+    //document.read<XMLReader>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml");
+    //document.read<XMLReader>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml");
+
+    document.read<JSONReader>("C:/SDK/Qt_Projects/OpenGL/logs/RapidJSON.json");
+
+    Serialization::Tests::print_document(document);
+
+    std::cout << "file read has taken " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    start = Helpers::tic();
+
+    //document.write<XMLBeautifulWriter>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML_Copy.xml");
+    //document.write<JSONBeautifulWriter>("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML_Copy.json");
+    //document.write<JSONBeautifulWriter>("C:/SDK/Qt_Projects/OpenGL/logs/TestFile.json");
+    document.write<JSONBeautifulWriter>("C:/SDK/Qt_Projects/OpenGL/logs/RapidJSON_Copy.json");
+
+    std::cout << "file write has taken " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+    //--------------------------------------------------------------------------------------------------------------------
+    // API
+    //--------------------------------------------------------------------------------------------------------------------
+
+    // Document document;
+
+    // auto root    = document.append_node("Name", "Root");
+    // auto scalars = root.append_node("Scalars", "");
+    // auto vectors = root.append_node("Vectors", "");
+    // auto lists   = root.append_node("Lists", "");
+    // auto sets    = root.append_node("Sets", "");
+
+    // #define __test_append_value__(__node, __type, __value) __node.append_node<__type>("Value", __value);
+    // #define __test_append_vector__(__node, __type, __value) __node.append_node<std::vector<__type>>("Value", std::vector<__type>({__value, __value, __value}));
+    // #define __test_append_list__(__node, __type, __value) __node.append_node<std::list<__type>>("Value", std::list<__type>({__value, __value, __value}));
+    // #define __test_append_set__(__node, __type, __value) __node.append_node<std::set<__type>>("Value", std::set<__type>({__value, __value, __value}));
+
+    // __test_append_value__(scalars, bool, false)
+    // __test_append_value__(scalars, float, 1.5f)
+    // __test_append_value__(scalars, double, 1.12313)
+    // __test_append_value__(scalars, int, 1000)
+    // __test_append_value__(scalars, unsigned int, 2000)
+    // __test_append_value__(scalars, long, 2000)
+    // __test_append_value__(scalars, unsigned long, 2000)
+    // __test_append_value__(scalars, long long, 2000)
+    // __test_append_value__(scalars, unsigned long long, 2000)
+
+    // __test_append_vector__(vectors, bool, false)
+    // __test_append_vector__(vectors, float, 1.5f)
+    // __test_append_vector__(vectors, double, 1.12313)
+    // __test_append_vector__(vectors, int, 1000)
+    // __test_append_vector__(vectors, unsigned int, 2000)
+    // __test_append_vector__(vectors, long, 2000)
+    // __test_append_vector__(vectors, unsigned long, 2000)
+    // __test_append_vector__(vectors, long long, 2000)
+    // __test_append_vector__(vectors, unsigned long long, 2000)
+
+    // __test_append_list__(lists, bool, false)
+    // __test_append_list__(lists, float, 1.5f)
+    // __test_append_list__(lists, double, 1.12313)
+    // __test_append_list__(lists, int, 1000)
+    // __test_append_list__(lists, unsigned int, 2000)
+    // __test_append_list__(lists, long, 2000)
+    // __test_append_list__(lists, unsigned long, 2000)
+    // __test_append_list__(lists, long long, 2000)
+    // __test_append_list__(lists, unsigned long long, 2000)
+
+    // __test_append_set__(sets, bool, false)
+    // __test_append_set__(sets, float, 1.5f)
+    // __test_append_set__(sets, double, 1.12313)
+    // __test_append_set__(sets, int, 1000)
+    // __test_append_set__(sets, unsigned int, 2000)
+    // __test_append_set__(sets, long, 2000)
+    // __test_append_set__(sets, unsigned long, 2000)
+    // __test_append_set__(sets, long long, 2000)
+    // __test_append_set__(sets, unsigned long long, 2000)
+
+    // #undef __append_value__
+    // #undef __append_vector__
+    // #undef __test_append_set__
+    // #undef __test_append_list__
+        
+    // for(auto&& node : scalars) 
+    //     std::cout << node.name() << "\t" << node.value() << "\n";
+
+    // for(auto&& vector : vectors) 
+    // {
+    //     std::cout << vector.name() << "\t" << vector.value() << "\n";
+    //     for(auto&& item : vector) 
+    //         std::cout << item.name() << "\t" << item.value() << "\n";
+    // }
+
+    // for(auto&& vector : lists) 
+    // {
+    //     std::cout << vector.name() << "\t" << vector.value() << "\n";
+    //     for(auto&& item : vector) 
+    //         std::cout << item.name() << "\t" << item.value() << "\n";
+    // }
+
+    // for(auto&& vector : sets) 
+    // {
+    //     std::cout << vector.name() << "\t" << vector.value() << "\n";
+    //     for(auto&& item : vector) 
+    //         std::cout << item.name() << "\t" << item.value() << "\n";
+    // }
+
+    // document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
+    // document.read<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test.xml");
+    // document.write<Format<XML_BEAUTIFUL>>("C:/SDK/Qt_Projects/OpenGL/logs/values_node_test_copy.xml");
+
+    return 0;
+}
 
 // int main(int, char**)
 // {
