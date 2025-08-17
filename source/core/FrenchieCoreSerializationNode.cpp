@@ -43,12 +43,15 @@ namespace Frenchie
 
             inline char* copy(const char* _Source, char* _Destination, const MemoryChunkAllocator<char>& PolymorphicAllocator)
             {
-                size_t length  = strlen(_Source);
+                size_t sourceLength = strlen(_Source);
 
-                if(length <= strlen(_Destination))
+                AllocationInfo* info = reinterpret_cast<AllocationInfo*>(_Destination - sizeof(AllocationInfo));
+                size_t destinationLength = info->Amount - sizeof(AllocationInfo);
+
+                if(sourceLength <= destinationLength)
                 {
-                    std::memcpy(_Destination, _Source, length);
-                    _Destination[length] = '\0';
+                    std::memcpy(_Destination, _Source, sourceLength);
+                    _Destination[sourceLength] = '\0';
                     return _Destination;
                 }
                 else
@@ -227,7 +230,6 @@ Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Typ
             head->NextSibling = node;
             node->PrevSibling = head;
             node->NextSibling = nullptr;
-
             m_Info->LastChild = node;
         }
     }
@@ -452,8 +454,4 @@ void Document::reset()
     // clear memory
     m_NodeAllocator.release();
     m_StringAllocator.release();
-
-    // reset allocators
-    // m_StringAllocator(MemoryChunkAllocator<char>(std::max<size_t>(_StringBufferSize, 128))),
-    // m_NodeAllocator(MemoryChunkAllocator<NodeInfo>(std::max<size_t>(_NodesBufferSize, 8)))
 }

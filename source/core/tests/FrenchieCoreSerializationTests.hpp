@@ -93,10 +93,17 @@ namespace Frenchie
                         document.remove_node("Child_2");
                         document.remove_node("Child_5");
 
-                        child_1.set_value("v_1");
-                        child_2.set_value("v_2");
                         child_3.set_value("v_3");
                         child_4.set_value("SomeVeryLongLongLongLongLongLongLongString");
+
+                        print_document(document);
+
+                        std::cout << "------------------------------------------------------------------------------\n";
+                        std::cout << "after next modifying: \n";
+                        std::cout << "------------------------------------------------------------------------------\n";
+
+                        child_3.set_value("value_3");
+                        child_4.set_value("value_4");
 
                         print_document(document);
                     }
