@@ -153,6 +153,7 @@ namespace Frenchie
                         document.remove_node("Child_1");
                         document.remove_node("Child_2");
                         document.remove_node("Child_5");
+                        document.remove_node("Root");
 
                         child_3.set_name("c_3");
                         child_3.set_value("v_3");
