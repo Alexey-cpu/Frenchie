@@ -211,8 +211,6 @@ namespace Frenchie
 
                     YAML::write_object(*_Document, root);
 
-                    std::cout << "YAML::write_object() has taken " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << "ms \n";
-
                     // open YAML file
                     FILE* file = Helpers::open_file(_Path.string(), "wb");
 
