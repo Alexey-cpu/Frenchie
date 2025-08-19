@@ -10,9 +10,14 @@ std::string Layer::get_name() const
     return m_Name;
 }
 
-bool Layer::is_closed()
+bool Layer::is_closed() const
 {
     return !m_Opened;
+}
+
+bool Layer::is_hidden() const
+{
+    return !m_Shown;
 }
 
 void Layer::close()

@@ -14,6 +14,8 @@ namespace Frenchie
             {
             public:
 
+                int width_left = 0;
+
                 // nested types
                 struct Message
                 {
@@ -21,6 +23,7 @@ namespace Frenchie
                     int                                   Level;
                     std::string                           Message;
                     std::string                           LoggerName;
+                    bool                                  Selected  = false;
                 };
 
                 struct Filter
@@ -47,17 +50,8 @@ namespace Frenchie
 
                 // info
                 mutable std::vector<Message> m_Messages            = std::vector<Message>();
-                
-                mutable std::vector<Filter>  m_Filters = 
-                {
-                    {"trace",    false},
-                    {"debug",    false},
-                    {"info",     true},
-                    {"warn",     true},
-                    {"error",    true},
-                    {"critical", true}
-                };
-
+                mutable std::vector<Filter>  m_MessageTypeFilter   = std::vector<Filter>();
+                mutable char                 m_MessageContentFilter[1024]{};
                 mutable size_t               m_MaximumMessageCount = 100;
 
                 // friends
