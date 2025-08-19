@@ -22,8 +22,6 @@ namespace Frenchie
             virtual void frame_update() override;
             virtual void frame_finish() override;
             virtual void finish() override;
-            virtual void close() override;
-            virtual bool is_closed() override;
 
         protected:
             std::shared_ptr<Scene3D> m_Scene = nullptr;

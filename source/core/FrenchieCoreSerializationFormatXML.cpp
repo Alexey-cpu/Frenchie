@@ -1,5 +1,101 @@
 #include <FrenchieCoreSerializationFormatXML.hpp>
 
+// int main(int, char**)
+// {
+//     auto start = Helpers::tic();
+
+//     //--------------------------------------------------------------------------------
+//     // load a file into a buffer
+//     //--------------------------------------------------------------------------------
+//     char* path = "C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml";
+//     //char* path = "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml";
+
+//     std::ifstream t(path);
+//     //std::ifstream t("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml");
+//     t.seekg(0, std::ios::end);
+//     size_t size = t.tellg();
+//     std::string buffer(size, ' ');
+//     t.seekg(0);
+//     t.read(&buffer[0], size); 
+
+//     //--------------------------------------------------------------------------------
+//     // parse buffer
+//     //--------------------------------------------------------------------------------    
+//     // XML tree
+//     char* buff = buffer.data();
+
+//     // stack
+//     Helpers::Stack<char*> tails;
+
+//     // Allocator
+//     MemoryChunkAllocator<char> allocator(4096);
+
+//     // constants
+//     const char END_OF_FILE               = '\0';
+//     const char XML_TAG_START             =  '<';
+//     const char XML_TAG_FINISH            =  '>';
+//     const char XML_TAG_POP               =  '/';
+//     const char XML_ATTRIBUTE_SEPARATOR   =  ' ';
+//     const char XML_ATTRIBUTE_VALUE_FRAME =  '"';
+
+//     // walk a tree
+//     while(*buff != END_OF_FILE)
+//     {
+//         if(*buff == XML_TAG_START)
+//         {
+//             buff++; // next
+
+//             if(*buff == XML_TAG_POP)
+//             {
+//                 tails.pop();
+//             }
+//             else
+//             {
+//                 // push node
+//                 tails.push(buff);
+
+//                 // read tag
+//                 while(*buff != XML_TAG_FINISH && *buff != XML_TAG_POP) buff++;
+
+//                 // parse tag
+//                 // char* tail = tails.top();
+//                 // allocator.allocate(buff - tail);
+
+//                 //---------------------------------------------------------------------------------------
+//                 // print tag
+//                 //---------------------------------------------------------------------------------------
+//                 if(buffer.size() < 4096)
+//                 {
+//                     char* tail = tails.top();
+
+//                     while(tail != buff)
+//                     {
+//                         std::cout << *tail;
+//                         tail++;
+//                     }
+
+//                     std::cout << "\n";
+//                 }
+//                 //---------------------------------------------------------------------------------------
+//             }
+//         }
+
+//         buff++; // next
+//     }
+    
+//     std::cout << "elapsed " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+//     // pugi benchmark
+//     start = Helpers::tic();
+
+//     pugi::xml_document doc;
+//     doc.load_file(path);
+
+//     std::cout << "pugi elapsed " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+
+//     return 0;
+// }
+
 namespace Frenchie
 {
     namespace Core
