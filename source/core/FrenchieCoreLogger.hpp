@@ -36,6 +36,27 @@ namespace Frenchie
                     return sink;
                 }
 
+                void unregister_sink(std::function<bool(spdlog::sink_ptr)> _Predidate)
+                {
+                    auto& vec = get_logger()->sinks();
+
+                    vec.erase(std::remove_if(vec.begin(), vec.end(), _Predidate), vec.end());
+                }
+
+                // spdlog::sink_ptr find_sink(std::function<bool(spdlog::sink_ptr)> _Predidate)
+                // {
+                //     if(_Predidate == nullptr) 
+                //         return nullptr;
+
+                //     for(auto&& sink : get_logger()->sinks())
+                //     {
+                //         if(_Predidate(sink)) 
+                //             return sink;
+                //     }
+
+                //     return nullptr;
+                // }
+
                 void set_level(spdlog::level::level_enum _Level);
                 void trace(const std::string _Message);
                 void info(const std::string _Message);

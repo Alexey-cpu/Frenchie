@@ -110,13 +110,3 @@ void InspectorView::finish()
 {
     Layer::finish();
 }
-
-void InspectorView::close()
-{
-    Layer::close();
-}
-
-bool InspectorView::is_closed()
-{
-    return Layer::is_closed();
-}

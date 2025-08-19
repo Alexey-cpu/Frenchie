@@ -22,18 +22,21 @@ namespace Frenchie
 
             std::string get_name() const;
 
+            // API
+            bool is_closed();
+            void close();
+
+            // virtual API
             virtual bool awake();
             virtual void frame_start();
             virtual void frame_update();
             virtual void frame_finish();
             virtual void finish();
-            virtual void close();
-            virtual bool is_closed();
             virtual bool allows_multiple_instances() const;
 
         protected:
             std::string m_Name;
-            bool        m_Closed = false;
+            bool        m_Opened = true;
         };
 
         class IMouseCallbackHandler

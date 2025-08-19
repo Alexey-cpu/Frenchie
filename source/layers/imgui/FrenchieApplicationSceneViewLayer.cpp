@@ -109,16 +109,6 @@ void SceneView::finish()
     Layer::finish();
 }
 
-void SceneView::close()
-{
-    Layer::close();
-}
-
-bool SceneView::is_closed()
-{
-    return Layer::is_closed();
-}
-
 glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition)
 {
     return glm::vec3(

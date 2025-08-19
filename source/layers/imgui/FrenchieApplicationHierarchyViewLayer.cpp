@@ -54,16 +54,6 @@ void HierarchyView::finish()
     Layer::finish();
 }
 
-void HierarchyView::close()
-{
-    Layer::close();
-}
-
-bool HierarchyView::is_closed()
-{
-    return Layer::is_closed();
-}
-
 void HierarchyView::draw_tree(Object* _Transform, int& _ID)
 {
     if(_Transform == nullptr || m_Scene == nullptr) 

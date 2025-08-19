@@ -10,6 +10,16 @@ std::string Layer::get_name() const
     return m_Name;
 }
 
+bool Layer::is_closed()
+{
+    return !m_Opened;
+}
+
+void Layer::close()
+{
+    m_Opened = false;
+}
+
 bool Layer::awake()
 {
     return true;
@@ -19,16 +29,6 @@ void Layer::frame_start(){}
 void Layer::frame_update(){}
 void Layer::frame_finish(){}
 void Layer::finish(){}
-
-void Layer::close()
-{
-    m_Closed = true;
-}
-
-bool Layer::is_closed()
-{
-    return m_Closed;
-}
 
 bool Layer::allows_multiple_instances() const
 {
