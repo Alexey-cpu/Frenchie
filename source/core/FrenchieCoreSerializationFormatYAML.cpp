@@ -131,14 +131,14 @@ namespace Frenchie
                         {
                             auto yml = array.append_child();
                             yml |= ryml::VAL;
-                            //yml.set_val(child.get_value());
+                            yml.set_val(child.get_value());
                         }
                     }
                 }
 
                 static void write_object(const Node& _Node, ryml::NodeRef& _YAML)
                 {
-                    if(!_YAML.is_map()) 
+                    if(!_YAML.is_map() && !_YAML.is_seq()) 
                         return;
 
                     ryml::NodeRef root;
@@ -171,7 +171,7 @@ namespace Frenchie
                             auto ymlNode = document.append_child();
                             ymlNode |= ryml::KEYVAL;
                             ymlNode.set_key(data.get_name());
-                            //ymlNode.set_val(data.get_value());
+                            ymlNode.set_val(data.get_value());
                         }
                         else // data has children
                         {
