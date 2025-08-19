@@ -33,7 +33,7 @@ namespace Frenchie
                 virtual ~Application();
 
                 // getters
-                std::string get_name() const;
+                std::string  get_name() const;
                 glm::u32vec2 get_window_size() const;
                 GLFWwindow*  get_window() const;
 

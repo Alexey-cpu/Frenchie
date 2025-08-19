@@ -20,10 +20,10 @@ namespace Frenchie
             Layer(const std::string& _Name);
             virtual ~Layer();
 
-            std::string get_name() const;
-
             // API
-            bool is_closed();
+            std::string get_name() const;
+            bool is_closed() const;
+            bool is_hidden() const;
             void close();
 
             // virtual API
@@ -37,6 +37,7 @@ namespace Frenchie
         protected:
             std::string m_Name;
             bool        m_Opened = true;
+            bool        m_Shown  = true;
         };
 
         class IMouseCallbackHandler
