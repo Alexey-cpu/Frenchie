@@ -201,6 +201,15 @@ bool Node::empty() const
     return begin() == end();
 }
 
+size_t Node::size() const
+{
+    size_t size = 0;
+    for(auto&& child : *this) 
+        size++;
+
+    return size;
+}
+
 Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Type) const
 {
     if(!is_valid()) 
@@ -243,59 +252,6 @@ Node Node::append_node(const char* _Name, const char* _Value, const size_t& _Typ
     }
 
     return Node(node);
-}
-
-void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
-{
-    if(_Predicate == nullptr || !is_valid()) 
-        return;
-
-    auto toBeRemoved = find_node(_Predicate);
-
-    if(!toBeRemoved.is_valid()) 
-        return;
-
-    // collect deallocated nodes
-    auto document = m_Info->Document;
-    Helpers::Stack<Node> stack;
-    stack.push(toBeRemoved);
-
-    std::vector<Node> nodesToBeRemoved;
-
-    while(!stack.empty())
-    {
-        auto top = stack.top();
-        stack.pop();
-
-        for(auto&& child : top) 
-            stack.push(child);
-        
-        nodesToBeRemoved.push_back(top);
-    }
-
-    // update linken list
-    auto info = toBeRemoved.m_Info;
-
-    if(info->PrevSibling != nullptr)
-    {
-        info->PrevSibling->NextSibling = info->NextSibling;
-    }
-    else
-    {
-        if(info->Parent != nullptr)
-            info->Parent->FirstChild = info->NextSibling;
-    }
-
-    if(info->NextSibling != nullptr) 
-        info->NextSibling->PrevSibling = info->PrevSibling;
-
-    // deallocate nodes
-    for(auto&& node : nodesToBeRemoved)
-    {
-        document->m_StringAllocator.deallocate(node.m_Info->Name);
-        document->m_StringAllocator.deallocate(node.m_Info->Value);
-        document->m_NodeAllocator.deallocate(node.m_Info);
-    }
 }
 
 #define __support_scalar__(__type)\
@@ -390,6 +346,59 @@ __support_set__(nullptr_t)
 #undef __support_vector__
 #undef __support_list__
 #undef __support_set__
+
+void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
+{
+    if(_Predicate == nullptr || !is_valid()) 
+        return;
+
+    auto toBeRemoved = find_node(_Predicate);
+
+    if(!toBeRemoved.is_valid()) 
+        return;
+
+    // collect deallocated nodes
+    auto document = m_Info->Document;
+    Helpers::Stack<Node> stack;
+    stack.push(toBeRemoved);
+
+    std::vector<Node> nodesToBeRemoved;
+
+    while(!stack.empty())
+    {
+        auto top = stack.top();
+        stack.pop();
+
+        for(auto&& child : top) 
+            stack.push(child);
+        
+        nodesToBeRemoved.push_back(top);
+    }
+
+    // update linken list
+    auto info = toBeRemoved.m_Info;
+
+    if(info->PrevSibling != nullptr)
+    {
+        info->PrevSibling->NextSibling = info->NextSibling;
+    }
+    else
+    {
+        if(info->Parent != nullptr)
+            info->Parent->FirstChild = info->NextSibling;
+    }
+
+    if(info->NextSibling != nullptr) 
+        info->NextSibling->PrevSibling = info->PrevSibling;
+
+    // deallocate nodes
+    for(auto&& node : nodesToBeRemoved)
+    {
+        document->m_StringAllocator.deallocate(node.m_Info->Name);
+        document->m_StringAllocator.deallocate(node.m_Info->Value);
+        document->m_NodeAllocator.deallocate(node.m_Info);
+    }
+}
 
 void Node::remove_node(const char* _Name) const
 {
