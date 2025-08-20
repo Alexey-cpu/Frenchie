@@ -1,5 +1,6 @@
 #pragma once
 
+#include <FrenchieCoreSerializationNode.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreLogger.hpp>
@@ -13,18 +14,6 @@ namespace Frenchie
             class Console : public Layer
             {
             public:
-
-                int width_left = 0;
-
-                // nested types
-                struct Message
-                {
-                    std::chrono::system_clock::time_point Time;
-                    int                                   Level;
-                    std::string                           Message;
-                    std::string                           LoggerName;
-                    bool                                  Selected  = false;
-                };
 
                 struct Filter
                 {
@@ -49,10 +38,12 @@ namespace Frenchie
             protected:
 
                 // info
-                mutable std::vector<Message> m_Messages            = std::vector<Message>();
+                Frenchie::Core::Serialization::Document m_Messages;
+
                 mutable std::vector<Filter>  m_MessageTypeFilter   = std::vector<Filter>();
                 mutable char                 m_MessageContentFilter[1024]{};
                 mutable size_t               m_MaximumMessageCount = 100;
+                mutable bool                 m_InitializeDockSpace = true;
 
                 // friends
                 friend class ConsoleSink;

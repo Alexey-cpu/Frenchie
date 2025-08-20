@@ -103,13 +103,24 @@ namespace Frenchie
                 const char* get_name() const;
                 const char* get_value() const;
 
+                template<typename T> T get_value_as() const
+                {
+                    return Helpers::from_string<T>(get_value());
+                }
+
                 // setters
                 void set_name(const char* _Value);
                 void set_value(const char* _Value);
 
+                template<typename T> void set_value_as(const T& _Value)
+                {
+                    set_value(Frenchie::Core::Helpers::to_string<T>(_Value).c_str());
+                }
+
                 const NodeIterator begin() const;
                 const NodeIterator end() const;
                 bool empty() const;
+                size_t size() const;
 
                 Node append_node(
                     const char*   _Name, 
