@@ -96,6 +96,7 @@ Application::Application()
             ImGuiConfigFlags_::ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();
     ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
+    io.IniFilename = nullptr; // disable automatic .ini file save
 
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -231,12 +232,12 @@ void Application::set_name(const std::string& _Name)
 
 bool Application::is_closed()
 {
-    return m_Closed || glfwWindowShouldClose(m_Window);
+    return !m_Opened || glfwWindowShouldClose(m_Window);
 }
 
 void Application::close()
 {
-    m_Closed = true;
+    m_Opened = false;
 }
 
 int Application::execute()
@@ -269,6 +270,54 @@ int Application::execute()
     finish();
 
     return 1;
+}
+
+void Application::load_state(std::filesystem::path _Path)
+{
+    m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path);
+
+    // load .ini file
+    ImGui::LoadIniSettingsFromMemory(m_State.find_node(STRINGIFY(Application)).get_value());
+}
+
+void Application::save_state(std::filesystem::path _Path)
+{
+    // save state of only opened nodes
+    m_State.reset();
+
+    // append self
+    auto application = m_State.append_node(STRINGIFY(Application), ImGui::SaveIniSettingsToMemory());
+
+    for(auto it = begin(); it != end(); ++it)
+    {
+        auto serializer = 
+            std::dynamic_pointer_cast<Frenchie::Core::Serialization::ISerializer>(*it);
+
+        if(serializer != nullptr) 
+            serializer->serialize(application);
+    }
+
+    m_State.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(_Path);
+}
+
+Frenchie::Core::Serialization::Document& Application::get_state() const
+{
+    return m_State;
+}
+
+Application::const_iterator Application::begin() const
+{
+    return m_Layers.begin();
+}
+
+Application::const_iterator Application::end() const
+{
+    return m_Layers.end();
+}
+
+size_t Application::size() const
+{
+    return m_Layers.size();
 }
 
 void Application::mouse_callback(GLFWwindow* _Window, double _X, double _Y)

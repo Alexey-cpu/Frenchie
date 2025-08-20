@@ -19,7 +19,7 @@ using namespace Frenchie::Renderer;
 HierarchyView::HierarchyView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
 HierarchyView::~HierarchyView(){}
 
-bool HierarchyView::awake()
+bool HierarchyView::on_awake()
 {
     m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
     m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
@@ -29,12 +29,12 @@ bool HierarchyView::awake()
            m_Scene         != nullptr;
 }
 
-void HierarchyView::frame_start()
+void HierarchyView::on_frame_start()
 {
-    Layer::frame_start();
+    Layer::on_frame_start();
 }
 
-void HierarchyView::frame_update()
+void HierarchyView::on_frame_update()
 {
     ImGui::Begin(get_name().c_str());
 
@@ -44,14 +44,14 @@ void HierarchyView::frame_update()
     ImGui::End();
 }
 
-void HierarchyView::frame_finish()
+void HierarchyView::on_frame_finish()
 {
-    Layer::frame_finish();
+    Layer::on_frame_finish();
 }
 
-void HierarchyView::finish()
+void HierarchyView::on_finish()
 {
-    Layer::finish();
+    Layer::on_finish();
 }
 
 void HierarchyView::draw_tree(Object* _Transform, int& _ID)

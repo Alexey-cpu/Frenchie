@@ -18,7 +18,7 @@ namespace Frenchie
             double get_time() const;
 
             // Layer
-            virtual void frame_update() override;
+            virtual void on_frame_update() override;
 
         protected:
             

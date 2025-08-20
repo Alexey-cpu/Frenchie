@@ -131,19 +131,14 @@ Console::Console() :
 Console::~Console(){}
 
 // Layer
-bool Console::awake()
+bool Console::on_awake()
 {
     Frenchie::Core::Logger::instance()->register_sink<ConsoleSink>(this);
 
     return true;
 }
 
-void Console::frame_start()
-{
-    Layer::frame_start();
-}
-
-void Console::frame_update()
+void Console::on_frame_update()
 {
     // handle events
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
@@ -320,12 +315,7 @@ void Console::frame_update()
     }
 }
 
-void Console::frame_finish()
-{
-    Layer::frame_finish();
-}
-
-void Console::finish()
+void Console::on_finish()
 {
     // unregister self from logger
     Frenchie::Core::Logger::instance()->unregister_sink(
@@ -334,13 +324,6 @@ void Console::finish()
             return std::dynamic_pointer_cast<ConsoleSink>(_Sink) != nullptr;
         }
     );
-
-    // serialize self into an application state
-    auto& state = Frenchie::Application::Application::instance()->get_state();
-
-    state.remove_node(get_name().c_str());
-
-    serialize(state);
 }
 
 bool Console::allows_multiple_instances() const
@@ -356,7 +339,7 @@ Console::TReturnType Console::create()
 bool Console::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     // write self
-    auto self = _Parent.append_node(get_name().c_str());
+    auto self = _Parent.append_node(STRINGIFY(Console));
 
     // write message type filter
     auto messageTypeFilter = self.append_node(STRINGIFY(m_MessageTypeFilter));
@@ -377,7 +360,7 @@ bool Console::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 bool Console::deserialize(const Frenchie::Core::Serialization::Node& _Parent) 
 {
-    auto self = _Parent.find_node(get_name().c_str());
+    auto self = _Parent.find_node(STRINGIFY(Console));
 
     if(self.empty()) 
         return false;

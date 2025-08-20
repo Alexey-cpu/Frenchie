@@ -24,7 +24,7 @@ double TimeProviderLayer::get_time() const
     return m_CurrentFrame;
 }
 
-void TimeProviderLayer::frame_update()
+void TimeProviderLayer::on_frame_update()
 {
     m_PreviousFrame = m_CurrentFrame;
 

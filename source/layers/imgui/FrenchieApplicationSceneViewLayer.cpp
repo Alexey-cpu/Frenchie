@@ -24,7 +24,7 @@ SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D
 
 SceneView::~SceneView(){}
 
-bool SceneView::awake() 
+bool SceneView::on_awake() 
 {
     m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
     m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
@@ -36,13 +36,13 @@ bool SceneView::awake()
            m_Scene         != nullptr;
 }
 
-void SceneView::frame_start()
+void SceneView::on_frame_start()
 {
     if(m_Scene != nullptr)  
         m_Scene->frame_start();
 }
 
-void SceneView::frame_update()
+void SceneView::on_frame_update()
 {
     if(m_Scene == nullptr) 
         return;
@@ -95,7 +95,7 @@ void SceneView::frame_update()
     m_Scene->frame_update();
 }
 
-void SceneView::frame_finish()
+void SceneView::on_frame_finish()
 {
     auto camera = 
         m_Scene != nullptr ? m_Scene->get_active_camera() : nullptr;
@@ -104,9 +104,9 @@ void SceneView::frame_finish()
         camera->render();
 }
 
-void SceneView::finish()
+void SceneView::on_finish()
 {
-    Layer::finish();
+    Layer::on_finish();
 }
 
 glm::vec3 SceneView::to_ndc(const glm::vec2& _ScreenSize, const glm::vec3& _OpenGLPosition)
