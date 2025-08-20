@@ -123,6 +123,8 @@ namespace Frenchie
                 // to string conversion
                 template <typename __type>
                 std::string to_string(const __type& _Input);
+
+                std::string as_utf8(const std::wstring&);
             }
 
             namespace Time
