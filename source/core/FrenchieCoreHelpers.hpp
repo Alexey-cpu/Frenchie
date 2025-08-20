@@ -13,39 +13,14 @@ namespace Frenchie
     {
         namespace Helpers
         {
-            inline std::string get_file_extention(const std::filesystem::path& _Path)
-            {
-                if(std::filesystem::is_directory(_Path)) 
-                    return std::string();
+            //Returns the absolute path of the executable
+            std::filesystem::path get_exe_absolute_path();
 
-                auto        filePath  = std::filesystem::path(_Path).make_preferred().stem();
-                std::string extention = std::filesystem::path(_Path).make_preferred().extension().string();
+            std::filesystem::path get_exe_absolute_directory();
 
-                while (!filePath.extension().empty())
-                {
-                    extention = filePath.extension().string().append(extention);
-                    filePath  = std::filesystem::path(filePath.stem().wstring());
-                }
+            std::string get_file_extention(const std::filesystem::path& _Path);
 
-                return extention;
-            }
-
-            inline FILE* open_file(std::string _Path, std::string _Mode)
-            {
-                auto to_wstring = [](const std::string _Value)->std::wstring
-                {
-                    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(_Value);
-                };
-
-                FILE* file = std::fopen(_Path.c_str(), _Mode.c_str());
-
-                #if defined(_WIN32) || defined(WIN32) // try to do something on Windows
-                    if(file == nullptr)
-                        file = _wfopen(&to_wstring(_Path)[0], &to_wstring(_Mode)[0] );
-                #endif
-
-                return file;
-            }
+            FILE* open_file(std::string _Path, std::string _Mode);
 
             template<typename T, int S = 512>
             class Stack final

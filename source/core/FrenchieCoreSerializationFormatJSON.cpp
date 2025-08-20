@@ -79,8 +79,8 @@ namespace Frenchie
                             auto top = stack.top();
                             stack.pop();
 
-                            auto& name  = top.name;
-                            auto& value = top.value;
+                            rapidjson::Value* name  = top.name;
+                            rapidjson::Value* value = top.value;
 
                             if(value->IsNull())
                             {
