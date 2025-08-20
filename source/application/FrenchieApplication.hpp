@@ -91,7 +91,7 @@ namespace Frenchie
                 }
 
                 template<typename Type>
-                std::shared_ptr<Type> find()
+                Core::Reference<Type> find()
                 {
                     auto layer = std::find_if(
                         m_Layers.begin(),

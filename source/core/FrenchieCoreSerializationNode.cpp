@@ -259,19 +259,19 @@ template<> Node Node::append_node(const char* _Name, const __type& _Value) const
 {\
     if(is_number<__type>())\
     {\
-        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::NUMBER));\
+        return Node(append_node(_Name, Helpers::String::to_string<__type>(_Value).c_str(), NodeType::NUMBER));\
     }\
     \
     else if(is_bool<__type>())\
     {\
-        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::BOOL));\
+        return Node(append_node(_Name, Helpers::String::to_string<__type>(_Value).c_str(), NodeType::BOOL));\
     }\
     \
     else if(is_null<__type>())\
     {\
-        return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::NULLPTR));\
+        return Node(append_node(_Name, Helpers::String::to_string<__type>(_Value).c_str(), NodeType::NULLPTR));\
     }\
-    return Node(append_node(_Name, Helpers::to_string<__type>(_Value).c_str(), NodeType::OBJECT));\
+    return Node(append_node(_Name, Helpers::String::to_string<__type>(_Value).c_str(), NodeType::OBJECT));\
 }\
 
 #define __support_vector__(__type)\

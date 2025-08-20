@@ -10,18 +10,20 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
+#include <FrenchieCoreFactory.hpp>
+
 namespace Frenchie
 {
     namespace Application
     {
-        class Layer
+        class Layer : public Frenchie::Core::Factory::Creator<Layer>
         {
         public:
-            Layer(const std::string& _Name);
+            Layer(const std::string& _Name = std::string());
             virtual ~Layer();
 
             // API
-            std::string get_name() const;
+            virtual std::string get_name() const;
             bool is_closed() const;
             bool is_hidden() const;
             void close();

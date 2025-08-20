@@ -169,13 +169,13 @@ namespace Frenchie
                         if(data.get_type() == NodeType::BOOL)
                         {
                             array.PushBack(
-                                rapidjson::Value().Set<bool>(Helpers::from_string<bool>(data.get_value())), 
+                                rapidjson::Value().Set<bool>(Helpers::String::from_string<bool>(data.get_value())), 
                                 _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::NUMBER)
                         {
                             array.PushBack(
-                                rapidjson::Value().Set<double>(Helpers::from_string<double>(data.get_value())), 
+                                rapidjson::Value().Set<double>(Helpers::String::from_string<double>(data.get_value())), 
                                 _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::STRING || 
@@ -260,14 +260,14 @@ namespace Frenchie
                             {                                
                                 parent.AddMember(
                                     rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
-                                    rapidjson::Value().Set<bool>(Helpers::from_string<bool>(data.get_value())), 
+                                    rapidjson::Value().Set<bool>(Helpers::String::from_string<bool>(data.get_value())), 
                                     _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::NUMBER)
                             {
                                 parent.AddMember(
                                     rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
-                                    rapidjson::Value().Set<double>(Helpers::from_string<double>(data.get_value())), 
+                                    rapidjson::Value().Set<double>(Helpers::String::from_string<double>(data.get_value())), 
                                     _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::STRING || 
