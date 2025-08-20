@@ -1,5 +1,7 @@
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
 
+#include <FrenchieApplication.hpp>
+
 // SPDLOG
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/details/null_mutex.h>
@@ -180,14 +182,6 @@ void Console::frame_update()
     // docked windows
     ImGui::Begin(consoleTableID);
     {
-        // debugging buttons
-        if(ImGui::Button("Trace")) Frenchie::Core::Logger::instance()->trace("trace");
-        if(ImGui::Button("Debug")) Frenchie::Core::Logger::instance()->debug("debug");
-        if(ImGui::Button("Info")) Frenchie::Core::Logger::instance()->info("info");
-        if(ImGui::Button("Warn")) Frenchie::Core::Logger::instance()->warn("warn");
-        if(ImGui::Button("Error")) Frenchie::Core::Logger::instance()->error("error");
-        if(ImGui::Button("Critical")) Frenchie::Core::Logger::instance()->critical("critical");
-
         // draw clear button
         if(ImGui::Button("Clear"))
             m_Messages.reset();
@@ -198,6 +192,11 @@ void Console::frame_update()
             ImGui::SameLine();
             ImGui::Checkbox(m_MessageTypeFilter[i].Level.c_str(), &m_MessageTypeFilter[i].Selected);
         }
+
+        // maximum message count
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(64);
+        ImGui::DragInt("MaximumMessageCount", &m_MaximumMessageCount, 1.f, 10, 150);
 
         ImGui::SameLine();
 
@@ -211,7 +210,6 @@ void Console::frame_update()
             sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));
 
         // draw message table
-        //if(ImGui::BeginChild("MessagesTable", ImVec2(0.f, 0.f), ImGuiChildFlags_::ImGuiChildFlags_Borders))
         ImGui::BeginChild("MessagesTable", ImVec2(0.f, 0.f), ImGuiChildFlags_::ImGuiChildFlags_Borders);
         {
             if(ImGui::BeginTable(
@@ -237,8 +235,8 @@ void Console::frame_update()
                         continue;
 
                     // check message text filter
-                    std::string messageText       = message.find_node("message").get_value();
-                    std::string messageTextFilter = m_MessageContentFilter;
+                    std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
+                    std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
 
                     auto iterator = std::search(
                         messageText.begin(), 
@@ -329,12 +327,20 @@ void Console::frame_finish()
 
 void Console::finish()
 {
+    // unregister self from logger
     Frenchie::Core::Logger::instance()->unregister_sink(
         [](spdlog::sink_ptr _Sink)->bool
         {
             return std::dynamic_pointer_cast<ConsoleSink>(_Sink) != nullptr;
         }
     );
+
+    // serialize self into an application state
+    auto& state = Frenchie::Application::Application::instance()->get_state();
+
+    state.remove_node(get_name().c_str());
+
+    serialize(state);
 }
 
 bool Console::allows_multiple_instances() const
@@ -345,4 +351,52 @@ bool Console::allows_multiple_instances() const
 Console::TReturnType Console::create()
 {
     return std::make_unique<Console>();
+}
+
+bool Console::serialize(const Frenchie::Core::Serialization::Node& _Parent)
+{
+    // write self
+    auto self = _Parent.append_node(get_name().c_str());
+
+    // write message type filter
+    auto messageTypeFilter = self.append_node(STRINGIFY(m_MessageTypeFilter));
+    for(auto&& item : m_MessageTypeFilter) 
+        messageTypeFilter.append_node<bool>(item.Level.c_str(), item.Selected);
+
+    // write message content filter
+    self.append_node(
+        STRINGIFY(m_MessageContentFilter), 
+        std::string(m_MessageContentFilter).c_str(), 
+        Frenchie::Core::Serialization::NodeType::OBJECT);
+
+    // write message count
+    self.append_node<size_t>(STRINGIFY(m_MaximumMessageCount), m_MaximumMessageCount);
+
+    return true;
+}
+
+bool Console::deserialize(const Frenchie::Core::Serialization::Node& _Parent) 
+{
+    auto self = _Parent.find_node(get_name().c_str());
+
+    if(self.empty()) 
+        return false;
+
+    // read message type filter
+    auto messageTypeFilter = self.find_node(STRINGIFY(m_MessageTypeFilter));
+    for(auto&& item : m_MessageTypeFilter) 
+        item.Selected = messageTypeFilter.find_node(item.Level.c_str()).get_value_as<bool>();
+
+
+    // read message content filter
+    std::memcpy(
+        m_MessageContentFilter,
+        self.find_node(STRINGIFY(m_MessageContentFilter)).get_value(), 
+        sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));
+
+    // read maximum message count
+    m_MaximumMessageCount = 
+        self.find_node(STRINGIFY(m_MaximumMessageCount)).get_value_as<int>();
+
+    return true;
 }

@@ -7,6 +7,8 @@ using namespace Frenchie::Core::Helpers;
 #include <libloaderapi.h>
 #endif
 
+#include <pugixml.hpp>
+
 std::filesystem::path Frenchie::Core::Helpers::get_exe_absolute_path()
 {
     #if defined(_MSC_VER)
@@ -330,4 +332,10 @@ template<> std::string Frenchie::Core::Helpers::String::to_string<std::chrono::s
     std::string time = std::string(std::asctime(std::localtime(&now)));
     time.pop_back();
     return time;
+}
+
+// TODO: inplement custom UTF8, UTF16 e.t.c encoders
+std::string Frenchie::Core::Helpers::String::as_utf8(const std::wstring& _Input)
+{
+    return pugi::as_utf8(_Input);
 }

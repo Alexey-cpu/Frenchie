@@ -3,7 +3,10 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
-#include <FrenchieCoreObject.hpp>
+
+#include <FrenchieCoreISerializer.hpp>
+#include <FrenchieCoreSerializationNode.hpp>
+#include <FrenchieCoreSerializationFormatXML.hpp>
 
 // STL
 #include <iostream>
@@ -42,6 +45,25 @@ namespace Frenchie
                 void set_window_size(const glm::u32vec2& _Value);
                 void set_maximized(const bool& _Value);
 
+                // API
+                void load_state(std::filesystem::path _Path)
+                {
+                    // load state
+                    m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path);
+                }
+
+                void save_state(std::filesystem::path _Path)
+                {
+                    // load state
+                    m_State.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(_Path);
+                }
+
+                Frenchie::Core::Serialization::Document& get_state() const
+                {
+                    return m_State;
+                }
+
+                // virtual API
                 bool awake();
                 void frame_start();
                 void frame_update();
@@ -59,6 +81,7 @@ namespace Frenchie
                 {
                     auto layer = std::make_shared<Type>(_Parameters ...);
                     
+                    // check if layer allowns multiple instances
                     if(contains<Type>() && 
                         !layer->allows_multiple_instances())
                     {
@@ -67,6 +90,7 @@ namespace Frenchie
                         return nullptr;
                     }
 
+                    // awake layer
                     if(!layer->awake())
                     {
                         Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
@@ -74,7 +98,20 @@ namespace Frenchie
                         return nullptr;
                     }
 
+                    // push layer into layers stack
                     m_Layers.push_back(layer);
+
+                    // load layer state
+                    if(!m_State.empty())
+                    {
+                        // deserialize layer
+                        std::shared_ptr<Frenchie::Core::Serialization::ISerializer> serializer = 
+                            std::dynamic_pointer_cast<Frenchie::Core::Serialization::ISerializer>(layer);
+
+                        if(serializer != nullptr) 
+                            serializer->deserialize(m_State);
+                    }
+                    
                     return Core::Reference<Type>(layer);
                 }
 
@@ -110,6 +147,10 @@ namespace Frenchie
                 std::string                       m_Name   = "Frenchie::Application";
                 bool                              m_Closed = false;
                 GLFWwindow*                       m_Window = nullptr;
+
+                mutable Frenchie::Core::Serialization::Document m_State;
+
+                friend class Layer;
 
                 static void mouse_callback(GLFWwindow* _Window, double _X, double _Y);
             };
