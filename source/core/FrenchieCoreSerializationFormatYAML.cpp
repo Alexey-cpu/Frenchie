@@ -207,8 +207,6 @@ namespace Frenchie
                     ryml::NodeRef root = tree.rootref();
                     root |= ryml::DOCMAP; // mark root as a map
 
-                    auto start = Helpers::tic();
-
                     YAML::write_object(*_Document, root);
 
                     // open YAML file

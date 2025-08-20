@@ -11,7 +11,7 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class Console : public Layer
+            class Console : public Layer::Registry<Console>
             {
             public:
 
@@ -34,6 +34,9 @@ namespace Frenchie
                 virtual void frame_finish();
                 virtual void finish();
                 virtual bool allows_multiple_instances() const;
+
+                // Component::Register<TReturnType>
+                static TReturnType create();
 
             protected:
 

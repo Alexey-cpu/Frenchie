@@ -35,22 +35,17 @@ namespace Frenchie
                             m_Console->m_Messages.size() >= m_Console->m_MaximumMessageCount) 
                             return;
 
-                    // get message time
-                    std::time_t now = std::chrono::system_clock::to_time_t(_Message.time);
-                    std::string time = std::string(std::asctime(std::localtime(&now)));
-                    time.pop_back();
-
                     // create message
                     auto message = m_Console->m_Messages.append_node("message");
-                    message.append_node("time", time.c_str(), Frenchie::Core::Serialization::NodeType::OBJECT);
+                    message.append_node("time", Helpers::String::to_string<std::chrono::system_clock::time_point>(_Message.time).c_str(), Frenchie::Core::Serialization::NodeType::OBJECT);
                     message.append_node("level", ConsoleSink::get_level(_Message.level).c_str());
-                    message.append_node("level_enum", Helpers::to_string<size_t>(_Message.level).c_str());
+                    message.append_node("level_enum", Helpers::String::to_string<size_t>(_Message.level).c_str());
                     message.append_node("message", fmt::to_string(_Message.payload).c_str());
                     message.append_node("logger", fmt::to_string(_Message.logger_name).c_str());
 
                     message.append_node("selected", false);
 
-                    message.append_node("color", Helpers::to_string<ImU32>(ConsoleSink::get_color(_Message.level)).c_str(), Frenchie::Core::Serialization::NodeType::OBJECT);
+                    message.append_node("color", Helpers::String::to_string<ImU32>(ConsoleSink::get_color(_Message.level)).c_str(), Frenchie::Core::Serialization::NodeType::OBJECT);
                 }
 
                 virtual void flush_() override{}
@@ -118,7 +113,8 @@ namespace Frenchie
 }
 
 // Console
-Console::Console() : Layer(STRINGIFY(Console))
+Console::Console() : 
+    Layer::Registry<Console>(STRINGIFY(Frenchie::Application::Editor::Console))
 {
     m_MessageTypeFilter.resize(spdlog::level::level_enum::n_levels - 1);
     m_MessageTypeFilter[spdlog::level::level_enum::trace]    = {"trace",    false};
@@ -344,4 +340,9 @@ void Console::finish()
 bool Console::allows_multiple_instances() const
 {
     return false;
+}
+
+Console::TReturnType Console::create()
+{
+    return std::make_unique<Console>();
 }
