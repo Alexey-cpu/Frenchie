@@ -31,11 +31,9 @@ namespace Frenchie
                 virtual ~Console();
 
                 // Layer
-                virtual bool awake();
-                virtual void frame_start();
-                virtual void frame_update();
-                virtual void frame_finish();
-                virtual void finish();
+                virtual bool on_awake();
+                virtual void on_frame_update();
+                virtual void on_finish();
                 virtual bool allows_multiple_instances() const;
 
                 // Component::Register<TReturnType>

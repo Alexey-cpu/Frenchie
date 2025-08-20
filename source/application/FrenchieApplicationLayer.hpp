@@ -27,16 +27,25 @@ namespace Frenchie
             bool is_closed() const;
             bool is_hidden() const;
             void close();
+            void hide();
 
-            // virtual API
-            virtual bool awake();
-            virtual void frame_start();
-            virtual void frame_update();
-            virtual void frame_finish();
-            virtual void finish();
+            bool awake();
+            void frame_start();
+            void frame_update();
+            void frame_finish();
+            void finish();
+
             virtual bool allows_multiple_instances() const;
 
         protected:
+
+            // virtual API
+            virtual bool on_awake();
+            virtual void on_frame_start();
+            virtual void on_frame_update();
+            virtual void on_frame_finish();
+            virtual void on_finish();
+
             std::string m_Name;
             bool        m_Opened = true;
             bool        m_Shown  = true;

@@ -8,7 +8,7 @@ CursorWatcher::CursorWatcher() : Layer(STRINGIFY(CursorWatcher)){}
 
 CursorWatcher::~CursorWatcher(){}
 
-void CursorWatcher::frame_update()
+void CursorWatcher::on_frame_update()
 {
     m_PositionDelta    = m_CurrentPosition - m_PreviousPosition;
     m_PreviousPosition = m_CurrentPosition;

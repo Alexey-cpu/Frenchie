@@ -25,7 +25,7 @@ namespace Frenchie
             virtual ~CursorWatcher();
 
             // Layer
-            virtual void frame_update() override;
+            virtual void on_frame_update() override;
             virtual void mouse_callback(GLFWwindow* _Window, double _X, double _Y) override;
 
             // API

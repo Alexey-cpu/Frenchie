@@ -45,24 +45,6 @@ namespace Frenchie
                 void set_window_size(const glm::u32vec2& _Value);
                 void set_maximized(const bool& _Value);
 
-                // API
-                void load_state(std::filesystem::path _Path)
-                {
-                    // load state
-                    m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path);
-                }
-
-                void save_state(std::filesystem::path _Path)
-                {
-                    // load state
-                    m_State.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(_Path);
-                }
-
-                Frenchie::Core::Serialization::Document& get_state() const
-                {
-                    return m_State;
-                }
-
                 // virtual API
                 bool awake();
                 void frame_start();
@@ -73,8 +55,15 @@ namespace Frenchie
                 bool is_closed();
                 void close();
                 
-                // native API
+                // API
                 int execute();
+
+                void load_state(std::filesystem::path _Path);
+                void save_state(std::filesystem::path _Path);
+                Frenchie::Core::Serialization::Document& get_state() const;
+                std::list<std::shared_ptr<Layer>>::const_iterator begin() const;
+                std::list<std::shared_ptr<Layer>>::const_iterator end() const;
+                size_t size() const;
 
                 template<typename Type, typename ... Arguments>
                 Core::Reference<Type> push(Arguments... _Parameters)
@@ -100,18 +89,6 @@ namespace Frenchie
 
                     // push layer into layers stack
                     m_Layers.push_back(layer);
-
-                    // load layer state
-                    if(!m_State.empty())
-                    {
-                        // deserialize layer
-                        std::shared_ptr<Frenchie::Core::Serialization::ISerializer> serializer = 
-                            std::dynamic_pointer_cast<Frenchie::Core::Serialization::ISerializer>(layer);
-
-                        if(serializer != nullptr) 
-                            serializer->deserialize(m_State);
-                    }
-                    
                     return Core::Reference<Type>(layer);
                 }
 
@@ -142,12 +119,13 @@ namespace Frenchie
                     return layer != m_Layers.end() ? std::dynamic_pointer_cast<Type>(*layer) : nullptr;
                 }
 
-            protected:
-                std::list<std::shared_ptr<Layer>> m_Layers =  std::list<std::shared_ptr<Layer>>();
-                std::string                       m_Name   = "Frenchie::Application";
-                bool                              m_Closed = false;
-                GLFWwindow*                       m_Window = nullptr;
+                typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
 
+            protected:
+                std::list<std::shared_ptr<Layer>>               m_Layers =  std::list<std::shared_ptr<Layer>>();
+                std::string                                     m_Name   = "Frenchie::Application";
+                bool                                            m_Opened = true;
+                GLFWwindow*                                     m_Window = nullptr;
                 mutable Frenchie::Core::Serialization::Document m_State;
 
                 friend class Layer;

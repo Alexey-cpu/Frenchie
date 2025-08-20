@@ -1,7 +1,7 @@
 #include <FrenchieApplication.hpp>
 
 #include <FrenchieImGuiDemoLayer.hpp>
-
+#include <FrenchieApplicationEditor.hpp>
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
 
 // #include <FrenchieRendererMeshRendererComponent.hpp>
@@ -170,17 +170,5 @@
 
 int main(int, char**)
 {
-    // setup logger
-    Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
-    Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
-
-    // setup application
-    auto application = Frenchie::Application::Application::instance();
-    application->set_window_size(glm::vec2(2048, 1024));
-    application->set_maximized(true);
-
-    application->push<Frenchie::Application::ImguiDemo>();
-    application->push<Frenchie::Application::Editor::Console>();
-
-    return application->execute();
+    return Frenchie::Application::Editor::Editor().execute();
 }

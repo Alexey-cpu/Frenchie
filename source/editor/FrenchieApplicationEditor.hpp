@@ -12,7 +12,9 @@ namespace Frenchie
             {
             public:
                 Editor();
-                virtual ~Editor();
+                ~Editor();
+                
+                // API
                 int execute();
 
             protected:

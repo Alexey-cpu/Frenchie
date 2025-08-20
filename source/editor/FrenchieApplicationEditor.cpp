@@ -16,7 +16,7 @@ using namespace Frenchie::Application::Editor;
 
 Frenchie::Application::Editor::Editor::Editor()
 {
-    // create and configure application instance
+    // create and configure application
     auto application = Frenchie::Application::Application::instance();
     application->set_window_size(glm::vec2(2048, 1024));
     application->set_maximized(true);
@@ -35,7 +35,7 @@ Frenchie::Application::Editor::Editor::Editor()
             std::filesystem::create_directory(m_AppStateDirectory);
     }
 
-    // setup logger
+    // setup application logger
     Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
 
@@ -57,18 +57,19 @@ Frenchie::Application::Editor::Editor::Editor()
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
 
     // load application state
-    application->load_state(
-        std::filesystem::path(m_AppStateDirectory.wstring().append(L"/State.xml"))
-    );
+    application->load_state(std::filesystem::path(m_AppStateDirectory.wstring().append(L"/State.xml")));
+
+    // load application .ini file
+
+    // append layers
+    application->push<Frenchie::Application::Editor::Console>();
+    //application->push<Frenchie::Application::Editor::StateLoader>();
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(m_AppExeDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .ini directory: {}", Helpers::String::as_utf8(m_AppLogDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Helpers::String::as_utf8(m_AppStateDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App log file path: {}", logFileName));
-
-    // append layers
-    application->push<Frenchie::Application::Editor::Console>();
 }
 
 Frenchie::Application::Editor::Editor::~Editor()
