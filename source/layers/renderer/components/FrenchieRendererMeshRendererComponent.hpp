@@ -11,7 +11,7 @@ namespace Frenchie
     namespace Renderer
     {
         // MeshRenderer
-        class MeshRenderer : public Component::Registry<MeshRenderer>, public IShader, public IMesh, public IEditor
+        class MeshRenderer : public Frenchie::Core::Component, public IShader, public IMesh, public IEditor
         {
         public:
             MeshRenderer(
@@ -32,9 +32,6 @@ namespace Frenchie
 
             // IMesh
             virtual std::shared_ptr<Mesh> get_mesh() const override;
-
-            // Component::Register<TReturnType>
-            static TReturnType create();
 
         protected:
 

@@ -3,8 +3,7 @@
 
 using namespace Frenchie::Renderer;
 
-Scene3DCursor::Scene3DCursor() : 
-    Component::Registry<Scene3DCursor>(STRINGIFY(Scene3DCursor)){}
+Scene3DCursor::Scene3DCursor(){}
 
 Scene3DCursor::~Scene3DCursor(){}
 
@@ -64,8 +63,3 @@ Scene3DCursor::PickedObjects Scene3DCursor::pick(const glm::vec3& _CursorNDCPosi
 }
 
 void Scene3DCursor::draw_editor(){}
-
-Component::TReturnType Scene3DCursor::create()
-{
-    return std::make_unique<Scene3DCursor>();
-}

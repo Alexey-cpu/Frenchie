@@ -27,9 +27,7 @@ namespace Frenchie
 
                 if(it == registry().end())
                 {
-                    Logger::instance()->error("------------------------------------------------------------------------------");
                     Logger::instance()->error(STRINGIFY(Frenchie::Core::Factory));
-                    Logger::instance()->error("------------------------------------------------------------------------------");
                     Logger::instance()->error(fmt::format("Factory method for {} does not exist", _Name));
                     return nullptr;
                 }
@@ -43,9 +41,7 @@ namespace Frenchie
                 }
                 catch(...)
                 {
-                    Logger::instance()->error("------------------------------------------------------------------------------");
                     Logger::instance()->error(STRINGIFY(Frenchie::Core::Factory));
-                    Logger::instance()->error("------------------------------------------------------------------------------");
                     Logger::instance()->error(fmt::format("Factory method for {} does not exist", _Name));
                     return nullptr;
                 }
@@ -56,37 +52,27 @@ namespace Frenchie
             class Creator
             {
             public:
-                using TReturnType = std::unique_ptr<Base>;
 
                 template<typename Type>
                 class Registry : public Base
                 {
                 public:
-
-                    Registry(const std::string& _Name) : Base(_Name)
-                    {
-                        if(!m_Registered) 
-                            m_Registered = registerFactory(_Name);
-                    }
-
+                    template<typename ... Args>
+                    Registry(Args ... _Args) : Base(_Args...){}
                     virtual ~Registry(){}
 
                 protected:
+                    using TReturnType = std::unique_ptr<Base>;
 
-                    inline static bool m_Registered = false;
-
-                    template<typename ...Args>
-                    static bool registerFactory(const std::string& _Name)
+                    static bool registerFactory()
                     {
-                        Factory::registry()[_Name] = std::function<TReturnType(Args...)>(
-                            [](Args... _Args)
-                            {
-                                return Type::create(std::forward<Args>(_Args)...);
-                            }
-                        );
+                        Factory::registry()[Type::factory_id()] = 
+                            std::function<TReturnType()>([](){return Type::create();});
 
                         return true;
                     }
+
+                    inline static bool m_Registered = Registry<Type>::registerFactory();
                 };
             };
 

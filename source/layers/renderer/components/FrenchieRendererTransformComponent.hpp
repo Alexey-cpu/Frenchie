@@ -15,7 +15,7 @@ namespace Frenchie
     {
         using namespace Frenchie::Core;
 
-        class Transform : public Component::Registry<Transform>, public IEditor
+        class Transform : public Component, public IEditor
         {
         public:
 
@@ -42,9 +42,6 @@ namespace Frenchie
 
             // IEditor
             virtual void draw_editor() override;
-
-            // Component::Register<TReturnType>
-            static TReturnType create();
 
         protected:
 
