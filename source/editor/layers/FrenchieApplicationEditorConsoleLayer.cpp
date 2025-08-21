@@ -131,14 +131,17 @@ Console::Console() :
 Console::~Console(){}
 
 // Layer
-bool Console::on_awake()
+bool Console::awake()
 {
+    if(!Layer::awake()) 
+        return false;
+
     Frenchie::Core::Logger::instance()->register_sink<ConsoleSink>(this);
 
     return true;
 }
 
-void Console::on_frame_update()
+void Console::frame_update()
 {
     // handle events
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
@@ -315,8 +318,10 @@ void Console::on_frame_update()
     }
 }
 
-void Console::on_finish()
+void Console::finish()
 {
+    Layer::finish();
+
     // unregister self from logger
     Frenchie::Core::Logger::instance()->unregister_sink(
         [](spdlog::sink_ptr _Sink)->bool

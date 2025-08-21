@@ -78,7 +78,7 @@ std::vector<std::string> Frenchie::Core::Helpers::String::split(const std::strin
     int start  = 0;
     int end    = 0;
     int size   = (int)_Delimeter.size();
-    std::vector< std::string > output;
+    std::vector<std::string> output;
 
     while(end >= 0)
     {

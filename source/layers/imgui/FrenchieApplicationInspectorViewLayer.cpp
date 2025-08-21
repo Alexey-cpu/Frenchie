@@ -62,17 +62,17 @@ InspectorView::InspectorView(const std::string& _Name, std::shared_ptr<Scene3D> 
 
 InspectorView::~InspectorView(){}
 
-bool InspectorView::on_awake()
+bool InspectorView::awake()
 {
-    return Layer::on_awake();
+    return Layer::awake();
 }
 
-void InspectorView::on_frame_start()
+void InspectorView::frame_start()
 {
-    return Layer::on_frame_start();
+    return Layer::frame_start();
 }
 
-void InspectorView::on_frame_update()
+void InspectorView::frame_update()
 {
     if(m_Scene == nullptr) 
         return;
@@ -98,15 +98,15 @@ void InspectorView::on_frame_update()
 
     ImGui::End();
 
-    Layer::on_frame_update();
+    Layer::frame_update();
 }
 
-void InspectorView::on_frame_finish()
+void InspectorView::frame_finish()
 {
-    Layer::on_frame_finish();
+    Layer::frame_finish();
 }
 
-void InspectorView::on_finish()
+void InspectorView::finish()
 {
-    Layer::on_finish();
+    Layer::finish();
 }

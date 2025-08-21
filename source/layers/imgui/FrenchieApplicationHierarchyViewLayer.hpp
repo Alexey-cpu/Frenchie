@@ -30,11 +30,11 @@ namespace Frenchie
             HierarchyView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D);
             virtual ~HierarchyView();
 
-            virtual bool on_awake() override;
-            virtual void on_frame_start() override;
-            virtual void on_frame_update() override;
-            virtual void on_frame_finish() override;
-            virtual void on_finish() override;
+            virtual bool awake() override;
+            virtual void frame_start() override;
+            virtual void frame_update() override;
+            virtual void frame_finish() override;
+            virtual void finish() override;
 
         protected:
             std::shared_ptr<Scene3D>            m_Scene         = nullptr;

@@ -14,7 +14,7 @@ namespace Frenchie
             ImguiDemo() : Layer("ImguiDemo"){}
             virtual ~ImguiDemo(){}
 
-            virtual void on_frame_update()override
+            virtual void frame_update()override
             {
                 ImGuiIO& io = ImGui::GetIO();
 
