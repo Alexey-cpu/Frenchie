@@ -39,13 +39,6 @@ namespace Frenchie
 
         protected:
 
-            // // virtual API
-            // virtual bool on_awake();
-            // virtual void on_frame_start();
-            // virtual void on_frame_update();
-            // virtual void on_frame_finish();
-            // virtual void on_finish();
-
             std::string m_Name;
             bool        m_Opened = true;
             bool        m_Shown  = true;
