@@ -29,11 +29,28 @@ Frenchie::Application::Editor::Editor::Editor()
 
     if(std::filesystem::exists(m_AppExeDirectory))
     {
+        // create app logs directory
         if(!std::filesystem::exists(m_AppLogDirectory)) 
             std::filesystem::create_directory(m_AppLogDirectory);
 
+        // create app state directory
         if(!std::filesystem::exists(m_AppStateDirectory)) 
             std::filesystem::create_directory(m_AppStateDirectory);
+    }
+
+    // clean-up logs if there are too many of them
+    if(std::filesystem::exists(m_AppLogDirectory))
+    {
+        size_t logFilesNumber = 0;
+        
+        for(const auto& directory :
+                std::filesystem::directory_iterator(m_AppLogDirectory.make_preferred(), std::filesystem::directory_options::skip_permission_denied))
+        {
+            logFilesNumber++;
+        }
+
+        if(logFilesNumber > 100) // TODO: this must be a setting !!!
+            std::filesystem::remove_all(m_AppLogDirectory);
     }
 
     // setup application logger
@@ -64,7 +81,7 @@ Frenchie::Application::Editor::Editor::Editor()
 
     // append layers
     application->push<Frenchie::Application::Editor::Console>();
-    application->push<Frenchie::Application::Editor::MainMenu>();
+    application->push<Frenchie::Application::Editor::MainMenu::Menu>();
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(m_AppExeDirectory.wstring())));

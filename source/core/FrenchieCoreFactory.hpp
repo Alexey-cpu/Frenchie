@@ -27,8 +27,8 @@ namespace Frenchie
 
                 if(it == registry().end())
                 {
-                    Logger::instance()->error(STRINGIFY(Frenchie::Core::Factory));
-                    Logger::instance()->error(fmt::format("Factory method for {} does not exist", _Name));
+                    Logger::instance()->error(
+                        fmt::format("{}: factory method for {} does not exist", STRINGIFY(Frenchie::Core::Factory), _Name));
                     return nullptr;
                 }
 
@@ -41,8 +41,9 @@ namespace Frenchie
                 }
                 catch(...)
                 {
-                    Logger::instance()->error(STRINGIFY(Frenchie::Core::Factory));
-                    Logger::instance()->error(fmt::format("Factory method for {} does not exist", _Name));
+
+                    Logger::instance()->error(
+                        fmt::format("{} factory method for {} does not exist", STRINGIFY(Frenchie::Core::Factory), _Name));
                     return nullptr;
                 }
             }

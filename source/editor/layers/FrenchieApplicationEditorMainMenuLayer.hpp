@@ -1,6 +1,12 @@
 #pragma once
 
+// Application
 #include <FrenchieApplicationLayer.hpp>
+
+// Core
+
+// STL
+#include <map>
 
 namespace Frenchie
 {
@@ -8,21 +14,29 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class MainMenu : public Layer
+            namespace MainMenu
             {
-            public:
-                MainMenu();
-                virtual ~MainMenu();
+                class Menu : public Layer
+                {
+                public:
+                    Menu();
+                    virtual ~Menu();
 
-                virtual bool awake() override;
-                virtual void frame_update() override;
+                    virtual bool awake() override;
+                    virtual void frame_update() override;
 
-                // virtual bool on_awake();
-                // virtual void on_frame_start();
-                // virtual void on_frame_update();
-                // virtual void on_frame_finish();
-                // virtual void on_finish();
-            };
+                protected:
+
+                    struct MenuData
+                    {
+                        std::string                           Name;
+                        std::vector<std::string>              Paths;
+                        std::vector<std::vector<std::string>> Actions;
+                    };
+
+                    std::map<std::string, MenuData> m_Menus;
+                };
+            }
         }
     }
 }
