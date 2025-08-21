@@ -15,7 +15,7 @@
 using namespace Frenchie::Core;
 
 // Component
-Component::Component(){}
+Component::Component(const std::string& _Name){}
 
 Component::~Component(){}
 

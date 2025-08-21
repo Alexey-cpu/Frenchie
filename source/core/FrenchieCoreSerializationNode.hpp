@@ -99,6 +99,7 @@ namespace Frenchie
                 bool has_value() const;
 
                 // getters
+                Node get_parent() const;
                 size_t get_type() const;
                 const char* get_name() const;
                 const char* get_value() const;

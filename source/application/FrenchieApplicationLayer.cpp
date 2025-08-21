@@ -46,22 +46,19 @@ bool Layer::awake()
         serializer->deserialize(appState.find_node(STRINGIFY(Application)));
     }
 
-    return on_awake();
+    return true;
 }
 
 void Layer::frame_start()
 {
-    on_frame_start();
 }
 
 void Layer::frame_update()
 {
-    on_frame_update();
 }
 
 void Layer::frame_finish()
 {
-    on_frame_finish();
 }
 
 void Layer::finish()
@@ -82,20 +79,7 @@ void Layer::finish()
 
         serializer->serialize(appInfoNode);
     }
-
-    // finish
-    on_finish();
 }
-
-bool Layer::on_awake()
-{
-    return true;
-}
-
-void Layer::on_frame_start(){}
-void Layer::on_frame_update(){}
-void Layer::on_frame_finish(){}
-void Layer::on_finish(){}
 
 bool Layer::allows_multiple_instances() const
 {

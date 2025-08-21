@@ -28,7 +28,7 @@ namespace Frenchie
                 if(it == registry().end())
                 {
                     Logger::instance()->error("------------------------------------------------------------------------------");
-                    Logger::instance()->error("FRENCHIE::CORE::FACTORY::ERROR");
+                    Logger::instance()->error(STRINGIFY(Frenchie::Core::Factory));
                     Logger::instance()->error("------------------------------------------------------------------------------");
                     Logger::instance()->error(fmt::format("Factory method for {} does not exist", _Name));
                     return nullptr;
@@ -44,9 +44,9 @@ namespace Frenchie
                 catch(...)
                 {
                     Logger::instance()->error("------------------------------------------------------------------------------");
-                    Logger::instance()->error("FRENCHIE::CORE::FACTORY::ERROR");
+                    Logger::instance()->error(STRINGIFY(Frenchie::Core::Factory));
                     Logger::instance()->error("------------------------------------------------------------------------------");
-                    Logger::instance()->error(fmt::format("Factory method for {} does not exist 1", _Name));
+                    Logger::instance()->error(fmt::format("Factory method for {} does not exist", _Name));
                     return nullptr;
                 }
             }
@@ -63,7 +63,7 @@ namespace Frenchie
                 {
                 public:
 
-                    Registry(const std::string& _Name) : m_Name(_Name)
+                    Registry(const std::string& _Name) : Base(_Name)
                     {
                         if(!m_Registered) 
                             m_Registered = registerFactory(_Name);
@@ -71,13 +71,7 @@ namespace Frenchie
 
                     virtual ~Registry(){}
 
-                    virtual std::string get_name() const override
-                    {
-                        return m_Name;
-                    }
-
                 protected:
-                    std::string m_Name;
 
                     inline static bool m_Registered = false;
 

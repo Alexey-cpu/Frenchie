@@ -31,7 +31,7 @@ namespace Frenchie
         {
         public:
 
-            Component();
+            Component(const std::string& _Name = std::string());
             virtual ~Component();
 
             template<typename T = Object>

@@ -159,6 +159,11 @@ bool Node::has_value() const
     return m_Info != nullptr && std::strlen(m_Info->Value) > 0;
 }
 
+Node Node::get_parent() const
+{
+    return m_Info != nullptr ? Node(m_Info->Parent) : Node();
+}
+
 size_t Node::get_type() const
 {
     return m_Info != nullptr ? m_Info->Type : NodeType::OBJECT;

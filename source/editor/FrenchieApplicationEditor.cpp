@@ -2,6 +2,7 @@
 #include <FrenchieCoreHelpers.hpp>
 
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
+#include <FrenchieApplicationEditorMainMenuLayer.hpp>
 
 // SPDLOG
 #include "spdlog/sinks/basic_file_sink.h"
@@ -63,7 +64,7 @@ Frenchie::Application::Editor::Editor::Editor()
 
     // append layers
     application->push<Frenchie::Application::Editor::Console>();
-    //application->push<Frenchie::Application::Editor::StateLoader>();
+    application->push<Frenchie::Application::Editor::MainMenu>();
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(m_AppExeDirectory.wstring())));

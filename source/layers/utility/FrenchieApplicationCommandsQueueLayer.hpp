@@ -16,7 +16,7 @@ namespace Frenchie
             virtual ~CommandsQueueLayer();
             
             // Layer
-            virtual void on_frame_start() override;
+            virtual void frame_start() override;
 
             template<typename Type, typename ... Arguments>
             void push(Arguments... _Args)

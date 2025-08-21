@@ -168,6 +168,54 @@
 //     return application->execute();
 // }
 
+void parseMainMenuTree(
+    Frenchie::Core::Serialization::Node& _Parent, 
+    std::vector<std::string>&            _Items)
+{
+    struct Element
+    {
+        Frenchie::Core::Serialization::Node document;
+        std::string                         hierarchy;
+    };
+
+    for(auto&& item : _Items)
+    {
+        Frenchie::Core::Helpers::Stack<Element> stack;
+        stack.push({_Parent, item});
+
+        while(!stack.empty())
+        {
+            auto document  = stack.top().document;
+            auto hierarchy = stack.top().hierarchy;
+            stack.pop();
+
+            auto contents = Frenchie::Core::Helpers::String::split(hierarchy, "::");
+
+            if(contents.empty()) 
+                continue;
+            
+            // parse hierarchy
+            hierarchy.clear();
+
+            for (size_t i = 1; i < contents.size(); i++)
+            {
+                hierarchy = hierarchy.append(contents[i]);
+
+                if(i < contents.size() - 1) 
+                    hierarchy.append("::");
+            }
+
+            // push node onto stack
+            auto node = document.find_node(contents.front().c_str());
+            if(!node.is_valid())
+                node = document.append_node(contents.front().c_str());
+
+            stack.push({node, hierarchy});
+        }
+        
+    }
+}
+
 int main(int, char**)
 {
     return Frenchie::Application::Editor::Editor().execute();
