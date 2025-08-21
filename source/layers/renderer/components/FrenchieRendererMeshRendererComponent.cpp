@@ -19,7 +19,6 @@ using namespace Frenchie::Renderer;
 MeshRenderer::MeshRenderer(
     const std::shared_ptr<Mesh>&   _Mesh, 
     const std::shared_ptr<Shader>& _Shader) :
-    Component::Registry<MeshRenderer>(STRINGIFY(MeshRenderer)),
     m_Mesh(_Mesh), 
     m_Shader(_Shader),
     m_MeshBox(Cache<MeshBox>::request(
@@ -89,10 +88,4 @@ std::shared_ptr<Shader> MeshRenderer::get_shader() const
 std::shared_ptr<Mesh> MeshRenderer::get_mesh() const
 {
     return m_Mesh;
-}
-
-
-Component::TReturnType MeshRenderer::create()
-{
-    return std::make_unique<MeshRenderer>();
 }

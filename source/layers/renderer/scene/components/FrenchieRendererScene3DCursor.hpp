@@ -14,7 +14,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Scene3DCursor : public Core::Component::Registry<Scene3DCursor>, public IEditor
+        class Scene3DCursor : public Frenchie::Core::Component, public IEditor
         {
         public:
             struct PickedObject
@@ -54,9 +54,6 @@ namespace Frenchie
 
             // IEditor
             virtual void draw_editor() override;
-
-            // Component::Register<Transform>
-            static TReturnType create();
         };
     }
 }

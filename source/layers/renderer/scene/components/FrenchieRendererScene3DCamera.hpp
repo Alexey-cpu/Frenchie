@@ -13,7 +13,7 @@ namespace Frenchie
 {
     namespace Renderer
     {
-        class Camera : public Core::Component::Registry<Camera>, public IRenderer, public IEditor
+        class Camera : public Frenchie::Core::Component, public IRenderer, public IEditor
         {
         public:
 
@@ -65,9 +65,6 @@ namespace Frenchie
             // IRenderer
             virtual unsigned int get_texture() const override;
             virtual void render() override;
-
-            // Component::Register<Transform>
-            static TReturnType create();
 
         protected:
 

@@ -115,8 +115,7 @@ namespace Frenchie
 }
 
 // Console
-Console::Console() : 
-    Layer::Registry<Console>(STRINGIFY(Frenchie::Application::Editor::Console))
+Console::Console() : Layer::Registry<Console>(STRINGIFY(Console))
 {
     m_MessageTypeFilter.resize(spdlog::level::level_enum::n_levels - 1);
     m_MessageTypeFilter[spdlog::level::level_enum::trace]    = {"trace",    false};
@@ -339,6 +338,11 @@ bool Console::allows_multiple_instances() const
 Console::TReturnType Console::create()
 {
     return std::make_unique<Console>();
+}
+
+const char* Console::factory_id()
+{
+    return STRINGIFY(Frenchie::Application::Editor::Console);
 }
 
 bool Console::serialize(const Frenchie::Core::Serialization::Node& _Parent)

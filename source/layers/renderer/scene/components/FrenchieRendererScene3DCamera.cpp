@@ -16,7 +16,6 @@ using namespace Frenchie::Renderer;
 Camera::Camera(
     glm::vec3 _CameraWorldPosition, 
     glm::vec3 _CameraWorldUpAxisDirection) :
-    Component::Registry<Camera>(STRINGIFY(Camera)),
     m_CameraWorldPosition(_CameraWorldPosition), 
     m_CameraWorldUpAxisDirection(_CameraWorldUpAxisDirection)
 {
@@ -288,11 +287,6 @@ void Camera::draw_editor()
     set_pitch(rotation.x);
     set_yaw(rotation.y);
     set_roll(rotation.z);
-}
-
-Component::TReturnType Camera::create()
-{
-    return std::make_unique<Camera>();
 }
 
 void Camera::render()

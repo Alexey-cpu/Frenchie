@@ -38,6 +38,7 @@ namespace Frenchie
 
                 // Component::Register<TReturnType>
                 static TReturnType create();
+                static const char* factory_id();
 
                 // Frenchie::Core::Serialization::ISerializer
                 virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
