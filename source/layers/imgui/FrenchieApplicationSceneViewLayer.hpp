@@ -41,7 +41,7 @@ namespace Frenchie
         protected:
 
             Reference<Scene3D>            m_Scene = nullptr;
-            Reference<CommandsQueueLayer> m_CommandsQueue;
+            Reference<CommandsQueue> m_CommandsQueue;
             Reference<TimeProviderLayer>  m_TimeProvider;
             Reference<CursorWatcher>      m_CursorWatcher;
             Scene3DCursor::PickedObjects  m_Selection     = Scene3DCursor::PickedObjects();

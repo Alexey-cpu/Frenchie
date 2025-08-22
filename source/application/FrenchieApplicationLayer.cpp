@@ -32,6 +32,11 @@ void Layer::hide()
     m_Shown = false;
 }
 
+void Layer::show()
+{
+    m_Shown = true;
+}
+
 bool Layer::awake()
 {
     // read self state

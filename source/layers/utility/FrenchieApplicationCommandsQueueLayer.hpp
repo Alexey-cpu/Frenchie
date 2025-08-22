@@ -9,20 +9,26 @@ namespace Frenchie
 {
     namespace Application
     {
-        class CommandsQueueLayer : public Layer
+        class CommandsQueue : public Layer
         {
         public:
-            CommandsQueueLayer();
-            virtual ~CommandsQueueLayer();
+            CommandsQueue();
+            virtual ~CommandsQueue();
             
-            // Layer
-            virtual void frame_start() override;
+            // API
+            void push(const std::string& _Command)
+            {
+                m_CommandsQueue.push(_Command);
+            }
 
             template<typename Type, typename ... Arguments>
             void push(Arguments... _Args)
             {
                 m_CommandsQueue.push<Type>(std::move(_Args...));
             }
+
+            // Layer
+            virtual void frame_start() override;
 
         protected:
             Frenchie::Core::Commands m_CommandsQueue;

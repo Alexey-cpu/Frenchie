@@ -45,7 +45,7 @@ namespace Frenchie
                 void set_window_size(const glm::u32vec2& _Value);
                 void set_maximized(const bool& _Value);
 
-                // virtual API
+                // API
                 bool awake();
                 void frame_start();
                 void frame_update();
@@ -55,7 +55,6 @@ namespace Frenchie
                 bool is_closed();
                 void close();
                 
-                // API
                 int execute();
 
                 void load_state(std::filesystem::path _Path);
@@ -68,7 +67,7 @@ namespace Frenchie
                 template<typename Type, typename ... Arguments>
                 Core::Reference<Type> push(Arguments... _Parameters)
                 {
-                    auto layer = std::make_shared<Type>(_Parameters ...);
+                    auto layer = std::make_shared<Type>(std::forward(_Parameters)...);
                     
                     // check if layer allowns multiple instances
                     if(contains<Type>() && 
@@ -117,6 +116,17 @@ namespace Frenchie
                     );
 
                     return layer != m_Layers.end() ? std::dynamic_pointer_cast<Type>(*layer) : nullptr;
+                }
+
+                template<typename Type, typename ... Arguments>
+                Core::Reference<Type> find_or_push(Arguments... _Parameters)
+                {
+                    auto layer = find<Type>();
+
+                    if(layer == nullptr) 
+                        layer = push<Type>(std::forward(_Parameters)...);
+
+                    return layer;
                 }
 
                 typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;

@@ -16,6 +16,7 @@
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
+using namespace Frenchie::Core;
 
 // SceneView
 SceneView::SceneView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : 
@@ -26,7 +27,7 @@ SceneView::~SceneView(){}
 
 bool SceneView::awake() 
 {
-    m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
+    m_CommandsQueue = Application::instance()->find<CommandsQueue>();
     m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
     m_CursorWatcher = Application::instance()->find<CursorWatcher>();
 

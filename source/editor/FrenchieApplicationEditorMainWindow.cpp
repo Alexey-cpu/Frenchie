@@ -1,8 +1,8 @@
-#include <FrenchieApplicationEditor.hpp>
-#include <FrenchieCoreHelpers.hpp>
-
+#include <FrenchieApplicationEditorMainWindow.hpp>
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
 #include <FrenchieApplicationEditorMainMenuLayer.hpp>
+
+#include <FrenchieCoreHelpers.hpp>
 
 // SPDLOG
 #include "spdlog/sinks/basic_file_sink.h"
@@ -15,7 +15,7 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-Frenchie::Application::Editor::Editor::Editor()
+MainWindow::MainWindow()
 {
     // create and configure application
     auto application = Frenchie::Application::Application::instance();
@@ -80,8 +80,8 @@ Frenchie::Application::Editor::Editor::Editor()
     // load application .ini file
 
     // append layers
+    application->push<Frenchie::Application::Editor::MainMenu>();
     application->push<Frenchie::Application::Editor::Console>();
-    application->push<Frenchie::Application::Editor::MainMenu::Menu>();
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(m_AppExeDirectory.wstring())));
@@ -90,14 +90,25 @@ Frenchie::Application::Editor::Editor::Editor()
     Frenchie::Core::Logger::instance()->info(fmt::format("App log file path: {}", logFileName));
 }
 
-Frenchie::Application::Editor::Editor::~Editor()
+MainWindow::~MainWindow()
 {
     Frenchie::Application::Application::instance()->save_state(
         std::filesystem::path(m_AppStateDirectory.wstring().append(L"/State.xml"))
     );
 }
 
-int Frenchie::Application::Editor::Editor::execute()
+int MainWindow::execute()
 {
     return Frenchie::Application::Application::instance()->execute();
+}
+
+Reference<CommandsQueue> MainWindow::get_commands_queue()
+{
+    Reference<CommandsQueue> commandsQueue = 
+        Frenchie::Application::Application::instance()->find<CommandsQueue>();
+
+    if(commandsQueue == nullptr) 
+        commandsQueue = Frenchie::Application::Application::instance()->push<CommandsQueue>();
+
+    return commandsQueue;
 }

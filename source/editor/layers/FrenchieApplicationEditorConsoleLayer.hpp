@@ -13,7 +13,7 @@ namespace Frenchie
         namespace Editor
         {
             class Console : 
-                public Layer::Registry<Console>, 
+                public Layer, 
                 public Frenchie::Core::Serialization::ISerializer
             {
             public:
@@ -35,10 +35,6 @@ namespace Frenchie
                 virtual void frame_update() override;
                 virtual void finish() override;
                 virtual bool allows_multiple_instances() const override;
-
-                // Component::Register<TReturnType>
-                static TReturnType create();
-                static const char* factory_id();
 
                 // Frenchie::Core::Serialization::ISerializer
                 virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;

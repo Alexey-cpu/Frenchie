@@ -38,7 +38,7 @@ namespace Frenchie
 
         protected:
             std::shared_ptr<Scene3D>            m_Scene         = nullptr;
-            std::shared_ptr<CommandsQueueLayer> m_CommandsQueue = nullptr;
+            std::shared_ptr<CommandsQueue> m_CommandsQueue = nullptr;
             std::shared_ptr<TimeProviderLayer>  m_TimeProvider  = nullptr;
             char                                m_TextInput[512]{};
 

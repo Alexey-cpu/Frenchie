@@ -14,29 +14,27 @@ namespace Frenchie
     {
         namespace Editor
         {
-            namespace MainMenu
+            class MainMenu : public Frenchie::Application::Layer
             {
-                class Menu : public Layer
+            public:
+                MainMenu();
+                virtual ~MainMenu();
+
+                // Layer
+                virtual bool awake() override;
+                virtual void frame_update() override;
+
+            protected:
+
+                struct MenuData
                 {
-                public:
-                    Menu();
-                    virtual ~Menu();
-
-                    virtual bool awake() override;
-                    virtual void frame_update() override;
-
-                protected:
-
-                    struct MenuData
-                    {
-                        std::string                           Name;
-                        std::vector<std::string>              Paths;
-                        std::vector<std::vector<std::string>> Actions;
-                    };
-
-                    std::map<std::string, MenuData> m_Menus;
+                    std::string                           Name;
+                    std::vector<std::string>              Paths;
+                    std::vector<std::vector<std::string>> Actions;
                 };
-            }
+
+                std::map<std::string, MenuData> m_Menus;
+            };
         }
     }
 }

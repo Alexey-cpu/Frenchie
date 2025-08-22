@@ -28,6 +28,7 @@ namespace Frenchie
             bool is_hidden() const;
             void close();
             void hide();
+            void show();
 
             virtual bool awake();
             virtual void frame_start();
