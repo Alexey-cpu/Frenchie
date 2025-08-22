@@ -14,7 +14,7 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class MainMenu : public Frenchie::Application::Layer
+            class MainMenu : public Layer
             {
             public:
                 MainMenu();
