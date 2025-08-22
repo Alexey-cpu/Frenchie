@@ -15,13 +15,14 @@
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Renderer;
+using namespace Frenchie::Core;
 
 HierarchyView::HierarchyView(const std::string& _Name, std::shared_ptr<Scene3D> _Scene3D) : Layer(_Name), m_Scene(_Scene3D){}
 HierarchyView::~HierarchyView(){}
 
 bool HierarchyView::awake()
 {
-    m_CommandsQueue = Application::instance()->find<CommandsQueueLayer>();
+    m_CommandsQueue = Application::instance()->find<CommandsQueue>();
     m_TimeProvider  = Application::instance()->find<TimeProviderLayer>();
 
     return m_CommandsQueue != nullptr && 

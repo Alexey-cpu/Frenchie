@@ -1,5 +1,7 @@
 #pragma once
 
+#include <FrenchieCoreFactory.hpp>
+
 #include <functional>
 #include <memory>
 #include <queue>
@@ -8,7 +10,7 @@ namespace Frenchie
 {
     namespace Core
     {
-        class Command
+        class Command : public Frenchie::Core::Factory::Creator<Command>
         {
         public:
             Command(){}
@@ -16,7 +18,7 @@ namespace Frenchie
             virtual void execute() = 0;
         };
 
-        class CallbackCommand : public Command
+        class CallbackCommand : public Command::Registry<CallbackCommand, const std::function<void()>&>
         {
         public:
             CallbackCommand(const std::function<void()>& _Callback) : 
@@ -30,6 +32,12 @@ namespace Frenchie
                     m_Callback();
             }
 
+            // Command::TRegistryType
+            static std::string factory_id()
+            {
+                return STRINGIFY(Frenchie::Core::CallbackCommand);
+            }
+
         protected:
             std::function<void()> m_Callback = nullptr;
         };
@@ -40,6 +48,15 @@ namespace Frenchie
             Commands(){}
             virtual ~Commands(){}
 
+            void push(const std::string& _Command)
+            {
+                std::unique_ptr<Command> command = 
+                    Frenchie::Core::Factory::create<Command>(_Command);
+
+                if(command != nullptr)
+                    m_Commands.push(std::move(command));
+            }
+
             template<typename Type, typename ...Arguments>
             void push(Arguments ... _Args)
             {
@@ -48,7 +65,7 @@ namespace Frenchie
 
             void execute()
             {
-                while (!m_Commands.empty())
+                while(!m_Commands.empty())
                 {
                     auto& command = m_Commands.front();
                     if(command != nullptr) 

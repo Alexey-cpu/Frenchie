@@ -1,9 +1,3 @@
-#include <FrenchieApplication.hpp>
-
-#include <FrenchieImGuiDemoLayer.hpp>
-#include <FrenchieApplicationEditor.hpp>
-#include <FrenchieApplicationEditorConsoleLayer.hpp>
-
 // #include <FrenchieRendererMeshRendererComponent.hpp>
 // #include <FrenchieRendererTransformComponent.hpp>
 // #include <FrenchieRendererMesh2D.hpp>
@@ -168,7 +162,9 @@
 //     return application->execute();
 // }
 
+#include <FrenchieApplicationEditorMainWindow.hpp>
+
 int main(int, char**)
 {
-    return Frenchie::Application::Editor::Editor().execute();
+    return Frenchie::Application::Editor::MainWindow().execute();
 }

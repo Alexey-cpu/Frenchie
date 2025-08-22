@@ -2,10 +2,10 @@
 
 using namespace Frenchie::Application;
 
-CommandsQueueLayer::CommandsQueueLayer() : Layer(STRINGIFY(CommandsQueueLayer)){}
-CommandsQueueLayer::~CommandsQueueLayer(){}
+CommandsQueue::CommandsQueue() : Layer(STRINGIFY(CommandsQueue)){}
+CommandsQueue::~CommandsQueue(){}
 
-void CommandsQueueLayer::frame_start()
+void CommandsQueue::frame_start()
 {
     m_CommandsQueue.execute(); // execute all commands added into queue
 }

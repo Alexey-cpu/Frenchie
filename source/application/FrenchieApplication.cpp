@@ -176,13 +176,19 @@ void Application::Application::frame_start()
     //---------------------------------------------------------------------------------------------------
 
     for(auto layer : m_Layers) 
-        layer->frame_start();
+    {
+        if(!layer->is_hidden()) 
+            layer->frame_start();
+    }
 }
 
 void Application::Application::frame_update()
 {
     for(auto layer : m_Layers) 
-        layer->frame_update();
+    {
+        if(!layer->is_hidden())
+            layer->frame_update();
+    }
 }
 
 void Application::Application::frame_finish()
@@ -207,8 +213,11 @@ void Application::Application::frame_finish()
     }
     //---------------------------------------------------------------------------------------------------
 
-    for(auto layer : m_Layers) 
-        layer->frame_finish();
+    for(auto layer : m_Layers)
+    {
+        if(!layer->is_hidden())
+            layer->frame_finish();
+    }
 
     glfwSwapBuffers(m_Window);
 }

@@ -2,6 +2,7 @@
 
 // Custom
 #include <FrenchieCoreLogger.hpp>
+#include <FrenchieCoreHelpers.hpp>
 
 // STL
 #include <memory>
@@ -54,7 +55,7 @@ namespace Frenchie
             {
             public:
 
-                template<typename Type>
+                template<typename Type, typename ... FactoryArgs>
                 class Registry : public Base
                 {
                 public:
@@ -62,18 +63,25 @@ namespace Frenchie
                     Registry(Args ... _Args) : Base(_Args...){}
                     virtual ~Registry(){}
 
+                    using TRegistryType = Registry<Type, FactoryArgs ...>;
+                    using TReturnType   = std::unique_ptr<Base>;
+
                 protected:
-                    using TReturnType = std::unique_ptr<Base>;
 
                     static bool registerFactory()
                     {
                         Factory::registry()[Type::factory_id()] = 
-                            std::function<TReturnType()>([](){return Type::create();});
+                            std::function<TReturnType(FactoryArgs ...)>(
+                                [](FactoryArgs ... _Args)->TReturnType
+                                {
+                                    return std::make_unique<Type>(std::forward<FactoryArgs>(_Args)...);
+                                }
+                            );
 
                         return true;
                     }
 
-                    inline static bool m_Registered = Registry<Type>::registerFactory();
+                    inline static bool m_Registered = TRegistryType::registerFactory();
                 };
             };
 
