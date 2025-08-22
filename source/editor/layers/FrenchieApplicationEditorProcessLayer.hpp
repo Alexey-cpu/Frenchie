@@ -17,7 +17,7 @@ namespace Frenchie
                 Process(){}
                 virtual ~Process(){}
 
-                virtual void on_frame_update() override
+                virtual void frame_update() override
                 {   
                     // load something
                     float progress   = execute();

@@ -2,8 +2,6 @@
 
 #include <FrenchieApplication.hpp>
 
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
-
 namespace Frenchie
 {
     namespace Application
@@ -18,10 +16,6 @@ namespace Frenchie
                 
                 // API
                 int execute();
-
-                // static API
-                static Frenchie::Core::Reference<Frenchie::Application::CommandsQueue> get_commands_queue();
-
 
             protected:
                 std::filesystem::path m_AppExeDirectory;

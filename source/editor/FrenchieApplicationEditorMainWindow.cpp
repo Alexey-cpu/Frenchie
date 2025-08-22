@@ -2,6 +2,8 @@
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
 #include <FrenchieApplicationEditorMainMenuLayer.hpp>
 
+#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+
 #include <FrenchieCoreHelpers.hpp>
 
 // SPDLOG
@@ -82,6 +84,7 @@ MainWindow::MainWindow()
     // append layers
     application->push<Frenchie::Application::Editor::MainMenu>();
     application->push<Frenchie::Application::Editor::Console>();
+    application->push<Frenchie::Application::Editor::FlileSystemExplorer>();
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(m_AppExeDirectory.wstring())));
@@ -100,15 +103,4 @@ MainWindow::~MainWindow()
 int MainWindow::execute()
 {
     return Frenchie::Application::Application::instance()->execute();
-}
-
-Reference<CommandsQueue> MainWindow::get_commands_queue()
-{
-    Reference<CommandsQueue> commandsQueue = 
-        Frenchie::Application::Application::instance()->find<CommandsQueue>();
-
-    if(commandsQueue == nullptr) 
-        commandsQueue = Frenchie::Application::Application::instance()->push<CommandsQueue>();
-
-    return commandsQueue;
 }
