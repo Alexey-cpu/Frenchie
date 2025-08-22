@@ -105,6 +105,9 @@
         "print": "cpp",
         "string_view": "cpp",
         "*.rh": "cpp",
-        "memory_resource": "cpp"
+        "memory_resource": "cpp",
+        "cinttypes": "cpp",
+        "stdfloat": "cpp",
+        "csetjmp": "cpp"
     }
 }
