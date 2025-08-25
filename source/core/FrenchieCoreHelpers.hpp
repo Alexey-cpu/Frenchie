@@ -125,6 +125,7 @@ namespace Frenchie
                 std::string to_string(const __type& _Input);
 
                 std::string as_utf8(const std::wstring&);
+                std::wstring as_wide(const std::string&);
             }
 
             namespace Time

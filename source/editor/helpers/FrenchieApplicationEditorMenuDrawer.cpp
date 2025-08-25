@@ -1,0 +1,140 @@
+#include <FrenchieApplicationEditorMenuDrawer.hpp>
+
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplication.hpp>
+
+using namespace Frenchie::Core;
+using namespace Frenchie::Application::Editor;
+
+// IMGUI
+#include <imgui.h>
+#include <imgui_internal.h>
+
+namespace Frenchie
+{
+    namespace Application
+    {
+        namespace Editor
+        {
+            class MenuPathsParser
+            {
+            public:
+                MenuPathsParser(const std::string& _AbsolutePath) : 
+                    m_AbsolutePath(_AbsolutePath), 
+                    m_AbsoluteTokenizedPath(Frenchie::Core::Helpers::String::split(m_AbsolutePath, "::")){}
+
+                ~MenuPathsParser(){}
+            
+                void parse(const std::vector<std::string>& _Path)
+                {
+                    if(!is_main_menu(_Path)) 
+                        return;
+
+                    std::string result;
+
+                    for (size_t i = m_AbsoluteTokenizedPath.size(); i < _Path.size(); i++) 
+                        result = (i < _Path.size() - 1) ? result.append(_Path[i]).append("::") : result.append(_Path[i]);
+
+                    if(!result.empty()) 
+                        m_RelativePaths.insert(result);
+                }
+
+                bool is_main_menu(const std::vector<std::string>& _Path)
+                {
+                    return _Path.size() >= m_AbsoluteTokenizedPath.size() && 
+                        _Path[m_AbsoluteTokenizedPath.size()-1] == m_AbsoluteTokenizedPath.back();
+                }
+
+                std::string              m_AbsolutePath          = std::string();
+                std::set<std::string>    m_RelativePaths         = std::set<std::string>();
+                std::vector<std::string> m_AbsoluteTokenizedPath = std::vector<std::string>();
+            };
+
+            class MenuPathsDrawer
+            {
+            public:
+
+                static void draw(std::vector<std::string>& _Actions, std::string& _Path, int& _Index)
+                {
+                    if(_Index == _Actions.size() - 1) 
+                    {
+                        if(ImGui::MenuItem(_Actions.back().c_str()))
+                        //if(ImGui::MenuItem(_Path.c_str()))
+                        {
+                            Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(_Path);
+                        }
+
+                        return;
+                    }
+
+                    if(ImGui::BeginMenu(_Actions[_Index].c_str()))
+                    {
+                        draw(_Actions, _Path, ++_Index);
+
+                        ImGui::EndMenu();
+                    }
+                }
+            };
+        }
+    }
+}
+
+MenuDrawer::MenuDrawer(){}
+
+MenuDrawer::~MenuDrawer(){}
+
+void MenuDrawer::draw(const std::string& _MenuPath, bool _ForceUpdate)
+{
+    if(_ForceUpdate) 
+        m_Menus.clear();
+
+    // parse menu
+    if(m_Menus.empty() && !_MenuPath.empty())
+    {
+        // parse main menu paths
+        MenuPathsParser parser(_MenuPath);
+        for(auto&& creator : Factory::registry()) 
+            parser.parse(Frenchie::Core::Helpers::String::split(creator.first, "::"));
+
+        // fill menu infos
+        for(auto&& path : parser.m_RelativePaths)
+        {
+            auto menu = Frenchie::Core::Helpers::String::split(path, "::");
+
+            if(menu.empty()) 
+                continue;
+
+            std::vector<std::string> actions;
+            for(size_t i = 1; i < menu.size(); i++) 
+                actions.push_back(menu[i]);
+
+            m_Menus[menu[0]].Name = menu[0];
+            m_Menus[menu[0]].Paths.push_back(fmt::format("{}::{}", parser.m_AbsolutePath, path));
+            m_Menus[menu[0]].Actions.push_back((actions.empty() ? std::vector<std::string>({menu[0]}) : actions));
+        }
+    }
+
+    // draw menu
+    int index = 0;
+    
+    for(auto&& menu : m_Menus)
+    {
+        if(menu.second.Actions.size() <= 1 && 
+            menu.second.Actions.front().size() <= 1 && 
+            menu.second.Actions.front().front() == menu.second.Name) // identify if it's menu or not
+        {
+            for (size_t i = 0; i < menu.second.Actions.size(); i++)
+                MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index);
+        }
+        else
+        {
+            if(ImGui::BeginMenu(menu.first.c_str()))
+            {
+                for (size_t i = 0; i < menu.second.Actions.size(); i++)
+                    MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index);             
+
+                ImGui::EndMenu();
+            }
+        }
+    }
+}

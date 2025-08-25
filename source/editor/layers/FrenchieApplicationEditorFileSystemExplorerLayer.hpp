@@ -1,7 +1,11 @@
 #pragma once
 
 // Application
+#include <FrenchieApplicationEditorInputTextDrawer.hpp>
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorMenuDrawer.hpp>
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 // Core
 #include <FrenchieCoreISerializer.hpp>
@@ -18,96 +22,55 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class FlileSystemExplorerHelpers
+            namespace FileSystem
             {
-            public:
-                FlileSystemExplorerHelpers(const std::string& _Name) : m_Name(_Name)
+                // FileSystemExplorerMenu
+                class FileMenu : public Layer
                 {
-                    m_CurrentDirectoryBuffer = (char*)std::malloc(sizeof(char) * m_CurrentDirectoryBufferSize);
-                    for (int i = 0; i < m_CurrentDirectoryBufferSize; i++) m_CurrentDirectoryBuffer[i] = '\0';
-                    m_CurrentDirectoryBuffer[m_CurrentDirectoryBufferSize-1] = '\0';
-                }
+                public:
+                    FileMenu();
+                    virtual ~FileMenu();
 
-                ~FlileSystemExplorerHelpers()
+                    // Layer
+                    virtual void frame_update() override;
+
+                protected:
+
+                    MenuDrawer m_MenuDrawer;
+                };
+
+                // FlileSystemExplorer
+                class Explorer : public Layer
                 {
-                    if(m_CurrentDirectoryBuffer != nullptr)
-                        free(m_CurrentDirectoryBuffer);
-                }
+                public:
+                    Explorer();
+                    virtual ~Explorer();
 
-                bool draw(const std::string& _Input, ImGuiInputTextFlags _Flags = 0)
-                {
-                    // reallocate buffer to hold an input
-                    if(_Input.size() >= m_CurrentDirectoryBufferSize)
-                    {
-                        m_CurrentDirectoryBufferSize = 2 * (int)_Input.size();
-                        m_CurrentDirectoryBuffer = (char*)std::realloc(m_CurrentDirectoryBuffer, m_CurrentDirectoryBufferSize);
-                        m_CurrentDirectoryBuffer[m_CurrentDirectoryBufferSize-1] = '\0';
-                    }
+                    // API
+                    std::vector<std::filesystem::path> get_selected_paths() const;
 
-                    // copy input string a buffer
-                    std::strcpy(m_CurrentDirectoryBuffer, _Input.c_str());
+                    // Layer
+                    virtual void frame_update() override;
 
-                    return ImGui::InputText(
-                        "CurrentDirectory", 
-                        m_CurrentDirectoryBuffer, 
-                        m_CurrentDirectoryBufferSize, 
-                        _Flags | ImGuiInputTextFlags_::ImGuiInputTextFlags_CallbackResize,
-                        FlileSystemExplorerHelpers::InputTextResizeCallback, 
-                        this
-                    );
-                }
+                protected:
 
-                static int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
-                {
-                    if(data->EventFlag != ImGuiInputTextFlags_::ImGuiInputTextFlags_CallbackResize) 
-                        return 0;
-
-                    FlileSystemExplorerHelpers* explorer = 
-                        reinterpret_cast<FlileSystemExplorerHelpers*>(data->UserData);
-
-                    if(data->BufTextLen < explorer->m_CurrentDirectoryBufferSize - 1) 
-                        return 0;
-
-                    explorer->m_CurrentDirectoryBufferSize = 2 * data->BufSize;
-
-                    explorer->m_CurrentDirectoryBuffer = 
-                        (char*)std::realloc(explorer->m_CurrentDirectoryBuffer, explorer->m_CurrentDirectoryBufferSize);
+                    // info
                     
-                    explorer->m_CurrentDirectoryBuffer[explorer->m_CurrentDirectoryBufferSize-1] = '\0';
+                    // this is cleared when current directory is changed
+                    // or if some directory entry is renamed
+                    std::map<std::filesystem::path, bool> m_Paths = 
+                        std::map<std::filesystem::path, bool>();
 
-                    return 0; // Return 0 to indicate no error
-                }
+                    std::map<std::string, bool> m_FormatFilter = 
+                        std::map<std::string, bool>();
 
-                std::string get_buffer() const
-                {
-                    return std::string(m_CurrentDirectoryBuffer);
-                }
+                    InputText m_CurrentDirectory = 
+                        InputText("CurrentDirectory");
 
-            protected:
-
-                std::string m_Name = "InputText";
-                char*       m_CurrentDirectoryBuffer     = nullptr;
-                int         m_CurrentDirectoryBufferSize = 128;
-            };
-
-            class FlileSystemExplorer : public Layer
-            {
-            public:
-                FlileSystemExplorer();
-                virtual ~FlileSystemExplorer();
-
-                // Layer
-                virtual void frame_update() override;
-
-            protected:
-
-                // info
-                std::map<std::string, bool> m_ForamtFilter = 
-                    std::map<std::string, bool>();
-
-                FlileSystemExplorerHelpers m_CurrentDirectory = 
-                    FlileSystemExplorerHelpers("CurrentDirectory");
-            };
+                    // servive methods
+                    void change_current_directory(const std::filesystem::path&);
+                };   
+            }
         }
     }
 }

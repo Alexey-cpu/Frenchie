@@ -6,12 +6,17 @@
 
 #include <FrenchieCoreHelpers.hpp>
 
+#include <FrenchieApplication.hpp>
+
 // SPDLOG
 #include "spdlog/sinks/basic_file_sink.h"
 
 // STL
 #include <chrono>
 #include <iostream>
+
+// IMGUI
+#include <imgui.h>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
@@ -84,7 +89,41 @@ MainWindow::MainWindow()
     // append layers
     application->push<Frenchie::Application::Editor::MainMenu>();
     application->push<Frenchie::Application::Editor::Console>();
-    application->push<Frenchie::Application::Editor::FlileSystemExplorer>();
+    application->push<Frenchie::Application::Editor::FileSystem::Explorer>();
+
+    // TODO: this command MUST BE pushed from application settings
+    application->find_or_push<CommandsQueue>()->push<CallbackCommand>(
+        [this]()
+        {
+            int m_DefaultFontSize = 16;
+            std::filesystem::path m_Path = "C:/SDK/Qt_Projects/OpenGL/shared/fonts";
+
+            // retrive ImGui IO
+            auto& io = ImGui::GetIO();
+            io.Fonts->Clear();
+
+            // recursivelly scan path for .ttf fonts
+            for(const auto& directory :
+                std::filesystem::recursive_directory_iterator(m_Path, std::filesystem::directory_options::skip_permission_denied))
+            {
+                if(directory.is_directory() ||
+                    directory.path().extension() != ".ttf")
+                    continue;
+
+                io.Fonts->AddFontFromFileTTF(
+                    pugi::as_utf8(directory.path().wstring()).c_str(),
+                    m_DefaultFontSize * (4.0 / 3.0),
+                    nullptr,
+                    io.Fonts->GetGlyphRangesCyrillic());
+            }
+
+            // build fonts
+            io.Fonts->Build();
+
+            //reload app
+            Frenchie::Application::Application::instance()->reload();
+        }
+    );
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(m_AppExeDirectory.wstring())));
