@@ -161,7 +161,15 @@ bool Application::awake()
 
 void Application::Application::frame_start()
 {
+    for(auto layer : m_Layers) 
+    {
+        if(!layer->is_hidden()) 
+            layer->frame_start();
+    }
+
+    //---------------------------------------------------------------------------------------------------
     // OpenGL
+    //---------------------------------------------------------------------------------------------------
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glfwPollEvents();
 
@@ -174,12 +182,6 @@ void Application::Application::frame_start()
 
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
     //---------------------------------------------------------------------------------------------------
-
-    for(auto layer : m_Layers) 
-    {
-        if(!layer->is_hidden()) 
-            layer->frame_start();
-    }
 }
 
 void Application::Application::frame_update()
@@ -247,6 +249,12 @@ bool Application::is_closed()
 void Application::close()
 {
     m_Opened = false;
+}
+
+void Application::reload()
+{
+    ImGui_ImplOpenGL3_DestroyDeviceObjects();
+    ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
 
 int Application::execute()

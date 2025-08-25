@@ -54,7 +54,8 @@ namespace Frenchie
                 
                 bool is_closed();
                 void close();
-                
+                void reload();
+
                 int execute();
 
                 void load_state(std::filesystem::path _Path);

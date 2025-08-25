@@ -339,3 +339,8 @@ std::string Frenchie::Core::Helpers::String::as_utf8(const std::wstring& _Input)
 {
     return pugi::as_utf8(_Input);
 }
+
+std::wstring Frenchie::Core::Helpers::String::as_wide(const std::string& _Input)
+{
+    return pugi::as_wide(_Input);
+}
