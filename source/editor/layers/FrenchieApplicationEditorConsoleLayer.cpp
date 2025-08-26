@@ -75,10 +75,10 @@ namespace Frenchie
                             return IM_COL32(233, 245, 66, 255);
 
                         case spdlog::level::level_enum::err:
-                            return IM_COL32(255, 0, 0, 255);
+                            return IM_COL32(240, 100, 100, 255);
 
                         case spdlog::level::level_enum::critical:
-                            return IM_COL32(255, 255, 255, 255);
+                            return IM_COL32(255, 0, 0, 255);
                     }
 
                     return IM_COL32(255, 255, 255, 255);
