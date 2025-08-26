@@ -348,7 +348,7 @@ void Explorer::frame_update()
     m_FormatFilter = formatFilter;
 
     // draw
-    ImGui::Begin(get_name().c_str());
+    ImGui::Begin(get_name().c_str(), &m_Shown);
     {
         // draw 'back' button
         draw_current_directory_path_editor();
@@ -359,6 +359,11 @@ void Explorer::frame_update()
 
         ImGui::End();
     }
+}
+
+bool Explorer::allows_multiple_instances() const
+{
+    return false;
 }
 
 void Explorer::change_current_directory(const std::filesystem::path& _Path)
