@@ -69,16 +69,13 @@ namespace Frenchie
                 protected:
 
                     // info
-                    
-                    // this is cleared when current directory is changed
-                    // or if some directory entry is renamed
                     std::map<std::filesystem::path, bool> m_Paths = 
                         std::map<std::filesystem::path, bool>();
 
                     std::map<std::string, bool> m_FormatFilter = 
                         std::map<std::string, bool>();
 
-                    InputText m_CurrentDirectory;
+                    InputText m_CurrentDirectoryTextEdit;
                     bool      m_DrawCurrentDirectoryTextEdit = false;
 
                     // servive methods

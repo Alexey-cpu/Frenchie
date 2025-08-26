@@ -394,23 +394,8 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
 
 void Explorer::draw_current_directory_path_editor()
 {
-    // draw 'back' button
-    auto path = std::filesystem::current_path();
-
-    std::stack<std::filesystem::path> stack;
-
-    while(true)
-    {
-        stack.push(path);
-
-        if(path == path.parent_path()) 
-            break;
-
-        path = path.parent_path();
-    }
-
-    bool  selected = false;
     float height   = ImGui::CalcTextSize("LAGEST").y + 2.f * ImGui::GetStyle().FramePadding.y;
+    bool  selected = false;
 
     // draw selectable
     ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyle().Colors[ImGuiCol_Header]);
@@ -437,6 +422,16 @@ void Explorer::draw_current_directory_path_editor()
     if(!m_DrawCurrentDirectoryTextEdit)
     {
         // draw buttons
+        auto path = std::filesystem::current_path();
+
+        std::stack<std::filesystem::path> stack;
+
+        while(path != path.parent_path())
+        {
+            stack.push(path);
+            path = path.parent_path();
+        }
+
         while (!stack.empty())
         {
             ImGui::SameLine();
@@ -458,13 +453,13 @@ void Explorer::draw_current_directory_path_editor()
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
         // draw current path editor
-        if(m_CurrentDirectory.draw(
+        if(m_CurrentDirectoryTextEdit.draw(
             "###",
             Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()).c_str(), 
             ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {
             change_current_directory(
-                std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectory.get_buffer())));
+                std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectoryTextEdit.get_buffer())));
 
             m_DrawCurrentDirectoryTextEdit = false;
         }   
