@@ -68,7 +68,7 @@ namespace Frenchie
                 template<typename Type, typename ... Arguments>
                 Core::Reference<Type> push(Arguments... _Parameters)
                 {
-                    auto layer = std::make_shared<Type>(std::forward(_Parameters)...);
+                    auto layer = std::make_shared<Type>(_Parameters...);
                     
                     // check if layer allowns multiple instances
                     if(contains<Type>() && 
