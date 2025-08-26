@@ -48,16 +48,27 @@ MainWindow::MainWindow()
     // clean-up logs if there are too many of them
     if(std::filesystem::exists(m_AppLogDirectory))
     {
-        size_t logFilesNumber = 0;
+        std::vector<std::filesystem::path> paths;
         
         for(const auto& directory :
-                std::filesystem::directory_iterator(m_AppLogDirectory.make_preferred(), std::filesystem::directory_options::skip_permission_denied))
+                std::filesystem::directory_iterator(m_AppLogDirectory, std::filesystem::directory_options::skip_permission_denied))
         {
-            logFilesNumber++;
+            paths.push_back(directory.path());
         }
 
-        if(logFilesNumber > 100) // TODO: this must be a setting !!!
-            std::filesystem::remove_all(m_AppLogDirectory);
+        if(paths.size() > 100)
+        {
+            for(auto&& path : paths) 
+            {
+                try
+                {
+                    std::filesystem::remove_all(path);
+                }
+                catch(const std::exception& e)
+                {
+                }
+            }
+        }
     }
 
     // setup application logger
