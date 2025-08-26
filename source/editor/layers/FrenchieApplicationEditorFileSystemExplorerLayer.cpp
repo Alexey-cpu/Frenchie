@@ -19,17 +19,17 @@ namespace Frenchie
             namespace FileSystem
             {
                 // FileRenamerDialog
-                class FileRenamerDialog : public Dialog
+                class FilesRenameDialog : public Dialog
                 {
                 public:
-                    FileRenamerDialog(const std::vector<std::filesystem::path>& _Paths): 
+                    FilesRenameDialog(const std::vector<std::filesystem::path>& _Paths): 
                         Dialog("Rename files")
                     {
                         for(auto&& path : _Paths)
                             m_Paths.insert({path, {std::make_shared<InputText>(), true}});
                     }
                     
-                    virtual ~FileRenamerDialog(){}
+                    virtual ~FilesRenameDialog(){}
 
                     virtual void draw_content() override
                     {
@@ -113,8 +113,8 @@ namespace Frenchie
                         std::pair<std::shared_ptr<InputText>, bool>> m_Paths;
                 };
 
-                class MenuCopyAction : 
-                    public Frenchie::Core::Command::Registry<MenuCopyAction>
+                class FileMenuCopyAction : 
+                    public Frenchie::Core::Command::Registry<FileMenuCopyAction>
                 {
                 public:
 
@@ -144,8 +144,8 @@ namespace Frenchie
                     }
                 };
 
-                class MenuPasteAction : 
-                    public Frenchie::Core::Command::Registry<MenuPasteAction>
+                class FileMenuPasteAction : 
+                    public Frenchie::Core::Command::Registry<FileMenuPasteAction>
                 {
                 public:
 
@@ -188,8 +188,8 @@ namespace Frenchie
                     }
                 };
 
-                class MenuRemoveAction : 
-                    public Frenchie::Core::Command::Registry<MenuRemoveAction>
+                class FileMenuRemoveAction : 
+                    public Frenchie::Core::Command::Registry<FileMenuRemoveAction>
                 {
                 public:
 
@@ -221,8 +221,8 @@ namespace Frenchie
                     }
                 };
 
-                class MenuRenameAction : 
-                    public Frenchie::Core::Command::Registry<MenuRenameAction>
+                class FileMenuRenameAction : 
+                    public Frenchie::Core::Command::Registry<FileMenuRenameAction>
                 {
                 public:
 
@@ -232,7 +232,7 @@ namespace Frenchie
                         auto selectedPaths = Explorer::get_selected_paths();
 
                         if(!selectedPaths.empty()) 
-                            Application::instance()->push<FileRenamerDialog>(selectedPaths);
+                            Application::instance()->push<FilesRenameDialog>(selectedPaths);
                     }
 
                     // Command::TRegistryType
@@ -241,12 +241,44 @@ namespace Frenchie
                         return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "rename");
                     }
                 };
+
+                class FolderMenuCreateFolderAction : 
+                    public Frenchie::Core::Command::Registry<FolderMenuCreateFolderAction>
+                {
+                public:
+
+                    // Frenchie::Core::Command
+                    virtual void execute() override
+                    {
+                        std::wstring newFolderName = L"NewFolder";
+
+                        auto newPath = std::filesystem::current_path().wstring().append(L"/").append(newFolderName);
+
+                        while(std::filesystem::exists(newPath))
+                            newPath = newPath.append(L"_Copy");
+
+                        try
+                        {
+                            std::filesystem::create_directories(newPath);
+                        }
+                        catch(const std::exception& e)
+                        {
+                            Frenchie::Core::Logger::instance()->critical(e.what());
+                        }
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "create::folder");
+                    }
+                };
             }
         }
     }
 }
 
-// FileSystemExplorerMenu
+// FileMenu
 FileMenu::FileMenu(){}
 FileMenu::~FileMenu(){}
 
@@ -255,7 +287,16 @@ void FileMenu::frame_update()
     m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu));
 }
 
-// FlileSystemExplorer
+// FolderMenu
+FolderMenu::FolderMenu(){}
+FolderMenu::~FolderMenu(){}
+
+void FolderMenu::frame_update()
+{
+    m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu));
+}
+
+// Explorer
 Explorer::Explorer() : 
     Layer(STRINGIFY(Explorer)){}
 
@@ -349,18 +390,79 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
 void Explorer::draw_current_directory_path_editor()
 {
     // draw 'back' button
-    if(ImGui::Button("<--")) 
-        change_current_directory(std::filesystem::current_path().parent_path());
+    auto path = std::filesystem::current_path();
+
+    std::stack<std::filesystem::path> stack;
+
+    while(true)
+    {
+        stack.push(path);
+
+        if(path == path.parent_path()) 
+            break;
+
+        path = path.parent_path();
+    }
+
+    bool  selected = false;
+    float height   = ImGui::CalcTextSize("LAGEST").y + 2.f * ImGui::GetStyle().FramePadding.y;
+
+    // draw selectable
+    ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyle().Colors[ImGuiCol_Header]);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyle().Colors[ImGuiCol_Header]);
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::GetStyle().Colors[ImGuiCol_Header]);
+
+    if(ImGui::Selectable(
+        "##", 
+        &selected,
+        ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
+        ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
+        ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
+        ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick  | 
+        ImGuiSelectableFlags_::ImGuiSelectableFlags_Highlight, 
+        ImVec2(0.f, height)))
+    {
+        m_DrawCurrentDirectoryTextEdit = true;
+    }
+
+    ImGui::PopStyleColor(3);
+
     ImGui::SameLine();
 
-    // draw current path editor
-    if(m_CurrentDirectory.draw(
-        "CurrentDirectory",
-        Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()).c_str(), 
-        ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+    if(!m_DrawCurrentDirectoryTextEdit)
     {
-        change_current_directory(
-            std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectory.get_buffer())));
+        // draw buttons
+        while (!stack.empty())
+        {
+            ImGui::SameLine();
+
+            auto path = stack.top();
+            auto name = Frenchie::Core::Helpers::String::as_utf8(path.filename().stem().wstring());
+
+            if(name.empty()) 
+                name = Frenchie::Core::Helpers::String::as_utf8(path.wstring());
+
+            if(ImGui::Button(name.c_str(), ImVec2(0.f, height)))
+                change_current_directory(path);
+
+            stack.pop();
+        }
+    }
+    else
+    {
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+        // draw current path editor
+        if(m_CurrentDirectory.draw(
+            "###",
+            Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()).c_str(), 
+            ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            change_current_directory(
+                std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectory.get_buffer())));
+
+            m_DrawCurrentDirectoryTextEdit = false;
+        }   
     }
 }
 
@@ -530,7 +632,11 @@ void Explorer::draw_current_directory_popup_menu()
 {
     if(get_selected_paths().empty())
     {
-
+        if(ImGui::BeginPopupContextItem())
+        {
+            FolderMenu().frame_update();
+            ImGui::EndPopup();
+        }
     }
     else
     {
@@ -552,7 +658,7 @@ void Explorer::handle_current_directory_hot_keys()
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileSystem::MenuCopyAction::factory_id());
+            Frenchie::Application::Editor::FileSystem::FileMenuCopyAction::factory_id());
     }
 
     // Ctrl + V
@@ -560,14 +666,14 @@ void Explorer::handle_current_directory_hot_keys()
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileSystem::MenuPasteAction::factory_id());
+            Frenchie::Application::Editor::FileSystem::FileMenuPasteAction::factory_id());
     }
 
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileSystem::MenuRemoveAction::factory_id());
+            Frenchie::Application::Editor::FileSystem::FileMenuRemoveAction::factory_id());
     }
 
     // Escape

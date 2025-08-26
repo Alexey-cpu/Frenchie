@@ -24,7 +24,7 @@ namespace Frenchie
         {
             namespace FileSystem
             {
-                // FileSystemExplorerMenu
+                // FileMenu
                 class FileMenu : public Layer
                 {
                 public:
@@ -38,7 +38,21 @@ namespace Frenchie
                     MenuDrawer m_MenuDrawer;
                 };
 
-                // FlileSystemExplorer
+                // FolderMenu
+                class FolderMenu : public Layer
+                {
+                public:
+                    FolderMenu();
+                    virtual ~FolderMenu();
+
+                    // Layer
+                    virtual void frame_update() override;
+
+                protected:
+                    MenuDrawer m_MenuDrawer;  
+                };
+
+                // Explorer
                 class Explorer : public Layer
                 {
                 public:
@@ -64,6 +78,7 @@ namespace Frenchie
                         std::map<std::string, bool>();
 
                     InputText m_CurrentDirectory;
+                    bool      m_DrawCurrentDirectoryTextEdit = false;
 
                     // servive methods
                     void change_current_directory(const std::filesystem::path&);
