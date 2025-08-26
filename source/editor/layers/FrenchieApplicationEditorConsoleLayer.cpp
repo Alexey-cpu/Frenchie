@@ -142,7 +142,7 @@ bool Console::awake()
 
 void Console::frame_update()
 {
-    if(ImGui::Begin(get_name().c_str(), &m_Shown))
+    ImGui::Begin(get_name().c_str(), &m_Shown);
     {
         // handle events
         if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
@@ -157,9 +157,7 @@ void Console::frame_update()
 
         auto dockspace_id = ImGui::GetID(get_name().c_str());
 
-        ImGuiDockNodeFlags dockspaceFlags = 
-            ImGuiDockNodeFlags_::ImGuiDockNodeFlags_PassthruCentralNode | 
-            ImGuiDockNodeFlags_::ImGuiDockNodeFlags_NoUndocking;
+        ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_::ImGuiDockNodeFlags_PassthruCentralNode;
 
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
