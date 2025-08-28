@@ -922,12 +922,16 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
         ImGui::SetNextItemOpen(true);
 
     ImGui::PushID(_ID++);
-
     if(ImGui::TreeNodeEx(pugi::as_utf8(_Path.filename().wstring()).c_str(), 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanAvailWidth | 
-        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull))
+        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull  | 
+        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-        change_current_directory(_Path);
+        if(ImGui::IsItemHovered() && 
+            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+        {
+            change_current_directory(_Path);
+        }
 
         for(const auto& directory :
             std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
