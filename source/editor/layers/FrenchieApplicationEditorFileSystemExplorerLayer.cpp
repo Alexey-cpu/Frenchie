@@ -546,7 +546,6 @@ void Explorer::draw_current_directory_path_editor()
     if(ImGui::Selectable(
         "##", 
         &selected,
-        //ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
         ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
         ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
         ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick  | 
@@ -686,9 +685,7 @@ void Explorer::draw_current_directory_paths_table()
                     change_current_directory(path.first);
             }
 
-            //------------------------------------------------------------------------------------------------------------------
             // drag & drop
-            //------------------------------------------------------------------------------------------------------------------
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
             {
                 std::set<std::filesystem::path> selection;
@@ -712,53 +709,7 @@ void Explorer::draw_current_directory_paths_table()
                 ImGui::EndDragDropSource();
             }
 
-            if (ImGui::BeginDragDropTarget())
-            {
-                if (const ImGuiPayload* payload = 
-                    ImGui::AcceptDragDropPayload(STRINGIFY(std::filesystem::path)))
-                {
-                    auto adress = static_cast<char*>(payload->Data);
-
-                    Frenchie::Core::Logger::instance()->info(fmt::format("moving\n{}", std::string(adress)));
-
-                    if(std::filesystem::is_directory(path.first))
-                    {
-                        auto movedPaths = Frenchie::Core::Helpers::String::split(std::string(adress), "\n");
-
-                        for(auto&& movedPath : movedPaths)
-                        {
-                            std::filesystem::path oldAdress(movedPath);
-
-                            if(!std::filesystem::exists(oldAdress)) 
-                                continue;
-
-                            std::filesystem::path newAdress(path.first.wstring().append(L"/").append(oldAdress.filename()));
-
-                            while(std::filesystem::exists(newAdress))
-                            {
-                                newAdress = 
-                                    path.first.wstring()
-                                    .append(L"/")
-                                    .append(oldAdress.filename().stem().wstring())
-                                    .append(L"_Copy")
-                                    .append(Frenchie::Core::Helpers::String::as_wide(Frenchie::Core::Helpers::get_file_extention(oldAdress)));
-                            }
-
-                            try
-                            {
-                                std::filesystem::rename(oldAdress, newAdress);
-                            }
-                            catch(const std::exception& e)
-                            {
-                                Frenchie::Core::Logger::instance()->critical(e.what());
-                            }
-                        }
-                    }
-                }
-
-                ImGui::EndDragDropTarget();
-            }
-            //------------------------------------------------------------------------------------------------------------------
+            drop_item_to(path.first);
 
             // show pop up menu when item is clicked
             if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
@@ -910,29 +861,48 @@ void Explorer::handle_current_directory_hot_keys()
 
 void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
 {
-    size_t counter = 0;
-    for(const auto& directory : 
-        std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
-            counter++;
-
-    if(counter <= 0) 
+    try
+    {
+        for(const auto& directory : 
+            std::filesystem::directory_iterator(_Path));
+    }
+    catch(...)
+    {
         return;
+    }
+    
+
+    // size_t counter = 0;
+    // for(const auto& directory : 
+    //     std::filesystem::directory_iterator(_Path))
+    // {
+    //     counter++;
+    // }
+
+    // if(counter <= 0) return;
 
     if(_Path == std::filesystem::current_path().root_path())
         ImGui::SetNextItemOpen(true);
 
+    auto name = _Path.filename().wstring();
+
     ImGui::PushID(_ID++);
-    if(ImGui::TreeNodeEx(pugi::as_utf8(_Path.filename().wstring()).c_str(), 
+    if(ImGui::TreeNodeEx(pugi::as_utf8(name.empty() ? _Path.wstring() : name).c_str(), 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanAvailWidth | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull  | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
+        // open item
         if(ImGui::IsItemHovered() && 
             ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
             change_current_directory(_Path);
         }
 
+        // drag & drop
+        drop_item_to(_Path);
+
+        // draw next item
         for(const auto& directory :
             std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
         {
@@ -945,3 +915,54 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
 
     ImGui::PopID();
 };
+
+void Explorer::drop_item_to(const std::filesystem::path& _Path)
+{
+    // drag & drop
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = 
+            ImGui::AcceptDragDropPayload(STRINGIFY(std::filesystem::path)))
+        {
+            auto adress = static_cast<char*>(payload->Data);
+
+            Frenchie::Core::Logger::instance()->info(fmt::format("moving\n{}", std::string(adress)));
+
+            if(std::filesystem::is_directory(_Path))
+            {
+                auto movedPaths = Frenchie::Core::Helpers::String::split(std::string(adress), "\n");
+
+                for(auto&& movedPath : movedPaths)
+                {
+                    std::filesystem::path oldAdress(movedPath);
+
+                    if(!std::filesystem::exists(oldAdress)) 
+                        continue;
+
+                    std::filesystem::path newAdress(_Path.wstring().append(L"/").append(oldAdress.filename()));
+
+                    while(std::filesystem::exists(newAdress))
+                    {
+                        newAdress = 
+                            _Path.wstring()
+                            .append(L"/")
+                            .append(oldAdress.filename().stem().wstring())
+                            .append(L"_Copy")
+                            .append(Frenchie::Core::Helpers::String::as_wide(Frenchie::Core::Helpers::get_file_extention(oldAdress)));
+                    }
+
+                    try
+                    {
+                        std::filesystem::rename(oldAdress, newAdress);
+                    }
+                    catch(const std::exception& e)
+                    {
+                        Frenchie::Core::Logger::instance()->critical(e.what());
+                    }
+                }
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+}
