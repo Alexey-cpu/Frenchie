@@ -86,6 +86,8 @@ namespace Frenchie
                     void draw_current_directory_popup_menu();
                     void handle_current_directory_hot_keys();
                     void draw_paths_tree(const std::filesystem::path&, int&);
+
+                    void drop_item_to(const std::filesystem::path&);
                 };   
             }
         }
