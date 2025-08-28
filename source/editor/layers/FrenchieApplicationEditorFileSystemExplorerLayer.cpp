@@ -113,6 +113,55 @@ namespace Frenchie
                         std::pair<std::shared_ptr<InputText>, bool>> m_Paths;
                 };
 
+                // FileRenamerDialog
+                class FilesRemoveDialog : public Dialog
+                {
+                public:
+                    FilesRemoveDialog(const std::vector<std::filesystem::path>& _Paths) : 
+                        Dialog("Are you sure you want to delete these files ?"), 
+                        m_Paths(_Paths){}
+                    
+                    virtual ~FilesRemoveDialog(){}
+
+                    virtual void draw_content() override
+                    {
+                        for(auto&& path : m_Paths)
+                            ImGui::TextUnformatted(path.string().c_str());
+                    }
+
+                    virtual void draw_buttons() override
+                    {
+                        if(ImGui::Button("Yes"))
+                        {
+                            if(m_Paths.empty())
+                                return;
+
+                            for(auto& path : m_Paths)
+                            {
+                                try
+                                {
+                                    std::filesystem::remove_all(path);
+                                }
+                                catch(...)
+                                {
+                                    Frenchie::Core::Logger::instance()->critical(fmt::format("Could not remove {}", path.string()));
+                                }
+                            }
+
+                            close();
+                        }
+                        
+                        ImGui::SameLine();
+                        
+                        if(ImGui::Button("No"))
+                            close();
+                    }
+
+                protected:
+                    std::vector<std::filesystem::path> m_Paths;
+                };
+
+                //
                 class FileMenuActions
                 {
                 public:
@@ -178,20 +227,8 @@ namespace Frenchie
                     {
                         auto selectedPaths = Explorer::get_selected_paths();
 
-                        if(selectedPaths.empty())
-                            return;
-
-                        for(auto& path : selectedPaths)
-                        {
-                            try
-                            {
-                                std::filesystem::remove_all(path);
-                            }
-                            catch(...)
-                            {
-                                Frenchie::Core::Logger::instance()->critical(fmt::format("Could not remove {}", path.string()));
-                            }
-                        }
+                        if(!selectedPaths.empty()) 
+                            Application::instance()->push<FilesRemoveDialog>(selectedPaths);
                     }
 
                     static void rename()
@@ -421,15 +458,45 @@ void Explorer::frame_update()
     m_Paths        = paths;
     m_FormatFilter = formatFilter;
 
-    // draw
+    // draw content
     ImGui::Begin(get_name().c_str(), &m_Shown);
     {
-        // draw 'back' button
-        draw_current_directory_path_editor();
-        draw_current_directory_paths_table();
-        draw_current_directory_popup_menu();
-        draw_current_directory_format_filter();
-        handle_current_directory_hot_keys();
+        if(ImGui::BeginTable("FileSystemContentTable", 2,
+            ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
+            ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
+            ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
+            ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
+            ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
+            ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
+            ImGuiTableFlags_::ImGuiTableFlags_Hideable))
+        {
+            ImGui::TableNextRow();
+
+            // draw tree
+            ImGui::TableSetColumnIndex(0);
+
+            ImGui::BeginChild("Tree");
+            {
+                int id = 0;
+                draw_paths_tree(std::filesystem::current_path().root_path(), id);
+            }
+            ImGui::EndChild();
+
+            // draw table
+            ImGui::TableSetColumnIndex(1);
+
+            ImGui::BeginChild("Table");
+            {
+                draw_current_directory_path_editor();
+                draw_current_directory_paths_table();
+                draw_current_directory_popup_menu();
+                draw_current_directory_format_filter();
+                handle_current_directory_hot_keys();
+            }
+            ImGui::EndChild();
+
+            ImGui::EndTable();
+        }
 
         ImGui::End();
     }
@@ -479,7 +546,7 @@ void Explorer::draw_current_directory_path_editor()
     if(ImGui::Selectable(
         "##", 
         &selected,
-        ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
+        //ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
         ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
         ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
         ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick  | 
@@ -500,24 +567,34 @@ void Explorer::draw_current_directory_path_editor()
 
         std::stack<std::filesystem::path> stack;
 
-        while(path != path.parent_path())
+        while(true)
         {
             stack.push(path);
+
+            if(path == path.parent_path()) 
+                break;
+
             path = path.parent_path();
         }
 
-        while (!stack.empty())
+        int buttonID = 0;
+
+        while(!stack.empty())
         {
             ImGui::SameLine();
 
             auto path = stack.top();
-            auto name = Frenchie::Core::Helpers::String::as_utf8(path.filename().stem().wstring());
+            auto name = Frenchie::Core::Helpers::String::as_utf8(path.filename().wstring());
 
             if(name.empty()) 
                 name = Frenchie::Core::Helpers::String::as_utf8(path.wstring());
 
+            ImGui::PushID(buttonID++);
+
             if(ImGui::Button(name.c_str(), ImVec2(0.f, height)))
                 change_current_directory(path);
+
+            ImGui::PopID();
 
             stack.pop();
         }
@@ -830,3 +907,37 @@ void Explorer::handle_current_directory_hot_keys()
             path.second = false;
     }
 }
+
+void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
+{
+    size_t counter = 0;
+    for(const auto& directory : 
+        std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
+            counter++;
+
+    if(counter <= 0) 
+        return;
+
+    if(_Path == std::filesystem::current_path().root_path())
+        ImGui::SetNextItemOpen(true);
+
+    ImGui::PushID(_ID++);
+
+    if(ImGui::TreeNodeEx(pugi::as_utf8(_Path.filename().wstring()).c_str(), 
+        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanAvailWidth | 
+        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull))
+    {
+        change_current_directory(_Path);
+
+        for(const auto& directory :
+            std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
+        {
+            if(directory.is_directory())
+                draw_paths_tree(directory.path(), _ID);
+        }
+
+        ImGui::TreePop();
+    }
+
+    ImGui::PopID();
+};
