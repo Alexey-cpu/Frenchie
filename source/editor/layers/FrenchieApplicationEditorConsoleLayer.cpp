@@ -220,60 +220,125 @@ void Console::frame_update()
                     // draw a content of spdlog buffer here
                     int id = 0;
 
-                    for(auto&& message : m_Messages)
+                    ImGuiListClipper clipper;
+                    clipper.Begin((int)m_Messages.size());
+
+                    auto iterator = m_Messages.begin();
+
+                    while (clipper.Step())
                     {
-                        // check message type filter 
-                        if(!m_MessageTypeFilter[message.find_node("level_enum").get_value_as<size_t>()].Selected) 
-                            continue;
-
-                        // check message text filter
-                        std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
-                        std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
-
-                        auto iterator = std::search(
-                            messageText.begin(), 
-                            messageText.end(), 
-                            std::boyer_moore_searcher(messageTextFilter.begin(), messageTextFilter.end()));
-
-                        if(!messageTextFilter.empty() && iterator == messageText.end()) 
-                            continue;
-
-                        ImGui::TableNextRow();
-                        ImGui::TableSetColumnIndex(0);
-
-                        ImGui::PushID(id);  
-                        
-                        bool selected = message.find_node("selected").get_value_as<bool>();
-
-                        if(ImGui::Selectable("", 
-                            &selected, 
-                            ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
-                            ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
+                        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++, iterator++)
                         {
-                            message.find_node("selected").set_value_as<bool>(true);
+                            auto message = *iterator;
+
+                            // check message type filter
+                            if(!m_MessageTypeFilter[message.find_node("level_enum").get_value_as<size_t>()].Selected) 
+                                continue;
+
+                            // check message text filter
+                            std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
+                            std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
+
+                            auto iterator = std::search(
+                                messageText.begin(), 
+                                messageText.end(), 
+                                std::boyer_moore_searcher(messageTextFilter.begin(), messageTextFilter.end()));
+
+                            if(!messageTextFilter.empty() && iterator == messageText.end()) 
+                                continue;
+
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+
+                            ImGui::PushID(id);  
+                            
+                            bool selected = message.find_node("selected").get_value_as<bool>();
+
+                            if(ImGui::Selectable("", 
+                                &selected, 
+                                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
+                                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
+                            {
+                                message.find_node("selected").set_value_as<bool>(true);
+                            }
+
+                            ImGui::PopID();
+
+                            ImGui::SameLine();
+
+                            ImGui::PushStyleColor(ImGuiCol_Text, message.find_node("color").get_value_as<ImU32>());
+                            
+                            ImGui::TextUnformatted(message.find_node("level").get_value());
+
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::TextUnformatted(message.find_node("time").get_value());
+
+                            ImGui::TableSetColumnIndex(2);
+                            ImGui::TextUnformatted(message.find_node("logger").get_value());
+
+                            ImGui::TableSetColumnIndex(3);
+                            ImGui::TextUnformatted(message.find_node("message").get_value());
+
+                            ImGui::PopStyleColor();
+
+                            id++;
                         }
-
-                        ImGui::PopID();
-
-                        ImGui::SameLine();
-
-                        ImGui::PushStyleColor(ImGuiCol_Text, message.find_node("color").get_value_as<ImU32>());
-                        
-                        ImGui::TextUnformatted(message.find_node("level").get_value());
-
-                        ImGui::TableSetColumnIndex(1);
-                        ImGui::TextUnformatted(message.find_node("time").get_value());
-
-                        ImGui::TableSetColumnIndex(2);
-                        ImGui::TextUnformatted(message.find_node("logger").get_value());
-
-                        ImGui::TableSetColumnIndex(3);
-                        ImGui::TextUnformatted(message.find_node("message").get_value());
-
-                        ImGui::PopStyleColor();
-
-                        id++;
                     }
+                    
+                    // for(auto&& message : m_Messages)
+                    // {
+                    //     // check message type filter 
+                    //     if(!m_MessageTypeFilter[message.find_node("level_enum").get_value_as<size_t>()].Selected) 
+                    //         continue;
+
+                    //     // check message text filter
+                    //     std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
+                    //     std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
+
+                    //     auto iterator = std::search(
+                    //         messageText.begin(), 
+                    //         messageText.end(), 
+                    //         std::boyer_moore_searcher(messageTextFilter.begin(), messageTextFilter.end()));
+
+                    //     if(!messageTextFilter.empty() && iterator == messageText.end()) 
+                    //         continue;
+
+                    //     ImGui::TableNextRow();
+                    //     ImGui::TableSetColumnIndex(0);
+
+                    //     ImGui::PushID(id);  
+                        
+                    //     bool selected = message.find_node("selected").get_value_as<bool>();
+
+                    //     if(ImGui::Selectable("", 
+                    //         &selected, 
+                    //         ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
+                    //         ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
+                    //     {
+                    //         message.find_node("selected").set_value_as<bool>(true);
+                    //     }
+
+                    //     ImGui::PopID();
+
+                    //     ImGui::SameLine();
+
+                    //     ImGui::PushStyleColor(ImGuiCol_Text, message.find_node("color").get_value_as<ImU32>());
+                        
+                    //     ImGui::TextUnformatted(message.find_node("level").get_value());
+
+                    //     ImGui::TableSetColumnIndex(1);
+                    //     ImGui::TextUnformatted(message.find_node("time").get_value());
+
+                    //     ImGui::TableSetColumnIndex(2);
+                    //     ImGui::TextUnformatted(message.find_node("logger").get_value());
+
+                    //     ImGui::TableSetColumnIndex(3);
+                    //     ImGui::TextUnformatted(message.find_node("message").get_value());
+
+                    //     ImGui::PopStyleColor();
+
+                    //     id++;
+                    // }
 
                     ImGui::EndTable();
                 }
