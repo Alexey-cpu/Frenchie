@@ -422,10 +422,14 @@ std::vector<std::filesystem::path> Explorer::get_selected_paths()
 
     std::vector<std::filesystem::path> selectedPaths;
     
-    for(auto&& path : explorer->m_Paths)
+    auto selection = explorer->m_SelectedPaths;
+
+    for(auto&& path : selection)
     {
-        if(path.second) 
-            selectedPaths.push_back(path.first);
+        if(std::filesystem::exists(path))
+            selectedPaths.push_back(path);
+        else 
+            explorer->m_SelectedPaths.erase(path);
     }
 
     return selectedPaths;
@@ -433,31 +437,6 @@ std::vector<std::filesystem::path> Explorer::get_selected_paths()
 
 void Explorer::frame_update()
 {
-    // update paths and format filter
-    std::map<std::filesystem::path, bool> paths;
-    std::map<std::string, bool> formatFilter;
-
-    for(const auto& directory :
-        std::filesystem::directory_iterator(std::filesystem::current_path().make_preferred(), 
-        std::filesystem::directory_options::skip_permission_denied))
-    {
-        // update path
-        auto path   = directory.path();
-        paths[path] = m_Paths.find(path) != m_Paths.end() ? m_Paths[path] : false;
-
-        // update extention
-        auto extention = Frenchie::Core::Helpers::get_file_extention(path);
-
-        if(!extention.empty()) 
-        {
-            formatFilter[extention] = 
-                m_FormatFilter.find(extention) != m_FormatFilter.end() ? m_FormatFilter[extention] : true;
-        }
-    }
-
-    m_Paths        = paths;
-    m_FormatFilter = formatFilter;
-
     // draw content
     ImGui::Begin(get_name().c_str(), &m_Shown);
     {
@@ -490,7 +469,6 @@ void Explorer::frame_update()
                 draw_current_directory_path_editor();
                 draw_current_directory_paths_table();
                 draw_current_directory_popup_menu();
-                draw_current_directory_format_filter();
                 handle_current_directory_hot_keys();
             }
             ImGui::EndChild();
@@ -524,6 +502,9 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
                     auto path = _Path;
 
                     std::filesystem::current_path(path.make_preferred());
+
+                    // clear selection
+                    m_SelectedPaths.clear();
                 }
                 catch(const std::exception& e)
                 {
@@ -618,6 +599,15 @@ void Explorer::draw_current_directory_path_editor()
 
 void Explorer::draw_current_directory_paths_table()
 {
+    int pathsCount = 0;
+
+    for(const auto& directory :
+        std::filesystem::directory_iterator(std::filesystem::current_path().make_preferred(), 
+        std::filesystem::directory_options::skip_permission_denied))
+    {
+        pathsCount++;
+    }
+
     if (ImGui::BeginTable(
             "CurrentDirectoryContentTable",
             3,
@@ -645,161 +635,102 @@ void Explorer::draw_current_directory_paths_table()
         ImGui::TableHeadersRow();
 
         // draw content of current directory
-        auto widgetID = 0;
+        auto pathIterator = 
+            std::filesystem::directory_iterator(std::filesystem::current_path().make_preferred(), 
+                std::filesystem::directory_options::skip_permission_denied);
 
-        for(auto&& path : m_Paths)
+        ImGuiListClipper clipper;
+        clipper.Begin(pathsCount);
+
+        while (clipper.Step())
         {
-            // check format filter
-            if(!std::filesystem::is_directory(path.first))
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++, pathIterator++)
             {
-                auto iterator = m_FormatFilter.find(Frenchie::Core::Helpers::get_file_extention(path.first));
+                auto path = (*pathIterator).path();
 
-                if(iterator == m_FormatFilter.end() || !iterator->second) 
-                    continue;
-            }
+                ImGui::TableNextRow();
 
-            ImGui::TableNextRow();
+                // draw name
+                ImGui::TableSetColumnIndex(0);
 
-            // draw name
-            ImGui::TableSetColumnIndex(0);
-            ImGui::PushID(widgetID++);
-            ImGui::Checkbox("##", &path.second);
-            ImGui::PopID();
-            ImGui::SameLine();
+                bool selected = m_SelectedPaths.find(path) != m_SelectedPaths.end();
 
-            ImGui::PushID(widgetID++);
-            bool selected = false;
-
-            if(ImGui::Selectable(
-                Frenchie::Core::Helpers::String::as_utf8(path.first.filename().wstring()).c_str(), 
-                &selected,
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick))
-            {
-                if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
-                    path.second = !path.second;
-
-                if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
-                    change_current_directory(path.first);
-            }
-
-            // drag & drop
-            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-            {
-                std::set<std::filesystem::path> selection;
-                auto selectedPaths = get_selected_paths();
-                selectedPaths.push_back(path.first);
-
-                std::string selectionBuffer;
-
-                for(auto&& selectedPath : selectedPaths)
+                if(ImGui::Selectable(
+                    Frenchie::Core::Helpers::String::as_utf8(path.filename().wstring()).c_str(), 
+                    &selected,
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick))
                 {
-                    if(selection.find(selectedPath) != selection.end()) 
-                        continue;
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+                    {
+                        m_SelectedPaths.insert(path);
+                    }
 
-                    selection.insert(selectedPath);
-
-                    selectionBuffer.append(Frenchie::Core::Helpers::String::as_utf8(selectedPath.wstring())).append("\n");
+                    if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+                        change_current_directory(path);
                 }
 
-                ImGui::SetDragDropPayload(STRINGIFY(std::filesystem::path),selectionBuffer.c_str(), selectionBuffer.size() + 1);
-                ImGui::TextUnformatted(selectionBuffer.c_str());
-                ImGui::EndDragDropSource();
+                // drag & drop
+                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+                {
+                    std::set<std::filesystem::path> selection;
+                    auto selectedPaths = get_selected_paths();
+                    selectedPaths.push_back(path);
+
+                    std::string selectionBuffer;
+
+                    for(auto&& selectedPath : selectedPaths)
+                    {
+                        if(selection.find(selectedPath) != selection.end()) 
+                            continue;
+
+                        selection.insert(selectedPath);
+
+                        selectionBuffer.append(Frenchie::Core::Helpers::String::as_utf8(selectedPath.wstring())).append("\n");
+                    }
+
+                    ImGui::SetDragDropPayload(STRINGIFY(std::filesystem::path),selectionBuffer.c_str(), selectionBuffer.size() + 1);
+                    ImGui::TextUnformatted(selectionBuffer.c_str());
+                    ImGui::EndDragDropSource();
+                }
+
+                drop_item_to(path);
+
+                // show pop up menu when item is clicked
+                if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
+                {
+                    // // select this item
+                    m_SelectedPaths.insert(path);
+
+                    // show context menu
+                    draw_current_directory_popup_menu();
+                }
+
+                // draw last write time
+                ImGui::TableSetColumnIndex(1);
+
+                try
+                {
+                    auto time    = std::filesystem::last_write_time(path);
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
+                    ImGui::TextUnformatted(asctime(std::localtime(&seconds)));
+                }
+                catch(const std::exception& e)
+                {
+                    Frenchie::Core::Logger::instance()->critical(e.what());
+                    ImGui::TextUnformatted("UNKNOWN");
+                }
+
+                // draw type
+                ImGui::TableSetColumnIndex(2);
+                ImGui::TextUnformatted((std::filesystem::is_directory(path) ? "folder" : "file"));
+
             }
-
-            drop_item_to(path.first);
-
-            // show pop up menu when item is clicked
-            if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
-            {
-                // select this item
-                path.second = true;
-
-                // show context menu
-                draw_current_directory_popup_menu();
-            }
-            
-            ImGui::PopID();
-
-            // draw last write time
-            ImGui::TableSetColumnIndex(1);
-
-            try
-            {
-                auto time    = std::filesystem::last_write_time(path.first);
-                auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
-                ImGui::TextUnformatted(asctime(std::localtime(&seconds)));
-            }
-            catch(const std::exception& e)
-            {
-                Frenchie::Core::Logger::instance()->critical(e.what());
-                ImGui::TextUnformatted("UNKNOWN");
-            }
-
-            // draw type
-            ImGui::TableSetColumnIndex(2);
-            ImGui::TextUnformatted((std::filesystem::is_directory(path.first) ? "folder" : "file"));
         }
 
         ImGui::EndTable();
-    }
-}
-
-void Explorer::draw_current_directory_format_filter()
-{
-    std::string foramtFilterPreviewText;
-    size_t      counter = 0;
-
-    for (auto&& formatFilter : m_FormatFilter)
-    {
-        auto text = foramtFilterPreviewText;
-
-        if(formatFilter.second)
-        {
-            text = text.append(" ").append(formatFilter.first);
-            counter++;
-        }
-
-        if(ImGui::CalcTextSize(text.c_str()).x > ImGui::GetContentRegionAvail().x * 0.7f) 
-        {
-            foramtFilterPreviewText.append("...");
-            break;
-        }
-        else
-        {
-            foramtFilterPreviewText = text;
-        }
-    }
-
-    if(foramtFilterPreviewText.empty()) 
-        foramtFilterPreviewText = "none";
-
-    if (counter >= m_FormatFilter.size())
-        foramtFilterPreviewText = "all";
-
-    if(ImGui::BeginCombo("format filter", foramtFilterPreviewText.c_str()))
-    {
-        int checkboxID = 0;
-
-        for (auto&& formatFilter : m_FormatFilter)
-        {
-            ImGui::PushID(checkboxID++);
-            ImGui::Checkbox("##", &formatFilter.second);
-            ImGui::SameLine();
-
-            ImGui::Selectable(
-                formatFilter.first.c_str(), 
-                &formatFilter.second, 
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap   | 
-                ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups);
-
-            ImGui::PopID();
-        }
-
-        ImGui::EndCombo();
     }
 }
 
@@ -854,8 +785,7 @@ void Explorer::handle_current_directory_hot_keys()
     // Escape
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
     {
-        for(auto&& path : m_Paths)
-            path.second = false;
+        m_SelectedPaths.clear();
     }
 }
 
@@ -870,16 +800,6 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
     {
         return;
     }
-    
-
-    // size_t counter = 0;
-    // for(const auto& directory : 
-    //     std::filesystem::directory_iterator(_Path))
-    // {
-    //     counter++;
-    // }
-
-    // if(counter <= 0) return;
 
     if(_Path == std::filesystem::current_path().root_path())
         ImGui::SetNextItemOpen(true);
@@ -892,7 +812,7 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull  | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick))
     {
-        // open item
+        // change current direcrtory on double click
         if(ImGui::IsItemHovered() && 
             ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
