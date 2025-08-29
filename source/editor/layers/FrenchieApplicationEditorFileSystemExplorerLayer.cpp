@@ -485,6 +485,44 @@ bool Explorer::allows_multiple_instances() const
     return false;
 }
 
+// Frenchie::Core::Serialization::ISerializer
+bool Explorer::serialize(const Frenchie::Core::Serialization::Node& _Parent)
+{
+    // write self
+    auto self = _Parent.append_node(STRINGIFY(Explorer));
+
+    // write message content filter
+    self.append_node(
+        STRINGIFY(m_CurrentDirectoryTextEdit), 
+        Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().wstring()).c_str(),
+        Frenchie::Core::Serialization::NodeType::OBJECT);
+
+    return true;
+}
+
+bool Explorer::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
+{
+    auto self = _Parent.find_node(STRINGIFY(Explorer));
+
+    if(self.empty()) 
+        return false;
+
+    // try to setup current directory
+    try
+    {
+        std::filesystem::current_path(std::filesystem::path(
+                self.find_node(STRINGIFY(m_CurrentDirectoryTextEdit)).get_value()
+            )
+        );
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->critical(e.what());
+    }
+
+    return true;
+}
+
 void Explorer::change_current_directory(const std::filesystem::path& _Path)
 {
     // change current path
