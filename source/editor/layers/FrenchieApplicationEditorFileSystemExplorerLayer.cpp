@@ -617,8 +617,7 @@ void Explorer::draw_current_directory_paths_table()
             ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
             ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
             ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
-            ImGuiTableFlags_::ImGuiTableFlags_Hideable, 
-            ImVec2(0.0, ImGui::GetContentRegionAvail().y - 2.0f * ImGui::GetTextLineHeightWithSpacing())))
+            ImGuiTableFlags_::ImGuiTableFlags_Hideable))
     {
         // setup columns
         ImGui::TableSetupColumn("name", 

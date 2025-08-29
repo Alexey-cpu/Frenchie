@@ -2,6 +2,8 @@
 // #include <FrenchieRendererTransformComponent.hpp>
 // #include <FrenchieRendererMesh2D.hpp>
 
+// #include <FrenchieApplication.hpp>
+
 // // layers
 // #include <FrenchieApplicationCommandsQueueLayer.hpp>
 // #include <FrenchieApplicationHierarchyViewLayer.hpp>
@@ -142,7 +144,7 @@
 //     }
 
 //     // create application layers
-//     application->push<CommandsQueueLayer>()->push<CallbackCommand>(
+//     application->push<CommandsQueue>()->push<CallbackCommand>(
 //         [scene]()
 //         {
 //             if(scene != nullptr) 
@@ -157,7 +159,7 @@
 //     //application->push<SceneView>("Scene-2", scene);
 //     application->push<HierarchyView>("Hierarchy", scene);
 //     application->push<InspectorView>("Inspector", scene);
-//     application->push<ImguiDemo>();
+//     //application->push<ImguiDemo>();
 
 //     return application->execute();
 // }
