@@ -53,7 +53,9 @@ namespace Frenchie
                 };
 
                 // Explorer
-                class Explorer : public Layer
+                class Explorer : 
+                    public Layer, 
+                    public Frenchie::Core::Serialization::ISerializer
                 {
                 public:
                     Explorer();
@@ -65,6 +67,10 @@ namespace Frenchie
                     // Layer
                     virtual void frame_update() override;
                     virtual bool allows_multiple_instances() const;
+
+                    // Frenchie::Core::Serialization::ISerializer
+                    virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
+                    virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
 
                 protected:
 
