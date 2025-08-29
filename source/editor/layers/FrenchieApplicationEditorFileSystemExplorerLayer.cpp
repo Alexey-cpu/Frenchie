@@ -454,7 +454,7 @@ void Explorer::frame_update()
             // draw tree
             ImGui::TableSetColumnIndex(0);
 
-            ImGui::BeginChild("Tree");
+            ImGui::BeginChild("ContentTree");
             {
                 int id = 0;
                 draw_paths_tree(std::filesystem::current_path().root_path(), id);
@@ -464,7 +464,7 @@ void Explorer::frame_update()
             // draw table
             ImGui::TableSetColumnIndex(1);
 
-            ImGui::BeginChild("Table");
+            ImGui::BeginChild("ContentTable");
             {
                 draw_current_directory_path_editor();
                 draw_current_directory_paths_table();
@@ -672,30 +672,8 @@ void Explorer::draw_current_directory_paths_table()
                 }
 
                 // drag & drop
-                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-                {
-                    std::set<std::filesystem::path> selection;
-                    auto selectedPaths = get_selected_paths();
-                    selectedPaths.push_back(path);
-
-                    std::string selectionBuffer;
-
-                    for(auto&& selectedPath : selectedPaths)
-                    {
-                        if(selection.find(selectedPath) != selection.end()) 
-                            continue;
-
-                        selection.insert(selectedPath);
-
-                        selectionBuffer.append(Frenchie::Core::Helpers::String::as_utf8(selectedPath.wstring())).append("\n");
-                    }
-
-                    ImGui::SetDragDropPayload(STRINGIFY(std::filesystem::path),selectionBuffer.c_str(), selectionBuffer.size() + 1);
-                    ImGui::TextUnformatted(selectionBuffer.c_str());
-                    ImGui::EndDragDropSource();
-                }
-
-                drop_item_to(path);
+                drag_selected_paths(path);
+                drop_path_to(path);
 
                 // show pop up menu when item is clicked
                 if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
@@ -805,6 +783,8 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
 
     auto name = _Path.filename().wstring();
 
+    drag_selected_paths(_Path);
+
     ImGui::PushID(_ID++);
     if(ImGui::TreeNodeEx(pugi::as_utf8(name.empty() ? _Path.wstring() : name).c_str(), 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanAvailWidth | 
@@ -819,7 +799,7 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
         }
 
         // drag & drop
-        drop_item_to(_Path);
+        drop_path_to(_Path);
 
         // draw next item
         for(const auto& directory :
@@ -835,7 +815,33 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
     ImGui::PopID();
 };
 
-void Explorer::drop_item_to(const std::filesystem::path& _Path)
+void Explorer::drag_selected_paths(const std::filesystem::path& _Path)
+{
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    {
+        std::set<std::filesystem::path> selection;
+        auto selectedPaths = get_selected_paths();
+        selectedPaths.push_back(_Path);
+
+        std::string selectionBuffer;
+
+        for(auto&& selectedPath : selectedPaths)
+        {
+            if(selection.find(selectedPath) != selection.end()) 
+                continue;
+
+            selection.insert(selectedPath);
+
+            selectionBuffer.append(Frenchie::Core::Helpers::String::as_utf8(selectedPath.wstring())).append("\n");
+        }
+
+        ImGui::SetDragDropPayload(STRINGIFY(std::filesystem::path),selectionBuffer.c_str(), selectionBuffer.size() + 1);
+        ImGui::TextUnformatted(selectionBuffer.c_str());
+        ImGui::EndDragDropSource();
+    }
+}
+
+void Explorer::drop_path_to(const std::filesystem::path& _Path)
 {
     // drag & drop
     if (ImGui::BeginDragDropTarget())
@@ -853,12 +859,15 @@ void Explorer::drop_item_to(const std::filesystem::path& _Path)
 
                 for(auto&& movedPath : movedPaths)
                 {
-                    std::filesystem::path oldAdress(movedPath);
+                    std::filesystem::path oldAdress(Frenchie::Core::Helpers::String::as_wide(movedPath));
 
                     if(!std::filesystem::exists(oldAdress)) 
                         continue;
 
                     std::filesystem::path newAdress(_Path.wstring().append(L"/").append(oldAdress.filename()));
+
+                    if(oldAdress.parent_path() == newAdress.parent_path()) 
+                        return;
 
                     while(std::filesystem::exists(newAdress))
                     {
