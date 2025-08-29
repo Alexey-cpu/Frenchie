@@ -116,6 +116,9 @@ namespace Frenchie
                 std::string to_upper(std::string);
                 std::string to_lower(std::string);
 
+                std::string replace_symbol(std::string& _Input, const char& _From, const char& _To);
+                std::string replace_substring(std::string _String, std::string _Substring, std::string _NewSubstring);
+
                 // from string conversion
                 template<typename __type> 
                 __type from_string(const std::string& _Input);

@@ -14,7 +14,8 @@ endif()
 # message("===================================================")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3")
 # set(CMAKE_CX_FLAGS "${CMAKE_CXX_FLAGS} /O3")
-# message(${CMAKE_CXX_FLAGS})
+message(${CMAKE_C_COMPILER})
+message(${CMAKE_CXX_COMPILER})
 # message("===================================================")
 
 #--------------------------------------------------------------
