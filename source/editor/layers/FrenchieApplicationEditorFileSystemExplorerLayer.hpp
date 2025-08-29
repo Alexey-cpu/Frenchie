@@ -69,24 +69,17 @@ namespace Frenchie
                 protected:
 
                     // info
-                    std::map<std::filesystem::path, bool> m_Paths = 
-                        std::map<std::filesystem::path, bool>();
-
-                    std::map<std::string, bool> m_FormatFilter = 
-                        std::map<std::string, bool>();
-
-                    InputText m_CurrentDirectoryTextEdit;
-                    bool      m_DrawCurrentDirectoryTextEdit = false;
+                    InputText                       m_CurrentDirectoryTextEdit;
+                    bool                            m_DrawCurrentDirectoryTextEdit = false;
+                    std::set<std::filesystem::path> m_SelectedPaths;
 
                     // servive methods
                     void change_current_directory(const std::filesystem::path&);
                     void draw_current_directory_path_editor();
                     void draw_current_directory_paths_table();
-                    void draw_current_directory_format_filter();
                     void draw_current_directory_popup_menu();
                     void handle_current_directory_hot_keys();
                     void draw_paths_tree(const std::filesystem::path&, int&);
-
                     void drop_item_to(const std::filesystem::path&);
                 };   
             }
