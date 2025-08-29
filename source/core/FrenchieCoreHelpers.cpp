@@ -102,6 +102,49 @@ std::string Frenchie::Core::Helpers::String::to_lower(std::string _String)
     return _String;
 }
 
+std::string Frenchie::Core::Helpers::String::replace_symbol(std::string& _Input, const char& _From, const char& _To)
+{
+    std::string result;
+
+    for(int i = 0; i < (int)_Input.size(); i++)
+        result.push_back(_Input[i] == _From ? _To: _Input[i]);
+    
+    return result;
+}
+
+std::string Frenchie::Core::Helpers::String::replace_substring(std::string _String, std::string _Substring, std::string _NewSubstring)
+{
+    // reserve buffer for substring
+    std::string buffer;
+    buffer.reserve(_Substring.size());
+
+    // generate output string
+    std::string output;
+    output.reserve(_String.size());
+
+    // main code
+    for(size_t i = 0; i < _String.size(); )
+    {
+        for(size_t j = 0, k = i; j < _Substring.size(); j++, k++)
+            buffer.push_back(_String[k]);
+
+        if(buffer == _Substring)
+        {
+            output.append(_NewSubstring);
+            i += _Substring.size();
+        }
+        else
+        {
+            output.push_back(_String[i]);
+            i++;
+        }
+
+        buffer.clear();
+    }
+
+    return output;
+}
+
 template<> float Frenchie::Core::Helpers::String::from_string<float>(const std::string& _Input)
 {
     try
