@@ -40,9 +40,11 @@ namespace Frenchie
                         ImGui::SameLine();
 
                         ImGui::PushID(checkboxID++);
-                        path.second.first->draw(
-                            "###", 
-                            Frenchie::Core::Helpers::String::as_utf8(path.first.filename().wstring()).c_str());
+
+                        if(path.second.first->empty()) 
+                            path.second.first->set_buffer(Frenchie::Core::Helpers::String::as_utf8(path.first.filename().wstring()));
+
+                        path.second.first->draw("###");
 
                         ImGui::PopID();
                     }
@@ -466,6 +468,7 @@ void FileSystemExplorer::frame_update()
                 draw_current_directory_paths_table();
                 draw_current_directory_popup_menu();
                 handle_current_directory_hot_keys();
+                draw_current_filename_editor();
             }
             ImGui::EndChild();
 
@@ -618,10 +621,10 @@ void FileSystemExplorer::draw_current_directory_path_editor()
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
         // draw current path editor
-        if(m_CurrentDirectoryTextEdit.draw(
-            "###",
-            Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()).c_str(), 
-            ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+        if(m_CurrentDirectoryTextEdit.empty()) 
+            m_CurrentDirectoryTextEdit.set_buffer(Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()));
+
+        if(m_CurrentDirectoryTextEdit.draw("###", ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {
             change_current_directory(
                 std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectoryTextEdit.get_buffer())));
@@ -629,6 +632,13 @@ void FileSystemExplorer::draw_current_directory_path_editor()
             m_DrawCurrentDirectoryTextEdit = false;
         }   
     }
+}
+
+void FileSystemExplorer::draw_current_filename_editor()
+{
+    m_CurrentFileTextEdit.set_buffer(m_SelectedPaths.empty() ? "No file selected..." : Frenchie::Core::Helpers::String::as_utf8((*m_SelectedPaths.begin()).filename().wstring()));
+
+    m_CurrentFileTextEdit.draw("CurrentFile");
 }
 
 void FileSystemExplorer::draw_current_directory_paths_table()
@@ -651,7 +661,8 @@ void FileSystemExplorer::draw_current_directory_paths_table()
             ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
             ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
             ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
-            ImGuiTableFlags_::ImGuiTableFlags_Hideable))
+            ImGuiTableFlags_::ImGuiTableFlags_Hideable, 
+            ImVec2(0.0, ImGui::GetContentRegionAvail().y - 2.0f * ImGui::GetTextLineHeightWithSpacing())))
     {
         // setup columns
         ImGui::TableSetupColumn("name", 
@@ -698,6 +709,11 @@ void FileSystemExplorer::draw_current_directory_paths_table()
                 {
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
                     {
+                        m_SelectedPaths.insert(path);
+                    }
+                    else
+                    {
+                        m_SelectedPaths.clear();
                         m_SelectedPaths.insert(path);
                     }
 

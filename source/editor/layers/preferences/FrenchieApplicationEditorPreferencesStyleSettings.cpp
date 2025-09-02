@@ -2,6 +2,7 @@
 
 // IMGUI
 #include <imgui.h>
+#include <imgui_internal.h>
 
 static const char* GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
 {
@@ -10,6 +11,8 @@ static const char* GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
     if (flags == ImGuiTreeNodeFlags_DrawLinesToNodes) return "DrawLinesToNodes";
     return "";
 }
+
+
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
@@ -248,9 +251,6 @@ void StyleSettings::draw_style_editor()
             ImGui::ShowFontSelector("Fonts##Selector");
             if (ImGui::DragFloat("FontSizeBase", &style.FontSizeBase, 0.20f, 5.0f, 100.0f, "%.0f"))
                 style._NextFrameFontSizeBase = style.FontSizeBase;
-            
-            ImGui::DragFloat("FontScaleMain", &style.FontScaleMain, 0.02f, 0.5f, 4.0f);
-            ImGui::DragFloat("FontScaleDpi", &style.FontScaleDpi, 0.02f, 0.5f, 4.0f);
 
             ImGui::EndTabItem();
         }
