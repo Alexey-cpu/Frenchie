@@ -198,7 +198,7 @@ void Console::frame_update()
 
             ImGui::InputText(textFilterLabel, 
                 m_MessageContentFilter,  
-                sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));
+                sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));            
 
             // draw message table
             ImGui::BeginChild("MessagesTable", ImVec2(0.f, 0.f), ImGuiChildFlags_::ImGuiChildFlags_Borders);
@@ -218,66 +218,56 @@ void Console::frame_update()
                     // draw a content of spdlog buffer here
                     int id = 0;
 
-                    ImGuiListClipper clipper;
-                    clipper.Begin((int)m_Messages.size());
-
-                    auto iterator = m_Messages.begin();
-
-                    while (clipper.Step())
+                    for (auto&& message : m_Messages)
                     {
-                        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++, iterator++)
+                        // check message type filter
+                        if(!m_MessageTypeFilter[message.find_node("level_enum").get_value_as<size_t>()].Selected) 
+                            continue;
+
+                        // check message text filter
+                        std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
+                        std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
+
+                        auto iterator = std::search(
+                            messageText.begin(), 
+                            messageText.end(), 
+                            std::boyer_moore_searcher(messageTextFilter.begin(), messageTextFilter.end()));
+
+                        if(!messageTextFilter.empty() && iterator == messageText.end()) 
+                            continue;
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+
+                        ImGui::PushID(id);  
+                        
+                        bool selected = message.find_node("selected").get_value_as<bool>();
+
+                        if(ImGui::Selectable("", 
+                            &selected, 
+                            ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
+                            ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
                         {
-                            auto message = *iterator;
-
-                            // check message type filter
-                            if(!m_MessageTypeFilter[message.find_node("level_enum").get_value_as<size_t>()].Selected) 
-                                continue;
-
-                            // check message text filter
-                            std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
-                            std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
-
-                            auto iterator = std::search(
-                                messageText.begin(), 
-                                messageText.end(), 
-                                std::boyer_moore_searcher(messageTextFilter.begin(), messageTextFilter.end()));
-
-                            if(!messageTextFilter.empty() && iterator == messageText.end()) 
-                                continue;
-
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-
-                            ImGui::PushID(id);  
-                            
-                            bool selected = message.find_node("selected").get_value_as<bool>();
-
-                            if(ImGui::Selectable("", 
-                                &selected, 
-                                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
-                                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
-                            {
-                                message.find_node("selected").set_value_as<bool>(true);
-                            }
-
-                            ImGui::PopID();
-
-                            ImGui::SameLine();
-
-                            ImGui::PushStyleColor(ImGuiCol_Text, message.find_node("color").get_value_as<ImU32>());
-                            
-                            ImGui::TextUnformatted(message.find_node("level").get_value());
-
-                            ImGui::TableSetColumnIndex(1);
-                            ImGui::TextUnformatted(message.find_node("time").get_value());
-
-                            ImGui::TableSetColumnIndex(2);
-                            ImGui::TextUnformatted(message.find_node("message").get_value());
-
-                            ImGui::PopStyleColor();
-
-                            id++;
+                            message.find_node("selected").set_value_as<bool>(true);
                         }
+
+                        ImGui::PopID();
+
+                        ImGui::SameLine();
+
+                        ImGui::PushStyleColor(ImGuiCol_Text, message.find_node("color").get_value_as<ImU32>());
+                        
+                        ImGui::TextUnformatted(message.find_node("level").get_value());
+
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::TextUnformatted(message.find_node("time").get_value());
+
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::TextUnformatted(message.find_node("message").get_value());
+
+                        ImGui::PopStyleColor();
+
+                        id++;
                     }
 
                     ImGui::EndTable();
@@ -310,7 +300,10 @@ void Console::frame_update()
             // Copy to clipboard
             if(ImGui::IsKeyDown(ImGuiKey::ImGuiMod_Ctrl) && 
                 ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C)) 
+            {
+                ImGui::SetClipboardText("");
                 ImGui::SetClipboardText(clipBoardText.c_str());
+            }
 
             ImGui::End();
         }

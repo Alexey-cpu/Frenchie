@@ -358,11 +358,11 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
     }
 
     // Windows
-    {
-        auto WindowMenuButtonPosition = _Parent.find_node("WindowMenuButtonPosition");
-        if(WindowMenuButtonPosition.is_valid()) 
-            ImGui::GetStyle().WindowMenuButtonPosition = (ImGuiDir)WindowMenuButtonPosition.get_value_as<size_t>();
-    }
+    // {
+    //     auto WindowMenuButtonPosition = _Parent.find_node("WindowMenuButtonPosition");
+    //     if(WindowMenuButtonPosition.is_valid()) 
+    //         ImGui::GetStyle().WindowMenuButtonPosition = (ImGuiDir)WindowMenuButtonPosition.get_value_as<size_t>();
+    // }
 
     // Docking
     {
@@ -488,12 +488,12 @@ void StyleSettings::draw_geometry_settings(ImGuiStyle& style)
         ImGui::SliderFloat("TreeLinesRounding", &style.TreeLinesRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    ImGui::SeparatorText("Windows");
-    {
-        int window_menu_button_position = style.WindowMenuButtonPosition + 1;
-        if (ImGui::Combo("WindowMenuButtonPosition", (int*)&window_menu_button_position, "None\0Left\0Right\0"))
-            style.WindowMenuButtonPosition = (ImGuiDir)(window_menu_button_position - 1);
-    }
+    // ImGui::SeparatorText("Windows");
+    // {
+    //     int window_menu_button_position = style.WindowMenuButtonPosition + 1;
+    //     if (ImGui::Combo("WindowMenuButtonPosition", (int*)&window_menu_button_position, "None\0Left\0Right\0"))
+    //         style.WindowMenuButtonPosition = (ImGuiDir)(window_menu_button_position - 1);
+    // }
 
     ImGui::SeparatorText("Docking");
     {
