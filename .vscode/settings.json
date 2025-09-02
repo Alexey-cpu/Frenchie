@@ -108,6 +108,7 @@
         "memory_resource": "cpp",
         "cinttypes": "cpp",
         "stdfloat": "cpp",
-        "csetjmp": "cpp"
+        "csetjmp": "cpp",
+        "unordered_set": "cpp"
     }
 }

@@ -1,5 +1,6 @@
 #include <FrenchieApplicationEditorMainWindow.hpp>
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
+#include <FrenchieApplicationEditorPreferencesLayer.hpp>
 #include <FrenchieApplicationEditorMainMenuLayer.hpp>
 
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
@@ -7,6 +8,8 @@
 #include <FrenchieCoreHelpers.hpp>
 
 #include <FrenchieApplication.hpp>
+
+#include <FrenchieImGuiDemoLayer.hpp>
 
 // SPDLOG
 #include "spdlog/sinks/basic_file_sink.h"
@@ -38,11 +41,29 @@ MainWindow::MainWindow()
     {
         // create app logs directory
         if(!std::filesystem::exists(m_AppLogDirectory)) 
-            std::filesystem::create_directory(m_AppLogDirectory);
+        {
+            try
+            {
+                std::filesystem::create_directory(m_AppLogDirectory);
+            }
+            catch(const std::exception& e)
+            {
+                Frenchie::Core::Logger::instance()->critical(e.what());
+            }
+        }
 
         // create app state directory
         if(!std::filesystem::exists(m_AppStateDirectory)) 
-            std::filesystem::create_directory(m_AppStateDirectory);
+        {
+            try
+            {
+                std::filesystem::create_directory(m_AppStateDirectory);
+            }
+            catch(const std::exception& e)
+            {
+                Frenchie::Core::Logger::instance()->critical(e.what());
+            }
+        }
     }
 
     // clean-up logs if there are too many of them
@@ -100,7 +121,11 @@ MainWindow::MainWindow()
     // append layers
     application->push<Frenchie::Application::Editor::MainMenu>();
     application->push<Frenchie::Application::Editor::Console>();
-    application->push<Frenchie::Application::Editor::FileSystem::Explorer>();
+    application->push<Frenchie::Application::Editor::Preferences>();
+
+    application->push<Frenchie::Application::ImguiDemo>();
+
+    application->push<Frenchie::Application::Editor::FileSystemExplorer>();
 
     // TODO: this command MUST BE pushed from application settings
     application->find_or_push<CommandsQueue>()->push<CallbackCommand>(

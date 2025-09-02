@@ -43,7 +43,6 @@ namespace Frenchie
                     message.append_node("level", ConsoleSink::get_level(_Message.level).c_str());
                     message.append_node("level_enum", Helpers::String::to_string<size_t>(_Message.level).c_str());
                     message.append_node("message", fmt::to_string(_Message.payload).c_str());
-                    message.append_node("logger", fmt::to_string(_Message.logger_name).c_str());
 
                     message.append_node("selected", false);
 
@@ -206,14 +205,13 @@ void Console::frame_update()
             {
                 if(ImGui::BeginTable(
                     "Messages", 
-                    4, 
+                    3, 
                     ImGuiTableFlags_::ImGuiTableFlags_Borders   | 
                     ImGuiTableFlags_::ImGuiTableFlags_Resizable | 
                     ImGuiTableFlags_::ImGuiTableFlags_Reorderable))
                 {
                     ImGui::TableSetupColumn("level");
                     ImGui::TableSetupColumn("time");
-                    ImGui::TableSetupColumn("logger");
                     ImGui::TableSetupColumn("message");
                     ImGui::TableHeadersRow();
 
@@ -274,9 +272,6 @@ void Console::frame_update()
                             ImGui::TextUnformatted(message.find_node("time").get_value());
 
                             ImGui::TableSetColumnIndex(2);
-                            ImGui::TextUnformatted(message.find_node("logger").get_value());
-
-                            ImGui::TableSetColumnIndex(3);
                             ImGui::TextUnformatted(message.find_node("message").get_value());
 
                             ImGui::PopStyleColor();
@@ -304,10 +299,9 @@ void Console::frame_update()
                 if(!message.find_node("selected").get_value_as<bool>()) 
                     continue;
 
-                clipBoardText = clipBoardText.append(fmt::format("[{}][{}][{}] {}", 
+                clipBoardText = clipBoardText.append(fmt::format("[{}][{}] {}", 
                     message.find_node("level").get_value(), 
-                    message.find_node("time").get_value(), 
-                    message.find_node("logger").get_value(), 
+                    message.find_node("time").get_value(),
                     message.find_node("message").get_value())).append("\n");
             }
 

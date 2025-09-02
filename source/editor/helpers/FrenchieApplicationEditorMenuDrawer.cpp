@@ -59,10 +59,7 @@ namespace Frenchie
                     if(_Index == _Actions.size() - 1) 
                     {
                         if(ImGui::MenuItem(_Actions.back().c_str()))
-                        //if(ImGui::MenuItem(_Path.c_str()))
-                        {
                             Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(_Path);
-                        }
 
                         return;
                     }

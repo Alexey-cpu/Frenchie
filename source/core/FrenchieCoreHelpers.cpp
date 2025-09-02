@@ -2,6 +2,10 @@
 
 using namespace Frenchie::Core::Helpers;
 
+#include <functional>
+#include <algorithm>
+
+// Windows fucking API
 #ifdef _MSC_VER
 #include <windows.h>
 #include <libloaderapi.h>
@@ -112,7 +116,7 @@ std::string Frenchie::Core::Helpers::String::replace_symbol(std::string& _Input,
     return result;
 }
 
-std::string Frenchie::Core::Helpers::String::replace_substring(std::string _String, std::string _Substring, std::string _NewSubstring)
+std::string Frenchie::Core::Helpers::String::replace_substring(const std::string& _String, const std::string& _Substring, const std::string& _NewSubstring)
 {
     // reserve buffer for substring
     std::string buffer;
@@ -143,6 +147,16 @@ std::string Frenchie::Core::Helpers::String::replace_substring(std::string _Stri
     }
 
     return output;
+}
+
+bool Frenchie::Core::Helpers::String::contains_substring(const std::string& _String, const std::string& _Substring)
+{
+    auto iterator = std::search(
+        _String.begin(),
+        _String.end(), 
+        std::boyer_moore_searcher(_Substring.begin(), _Substring.end()));
+
+    return !_Substring.empty() && !_String.empty() && iterator != _String.end();
 }
 
 template<> float Frenchie::Core::Helpers::String::from_string<float>(const std::string& _Input)
