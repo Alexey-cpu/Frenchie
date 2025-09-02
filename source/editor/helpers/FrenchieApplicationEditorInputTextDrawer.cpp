@@ -1,19 +1,15 @@
 #include <FrenchieApplicationEditorInputTextDrawer.hpp>
 
+#include <FrenchieCoreLogger.hpp>
+
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-InputText::InputText()
-{
-    m_Buffer = (char*)std::malloc(sizeof(char) * m_BufferSize);
-    for (int i = 0; i < m_BufferSize; i++) 
-        m_Buffer[i] = '\0';
-}
+InputText::InputText(){}
 
 InputText::~InputText()
 {
-    if(m_Buffer != nullptr)
-        free(m_Buffer);
+    clear();
 }
 
 std::string InputText::get_buffer() const
@@ -23,10 +19,17 @@ std::string InputText::get_buffer() const
 
 void InputText::set_buffer(const std::string& _Input)
 {
-    if(_Input.size() >= m_BufferSize)
+    // allocate buffer if it's nullptr
+    if(m_Buffer == nullptr)
+    {
+        m_Buffer = (char*)std::malloc(std::max<size_t>(m_BufferSize, _Input.size()) * sizeof(char) * 2);
+        for (int i = 0; i < m_BufferSize; i++) 
+            m_Buffer[i] = '\0';
+    }
+    else if(_Input.size() >= m_BufferSize)
     {
         m_BufferSize = 2 * (int)_Input.size();
-        m_Buffer = (char*)std::realloc(m_Buffer, m_BufferSize);
+        m_Buffer = (char*)std::realloc(m_Buffer, sizeof(char) * m_BufferSize);
         for (int i = 0; i < m_BufferSize; i++) 
             m_Buffer[i] = '\0';
     }
@@ -34,25 +37,22 @@ void InputText::set_buffer(const std::string& _Input)
     std::strcpy(m_Buffer, _Input.c_str());
 }
 
+void InputText::clear()
+{
+    if(m_Buffer != nullptr)
+        free(m_Buffer);
+    m_Buffer = nullptr;
+}
+
 bool InputText::empty() const
 {
-    return m_Buffer[0] == '\0';
+    return m_Buffer == nullptr || m_Buffer[0] == '\0';
 }
 
 bool InputText::draw(const std::string& _Name, ImGuiInputTextFlags _Flags)
 {
-    // reallocate buffer to hold an input
-    // if(_Input.size() >= m_BufferSize)
-    // {
-    //     m_BufferSize = 2 * (int)_Input.size();
-    //     m_Buffer = (char*)std::realloc(m_Buffer, m_BufferSize);
-    //     for (int i = 0; i < m_BufferSize; i++) 
-    //         m_Buffer[i] = '\0';
-    // }
-
-    // // copy input string an empty buffer
-    // if(m_Buffer[0] == '\0')
-    //     std::strcpy(m_Buffer, _Input.c_str());
+    if(empty()) 
+        set_buffer("Empty string...");
 
     return ImGui::InputText(
         _Name.c_str(), 
@@ -79,8 +79,6 @@ int InputText::InputTextResizeCallback(ImGuiInputTextCallbackData* _Data)
 
     explorer->m_Buffer = 
         (char*)std::realloc(explorer->m_Buffer, explorer->m_BufferSize);
-    
-    explorer->m_Buffer[explorer->m_BufferSize-1] = '\0';
 
     return 0; // Return 0 to indicate no error
 }

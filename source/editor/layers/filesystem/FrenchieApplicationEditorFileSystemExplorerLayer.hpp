@@ -88,6 +88,8 @@ namespace Frenchie
                 void draw_paths_tree(const std::filesystem::path&, int&);
                 void drop_path_to(const std::filesystem::path&);
                 void drag_selected_paths(const std::filesystem::path&);
+
+                friend class FileMenuActions;
             };
         }
     }

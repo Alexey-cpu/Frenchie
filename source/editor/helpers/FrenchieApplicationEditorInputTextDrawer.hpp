@@ -28,9 +28,10 @@ namespace Frenchie
                 // predicates
                 bool empty() const;
 
-                bool draw(
-                    const std::string& _Name,
-                    ImGuiInputTextFlags _Flags = 0);
+                // API
+                void clear();
+
+                bool draw(const std::string&, ImGuiInputTextFlags = 0);
 
             protected:
 
