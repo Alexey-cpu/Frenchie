@@ -25,10 +25,7 @@ bool Preferences::awake()
             m_Layers.push_back(Frenchie::Core::Factory::create<Layer>(registry.first));
             
             if(m_Layers.back())
-            {
-                m_Layers.back()->awake();
                 m_Layers.back()->hide();
-            }
         }
     }
 
@@ -98,10 +95,35 @@ void Preferences::frame_update()
 
 bool Preferences::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
+    auto preferences = _Parent.append_node(STRINGIFY(Preferences));
+
+    for(auto&& layer : m_Layers)
+    {
+        auto serializer = 
+            std::dynamic_pointer_cast<ISerializer>(layer);
+
+        if(serializer != nullptr) 
+            serializer->serialize(preferences);
+    }
+
     return true;
 }
 
 bool Preferences::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
+    auto preferences = _Parent.find_node(STRINGIFY(Preferences)); 
+
+    if(!preferences.is_valid())
+        return false;
+
+    for(auto&& layer : m_Layers)
+    {
+        auto serializer = 
+            std::dynamic_pointer_cast<ISerializer>(layer);
+
+        if(serializer != nullptr) 
+            serializer->deserialize(preferences);
+    }
+
     return true;
 }
