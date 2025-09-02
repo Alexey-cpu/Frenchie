@@ -21,9 +21,8 @@ std::string InputText::get_buffer() const
     return std::string(m_Buffer);
 }
 
-bool InputText::draw(const std::string& _Name, const std::string& _Input, ImGuiInputTextFlags _Flags)
+void InputText::set_buffer(const std::string& _Input)
 {
-    // reallocate buffer to hold an input
     if(_Input.size() >= m_BufferSize)
     {
         m_BufferSize = 2 * (int)_Input.size();
@@ -32,9 +31,28 @@ bool InputText::draw(const std::string& _Name, const std::string& _Input, ImGuiI
             m_Buffer[i] = '\0';
     }
 
-    // copy input string an empty buffer
-    if(m_Buffer[0] == '\0')
-        std::strcpy(m_Buffer, _Input.c_str());
+    std::strcpy(m_Buffer, _Input.c_str());
+}
+
+bool InputText::empty() const
+{
+    return m_Buffer[0] == '\0';
+}
+
+bool InputText::draw(const std::string& _Name, ImGuiInputTextFlags _Flags)
+{
+    // reallocate buffer to hold an input
+    // if(_Input.size() >= m_BufferSize)
+    // {
+    //     m_BufferSize = 2 * (int)_Input.size();
+    //     m_Buffer = (char*)std::realloc(m_Buffer, m_BufferSize);
+    //     for (int i = 0; i < m_BufferSize; i++) 
+    //         m_Buffer[i] = '\0';
+    // }
+
+    // // copy input string an empty buffer
+    // if(m_Buffer[0] == '\0')
+    //     std::strcpy(m_Buffer, _Input.c_str());
 
     return ImGui::InputText(
         _Name.c_str(), 

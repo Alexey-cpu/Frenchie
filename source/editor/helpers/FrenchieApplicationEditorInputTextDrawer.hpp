@@ -19,8 +19,18 @@ namespace Frenchie
                 InputText();
                 ~InputText();
 
+                // getters
                 std::string get_buffer() const;
-                bool draw(const std::string& _Name, const std::string& _Input, ImGuiInputTextFlags _Flags = 0);
+                
+                // setters
+                void set_buffer(const std::string&);
+
+                // predicates
+                bool empty() const;
+
+                bool draw(
+                    const std::string& _Name,
+                    ImGuiInputTextFlags _Flags = 0);
 
             protected:
 

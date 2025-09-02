@@ -74,12 +74,14 @@ namespace Frenchie
 
                 // info
                 InputText                       m_CurrentDirectoryTextEdit;
+                InputText                       m_CurrentFileTextEdit;
                 bool                            m_DrawCurrentDirectoryTextEdit = false;
                 std::set<std::filesystem::path> m_SelectedPaths;
 
                 // servive methods
                 void change_current_directory(const std::filesystem::path&);
                 void draw_current_directory_path_editor();
+                void draw_current_filename_editor();
                 void draw_current_directory_paths_table();
                 void draw_current_directory_popup_menu();
                 void handle_current_directory_hot_keys();
