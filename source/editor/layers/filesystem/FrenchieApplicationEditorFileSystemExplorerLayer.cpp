@@ -6,7 +6,6 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::FileSystem;
 
 // FileSystem
 
@@ -16,406 +15,403 @@ namespace Frenchie
     {
         namespace Editor
         {
-            namespace FileSystem
+            // FileRenamerDialog
+            class FilesRenameDialog : public Dialog
             {
-                // FileRenamerDialog
-                class FilesRenameDialog : public Dialog
+            public:
+                FilesRenameDialog(const std::vector<std::filesystem::path>& _Paths): 
+                    Dialog("Rename files")
                 {
-                public:
-                    FilesRenameDialog(const std::vector<std::filesystem::path>& _Paths): 
-                        Dialog("Rename files")
+                    for(auto&& path : _Paths)
+                        m_Paths.insert({path, {std::make_shared<InputText>(), true}});
+                }
+                
+                virtual ~FilesRenameDialog(){}
+
+                virtual void draw_content() override
+                {
+                    int checkboxID = 0;
+
+                    for(auto&& path : m_Paths)
                     {
-                        for(auto&& path : _Paths)
-                            m_Paths.insert({path, {std::make_shared<InputText>(), true}});
-                    }
-                    
-                    virtual ~FilesRenameDialog(){}
-
-                    virtual void draw_content() override
-                    {
-                        int checkboxID = 0;
-
-                        for(auto&& path : m_Paths)
-                        {
-                            ImGui::PushID(checkboxID++);
-                            ImGui::Checkbox("##", &path.second.second);
-                            ImGui::PopID();
-                            ImGui::SameLine();
-
-                            ImGui::PushID(checkboxID++);
-                            path.second.first->draw(
-                                "###", 
-                                Frenchie::Core::Helpers::String::as_utf8(path.first.filename().wstring()).c_str());
-
-                            ImGui::PopID();
-                        }
-                    }
-
-                    virtual void draw_buttons() override
-                    {
-                        if(ImGui::Button("Apply"))
-                        {
-                            // rename files
-                            for(auto& item : m_Paths)
-                            {
-                                auto source   = item.first;
-                                auto text     = item.second.first->get_buffer();
-                                auto selected = item.second.second;
-
-                                if(!std::filesystem::exists(source) || !selected) 
-                                    continue;
-
-                                auto target = std::filesystem::path(
-                                    source.parent_path().wstring()
-                                    .append(L"/")
-                                    .append(Frenchie::Core::Helpers::String::as_wide(text))
-                                );
-
-                                if(source == target) 
-                                    continue;
-
-                                while (std::filesystem::exists(target))
-                                {
-                                    auto extention = Frenchie::Core::Helpers::String::as_wide(
-                                        Frenchie::Core::Helpers::get_file_extention(target));
-
-                                    target = source.parent_path().wstring()
-                                        .append(L"/")
-                                        .append(target.filename().stem().wstring())
-                                        .append(L"_Copy")
-                                        .append(extention);
-                                }
-                                
-                                try
-                                {
-                                    std::filesystem::rename(source, target);
-                                }
-                                catch(const std::exception& e)
-                                {
-                                    Frenchie::Core::Logger::instance()->critical(e.what());
-                                }
-                                
-                            }
-
-                            // close dialog
-                            close();
-                        }
-                        
+                        ImGui::PushID(checkboxID++);
+                        ImGui::Checkbox("##", &path.second.second);
+                        ImGui::PopID();
                         ImGui::SameLine();
-                        
-                        if(ImGui::Button("Cancel"))
-                            close();
+
+                        ImGui::PushID(checkboxID++);
+                        path.second.first->draw(
+                            "###", 
+                            Frenchie::Core::Helpers::String::as_utf8(path.first.filename().wstring()).c_str());
+
+                        ImGui::PopID();
                     }
+                }
 
-                protected:
-                    std::map<
-                        std::filesystem::path, 
-                        std::pair<std::shared_ptr<InputText>, bool>> m_Paths;
-                };
-
-                // FileRenamerDialog
-                class FilesRemoveDialog : public Dialog
+                virtual void draw_buttons() override
                 {
-                public:
-                    FilesRemoveDialog(const std::vector<std::filesystem::path>& _Paths) : 
-                        Dialog("Are you sure you want to delete these files ?"), 
-                        m_Paths(_Paths){}
-                    
-                    virtual ~FilesRemoveDialog(){}
-
-                    virtual void draw_content() override
+                    if(ImGui::Button("Apply"))
                     {
-                        for(auto&& path : m_Paths)
-                            ImGui::TextUnformatted(path.string().c_str());
-                    }
-
-                    virtual void draw_buttons() override
-                    {
-                        if(ImGui::Button("Yes"))
+                        // rename files
+                        for(auto& item : m_Paths)
                         {
-                            if(m_Paths.empty())
-                                return;
+                            auto source   = item.first;
+                            auto text     = item.second.first->get_buffer();
+                            auto selected = item.second.second;
 
-                            for(auto& path : m_Paths)
-                            {
-                                try
-                                {
-                                    std::filesystem::remove_all(path);
-                                }
-                                catch(...)
-                                {
-                                    Frenchie::Core::Logger::instance()->critical(fmt::format("Could not remove {}", path.string()));
-                                }
-                            }
-
-                            close();
-                        }
-                        
-                        ImGui::SameLine();
-                        
-                        if(ImGui::Button("No"))
-                            close();
-                    }
-
-                protected:
-                    std::vector<std::filesystem::path> m_Paths;
-                };
-
-                //
-                class FileMenuActions
-                {
-                public:
-                    static void copy()
-                    {
-                        auto selectedPaths = Explorer::get_selected_paths();
-
-                        if(selectedPaths.empty())
-                            return;
-
-                        std::string clipBoardText;
-
-                        for(auto& path : selectedPaths)
-                        {
-                            clipBoardText = clipBoardText.append(
-                                fmt::format("{}\n", Frenchie::Core::Helpers::String::as_utf8(path.wstring()).c_str()));
-                        }
-
-                        ImGui::SetClipboardText(clipBoardText.c_str());
-                    }
-
-                    static void paste()
-                    {
-                        auto paths = Frenchie::Core::Helpers::String::split(std::string(ImGui::GetClipboardText()), "\n");
-
-                        for(auto&& path : paths)
-                        {
-                            if(!std::filesystem::exists(path)) 
+                            if(!std::filesystem::exists(source) || !selected) 
                                 continue;
 
-                            auto source    = std::filesystem::path(path);
-                            auto extention = Frenchie::Core::Helpers::get_file_extention(source);
-                            auto target    = std::filesystem::path(
-                                std::filesystem::current_path().wstring()
+                            auto target = std::filesystem::path(
+                                source.parent_path().wstring()
                                 .append(L"/")
-                                .append(source.filename().stem().wstring())
-                                .append(L"_Copy")
-                                .append(pugi::as_wide(extention))).make_preferred();
+                                .append(Frenchie::Core::Helpers::String::as_wide(text))
+                            );
 
-                            while(std::filesystem::exists(target))
+                            if(source == target) 
+                                continue;
+
+                            while (std::filesystem::exists(target))
                             {
-                                target = std::filesystem::path(
-                                    std::filesystem::current_path().wstring()
+                                auto extention = Frenchie::Core::Helpers::String::as_wide(
+                                    Frenchie::Core::Helpers::get_file_extention(target));
+
+                                target = source.parent_path().wstring()
                                     .append(L"/")
                                     .append(target.filename().stem().wstring())
                                     .append(L"_Copy")
-                                    .append(pugi::as_wide(extention))).make_preferred();
+                                    .append(extention);
                             }
-
-                            // try to copy
+                            
                             try
                             {
-                               std::filesystem::copy(source, target);
+                                std::filesystem::rename(source, target);
                             }
                             catch(const std::exception& e)
                             {
                                 Frenchie::Core::Logger::instance()->critical(e.what());
                             }
+                            
                         }
+
+                        // close dialog
+                        close();
+                    }
+                    
+                    ImGui::SameLine();
+                    
+                    if(ImGui::Button("Cancel"))
+                        close();
+                }
+
+            protected:
+                std::map<
+                    std::filesystem::path, 
+                    std::pair<std::shared_ptr<InputText>, bool>> m_Paths;
+            };
+
+            // FileRenamerDialog
+            class FilesRemoveDialog : public Dialog
+            {
+            public:
+                FilesRemoveDialog(const std::vector<std::filesystem::path>& _Paths) : 
+                    Dialog("Are you sure you want to delete these files ?"), 
+                    m_Paths(_Paths){}
+                
+                virtual ~FilesRemoveDialog(){}
+
+                virtual void draw_content() override
+                {
+                    for(auto&& path : m_Paths)
+                        ImGui::TextUnformatted(path.string().c_str());
+                }
+
+                virtual void draw_buttons() override
+                {
+                    if(ImGui::Button("Yes"))
+                    {
+                        if(m_Paths.empty())
+                            return;
+
+                        for(auto& path : m_Paths)
+                        {
+                            try
+                            {
+                                std::filesystem::remove_all(path);
+                            }
+                            catch(...)
+                            {
+                                Frenchie::Core::Logger::instance()->critical(fmt::format("Could not remove {}", path.string()));
+                            }
+                        }
+
+                        close();
+                    }
+                    
+                    ImGui::SameLine();
+                    
+                    if(ImGui::Button("No"))
+                        close();
+                }
+
+            protected:
+                std::vector<std::filesystem::path> m_Paths;
+            };
+
+            //
+            class FileMenuActions
+            {
+            public:
+                static void copy()
+                {
+                    auto selectedPaths = FileSystemExplorer::get_selected_paths();
+
+                    if(selectedPaths.empty())
+                        return;
+
+                    std::string clipBoardText;
+
+                    for(auto& path : selectedPaths)
+                    {
+                        clipBoardText = clipBoardText.append(
+                            fmt::format("{}\n", Frenchie::Core::Helpers::String::as_utf8(path.wstring()).c_str()));
                     }
 
-                    static void remove()
+                    ImGui::SetClipboardText(clipBoardText.c_str());
+                }
+
+                static void paste()
+                {
+                    auto paths = Frenchie::Core::Helpers::String::split(std::string(ImGui::GetClipboardText()), "\n");
+
+                    for(auto&& path : paths)
                     {
-                        auto selectedPaths = Explorer::get_selected_paths();
+                        if(!std::filesystem::exists(path)) 
+                            continue;
 
-                        if(!selectedPaths.empty()) 
-                            Application::instance()->push<FilesRemoveDialog>(selectedPaths);
-                    }
+                        auto source    = std::filesystem::path(path);
+                        auto extention = Frenchie::Core::Helpers::get_file_extention(source);
+                        auto target    = std::filesystem::path(
+                            std::filesystem::current_path().wstring()
+                            .append(L"/")
+                            .append(source.filename().stem().wstring())
+                            .append(L"_Copy")
+                            .append(pugi::as_wide(extention))).make_preferred();
 
-                    static void rename()
-                    {
-                        auto selectedPaths = Explorer::get_selected_paths();
+                        while(std::filesystem::exists(target))
+                        {
+                            target = std::filesystem::path(
+                                std::filesystem::current_path().wstring()
+                                .append(L"/")
+                                .append(target.filename().stem().wstring())
+                                .append(L"_Copy")
+                                .append(pugi::as_wide(extention))).make_preferred();
+                        }
 
-                        if(!selectedPaths.empty()) 
-                            Application::instance()->push<FilesRenameDialog>(selectedPaths);
-                    }
-
-                    static void create_folder()
-                    {
-                        std::wstring newFolderName = L"NewFolder";
-
-                        auto newPath = std::filesystem::current_path().wstring().append(L"/").append(newFolderName);
-
-                        while(std::filesystem::exists(newPath))
-                            newPath = newPath.append(L"_Copy");
-
+                        // try to copy
                         try
                         {
-                            std::filesystem::create_directories(newPath);
+                            std::filesystem::copy(source, target);
                         }
                         catch(const std::exception& e)
                         {
                             Frenchie::Core::Logger::instance()->critical(e.what());
                         }
                     }
-                };
+                }
 
-                class FileMenuCopyAction : 
-                    public Frenchie::Core::Command::Registry<FileMenuCopyAction>
+                static void remove()
                 {
-                public:
+                    auto selectedPaths = FileSystemExplorer::get_selected_paths();
 
-                    // Frenchie::Core::Command
-                    virtual void execute() override
-                    {
-                        FileMenuActions::copy();
-                    }
+                    if(!selectedPaths.empty()) 
+                        Application::instance()->push<FilesRemoveDialog>(selectedPaths);
+                }
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "copy");
-                    }
-                };
-
-                class FileMenuPasteAction : 
-                    public Frenchie::Core::Command::Registry<FileMenuPasteAction>
+                static void rename()
                 {
-                public:
+                    auto selectedPaths = FileSystemExplorer::get_selected_paths();
 
-                    virtual void execute() override
-                    {
-                        FileMenuActions::paste();
-                    }
+                    if(!selectedPaths.empty()) 
+                        Application::instance()->push<FilesRenameDialog>(selectedPaths);
+                }
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "paste");
-                    }
-                };
-
-                class FileMenuRemoveAction : 
-                    public Frenchie::Core::Command::Registry<FileMenuRemoveAction>
+                static void create_folder()
                 {
-                public:
+                    std::wstring newFolderName = L"NewFolder";
 
-                    // Frenchie::Core::Command
-                    virtual void execute() override
+                    auto newPath = std::filesystem::current_path().wstring().append(L"/").append(newFolderName);
+
+                    while(std::filesystem::exists(newPath))
+                        newPath = newPath.append(L"_Copy");
+
+                    try
                     {
-                        FileMenuActions::remove();
+                        std::filesystem::create_directories(newPath);
                     }
-
-                    // Command::TRegistryType
-                    static std::string factory_id()
+                    catch(const std::exception& e)
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "remove");
+                        Frenchie::Core::Logger::instance()->critical(e.what());
                     }
-                };
+                }
+            };
 
-                class FileMenuRenameAction : 
-                    public Frenchie::Core::Command::Registry<FileMenuRenameAction>
+            class FileMenuCopyAction : 
+                public Frenchie::Core::Command::Registry<FileMenuCopyAction>
+            {
+            public:
+
+                // Frenchie::Core::Command
+                virtual void execute() override
                 {
-                public:
+                    FileMenuActions::copy();
+                }
 
-                    // Frenchie::Core::Command
-                    virtual void execute() override
-                    {
-                        FileMenuActions::rename();
-                    }
-
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "rename");
-                    }
-                };
-
-                class FileMenuCreateFolderAction : 
-                    public Frenchie::Core::Command::Registry<FileMenuCreateFolderAction>
+                // Command::TRegistryType
+                static std::string factory_id()
                 {
-                public:
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "copy");
+                }
+            };
 
-                    // Frenchie::Core::Command
-                    virtual void execute() override
-                    {
-                        FileMenuActions::create_folder();
-                    }
+            class FileMenuPasteAction : 
+                public Frenchie::Core::Command::Registry<FileMenuPasteAction>
+            {
+            public:
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "create::folder");
-                    }
-                };
-
-                // Folder menu actions
-                class FolderMenuCreateFolderAction : 
-                    public Frenchie::Core::Command::Registry<FolderMenuCreateFolderAction>
+                virtual void execute() override
                 {
-                public:
+                    FileMenuActions::paste();
+                }
 
-                    // Frenchie::Core::Command
-                    virtual void execute() override
-                    {
-                        FileMenuActions::create_folder();
-                    }
-
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "create::folder");
-                    }
-                };
-
-                class FolderMenuPasteAction : 
-                    public Frenchie::Core::Command::Registry<FolderMenuPasteAction>
+                // Command::TRegistryType
+                static std::string factory_id()
                 {
-                public:
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "paste");
+                }
+            };
 
-                    // Frenchie::Core::Command
-                    virtual void execute() override
-                    {
-                        FileMenuActions::paste();
-                    }
+            class FileMenuRemoveAction : 
+                public Frenchie::Core::Command::Registry<FileMenuRemoveAction>
+            {
+            public:
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "paste");
-                    }
-                };
-            }
+                // Frenchie::Core::Command
+                virtual void execute() override
+                {
+                    FileMenuActions::remove();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "remove");
+                }
+            };
+
+            class FileMenuRenameAction : 
+                public Frenchie::Core::Command::Registry<FileMenuRenameAction>
+            {
+            public:
+
+                // Frenchie::Core::Command
+                virtual void execute() override
+                {
+                    FileMenuActions::rename();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "rename");
+                }
+            };
+
+            class FileMenuCreateFolderAction : 
+                public Frenchie::Core::Command::Registry<FileMenuCreateFolderAction>
+            {
+            public:
+
+                // Frenchie::Core::Command
+                virtual void execute() override
+                {
+                    FileMenuActions::create_folder();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "create::folder");
+                }
+            };
+
+            // Folder menu actions
+            class FolderMenuCreateFolderAction : 
+                public Frenchie::Core::Command::Registry<FolderMenuCreateFolderAction>
+            {
+            public:
+
+                // Frenchie::Core::Command
+                virtual void execute() override
+                {
+                    FileMenuActions::create_folder();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "create::folder");
+                }
+            };
+
+            class FolderMenuPasteAction : 
+                public Frenchie::Core::Command::Registry<FolderMenuPasteAction>
+            {
+            public:
+
+                // Frenchie::Core::Command
+                virtual void execute() override
+                {
+                    FileMenuActions::paste();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "paste");
+                }
+            };
         }
     }
 }
 
 // FileMenu
-FileMenu::FileMenu(){}
-FileMenu::~FileMenu(){}
+FileSystemExplorerFileMenu::FileSystemExplorerFileMenu(){}
+FileSystemExplorerFileMenu::~FileSystemExplorerFileMenu(){}
 
-void FileMenu::frame_update()
+void FileSystemExplorerFileMenu::frame_update()
 {
     m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu));
 }
 
 // FolderMenu
-FolderMenu::FolderMenu(){}
-FolderMenu::~FolderMenu(){}
+FileSystemExplorerFolderMenu::FileSystemExplorerFolderMenu(){}
+FileSystemExplorerFolderMenu::~FileSystemExplorerFolderMenu(){}
 
-void FolderMenu::frame_update()
+void FileSystemExplorerFolderMenu::frame_update()
 {
     m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu));
 }
 
 // Explorer
-Explorer::Explorer() : 
-    Layer(STRINGIFY(Explorer)){}
+FileSystemExplorer::FileSystemExplorer() : 
+    Layer(STRINGIFY(FileSystemExplorer)){}
 
-Explorer::~Explorer(){}
+FileSystemExplorer::~FileSystemExplorer(){}
 
-std::vector<std::filesystem::path> Explorer::get_selected_paths()
+std::vector<std::filesystem::path> FileSystemExplorer::get_selected_paths()
 {
-    auto explorer = Application::instance()->find<Explorer>();
+    auto explorer = Application::instance()->find<FileSystemExplorer>();
 
     if(explorer == nullptr) 
         return std::vector<std::filesystem::path>();
@@ -435,7 +431,7 @@ std::vector<std::filesystem::path> Explorer::get_selected_paths()
     return selectedPaths;
 }
 
-void Explorer::frame_update()
+void FileSystemExplorer::frame_update()
 {
     // draw content
     ImGui::Begin(get_name().c_str(), &m_Shown);
@@ -480,16 +476,16 @@ void Explorer::frame_update()
     }
 }
 
-bool Explorer::allows_multiple_instances() const
+bool FileSystemExplorer::allows_multiple_instances() const
 {
     return false;
 }
 
 // Frenchie::Core::Serialization::ISerializer
-bool Explorer::serialize(const Frenchie::Core::Serialization::Node& _Parent)
+bool FileSystemExplorer::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     // write self
-    auto self = _Parent.append_node(STRINGIFY(Explorer));
+    auto self = _Parent.append_node(STRINGIFY(FileSystemExplorer));
 
     // write message content filter
     self.append_node(
@@ -500,9 +496,9 @@ bool Explorer::serialize(const Frenchie::Core::Serialization::Node& _Parent)
     return true;
 }
 
-bool Explorer::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
+bool FileSystemExplorer::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
-    auto self = _Parent.find_node(STRINGIFY(Explorer));
+    auto self = _Parent.find_node(STRINGIFY(FileSystemExplorer));
 
     if(self.empty()) 
         return false;
@@ -523,7 +519,7 @@ bool Explorer::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
     return true;
 }
 
-void Explorer::change_current_directory(const std::filesystem::path& _Path)
+void FileSystemExplorer::change_current_directory(const std::filesystem::path& _Path)
 {
     // change current path
     if(!std::filesystem::is_directory(_Path) || !std::filesystem::exists(_Path)) 
@@ -552,7 +548,7 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
         );
 }
 
-void Explorer::draw_current_directory_path_editor()
+void FileSystemExplorer::draw_current_directory_path_editor()
 {
     float height   = ImGui::CalcTextSize("LAGEST").y + 2.f * ImGui::GetStyle().FramePadding.y;
     bool  selected = false;
@@ -635,7 +631,7 @@ void Explorer::draw_current_directory_path_editor()
     }
 }
 
-void Explorer::draw_current_directory_paths_table()
+void FileSystemExplorer::draw_current_directory_paths_table()
 {
     int pathsCount = 0;
 
@@ -749,13 +745,13 @@ void Explorer::draw_current_directory_paths_table()
     }
 }
 
-void Explorer::draw_current_directory_popup_menu()
+void FileSystemExplorer::draw_current_directory_popup_menu()
 {
     if(get_selected_paths().empty())
     {
         if(ImGui::BeginPopupContextItem())
         {
-            FolderMenu().frame_update();
+            FileSystemExplorerFolderMenu().frame_update();
             ImGui::EndPopup();
         }
     }
@@ -763,13 +759,13 @@ void Explorer::draw_current_directory_popup_menu()
     {
         if(ImGui::BeginPopupContextItem())
         {
-            FileMenu().frame_update();
+            FileSystemExplorerFileMenu().frame_update();
             ImGui::EndPopup();
         }
     }
 }
 
-void Explorer::handle_current_directory_hot_keys()
+void FileSystemExplorer::handle_current_directory_hot_keys()
 {
     if(Application::instance()->find<Dialog>() != nullptr) 
         return;
@@ -779,7 +775,7 @@ void Explorer::handle_current_directory_hot_keys()
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileSystem::FileMenuCopyAction::factory_id());
+            Frenchie::Application::Editor::FileMenuCopyAction::factory_id());
     }
 
     // Ctrl + V
@@ -787,14 +783,14 @@ void Explorer::handle_current_directory_hot_keys()
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileSystem::FileMenuPasteAction::factory_id());
+            Frenchie::Application::Editor::FileMenuPasteAction::factory_id());
     }
 
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileSystem::FileMenuRemoveAction::factory_id());
+            Frenchie::Application::Editor::FileMenuRemoveAction::factory_id());
     }
 
     // Escape
@@ -804,7 +800,7 @@ void Explorer::handle_current_directory_hot_keys()
     }
 }
 
-void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
+void FileSystemExplorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
 {
     try
     {
@@ -853,7 +849,7 @@ void Explorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
     ImGui::PopID();
 };
 
-void Explorer::drag_selected_paths(const std::filesystem::path& _Path)
+void FileSystemExplorer::drag_selected_paths(const std::filesystem::path& _Path)
 {
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
     {
@@ -879,7 +875,7 @@ void Explorer::drag_selected_paths(const std::filesystem::path& _Path)
     }
 }
 
-void Explorer::drop_path_to(const std::filesystem::path& _Path)
+void FileSystemExplorer::drop_path_to(const std::filesystem::path& _Path)
 {
     // drag & drop
     if (ImGui::BeginDragDropTarget())

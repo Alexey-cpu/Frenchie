@@ -167,15 +167,16 @@
 //     return application->execute();
 // }
 
-//---------------------------------------------------------------------------------------------------
-// Editor
-//---------------------------------------------------------------------------------------------------
-// #include <FrenchieApplicationEditorMainWindow.hpp>
+// //---------------------------------------------------------------------------------------------------
+// // Editor
+// //---------------------------------------------------------------------------------------------------
+#include <FrenchieApplicationEditorMainWindow.hpp>
 
-// int main(int, char**)
-// {
-//     return Frenchie::Application::Editor::MainWindow().execute();
-// }
+int main(int, char**)
+{
+    //return 0;
+    return Frenchie::Application::Editor::MainWindow().execute();
+}
 
 //---------------------------------------------------------------------------------------------------
 // CMake
@@ -359,6 +360,15 @@ R"(if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif())").append("\n\n");
 
+//                 cmakeLists.append("# optionally include current CMakeLists.txt directory\n");
+//                 cmakeLists.append(
+// R"(
+// cmake_file_api(
+//   QUERY
+//   API_VERSION 1
+// )
+// )");
+
                 cmakeLists.append("# include .cmake macro \n");
                 cmakeLists.append(fmt::format("include({})\n", """\"cmake/headers_collection_macro.cmake""\""));
                 cmakeLists.append(fmt::format("include({})\n\n", """\"cmake/sources_collection_macro.cmake""\""));
@@ -420,33 +430,70 @@ toolchain.cmake
     }
 }
 
-int main(int, char**)
-{
-    // create CMake project
-    std::filesystem::path projectPath = "C:/SDK/Qt_Projects/TestProject";
+// #include <float.h>
 
-    try
-    {
-        std::filesystem::remove_all(projectPath);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+// int main(int, char**)
+// {
+//     // std::cout << "PATH: \n";
+//     // std::system("echo %PATH%");
+//     // std::cout << "\n\n";
 
-    Frenchie::Core::CMake::create_project("C:/SDK/Qt_Projects/", "TestProject", "1.0.0");
+//     // std::cout << "LIB: \n";
+//     // std::system("echo %LIB%");
+//     // std::cout << "\n\n";
 
-    // create toolchain file for CMake project
-    std::filesystem::path cCompiler("C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.41.34120/bin/Hostx64/x64/cl.exe");
-    std::filesystem::path cppCompiler("C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.41.34120/bin/Hostx64/x64/cl.exe");
+//     // std::cout << "INCLUDE: \n";
+//     // std::system("echo %INCLUDE%");
 
-    Frenchie::Core::CMake::create_toolchain_file(projectPath, cCompiler, cppCompiler);
+//     // auto _Path = std::filesystem::current_path().root_path();
+    
+//     // for(auto& directory :
+//     // std::filesystem::recursive_directory_iterator(
+//     //     _Path,
+//     //     std::filesystem::directory_options::skip_permission_denied))
+//     // {
+//     //     std::cout << directory.path() << "\n";
+//     // }
+    
+//     // // create CMake project
+//     // std::filesystem::path projectPath = "C:/SDK/Qt_Projects/TestProject";
 
-    // configure project using previously generated CMakeLists.cmake and it's toolchain.cmake file...
-    std::filesystem::path cmake("C:/Qt/Tools/CMake_64/bin/cmake.exe");
-    std::filesystem::path build("C:/SDK/Qt_Projects/TestProject/build");
-    std::filesystem::path cmakeGenerator("C:/Qt/Tools/Ninja/ninja.exe");
+//     // try
+//     // {
+//     //     std::filesystem::remove_all(projectPath);
+//     // }
+//     // catch(const std::exception& e)
+//     // {
+//     //     std::cerr << e.what() << '\n';
+//     // }
 
-    return 0;
-}
+//     // Frenchie::Core::CMake::create_project("C:/SDK/Qt_Projects/", "TestProject", "1.0.0");
+
+//     // // create toolchain file for CMake project
+//     // std::filesystem::path cCompiler("C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.41.34120/bin/Hostx64/x64/cl.exe");
+//     // std::filesystem::path cppCompiler("C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.41.34120/bin/Hostx64/x64/cl.exe");
+
+//     // Frenchie::Core::CMake::create_toolchain_file(projectPath, cCompiler, cppCompiler);
+
+//     // // configure project using previously generated CMakeLists.cmake and it's toolchain.cmake file...
+//     // std::filesystem::path cmake("C:/Qt/Tools/CMake_64/bin/cmake.exe");
+//     // std::filesystem::path build("C:/SDK/Qt_Projects/TestProject/build");
+//     // std::filesystem::path cmakeGenerator("C:/Qt/Tools/Ninja/ninja.exe");
+
+//     // std::string arguments;
+//     // arguments.append("-DCMAKE_BUILD_TYPE:STRING=Debug").append(" ");
+//     // arguments.append("-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE").append(" ");
+//     // arguments.append(fmt::format("-DCMAKE_TOOLCHAIN_FILE:FILEPATH={}", projectPath.string().append("/toolchain.cmake"))).append(" ");
+//     // arguments.append(fmt::format("-S {}", projectPath.string())).append(" ");
+//     // arguments.append(fmt::format("-B {}/build", projectPath.string())).append(" ");
+//     // arguments.append("-G Ninja");
+
+//     // launch_command(
+//     //     cmake.string().c_str(),
+//     //     arguments.c_str(),
+//     //     nullptr
+//     // );
+
+//     return 0;
+// }
 //---------------------------------------------------------------------------------------------------

@@ -117,7 +117,8 @@ namespace Frenchie
                 std::string to_lower(std::string);
 
                 std::string replace_symbol(std::string& _Input, const char& _From, const char& _To);
-                std::string replace_substring(std::string _String, std::string _Substring, std::string _NewSubstring);
+                std::string replace_substring(const std::string& _String, const std::string& _Substring, const std::string& _NewSubstring);
+                bool contains_substring(const std::string& _String, const std::string& _Substring);
 
                 // from string conversion
                 template<typename __type> 

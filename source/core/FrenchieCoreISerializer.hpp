@@ -13,8 +13,8 @@ namespace Frenchie
             public:
                 ISerializer(){}
                 virtual ~ISerializer(){}
-                virtual bool serialize(const Node& _Parent) = 0;
-                virtual bool deserialize(const Node& _Parent) = 0;
+                virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) = 0;
+                virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) = 0;
             };
         }
     }
