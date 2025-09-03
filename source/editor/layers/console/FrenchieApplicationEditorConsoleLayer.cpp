@@ -38,15 +38,17 @@ namespace Frenchie
                             return;
 
                     // create message
-                    auto message = m_Console->m_Messages.append_node("message");
-                    message.append_node("time", Helpers::String::to_string<std::chrono::system_clock::time_point>(_Message.time).c_str(), Frenchie::Core::Serialization::NodeType::OBJECT);
-                    message.append_node("level", ConsoleSink::get_level(_Message.level).c_str());
-                    message.append_node("level_enum", Helpers::String::to_string<size_t>(_Message.level).c_str());
-                    message.append_node("message", fmt::to_string(_Message.payload).c_str());
-
-                    message.append_node("selected", false);
-
-                    message.append_node("color", Helpers::String::to_string<ImU32>(ConsoleSink::get_color(_Message.level)).c_str(), Frenchie::Core::Serialization::NodeType::OBJECT);
+                    m_Console->m_Messages.push_back(
+                        Console::Message(
+                            {
+                                _Message.time,
+                                _Message.level,
+                                ConsoleSink::get_color( _Message.level),
+                                false,
+                                fmt::to_string(_Message.payload)
+                            }
+                        )
+                    );
                 }
 
                 virtual void flush_() override{}
@@ -81,32 +83,6 @@ namespace Frenchie
                     }
 
                     return IM_COL32(255, 255, 255, 255);
-                }
-
-                static std::string get_level(spdlog::level::level_enum _Level)
-                {
-                    switch (_Level)
-                    {
-                        case spdlog::level::level_enum::trace:
-                            return "trace";
-
-                        case spdlog::level::level_enum::debug:
-                            return "debug";
-
-                        case spdlog::level::level_enum::info:
-                            return "info";
-
-                        case spdlog::level::level_enum::warn:
-                            return "warning";
-
-                        case spdlog::level::level_enum::err:
-                            return "error";
-
-                        case spdlog::level::level_enum::critical:
-                            return "critical";
-                    }
-
-                    return "unknown";
                 }
             };
         }
@@ -147,35 +123,15 @@ void Console::frame_update()
         if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
         {
             for(auto&& message : m_Messages) 
-                message.find_node("selected").set_value_as<bool>(false);
-        }
-
-        // create dockspace
-        char consoleTableID[] = "Protocol";
-        char consoleTextID [] = "Selection";
-
-        auto dockspace_id = ImGui::GetID(get_name().c_str());
-
-        ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_::ImGuiDockNodeFlags_PassthruCentralNode;
-
-        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspaceFlags);
-
-        if(m_InitializeDockSpace)
-        {
-            m_InitializeDockSpace = false;
-            ImGui::DockBuilderRemoveNode(dockspace_id);
-            ImGui::DockBuilderAddNode(dockspace_id, dockspaceFlags);
-            ImGui::DockBuilderDockWindow(consoleTableID, ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Up, 0.8f, nullptr, &dockspace_id));
-            ImGui::DockBuilderDockWindow(consoleTextID, ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Down, 0.2f, nullptr, &dockspace_id));
-            ImGui::DockBuilderFinish(dockspace_id);
+                message.selected = false;
         }
 
         // docked windows
-        ImGui::Begin(consoleTableID);
+        ImGui::Begin("Console");
         {
             // draw clear button
             if(ImGui::Button("Clear"))
-                m_Messages.reset();
+                m_Messages.clear();
 
             // draw message type filter
             for (int i = 0; i < (int)m_MessageTypeFilter.size(); i++)
@@ -184,125 +140,60 @@ void Console::frame_update()
                 ImGui::Checkbox(m_MessageTypeFilter[i].Level.c_str(), &m_MessageTypeFilter[i].Selected);
             }
 
-            // maximum message count
+            // draw maximum message count
             ImGui::SameLine();
             ImGui::SetNextItemWidth(64);
             ImGui::DragInt("MaximumMessageCount", &m_MaximumMessageCount, 1.f, 10, 150);
 
-            ImGui::SameLine();
-
             // draw message text filter
+            ImGui::SameLine();
             auto textFilterLabel = "Text fiter";
-
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(textFilterLabel).x * 2.f);
+            ImGui::InputText(textFilterLabel, m_MessageContentFilter, sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));            
 
-            ImGui::InputText(textFilterLabel, 
-                m_MessageContentFilter,  
-                sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));            
+            auto clipRect = ImRect(
+                ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos() + ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY()), 
+                ImGui::GetWindowContentRegionMax() + ImGui::GetWindowPos() + ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY())
+            );
 
-            // draw message table
-            ImGui::BeginChild("MessagesTable", ImVec2(0.f, 0.f), ImGuiChildFlags_::ImGuiChildFlags_Borders);
-            {
-                if(ImGui::BeginTable(
-                    "Messages", 
-                    3, 
-                    ImGuiTableFlags_::ImGuiTableFlags_Borders   | 
-                    ImGuiTableFlags_::ImGuiTableFlags_Resizable | 
-                    ImGuiTableFlags_::ImGuiTableFlags_Reorderable))
-                {
-                    ImGui::TableSetupColumn("level");
-                    ImGui::TableSetupColumn("time");
-                    ImGui::TableSetupColumn("message");
-                    ImGui::TableHeadersRow();
-
-                    // draw a content of spdlog buffer here
-                    int id = 0;
-
-                    for (auto&& message : m_Messages)
-                    {
-                        // check message type filter
-                        if(!m_MessageTypeFilter[message.find_node("level_enum").get_value_as<size_t>()].Selected) 
-                            continue;
-
-                        // check message text filter
-                        std::string messageText       = Helpers::String::to_lower(message.find_node("message").get_value());
-                        std::string messageTextFilter = Helpers::String::to_lower(m_MessageContentFilter);
-
-                        auto iterator = std::search(
-                            messageText.begin(), 
-                            messageText.end(), 
-                            std::boyer_moore_searcher(messageTextFilter.begin(), messageTextFilter.end()));
-
-                        if(!messageTextFilter.empty() && iterator == messageText.end()) 
-                            continue;
-
-                        ImGui::TableNextRow();
-                        ImGui::TableSetColumnIndex(0);
-
-                        ImGui::PushID(id);  
-                        
-                        bool selected = message.find_node("selected").get_value_as<bool>();
-
-                        if(ImGui::Selectable("", 
-                            &selected, 
-                            ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
-                            ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
-                        {
-                            message.find_node("selected").set_value_as<bool>(true);
-                        }
-
-                        ImGui::PopID();
-
-                        ImGui::SameLine();
-
-                        ImGui::PushStyleColor(ImGuiCol_Text, message.find_node("color").get_value_as<ImU32>());
-                        
-                        ImGui::TextUnformatted(message.find_node("level").get_value());
-
-                        ImGui::TableSetColumnIndex(1);
-                        ImGui::TextUnformatted(message.find_node("time").get_value());
-
-                        ImGui::TableSetColumnIndex(2);
-                        ImGui::TextUnformatted(message.find_node("message").get_value());
-
-                        ImGui::PopStyleColor();
-
-                        id++;
-                    }
-
-                    ImGui::EndTable();
-                }
-
-                ImGui::EndChild();
-            }
-
-            ImGui::End();
-        }
-
-        // draw selection
-        ImGui::Begin(consoleTextID);
-        {
-            std::string clipBoardText;
+            // draw messages table
+            auto id = 0;
+            auto messageTextFilter = std::string(m_MessageContentFilter);
 
             for(auto&& message : m_Messages)
             {
-                if(!message.find_node("selected").get_value_as<bool>()) 
+                //check message type filter
+                if(!m_MessageTypeFilter[message.level].Selected) 
                     continue;
 
-                clipBoardText = clipBoardText.append(fmt::format("[{}][{}] {}", 
-                    message.find_node("level").get_value(), 
-                    message.find_node("time").get_value(),
-                    message.find_node("message").get_value())).append("\n");
-            }
+                //check message text filter
+                if(!messageTextFilter.empty() && 
+                    !Frenchie::Core::Helpers::String::contains_substring(
+                        Helpers::String::to_lower(message.message),
+                        Helpers::String::to_lower(messageTextFilter)))
+                {
+                    continue;
+                }
 
-            ImGui::TextUnformatted(clipBoardText.c_str());
+                ImGui::PushID(id++);
+                ImGui::PushStyleColor(ImGuiCol_Text, message.color);
 
-            // Copy to clipboard
-            if(ImGui::IsKeyDown(ImGuiKey::ImGuiMod_Ctrl) && 
-                ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C)) 
-            {
-                ImGui::SetClipboardText("");
-                ImGui::SetClipboardText(clipBoardText.c_str());
+                ImGui::GetCursorPos();
+
+                if(ImGui::Selectable(
+                    fmt::format(
+                        "[{}] {}", 
+                        Helpers::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
+                        message.message
+                    ).c_str(), 
+                    &message.selected, 
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
+                    ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
+                {
+                }
+
+                ImGui::PopStyleColor();
+                ImGui::PopID();
             }
 
             ImGui::End();

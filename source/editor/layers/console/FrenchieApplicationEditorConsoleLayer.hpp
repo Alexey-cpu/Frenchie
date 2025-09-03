@@ -1,6 +1,5 @@
 #pragma once
 
-#include <FrenchieCoreSerializationNode.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreISerializer.hpp>
 #include <FrenchieCoreHelpers.hpp>
@@ -42,8 +41,17 @@ namespace Frenchie
 
             protected:
 
+                struct Message
+                {
+                    std::chrono::system_clock::time_point time;
+                    spdlog::level::level_enum             level;
+                    unsigned int                          color;
+                    bool                                  selected;
+                    std::string                           message;
+                };
+
                 // info
-                Frenchie::Core::Serialization::Document m_Messages;
+                mutable std::vector<Message> m_Messages;
 
                 mutable std::vector<Filter>  m_MessageTypeFilter   = std::vector<Filter>();
                 mutable char                 m_MessageContentFilter[1024]{};
