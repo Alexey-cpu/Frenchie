@@ -1,9 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
-
-// IMGUI
-#include <imgui.h>
+#include <FrenchieApplicationEditorInputTextDrawer.hpp>
 
 namespace Frenchie
 {
@@ -11,19 +9,18 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class StyleSettings : 
-                public Frenchie::Application::Layer::Registry<StyleSettings>, 
+            class EnvironmentSettings : 
+                public Frenchie::Application::Layer::Registry<EnvironmentSettings>, 
                 public Frenchie::Core::Serialization::ISerializer
             {
             public:
-                StyleSettings();
-                virtual ~StyleSettings();
+                EnvironmentSettings();
+                virtual ~EnvironmentSettings();
 
                 // Frenchie::Application::Layer::Registry<EnvironmentSettings>
                 static std::string factory_id();
 
                 // Frenchie::Application::Layer
-                virtual bool awake() override;
                 virtual void frame_update() override;
 
                 // Frenchie::Core::Serialization::ISerializer
@@ -32,14 +29,14 @@ namespace Frenchie
 
             protected:
 
-                // info
-                ImGuiStyle m_ReferenceStyle;
+                std::string m_PATH    = std::string();
+                std::string m_LIB     = std::string();
+                std::string m_INCLUDE = std::string();
 
-                void draw_style_editor();
-                void draw_geometry_settings(ImGuiStyle&);
-                void draw_color_settings(ImGuiStyle&);
-                void draw_fonts_settings(ImGuiStyle&);
-                void draw_rendering_settings(ImGuiStyle&);
+                void draw_editor_folders();
+                void draw_system_path_variable();
+                void draw_system_lib_variable();
+                void draw_system_include_variable();
             };
         }
     }

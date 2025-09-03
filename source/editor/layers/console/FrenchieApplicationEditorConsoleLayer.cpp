@@ -257,10 +257,11 @@ bool Console::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 
     // read message content filter
-    std::memcpy(
-        m_MessageContentFilter,
-        self.find_node(STRINGIFY(m_MessageContentFilter)).get_value(), 
-        sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));
+    // TODO: here we have SEGV !!!
+    // std::memcpy(
+    //     m_MessageContentFilter,
+    //     self.find_node(STRINGIFY(m_MessageContentFilter)).get_value(),
+    //     sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));
 
     // read maximum message count
     m_MaximumMessageCount = 
