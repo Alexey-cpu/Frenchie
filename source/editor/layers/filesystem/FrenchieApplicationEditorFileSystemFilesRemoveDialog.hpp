@@ -2,6 +2,9 @@
 
 #include <FrenchieApplicationEditorDialogLayer.hpp>
 
+// STL
+#include <set>
+
 namespace Frenchie
 {
     namespace Application
@@ -12,7 +15,7 @@ namespace Frenchie
             class FilesRemoveDialog : public Dialog
             {
             public:
-                FilesRemoveDialog(const std::vector<std::filesystem::path>& _Paths);
+                FilesRemoveDialog(const std::set<std::filesystem::path>& _Paths);
                 virtual ~FilesRemoveDialog();
 
                 // Frenchie::Application::Editor::Dialog
@@ -20,7 +23,7 @@ namespace Frenchie
                 virtual void draw_buttons() override;
 
             protected:
-                std::vector<std::filesystem::path> m_Paths;
+                std::set<std::filesystem::path> m_Paths;
             };
         }
     }

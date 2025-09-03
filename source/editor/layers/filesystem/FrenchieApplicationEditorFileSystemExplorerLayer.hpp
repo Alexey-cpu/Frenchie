@@ -22,34 +22,6 @@ namespace Frenchie
     {
         namespace Editor
         {
-            // FileMenu
-            class FileSystemExplorerFileMenu : public Layer
-            {
-            public:
-                FileSystemExplorerFileMenu();
-                virtual ~FileSystemExplorerFileMenu();
-
-                // Layer
-                virtual void frame_update() override;
-
-            protected:
-                MenuDrawer m_MenuDrawer;
-            };
-
-            // FolderMenu
-            class FileSystemExplorerFolderMenu : public Layer
-            {
-            public:
-                FileSystemExplorerFolderMenu();
-                virtual ~FileSystemExplorerFolderMenu();
-
-                // Layer
-                virtual void frame_update() override;
-
-            protected:
-                MenuDrawer m_MenuDrawer;  
-            };
-
             // Explorer
             class FileSystemExplorer : 
                 public Layer, 
@@ -59,8 +31,13 @@ namespace Frenchie
                 FileSystemExplorer();
                 virtual ~FileSystemExplorer();
 
-                // API
-                static std::vector<std::filesystem::path> get_selected_paths();
+                // static API
+                static std::set<std::filesystem::path> get_selected_paths();
+                static void create_folder();
+                static void copy_paths();
+                static void paste_paths();
+                static void remove_paths();
+                static void rename_paths();
 
                 // Layer
                 virtual void frame_update() override;
@@ -73,10 +50,11 @@ namespace Frenchie
             protected:
 
                 // info
-                InputText                       m_CurrentDirectoryTextEdit;
-                InputText                       m_CurrentFileTextEdit;
+                InputText                       m_CurrentDirectory;
+                InputText                       m_CurrentFile;
                 bool                            m_DrawCurrentDirectoryTextEdit = false;
                 std::set<std::filesystem::path> m_SelectedPaths;
+                std::set<std::filesystem::path> m_CopiedPaths;
 
                 // servive methods
                 void change_current_directory(const std::filesystem::path&);
@@ -88,8 +66,6 @@ namespace Frenchie
                 void draw_paths_tree(const std::filesystem::path&, int&);
                 void drop_path_to(const std::filesystem::path&);
                 void drag_selected_paths(const std::filesystem::path&);
-
-                friend class FileMenuActions;
             };
         }
     }
