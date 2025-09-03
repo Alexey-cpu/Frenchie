@@ -144,11 +144,6 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
         _Parent.append_node("TreeLinesRounding").set_value_as<float>(ImGui::GetStyle().TreeLinesRounding);
     }
 
-    // Windows
-    {
-        _Parent.append_node("WindowMenuButtonPosition").set_value_as<int>(ImGui::GetStyle().WindowMenuButtonPosition);
-    }
-
     // Docking
     {
         _Parent.append_node("DockingSeparatorSize").set_value_as<float>(ImGui::GetStyle().DockingSeparatorSize);
@@ -156,6 +151,16 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
 
     // Colors
     {
+        auto colors = _Parent.append_node("Colors");
+
+        for (int i = 0; i < ImGuiCol_COUNT; i++)
+        {
+            auto color = colors.append_node(fmt::format("Color_{}", i).c_str());
+            color.append_node("R").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].x * 255));
+            color.append_node("G").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].y * 255));
+            color.append_node("B").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].z * 255));
+            color.append_node("A").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].w * 255));
+        }
     }
 
     return true;
@@ -357,13 +362,6 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
             ImGui::GetStyle().TreeLinesRounding = TreeLinesRounding.get_value_as<float>();
     }
 
-    // Windows
-    // {
-    //     auto WindowMenuButtonPosition = _Parent.find_node("WindowMenuButtonPosition");
-    //     if(WindowMenuButtonPosition.is_valid()) 
-    //         ImGui::GetStyle().WindowMenuButtonPosition = (ImGuiDir)WindowMenuButtonPosition.get_value_as<size_t>();
-    // }
-
     // Docking
     {
         auto DockingSeparatorSize = _Parent.find_node("DockingSeparatorSize");
@@ -371,10 +369,57 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
             ImGui::GetStyle().DockingSeparatorSize = DockingSeparatorSize.get_value_as<float>();
     }
 
+    // Colors
+    {
+        auto colors = _Parent.find_node("Colors");
+
+        // for (int i = 0; i < ImGuiCol_COUNT; i++)
+        // {
+        //     auto color = colors.append_node(fmt::format("Color_{}", i).c_str());
+        //     color.append_node("R").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].x * 255));
+        //     color.append_node("G").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].y * 255));
+        //     color.append_node("B").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].z * 255));
+        //     color.append_node("A").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].w * 255));
+        // }
+    }
+
     return true;
 }
 
-// drawers
+void StyleSettings::draw_style_editor()
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
+    {
+        if (ImGui::BeginTabItem("Geometry"))
+        {
+            draw_geometry_settings(style);
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Colors"))
+        {
+            draw_color_settings(style);
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Fonts"))
+        {
+            draw_fonts_settings(style);
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Rendering"))
+        {
+            draw_rendering_settings(style);
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+}
+
 void StyleSettings::draw_geometry_settings(ImGuiStyle& style)
 {
     ImGui::SeparatorText("Main");
@@ -488,13 +533,6 @@ void StyleSettings::draw_geometry_settings(ImGuiStyle& style)
         ImGui::SliderFloat("TreeLinesRounding", &style.TreeLinesRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    // ImGui::SeparatorText("Windows");
-    // {
-    //     int window_menu_button_position = style.WindowMenuButtonPosition + 1;
-    //     if (ImGui::Combo("WindowMenuButtonPosition", (int*)&window_menu_button_position, "None\0Left\0Right\0"))
-    //         style.WindowMenuButtonPosition = (ImGuiDir)(window_menu_button_position - 1);
-    // }
-
     ImGui::SeparatorText("Docking");
     {
         ImGui::SliderFloat("DockingSeparatorSize", &style.DockingSeparatorSize, 0.0f, 12.0f, "%.0f");
@@ -555,93 +593,64 @@ void StyleSettings::draw_color_settings(ImGuiStyle& style)
     ImGui::EndChild();
 }
 
-void StyleSettings::draw_style_editor()
+void StyleSettings::draw_fonts_settings(ImGuiStyle& style)
 {
-    ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::ShowFontSelector("Fonts##Selector");
+    if (ImGui::DragFloat("FontSizeBase", &style.FontSizeBase, 0.20f, 5.0f, 100.0f, "%.0f"))
+        style._NextFrameFontSizeBase = style.FontSizeBase;
+}
 
-    //ImGui::SeparatorText("Details");
-    if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
+void StyleSettings::draw_rendering_settings(ImGuiStyle& style)
+{
+    ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
+    ImGui::SameLine();
+
+    ImGui::Checkbox("Anti-aliased lines use texture", &style.AntiAliasedLinesUseTex);
+    ImGui::SameLine();
+
+    ImGui::Checkbox("Anti-aliased fill", &style.AntiAliasedFill);
+    ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
+    ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, 10.0f, "%.2f");
+    if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
+
+    // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
+    ImGui::DragFloat("Circle Tessellation Max Error", &style.CircleTessellationMaxError , 0.005f, 0.10f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+    const bool show_samples = ImGui::IsItemActive();
+    if (show_samples)
+        ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
+    if (show_samples && ImGui::BeginTooltip())
     {
-        if (ImGui::BeginTabItem("Geometry"))
+        ImGui::TextUnformatted("(R = radius, N = approx number of segments)");
+        ImGui::Spacing();
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        const float min_widget_width = ImGui::CalcTextSize("R: MMM\nN: MMM").x;
+        for (int n = 0; n < 8; n++)
         {
-            draw_geometry_settings(style);
-            ImGui::EndTabItem();
-        }
+            const float RAD_MIN = 5.0f;
+            const float RAD_MAX = 70.0f;
+            const float rad = RAD_MIN + (RAD_MAX - RAD_MIN) * (float)n / (8.0f - 1.0f);
 
-        if (ImGui::BeginTabItem("Colors"))
-        {
-            draw_color_settings(style);
-            ImGui::EndTabItem();
-        }
+            ImGui::BeginGroup();
 
-        if (ImGui::BeginTabItem("Fonts"))
-        {
-            ImGui::ShowFontSelector("Fonts##Selector");
-            if (ImGui::DragFloat("FontSizeBase", &style.FontSizeBase, 0.20f, 5.0f, 100.0f, "%.0f"))
-                style._NextFrameFontSizeBase = style.FontSizeBase;
+            // N is not always exact here due to how PathArcTo() function work internally
+            ImGui::Text("R: %.f\nN: %d", rad, draw_list->_CalcCircleAutoSegmentCount(rad));
 
-            ImGui::EndTabItem();
-        }
+            const float canvas_width = std::max<float>(min_widget_width, rad * 2.0f);
+            const float offset_x     = floorf(canvas_width * 0.5f);
+            const float offset_y     = floorf(RAD_MAX);
 
-        if (ImGui::BeginTabItem("Rendering"))
-        {
-            ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
+            const ImVec2 p1 = ImGui::GetCursorScreenPos();
+            draw_list->AddCircle(ImVec2(p1.x + offset_x, p1.y + offset_y), rad, ImGui::GetColorU32(ImGuiCol_Text));
+            ImGui::Dummy(ImVec2(canvas_width, RAD_MAX * 2));
+            ImGui::EndGroup();
             ImGui::SameLine();
-
-            ImGui::Checkbox("Anti-aliased lines use texture", &style.AntiAliasedLinesUseTex);
-            ImGui::SameLine();
-
-            ImGui::Checkbox("Anti-aliased fill", &style.AntiAliasedFill);
-            ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
-            ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, 10.0f, "%.2f");
-            if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
-
-            // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-            ImGui::DragFloat("Circle Tessellation Max Error", &style.CircleTessellationMaxError , 0.005f, 0.10f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-            const bool show_samples = ImGui::IsItemActive();
-            if (show_samples)
-                ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
-            if (show_samples && ImGui::BeginTooltip())
-            {
-                ImGui::TextUnformatted("(R = radius, N = approx number of segments)");
-                ImGui::Spacing();
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                const float min_widget_width = ImGui::CalcTextSize("R: MMM\nN: MMM").x;
-                for (int n = 0; n < 8; n++)
-                {
-                    const float RAD_MIN = 5.0f;
-                    const float RAD_MAX = 70.0f;
-                    const float rad = RAD_MIN + (RAD_MAX - RAD_MIN) * (float)n / (8.0f - 1.0f);
-
-                    ImGui::BeginGroup();
-
-                    // N is not always exact here due to how PathArcTo() function work internally
-                    ImGui::Text("R: %.f\nN: %d", rad, draw_list->_CalcCircleAutoSegmentCount(rad));
-
-                    const float canvas_width = std::max<float>(min_widget_width, rad * 2.0f);
-                    const float offset_x     = floorf(canvas_width * 0.5f);
-                    const float offset_y     = floorf(RAD_MAX);
-
-                    const ImVec2 p1 = ImGui::GetCursorScreenPos();
-                    draw_list->AddCircle(ImVec2(p1.x + offset_x, p1.y + offset_y), rad, ImGui::GetColorU32(ImGuiCol_Text));
-                    ImGui::Dummy(ImVec2(canvas_width, RAD_MAX * 2));
-                    ImGui::EndGroup();
-                    ImGui::SameLine();
-                }
-                ImGui::EndTooltip();
-            }
-            ImGui::SameLine();
-
-            ImGui::DragFloat("Global Alpha", &style.Alpha, 0.005f, 0.20f, 1.0f, "%.2f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
-            ImGui::DragFloat("Disabled Alpha", &style.DisabledAlpha, 0.005f, 0.0f, 1.0f, "%.2f"); 
-            ImGui::SameLine();
-            ImGui::PopItemWidth();
-
-            ImGui::EndTabItem();
         }
-
-        ImGui::EndTabBar();
+        ImGui::EndTooltip();
     }
+    ImGui::SameLine();
 
-    //ImGui::PopItemWidth();
+    ImGui::DragFloat("Global Alpha", &style.Alpha, 0.005f, 0.20f, 1.0f, "%.2f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
+    ImGui::DragFloat("Disabled Alpha", &style.DisabledAlpha, 0.005f, 0.0f, 1.0f, "%.2f"); 
+    ImGui::SameLine();
+    ImGui::PopItemWidth();
 }

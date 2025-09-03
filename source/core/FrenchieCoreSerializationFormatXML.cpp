@@ -1,5 +1,7 @@
 #include <FrenchieCoreSerializationFormatXML.hpp>
 
+#include <FrenchieCoreLogger.hpp>
+
 // int main(int, char**)
 // {
 //     auto start = Helpers::tic();
@@ -120,7 +122,13 @@ namespace Frenchie
 
                     // check path
                     if(!std::filesystem::exists(_Path)) 
+                    {
+                        Frenchie::Core::Logger::instance()->error(
+                            fmt::format("{} does not exist", _Path.string())
+                        );
+
                         return false;
+                    }
 
                     auto parse_options = 
                         pugi::parse_embed_pcdata    | 
@@ -138,11 +146,25 @@ namespace Frenchie
                         status = document.load_file(&pugi::as_utf8(_Path.wstring())[0], parse_options).status;
 
                         if(status != pugi::xml_parse_status::status_ok) 
+                        {
+                            Frenchie::Core::Logger::instance()->error(
+                                fmt::format("{}\n XML parse error '{}'", 
+                                    Frenchie::Core::Helpers::String::as_utf8(_Path.wstring()), 
+                                    descript_status(status))
+                            );
+
                             return false;
+                        }
                     }
 
                     if(document.empty()) 
+                    {
+                        Frenchie::Core::Logger::instance()->error(
+                            fmt::format("{}\n empty document", 
+                                Frenchie::Core::Helpers::String::as_utf8(_Path.wstring()))
+                            );
                         return false;
+                    }
 
                     // reset document
                     _Document->reset();
@@ -231,6 +253,64 @@ namespace Frenchie
                     return Compact ? 
                             main.save_file(pugi::as_utf8(_Path.wstring()).c_str(), "\t", pugi::format_raw) : 
                             main.save_file(pugi::as_utf8(_Path.wstring()).c_str());
+                }
+            
+            protected:
+
+                static std::string descript_status(pugi::xml_parse_status _Status)
+                {
+                    switch (_Status)
+                    {
+                    case pugi::xml_parse_status::status_file_not_found:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+                    
+                    case pugi::xml_parse_status::status_io_error:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_out_of_memory:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_internal_error:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_unrecognized_tag:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_pi:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_comment:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_cdata:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_doctype:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_pcdata:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_start_element:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_attribute:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_bad_end_element:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_end_element_mismatch:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_append_invalid_root:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+
+                    case pugi::xml_parse_status::status_no_document_element:
+                        return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+                    }
+
+                    return STRINGIFY(pugi::xml_parse_status::status_ok);
                 }
             };
         }

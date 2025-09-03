@@ -170,11 +170,11 @@
 // //---------------------------------------------------------------------------------------------------
 // // Editor
 // //---------------------------------------------------------------------------------------------------
-#include <FrenchieApplicationEditorMainWindow.hpp>
+#include <FrenchieApplicationEditorLauncher.hpp>
 
 int main(int, char**)
 {
-    return Frenchie::Application::Editor::MainWindow().execute();
+    return Frenchie::Application::Editor::Launcher::execute();
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -193,27 +193,6 @@ int main(int, char**)
 
 // FMT
 #include <fmt/format.h>
-
-void launch_command(
-    const char* _Program, 
-    const char* _Arguments = nullptr, 
-    const char* _LogFile   = nullptr)
-{
-    if(_Program == nullptr) 
-        return;
-
-    if(_LogFile != nullptr)
-    {
-        std::system(fmt::format("{} {} > {}", 
-            _Program, 
-            (_Arguments != nullptr ? _Arguments : " "), 
-            _LogFile).c_str());
-
-        return;
-    }
-
-    std::system(fmt::format("{} {}", _Program, (_Arguments != nullptr ? _Arguments : " ")).c_str());
-}
 
 namespace Frenchie
 {

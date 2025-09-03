@@ -291,7 +291,8 @@ int Application::execute()
 
 void Application::load_state(std::filesystem::path _Path)
 {
-    m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path);
+    if(!m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path)) 
+        Frenchie::Core::Logger::instance()->error(fmt::format("{} could not load state", _Path.string()));
 
     // load .ini file
     ImGui::LoadIniSettingsFromMemory(m_State.find_node(STRINGIFY(Application)).get_value());

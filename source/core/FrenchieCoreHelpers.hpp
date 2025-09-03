@@ -22,6 +22,8 @@ namespace Frenchie
 
             FILE* open_file(std::string _Path, std::string _Mode);
 
+            void launch_command(const char* _Program, const char* _Arguments = nullptr, const char* _LogFile = nullptr);
+
             template<typename T, int S = 512>
             class Stack final
             {

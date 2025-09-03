@@ -38,6 +38,8 @@ namespace Frenchie
                 void draw_style_editor();
                 void draw_geometry_settings(ImGuiStyle&);
                 void draw_color_settings(ImGuiStyle&);
+                void draw_fonts_settings(ImGuiStyle&);
+                void draw_rendering_settings(ImGuiStyle&);
             };
         }
     }

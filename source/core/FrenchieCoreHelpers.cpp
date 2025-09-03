@@ -11,7 +11,11 @@ using namespace Frenchie::Core::Helpers;
 #include <libloaderapi.h>
 #endif
 
+// PUGIXML
 #include <pugixml.hpp>
+
+// FMT
+#include <fmt/format.h>
 
 std::filesystem::path Frenchie::Core::Helpers::get_exe_absolute_path()
 {
@@ -71,6 +75,24 @@ FILE* Frenchie::Core::Helpers::open_file(std::string _Path, std::string _Mode)
     #endif
 
     return file;
+}
+
+void Frenchie::Core::Helpers::launch_command(const char* _Program, const char* _Arguments, const char* _LogFile)
+{
+    if(_Program == nullptr) 
+        return;
+
+    if(_LogFile != nullptr)
+    {
+        std::system(fmt::format("{} {} > {}", 
+            _Program, 
+            (_Arguments != nullptr ? _Arguments : " "), 
+            _LogFile).c_str());
+
+        return;
+    }
+
+    std::system(fmt::format("{} {}", _Program, (_Arguments != nullptr ? _Arguments : " ")).c_str());
 }
 
 // Frenchie::Core::Helpers::String
