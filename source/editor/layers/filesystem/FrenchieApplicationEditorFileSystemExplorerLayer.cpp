@@ -3,268 +3,12 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorFileSystemFilesRenameDialog.hpp>
 #include <FrenchieApplicationEditorFileSystemFilesRemoveDialog.hpp>
+#include <FrenchieApplicationEditorFileSystemExplorerFileMenu.hpp>
+#include <FrenchieApplicationEditorFileSystemExplorerFolderMenu.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
-
-// FileSystem
-
-namespace Frenchie
-{
-    namespace Application
-    {
-        namespace Editor
-        {
-            class FileMenuActions
-            {
-            public:
-                static void copy()
-                {
-                    auto selectedPaths = FileSystemExplorer::get_selected_paths();
-
-                    if(selectedPaths.empty())
-                        return;
-
-                    std::string clipBoardText;
-
-                    for(auto& path : selectedPaths)
-                    {
-                        clipBoardText = clipBoardText.append(
-                            fmt::format("{};", Frenchie::Core::Helpers::String::as_utf8(path.wstring()).c_str()));
-                    }
-
-                    ImGui::SetClipboardText(clipBoardText.c_str());
-                }
-
-                static void paste()
-                {
-                    auto paths = Frenchie::Core::Helpers::String::split(std::string(ImGui::GetClipboardText()), ";");
-
-                    for(auto&& path : paths)
-                    {
-                        if(path.empty())
-                            continue;
-
-                        if(!std::filesystem::exists(path)) 
-                        {
-                            Frenchie::Core::Logger::instance()->critical(fmt::format("{} does not exists", path));
-                            continue;
-                        }
-
-                        auto source    = std::filesystem::path(path);
-                        auto extention = Frenchie::Core::Helpers::get_file_extention(source);
-                        auto target    = std::filesystem::path(
-                            std::filesystem::current_path().wstring()
-                            .append(L"/")
-                            .append(source.filename().stem().wstring())
-                            .append(L"_Copy")
-                            .append(pugi::as_wide(extention))).make_preferred();
-
-                        while(std::filesystem::exists(target))
-                        {
-                            target = std::filesystem::path(
-                                std::filesystem::current_path().wstring()
-                                .append(L"/")
-                                .append(target.filename().stem().wstring())
-                                .append(L"_Copy")
-                                .append(pugi::as_wide(extention))).make_preferred();
-                        }
-
-                        // try to copy
-                        try
-                        {
-                            std::filesystem::copy(source, target);
-                        }
-                        catch(const std::exception& e)
-                        {
-                            Frenchie::Core::Logger::instance()->critical(e.what());
-                        }
-                    }
-                }
-
-                static void remove()
-                {
-                    auto selectedPaths = FileSystemExplorer::get_selected_paths();
-
-                    if(!selectedPaths.empty()) 
-                        Application::instance()->push<FilesRemoveDialog>(selectedPaths);
-                }
-
-                static void rename()
-                {
-                    auto selectedPaths = FileSystemExplorer::get_selected_paths();
-
-                    if(!selectedPaths.empty()) 
-                        Application::instance()->push<FilesRenameDialog>(selectedPaths);
-                }
-
-                static void create_folder()
-                {
-                    std::wstring newFolderName = L"NewFolder";
-
-                    auto newPath = std::filesystem::current_path().wstring().append(L"/").append(newFolderName);
-
-                    while(std::filesystem::exists(newPath))
-                        newPath = newPath.append(L"_Copy");
-
-                    try
-                    {
-                        std::filesystem::create_directories(newPath);
-                    }
-                    catch(const std::exception& e)
-                    {
-                        Frenchie::Core::Logger::instance()->critical(e.what());
-                    }
-                }
-            };
-
-            class FileMenuCopyAction : 
-                public Frenchie::Core::Command::Registry<FileMenuCopyAction>
-            {
-            public:
-
-                // Frenchie::Core::Command
-                virtual void execute() override
-                {
-                    FileMenuActions::copy();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "copy");
-                }
-            };
-
-            class FileMenuPasteAction : 
-                public Frenchie::Core::Command::Registry<FileMenuPasteAction>
-            {
-            public:
-
-                virtual void execute() override
-                {
-                    FileMenuActions::paste();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "paste");
-                }
-            };
-
-            class FileMenuRemoveAction : 
-                public Frenchie::Core::Command::Registry<FileMenuRemoveAction>
-            {
-            public:
-
-                // Frenchie::Core::Command
-                virtual void execute() override
-                {
-                    FileMenuActions::remove();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "remove");
-                }
-            };
-
-            class FileMenuRenameAction : 
-                public Frenchie::Core::Command::Registry<FileMenuRenameAction>
-            {
-            public:
-
-                // Frenchie::Core::Command
-                virtual void execute() override
-                {
-                    FileMenuActions::rename();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "rename");
-                }
-            };
-
-            class FileMenuCreateFolderAction : 
-                public Frenchie::Core::Command::Registry<FileMenuCreateFolderAction>
-            {
-            public:
-
-                // Frenchie::Core::Command
-                virtual void execute() override
-                {
-                    FileMenuActions::create_folder();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "create::folder");
-                }
-            };
-
-            // Folder menu actions
-            class FolderMenuCreateFolderAction : 
-                public Frenchie::Core::Command::Registry<FolderMenuCreateFolderAction>
-            {
-            public:
-
-                // Frenchie::Core::Command
-                virtual void execute() override
-                {
-                    FileMenuActions::create_folder();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "create::folder");
-                }
-            };
-
-            class FolderMenuPasteAction : 
-                public Frenchie::Core::Command::Registry<FolderMenuPasteAction>
-            {
-            public:
-
-                // Frenchie::Core::Command
-                virtual void execute() override
-                {
-                    FileMenuActions::paste();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "paste");
-                }
-            };
-        }
-    }
-}
-
-// FileMenu
-FileSystemExplorerFileMenu::FileSystemExplorerFileMenu(){}
-FileSystemExplorerFileMenu::~FileSystemExplorerFileMenu(){}
-
-void FileSystemExplorerFileMenu::frame_update()
-{
-    m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu));
-}
-
-// FolderMenu
-FileSystemExplorerFolderMenu::FileSystemExplorerFolderMenu(){}
-FileSystemExplorerFolderMenu::~FileSystemExplorerFolderMenu(){}
-
-void FileSystemExplorerFolderMenu::frame_update()
-{
-    m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu));
-}
 
 // Explorer
 FileSystemExplorer::FileSystemExplorer() : 
@@ -272,26 +16,114 @@ FileSystemExplorer::FileSystemExplorer() :
 
 FileSystemExplorer::~FileSystemExplorer(){}
 
-std::vector<std::filesystem::path> FileSystemExplorer::get_selected_paths()
+std::set<std::filesystem::path> FileSystemExplorer::get_selected_paths()
 {
     auto explorer = Application::instance()->find<FileSystemExplorer>();
 
     if(explorer == nullptr) 
-        return std::vector<std::filesystem::path>();
-
-    std::vector<std::filesystem::path> selectedPaths;
+        return std::set<std::filesystem::path>();
     
     auto selection = explorer->m_SelectedPaths;
 
     for(auto&& path : selection)
     {
-        if(std::filesystem::exists(path))
-            selectedPaths.push_back(path);
-        else 
+        if(!std::filesystem::exists(path))
             explorer->m_SelectedPaths.erase(path);
     }
 
-    return selectedPaths;
+    return explorer->m_SelectedPaths;
+}
+
+void FileSystemExplorer::create_folder()
+{
+    std::wstring newFolderName = L"NewFolder";
+
+    auto newPath = std::filesystem::current_path().wstring().append(L"/").append(newFolderName);
+
+    while(std::filesystem::exists(newPath))
+        newPath = newPath.append(L"_Copy");
+
+    try
+    {
+        std::filesystem::create_directories(newPath);
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->critical(e.what());
+    }
+}
+
+void FileSystemExplorer::copy_paths()
+{
+    auto explorer = Application::instance()->find<FileSystemExplorer>();
+
+    if(explorer != nullptr) 
+        explorer->m_CopiedPaths = explorer->get_selected_paths();
+}
+
+void FileSystemExplorer::paste_paths()
+{
+    auto explorer = Application::instance()->find<FileSystemExplorer>();
+
+    if(explorer == nullptr) 
+        return;
+
+    for(auto&& path : explorer->m_CopiedPaths)
+    {
+        if(path.empty())
+            continue;
+
+        if(!std::filesystem::exists(path)) 
+        {
+            Frenchie::Core::Logger::instance()->critical(fmt::format("{} does not exists", path.string()));
+            continue;
+        }
+
+        auto source    = std::filesystem::path(path);
+        auto extention = Frenchie::Core::Helpers::get_file_extention(source);
+        auto target    = std::filesystem::path(
+            std::filesystem::current_path().wstring()
+            .append(L"/")
+            .append(source.filename().stem().wstring())
+            .append(L"_Copy")
+            .append(pugi::as_wide(extention))).make_preferred();
+
+        while(std::filesystem::exists(target))
+        {
+            target = std::filesystem::path(
+                std::filesystem::current_path().wstring()
+                .append(L"/")
+                .append(target.filename().stem().wstring())
+                .append(L"_Copy")
+                .append(pugi::as_wide(extention))).make_preferred();
+        }
+
+        // try to copy
+        try
+        {
+            std::filesystem::copy(source, target);
+        }
+        catch(const std::exception& e)
+        {
+            Frenchie::Core::Logger::instance()->critical(e.what());
+        }
+    }
+}
+
+void FileSystemExplorer::remove_paths()
+{
+    auto selectedPaths = FileSystemExplorer::get_selected_paths();
+
+    if(!selectedPaths.empty()) 
+        Application::instance()->push<FilesRemoveDialog>(selectedPaths);
+}
+
+void FileSystemExplorer::rename_paths()
+{
+    auto selectedPaths = FileSystemExplorer::get_selected_paths();
+
+    if(!selectedPaths.empty()) 
+        Application::instance()->push<FilesRenameDialog>(selectedPaths);
 }
 
 void FileSystemExplorer::frame_update()
@@ -486,31 +318,38 @@ void FileSystemExplorer::draw_current_directory_path_editor()
         }
 
         // clear directory text edit
-        m_CurrentDirectoryTextEdit.clear();
+        m_CurrentDirectory.clear();
     }
     else
     {
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
         // draw current path editor
-        if(m_CurrentDirectoryTextEdit.empty())
-            m_CurrentDirectoryTextEdit.set_buffer(Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()));
+        if(m_CurrentDirectory.empty())
+            m_CurrentDirectory.set_buffer(Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()));
 
-        if(m_CurrentDirectoryTextEdit.draw("###", ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+        if(m_CurrentDirectory.draw("###", ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {            
             change_current_directory(
-                std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectoryTextEdit.get_buffer())));
+                std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectory.get_buffer())));
 
             m_DrawCurrentDirectoryTextEdit = false;
-        }   
+        }
+
+        if(!ImGui::IsItemHovered(ImGuiHoveredFlags_::ImGuiHoveredFlags_RectOnly) && 
+            ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+        {
+            m_DrawCurrentDirectoryTextEdit = false;
+        }
     }
 }
 
 void FileSystemExplorer::draw_current_filename_editor()
 {
-    m_CurrentFileTextEdit.set_buffer(m_SelectedPaths.empty() ? "No file selected..." : Frenchie::Core::Helpers::String::as_utf8((*m_SelectedPaths.begin()).filename().wstring()));
+    m_CurrentFile.set_buffer(
+        m_SelectedPaths.empty() ? "No file selected..." : Frenchie::Core::Helpers::String::as_utf8((*m_SelectedPaths.begin()).filename().wstring()));
 
-    m_CurrentFileTextEdit.draw("CurrentFile");
+    m_CurrentFile.draw("CurrentFile");
 }
 
 void FileSystemExplorer::draw_current_directory_paths_table()
@@ -579,7 +418,8 @@ void FileSystemExplorer::draw_current_directory_paths_table()
                     ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
                     ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick))
                 {
-                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
+                        ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
                     {
                         m_SelectedPaths.insert(path);
                     }
@@ -743,7 +583,7 @@ void FileSystemExplorer::drag_selected_paths(const std::filesystem::path& _Path)
     {
         std::set<std::filesystem::path> selection;
         auto selectedPaths = get_selected_paths();
-        selectedPaths.push_back(_Path);
+        selectedPaths.insert(_Path);
 
         std::string selectionBuffer;
 

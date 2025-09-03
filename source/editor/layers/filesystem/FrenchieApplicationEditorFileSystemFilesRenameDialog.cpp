@@ -7,7 +7,7 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-FilesRenameDialog::FilesRenameDialog(const std::vector<std::filesystem::path>& _Paths): 
+FilesRenameDialog::FilesRenameDialog(const std::set<std::filesystem::path>& _Paths): 
     Dialog("Rename files")
 {
     for(auto&& path : _Paths)

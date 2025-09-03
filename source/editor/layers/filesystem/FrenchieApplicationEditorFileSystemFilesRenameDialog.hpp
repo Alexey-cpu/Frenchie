@@ -3,6 +3,9 @@
 #include <FrenchieApplicationEditorDialogLayer.hpp>
 #include <FrenchieApplicationEditorInputTextDrawer.hpp>
 
+// STL
+#include <set>
+
 namespace Frenchie
 {
     namespace Application
@@ -14,7 +17,7 @@ namespace Frenchie
             {
             public:
 
-                FilesRenameDialog(const std::vector<std::filesystem::path>& _Paths);
+                FilesRenameDialog(const std::set<std::filesystem::path>& _Paths);
                 virtual ~FilesRenameDialog();
 
                 // Frenchie::Application::Editor::Dialog

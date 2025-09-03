@@ -7,7 +7,7 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-FilesRemoveDialog::FilesRemoveDialog(const std::vector<std::filesystem::path>& _Paths) : 
+FilesRemoveDialog::FilesRemoveDialog(const std::set<std::filesystem::path>& _Paths) : 
     Dialog("Are you sure you want to delete these files ?"), 
     m_Paths(_Paths){}
 
