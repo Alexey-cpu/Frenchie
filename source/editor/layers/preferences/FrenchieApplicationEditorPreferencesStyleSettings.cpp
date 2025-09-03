@@ -151,15 +151,16 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
 
     // Colors
     {
+        // Switch-case for ImGuiCol_ enum (example usage)
         auto colors = _Parent.append_node("Colors");
 
-        for (int i = 0; i < ImGuiCol_COUNT; i++)
+        for (size_t i = 0; i < ImGuiCol_::ImGuiCol_COUNT; i++)
         {
-            auto color = colors.append_node(fmt::format("Color_{}", i).c_str());
-            color.append_node("R").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].x * 255));
-            color.append_node("G").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].y * 255));
-            color.append_node("B").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].z * 255));
-            color.append_node("A").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].w * 255));
+            auto color = colors.append_node(get_imgui_color_name((ImGuiCol_)i).c_str());
+            color.append_node("R").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].x * 255));
+            color.append_node("G").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].y * 255));
+            color.append_node("B").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].z * 255));
+            color.append_node("A").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].w * 255));
         }
     }
 
@@ -371,7 +372,7 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
 
     // Colors
     {
-        auto colors = _Parent.find_node("Colors");
+        //auto colors = _Parent.find_node("Colors");
 
         // for (int i = 0; i < ImGuiCol_COUNT; i++)
         // {
