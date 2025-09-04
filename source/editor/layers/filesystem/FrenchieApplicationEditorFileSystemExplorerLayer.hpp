@@ -28,8 +28,12 @@ namespace Frenchie
                 public Frenchie::Core::Serialization::ISerializer
             {
             public:
-                FileSystemExplorer();
+                FileSystemExplorer(const std::string& = STRINGIFY(FileSystemExplorer));
                 virtual ~FileSystemExplorer();
+
+                // getters
+                std::filesystem::path get_current_directory() const;
+                std::string get_current_file() const;
 
                 // static API
                 static std::set<std::filesystem::path> get_selected_paths();
@@ -41,7 +45,6 @@ namespace Frenchie
 
                 // Layer
                 virtual void frame_update() override;
-                virtual bool allows_multiple_instances() const;
 
                 // Frenchie::Core::Serialization::ISerializer
                 virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;

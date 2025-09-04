@@ -35,7 +35,7 @@ namespace Frenchie
                     const char*                       _Source, 
                     const MemoryChunkAllocator<char>& _PolymorphicAllocator)
                 {
-                    size_t length  = _Source != nullptr ? strlen(_Source) : 0;
+                    size_t length  = _Source != nullptr ? std::strlen(_Source) : 0;
                     char*  buffer  = _PolymorphicAllocator.allocate(length + 1);
                     buffer[length] = '\0';
 
@@ -51,12 +51,12 @@ namespace Frenchie
                     char*                             _Destination, 
                     const MemoryChunkAllocator<char>& _PolymorphicAllocator)
                 {
-                    size_t sourceLength = strlen(_Source);
+                    size_t sourceLength = std::strlen(_Source);
 
                     AllocationInfo* info = reinterpret_cast<AllocationInfo*>(_Destination - sizeof(AllocationInfo));
                     size_t destinationLength = info->Amount - sizeof(AllocationInfo);
 
-                    if(sourceLength <= destinationLength)
+                    if(sourceLength < destinationLength)
                     {
                         std::memcpy(_Destination, _Source, sourceLength);
                         _Destination[sourceLength] = '\0';
