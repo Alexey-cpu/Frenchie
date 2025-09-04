@@ -1,5 +1,7 @@
 #include <FrenchieApplicationEditorPreferencesStyleSettings.hpp>
 
+#include <FrenchieApplication.hpp>
+
 // IMGUI
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -49,119 +51,122 @@ void StyleSettings::frame_update()
 bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     // Main
+    auto geometry = _Parent.append_node("Geometry");
     {
         // WindowPadding
         {
-            auto vector = _Parent.append_node("WindowPadding");
+            auto vector = geometry.append_node("WindowPadding");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().WindowPadding.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().WindowPadding.y);
         }
 
         // FramePadding
         {
-            auto vector = _Parent.append_node("FramePadding");
+            auto vector = geometry.append_node("FramePadding");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().FramePadding.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().FramePadding.y);
         }
 
         // ItemSpacing
         {
-            auto vector = _Parent.append_node("ItemSpacing");
+            auto vector = geometry.append_node("ItemSpacing");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().ItemSpacing.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().ItemSpacing.y);
         }
 
         // ItemInnerSpacing
         {
-            auto vector = _Parent.append_node("ItemInnerSpacing");
+            auto vector = geometry.append_node("ItemInnerSpacing");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().ItemInnerSpacing.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().ItemInnerSpacing.y);
         }
 
         // TouchExtraPadding
         {
-            auto vector = _Parent.append_node("TouchExtraPadding");
+            auto vector = geometry.append_node("TouchExtraPadding");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().TouchExtraPadding.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().TouchExtraPadding.y);
         }
 
-        _Parent.append_node("IndentSpacing").set_value_as<float>(ImGui::GetStyle().IndentSpacing);
-        _Parent.append_node("ScrollbarSize").set_value_as<float>(ImGui::GetStyle().ScrollbarSize);
-        _Parent.append_node("GrabMinSize").set_value_as<float>(ImGui::GetStyle().GrabMinSize);
+        geometry.append_node("IndentSpacing").set_value_as<float>(ImGui::GetStyle().IndentSpacing);
+        geometry.append_node("ScrollbarSize").set_value_as<float>(ImGui::GetStyle().ScrollbarSize);
+        geometry.append_node("GrabMinSize").set_value_as<float>(ImGui::GetStyle().GrabMinSize);
     }
 
     // Borders
     {
-        _Parent.append_node("WindowBorderSize").set_value_as<float>(ImGui::GetStyle().WindowBorderSize);
-        _Parent.append_node("ChildBorderSize").set_value_as<float>(ImGui::GetStyle().ChildBorderSize);
-        _Parent.append_node("PopupBorderSize").set_value_as<float>(ImGui::GetStyle().PopupBorderSize);
-        _Parent.append_node("FrameBorderSize").set_value_as<float>(ImGui::GetStyle().FrameBorderSize);
-        _Parent.append_node("TabBorderSize").set_value_as<float>(ImGui::GetStyle().TabBorderSize);
-        _Parent.append_node("TabBarBorderSize").set_value_as<float>(ImGui::GetStyle().TabBarBorderSize);
+        geometry.append_node("WindowBorderSize").set_value_as<float>(ImGui::GetStyle().WindowBorderSize);
+        geometry.append_node("ChildBorderSize").set_value_as<float>(ImGui::GetStyle().ChildBorderSize);
+        geometry.append_node("PopupBorderSize").set_value_as<float>(ImGui::GetStyle().PopupBorderSize);
+        geometry.append_node("FrameBorderSize").set_value_as<float>(ImGui::GetStyle().FrameBorderSize);
+        geometry.append_node("TabBorderSize").set_value_as<float>(ImGui::GetStyle().TabBorderSize);
+        geometry.append_node("TabBarBorderSize").set_value_as<float>(ImGui::GetStyle().TabBarBorderSize);
     }
 
     // Rounding
     {
-        _Parent.append_node("WindowRounding").set_value_as<float>(ImGui::GetStyle().WindowRounding);
-        _Parent.append_node("ChildRounding").set_value_as<float>(ImGui::GetStyle().ChildRounding);
-        _Parent.append_node("FrameRounding").set_value_as<float>(ImGui::GetStyle().FrameRounding);
-        _Parent.append_node("PopupRounding").set_value_as<float>(ImGui::GetStyle().PopupRounding);
-        _Parent.append_node("ScrollbarRounding").set_value_as<float>(ImGui::GetStyle().ScrollbarRounding);
-        _Parent.append_node("GrabRounding").set_value_as<float>(ImGui::GetStyle().GrabRounding);
-        _Parent.append_node("TabRounding").set_value_as<float>(ImGui::GetStyle().TabRounding);
+        geometry.append_node("WindowRounding").set_value_as<float>(ImGui::GetStyle().WindowRounding);
+        geometry.append_node("ChildRounding").set_value_as<float>(ImGui::GetStyle().ChildRounding);
+        geometry.append_node("FrameRounding").set_value_as<float>(ImGui::GetStyle().FrameRounding);
+        geometry.append_node("PopupRounding").set_value_as<float>(ImGui::GetStyle().PopupRounding);
+        geometry.append_node("ScrollbarRounding").set_value_as<float>(ImGui::GetStyle().ScrollbarRounding);
+        geometry.append_node("GrabRounding").set_value_as<float>(ImGui::GetStyle().GrabRounding);
+        geometry.append_node("TabRounding").set_value_as<float>(ImGui::GetStyle().TabRounding);
     }
 
     // Tabs
     {
-        _Parent.append_node("TabBarOverlineSize").set_value_as<float>(ImGui::GetStyle().TabBarOverlineSize);
-        _Parent.append_node("TabMinWidthBase").set_value_as<float>(ImGui::GetStyle().TabMinWidthBase);
-        _Parent.append_node("TabMinWidthShrink").set_value_as<float>(ImGui::GetStyle().TabMinWidthShrink);
-        _Parent.append_node("TabCloseButtonMinWidthSelected").set_value_as<float>(ImGui::GetStyle().TabCloseButtonMinWidthSelected);
-        _Parent.append_node("TabCloseButtonMinWidthUnselected").set_value_as<float>(ImGui::GetStyle().TabCloseButtonMinWidthUnselected);
+        geometry.append_node("TabBarOverlineSize").set_value_as<float>(ImGui::GetStyle().TabBarOverlineSize);
+        geometry.append_node("TabMinWidthBase").set_value_as<float>(ImGui::GetStyle().TabMinWidthBase);
+        geometry.append_node("TabMinWidthShrink").set_value_as<float>(ImGui::GetStyle().TabMinWidthShrink);
+        geometry.append_node("TabCloseButtonMinWidthSelected").set_value_as<float>(ImGui::GetStyle().TabCloseButtonMinWidthSelected);
+        geometry.append_node("TabCloseButtonMinWidthUnselected").set_value_as<float>(ImGui::GetStyle().TabCloseButtonMinWidthUnselected);
     }
 
     // Tables
     {
         {
-            auto vector = _Parent.append_node("CellPadding");
+            auto vector = geometry.append_node("CellPadding");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().CellPadding.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().CellPadding.y);
         }
 
         {
-            auto vector = _Parent.append_node("TableAngledHeadersTextAlign");
+            auto vector = geometry.append_node("TableAngledHeadersTextAlign");
             vector.append_node("x").set_value_as<float>(ImGui::GetStyle().CellPadding.x);
             vector.append_node("y").set_value_as<float>(ImGui::GetStyle().CellPadding.y);
         }
 
-        _Parent.append_node("TableAngledHeadersAngle").set_value_as<float>(ImGui::GetStyle().TableAngledHeadersAngle);
+        geometry.append_node("TableAngledHeadersAngle").set_value_as<float>(ImGui::GetStyle().TableAngledHeadersAngle);
     }
 
     // Trees
     {
-        _Parent.append_node("TreeLinesFlags").set_value_as<size_t>(ImGui::GetStyle().TreeLinesFlags);
-        _Parent.append_node("TreeLinesSize").set_value_as<float>(ImGui::GetStyle().TreeLinesSize);
-        _Parent.append_node("TreeLinesRounding").set_value_as<float>(ImGui::GetStyle().TreeLinesRounding);
+        geometry.append_node("TreeLinesFlags").set_value_as<size_t>(ImGui::GetStyle().TreeLinesFlags);
+        geometry.append_node("TreeLinesSize").set_value_as<float>(ImGui::GetStyle().TreeLinesSize);
+        geometry.append_node("TreeLinesRounding").set_value_as<float>(ImGui::GetStyle().TreeLinesRounding);
     }
 
     // Docking
     {
-        _Parent.append_node("DockingSeparatorSize").set_value_as<float>(ImGui::GetStyle().DockingSeparatorSize);
+        geometry.append_node("DockingSeparatorSize").set_value_as<float>(ImGui::GetStyle().DockingSeparatorSize);
     }
 
     // Colors
+    auto colors = _Parent.append_node("Colors");
     {
-        // Switch-case for ImGuiCol_ enum (example usage)
-        auto colors = _Parent.append_node("Colors");
-
-        for (size_t i = 0; i < ImGuiCol_::ImGuiCol_COUNT; i++)
+        for (int i = 0; i < ImGuiCol_::ImGuiCol_COUNT; i++)
         {
-            auto color = colors.append_node(get_imgui_color_name((ImGuiCol_)i).c_str());
-            color.append_node("R").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].x * 255));
-            color.append_node("G").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].y * 255));
-            color.append_node("B").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].z * 255));
-            color.append_node("A").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].w * 255));
+            auto color = colors.append_node(ImGui::GetStyleColorName(i));
+            color.append_node("R").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].x * 255.f));
+            color.append_node("G").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].y * 255.f));
+            color.append_node("B").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].z * 255.f));
+            color.append_node("A").set_value_as<int>((int)(ImGui::GetStyle().Colors[i].w * 255.f));
         }
+    }
+
+    // Fonts
+    {
     }
 
     return true;
@@ -169,220 +174,245 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
 
 bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
-    // Main
-    {
-        // WindowPadding
-        auto WindowPadding = _Parent.find_node("WindowPadding");
+    // parse geometry
+    auto geometry = _Parent.find_node("Geometry");
 
-        if(WindowPadding.find_node("x").is_valid() && 
-            WindowPadding.find_node("y").is_valid())
+    if(geometry.is_valid())
+    {
+        // Main
         {
-            ImGui::GetStyle().WindowPadding = 
-                ImVec2(WindowPadding.find_node("x").get_value_as<float>(), WindowPadding.find_node("y").get_value_as<float>());
+            // WindowPadding
+            auto WindowPadding = geometry.find_node("WindowPadding");
+
+            if(WindowPadding.find_node("x").is_valid() && 
+                WindowPadding.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().WindowPadding = 
+                    ImVec2(WindowPadding.find_node("x").get_value_as<float>(), WindowPadding.find_node("y").get_value_as<float>());
+            }
+
+            // FramePadding
+            auto FramePadding = geometry.find_node("FramePadding");
+
+            if(FramePadding.find_node("x").is_valid() && 
+                FramePadding.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().FramePadding = 
+                    ImVec2(FramePadding.find_node("x").get_value_as<float>(), FramePadding.find_node("y").get_value_as<float>());
+            }
+
+            // ItemSpacing
+            auto ItemSpacing = geometry.find_node("ItemSpacing");
+
+            if(ItemSpacing.find_node("x").is_valid() && 
+                ItemSpacing.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().ItemSpacing = 
+                    ImVec2(ItemSpacing.find_node("x").get_value_as<float>(), ItemSpacing.find_node("y").get_value_as<float>());
+            }    
+
+            // ItemInnerSpacing
+            auto ItemInnerSpacing  = geometry.find_node("ItemInnerSpacing");
+
+            if(ItemInnerSpacing.find_node("x").is_valid() && 
+                ItemInnerSpacing.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().ItemInnerSpacing = 
+                    ImVec2(ItemInnerSpacing.find_node("x").get_value_as<float>(), ItemInnerSpacing.find_node("y").get_value_as<float>());
+            } 
+
+            // TouchExtraPadding
+            auto TouchExtraPadding = geometry.find_node("TouchExtraPadding");
+
+            if(TouchExtraPadding.find_node("x").is_valid() && 
+                TouchExtraPadding.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().TouchExtraPadding = 
+                    ImVec2(TouchExtraPadding.find_node("x").get_value_as<float>(), TouchExtraPadding.find_node("y").get_value_as<float>());
+            } 
+
+            // IndentSpacing
+            auto IndentSpacing = geometry.find_node("IndentSpacing");
+
+            if(IndentSpacing.is_valid()) 
+                ImGui::GetStyle().IndentSpacing = IndentSpacing.get_value_as<float>();
+
+            // ScrollbarSize
+            auto ScrollbarSize = geometry.find_node("ScrollbarSize");
+
+            if(ScrollbarSize.is_valid()) 
+                ImGui::GetStyle().ScrollbarSize = ScrollbarSize.get_value_as<float>();
+            
+            // GrabMinSize
+            auto GrabMinSize = geometry.find_node("GrabMinSize");
+
+            if(GrabMinSize.is_valid()) 
+                ImGui::GetStyle().GrabMinSize = GrabMinSize.get_value_as<float>();
         }
 
-        // FramePadding
-        auto FramePadding = _Parent.find_node("FramePadding");
-
-        if(FramePadding.find_node("x").is_valid() && 
-            FramePadding.find_node("y").is_valid())
+        // Borders
         {
-            ImGui::GetStyle().FramePadding = 
-                ImVec2(FramePadding.find_node("x").get_value_as<float>(), FramePadding.find_node("y").get_value_as<float>());
+            auto WindowBorderSize = geometry.find_node("WindowBorderSize");
+            if(WindowBorderSize.is_valid()) 
+                ImGui::GetStyle().WindowBorderSize = WindowBorderSize.get_value_as<float>();
+
+            auto ChildBorderSize = geometry.find_node("ChildBorderSize");
+            if(ChildBorderSize.is_valid()) 
+                ImGui::GetStyle().ChildBorderSize = ChildBorderSize.get_value_as<float>();
+
+            auto PopupBorderSize = geometry.find_node("PopupBorderSize");
+            if(PopupBorderSize.is_valid()) 
+                ImGui::GetStyle().PopupBorderSize = PopupBorderSize.get_value_as<float>();
+
+            auto FrameBorderSize = geometry.find_node("FrameBorderSize");
+            if(FrameBorderSize.is_valid()) 
+                ImGui::GetStyle().FrameBorderSize = FrameBorderSize.get_value_as<float>();
+
+            auto TabBorderSize = geometry.find_node("TabBorderSize");
+            if(TabBorderSize.is_valid()) 
+                ImGui::GetStyle().TabBorderSize = TabBorderSize.get_value_as<float>();
+
+            auto TabBarBorderSize = geometry.find_node("TabBarBorderSize");
+            if(TabBarBorderSize.is_valid()) 
+                ImGui::GetStyle().TabBarBorderSize = TabBarBorderSize.get_value_as<float>();
         }
 
-        // ItemSpacing
-        auto ItemSpacing = _Parent.find_node("ItemSpacing");
-
-        if(ItemSpacing.find_node("x").is_valid() && 
-            ItemSpacing.find_node("y").is_valid())
+        // Rounding
         {
-            ImGui::GetStyle().ItemSpacing = 
-                ImVec2(ItemSpacing.find_node("x").get_value_as<float>(), ItemSpacing.find_node("y").get_value_as<float>());
-        }    
+            auto WindowRounding = geometry.find_node("WindowRounding");
+            if(WindowRounding.is_valid()) 
+                ImGui::GetStyle().WindowRounding = WindowRounding.get_value_as<float>();        
 
-        // ItemInnerSpacing
-        auto ItemInnerSpacing  = _Parent.find_node("ItemInnerSpacing");
+            auto ChildRounding = geometry.find_node("ChildRounding");
+            if(ChildRounding.is_valid()) 
+                ImGui::GetStyle().ChildRounding = ChildRounding.get_value_as<float>();
 
-        if(ItemInnerSpacing.find_node("x").is_valid() && 
-            ItemInnerSpacing.find_node("y").is_valid())
-        {
-            ImGui::GetStyle().ItemInnerSpacing = 
-                ImVec2(ItemInnerSpacing.find_node("x").get_value_as<float>(), ItemInnerSpacing.find_node("y").get_value_as<float>());
-        } 
+            auto FrameRounding = geometry.find_node("FrameRounding");
+            if(FrameRounding.is_valid()) 
+                ImGui::GetStyle().FrameRounding = FrameRounding.get_value_as<float>();
 
-        // TouchExtraPadding
-        auto TouchExtraPadding = _Parent.find_node("TouchExtraPadding");
+            auto PopupRounding = geometry.find_node("PopupRounding");
+            if(PopupRounding.is_valid()) 
+                ImGui::GetStyle().PopupRounding = PopupRounding.get_value_as<float>();
 
-        if(TouchExtraPadding.find_node("x").is_valid() && 
-            TouchExtraPadding.find_node("y").is_valid())
-        {
-            ImGui::GetStyle().TouchExtraPadding = 
-                ImVec2(TouchExtraPadding.find_node("x").get_value_as<float>(), TouchExtraPadding.find_node("y").get_value_as<float>());
-        } 
+            auto ScrollbarRounding = geometry.find_node("ScrollbarRounding");
+            if(ScrollbarRounding.is_valid()) 
+                ImGui::GetStyle().ScrollbarRounding = ScrollbarRounding.get_value_as<float>();
 
-        // IndentSpacing
-        auto IndentSpacing = _Parent.find_node("IndentSpacing");
+            auto GrabRounding = geometry.find_node("GrabRounding");
+            if(GrabRounding.is_valid()) 
+                ImGui::GetStyle().GrabRounding = GrabRounding.get_value_as<float>();
 
-        if(IndentSpacing.is_valid()) 
-            ImGui::GetStyle().IndentSpacing = IndentSpacing.get_value_as<float>();
-
-        // ScrollbarSize
-        auto ScrollbarSize = _Parent.find_node("ScrollbarSize");
-
-        if(ScrollbarSize.is_valid()) 
-            ImGui::GetStyle().ScrollbarSize = ScrollbarSize.get_value_as<float>();
-        
-        // GrabMinSize
-        auto GrabMinSize = _Parent.find_node("GrabMinSize");
-
-        if(GrabMinSize.is_valid()) 
-            ImGui::GetStyle().GrabMinSize = GrabMinSize.get_value_as<float>();
-    }
-
-    // Borders
-    {
-        auto WindowBorderSize = _Parent.find_node("WindowBorderSize");
-        if(WindowBorderSize.is_valid()) 
-            ImGui::GetStyle().WindowBorderSize = WindowBorderSize.get_value_as<float>();
-
-        auto ChildBorderSize = _Parent.find_node("ChildBorderSize");
-        if(ChildBorderSize.is_valid()) 
-            ImGui::GetStyle().ChildBorderSize = ChildBorderSize.get_value_as<float>();
-
-        auto PopupBorderSize = _Parent.find_node("PopupBorderSize");
-        if(PopupBorderSize.is_valid()) 
-            ImGui::GetStyle().PopupBorderSize = PopupBorderSize.get_value_as<float>();
-
-        auto FrameBorderSize = _Parent.find_node("FrameBorderSize");
-        if(FrameBorderSize.is_valid()) 
-            ImGui::GetStyle().FrameBorderSize = FrameBorderSize.get_value_as<float>();
-
-        auto TabBorderSize = _Parent.find_node("TabBorderSize");
-        if(TabBorderSize.is_valid()) 
-            ImGui::GetStyle().TabBorderSize = TabBorderSize.get_value_as<float>();
-
-        auto TabBarBorderSize = _Parent.find_node("TabBarBorderSize");
-        if(TabBarBorderSize.is_valid()) 
-            ImGui::GetStyle().TabBarBorderSize = TabBarBorderSize.get_value_as<float>();
-    }
-
-    // Rounding
-    {
-        auto WindowRounding = _Parent.find_node("WindowRounding");
-        if(WindowRounding.is_valid()) 
-            ImGui::GetStyle().WindowRounding = WindowRounding.get_value_as<float>();        
-
-        auto ChildRounding = _Parent.find_node("ChildRounding");
-        if(ChildRounding.is_valid()) 
-            ImGui::GetStyle().ChildRounding = ChildRounding.get_value_as<float>();
-
-        auto FrameRounding = _Parent.find_node("FrameRounding");
-        if(FrameRounding.is_valid()) 
-            ImGui::GetStyle().FrameRounding = FrameRounding.get_value_as<float>();
-
-        auto PopupRounding = _Parent.find_node("PopupRounding");
-        if(PopupRounding.is_valid()) 
-            ImGui::GetStyle().PopupRounding = PopupRounding.get_value_as<float>();
-
-        auto ScrollbarRounding = _Parent.find_node("ScrollbarRounding");
-        if(ScrollbarRounding.is_valid()) 
-            ImGui::GetStyle().ScrollbarRounding = ScrollbarRounding.get_value_as<float>();
-
-        auto GrabRounding = _Parent.find_node("GrabRounding");
-        if(GrabRounding.is_valid()) 
-            ImGui::GetStyle().GrabRounding = GrabRounding.get_value_as<float>();
-
-        auto TabRounding = _Parent.find_node("TabRounding");
-        if(TabRounding.is_valid()) 
-            ImGui::GetStyle().TabRounding = TabRounding.get_value_as<float>();
-    }
-
-    // Tabs
-    {
-        auto TabBarOverlineSize = _Parent.find_node("TabBarOverlineSize");
-        if(TabBarOverlineSize.is_valid()) 
-            ImGui::GetStyle().TabBarOverlineSize = TabBarOverlineSize.get_value_as<float>();
-
-        auto TabMinWidthBase = _Parent.find_node("TabMinWidthBase");
-        if(TabMinWidthBase.is_valid()) 
-            ImGui::GetStyle().TabMinWidthBase = TabMinWidthBase.get_value_as<float>();
-
-        auto TabMinWidthShrink = _Parent.find_node("TabMinWidthShrink");
-        if(TabMinWidthShrink.is_valid()) 
-            ImGui::GetStyle().TabMinWidthShrink = TabMinWidthShrink.get_value_as<float>();
-
-        auto TabCloseButtonMinWidthSelected = _Parent.find_node("TabCloseButtonMinWidthSelected");
-        if(TabCloseButtonMinWidthSelected.is_valid()) 
-            ImGui::GetStyle().TabCloseButtonMinWidthSelected = TabCloseButtonMinWidthSelected.get_value_as<float>();
-
-        auto TabCloseButtonMinWidthUnselected = _Parent.find_node("TabCloseButtonMinWidthUnselected");
-        if(TabCloseButtonMinWidthUnselected.is_valid()) 
-            ImGui::GetStyle().TabCloseButtonMinWidthUnselected = TabCloseButtonMinWidthUnselected.get_value_as<float>();
-    }
-
-    // Tables
-    {
-        // CellPadding
-        auto CellPadding = _Parent.find_node("CellPadding");
-
-        if(CellPadding.find_node("x").is_valid() && 
-            CellPadding.find_node("y").is_valid())
-        {
-            ImGui::GetStyle().CellPadding = 
-                ImVec2(CellPadding.find_node("x").get_value_as<float>(), CellPadding.find_node("y").get_value_as<float>());
+            auto TabRounding = geometry.find_node("TabRounding");
+            if(TabRounding.is_valid()) 
+                ImGui::GetStyle().TabRounding = TabRounding.get_value_as<float>();
         }
 
-        // TableAngledHeadersTextAlign
-        auto TableAngledHeadersTextAlign = _Parent.find_node("TableAngledHeadersTextAlign");
-
-        if(TableAngledHeadersTextAlign.find_node("x").is_valid() && 
-            TableAngledHeadersTextAlign.find_node("y").is_valid())
+        // Tabs
         {
-            ImGui::GetStyle().TableAngledHeadersTextAlign = 
-                ImVec2(TableAngledHeadersTextAlign.find_node("x").get_value_as<float>(), TableAngledHeadersTextAlign.find_node("y").get_value_as<float>());
+            auto TabBarOverlineSize = geometry.find_node("TabBarOverlineSize");
+            if(TabBarOverlineSize.is_valid()) 
+                ImGui::GetStyle().TabBarOverlineSize = TabBarOverlineSize.get_value_as<float>();
+
+            auto TabMinWidthBase = geometry.find_node("TabMinWidthBase");
+            if(TabMinWidthBase.is_valid()) 
+                ImGui::GetStyle().TabMinWidthBase = TabMinWidthBase.get_value_as<float>();
+
+            auto TabMinWidthShrink = geometry.find_node("TabMinWidthShrink");
+            if(TabMinWidthShrink.is_valid()) 
+                ImGui::GetStyle().TabMinWidthShrink = TabMinWidthShrink.get_value_as<float>();
+
+            auto TabCloseButtonMinWidthSelected = geometry.find_node("TabCloseButtonMinWidthSelected");
+            if(TabCloseButtonMinWidthSelected.is_valid()) 
+                ImGui::GetStyle().TabCloseButtonMinWidthSelected = TabCloseButtonMinWidthSelected.get_value_as<float>();
+
+            auto TabCloseButtonMinWidthUnselected = geometry.find_node("TabCloseButtonMinWidthUnselected");
+            if(TabCloseButtonMinWidthUnselected.is_valid()) 
+                ImGui::GetStyle().TabCloseButtonMinWidthUnselected = TabCloseButtonMinWidthUnselected.get_value_as<float>();
         }
 
-        auto TableAngledHeadersAngle = _Parent.find_node("TableAngledHeadersAngle");
-        if(TableAngledHeadersAngle.is_valid()) 
-            ImGui::GetStyle().TableAngledHeadersAngle = TableAngledHeadersAngle.get_value_as<float>();
+        // Tables
+        {
+            // CellPadding
+            auto CellPadding = geometry.find_node("CellPadding");
+
+            if(CellPadding.find_node("x").is_valid() && 
+                CellPadding.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().CellPadding = 
+                    ImVec2(CellPadding.find_node("x").get_value_as<float>(), CellPadding.find_node("y").get_value_as<float>());
+            }
+
+            // TableAngledHeadersTextAlign
+            auto TableAngledHeadersTextAlign = geometry.find_node("TableAngledHeadersTextAlign");
+
+            if(TableAngledHeadersTextAlign.find_node("x").is_valid() && 
+                TableAngledHeadersTextAlign.find_node("y").is_valid())
+            {
+                ImGui::GetStyle().TableAngledHeadersTextAlign = 
+                    ImVec2(TableAngledHeadersTextAlign.find_node("x").get_value_as<float>(), TableAngledHeadersTextAlign.find_node("y").get_value_as<float>());
+            }
+
+            auto TableAngledHeadersAngle = geometry.find_node("TableAngledHeadersAngle");
+            if(TableAngledHeadersAngle.is_valid()) 
+                ImGui::GetStyle().TableAngledHeadersAngle = TableAngledHeadersAngle.get_value_as<float>();
+        }
+
+        // Trees
+        {
+            auto TreeLinesFlags = geometry.find_node("TreeLinesFlags");
+            if(TreeLinesFlags.is_valid()) 
+                ImGui::GetStyle().TreeLinesFlags = TreeLinesFlags.get_value_as<ImGuiTreeNodeFlags>();
+
+            auto TreeLinesSize = geometry.find_node("TreeLinesSize");
+            if(TreeLinesSize.is_valid()) 
+                ImGui::GetStyle().TreeLinesSize = TreeLinesSize.get_value_as<float>();
+
+            auto TreeLinesRounding = geometry.find_node("TreeLinesRounding");
+            if(TreeLinesRounding.is_valid()) 
+                ImGui::GetStyle().TreeLinesRounding = TreeLinesRounding.get_value_as<float>();
+        }
+
+        // Docking
+        {
+            auto DockingSeparatorSize = geometry.find_node("DockingSeparatorSize");
+            if(DockingSeparatorSize.is_valid()) 
+                ImGui::GetStyle().DockingSeparatorSize = DockingSeparatorSize.get_value_as<float>();
+        }
     }
 
-    // Trees
+    // parse colors
+    auto colors = _Parent.find_node("Colors");
+
+    if(colors.is_valid())
     {
-        auto TreeLinesFlags = _Parent.find_node("TreeLinesFlags");
-        if(TreeLinesFlags.is_valid()) 
-            ImGui::GetStyle().TreeLinesFlags = TreeLinesFlags.get_value_as<float>();
+        for (int i = 0; i < ImGuiCol_::ImGuiCol_COUNT; i++)
+        {
+            auto color = colors.find_node(ImGui::GetStyleColorName(i));
 
-        auto TreeLinesSize = _Parent.find_node("TreeLinesSize");
-        if(TreeLinesSize.is_valid()) 
-            ImGui::GetStyle().TreeLinesSize = TreeLinesSize.get_value_as<float>();
+            if(!color.is_valid()) 
+                continue;
 
-        auto TreeLinesRounding = _Parent.find_node("TreeLinesRounding");
-        if(TreeLinesRounding.is_valid()) 
-            ImGui::GetStyle().TreeLinesRounding = TreeLinesRounding.get_value_as<float>();
+            auto r = color.find_node("R");
+            auto g = color.find_node("G");
+            auto b = color.find_node("B");
+            auto a = color.find_node("A");
+
+            if(r.is_valid()) 
+                ImGui::GetStyle().Colors[i].x = r.get_value_as<float>() / 255.f;
+
+            if(g.is_valid()) 
+                ImGui::GetStyle().Colors[i].y = g.get_value_as<float>() / 255.f;
+
+            if(b.is_valid()) 
+                ImGui::GetStyle().Colors[i].z = b.get_value_as<float>() / 255.f;
+
+            if(a.is_valid()) 
+                ImGui::GetStyle().Colors[i].w = a.get_value_as<float>() / 255.f;
+        }
     }
 
-    // Docking
-    {
-        auto DockingSeparatorSize = _Parent.find_node("DockingSeparatorSize");
-        if(DockingSeparatorSize.is_valid()) 
-            ImGui::GetStyle().DockingSeparatorSize = DockingSeparatorSize.get_value_as<float>();
-    }
-
-    // Colors
-    {
-        //auto colors = _Parent.find_node("Colors");
-
-        // for (int i = 0; i < ImGuiCol_COUNT; i++)
-        // {
-        //     auto color = colors.append_node(fmt::format("Color_{}", i).c_str());
-        //     color.append_node("R").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].x * 255));
-        //     color.append_node("G").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].y * 255));
-        //     color.append_node("B").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].z * 255));
-        //     color.append_node("A").set_value_as<size_t>((size_t)(ImGui::GetStyle().Colors[i].w * 255));
-        // }
-    }
+    // parse fonts
 
     return true;
 }
@@ -596,7 +626,12 @@ void StyleSettings::draw_color_settings(ImGuiStyle& style)
 
 void StyleSettings::draw_fonts_settings(ImGuiStyle& style)
 {
+    // font loader
+
+    // font selector
     ImGui::ShowFontSelector("Fonts##Selector");
+    
+    // font size
     if (ImGui::DragFloat("FontSizeBase", &style.FontSizeBase, 0.20f, 5.0f, 100.0f, "%.0f"))
         style._NextFrameFontSizeBase = style.FontSizeBase;
 }
@@ -654,4 +689,36 @@ void StyleSettings::draw_rendering_settings(ImGuiStyle& style)
     ImGui::DragFloat("Disabled Alpha", &style.DisabledAlpha, 0.005f, 0.0f, 1.0f, "%.2f"); 
     ImGui::SameLine();
     ImGui::PopItemWidth();
+}
+
+
+void StyleSettings::load_fonts(const std::filesystem::path& _Path)
+{
+    if(!std::filesystem::exists(_Path))
+        return;
+
+    // retrive ImGui IO
+    auto& io = ImGui::GetIO();
+    io.Fonts->Clear();
+
+    // recursivelly scan path for .ttf fonts
+    for(const auto& directory :
+         std::filesystem::recursive_directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
+    {
+        if(directory.is_directory() ||
+            directory.path().extension() != ".ttf")
+            continue;
+
+        io.Fonts->AddFontFromFileTTF(
+            pugi::as_utf8(directory.path().wstring()).c_str(),
+            ImGui::GetStyle().FontSizeBase * (4.0f / 3.0f),
+            nullptr,
+            io.Fonts->GetGlyphRangesCyrillic());
+    }
+
+    // build fonts
+    io.Fonts->Build();
+
+    // reload app
+    Frenchie::Application::Application::instance()->reload();
 }

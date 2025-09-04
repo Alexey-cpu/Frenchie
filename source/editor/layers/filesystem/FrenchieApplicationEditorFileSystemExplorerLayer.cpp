@@ -11,10 +11,20 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
 // Explorer
-FileSystemExplorer::FileSystemExplorer() : 
-    Layer(STRINGIFY(FileSystemExplorer)){}
+FileSystemExplorer::FileSystemExplorer(const std::string& _Name) : 
+    Layer(_Name){}
 
 FileSystemExplorer::~FileSystemExplorer(){}
+
+std::filesystem::path FileSystemExplorer::get_current_directory() const
+{
+    return m_CurrentDirectory.get_buffer();
+}
+
+std::string FileSystemExplorer::get_current_file() const
+{
+    return m_CurrentFile.get_buffer();
+}
 
 std::set<std::filesystem::path> FileSystemExplorer::get_selected_paths()
 {
@@ -170,11 +180,6 @@ void FileSystemExplorer::frame_update()
 
         ImGui::End();
     }
-}
-
-bool FileSystemExplorer::allows_multiple_instances() const
-{
-    return false;
 }
 
 // Frenchie::Core::Serialization::ISerializer
