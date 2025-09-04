@@ -74,7 +74,6 @@ namespace Frenchie
                     if(contains<Type>() && 
                         !layer->allows_multiple_instances())
                     {
-                        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
                         Frenchie::Core::Logger::instance()->error(fmt::format("Application queue already contains {}", layer->get_name()));
                         return nullptr;
                     }
@@ -82,7 +81,6 @@ namespace Frenchie
                     // awake layer
                     if(!layer->awake())
                     {
-                        Frenchie::Core::Logger::instance()->error(fmt::format("FRENCHIE::OPENGL::APPLICATION::ERROR"));
                         Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", layer->get_name()));
                         return nullptr;
                     }
