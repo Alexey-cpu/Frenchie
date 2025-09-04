@@ -27,11 +27,14 @@ namespace Frenchie
                 public Frenchie::Core::Serialization::ISerializer
             {
             public:
-                FileSystemExplorer(const std::string& = STRINGIFY(FileSystemExplorer));
+                FileSystemExplorer(
+                    const std::string&           = STRINGIFY(FileSystemExplorer),
+                    const std::filesystem::path& = std::filesystem::current_path());
                 virtual ~FileSystemExplorer();
 
                 // static API
-                std::set<std::filesystem::path> get_selected_paths();
+                std::filesystem::path get_path() const;
+                std::set<std::filesystem::path> get_selected_paths() const;
                 void create_folder();
                 void copy_paths();
                 void paste_paths();
@@ -48,16 +51,19 @@ namespace Frenchie
             protected:
 
                 // info
+                std::filesystem::path           m_Path                         = std::filesystem::current_path();
                 InputText                       m_CurrentDirectory;
                 InputText                       m_CurrentFile;
                 bool                            m_DrawCurrentDirectoryTextEdit = false;
-                std::set<std::filesystem::path> m_SelectedPaths;
-                std::set<std::filesystem::path> m_CopiedPaths;
+                mutable std::set<std::filesystem::path> m_SelectedPaths;
+                mutable std::set<std::filesystem::path> m_CopiedPaths;
 
                 // servive methods
                 void change_current_directory(const std::filesystem::path&);
                 
                 // drawers
+                void draw_contents();
+                
                 void draw_current_directory_path_editor();
                 void draw_current_filename_editor();
                 void draw_current_directory_paths_table();

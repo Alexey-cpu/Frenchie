@@ -1,6 +1,8 @@
 #include <FrenchieApplicationEditorPreferencesStyleSettings.hpp>
 
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorFileSystemDialog.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -166,7 +168,11 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
     }
 
     // Fonts
+    auto fonts = _Parent.append_node("Fonts");
     {
+        fonts.append_node("FontsLoadPath", Frenchie::Core::Helpers::String::as_utf8(m_FontsLoadPath.wstring()).c_str());
+        fonts.append_node("FontSizeBase").set_value_as<float>(ImGui::GetStyle().FontSizeBase);
+        fonts.append_node("Font", ImGui::GetFont()->GetDebugName());
     }
 
     return true;
@@ -413,6 +419,37 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
     }
 
     // parse fonts
+    auto fonts = _Parent.find_node("Fonts");
+    {
+        if(fonts.find_node("FontSizeBase").is_valid())
+            ImGui::GetStyle().FontSizeBase = fonts.find_node("FontSizeBase").get_value_as<float>();
+
+        if(fonts.find_node("FontsLoadPath").is_valid())
+        {
+            m_FontsLoadPath = std::filesystem::path(fonts.find_node("FontsLoadPath").get_value());
+
+            // load fonts
+            load_fonts(m_FontsLoadPath);
+        }
+
+        // setup font
+        if(fonts.find_node("Font").is_valid())
+        {
+            auto fontName = std::string(fonts.find_node("Font").get_value());
+
+            ImGuiIO& io = ImGui::GetIO();
+            ImFont* font_current = ImGui::GetFont();
+
+            for (ImFont* font : io.Fonts->Fonts)
+            {
+                if (std::string(font->GetDebugName()) == fontName)
+                {
+                    io.FontDefault = font;
+                    break;
+                }
+            }   
+        }
+    }
 
     return true;
 }
@@ -627,6 +664,30 @@ void StyleSettings::draw_color_settings(ImGuiStyle& style)
 void StyleSettings::draw_fonts_settings(ImGuiStyle& style)
 {
     // font loader
+    ImGui::TextUnformatted(m_FontsLoadPath.string().c_str());
+    ImGui::SameLine();
+    if(ImGui::Button("Browse"))
+    {
+        Frenchie::Application::Application::instance()->push<FilesOpenDialog>(
+            [this]()
+            {
+                auto dialog =  Frenchie::Application::Application::instance()->find<FilesOpenDialog>();
+
+                if(dialog != nullptr)
+                {
+                    auto path = dialog->get_path();
+
+                    Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push<CallbackCommand>(
+                        [this, path]()
+                        {
+                            load_fonts(path);
+                        }
+                    );
+                }
+            },
+            "Select directory where to look for the fonts .ttf files..."
+        );
+    }
 
     // font selector
     ImGui::ShowFontSelector("Fonts##Selector");
@@ -711,7 +772,7 @@ void StyleSettings::load_fonts(const std::filesystem::path& _Path)
 
         io.Fonts->AddFontFromFileTTF(
             pugi::as_utf8(directory.path().wstring()).c_str(),
-            ImGui::GetStyle().FontSizeBase * (4.0f / 3.0f),
+            ImGui::GetStyle().FontSizeBase,
             nullptr,
             io.Fonts->GetGlyphRangesCyrillic());
     }
@@ -721,4 +782,7 @@ void StyleSettings::load_fonts(const std::filesystem::path& _Path)
 
     // reload app
     Frenchie::Application::Application::instance()->reload();
+
+    // setup fonts load path
+    m_FontsLoadPath = _Path;
 }

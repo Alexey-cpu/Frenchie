@@ -33,7 +33,8 @@ namespace Frenchie
             protected:
 
                 // info
-                ImGuiStyle m_ReferenceStyle;
+                std::filesystem::path m_FontsLoadPath = std::filesystem::current_path();
+                ImGuiStyle            m_ReferenceStyle;
 
                 void draw_style_editor();
                 void draw_geometry_settings(ImGuiStyle&);

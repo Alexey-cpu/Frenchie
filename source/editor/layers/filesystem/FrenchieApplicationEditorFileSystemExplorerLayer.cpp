@@ -11,12 +11,20 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
 // Explorer
-FileSystemExplorer::FileSystemExplorer(const std::string& _Name) : 
-    Layer(_Name){}
+FileSystemExplorer::FileSystemExplorer(
+    const std::string&           _Name,
+    const std::filesystem::path& _Path) : 
+    Layer(_Name), 
+    m_Path((std::filesystem::exists(_Path) ? _Path : std::filesystem::current_path())){}
 
 FileSystemExplorer::~FileSystemExplorer(){}
 
-std::set<std::filesystem::path> FileSystemExplorer::get_selected_paths()
+std::filesystem::path FileSystemExplorer::get_path() const
+{
+    return m_Path;
+}
+
+std::set<std::filesystem::path> FileSystemExplorer::get_selected_paths() const
 {    
     auto selection = m_SelectedPaths;
 
@@ -33,7 +41,7 @@ void FileSystemExplorer::create_folder()
 {
     std::wstring newFolderName = L"NewFolder";
 
-    auto newPath = std::filesystem::current_path().wstring().append(L"/").append(newFolderName);
+    auto newPath = m_Path.wstring().append(L"/").append(newFolderName);
 
     while(std::filesystem::exists(newPath))
         newPath = newPath.append(L"_Copy");
@@ -69,7 +77,7 @@ void FileSystemExplorer::paste_paths()
         auto source    = std::filesystem::path(path);
         auto extention = Frenchie::Core::Helpers::get_file_extention(source);
         auto target    = std::filesystem::path(
-            std::filesystem::current_path().wstring()
+            m_Path.wstring()
             .append(L"/")
             .append(source.filename().stem().wstring())
             .append(L"_Copy")
@@ -78,7 +86,7 @@ void FileSystemExplorer::paste_paths()
         while(std::filesystem::exists(target))
         {
             target = std::filesystem::path(
-                std::filesystem::current_path().wstring()
+                m_Path.wstring()
                 .append(L"/")
                 .append(target.filename().stem().wstring())
                 .append(L"_Copy")
@@ -118,42 +126,7 @@ void FileSystemExplorer::frame_update()
     // draw content
     ImGui::Begin(get_name().c_str(), &m_Shown);
     {
-        if(ImGui::BeginTable("FileSystemContentTable", 2,
-            ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
-            ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
-            ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
-            ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
-            ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
-            ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
-            ImGuiTableFlags_::ImGuiTableFlags_Hideable))
-        {
-            ImGui::TableNextRow();
-
-            // draw tree
-            ImGui::TableSetColumnIndex(0);
-
-            ImGui::BeginChild("ContentTree");
-            {
-                draw_paths_tree(std::filesystem::current_path().root_path());
-            }
-            ImGui::EndChild();
-
-            // draw table
-            ImGui::TableSetColumnIndex(1);
-
-            ImGui::BeginChild("ContentTable");
-            {
-                draw_current_directory_path_editor();
-                draw_current_directory_paths_table();
-                draw_current_directory_popup_menu();
-                handle_current_directory_hot_keys();
-                draw_current_filename_editor();
-            }
-            ImGui::EndChild();
-
-            ImGui::EndTable();
-        }
-
+        draw_contents();
         ImGui::End();
     }
 }
@@ -167,7 +140,7 @@ bool FileSystemExplorer::serialize(const Frenchie::Core::Serialization::Node& _P
     // write message content filter
     self.append_node(
         STRINGIFY(m_CurrentDirectory), 
-        Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().wstring()).c_str(),
+        Frenchie::Core::Helpers::String::as_utf8(m_Path.wstring()).c_str(),
         Frenchie::Core::Serialization::NodeType::OBJECT);
 
     return true;
@@ -220,7 +193,7 @@ void FileSystemExplorer::change_current_directory(const std::filesystem::path& _
                     // change current path
                     auto path = _Path;
 
-                    std::filesystem::current_path(path.make_preferred());
+                    m_Path = path.make_preferred();
 
                     // clear selection
                     m_SelectedPaths.clear();
@@ -231,6 +204,49 @@ void FileSystemExplorer::change_current_directory(const std::filesystem::path& _
                 }
             }
         );
+}
+
+void FileSystemExplorer::draw_contents()
+{
+    // check that current path exists
+    while(!std::filesystem::exists(m_Path))
+        m_Path = m_Path.parent_path();
+
+    if(ImGui::BeginTable("FileSystemContentTable", 2,
+        ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
+        ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
+        ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
+        ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
+        ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
+        ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
+        ImGuiTableFlags_::ImGuiTableFlags_Hideable))
+    {
+        ImGui::TableNextRow();
+
+        // draw tree
+        ImGui::TableSetColumnIndex(0);
+
+        ImGui::BeginChild("ContentTree");
+        {
+            draw_paths_tree(m_Path.root_path());
+        }
+        ImGui::EndChild();
+
+        // draw table
+        ImGui::TableSetColumnIndex(1);
+
+        ImGui::BeginChild("ContentTable");
+        {
+            draw_current_directory_path_editor();
+            draw_current_directory_paths_table();
+            draw_current_directory_popup_menu();
+            handle_current_directory_hot_keys();
+            draw_current_filename_editor();
+        }
+        ImGui::EndChild();
+
+        ImGui::EndTable();
+    }
 }
 
 void FileSystemExplorer::draw_current_directory_path_editor()
@@ -262,7 +278,7 @@ void FileSystemExplorer::draw_current_directory_path_editor()
     if(!m_DrawCurrentDirectoryTextEdit)
     {
         // draw buttons
-        auto path = std::filesystem::current_path();
+        auto path = m_Path;
 
         std::stack<std::filesystem::path> stack;
 
@@ -307,7 +323,7 @@ void FileSystemExplorer::draw_current_directory_path_editor()
 
         // draw current path editor
         if(m_CurrentDirectory.empty())
-            m_CurrentDirectory.set_buffer(Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().make_preferred().wstring()));
+            m_CurrentDirectory.set_buffer(Frenchie::Core::Helpers::String::as_utf8(m_Path.make_preferred().wstring()));
 
         if(m_CurrentDirectory.draw("###", ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {            
@@ -338,7 +354,7 @@ void FileSystemExplorer::draw_current_directory_paths_table()
     int pathsCount = 0;
 
     for(const auto& directory :
-        std::filesystem::directory_iterator(std::filesystem::current_path().make_preferred(), 
+        std::filesystem::directory_iterator(m_Path.make_preferred(), 
         std::filesystem::directory_options::skip_permission_denied))
     {
         pathsCount++;
@@ -372,7 +388,7 @@ void FileSystemExplorer::draw_current_directory_paths_table()
 
         // draw content of current directory
         auto pathIterator = 
-            std::filesystem::directory_iterator(std::filesystem::current_path().make_preferred(), 
+            std::filesystem::directory_iterator(m_Path.make_preferred(), 
                 std::filesystem::directory_options::skip_permission_denied);
 
         ImGuiListClipper clipper;
@@ -514,7 +530,7 @@ void FileSystemExplorer::draw_paths_tree(const std::filesystem::path& _Path)
         return;
     }
 
-    if(_Path == std::filesystem::current_path().root_path() || _Path == std::filesystem::current_path())
+    if(_Path == m_Path.root_path() || _Path == m_Path)
         ImGui::SetNextItemOpen(true);
 
     auto name = _Path.filename().wstring();

@@ -1,16 +1,17 @@
-#include <FrenchieApplicationEditorDialogLayer.hpp>
+#include <FrenchieApplicationEditorFileSystemDialog.hpp>
 
-// IMGUI
-#include <imgui.h>
-
+using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-Dialog::Dialog(const std::string& _Name) : Layer(_Name){}
-Dialog::~Dialog(){}
+FilesOpenDialog::FilesOpenDialog(const std::function<void()>& _OnAccpected, const std::string& _Name) : 
+    FileSystemExplorer(_Name, std::filesystem::current_path()), 
+    m_OnAccepted(_OnAccpected){}
 
-void Dialog::frame_update()
-{   
+FilesOpenDialog::~FilesOpenDialog(){}
+
+void FilesOpenDialog::frame_update()
+{
     ImGui::OpenPopup(m_Name.c_str());
 
     ImGuiStyle& style = ImGui::GetStyle();
@@ -32,22 +33,40 @@ void Dialog::frame_update()
                 ImGui::GetContentRegionAvail().y - (ImGui::CalcTextSize("Button").y + style.FramePadding.x * 2.0f + ImGui::CalcTextSize("BUTTON").y)),
             ImGuiChildFlags_::ImGuiChildFlags_Borders,
             wiondowFlags);
-        draw_content();
-        ImGui::EndChild();
+        {
+            draw_contents();
+            ImGui::EndChild();
+        }
 
         ImGui::BeginChild(
             "Buttons",
             ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y),
             ImGuiChildFlags_::ImGuiChildFlags_Borders,
             wiondowFlags);
-        draw_buttons();
-        ImGui::EndChild();
+
+        {
+            if(ImGui::Button("Ok"))
+            {
+                if(m_OnAccepted != nullptr) 
+                    m_OnAccepted();
+                close();
+            }
+
+             ImGui::SameLine();
+
+            if(ImGui::Button("Cancel"))
+            {
+                close();
+            }
+
+            ImGui::EndChild();
+        }
 
         ImGui::EndPopup();
     }
 }
 
-bool Dialog::allows_multiple_instances() const
+bool FilesOpenDialog::allows_multiple_instances() const
 {
     return false;
 }
