@@ -44,3 +44,8 @@ void Dialog::frame_update()
         ImGui::EndPopup();
     }
 }
+
+bool Dialog::allows_multiple_instances() const
+{
+    return false;
+}

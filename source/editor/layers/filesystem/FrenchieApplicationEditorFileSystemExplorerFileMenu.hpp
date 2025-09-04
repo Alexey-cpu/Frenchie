@@ -1,8 +1,9 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorMenuDrawer.hpp>
+#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 namespace Frenchie
 {
@@ -16,11 +17,15 @@ namespace Frenchie
                 FileSystemExplorerFileMenu();
                 virtual ~FileSystemExplorerFileMenu();
 
-                // Layer
-                virtual void frame_update() override;
+                // API
+                FileSystemExplorer* get_caller() const;
+                void draw(FileSystemExplorer*);
+
+                // Frenchie::Application::Layer
+                virtual bool allows_multiple_instances() const override;
 
             protected:
-                MenuDrawer m_MenuDrawer;
+                FileSystemExplorer* m_Explorer = nullptr;
             };
 
             class FileMenuCopyAction : 

@@ -2,8 +2,7 @@
 
 // Application
 #include <FrenchieApplicationEditorInputTextDrawer.hpp>
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
-#include <FrenchieApplicationEditorMenuDrawer.hpp>
+//#include <FrenchieApplicationCommandsQueueLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 
@@ -32,12 +31,12 @@ namespace Frenchie
                 virtual ~FileSystemExplorer();
 
                 // static API
-                static std::set<std::filesystem::path> get_selected_paths();
-                static void create_folder();
-                static void copy_paths();
-                static void paste_paths();
-                static void remove_paths();
-                static void rename_paths();
+                std::set<std::filesystem::path> get_selected_paths();
+                void create_folder();
+                void copy_paths();
+                void paste_paths();
+                void remove_paths();
+                void rename_paths();
 
                 // Frenchie::Application::Layer
                 virtual void frame_update() override;
@@ -64,7 +63,7 @@ namespace Frenchie
                 void draw_current_directory_paths_table();
                 void draw_current_directory_popup_menu();
                 void handle_current_directory_hot_keys();
-                void draw_paths_tree(const std::filesystem::path&, int&);
+                void draw_paths_tree(const std::filesystem::path&);
                 void drop_path_to(const std::filesystem::path&);
                 void drag_selected_paths(const std::filesystem::path&);
             };

@@ -17,21 +17,16 @@ FileSystemExplorer::FileSystemExplorer(const std::string& _Name) :
 FileSystemExplorer::~FileSystemExplorer(){}
 
 std::set<std::filesystem::path> FileSystemExplorer::get_selected_paths()
-{
-    auto explorer = Application::instance()->find<FileSystemExplorer>();
-
-    if(explorer == nullptr) 
-        return std::set<std::filesystem::path>();
-    
-    auto selection = explorer->m_SelectedPaths;
+{    
+    auto selection = m_SelectedPaths;
 
     for(auto&& path : selection)
     {
         if(!std::filesystem::exists(path))
-            explorer->m_SelectedPaths.erase(path);
+            m_SelectedPaths.erase(path);
     }
 
-    return explorer->m_SelectedPaths;
+    return m_SelectedPaths;
 }
 
 void FileSystemExplorer::create_folder()
@@ -55,20 +50,12 @@ void FileSystemExplorer::create_folder()
 
 void FileSystemExplorer::copy_paths()
 {
-    auto explorer = Application::instance()->find<FileSystemExplorer>();
-
-    if(explorer != nullptr) 
-        explorer->m_CopiedPaths = explorer->get_selected_paths();
+    m_CopiedPaths = get_selected_paths();
 }
 
 void FileSystemExplorer::paste_paths()
 {
-    auto explorer = Application::instance()->find<FileSystemExplorer>();
-
-    if(explorer == nullptr) 
-        return;
-
-    for(auto&& path : explorer->m_CopiedPaths)
+    for(auto&& path : m_CopiedPaths)
     {
         if(path.empty())
             continue;
@@ -112,7 +99,7 @@ void FileSystemExplorer::paste_paths()
 
 void FileSystemExplorer::remove_paths()
 {
-    auto selectedPaths = FileSystemExplorer::get_selected_paths();
+    auto selectedPaths = get_selected_paths();
 
     if(!selectedPaths.empty()) 
         Application::instance()->push<FilesRemoveDialog>(selectedPaths);
@@ -120,7 +107,7 @@ void FileSystemExplorer::remove_paths()
 
 void FileSystemExplorer::rename_paths()
 {
-    auto selectedPaths = FileSystemExplorer::get_selected_paths();
+    auto selectedPaths = get_selected_paths();
 
     if(!selectedPaths.empty()) 
         Application::instance()->push<FilesRenameDialog>(selectedPaths);
@@ -147,8 +134,7 @@ void FileSystemExplorer::frame_update()
 
             ImGui::BeginChild("ContentTree");
             {
-                int id = 0;
-                draw_paths_tree(std::filesystem::current_path().root_path(), id);
+                draw_paths_tree(std::filesystem::current_path().root_path());
             }
             ImGui::EndChild();
 
@@ -470,21 +456,14 @@ void FileSystemExplorer::draw_current_directory_paths_table()
 
 void FileSystemExplorer::draw_current_directory_popup_menu()
 {
-    if(get_selected_paths().empty())
+    if(ImGui::BeginPopupContextItem())
     {
-        if(ImGui::BeginPopupContextItem())
-        {
-            FileSystemExplorerFolderMenu().frame_update();
-            ImGui::EndPopup();
-        }
-    }
-    else
-    {
-        if(ImGui::BeginPopupContextItem())
-        {
-            FileSystemExplorerFileMenu().frame_update();
-            ImGui::EndPopup();
-        }
+        if(get_selected_paths().empty())
+            Frenchie::Application::Application::instance()->find_or_push<FileSystemExplorerFolderMenu>()->draw(this);
+        else 
+            Frenchie::Application::Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->draw(this);
+        
+        ImGui::EndPopup();
     }
 }
 
@@ -523,7 +502,7 @@ void FileSystemExplorer::handle_current_directory_hot_keys()
     }
 }
 
-void FileSystemExplorer::draw_paths_tree(const std::filesystem::path& _Path, int& _ID)
+void FileSystemExplorer::draw_paths_tree(const std::filesystem::path& _Path)
 {
     try
     {
@@ -535,15 +514,14 @@ void FileSystemExplorer::draw_paths_tree(const std::filesystem::path& _Path, int
         return;
     }
 
-    if(_Path == std::filesystem::current_path().root_path())
+    if(_Path == std::filesystem::current_path().root_path() || _Path == std::filesystem::current_path())
         ImGui::SetNextItemOpen(true);
 
     auto name = _Path.filename().wstring();
 
     drag_selected_paths(_Path);
 
-    ImGui::PushID(_ID++);
-    if(ImGui::TreeNodeEx(pugi::as_utf8(name.empty() ? _Path.wstring() : name).c_str(), 
+    if(ImGui::TreeNodeEx(pugi::as_utf8(name.empty() ? L"Root" : name).c_str(), 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanAvailWidth | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull  | 
         ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick))
@@ -563,13 +541,11 @@ void FileSystemExplorer::draw_paths_tree(const std::filesystem::path& _Path, int
             std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
         {
             if(directory.is_directory())
-                draw_paths_tree(directory.path(), _ID);
+                draw_paths_tree(directory.path());
         }
 
         ImGui::TreePop();
     }
-
-    ImGui::PopID();
 };
 
 void FileSystemExplorer::drag_selected_paths(const std::filesystem::path& _Path)

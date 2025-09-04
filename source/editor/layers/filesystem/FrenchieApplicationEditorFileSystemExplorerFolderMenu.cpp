@@ -9,9 +9,23 @@ using namespace Frenchie::Application::Editor;
 FileSystemExplorerFolderMenu::FileSystemExplorerFolderMenu(){}
 FileSystemExplorerFolderMenu::~FileSystemExplorerFolderMenu(){}
 
-void FileSystemExplorerFolderMenu::frame_update()
+FileSystemExplorer* FileSystemExplorerFolderMenu::get_caller() const
 {
-    m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu));
+    return m_Explorer;
+}
+
+void FileSystemExplorerFolderMenu::draw(FileSystemExplorer* _Explorer)
+{
+    // setup who calls
+    m_Explorer = _Explorer;
+
+    // draw menu
+    MenuDrawer().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu));
+}
+
+bool FileSystemExplorerFolderMenu::allows_multiple_instances() const
+{
+    return false;
 }
 
 // FolderMenuCreateFolderAction
@@ -20,7 +34,10 @@ FolderMenuCreateFolderAction::~FolderMenuCreateFolderAction(){}
 
 void FolderMenuCreateFolderAction::execute()
 {
-    FileSystemExplorer::create_folder();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFolderMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->create_folder();
 }
 
 std::string FolderMenuCreateFolderAction::factory_id()
@@ -33,7 +50,10 @@ FolderMenuPasteAction::~FolderMenuPasteAction(){}
 
 void FolderMenuPasteAction::execute()
 {
-    FileSystemExplorer::paste_paths();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFolderMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->paste_paths();
 }
 
 std::string FolderMenuPasteAction::factory_id()
