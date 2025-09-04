@@ -9,9 +9,23 @@ using namespace Frenchie::Application::Editor;
 FileSystemExplorerFileMenu::FileSystemExplorerFileMenu(){}
 FileSystemExplorerFileMenu::~FileSystemExplorerFileMenu(){}
 
-void FileSystemExplorerFileMenu::frame_update()
+FileSystemExplorer* FileSystemExplorerFileMenu::get_caller() const
 {
-    m_MenuDrawer.draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu));
+    return m_Explorer;
+}
+
+void FileSystemExplorerFileMenu::draw(FileSystemExplorer* _Explorer)
+{
+    // setup who calls
+    m_Explorer = _Explorer;
+
+    // draw menu
+    MenuDrawer().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu));
+}
+
+bool FileSystemExplorerFileMenu::allows_multiple_instances() const
+{
+    return false;
 }
 
 // FileMenuCopyAction
@@ -20,7 +34,10 @@ FileMenuCopyAction::~FileMenuCopyAction(){}
 
 void FileMenuCopyAction::execute()
 {
-    FileSystemExplorer::copy_paths();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->copy_paths();
 }
 
 std::string FileMenuCopyAction::factory_id()
@@ -34,7 +51,10 @@ FileMenuPasteAction::~FileMenuPasteAction(){}
 
 void FileMenuPasteAction::execute()
 {
-    FileSystemExplorer::paste_paths();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->paste_paths();
 }
 
 std::string FileMenuPasteAction::factory_id()
@@ -48,7 +68,10 @@ FileMenuRemoveAction::~FileMenuRemoveAction(){}
 
 void FileMenuRemoveAction::execute()
 {
-    FileSystemExplorer::remove_paths();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->remove_paths();
 }
 
 std::string FileMenuRemoveAction::factory_id()
@@ -62,7 +85,10 @@ FileMenuRenameAction::~FileMenuRenameAction(){}
 
 void FileMenuRenameAction::execute()
 {
-    FileSystemExplorer::rename_paths();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->rename_paths();
 }
 
 std::string FileMenuRenameAction::factory_id()
@@ -75,7 +101,10 @@ FileMenuCreateFolderAction::~FileMenuCreateFolderAction(){}
 
 void FileMenuCreateFolderAction::execute()
 {
-    FileSystemExplorer::create_folder();
+    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
+
+    if(explorer != nullptr) 
+        explorer->create_folder();
 }
 
 std::string FileMenuCreateFolderAction::factory_id()

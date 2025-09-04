@@ -21,7 +21,7 @@ namespace Frenchie
                 MainMenu();
                 virtual ~MainMenu();
 
-                // Layer
+                // Frenchie::Application::Layer
                 virtual void frame_update() override;
 
             protected:

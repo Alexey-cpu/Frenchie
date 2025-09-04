@@ -11,7 +11,10 @@ namespace Frenchie
             class FilesOpenDialog : public Dialog 
             {
             public:
-                FilesOpenDialog(const std::string& = STRINGIFY(FilesOpenDialog));
+                FilesOpenDialog(
+                    const std::filesystem::path& = std::filesystem::current_path(), 
+                    const std::string&           = STRINGIFY(FilesOpenDialog));
+                
                 virtual ~FilesOpenDialog();
 
                 // Frenchie::Application::Editor::Dialog
