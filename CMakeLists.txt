@@ -36,7 +36,8 @@ include("tools/pugixml.cmake")
 # add executable
 #--------------------------------------------------------------
 add_compile_definitions(IMGUI_DEFINE_MATH_OPERATORS)
-list(APPEND KERNEL "source/")
+list(APPEND KERNEL 
+"source/application" "source/core" "source/editor" "source/vendor")
 set(PATHS "")
 list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
@@ -63,6 +64,8 @@ add_executable(
 
     ${HEADERS} 
     ${SOURCES}
+
+    "source/main.cpp"
     )
 target_link_libraries(
     OpenGL 

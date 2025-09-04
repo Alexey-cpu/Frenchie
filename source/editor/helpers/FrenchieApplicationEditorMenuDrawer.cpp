@@ -1,7 +1,6 @@
-#include <FrenchieApplicationEditorMenuDrawer.hpp>
-
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationEditorMenuDrawer.hpp>
+#include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application::Editor;

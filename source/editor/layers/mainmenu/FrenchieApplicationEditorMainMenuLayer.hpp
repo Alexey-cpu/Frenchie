@@ -3,9 +3,7 @@
 // Application
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationEditorMenuDrawer.hpp>
-
-// Core
-#include <FrenchieCoreCommand.hpp>
+#include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 
 // STL
 #include <map>
@@ -30,14 +28,14 @@ namespace Frenchie
             };
 
             class MainMenuFrenchieMenuExitCommand : 
-                public Frenchie::Core::Command::Registry<MainMenuFrenchieMenuExitCommand>
+                public Frenchie::Application::Command::Registry<MainMenuFrenchieMenuExitCommand>
             {
             public:
 
                 MainMenuFrenchieMenuExitCommand();
                 virtual ~MainMenuFrenchieMenuExitCommand();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -46,14 +44,14 @@ namespace Frenchie
 
             // MainMenuWindowsMenuConsoleCommand
             class MainMenuWindowsMenuConsoleCommand : 
-                public Frenchie::Core::Command::Registry<MainMenuWindowsMenuConsoleCommand>
+                public Frenchie::Application::Command::Registry<MainMenuWindowsMenuConsoleCommand>
             {
             public:
 
                 MainMenuWindowsMenuConsoleCommand();
                 virtual ~MainMenuWindowsMenuConsoleCommand();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -62,14 +60,14 @@ namespace Frenchie
 
             // MainMenuWindowsMenuFileSystemCommand
             class MainMenuWindowsMenuFileSystemCommand : 
-                public Frenchie::Core::Command::Registry<MainMenuWindowsMenuFileSystemCommand>
+                public Frenchie::Application::Command::Registry<MainMenuWindowsMenuFileSystemCommand>
             {
             public:
 
                 MainMenuWindowsMenuFileSystemCommand();
                 virtual ~MainMenuWindowsMenuFileSystemCommand();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -78,14 +76,14 @@ namespace Frenchie
 
             // MainMenuWindowsMenuSettingsCommand
             class MainMenuWindowsMenuPreferencesCommand : 
-                public Frenchie::Core::Command::Registry<MainMenuWindowsMenuPreferencesCommand>
+                public Frenchie::Application::Command::Registry<MainMenuWindowsMenuPreferencesCommand>
             {
             public:
 
                 MainMenuWindowsMenuPreferencesCommand();
                 virtual ~MainMenuWindowsMenuPreferencesCommand();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType

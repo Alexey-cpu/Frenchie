@@ -185,7 +185,7 @@ void FileSystemExplorer::change_current_directory(const std::filesystem::path& _
 
     Application::instance()
         ->find_or_push<Frenchie::Application::CommandsQueue>()
-        ->push<Frenchie::Core::CallbackCommand>(
+        ->push<Frenchie::Application::CallbackCommand>(
             [this, _Path]()
             {
                 try

@@ -2,12 +2,11 @@
 
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
+#include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 #include <FrenchieCoreHelpers.hpp>
-#include <FrenchieCoreCommand.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application::Editor;

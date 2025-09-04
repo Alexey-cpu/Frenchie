@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationEditorMenuDrawer.hpp>
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 namespace Frenchie
@@ -29,14 +29,14 @@ namespace Frenchie
             };
 
             class FolderMenuCreateFolderAction : 
-                public Frenchie::Core::Command::Registry<FolderMenuCreateFolderAction>
+                public Frenchie::Application::Command::Registry<FolderMenuCreateFolderAction>
             {
             public:
 
                 FolderMenuCreateFolderAction();
                 virtual ~FolderMenuCreateFolderAction();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -44,13 +44,13 @@ namespace Frenchie
             };
 
             class FolderMenuPasteAction : 
-                public Frenchie::Core::Command::Registry<FolderMenuPasteAction>
+                public Frenchie::Application::Command::Registry<FolderMenuPasteAction>
             {
             public:
                 FolderMenuPasteAction();
                 virtual ~FolderMenuPasteAction();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
