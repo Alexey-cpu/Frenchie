@@ -1,14 +1,17 @@
 #pragma once
 
-#include <FrenchieCoreFactory.hpp>
+// Application
+#include <FrenchieApplicationLayer.hpp>
 
-#include <functional>
-#include <memory>
+// Core
+#include <FrenchieCoreHelpers.hpp>
+
+// STL
 #include <queue>
 
 namespace Frenchie
 {
-    namespace Core
+    namespace Application
     {
         class Command : public Frenchie::Core::Factory::Creator<Command>
         {
@@ -18,7 +21,8 @@ namespace Frenchie
             virtual void execute() = 0;
         };
 
-        class CallbackCommand : public Command::Registry<CallbackCommand, const std::function<void()>&>
+        class CallbackCommand : 
+            public Command::Registry<CallbackCommand, const std::function<void()>&>
         {
         public:
             CallbackCommand(const std::function<void()>& _Callback) : 
@@ -42,11 +46,12 @@ namespace Frenchie
             std::function<void()> m_Callback = nullptr;
         };
 
-        class Commands
+        // CommandsQueue
+        class CommandsQueue : public Layer
         {
         public:
-            Commands(){}
-            virtual ~Commands(){}
+            CommandsQueue();
+            virtual ~CommandsQueue();
 
             void push(const std::string& _Command)
             {
@@ -63,16 +68,8 @@ namespace Frenchie
                 m_Commands.push(std::make_unique<Type>(_Args...));
             }
 
-            void execute()
-            {
-                while(!m_Commands.empty())
-                {
-                    auto& command = m_Commands.front();
-                    if(command != nullptr) 
-                        command->execute();
-                    m_Commands.pop();
-                }
-            }
+            // Frenchie::Application::Layer
+            virtual void frame_start() override;
 
         protected:
             std::queue<std::unique_ptr<Command>> m_Commands = 

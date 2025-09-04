@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationEditorMenuDrawer.hpp>
-#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 namespace Frenchie
@@ -29,13 +29,13 @@ namespace Frenchie
             };
 
             class FileMenuCopyAction : 
-                public Frenchie::Core::Command::Registry<FileMenuCopyAction>
+                public Frenchie::Application::Command::Registry<FileMenuCopyAction>
             {
             public:
                 FileMenuCopyAction();
                 virtual ~FileMenuCopyAction();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -43,7 +43,7 @@ namespace Frenchie
             };
 
             class FileMenuPasteAction : 
-                public Frenchie::Core::Command::Registry<FileMenuPasteAction>
+                public Frenchie::Application::Command::Registry<FileMenuPasteAction>
             {
             public:
                 FileMenuPasteAction();
@@ -56,13 +56,13 @@ namespace Frenchie
             };
 
             class FileMenuRemoveAction : 
-                public Frenchie::Core::Command::Registry<FileMenuRemoveAction>
+                public Frenchie::Application::Command::Registry<FileMenuRemoveAction>
             {
             public:
                 FileMenuRemoveAction();
                 virtual ~FileMenuRemoveAction();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -70,14 +70,14 @@ namespace Frenchie
             };
 
             class FileMenuRenameAction : 
-                public Frenchie::Core::Command::Registry<FileMenuRenameAction>
+                public Frenchie::Application::Command::Registry<FileMenuRenameAction>
             {
             public:
 
                 FileMenuRenameAction();
                 virtual ~FileMenuRenameAction();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
@@ -85,13 +85,13 @@ namespace Frenchie
             };
 
             class FileMenuCreateFolderAction : 
-                public Frenchie::Core::Command::Registry<FileMenuCreateFolderAction>
+                public Frenchie::Application::Command::Registry<FileMenuCreateFolderAction>
             {
             public:
                 FileMenuCreateFolderAction();
                 virtual ~FileMenuCreateFolderAction();
 
-                // Frenchie::Core::Command
+                // Frenchie::Application::Command
                 virtual void execute() override;
 
                 // Command::TRegistryType
