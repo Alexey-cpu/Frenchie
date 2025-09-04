@@ -31,10 +31,6 @@ namespace Frenchie
                 FileSystemExplorer(const std::string& = STRINGIFY(FileSystemExplorer));
                 virtual ~FileSystemExplorer();
 
-                // getters
-                std::filesystem::path get_current_directory() const;
-                std::string get_current_file() const;
-
                 // static API
                 static std::set<std::filesystem::path> get_selected_paths();
                 static void create_folder();
@@ -43,7 +39,7 @@ namespace Frenchie
                 static void remove_paths();
                 static void rename_paths();
 
-                // Layer
+                // Frenchie::Application::Layer
                 virtual void frame_update() override;
 
                 // Frenchie::Core::Serialization::ISerializer
@@ -61,6 +57,8 @@ namespace Frenchie
 
                 // servive methods
                 void change_current_directory(const std::filesystem::path&);
+                
+                // drawers
                 void draw_current_directory_path_editor();
                 void draw_current_filename_editor();
                 void draw_current_directory_paths_table();
