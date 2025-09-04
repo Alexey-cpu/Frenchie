@@ -1,10 +1,10 @@
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationEditorFileSystemExplorerFolderMenu.hpp>
 #include <FrenchieApplicationEditorFileSystemFilesRenameDialog.hpp>
 #include <FrenchieApplicationEditorFileSystemFilesRemoveDialog.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerFileMenu.hpp>
-#include <FrenchieApplicationEditorFileSystemExplorerFolderMenu.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
@@ -475,9 +475,9 @@ void FileSystemExplorer::draw_current_directory_popup_menu()
     if(ImGui::BeginPopupContextItem())
     {
         if(get_selected_paths().empty())
-            Frenchie::Application::Application::instance()->find_or_push<FileSystemExplorerFolderMenu>()->draw(this);
+            FileSystemExplorerFolderMenu().draw(this);
         else 
-            Frenchie::Application::Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->draw(this);
+            FileSystemExplorerFileMenu().draw(this);
         
         ImGui::EndPopup();
     }

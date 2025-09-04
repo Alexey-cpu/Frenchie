@@ -16,16 +16,29 @@ namespace Frenchie
         class Command : public Frenchie::Core::Factory::Creator<Command>
         {
         public:
-            Command(){}
+            Command(void* _Sender = nullptr) : m_Sender(_Sender){}
             virtual ~Command(){}
+
+            // API
+            template<typename T> 
+            T* get_sender() const
+            {
+                return reinterpret_cast<T*>(m_Sender);
+            }
+
+            // virtual API
             virtual void execute() = 0;
+
+        protected:
+            void* m_Sender = nullptr;
         };
 
         class CallbackCommand : 
-            public Command::Registry<CallbackCommand, const std::function<void()>&>
+            public Command::Registry<CallbackCommand, const std::function<void()>&, void*>
         {
         public:
-            CallbackCommand(const std::function<void()>& _Callback) : 
+            CallbackCommand(const std::function<void()>& _Callback, void* _Sender = nullptr) : 
+                Command::Registry<CallbackCommand, const std::function<void()>&, void*>(_Sender), 
                 m_Callback(_Callback){}
             
             virtual ~CallbackCommand(){}
@@ -53,10 +66,10 @@ namespace Frenchie
             CommandsQueue();
             virtual ~CommandsQueue();
 
-            void push(const std::string& _Command)
+            void push(const std::string& _Command, void* _Sender = nullptr)
             {
                 std::unique_ptr<Command> command = 
-                    Frenchie::Core::Factory::create<Command>(_Command);
+                    Frenchie::Core::Factory::create<Command>(_Command, _Sender);
 
                 if(command != nullptr)
                     m_Commands.push(std::move(command));

@@ -1,8 +1,7 @@
 #pragma once
 
 // Application
-#include <FrenchieApplicationEditorInputTextDrawer.hpp>
-//#include <FrenchieApplicationCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorInputText.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 

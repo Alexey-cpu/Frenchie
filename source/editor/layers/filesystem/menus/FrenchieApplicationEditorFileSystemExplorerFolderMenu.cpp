@@ -9,35 +9,19 @@ using namespace Frenchie::Application::Editor;
 FileSystemExplorerFolderMenu::FileSystemExplorerFolderMenu(){}
 FileSystemExplorerFolderMenu::~FileSystemExplorerFolderMenu(){}
 
-FileSystemExplorer* FileSystemExplorerFolderMenu::get_caller() const
-{
-    return m_Explorer;
-}
-
 void FileSystemExplorerFolderMenu::draw(FileSystemExplorer* _Explorer)
 {
-    // setup who calls
-    m_Explorer = _Explorer;
-
-    // draw menu
-    MenuDrawer().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu));
-}
-
-bool FileSystemExplorerFolderMenu::allows_multiple_instances() const
-{
-    return false;
+    Menu().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), _Explorer);
 }
 
 // FolderMenuCreateFolderAction
-FolderMenuCreateFolderAction::FolderMenuCreateFolderAction(){}
+FolderMenuCreateFolderAction::FolderMenuCreateFolderAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FolderMenuCreateFolderAction, void*>(_Sender){}
 FolderMenuCreateFolderAction::~FolderMenuCreateFolderAction(){}
 
 void FolderMenuCreateFolderAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFolderMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->create_folder();
+    get_sender<FileSystemExplorer>()->create_folder();
 }
 
 std::string FolderMenuCreateFolderAction::factory_id()
@@ -45,15 +29,13 @@ std::string FolderMenuCreateFolderAction::factory_id()
     return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "create::folder");
 }
 
-FolderMenuPasteAction::FolderMenuPasteAction(){}
+FolderMenuPasteAction::FolderMenuPasteAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FolderMenuPasteAction, void*>(_Sender){}
 FolderMenuPasteAction::~FolderMenuPasteAction(){}
 
 void FolderMenuPasteAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFolderMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->paste_paths();
+    get_sender<FileSystemExplorer>()->paste_paths();
 }
 
 std::string FolderMenuPasteAction::factory_id()
