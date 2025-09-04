@@ -1,8 +1,8 @@
-#include <FrenchieApplicationEditorPreferencesStyleSettings.hpp>
+#include <FrenchieApplicationEditorPreferencesStyleSettingsLayer.hpp>
 
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
-#include <FrenchieApplicationEditorFileSystemDialog.hpp>
+#include <FrenchieApplicationEditorFileSystemDialogLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -456,31 +456,31 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
 
 void StyleSettings::draw_style_editor()
 {
-    ImGuiStyle& style = ImGui::GetStyle();
+    //ImGuiStyle& style = ImGui::GetStyle();
 
     if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
     {
         if (ImGui::BeginTabItem("Geometry"))
         {
-            draw_geometry_settings(style);
+            draw_geometry_settings();
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Colors"))
         {
-            draw_color_settings(style);
+            draw_color_settings();
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Fonts"))
         {
-            draw_fonts_settings(style);
+            draw_fonts_settings();
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Rendering"))
         {
-            draw_rendering_settings(style);
+            draw_rendering_settings();
             ImGui::EndTabItem();
         }
 
@@ -488,8 +488,10 @@ void StyleSettings::draw_style_editor()
     }
 }
 
-void StyleSettings::draw_geometry_settings(ImGuiStyle& style)
+void StyleSettings::draw_geometry_settings()
 {
+    auto& style = ImGui::GetStyle();
+
     ImGui::SeparatorText("Main");
     {
         ImGui::SliderFloat2("WindowPadding", (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
@@ -607,8 +609,10 @@ void StyleSettings::draw_geometry_settings(ImGuiStyle& style)
     }
 }
 
-void StyleSettings::draw_color_settings(ImGuiStyle& style)
+void StyleSettings::draw_color_settings()
 {
+    auto& style = ImGui::GetStyle();
+
     if (ImGui::ShowStyleSelector("Colors##Selector")){}
 
     static ImGuiTextFilter filter;
@@ -661,8 +665,10 @@ void StyleSettings::draw_color_settings(ImGuiStyle& style)
     ImGui::EndChild();
 }
 
-void StyleSettings::draw_fonts_settings(ImGuiStyle& style)
+void StyleSettings::draw_fonts_settings()
 {
+    auto& style = ImGui::GetStyle();
+
     // font loader
     ImGui::TextUnformatted(m_FontsLoadPath.string().c_str());
     ImGui::SameLine();
@@ -697,8 +703,10 @@ void StyleSettings::draw_fonts_settings(ImGuiStyle& style)
         style._NextFrameFontSizeBase = style.FontSizeBase;
 }
 
-void StyleSettings::draw_rendering_settings(ImGuiStyle& style)
+void StyleSettings::draw_rendering_settings()
 {
+    auto& style = ImGui::GetStyle();
+
     ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
     ImGui::SameLine();
 
@@ -751,7 +759,6 @@ void StyleSettings::draw_rendering_settings(ImGuiStyle& style)
     ImGui::SameLine();
     ImGui::PopItemWidth();
 }
-
 
 void StyleSettings::load_fonts(const std::filesystem::path& _Path)
 {
