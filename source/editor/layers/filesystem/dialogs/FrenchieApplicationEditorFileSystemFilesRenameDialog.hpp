@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationEditorDialogLayer.hpp>
-#include <FrenchieApplicationEditorInputTextDrawer.hpp>
+#include <FrenchieApplicationEditorInputText.hpp>
 
 // STL
 #include <set>

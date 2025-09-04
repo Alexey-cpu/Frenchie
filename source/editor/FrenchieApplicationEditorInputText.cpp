@@ -1,4 +1,4 @@
-#include <FrenchieApplicationEditorInputTextDrawer.hpp>
+#include <FrenchieApplicationEditorInputText.hpp>
 
 #include <FrenchieCoreLogger.hpp>
 

@@ -9,35 +9,20 @@ using namespace Frenchie::Application::Editor;
 FileSystemExplorerFileMenu::FileSystemExplorerFileMenu(){}
 FileSystemExplorerFileMenu::~FileSystemExplorerFileMenu(){}
 
-FileSystemExplorer* FileSystemExplorerFileMenu::get_caller() const
-{
-    return m_Explorer;
-}
-
 void FileSystemExplorerFileMenu::draw(FileSystemExplorer* _Explorer)
 {
-    // setup who calls
-    m_Explorer = _Explorer;
-
     // draw menu
-    MenuDrawer().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu));
-}
-
-bool FileSystemExplorerFileMenu::allows_multiple_instances() const
-{
-    return false;
+    Menu().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), _Explorer);
 }
 
 // FileMenuCopyAction
-FileMenuCopyAction::FileMenuCopyAction(){}
+FileMenuCopyAction::FileMenuCopyAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FileMenuCopyAction, void*>(_Sender){}
 FileMenuCopyAction::~FileMenuCopyAction(){}
 
 void FileMenuCopyAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->copy_paths();
+    get_sender<FileSystemExplorer>()->copy_paths();
 }
 
 std::string FileMenuCopyAction::factory_id()
@@ -46,15 +31,13 @@ std::string FileMenuCopyAction::factory_id()
 }
 
 // FileMenuPasteAction
-FileMenuPasteAction::FileMenuPasteAction(){}
+FileMenuPasteAction::FileMenuPasteAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FileMenuPasteAction, void*>(_Sender){}
 FileMenuPasteAction::~FileMenuPasteAction(){}
 
 void FileMenuPasteAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->paste_paths();
+    get_sender<FileSystemExplorer>()->paste_paths();
 }
 
 std::string FileMenuPasteAction::factory_id()
@@ -63,15 +46,13 @@ std::string FileMenuPasteAction::factory_id()
 }
 
 // FileMenuRemoveAction
-FileMenuRemoveAction::FileMenuRemoveAction(){}
+FileMenuRemoveAction::FileMenuRemoveAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FileMenuRemoveAction, void*>(_Sender){}
 FileMenuRemoveAction::~FileMenuRemoveAction(){}
 
 void FileMenuRemoveAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->remove_paths();
+    get_sender<FileSystemExplorer>()->remove_paths();
 }
 
 std::string FileMenuRemoveAction::factory_id()
@@ -80,15 +61,13 @@ std::string FileMenuRemoveAction::factory_id()
 }
 
 // FileMenuRenameAction
-FileMenuRenameAction::FileMenuRenameAction(){}
+FileMenuRenameAction::FileMenuRenameAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FileMenuRenameAction, void*>(_Sender){}
 FileMenuRenameAction::~FileMenuRenameAction(){}
 
 void FileMenuRenameAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->rename_paths();
+    get_sender<FileSystemExplorer>()->rename_paths();
 }
 
 std::string FileMenuRenameAction::factory_id()
@@ -96,15 +75,13 @@ std::string FileMenuRenameAction::factory_id()
     return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FileMenu), "rename");
 }
 
-FileMenuCreateFolderAction::FileMenuCreateFolderAction(){}
+FileMenuCreateFolderAction::FileMenuCreateFolderAction(void* _Sender) : 
+    Frenchie::Application::Command::Registry<FileMenuCreateFolderAction, void*>(_Sender){}
 FileMenuCreateFolderAction::~FileMenuCreateFolderAction(){}
 
 void FileMenuCreateFolderAction::execute()
 {
-    auto explorer = Application::instance()->find_or_push<FileSystemExplorerFileMenu>()->get_caller();
-
-    if(explorer != nullptr) 
-        explorer->create_folder();
+    get_sender<FileSystemExplorer>()->create_folder();
 }
 
 std::string FileMenuCreateFolderAction::factory_id()

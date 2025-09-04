@@ -2,7 +2,7 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationEditorMenuDrawer.hpp>
+#include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 
 // STL
@@ -24,7 +24,7 @@ namespace Frenchie
                 virtual void frame_update() override;
 
             protected:
-                MenuDrawer m_MenuDrawer;
+                Menu m_MenuDrawer;
             };
 
             class MainMenuFrenchieMenuExitCommand : 

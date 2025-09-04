@@ -1,5 +1,5 @@
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorMenuDrawer.hpp>
+#include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 
 using namespace Frenchie::Core;
@@ -53,19 +53,19 @@ namespace Frenchie
             {
             public:
 
-                static void draw(std::vector<std::string>& _Actions, std::string& _Path, int& _Index)
+                static void draw(std::vector<std::string>& _Actions, std::string& _Path, int& _Index, void* _Sender)
                 {
                     if(_Index == _Actions.size() - 1) 
                     {
                         if(ImGui::MenuItem(_Actions.back().c_str()))
-                            Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(_Path);
+                            Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(_Path, _Sender);
 
                         return;
                     }
 
                     if(ImGui::BeginMenu(_Actions[_Index].c_str()))
                     {
-                        draw(_Actions, _Path, ++_Index);
+                        draw(_Actions, _Path, ++_Index, _Sender);
 
                         ImGui::EndMenu();
                     }
@@ -75,11 +75,11 @@ namespace Frenchie
     }
 }
 
-MenuDrawer::MenuDrawer(){}
+Menu::Menu(){}
 
-MenuDrawer::~MenuDrawer(){}
+Menu::~Menu(){}
 
-void MenuDrawer::draw(const std::string& _MenuPath, bool _ForceUpdate)
+void Menu::draw(const std::string& _MenuPath, void* _Sender, bool _ForceUpdate)
 {
     if(_ForceUpdate) 
         m_Menus.clear();
@@ -120,14 +120,14 @@ void MenuDrawer::draw(const std::string& _MenuPath, bool _ForceUpdate)
             menu.second.Actions.front().front() == menu.second.Name) // identify if it's menu or not
         {
             for (size_t i = 0; i < menu.second.Actions.size(); i++)
-                MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index);
+                MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index, _Sender);
         }
         else
         {
             if(ImGui::BeginMenu(menu.first.c_str()))
             {
                 for (size_t i = 0; i < menu.second.Actions.size(); i++)
-                    MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index);             
+                    MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index, _Sender);             
 
                 ImGui::EndMenu();
             }

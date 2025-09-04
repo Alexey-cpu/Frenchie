@@ -14,14 +14,14 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class MenuDrawer
+            class Menu
             {
             public:
-                MenuDrawer();
-                ~MenuDrawer();
+                Menu();
+                ~Menu();
             
                 // Layer
-                void draw(const std::string& _MenuPath, bool _ForceUpdate = false);
+                void draw(const std::string& _MenuPath, void* _Sender = nullptr, bool _ForceUpdate = false);
 
             protected:
 

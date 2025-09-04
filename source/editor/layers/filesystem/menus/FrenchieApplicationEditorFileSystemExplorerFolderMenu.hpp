@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationEditorMenuDrawer.hpp>
+#include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
@@ -11,29 +11,22 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class FileSystemExplorerFolderMenu : public Layer
+            class FileSystemExplorerFolderMenu
             {
             public:
                 FileSystemExplorerFolderMenu();
                 virtual ~FileSystemExplorerFolderMenu();
 
                 // API
-                FileSystemExplorer* get_caller() const;
                 void draw(FileSystemExplorer*);
-
-                // Frenchie::Application::Layer
-                virtual bool allows_multiple_instances() const override;
-
-            protected:
-                FileSystemExplorer* m_Explorer = nullptr;
             };
 
             class FolderMenuCreateFolderAction : 
-                public Frenchie::Application::Command::Registry<FolderMenuCreateFolderAction>
+                public Frenchie::Application::Command::Registry<FolderMenuCreateFolderAction, void*>
             {
             public:
 
-                FolderMenuCreateFolderAction();
+                FolderMenuCreateFolderAction(void* _Sender);
                 virtual ~FolderMenuCreateFolderAction();
 
                 // Frenchie::Application::Command
@@ -44,10 +37,10 @@ namespace Frenchie
             };
 
             class FolderMenuPasteAction : 
-                public Frenchie::Application::Command::Registry<FolderMenuPasteAction>
+                public Frenchie::Application::Command::Registry<FolderMenuPasteAction, void*>
             {
             public:
-                FolderMenuPasteAction();
+                FolderMenuPasteAction(void* _Sender);
                 virtual ~FolderMenuPasteAction();
 
                 // Frenchie::Application::Command

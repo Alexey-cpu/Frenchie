@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationEditorMenuDrawer.hpp>
+#include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
@@ -11,28 +11,21 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class FileSystemExplorerFileMenu : public Layer
+            class FileSystemExplorerFileMenu
             {
             public:
                 FileSystemExplorerFileMenu();
                 virtual ~FileSystemExplorerFileMenu();
 
                 // API
-                FileSystemExplorer* get_caller() const;
                 void draw(FileSystemExplorer*);
-
-                // Frenchie::Application::Layer
-                virtual bool allows_multiple_instances() const override;
-
-            protected:
-                FileSystemExplorer* m_Explorer = nullptr;
             };
 
             class FileMenuCopyAction : 
-                public Frenchie::Application::Command::Registry<FileMenuCopyAction>
+                public Frenchie::Application::Command::Registry<FileMenuCopyAction, void*>
             {
             public:
-                FileMenuCopyAction();
+                FileMenuCopyAction(void* _Sender = nullptr);
                 virtual ~FileMenuCopyAction();
 
                 // Frenchie::Application::Command
@@ -43,10 +36,10 @@ namespace Frenchie
             };
 
             class FileMenuPasteAction : 
-                public Frenchie::Application::Command::Registry<FileMenuPasteAction>
+                public Frenchie::Application::Command::Registry<FileMenuPasteAction, void*>
             {
             public:
-                FileMenuPasteAction();
+                FileMenuPasteAction(void* _Sender = nullptr);
                 virtual ~FileMenuPasteAction();
 
                 virtual void execute() override;
@@ -56,10 +49,10 @@ namespace Frenchie
             };
 
             class FileMenuRemoveAction : 
-                public Frenchie::Application::Command::Registry<FileMenuRemoveAction>
+                public Frenchie::Application::Command::Registry<FileMenuRemoveAction, void*>
             {
             public:
-                FileMenuRemoveAction();
+                FileMenuRemoveAction(void* _Sender = nullptr);
                 virtual ~FileMenuRemoveAction();
 
                 // Frenchie::Application::Command
@@ -70,11 +63,11 @@ namespace Frenchie
             };
 
             class FileMenuRenameAction : 
-                public Frenchie::Application::Command::Registry<FileMenuRenameAction>
+                public Frenchie::Application::Command::Registry<FileMenuRenameAction, void*>
             {
             public:
 
-                FileMenuRenameAction();
+                FileMenuRenameAction(void* _Sender = nullptr);
                 virtual ~FileMenuRenameAction();
 
                 // Frenchie::Application::Command
@@ -85,10 +78,10 @@ namespace Frenchie
             };
 
             class FileMenuCreateFolderAction : 
-                public Frenchie::Application::Command::Registry<FileMenuCreateFolderAction>
+                public Frenchie::Application::Command::Registry<FileMenuCreateFolderAction, void*>
             {
             public:
-                FileMenuCreateFolderAction();
+                FileMenuCreateFolderAction(void* _Sender = nullptr);
                 virtual ~FileMenuCreateFolderAction();
 
                 // Frenchie::Application::Command

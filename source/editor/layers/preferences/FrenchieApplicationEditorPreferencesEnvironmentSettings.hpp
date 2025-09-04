@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
-#include <FrenchieApplicationEditorInputTextDrawer.hpp>
+#include <FrenchieApplicationEditorInputText.hpp>
 
 namespace Frenchie
 {
