@@ -21,6 +21,8 @@ void Dialog::frame_update()
         ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar | 
         ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollWithMouse;
 
+    ImGui::SetNextWindowSizeConstraints(ImVec2(512, 512), ImVec2(FLT_MAX, FLT_MAX));
+
     if(ImGui::BeginPopupModal(m_Name.c_str(), &m_Opened))
     {
         ImGui::BeginChild(
