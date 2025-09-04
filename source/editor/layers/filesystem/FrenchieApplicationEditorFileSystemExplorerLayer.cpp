@@ -16,16 +16,6 @@ FileSystemExplorer::FileSystemExplorer(const std::string& _Name) :
 
 FileSystemExplorer::~FileSystemExplorer(){}
 
-std::filesystem::path FileSystemExplorer::get_current_directory() const
-{
-    return m_CurrentDirectory.get_buffer();
-}
-
-std::string FileSystemExplorer::get_current_file() const
-{
-    return m_CurrentFile.get_buffer();
-}
-
 std::set<std::filesystem::path> FileSystemExplorer::get_selected_paths()
 {
     auto explorer = Application::instance()->find<FileSystemExplorer>();
@@ -190,7 +180,7 @@ bool FileSystemExplorer::serialize(const Frenchie::Core::Serialization::Node& _P
 
     // write message content filter
     self.append_node(
-        STRINGIFY(m_CurrentDirectoryTextEdit), 
+        STRINGIFY(m_CurrentDirectory), 
         Frenchie::Core::Helpers::String::as_utf8(std::filesystem::current_path().wstring()).c_str(),
         Frenchie::Core::Serialization::NodeType::OBJECT);
 
@@ -208,7 +198,7 @@ bool FileSystemExplorer::deserialize(const Frenchie::Core::Serialization::Node& 
     try
     {
         std::filesystem::current_path(std::filesystem::path(
-                self.find_node(STRINGIFY(m_CurrentDirectoryTextEdit)).get_value()
+                self.find_node(STRINGIFY(m_CurrentDirectory)).get_value()
             )
         );
     }
