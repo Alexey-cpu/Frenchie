@@ -1,4 +1,4 @@
-#include <FrenchieApplicationEditorFileSystemFilesRenameDialog.hpp>
+#include <FrenchieApplicationEditorFileSystemFilesRenameDialogLayer.hpp>
 
 // IMGUI
 #include <imgui.h>

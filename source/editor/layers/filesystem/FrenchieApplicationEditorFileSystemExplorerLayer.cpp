@@ -1,10 +1,10 @@
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorFileSystemExplorerFolderMenu.hpp>
-#include <FrenchieApplicationEditorFileSystemFilesRenameDialog.hpp>
-#include <FrenchieApplicationEditorFileSystemFilesRemoveDialog.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerFileMenu.hpp>
+#include <FrenchieApplicationEditorFileSystemExplorerFolderMenu.hpp>
+#include <FrenchieApplicationEditorFileSystemFilesRenameDialogLayer.hpp>
+#include <FrenchieApplicationEditorFileSystemFilesRemoveDialogLayer.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
@@ -493,7 +493,7 @@ void FileSystemExplorer::handle_current_directory_hot_keys()
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileMenuCopyAction::factory_id());
+            Frenchie::Application::Editor::FileMenuCopyAction::factory_id(), this);
     }
 
     // Ctrl + V
@@ -501,14 +501,14 @@ void FileSystemExplorer::handle_current_directory_hot_keys()
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileMenuPasteAction::factory_id());
+            Frenchie::Application::Editor::FileMenuPasteAction::factory_id(), this);
     }
 
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
         Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            Frenchie::Application::Editor::FileMenuRemoveAction::factory_id());
+            Frenchie::Application::Editor::FileMenuRemoveAction::factory_id(), this);
     }
 
     // Escape

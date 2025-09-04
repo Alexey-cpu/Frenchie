@@ -126,6 +126,30 @@ void Console::frame_update()
                 message.selected = false;
         }
 
+        // Ctrl + C
+        if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
+            (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
+        {            
+            std::string clipboard;
+
+            for(auto&& message : m_Messages)
+            {
+                if(message.selected)
+                {
+                    clipboard.append(
+                        fmt::format(
+                            "[{}] {}\n", 
+                            Helpers::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
+                            message.message
+                        )
+                    );
+                }
+
+                if(!clipboard.empty())
+                    ImGui::SetClipboardText(clipboard.c_str());
+            }
+        }
+
         // docked windows
         ImGui::Begin("Console");
         {
@@ -258,10 +282,13 @@ bool Console::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
     // read message content filter
     // TODO: here we have SEGV !!!
-    // std::memcpy(
-    //     m_MessageContentFilter,
-    //     self.find_node(STRINGIFY(m_MessageContentFilter)).get_value(),
-    //     sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));
+    if(self.find_node(STRINGIFY(m_MessageContentFilter)).is_valid())
+    {
+        std::memcpy(
+            m_MessageContentFilter,
+            self.find_node(STRINGIFY(m_MessageContentFilter)).get_value(),
+            std::min(sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]), std::strlen(self.find_node(STRINGIFY(m_MessageContentFilter)).get_value())));
+    }
 
     // read maximum message count
     m_MaximumMessageCount = 
