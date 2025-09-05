@@ -45,18 +45,21 @@ namespace Frenchie
                 {
                     std::chrono::system_clock::time_point time;
                     spdlog::level::level_enum             level;
-                    unsigned int                          color;
-                    bool                                  selected;
                     std::string                           message;
                 };
 
                 // info
-                mutable std::vector<Message> m_Messages;
+                mutable std::map<
+                    spdlog::level::level_enum, 
+                    std::vector<Message>> m_Messages;
 
-                mutable std::vector<Filter>  m_MessageTypeFilter   = std::vector<Filter>();
-                mutable char                 m_MessageContentFilter[1024]{};
-                mutable int                  m_MaximumMessageCount = 100;
-                mutable bool                 m_InitializeDockSpace = true;
+                mutable char  m_MessageContentFilter[1024]{};
+                mutable int   m_MaximumMessageCount = 100;
+                mutable bool  m_InitializeDockSpace = true;
+
+                // service methods
+                static unsigned int get_color(spdlog::level::level_enum _Level);
+                static std::string get_group_name(spdlog::level::level_enum _Level);
 
                 // friends
                 friend class ConsoleSink;
