@@ -1,4 +1,4 @@
-#include <FrenchieApplicationEditorPreferencesStyleSettingsLayer.hpp>
+#include <FrenchieApplicationEditorPreferencesStyleLayer.hpp>
 
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
@@ -16,23 +16,21 @@ static const char* GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
     return "";
 }
 
-
-
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-StyleSettings::StyleSettings() : 
-    Frenchie::Application::Layer::Registry<StyleSettings>(STRINGIFY(StyleSettings)){}
+Style::Style() : 
+    Frenchie::Application::Layer::Registry<Style>(STRINGIFY(Style)){}
 
-StyleSettings::~StyleSettings(){}
+Style::~Style(){}
 
-std::string StyleSettings::factory_id()
+std::string Style::factory_id()
 {
-    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::Preferences), STRINGIFY(StyleSettings));
+    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::Preferences), STRINGIFY(Style));
 }
 
-bool StyleSettings::awake()
+bool Style::awake()
 {
     // load style from imgui
     m_ReferenceStyle = ImGui::GetStyle();
@@ -40,7 +38,7 @@ bool StyleSettings::awake()
     return Layer::awake();
 }
 
-void StyleSettings::frame_update() 
+void Style::frame_update() 
 {
     ImGui::BeginChild(get_name().c_str());
     {
@@ -50,7 +48,7 @@ void StyleSettings::frame_update()
     ImGui::EndChild();
 }
 
-bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent)
+bool Style::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     // Main
     auto geometry = _Parent.append_node("Geometry");
@@ -178,7 +176,7 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
     return true;
 }
 
-bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
+bool Style::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     // parse geometry
     auto geometry = _Parent.find_node("Geometry");
@@ -454,7 +452,7 @@ bool StyleSettings::deserialize(const Frenchie::Core::Serialization::Node& _Pare
     return true;
 }
 
-void StyleSettings::draw_style_editor()
+void Style::draw_style_editor()
 {
     //ImGuiStyle& style = ImGui::GetStyle();
 
@@ -488,7 +486,7 @@ void StyleSettings::draw_style_editor()
     }
 }
 
-void StyleSettings::draw_geometry_settings()
+void Style::draw_geometry_settings()
 {
     auto& style = ImGui::GetStyle();
 
@@ -609,7 +607,7 @@ void StyleSettings::draw_geometry_settings()
     }
 }
 
-void StyleSettings::draw_color_settings()
+void Style::draw_color_settings()
 {
     auto& style = ImGui::GetStyle();
 
@@ -665,7 +663,7 @@ void StyleSettings::draw_color_settings()
     ImGui::EndChild();
 }
 
-void StyleSettings::draw_fonts_settings()
+void Style::draw_fonts_settings()
 {
     auto& style = ImGui::GetStyle();
 
@@ -703,7 +701,7 @@ void StyleSettings::draw_fonts_settings()
         style._NextFrameFontSizeBase = style.FontSizeBase;
 }
 
-void StyleSettings::draw_rendering_settings()
+void Style::draw_rendering_settings()
 {
     auto& style = ImGui::GetStyle();
 
@@ -760,36 +758,43 @@ void StyleSettings::draw_rendering_settings()
     ImGui::PopItemWidth();
 }
 
-void StyleSettings::load_fonts(const std::filesystem::path& _Path)
+void Style::load_fonts(const std::filesystem::path& _Path)
 {
     if(!std::filesystem::exists(_Path))
         return;
 
-    // retrive ImGui IO
-    auto& io = ImGui::GetIO();
-    io.Fonts->Clear();
-
-    // recursivelly scan path for .ttf fonts
-    for(const auto& directory :
-         std::filesystem::recursive_directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
+    try
     {
-        if(directory.is_directory() ||
-            directory.path().extension() != ".ttf")
-            continue;
+        // retrive ImGui IO
+        auto& io = ImGui::GetIO();
+        io.Fonts->Clear();
 
-        io.Fonts->AddFontFromFileTTF(
-            pugi::as_utf8(directory.path().wstring()).c_str(),
-            ImGui::GetStyle().FontSizeBase,
-            nullptr,
-            io.Fonts->GetGlyphRangesCyrillic());
+        // recursivelly scan path for .ttf fonts
+        for(const auto& directory :
+            std::filesystem::recursive_directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
+        {
+            if(directory.is_directory() ||
+                directory.path().extension() != ".ttf")
+                continue;
+
+            io.Fonts->AddFontFromFileTTF(
+                pugi::as_utf8(directory.path().wstring()).c_str(),
+                ImGui::GetStyle().FontSizeBase,
+                nullptr,
+                io.Fonts->GetGlyphRangesCyrillic());
+        }
+
+        // build fonts
+        io.Fonts->Build();
+
+        // reload app
+        Frenchie::Application::Application::instance()->reload();
+
+        // setup fonts load path
+        m_FontsLoadPath = _Path;
     }
-
-    // build fonts
-    io.Fonts->Build();
-
-    // reload app
-    Frenchie::Application::Application::instance()->reload();
-
-    // setup fonts load path
-    m_FontsLoadPath = _Path;
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->critical(e.what());
+    }
 }

@@ -12,6 +12,9 @@
 
 // STL
 #include <mutex>
+#include <fstream> // Required for ifstream
+#include <iostream> // Required for cout
+#include <regex>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
@@ -38,13 +41,11 @@ namespace Frenchie
                             return;
 
                     // create message
-                    m_Console->m_Messages.push_back(
+                    m_Console->m_Messages[_Message.level].push_back(
                         Console::Message(
                             {
                                 _Message.time,
                                 _Message.level,
-                                ConsoleSink::get_color( _Message.level),
-                                false,
                                 fmt::to_string(_Message.payload)
                             }
                         )
@@ -57,33 +58,6 @@ namespace Frenchie
 
                 // info
                 const Console* m_Console = nullptr;
-
-                // service methods
-                static ImU32 get_color(spdlog::level::level_enum _Level)
-                {
-                    switch (_Level)
-                    {
-                        case spdlog::level::level_enum::trace:
-                            return IM_COL32(128, 128, 128, 255);
-
-                        case spdlog::level::level_enum::debug:
-                            return IM_COL32(200, 200, 200, 255);
-
-                        case spdlog::level::level_enum::info:
-                            return IM_COL32(0, 200, 0, 255);
-
-                        case spdlog::level::level_enum::warn:
-                            return IM_COL32(233, 245, 66, 255);
-
-                        case spdlog::level::level_enum::err:
-                            return IM_COL32(240, 100, 100, 255);
-
-                        case spdlog::level::level_enum::critical:
-                            return IM_COL32(255, 0, 0, 255);
-                    }
-
-                    return IM_COL32(255, 255, 255, 255);
-                }
             };
         }
     }
@@ -92,13 +66,6 @@ namespace Frenchie
 // Console
 Console::Console() : Layer(STRINGIFY(Console))
 {
-    m_MessageTypeFilter.resize(spdlog::level::level_enum::n_levels - 1);
-    m_MessageTypeFilter[spdlog::level::level_enum::trace]    = {"trace",    false};
-    m_MessageTypeFilter[spdlog::level::level_enum::debug]    = {"debug",    false};
-    m_MessageTypeFilter[spdlog::level::level_enum::info]     = {"info",     true};
-    m_MessageTypeFilter[spdlog::level::level_enum::warn]     = {"warning",  true};
-    m_MessageTypeFilter[spdlog::level::level_enum::err]      = {"error",    true};
-    m_MessageTypeFilter[spdlog::level::level_enum::critical] = {"critical", true};
 }
 
 // virtual destructor
@@ -119,37 +86,6 @@ void Console::frame_update()
 {
     ImGui::Begin(get_name().c_str(), &m_Shown);
     {
-        // handle events
-        if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
-        {
-            for(auto&& message : m_Messages) 
-                message.selected = false;
-        }
-
-        // Ctrl + C
-        if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
-            (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
-        {            
-            std::string clipboard;
-
-            for(auto&& message : m_Messages)
-            {
-                if(message.selected)
-                {
-                    clipboard.append(
-                        fmt::format(
-                            "[{}] {}\n", 
-                            Core::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
-                            message.message
-                        )
-                    );
-                }
-
-                if(!clipboard.empty())
-                    ImGui::SetClipboardText(clipboard.c_str());
-            }
-        }
-
         // docked windows
         ImGui::Begin("Console");
         {
@@ -157,11 +93,63 @@ void Console::frame_update()
             if(ImGui::Button("Clear"))
                 m_Messages.clear();
 
-            // draw message type filter
-            for (int i = 0; i < (int)m_MessageTypeFilter.size(); i++)
+            if(ImGui::Button("Debug"))
             {
-                ImGui::SameLine();
-                ImGui::Checkbox(m_MessageTypeFilter[i].Level.c_str(), &m_MessageTypeFilter[i].Selected);
+                // compile program
+                std::filesystem::current_path("C:/SDK/Qt_Projects/TestProject");
+
+                const auto out_file = std::filesystem::path("C:/SDK/Qt_Projects/TestProject/logs/messages.txt");
+                const auto err_file = std::filesystem::path("C:/SDK/Qt_Projects/TestProject/logs/errors.txt");
+                
+                std::filesystem::remove_all(out_file);
+                std::filesystem::remove_all(err_file);
+                
+                // 2>&1
+                //std::string command = "cmake --preset HabrPresetName"; // Redirect stderr to stdout
+                //std::string command = fmt::format("cmake --build --preset debug 2> {} 1> {}", err_file.string(), out_file.string());
+                std::string command = fmt::format("cmake --build --preset debug");
+
+                std::array<char, 1024> buffer;
+                std::string result;
+
+                std::cout << "Opening reading pipe" << std::endl;
+
+                FILE* pipe = _popen(command.c_str(), "r");
+                if (!pipe)
+                {
+                    std::cerr << "Couldn't start command." << std::endl;
+                }
+                else
+                {
+                    while(fgets(buffer.data(), (int)buffer.size(), pipe) != nullptr) 
+                        result += buffer.data();
+                    
+                    // parse compiler log
+                    std::smatch matches;
+                    std::regex gcc_err_pattern(R"(^(.*?):(\d+):(?:(\d+):)?\s*(error):\s*(.*)$)");
+                    std::regex gcc_warn_pattern(R"(^(.*?):(\d+):(?:(\d+):)?\s*(warning):\s*(.*)$)");
+                    std::regex gcc_info_pattern(R"(^(.*?):(\d+):(?:(\d+):)?\s*(note):\s*(.*)$)");
+                    // std::regex gcc_err_pattern("^(.*?):(\\d+):(?:(\\d+):)?\\s*(error):\\s*(?:\\s*\\[([^\\]]+)\\])?\\s*(.*)$");
+                    // std::regex gcc_warn_pattern("^(.*?):(\\d+):(?:(\\d+):)?\\s*(warning):\\s*(?:\\s*\\[([^\\]]+)\\])?\\s*(.*)$");
+                    // std::regex gcc_info_pattern("^(.*?):(\\d+):(?:(\\d+):)?\\s*(note):\\s*(?:\\s*\\[([^\\]]+)\\])?\\s*(.*)$");
+                    std::regex failed_pattern(R"(^FAILED:\s*(.*)$)", std::regex_constants::icase);
+
+                    if (std::regex_search(result, matches, failed_pattern))
+                        Frenchie::Core::Logger::instance()->critical(matches[0].str());
+
+                    if (std::regex_search(result, matches, gcc_err_pattern))
+                        Frenchie::Core::Logger::instance()->error(matches[0].str());
+                    
+                    if(std::regex_search(result, matches, gcc_warn_pattern))
+                        Frenchie::Core::Logger::instance()->warn(matches[0].str());
+
+                    if(std::regex_search(result, matches, gcc_info_pattern))
+                        Frenchie::Core::Logger::instance()->debug(matches[0].str());
+
+                    Frenchie::Core::Logger::instance()->trace(result);
+
+                    auto returnCode = _pclose(pipe);
+                }
             }
 
             // draw maximum message count
@@ -170,7 +158,7 @@ void Console::frame_update()
             ImGui::DragInt("MaximumMessageCount", &m_MaximumMessageCount, 1.f, 10, 150);
 
             // draw message text filter
-            ImGui::SameLine();
+            //ImGui::SameLine();
             auto textFilterLabel = "Text fiter";
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(textFilterLabel).x * 2.f);
             ImGui::InputText(textFilterLabel, m_MessageContentFilter, sizeof(m_MessageContentFilter) / sizeof(m_MessageContentFilter[0]));            
@@ -183,41 +171,71 @@ void Console::frame_update()
             // draw messages table
             auto id = 0;
             auto messageTextFilter = std::string(m_MessageContentFilter);
-
-            for(auto&& message : m_Messages)
+            
+            if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
             {
-                //check message type filter
-                if(!m_MessageTypeFilter[message.level].Selected) 
-                    continue;
-
-                //check message text filter
-                if(!messageTextFilter.empty() && 
-                    !Frenchie::Core::String::contains_substring(
-                        Core::String::to_lower(message.message),
-                        Core::String::to_lower(messageTextFilter)))
+                for (int level = 0; level < spdlog::level::level_enum::n_levels - 1; level++)
                 {
-                    continue;
+                    std::string  group;
+
+                    for(auto&& message : m_Messages[(spdlog::level::level_enum)level])
+                    {
+                        // check message type
+                        if(message.level != level) 
+                            continue;
+
+                        // check message text filter
+                        if(!messageTextFilter.empty() && 
+                            !Frenchie::Core::String::contains_substring(
+                                Core::String::to_lower(message.message),
+                                Core::String::to_lower(messageTextFilter)))
+                        {
+                            continue;
+                        }
+
+                        group.append(message.message).append("\n");
+                    }
+
+                    auto appTextColor = ImGui::GetStyle().Colors[ImGuiCol_Text];
+                    ImGui::PushStyleColor(ImGuiCol_Tab, Console::get_color((spdlog::level::level_enum)level));
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+
+                    auto tabID = m_Messages[(spdlog::level::level_enum)level].size() > 0 ?
+                        fmt::format("{} +{} !!!", Console::get_group_name((spdlog::level::level_enum)level), m_Messages[(spdlog::level::level_enum)level].size()) : 
+                            Console::get_group_name((spdlog::level::level_enum)level);
+
+                    if(ImGui::BeginTabItem(tabID.c_str()))
+                    {
+                        if(!group.empty())
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, Console::get_color((spdlog::level::level_enum)level));
+                            ImGui::PushID(id++);
+                            ImGui::InputTextMultiline(
+                                    "##", 
+                                    &group[0], 
+                                    group.size() + 1, 
+                                    ImGui::GetContentRegionAvail(), 
+                                    ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly
+                                );
+
+                            ImGui::PopID();
+                            ImGui::PopStyleColor();
+                        }
+                        else
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, appTextColor);
+                            ImGui::TextUnformatted("Nothing to show...");
+                            ImGui::PopStyleColor();
+                        }
+
+                        ImGui::EndTabItem();
+                    }
+
+                    ImGui::PopStyleColor();
+                    ImGui::PopStyleColor();
                 }
 
-                ImGui::PushID(id++);
-                ImGui::PushStyleColor(ImGuiCol_Text, message.color);
-
-                ImGui::GetCursorPos();
-
-                if(ImGui::Selectable(
-                    fmt::format(
-                        "[{}] {}", 
-                        Core::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
-                        message.message
-                    ).c_str(), 
-                    &message.selected, 
-                    ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns | 
-                    ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap))
-                {
-                }
-
-                ImGui::PopStyleColor();
-                ImGui::PopID();
+                ImGui::EndTabBar();
             }
 
             ImGui::End();
@@ -245,15 +263,62 @@ bool Console::allows_multiple_instances() const
     return false;
 }
 
+unsigned int Console::get_color(spdlog::level::level_enum _Level)
+{
+    switch (_Level)
+    {
+        case spdlog::level::level_enum::trace:
+            return IM_COL32(128, 128, 128, 255);
+
+        case spdlog::level::level_enum::debug:
+            return IM_COL32(200, 200, 200, 255);
+
+        case spdlog::level::level_enum::info:
+            return IM_COL32(0, 200, 0, 255);
+
+        case spdlog::level::level_enum::warn:
+            return IM_COL32(233, 245, 66, 255);
+
+        case spdlog::level::level_enum::err:
+            return IM_COL32(240, 100, 100, 255);
+
+        case spdlog::level::level_enum::critical:
+            return IM_COL32(255, 0, 0, 255);
+    }
+
+    return IM_COL32(255, 255, 255, 255);
+}
+
+std::string Console::get_group_name(spdlog::level::level_enum _Level)
+{
+    switch (_Level)
+    {
+        case spdlog::level::level_enum::trace:
+            return "trace";
+
+        case spdlog::level::level_enum::debug:
+            return "debug";
+
+        case spdlog::level::level_enum::info:
+            return "info";
+
+        case spdlog::level::level_enum::warn:
+            return "warning";
+
+        case spdlog::level::level_enum::err:
+            return "error";
+
+        case spdlog::level::level_enum::critical:
+            return "critical";
+    }
+
+    return "unknown";    
+}
+
 bool Console::serialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     // write self
     auto self = _Parent.append_node(STRINGIFY(Console));
-
-    // write message type filter
-    auto messageTypeFilter = self.append_node(STRINGIFY(m_MessageTypeFilter));
-    for(auto&& item : m_MessageTypeFilter) 
-        messageTypeFilter.append_node<bool>(item.Level.c_str(), item.Selected);
 
     // write message content filter
     self.append_node(
@@ -274,14 +339,7 @@ bool Console::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
     if(self.empty()) 
         return false;
 
-    // read message type filter
-    auto messageTypeFilter = self.find_node(STRINGIFY(m_MessageTypeFilter));
-    for(auto&& item : m_MessageTypeFilter) 
-        item.Selected = messageTypeFilter.find_node(item.Level.c_str()).get_value_as<bool>();
-
-
     // read message content filter
-    // TODO: here we have SEGV !!!
     if(self.find_node(STRINGIFY(m_MessageContentFilter)).is_valid())
     {
         std::memcpy(

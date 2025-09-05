@@ -82,7 +82,6 @@ FILE* Frenchie::Core::FileSystem::open_file(std::string _Path, std::string _Mode
 }
 
 //Frenchie::Core::CommandLine
-
 Frenchie::Core::CommandLine::Command Frenchie::Core::CommandLine::execute_command(const std::string& _Command)
 {
     // start command

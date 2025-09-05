@@ -25,7 +25,10 @@ bool Preferences::awake()
             m_Layers.push_back(Frenchie::Core::Factory::create<Layer>(registry.first));
             
             if(m_Layers.back())
+            {
+                m_Layers.back()->awake();
                 m_Layers.back()->hide();
+            }
         }
     }
 

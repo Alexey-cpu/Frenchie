@@ -167,8 +167,6 @@ int Launcher::execute()
     application->push<Frenchie::Application::Editor::Console>();
     application->push<Frenchie::Application::Editor::MainMenu>();
     application->push<Frenchie::Application::Editor::Preferences>();
-    application->push<Frenchie::Application::Editor::FileSystemExplorer>("Exp-1");
-    application->push<Frenchie::Application::Editor::FileSystemExplorer>("Exp-2");
 
     application->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
