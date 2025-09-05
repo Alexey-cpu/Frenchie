@@ -170,7 +170,7 @@ bool StyleSettings::serialize(const Frenchie::Core::Serialization::Node& _Parent
     // Fonts
     auto fonts = _Parent.append_node("Fonts");
     {
-        fonts.append_node("FontsLoadPath", Frenchie::Core::Helpers::String::as_utf8(m_FontsLoadPath.wstring()).c_str());
+        fonts.append_node("FontsLoadPath", Frenchie::Core::String::as_utf8(m_FontsLoadPath.wstring()).c_str());
         fonts.append_node("FontSizeBase").set_value_as<float>(ImGui::GetStyle().FontSizeBase);
         fonts.append_node("Font", ImGui::GetFont()->GetDebugName());
     }

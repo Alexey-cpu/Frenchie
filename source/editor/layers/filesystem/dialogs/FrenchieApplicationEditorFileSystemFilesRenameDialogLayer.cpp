@@ -13,7 +13,7 @@ FilesRenameDialog::FilesRenameDialog(const std::set<std::filesystem::path>& _Pat
     for(auto&& path : _Paths)
     {
         auto textInput = std::make_shared<InputText>();
-        textInput->set_buffer(Frenchie::Core::Helpers::String::as_utf8(path.filename().wstring()));
+        textInput->set_buffer(Frenchie::Core::String::as_utf8(path.filename().wstring()));
         m_Paths.insert({path, {textInput, true}});
     }
 }
@@ -54,7 +54,7 @@ void FilesRenameDialog::draw_buttons()
             auto target = std::filesystem::path(
                 source.parent_path().wstring()
                 .append(L"/")
-                .append(Frenchie::Core::Helpers::String::as_wide(text))
+                .append(Frenchie::Core::String::as_wide(text))
             );
 
             if(source == target) 
@@ -62,8 +62,8 @@ void FilesRenameDialog::draw_buttons()
 
             while (std::filesystem::exists(target))
             {
-                auto extention = Frenchie::Core::Helpers::String::as_wide(
-                    Frenchie::Core::Helpers::get_file_extention(target));
+                auto extention = Frenchie::Core::String::as_wide(
+                    Frenchie::Core::FileSystem::get_file_extention(target));
 
                 target = source.parent_path().wstring()
                     .append(L"/")

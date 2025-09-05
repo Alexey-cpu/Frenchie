@@ -75,13 +75,13 @@ void FileSystemExplorer::paste_paths()
         }
 
         auto source    = std::filesystem::path(path);
-        auto extention = Frenchie::Core::Helpers::get_file_extention(source);
+        auto extention = Frenchie::Core::FileSystem::get_file_extention(source);
         auto target    = std::filesystem::path(
             m_Path.wstring()
             .append(L"/")
             .append(source.filename().stem().wstring())
             .append(L"_Copy")
-            .append(pugi::as_wide(extention))).make_preferred();
+            .append(Frenchie::Core::String::as_wide(extention))).make_preferred();
 
         while(std::filesystem::exists(target))
         {
@@ -90,7 +90,7 @@ void FileSystemExplorer::paste_paths()
                 .append(L"/")
                 .append(target.filename().stem().wstring())
                 .append(L"_Copy")
-                .append(pugi::as_wide(extention))).make_preferred();
+                .append(Frenchie::Core::String::as_wide(extention))).make_preferred();
         }
 
         // try to copy
@@ -140,7 +140,7 @@ bool FileSystemExplorer::serialize(const Frenchie::Core::Serialization::Node& _P
     // write message content filter
     self.append_node(
         STRINGIFY(m_CurrentDirectory), 
-        Frenchie::Core::Helpers::String::as_utf8(m_Path.wstring()).c_str(),
+        Frenchie::Core::String::as_utf8(m_Path.wstring()).c_str(),
         Frenchie::Core::Serialization::NodeType::OBJECT);
 
     return true;
@@ -299,10 +299,10 @@ void FileSystemExplorer::draw_current_directory_path_editor()
             ImGui::SameLine();
 
             auto path = stack.top();
-            auto name = Frenchie::Core::Helpers::String::as_utf8(path.filename().wstring());
+            auto name = Frenchie::Core::String::as_utf8(path.filename().wstring());
 
             if(name.empty()) 
-                name = Frenchie::Core::Helpers::String::as_utf8(path.wstring());
+                name = Frenchie::Core::String::as_utf8(path.wstring());
 
             ImGui::PushID(buttonID++);
 
@@ -323,12 +323,12 @@ void FileSystemExplorer::draw_current_directory_path_editor()
 
         // draw current path editor
         if(m_CurrentDirectory.empty())
-            m_CurrentDirectory.set_buffer(Frenchie::Core::Helpers::String::as_utf8(m_Path.make_preferred().wstring()));
+            m_CurrentDirectory.set_buffer(Frenchie::Core::String::as_utf8(m_Path.make_preferred().wstring()));
 
         if(m_CurrentDirectory.draw("###", ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {            
             change_current_directory(
-                std::filesystem::path(Frenchie::Core::Helpers::String::as_wide(m_CurrentDirectory.get_buffer())));
+                std::filesystem::path(Frenchie::Core::String::as_wide(m_CurrentDirectory.get_buffer())));
 
             m_DrawCurrentDirectoryTextEdit = false;
         }
@@ -344,7 +344,7 @@ void FileSystemExplorer::draw_current_directory_path_editor()
 void FileSystemExplorer::draw_current_filename_editor()
 {
     m_CurrentFile.set_buffer(
-        m_SelectedPaths.empty() ? "No file selected..." : Frenchie::Core::Helpers::String::as_utf8((*m_SelectedPaths.begin()).filename().wstring()));
+        m_SelectedPaths.empty() ? "No file selected..." : Frenchie::Core::String::as_utf8((*m_SelectedPaths.begin()).filename().wstring()));
 
     m_CurrentFile.draw("CurrentFile");
 }
@@ -408,7 +408,7 @@ void FileSystemExplorer::draw_current_directory_paths_table()
                 bool selected = m_SelectedPaths.find(path) != m_SelectedPaths.end();
 
                 if(ImGui::Selectable(
-                    Frenchie::Core::Helpers::String::as_utf8(path.filename().wstring()).c_str(), 
+                    Frenchie::Core::String::as_utf8(path.filename().wstring()).c_str(), 
                     &selected,
                     ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
                     ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
@@ -581,7 +581,7 @@ void FileSystemExplorer::drag_selected_paths(const std::filesystem::path& _Path)
 
             selection.insert(selectedPath);
 
-            selectionBuffer.append(Frenchie::Core::Helpers::String::as_utf8(selectedPath.wstring())).append(";");
+            selectionBuffer.append(Frenchie::Core::String::as_utf8(selectedPath.wstring())).append(";");
         }
 
         ImGui::SetDragDropPayload(STRINGIFY(std::filesystem::path),selectionBuffer.c_str(), selectionBuffer.size() + 1);
@@ -608,11 +608,11 @@ void FileSystemExplorer::drop_path_to(const std::filesystem::path& _Path)
                 return;
             }
             
-            auto movedPaths = Frenchie::Core::Helpers::String::split(std::string(adress), ";");
+            auto movedPaths = Frenchie::Core::String::split(std::string(adress), ";");
 
             for(auto&& movedPath : movedPaths)
             {
-                std::filesystem::path oldAdress(Frenchie::Core::Helpers::String::as_wide(movedPath));
+                std::filesystem::path oldAdress(Frenchie::Core::String::as_wide(movedPath));
 
                 if(!std::filesystem::exists(oldAdress)) 
                     continue;
@@ -629,7 +629,7 @@ void FileSystemExplorer::drop_path_to(const std::filesystem::path& _Path)
                         .append(L"/")
                         .append(newAdress.filename().stem().wstring())
                         .append(L"_Copy")
-                        .append(Frenchie::Core::Helpers::String::as_wide(Frenchie::Core::Helpers::get_file_extention(oldAdress)));
+                        .append(Frenchie::Core::String::as_wide(Frenchie::Core::FileSystem::get_file_extention(oldAdress)));
                 }
 
                 try

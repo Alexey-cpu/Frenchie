@@ -17,6 +17,10 @@
 
 #include <fstream>
 
+using namespace Frenchie::Core;
+using namespace Frenchie::Core::FileSystem;
+using namespace Frenchie::Core::Serialization;
+
 namespace Frenchie
 {
     namespace Core
@@ -77,7 +81,7 @@ namespace Frenchie
                     for(auto&& yaml : tree.rootref().children())
                     {
                         // parse in depth
-                        Helpers::Stack<Element> stack;
+                        Stack<Element> stack;
                         stack.push({yaml, *_Document});
 
                         while(!stack.empty())
@@ -154,7 +158,7 @@ namespace Frenchie
                         root.set_key(_Node.get_name());
                     }
 
-                    Helpers::Queue<Element> stack;
+                    Queue<Element> stack;
                     stack.push({root, _Node});
 
                     while(!stack.empty())
@@ -210,7 +214,7 @@ namespace Frenchie
                     YAML::write_object(*_Document, root);
 
                     // open YAML file
-                    FILE* file = Helpers::open_file(_Path.string(), "wb");
+                    FILE* file = open_file(_Path.string(), "wb");
 
                     // check that file has been opened
                     if(file == nullptr) 
@@ -225,10 +229,6 @@ namespace Frenchie
         }
     }
 }
-
-using namespace Frenchie::Core;
-using namespace Frenchie::Core::Helpers;
-using namespace Frenchie::Core::Serialization;
 
 bool YAMLReader::read(Document* _Document, const std::filesystem::path& _Path)
 {
