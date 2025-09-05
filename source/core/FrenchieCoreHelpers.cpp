@@ -1,6 +1,6 @@
 #include <FrenchieCoreHelpers.hpp>
 
-using namespace Frenchie::Core::Helpers;
+using namespace Frenchie::Core;
 
 #include <functional>
 #include <algorithm>
@@ -17,7 +17,11 @@ using namespace Frenchie::Core::Helpers;
 // FMT
 #include <fmt/format.h>
 
-std::filesystem::path Frenchie::Core::Helpers::get_exe_absolute_path()
+// STL
+#include <array>
+
+// Frenchie::Core::FileSystem
+std::filesystem::path Frenchie::Core::FileSystem::get_exe_absolute_path()
 {
     #if defined(_MSC_VER)
         wchar_t path[FILENAME_MAX] = { 0 };
@@ -30,7 +34,7 @@ std::filesystem::path Frenchie::Core::Helpers::get_exe_absolute_path()
     #endif
 }
 
-std::filesystem::path Frenchie::Core::Helpers::get_exe_absolute_directory()
+std::filesystem::path Frenchie::Core::FileSystem::get_exe_absolute_directory()
 {
     #if defined(_MSC_VER)
         wchar_t path[FILENAME_MAX] = { 0 };
@@ -43,7 +47,7 @@ std::filesystem::path Frenchie::Core::Helpers::get_exe_absolute_directory()
     #endif
 }
 
-std::string Frenchie::Core::Helpers::get_file_extention(const std::filesystem::path& _Path)
+std::string Frenchie::Core::FileSystem::get_file_extention(const std::filesystem::path& _Path)
 {
     if(std::filesystem::is_directory(_Path)) 
         return std::string();
@@ -60,7 +64,7 @@ std::string Frenchie::Core::Helpers::get_file_extention(const std::filesystem::p
     return extention;
 }
 
-FILE* Frenchie::Core::Helpers::open_file(std::string _Path, std::string _Mode)
+FILE* Frenchie::Core::FileSystem::open_file(std::string _Path, std::string _Mode)
 {
     auto to_wstring = [](const std::string _Value)->std::wstring
     {
@@ -77,26 +81,42 @@ FILE* Frenchie::Core::Helpers::open_file(std::string _Path, std::string _Mode)
     return file;
 }
 
-void Frenchie::Core::Helpers::launch_command(const char* _Program, const char* _Arguments, const char* _LogFile)
+//Frenchie::Core::CommandLine
+
+Frenchie::Core::CommandLine::Command Frenchie::Core::CommandLine::execute_command(const std::string& _Command)
 {
-    if(_Program == nullptr) 
-        return;
+    // start command
+    #ifdef _WIN32
+        FILE* pipe = _popen(_Command.c_str(), "r");
+    #else
+        FILE* pipe = popen(command.c_str(), "r");
+    #endif
 
-    if(_LogFile != nullptr)
+    if (!pipe)
     {
-        std::system(fmt::format("{} {} > {}", 
-            _Program, 
-            (_Arguments != nullptr ? _Arguments : " "), 
-            _LogFile).c_str());
-
-        return;
+        return 
+        {
+            0,
+            fmt::format("Could not start command {}", _Command)
+        };
     }
 
-    std::system(fmt::format("{} {}", _Program, (_Arguments != nullptr ? _Arguments : " ")).c_str());
+    // read command output
+    std::array<char, 1024> buffer;
+    std::string result;
+
+    while (fgets(buffer.data(), (int)buffer.size(), pipe) != NULL) 
+        result.append(buffer.data());
+
+    return 
+    {
+        _pclose(pipe),
+        result
+    };
 }
 
-// Frenchie::Core::Helpers::String
-std::vector<std::string> Frenchie::Core::Helpers::String::split(const std::string& _Input, const std::string& _Delimeter)
+// Frenchie::Core::String
+std::vector<std::string> Frenchie::Core::String::split(const std::string& _Input, const std::string& _Delimeter)
 {
     if( _Input.empty() )
         return std::vector<std::string>();
@@ -116,19 +136,19 @@ std::vector<std::string> Frenchie::Core::Helpers::String::split(const std::strin
     return output;
 }
 
-std::string Frenchie::Core::Helpers::String::to_upper(std::string _String)
+std::string Frenchie::Core::String::to_upper(std::string _String)
 {
     std::transform(_String.begin(), _String.end(), _String.begin(), ::toupper);
     return _String;
 }
 
-std::string Frenchie::Core::Helpers::String::to_lower(std::string _String)
+std::string Frenchie::Core::String::to_lower(std::string _String)
 {
     std::transform(_String.begin(), _String.end(), _String.begin(), ::tolower);
     return _String;
 }
 
-std::string Frenchie::Core::Helpers::String::replace_symbol(std::string& _Input, const char& _From, const char& _To)
+std::string Frenchie::Core::String::replace_symbol(std::string& _Input, const char& _From, const char& _To)
 {
     std::string result;
 
@@ -138,7 +158,7 @@ std::string Frenchie::Core::Helpers::String::replace_symbol(std::string& _Input,
     return result;
 }
 
-std::string Frenchie::Core::Helpers::String::replace_substring(const std::string& _String, const std::string& _Substring, const std::string& _NewSubstring)
+std::string Frenchie::Core::String::replace_substring(const std::string& _String, const std::string& _Substring, const std::string& _NewSubstring)
 {
     // reserve buffer for substring
     std::string buffer;
@@ -171,7 +191,7 @@ std::string Frenchie::Core::Helpers::String::replace_substring(const std::string
     return output;
 }
 
-bool Frenchie::Core::Helpers::String::contains_substring(const std::string& _String, const std::string& _Substring)
+bool Frenchie::Core::String::contains_substring(const std::string& _String, const std::string& _Substring)
 {
     auto iterator = std::search(
         _String.begin(),
@@ -181,7 +201,7 @@ bool Frenchie::Core::Helpers::String::contains_substring(const std::string& _Str
     return !_Substring.empty() && !_String.empty() && iterator != _String.end();
 }
 
-template<> float Frenchie::Core::Helpers::String::from_string<float>(const std::string& _Input)
+template<> float Frenchie::Core::String::from_string<float>(const std::string& _Input)
 {
     try
     {
@@ -193,7 +213,7 @@ template<> float Frenchie::Core::Helpers::String::from_string<float>(const std::
     }
 }
 
-template<> double Frenchie::Core::Helpers::String::from_string<double>(const std::string& _Input)
+template<> double Frenchie::Core::String::from_string<double>(const std::string& _Input)
 {
     try
     {
@@ -205,7 +225,7 @@ template<> double Frenchie::Core::Helpers::String::from_string<double>(const std
     }
 }
 
-template<> long double Frenchie::Core::Helpers::String::from_string<long double>(const std::string& _Input)
+template<> long double Frenchie::Core::String::from_string<long double>(const std::string& _Input)
 {
     try
     {
@@ -217,7 +237,7 @@ template<> long double Frenchie::Core::Helpers::String::from_string<long double>
     }
 }
 
-template<> short Frenchie::Core::Helpers::String::from_string<short>(const std::string& _Input)
+template<> short Frenchie::Core::String::from_string<short>(const std::string& _Input)
 {
     try
     {
@@ -229,7 +249,7 @@ template<> short Frenchie::Core::Helpers::String::from_string<short>(const std::
     }
 }
 
-template<> int Frenchie::Core::Helpers::String::from_string<int>(const std::string& _Input)
+template<> int Frenchie::Core::String::from_string<int>(const std::string& _Input)
 {
     try
     {
@@ -241,7 +261,7 @@ template<> int Frenchie::Core::Helpers::String::from_string<int>(const std::stri
     }
 }
 
-template<> long Frenchie::Core::Helpers::String::from_string<long>(const std::string& _Input)
+template<> long Frenchie::Core::String::from_string<long>(const std::string& _Input)
 {
     try
     {
@@ -253,7 +273,7 @@ template<> long Frenchie::Core::Helpers::String::from_string<long>(const std::st
     }
 }
 
-template<> long long Frenchie::Core::Helpers::String::from_string<long long>(const std::string& _Input)
+template<> long long Frenchie::Core::String::from_string<long long>(const std::string& _Input)
 {
     try
     {
@@ -265,7 +285,7 @@ template<> long long Frenchie::Core::Helpers::String::from_string<long long>(con
     }
 }
 
-template<> unsigned short Frenchie::Core::Helpers::String::from_string<unsigned short>(const std::string& _Input)
+template<> unsigned short Frenchie::Core::String::from_string<unsigned short>(const std::string& _Input)
 {
     try
     {
@@ -277,7 +297,7 @@ template<> unsigned short Frenchie::Core::Helpers::String::from_string<unsigned 
     }
 }
 
-template<> unsigned int Frenchie::Core::Helpers::String::from_string<unsigned int>(const std::string& _Input)
+template<> unsigned int Frenchie::Core::String::from_string<unsigned int>(const std::string& _Input)
 {
     try
     {
@@ -289,7 +309,7 @@ template<> unsigned int Frenchie::Core::Helpers::String::from_string<unsigned in
     }
 }
 
-template<> unsigned long Frenchie::Core::Helpers::String::from_string<unsigned long>(const std::string& _Input)
+template<> unsigned long Frenchie::Core::String::from_string<unsigned long>(const std::string& _Input)
 {
     try
     {
@@ -301,7 +321,7 @@ template<> unsigned long Frenchie::Core::Helpers::String::from_string<unsigned l
     }
 }
 
-template<> unsigned long long Frenchie::Core::Helpers::String::from_string<unsigned long long>(const std::string& _Input)
+template<> unsigned long long Frenchie::Core::String::from_string<unsigned long long>(const std::string& _Input)
 {
     try
     {
@@ -313,7 +333,7 @@ template<> unsigned long long Frenchie::Core::Helpers::String::from_string<unsig
     }
 }
 
-template<> bool Frenchie::Core::Helpers::String::from_string<bool>(const std::string& _Input)
+template<> bool Frenchie::Core::String::from_string<bool>(const std::string& _Input)
 {
     try
     {
@@ -325,87 +345,87 @@ template<> bool Frenchie::Core::Helpers::String::from_string<bool>(const std::st
     }
 }
 
-template<> std::string Frenchie::Core::Helpers::String::from_string< std::string >(const std::string& _Input)
+template<> std::string Frenchie::Core::String::from_string< std::string >(const std::string& _Input)
 {
     return _Input;
 }
 
-template<> char Frenchie::Core::Helpers::String::from_string<char>(const std::string& _Input)
+template<> char Frenchie::Core::String::from_string<char>(const std::string& _Input)
 {
     return _Input.empty() ? ' ' : _Input[0];
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<bool>(const bool& _Input)
+template<> std::string Frenchie::Core::String::to_string<bool>(const bool& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<float>(const float& _Input)
+template<> std::string Frenchie::Core::String::to_string<float>(const float& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<double>(const double& _Input)
+template<> std::string Frenchie::Core::String::to_string<double>(const double& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<long double>(const long double& _Input)
+template<> std::string Frenchie::Core::String::to_string<long double>(const long double& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<short>(const short& _Input)
+template<> std::string Frenchie::Core::String::to_string<short>(const short& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<int>(const int& _Input)
+template<> std::string Frenchie::Core::String::to_string<int>(const int& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<long>(const long& _Input)
+template<> std::string Frenchie::Core::String::to_string<long>(const long& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<long long>(const long long& _Input)
+template<> std::string Frenchie::Core::String::to_string<long long>(const long long& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<unsigned short>(const unsigned short& _Input)
+template<> std::string Frenchie::Core::String::to_string<unsigned short>(const unsigned short& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<unsigned int>(const unsigned int& _Input)
+template<> std::string Frenchie::Core::String::to_string<unsigned int>(const unsigned int& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<unsigned long>(const unsigned long& _Input)
+template<> std::string Frenchie::Core::String::to_string<unsigned long>(const unsigned long& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<unsigned long long>(const unsigned long long& _Input)
+template<> std::string Frenchie::Core::String::to_string<unsigned long long>(const unsigned long long& _Input)
 {
     return std::to_string(_Input);
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<nullptr_t>(const nullptr_t& _Input)
+template<> std::string Frenchie::Core::String::to_string<nullptr_t>(const nullptr_t& _Input)
 {
     return "0";
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<std::string>(const std::string& _Input)
+template<> std::string Frenchie::Core::String::to_string<std::string>(const std::string& _Input)
 {
     return _Input;
 }
 
-template<> std::string Frenchie::Core::Helpers::String::to_string<std::chrono::system_clock::time_point>(const std::chrono::system_clock::time_point& _Input)
+template<> std::string Frenchie::Core::String::to_string<std::chrono::system_clock::time_point>(const std::chrono::system_clock::time_point& _Input)
 {
     std::time_t now = std::chrono::system_clock::to_time_t(_Input);
     std::string time = std::string(std::asctime(std::localtime(&now)));
@@ -414,12 +434,12 @@ template<> std::string Frenchie::Core::Helpers::String::to_string<std::chrono::s
 }
 
 // TODO: inplement custom UTF8, UTF16 e.t.c encoders
-std::string Frenchie::Core::Helpers::String::as_utf8(const std::wstring& _Input)
+std::string Frenchie::Core::String::as_utf8(const std::wstring& _Input)
 {
     return pugi::as_utf8(_Input);
 }
 
-std::wstring Frenchie::Core::Helpers::String::as_wide(const std::string& _Input)
+std::wstring Frenchie::Core::String::as_wide(const std::string& _Input)
 {
     return pugi::as_wide(_Input);
 }

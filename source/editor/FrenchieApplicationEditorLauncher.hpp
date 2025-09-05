@@ -21,7 +21,6 @@ namespace Frenchie
                 static std::filesystem::path get_app_state_directory();
                 static std::filesystem::path get_app_console_directory();
                 static std::filesystem::path get_app_console_log_file_path();
-                static std::string get_system_path_variable(const std::string&);
 
                 // API
                 static int execute();

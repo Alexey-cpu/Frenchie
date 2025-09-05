@@ -8,6 +8,10 @@
 #include "rapidjson/filereadstream.h"
 #include <rapidjson/writer.h>
 
+using namespace Frenchie::Core;
+using namespace Frenchie::Core::FileSystem;
+using namespace Frenchie::Core::Serialization;
+
 namespace Frenchie
 {
     namespace Core
@@ -29,7 +33,7 @@ namespace Frenchie
                         return false;
 
                     // open JSON file
-                    FILE* file = Helpers::open_file(_Path.string(), "rb");
+                    FILE* file = open_file(_Path.string(), "rb");
 
                     // check that file has been opened
                     if(file == nullptr) 
@@ -71,7 +75,7 @@ namespace Frenchie
                     // parse in depth
                     for(auto it = document.MemberBegin(); it != document.MemberEnd(); it++) // --> this is object
                     {
-                        Helpers::Stack<Element> stack;
+                        Stack<Element> stack;
                         stack.push({&it->name, &it->value, *_Document});
 
                         while(!stack.empty())
@@ -129,7 +133,7 @@ namespace Frenchie
                     if(!std::filesystem::exists(_Path.parent_path())) 
                         return false;
 
-                    FILE* file = Helpers::open_file(_Path.string(), "wb");
+                    FILE* file = open_file(_Path.string(), "wb");
  
                     if(file == nullptr) 
                         return false;
@@ -169,13 +173,13 @@ namespace Frenchie
                         if(data.get_type() == NodeType::BOOL)
                         {
                             array.PushBack(
-                                rapidjson::Value().Set<bool>(Helpers::String::from_string<bool>(data.get_value())), 
+                                rapidjson::Value().Set<bool>(String::from_string<bool>(data.get_value())), 
                                 _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::NUMBER)
                         {
                             array.PushBack(
-                                rapidjson::Value().Set<double>(Helpers::String::from_string<double>(data.get_value())), 
+                                rapidjson::Value().Set<double>(String::from_string<double>(data.get_value())), 
                                 _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::STRING || 
@@ -243,7 +247,7 @@ namespace Frenchie
                         _Parent.AddMember(name, rapidjson::Value(rapidjson::kObjectType), _JSON.GetAllocator());
 
                         // push children onto the stack
-                        Helpers::Stack<Element> stack;
+                        Stack<Element> stack;
 
                         for(auto&& child : node)
                             stack.push({std::prev(_Parent.MemberEnd()), child});
@@ -260,14 +264,14 @@ namespace Frenchie
                             {                                
                                 parent.AddMember(
                                     rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
-                                    rapidjson::Value().Set<bool>(Helpers::String::from_string<bool>(data.get_value())), 
+                                    rapidjson::Value().Set<bool>(String::from_string<bool>(data.get_value())), 
                                     _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::NUMBER)
                             {
                                 parent.AddMember(
                                     rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
-                                    rapidjson::Value().Set<double>(Helpers::String::from_string<double>(data.get_value())), 
+                                    rapidjson::Value().Set<double>(String::from_string<double>(data.get_value())), 
                                     _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::STRING || 
@@ -329,10 +333,6 @@ namespace Frenchie
         }
     }
 }
-
-using namespace Frenchie::Core;
-using namespace Frenchie::Core::Helpers;
-using namespace Frenchie::Core::Serialization;
 
 bool JSONReader::read(Document* _Document, const std::filesystem::path& _Path)
 {

@@ -4,7 +4,7 @@
 
 // int main(int, char**)
 // {
-//     auto start = Helpers::tic();
+//     auto start = tic();
 
 //     //--------------------------------------------------------------------------------
 //     // load a file into a buffer
@@ -27,7 +27,7 @@
 //     char* buff = buffer.data();
 
 //     // stack
-//     Helpers::Stack<char*> tails;
+//     Stack<char*> tails;
 
 //     // Allocator
 //     MemoryChunkAllocator<char> allocator(4096);
@@ -85,18 +85,22 @@
 //         buff++; // next
 //     }
     
-//     std::cout << "elapsed " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+//     std::cout << "elapsed " << elapsed<std::chrono::milliseconds>(start, tic()) << " ms \n";
 
 //     // pugi benchmark
-//     start = Helpers::tic();
+//     start = tic();
 
 //     pugi::xml_document doc;
 //     doc.load_file(path);
 
-//     std::cout << "pugi elapsed " << Helpers::elapsed<std::chrono::milliseconds>(start, Helpers::tic()) << " ms \n";
+//     std::cout << "pugi elapsed " << elapsed<std::chrono::milliseconds>(start, tic()) << " ms \n";
 
 //     return 0;
 // }
+
+using namespace Frenchie::Core;
+using namespace Frenchie::Core::FileSystem;
+using namespace Frenchie::Core::Serialization;
 
 namespace Frenchie
 {
@@ -149,7 +153,7 @@ namespace Frenchie
                         {
                             Frenchie::Core::Logger::instance()->error(
                                 fmt::format("{}\n XML parse error '{}'", 
-                                    Frenchie::Core::Helpers::String::as_utf8(_Path.wstring()), 
+                                    Frenchie::Core::String::as_utf8(_Path.wstring()), 
                                     descript_status(status))
                             );
 
@@ -161,7 +165,7 @@ namespace Frenchie
                     {
                         Frenchie::Core::Logger::instance()->error(
                             fmt::format("{}\n empty document", 
-                                Frenchie::Core::Helpers::String::as_utf8(_Path.wstring()))
+                                Frenchie::Core::String::as_utf8(_Path.wstring()))
                             );
                         return false;
                     }
@@ -170,7 +174,7 @@ namespace Frenchie
                     _Document->reset();
 
                     // parse in depth
-                    Helpers::Stack<Element> stack;
+                    Stack<Element> stack;
                     stack.push({document, *_Document});
 
                     while(!stack.empty())
@@ -224,7 +228,7 @@ namespace Frenchie
 
                     for(auto&& singleton : *_Document)
                     {
-                        Helpers::Queue<Element> queue;
+                        Queue<Element> queue;
                         queue.push({main, singleton});
 
                         while (!queue.empty())
@@ -316,10 +320,6 @@ namespace Frenchie
         }
     }
 }
-
-using namespace Frenchie::Core;
-using namespace Frenchie::Core::Helpers;
-using namespace Frenchie::Core::Serialization;
 
 bool XMLReader::read(Document* _Document, const std::filesystem::path& _Path)
 {

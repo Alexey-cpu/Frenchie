@@ -106,7 +106,7 @@ namespace Frenchie
 
                 template<typename T> T get_value_as() const
                 {
-                    return Helpers::String::from_string<T>(get_value());
+                    return Core::String::from_string<T>(get_value());
                 }
 
                 // setters
@@ -115,7 +115,7 @@ namespace Frenchie
 
                 template<typename T> void set_value_as(const T& _Value)
                 {
-                    set_value(Helpers::String::to_string<T>(_Value).c_str());
+                    set_value(Core::String::to_string<T>(_Value).c_str());
                 }
 
                 const NodeIterator begin() const;

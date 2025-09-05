@@ -31,7 +31,7 @@ using namespace Frenchie::Application::Editor;
 
 std::filesystem::path Launcher::get_app_exe_directory()
 {
-    return Helpers::get_exe_absolute_directory();
+    return Frenchie::Core::FileSystem::get_exe_absolute_directory();
 }
 
 std::filesystem::path Launcher::get_app_log_directory()
@@ -55,41 +55,6 @@ std::filesystem::path Launcher::get_app_console_directory()
 std::filesystem::path Launcher::get_app_console_log_file_path()
 {
     return Launcher::get_app_console_directory().wstring().append(L"/console.txt");
-}
-
-std::string Launcher::get_system_path_variable(const std::string& _Name)
-{
-    // remove 'console.txt' file
-    try
-    {
-        std::filesystem::remove_all(Launcher::get_app_console_log_file_path());
-    }
-    catch(const std::exception& e)
-    {
-        Frenchie::Core::Logger::instance()->critical(e.what());
-    }
-
-    // write system PATH variable contents into a new 'console.txt' file
-#ifdef _WIN32
-    Frenchie::Core::Helpers::launch_command(
-        "echo", 
-        fmt::format("%{}%", _Name).c_str(), 
-        Frenchie::Core::Helpers::String::as_utf8(Launcher::get_app_console_log_file_path()).c_str()
-    );
-#else
-    Frenchie::Core::Helpers::launch_command(
-        "echo", 
-        fmt::format("${}", _Name).c_str(), 
-        Frenchie::Core::Helpers::String::as_utf8(Launcher::get_app_console_log_file_path()).c_str()
-    );
-#endif
-
-    // read 'console.txt'
-    std::ifstream ifsream(Launcher::get_app_console_log_file_path());
-
-    return std::string(
-            (std::istreambuf_iterator<char>(ifsream)), 
-            (std::istreambuf_iterator<char>()));
 }
 
 int Launcher::execute()
@@ -180,7 +145,7 @@ int Launcher::execute()
 
     auto rawtime     = time(nullptr);
     auto localTime   = localtime(&rawtime);
-    auto logFileName = Helpers::String::as_utf8(appLogDirectory.wstring())
+    auto logFileName = Frenchie::Core::String::as_utf8(appLogDirectory.wstring())
         .append("/")
         .append(fmt::format("protocol_{}_{}_{}_{}_{}_{}_{}.txt", 
             localTime->tm_mday,
@@ -207,46 +172,11 @@ int Launcher::execute()
 
     application->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
-    // LOAD FONTS
-    // TODO: this command MUST BE pushed from application settings
-    // application->find_or_push<CommandsQueue>()->push<CallbackCommand>(
-    //     []()
-    //     {
-    //         int m_DefaultFontSize = 16;
-    //         std::filesystem::path m_Path = "C:/SDK/Qt_Projects/OpenGL/shared/fonts";
-
-    //         // retrive ImGui IO
-    //         auto& io = ImGui::GetIO();
-    //         io.Fonts->Clear();
-
-    //         // recursivelly scan path for .ttf fonts
-    //         for(const auto& directory :
-    //             std::filesystem::recursive_directory_iterator(m_Path, std::filesystem::directory_options::skip_permission_denied))
-    //         {
-    //             if(directory.is_directory() ||
-    //                 directory.path().extension() != ".ttf")
-    //                 continue;
-
-    //             io.Fonts->AddFontFromFileTTF(
-    //                 pugi::as_utf8(directory.path().wstring()).c_str(),
-    //                 m_DefaultFontSize * (4.0 / 3.0),
-    //                 nullptr,
-    //                 io.Fonts->GetGlyphRangesCyrillic());
-    //         }
-
-    //         // build fonts
-    //         io.Fonts->Build();
-
-    //         //reload app
-    //         Frenchie::Application::Application::instance()->reload();
-    //     }
-    // );
-
     // log
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Helpers::String::as_utf8(appExeDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .ini directory: {}", Helpers::String::as_utf8(appLogDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Helpers::String::as_utf8(appStateDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Helpers::String::as_utf8(appConsoleDirectory.wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Frenchie::Core::String::as_utf8(appExeDirectory.wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .ini directory: {}", Frenchie::Core::String::as_utf8(appLogDirectory.wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appStateDirectory.wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appConsoleDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App log file path: {}", logFileName));
 
     // execute app and wait until it finishes it's job

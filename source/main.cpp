@@ -172,6 +172,44 @@
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplicationEditorLauncher.hpp>
 
+// int main(int argc, char** argv)
+// {
+//     // setup application logger
+//     Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
+//     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
+
+//     // compile program
+//     std::filesystem::current_path("C:/SDK/Qt_Projects/TestProject");
+
+//     //std::string command = "cmake --preset HabrPresetName"; // Redirect stderr to stdout
+
+//     std::string command = "cmake --build --preset debug 2>&1"; // Redirect stderr to stdout
+
+//     std::array<char, 1024> buffer;
+//     std::string result;
+
+//     std::cout << "Opening reading pipe" << std::endl;
+//     FILE* pipe = _popen(command.c_str(), "r");
+//     if (!pipe)
+//     {
+//         std::cerr << "Couldn't start command." << std::endl;
+//         return 0;
+//     }
+
+//     while (fgets(buffer.data(), (int)buffer.size(), pipe) != NULL) 
+//     {
+//         //Frenchie::Core::Logger::instance()->info(result);
+//         //std::cout << "Reading..." << std::endl;
+//         result += buffer.data();
+//     }
+//     auto returnCode = _pclose(pipe);
+
+//     //std::cout << result << std::endl;
+//     std::cout << returnCode << std::endl;
+
+//     return 0;
+// }
+
 int main(int, char**)
 {
     return Frenchie::Application::Editor::Launcher::execute();
@@ -214,8 +252,8 @@ namespace Frenchie
                         _Path,
                         std::filesystem::directory_options::skip_permission_denied))
                 {
-                    auto path = Frenchie::Core::Helpers::String::replace_symbol(
-                        Frenchie::Core::Helpers::String::as_utf8(
+                    auto path = Frenchie::Core::String::replace_symbol(
+                        Frenchie::Core::String::as_utf8(
                             std::filesystem::relative(directory.path(), _Path.parent_path()).make_preferred().wstring()
                         ),
                         '\\', 
@@ -224,7 +262,7 @@ namespace Frenchie
 
                     std::cout << std::filesystem::relative(path, _Path.parent_path()) << "\n";
 
-                    if(_Formats.find(Frenchie::Core::Helpers::get_file_extention(path)) != _Formats.end())
+                    if(_Formats.find(Frenchie::Core::FileSystem::get_file_extention(path)) != _Formats.end())
                         headerFiles.append("\"").append(path).append("\"\n");
                 }
 

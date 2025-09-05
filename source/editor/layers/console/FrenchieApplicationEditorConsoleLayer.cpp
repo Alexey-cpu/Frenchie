@@ -139,7 +139,7 @@ void Console::frame_update()
                     clipboard.append(
                         fmt::format(
                             "[{}] {}\n", 
-                            Helpers::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
+                            Core::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
                             message.message
                         )
                     );
@@ -192,9 +192,9 @@ void Console::frame_update()
 
                 //check message text filter
                 if(!messageTextFilter.empty() && 
-                    !Frenchie::Core::Helpers::String::contains_substring(
-                        Helpers::String::to_lower(message.message),
-                        Helpers::String::to_lower(messageTextFilter)))
+                    !Frenchie::Core::String::contains_substring(
+                        Core::String::to_lower(message.message),
+                        Core::String::to_lower(messageTextFilter)))
                 {
                     continue;
                 }
@@ -207,7 +207,7 @@ void Console::frame_update()
                 if(ImGui::Selectable(
                     fmt::format(
                         "[{}] {}", 
-                        Helpers::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
+                        Core::String::to_string<std::chrono::system_clock::time_point>(message.time).c_str(), 
                         message.message
                     ).c_str(), 
                     &message.selected, 

@@ -20,7 +20,7 @@ namespace Frenchie
             public:
                 MenuPathsParser(const std::string& _AbsolutePath) : 
                     m_AbsolutePath(_AbsolutePath), 
-                    m_AbsoluteTokenizedPath(Frenchie::Core::Helpers::String::split(m_AbsolutePath, "::")){}
+                    m_AbsoluteTokenizedPath(Frenchie::Core::String::split(m_AbsolutePath, "::")){}
 
                 ~MenuPathsParser(){}
             
@@ -90,12 +90,12 @@ void Menu::draw(const std::string& _MenuPath, void* _Sender, bool _ForceUpdate)
         // parse main menu paths
         MenuPathsParser parser(_MenuPath);
         for(auto&& creator : Factory::registry()) 
-            parser.parse(Frenchie::Core::Helpers::String::split(creator.first, "::"));
+            parser.parse(Frenchie::Core::String::split(creator.first, "::"));
 
         // fill menu infos
         for(auto&& path : parser.m_RelativePaths)
         {
-            auto menu = Frenchie::Core::Helpers::String::split(path, "::");
+            auto menu = Frenchie::Core::String::split(path, "::");
 
             if(menu.empty()) 
                 continue;

@@ -19,7 +19,7 @@ bool Preferences::awake()
     // create layers    
     for(auto&& registry : Frenchie::Core::Factory::registry())
     {
-        if(Frenchie::Core::Helpers::String::contains_substring(
+        if(Frenchie::Core::String::contains_substring(
             registry.first, STRINGIFY(Frenchie::Application::Editor::Preferences)))
         {
             m_Layers.push_back(Frenchie::Core::Factory::create<Layer>(registry.first));
