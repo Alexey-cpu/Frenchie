@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -11,6 +12,7 @@ namespace Frenchie
     {
         namespace Editor
         {
+            // Loader
             class LoaderModel
             {
             public:
@@ -23,22 +25,37 @@ namespace Frenchie
                 virtual void  finish()  = 0;
             };
 
-            class LoaderView : public Layer
+            class LoaderView : public Dialog
             {
             public:
 
                 LoaderView(
                     std::shared_ptr<LoaderModel> _Model, 
-                    const std::string&           _Name = STRINGIFY(Frenchie::Application::Editor::Loader));
+                    const std::string&           _Name = STRINGIFY(Frenchie::Application::Editor::LoaderView));
                 virtual ~LoaderView();
                 
                 virtual bool awake() override;
-                virtual void frame_update() override;
                 virtual void finish() override;
+                virtual void draw_content() override;
+                virtual void draw_buttons() override;
 
             protected:
                 std::shared_ptr<LoaderModel> m_Model = nullptr;
             };
+
+            // // Scanner
+            // class ScannerModel
+            // {
+            // public:
+            //     ScannerModel(){}
+            //     virtual ~ScannerModel(){}
+                
+            //     // virtual API
+            //     virtual bool        awake()    = 0;
+            //     virtual std::string execute()  = 0;
+            //     virtual void        finish()   = 0;
+            //     virtual bool        finished() = 0;
+            // };
         }
     }
 }

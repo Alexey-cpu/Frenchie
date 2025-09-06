@@ -3,6 +3,7 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorCommandsLayer.hpp>
 #include <FrenchieApplicationEditorLoaderLayer.hpp>
+#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 // Frenchie::Core
 #include <FrenchieCoreHelpers.hpp>
@@ -21,6 +22,7 @@
 using namespace Frenchie;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
+using namespace Frenchie::Application::Editor::FileSystem;
 
 namespace Frenchie
 {
@@ -28,93 +30,58 @@ namespace Frenchie
     {
         namespace Editor
         {
-            class FontsLoader : public LoaderModel
+            class FontsLoaderModel : public LoaderModel
             {
             public:
                 
-                FontsLoader(
-                    const std::filesystem::path& _Path,
-                    const std::string&           _Font,
-                    int                          _MaximumSearchDepth = 10) :
-                    m_Location(_Path),
+                FontsLoaderModel(
+                    const std::set<std::filesystem::path>& _Fonts,
+                    const std::string&                     _Font) :
+                    m_Fonts(_Fonts),
                     m_Font(_Font),
-                    m_MaximumSearchDepth(_MaximumSearchDepth){}
+                    m_Iterator(m_Fonts.begin())
+                    {}
                 
-                virtual ~FontsLoader(){}
+                virtual ~FontsLoaderModel(){}
 
                 virtual bool awake() override
                 {
-                    // close if path does not exists
-                    if(!std::filesystem::exists(m_Location)) 
+                    if(m_Fonts.empty()) 
                         return false;
 
-                    // collect fonts available in predefined location
-                    try 
-                    {
-                        for(auto it = std::filesystem::recursive_directory_iterator(m_Location); 
-                            it != std::filesystem::recursive_directory_iterator(); it++)
-                        {
-                            if (it.depth() > m_MaximumSearchDepth) 
-                            {
-                                const_cast<std::filesystem::recursive_directory_iterator&>(it)
-                                    .disable_recursion_pending();
-                                continue;
-                            }
-                            
-                            if(it->is_directory() ||
-                                it->path().extension() != ".ttf")
-                                continue;
-
-                            m_Fonts.push(it->path());
-                        }
-
-                        // memorize total fonts number
-                        m_Total = m_Fonts.size();
-
-                        // cache fonts that need to be removed
-                        for(ImFont* font : ImGui::GetIO().Fonts->Fonts)
-                            m_FontsToRemove.push_back(font);
-
-                        // clear fonts
-                        // auto& io = ImGui::GetIO();
-                        // io.Fonts->Clear();
-                    } 
-                    catch (const std::exception& e) 
-                    {
-                        Frenchie::Core::Logger::instance()->error(e.what());
-                        return false;
-                    }
+                    // cache fonts that need to be removed
+                    for(ImFont* font : ImGui::GetIO().Fonts->Fonts)
+                        m_Cache.push_back(font);
 
                     return true;
                 }
 
                 virtual float execute() override
                 {
-                    if(m_Fonts.empty()) 
+                    if(m_Iterator == m_Fonts.end()) 
                         return 1.f;
 
                     // retrive ImGui IO
                     auto& io = ImGui::GetIO();
 
-                    // get the top most path to load
-                    auto path = m_Fonts.front();
-                    m_Fonts.pop();
-
                     // load font
                     io.Fonts->AddFontFromFileTTF(
-                        Frenchie::Core::String::as_utf8(path.wstring()).c_str(),
+                        Frenchie::Core::String::as_utf8(*m_Iterator).c_str(),
                         ImGui::GetStyle().FontSizeBase,
                         nullptr,
                         io.Fonts->GetGlyphRangesCyrillic());
 
-                    return (float)m_Fonts.size() / (float)m_Total;
+                    // next
+                    m_Iterator++;
+
+                    return 1.f - (float)(++m_Progress) / (float)m_Fonts.size();
                 }
 
                 virtual void finish() override
                 {
                     // remove old fonts
-                    for(size_t i = 0; i < m_FontsToRemove.size(); i++)
-                        ImGui::GetIO().Fonts->RemoveFont(m_FontsToRemove[i]);
+                    for(size_t i = 0; i < m_Cache.size(); i++)
+                        ImGui::GetIO().Fonts->RemoveFont(m_Cache[i]);
 
                     // apply new font
                     for (ImFont* font : ImGui::GetIO().Fonts->Fonts)
@@ -124,6 +91,7 @@ namespace Frenchie
                         if (std::string(font->GetDebugName()) == m_Font)
                         {
                             ImGui::GetIO().FontDefault = font;
+                            break;
                         }
                     }
 
@@ -135,13 +103,11 @@ namespace Frenchie
                 }
 
             protected:
-                std::filesystem::path             m_Location           = std::filesystem::current_path();
-                std::string                       m_Font               = std::string();
-                std::queue<std::filesystem::path> m_Fonts              = std::queue<std::filesystem::path>();
-                size_t                            m_Total              = 0;
-                size_t                            m_MaximumSearchDepth = 10;
-
-                std::vector<ImFont*> m_FontsToRemove = std::vector<ImFont*>();
+                std::set<std::filesystem::path>           m_Fonts    = std::set<std::filesystem::path>();
+                std::string                               m_Font     = std::string();
+                std::set<std::filesystem::path>::iterator m_Iterator = std::set<std::filesystem::path>::iterator();
+                size_t                                    m_Progress = 0;
+                std::vector<ImFont*>                      m_Cache    = std::vector<ImFont*>();
             };
         }
     }
@@ -153,16 +119,33 @@ Config::Config() :
 
 Config::~Config(){}
 
-std::filesystem::path Config::get_fonts_location() const
+void Config::scan_fonts(const std::filesystem::path& _Path)
 {
-    return m_FontsLocation;
+    // load fonts
+    Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()
+        ->push<CallbackCommand>(
+            [this, _Path]()
+            {
+                Frenchie::Application::Application::instance()->push<Dialogs::PathScannerView>(
+                    std::make_shared<Dialogs::PathScannerModel>(
+                        _Path,
+                        [](const std::filesystem::path& _Entry)->bool
+                        {
+                            return !std::filesystem::is_directory(_Entry) && 
+                                Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".ttf";
+                        }
+                    )
+                );
+            }
+        );  
 }
 
-void Config::load_fonts(const std::filesystem::path& _Path, const std::string& _Font)
+void Config::load_fonts(
+    const std::set<std::filesystem::path>& _Fonts, 
+    const std::string&                     _Font)
 {
     // setup new fonts location
-    m_FontsLocation = 
-        std::filesystem::exists(_Path) ? _Path : std::filesystem::current_path();
+    m_Fonts = _Fonts;
 
     // load fonts
     Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()
@@ -171,7 +154,7 @@ void Config::load_fonts(const std::filesystem::path& _Path, const std::string& _
             {
                 Frenchie::Application::Application::instance()->push<LoaderView>(
                     std::shared_ptr<LoaderModel>(
-                        new FontsLoader(m_FontsLocation, _Font))
+                        new FontsLoaderModel(m_Fonts, _Font))
                     );
             }
         );
@@ -200,8 +183,15 @@ bool Config::serialize(const Frenchie::Core::Serialization::Node& _Parent)
     {
         auto fonts = main.append_node("Fonts");
         fonts.append_node("Size").set_value_as<float>(ImGui::GetStyle().FontSizeBase);
-        fonts.append_node("Location", Frenchie::Core::String::as_utf8(m_FontsLocation.wstring()).c_str());
         fonts.append_node("Font", ImGui::GetFont()->GetDebugName());
+        auto entries = fonts.append_node("Fonts", ImGui::GetFont()->GetDebugName());
+
+        for(auto&& font : m_Fonts)
+        {
+            entries.append_node(
+                Frenchie::Core::String::as_utf8(font.filename().stem().wstring()).c_str(), 
+                Frenchie::Core::String::as_utf8(font.wstring()).c_str());
+        }
     }
 
     // Style
@@ -346,11 +336,11 @@ bool Config::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
             }
 
             // load fonts
-            {
-                load_fonts(
-                    std::filesystem::path(fonts.find_node("Location").get_value()), 
-                    std::string(fonts.find_node("Font").get_value()));
-            }
+            // {
+            //     load_fonts(
+            //         std::filesystem::path(fonts.find_node("Location").get_value()), 
+            //         std::string(fonts.find_node("Font").get_value()));
+            // }
         }
     }
 

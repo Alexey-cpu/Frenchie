@@ -12,7 +12,7 @@ LoaderModel::~LoaderModel(){}
 
 // LoaderView
 LoaderView::LoaderView(std::shared_ptr<LoaderModel> _Model, const std::string& _Name) : 
-    Layer(_Name), 
+    Dialog(_Name), 
     m_Model(_Model){}
 
 LoaderView::~LoaderView(){}
@@ -22,7 +22,7 @@ bool LoaderView::awake()
     return m_Model != nullptr && m_Model->awake();
 }
 
-void LoaderView::frame_update()
+void LoaderView::draw_content()
 {
     if(m_Model == nullptr) 
     {
@@ -45,6 +45,15 @@ void LoaderView::frame_update()
     {
         close(); // close self when finished
         return;
+    }
+}
+
+void LoaderView::draw_buttons()
+{
+    if(ImGui::Button("Cancel")) 
+    {
+        m_Model = nullptr;
+        close();
     }
 }
 
