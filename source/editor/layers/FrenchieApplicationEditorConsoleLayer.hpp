@@ -17,12 +17,6 @@ namespace Frenchie
             {
             public:
 
-                struct Filter
-                {
-                    std::string Level;
-                    bool        Selected;
-                };
-
                 // constructors
                 Console();
 

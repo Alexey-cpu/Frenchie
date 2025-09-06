@@ -35,7 +35,6 @@ namespace Frenchie
             virtual void frame_update();
             virtual void frame_finish();
             virtual void finish();
-
             virtual bool allows_multiple_instances() const;
 
         protected:

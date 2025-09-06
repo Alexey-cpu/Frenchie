@@ -81,6 +81,28 @@ FILE* Frenchie::Core::FileSystem::open_file(std::string _Path, std::string _Mode
     return file;
 }
 
+void Frenchie::Core::FileSystem::create_directory(
+    const std::filesystem::path& _Path, 
+    const std::function<void()>& _OnSuccess, 
+    const std::function<void(const std::exception&)>& _OnFail)
+{
+    if(!std::filesystem::exists(_Path)) 
+    {
+        try
+        {
+            std::filesystem::create_directory(_Path);
+
+            if(_OnSuccess != nullptr) 
+                _OnSuccess();
+        }
+        catch(const std::exception& e)
+        {
+            if(_OnFail != nullptr) 
+                _OnFail(e);
+        }
+    }
+}
+
 //Frenchie::Core::CommandLine
 Frenchie::Core::CommandLine::Command Frenchie::Core::CommandLine::execute_command(const std::string& _Command)
 {

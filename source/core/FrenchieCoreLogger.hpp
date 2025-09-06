@@ -44,12 +44,42 @@ namespace Frenchie
                 }
 
                 void set_level(spdlog::level::level_enum _Level);
-                void trace(const std::string _Message);
-                void debug(const std::string _Message);
-                void info(const std::string _Message);
-                void warn(const std::string _Message);
-                void error(const std::string _Message);
-                void critical(const std::string _Message);
+
+                template<typename ... Arguments>
+                void trace(const std::string _Message, Arguments ... _Args)
+                {
+                    get_logger()->trace(fmt::format(_Message, _Args ...));
+                }
+
+                template<typename ... Arguments>
+                void debug(const std::string _Message, Arguments ... _Args)
+                {
+                    get_logger()->debug(fmt::format(_Message, _Args ...));
+                }
+
+                template<typename ... Arguments>
+                void info(const std::string _Message, Arguments ... _Args)
+                {
+                    get_logger()->info(fmt::format(_Message, _Args ...));
+                }
+
+                template<typename ... Arguments>
+                void warn(const std::string _Message, Arguments ... _Args)
+                {
+                    get_logger()->warn(fmt::format(_Message, _Args ...));
+                }
+
+                template<typename ... Arguments>
+                void error(const std::string _Message, Arguments ... _Args)
+                {
+                    get_logger()->error(fmt::format(_Message, _Args ...));
+                }
+
+                template<typename ... Arguments>
+                void critical(const std::string _Message, Arguments ... _Args)
+                {
+                    get_logger()->critical(fmt::format(_Message, _Args ...));
+                }
 
             private:
 

@@ -2,10 +2,14 @@
 
 // Frenchie::Application
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
-#include <FrenchieApplicationEditorMainMenuLayer.hpp>
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+
+#include <FrenchieApplicationEditorConfigurationLayer.hpp>
+
+#include <FrenchieApplicationEditorCommandsLayer.hpp>
 
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
@@ -28,6 +32,122 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
+namespace Frenchie
+{
+    namespace Application
+    {
+        namespace Editor
+        {
+            namespace MainMenu
+            {
+                class Instance : public Layer
+                {
+                public:
+                    Instance() : Layer(STRINGIFY(Instance)){}
+                    virtual ~Instance(){}
+
+                    // Frenchie::Application::Layer
+                    virtual void frame_update() override
+                    {
+                        if(ImGui::BeginMainMenuBar())
+                        {
+                            Frenchie::Application::Editor::Menu().draw(STRINGIFY(Frenchie::Application::Editor::MainMenu));
+                            ImGui::EndMainMenuBar();
+                        }
+                    }
+                };
+
+                class ExitAction : 
+                    public Frenchie::Application::Command::Registry<ExitAction, void*>
+                {
+                public:
+
+                    ExitAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<ExitAction, void*>(_Sender){}
+                    virtual ~ExitAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        Frenchie::Application::Application::instance()->close();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Frenchie::Exit");
+                    }
+                };
+
+                class OpenConsoleAction : 
+                    public Frenchie::Application::Command::Registry<OpenConsoleAction, void*>
+                {
+                public:
+
+                    OpenConsoleAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<OpenConsoleAction, void*>(_Sender){}
+                    virtual ~OpenConsoleAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        Frenchie::Application::Application::instance()->find_or_push<Console>()->show();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Console");
+                    }
+                };
+
+                class OpenFileSystemExplorerAction : 
+                    public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>
+                {
+                public:
+
+                    OpenFileSystemExplorerAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>(_Sender){}
+                    virtual ~OpenFileSystemExplorerAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        Frenchie::Application::Application::instance()->find_or_push<FileSystem::Explorer>()->show();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::FileSystem");
+                    }
+                };
+
+                class OpenPreferencesAction : 
+                    public Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>
+                {
+                public:
+
+                    OpenPreferencesAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>(_Sender){}
+                    virtual ~OpenPreferencesAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        Frenchie::Application::Application::instance()->find_or_push<Preferences::Explorer>()->show();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Preferences");
+                    }
+                };
+            }
+        }
+    }
+}
 
 std::filesystem::path Launcher::get_app_exe_directory()
 {
@@ -164,9 +284,10 @@ int Launcher::execute()
     application->load_state(std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
 
     // append basic layers
-    application->push<Frenchie::Application::Editor::Console>();
-    application->push<Frenchie::Application::Editor::MainMenu>();
-    application->push<Frenchie::Application::Editor::Preferences>();
+    application->push<Frenchie::Application::Editor::MainMenu::Instance>();
+
+    //application->push<Loader>();
+    application->push<Config>();
 
     application->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 

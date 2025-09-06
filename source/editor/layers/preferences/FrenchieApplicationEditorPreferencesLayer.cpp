@@ -9,12 +9,13 @@
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
+using namespace Frenchie::Application::Editor::Preferences;
 
 // Preferences
-Preferences::Preferences() : Layer(STRINGIFY(Preferences)){}
-Preferences::~Preferences(){}
+Explorer::Explorer() : Layer(STRINGIFY(Frenchie::Application::Editor::Preferences::Explorer)){}
+Explorer::~Explorer(){}
 
-bool Preferences::awake()
+bool Explorer::awake()
 {
     // create layers    
     for(auto&& registry : Frenchie::Core::Factory::registry())
@@ -22,24 +23,26 @@ bool Preferences::awake()
         if(Frenchie::Core::String::contains_substring(
             registry.first, STRINGIFY(Frenchie::Application::Editor::Preferences)))
         {
-            m_Layers.push_back(Frenchie::Core::Factory::create<Layer>(registry.first));
+            m_Topics.push_back(Frenchie::Core::Factory::create<Layer>(registry.first));
             
-            if(m_Layers.back())
-            {
-                m_Layers.back()->awake();
-                m_Layers.back()->hide();
-            }
+            if(m_Topics.back() == nullptr) 
+                continue;
+
+            m_Topics.back()->awake();
+            m_Topics.back()->hide();
         }
     }
 
-    if(m_Layers.front())
-        m_Layers.front()->show();
+    if(m_Topics.front())
+        m_Topics.front()->show();
 
     // call awake
     return Layer::awake();
+
+    return true;
 }
 
-void Preferences::frame_update()
+void Explorer::frame_update()
 {
     // draw content
     ImGui::Begin(get_name().c_str(), &m_Shown);
@@ -62,13 +65,13 @@ void Preferences::frame_update()
 
             ImGui::BeginChild(fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::Preferences), "Selectable").c_str());
             {
-                for(auto&& layer : m_Layers)
+                for(auto&& layer : m_Topics)
                 {
                     bool shown = !layer->is_hidden();
 
                     if(ImGui::Selectable(layer->get_name().c_str(), &shown))
                     {
-                        for(auto&& layer : m_Layers) 
+                        for(auto&& layer : m_Topics) 
                             layer->hide();
                         layer->show();
                     }
@@ -81,7 +84,7 @@ void Preferences::frame_update()
 
             ImGui::BeginChild(fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::Preferences), "Table").c_str());
             {
-                for(auto&& layer : m_Layers)
+                for(auto&& layer : m_Topics)
                 {
                     if(!layer->is_hidden())
                         layer->frame_update();
@@ -96,37 +99,7 @@ void Preferences::frame_update()
     }
 }
 
-bool Preferences::serialize(const Frenchie::Core::Serialization::Node& _Parent)
+bool Explorer::allows_multiple_instances() const
 {
-    auto preferences = _Parent.append_node(STRINGIFY(Preferences));
-
-    for(auto&& layer : m_Layers)
-    {
-        auto serializer = 
-            std::dynamic_pointer_cast<ISerializer>(layer);
-
-        if(serializer != nullptr) 
-            serializer->serialize(preferences);
-    }
-
-    return true;
-}
-
-bool Preferences::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
-{
-    auto preferences = _Parent.find_node(STRINGIFY(Preferences)); 
-
-    if(!preferences.is_valid())
-        return false;
-
-    for(auto&& layer : m_Layers)
-    {
-        auto serializer = 
-            std::dynamic_pointer_cast<ISerializer>(layer);
-
-        if(serializer != nullptr) 
-            serializer->deserialize(preferences);
-    }
-
-    return true;
+    return false;
 }

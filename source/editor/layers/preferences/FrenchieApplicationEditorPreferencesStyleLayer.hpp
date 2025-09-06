@@ -2,6 +2,8 @@
 
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
 
+#include <FrenchieApplicationEditorInputText.hpp>
+
 // IMGUI
 #include <imgui.h>
 
@@ -12,37 +14,30 @@ namespace Frenchie
         namespace Editor
         {
             class Style : 
-                public Frenchie::Application::Layer::Registry<Style>, 
-                public Frenchie::Core::Serialization::ISerializer
+                public Frenchie::Application::Layer::Registry<Style>
             {
             public:
                 Style();
                 virtual ~Style();
 
-                // Frenchie::Application::Layer::Registry<EnvironmentSettings>
+                // Frenchie::Application::Editor::Preferences::Topic::Registry<Style>
                 static std::string factory_id();
 
-                // Frenchie::Application::Layer
+                // Frenchie::Application::Editor::Preferences::Topic
                 virtual bool awake() override;
                 virtual void frame_update() override;
-
-                // Frenchie::Core::Serialization::ISerializer
-                virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
-                virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
 
             protected:
 
                 // info
-                ImGuiStyle            m_ReferenceStyle;
-                std::filesystem::path m_FontsLoadPath = std::filesystem::current_path();
+                ImGuiStyle m_ReferenceStyle;
+                InputText  m_FontsLocation;
 
                 void draw_style_editor();
                 void draw_geometry_settings();
                 void draw_color_settings();
                 void draw_fonts_settings();
                 void draw_rendering_settings();
-
-                void load_fonts(const std::filesystem::path&);
             };
         }
     }
