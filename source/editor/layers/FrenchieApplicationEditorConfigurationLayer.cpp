@@ -61,18 +61,25 @@ namespace Frenchie
                     if(m_Iterator == m_Fonts.end()) 
                         return 1.f;
 
-                    // retrive ImGui IO
-                    auto& io = ImGui::GetIO();
+                    try
+                    {
+                        // retrive ImGui IO
+                        auto& io = ImGui::GetIO();
 
-                    // load font
-                    io.Fonts->AddFontFromFileTTF(
-                        Frenchie::Core::String::as_utf8(*m_Iterator).c_str(),
-                        ImGui::GetStyle().FontSizeBase,
-                        nullptr,
-                        io.Fonts->GetGlyphRangesCyrillic());
+                        // load font
+                        io.Fonts->AddFontFromFileTTF(
+                            Frenchie::Core::String::as_utf8(*m_Iterator).c_str(),
+                            ImGui::GetStyle().FontSizeBase,
+                            nullptr,
+                            io.Fonts->GetGlyphRangesCyrillic());
 
-                    // next
-                    m_Iterator++;
+                        // next
+                        m_Iterator++;
+                    }
+                    catch(const std::exception& e)
+                    {
+                        Frenchie::Core::Logger::instance()->critical(e.what());
+                    }
 
                     return 1.f - (float)(++m_Progress) / (float)m_Fonts.size();
                 }
@@ -351,11 +358,21 @@ bool Config::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
             }
 
             // load fonts
-            // {
-            //     load_fonts(
-            //         std::filesystem::path(fonts.find_node("Location").get_value()), 
-            //         std::string(fonts.find_node("Font").get_value()));
-            // }
+            {
+                std::set<std::filesystem::path> fontsToLoad;
+
+                auto childFonts = fonts.find_node("Fonts");
+
+                for(auto&& font : childFonts)
+                {
+                    std::filesystem::path path(font.get_value());
+
+                    if(std::filesystem::exists(path)) 
+                        fontsToLoad.insert(path);
+                }
+
+                load_fonts(fontsToLoad, std::string(fonts.find_node("Font").get_value()));
+            }
         }
     }
 
