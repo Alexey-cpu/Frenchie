@@ -2,9 +2,6 @@
 
 #include <FrenchieApplication.hpp>
 
-// This static class is needed to initialize application layers, logger
-// and folders where to spawn application state, logs e.t.c
-
 namespace Frenchie
 {
     namespace Application

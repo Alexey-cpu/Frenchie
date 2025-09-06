@@ -4,6 +4,7 @@
 #include <string>
 #include <codecvt>
 #include <filesystem>
+#include <functional>
 
 #define STRINGIFY(_VALUE) #_VALUE
 
@@ -20,6 +21,11 @@ namespace Frenchie
             std::string get_file_extention(const std::filesystem::path& _Path);
 
             FILE* open_file(std::string _Path, std::string _Mode);
+
+            void create_directory(
+                const std::filesystem::path& _Path, 
+                const std::function<void()>& _OnSuccess, 
+                const std::function<void(const std::exception&)>& _OnFail);
         }
 
         namespace CommandLine

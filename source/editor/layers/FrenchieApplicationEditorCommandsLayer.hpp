@@ -83,6 +83,7 @@ namespace Frenchie
 
             // Frenchie::Application::Layer
             virtual void frame_start() override;
+            virtual bool allows_multiple_instances() const;
 
         protected:
             std::queue<std::unique_ptr<Command>> m_Commands = 

@@ -1,4 +1,4 @@
-#include <FrenchieApplicationEditorCommandsQueueLayer.hpp>
+#include <FrenchieApplicationEditorCommandsLayer.hpp>
 
 using namespace Frenchie::Application;
 
@@ -14,4 +14,9 @@ void CommandsQueue::frame_start()
             command->execute();
         m_Commands.pop();
     }
+}
+
+bool CommandsQueue::allows_multiple_instances() const
+{
+    return false;
 }

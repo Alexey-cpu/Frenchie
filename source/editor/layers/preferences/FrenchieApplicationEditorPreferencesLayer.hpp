@@ -12,25 +12,26 @@ namespace Frenchie
     {
         namespace Editor
         {
-            // Preferences
-            class Preferences : public Layer, public Frenchie::Core::Serialization::ISerializer
+            namespace Preferences
             {
-            public:
-                Preferences();
-                virtual ~Preferences();
+                // explorer
+                class Explorer : public Layer
+                {
+                public:
+                    Explorer();
+                    virtual ~Explorer();
 
-                // Frenchie::Application::Layer
-                virtual bool awake() override;
-                virtual void frame_update() override;
+                    // Frenchie::Application::Layer
+                    virtual bool awake() override;
+                    virtual void frame_update() override;
+                    virtual bool allows_multiple_instances() const;
 
-                // Frenchie::Core::Serialization::ISerializer
-                virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
-                virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
+                protected:
 
-            protected:
-                std::list<std::shared_ptr<Layer>> m_Layers = 
-                    std::list<std::shared_ptr<Layer>>();
-            };
+                    std::vector<std::shared_ptr<Layer>> m_Topics = 
+                        std::vector<std::shared_ptr<Layer>>();
+                };
+            }
         }
     }
 }

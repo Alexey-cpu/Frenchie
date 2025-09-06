@@ -44,7 +44,7 @@ namespace Frenchie
                 {
 
                     Logger::instance()->error(
-                        fmt::format("{} factory method for {} does not exist", STRINGIFY(Frenchie::Core::Factory), _Name));
+                        fmt::format("{} could not invoke factory method for {}", STRINGIFY(Frenchie::Core::Factory), _Name));
                     return nullptr;
                 }
             }
