@@ -42,20 +42,6 @@ namespace Frenchie
             protected:
                 std::shared_ptr<LoaderModel> m_Model = nullptr;
             };
-
-            // // Scanner
-            // class ScannerModel
-            // {
-            // public:
-            //     ScannerModel(){}
-            //     virtual ~ScannerModel(){}
-                
-            //     // virtual API
-            //     virtual bool        awake()    = 0;
-            //     virtual std::string execute()  = 0;
-            //     virtual void        finish()   = 0;
-            //     virtual bool        finished() = 0;
-            // };
         }
     }
 }
