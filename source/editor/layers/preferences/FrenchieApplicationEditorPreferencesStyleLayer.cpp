@@ -264,15 +264,15 @@ void Style::draw_fonts_settings()
     //ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
 
-    m_FontsLocation.set_buffer(Frenchie::Application::Application::instance()->find_or_push<Config>()->get_fonts_location().string());
-    if(m_FontsLocation.draw("##", 
-        ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
-    {
-        Frenchie::Application::Application::instance()->find_or_push<Config>()->load_fonts(
-            std::filesystem::path(m_FontsLocation.get_buffer()));
-    }
+    // m_FontsLocation.set_buffer(Frenchie::Application::Application::instance()->find_or_push<Config>()->get_fonts_location().string());
+    // if(m_FontsLocation.draw("##", 
+    //     ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+    // {
+    //     Frenchie::Application::Application::instance()->find_or_push<Config>()->load_fonts(
+    //         std::filesystem::path(m_FontsLocation.get_buffer()));
+    // }
 
-    ImGui::SameLine();
+    //ImGui::SameLine();
 
     if(ImGui::Button("Browse"))
     {
@@ -289,7 +289,7 @@ void Style::draw_fonts_settings()
                     Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push<CallbackCommand>(
                         [this, path]()
                         {
-                            Frenchie::Application::Application::instance()->find_or_push<Config>()->load_fonts(path);
+                            Frenchie::Application::Application::instance()->find_or_push<Config>()->scan_fonts(path);
                         }
                     );
                 }

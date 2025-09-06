@@ -20,11 +20,12 @@ namespace Frenchie
                 Config();
                 virtual ~Config();
 
-                // getters
-                std::filesystem::path get_fonts_location() const;
-
                 // API
-                void load_fonts(const std::filesystem::path& _Path, const std::string& _Font = std::string());
+                void scan_fonts(const std::filesystem::path& _Paths);
+
+                void load_fonts(
+                    const std::set<std::filesystem::path>& _Paths, 
+                    const std::string&                     _Font = std::string());
 
                 // Frenchie::Application::Layer
                 virtual bool awake() override;
@@ -39,8 +40,8 @@ namespace Frenchie
             protected:
 
                 // info
-                std::filesystem::path m_FontsLocation = 
-                    std::filesystem::current_path();
+                std::set<std::filesystem::path> m_Fonts = 
+                    std::set<std::filesystem::path>();
 
                 // static API
                 static std::filesystem::path get_app_exe_directory();

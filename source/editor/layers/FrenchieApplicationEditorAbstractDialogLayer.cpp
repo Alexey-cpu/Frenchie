@@ -6,7 +6,11 @@
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-Dialog::Dialog(const std::string& _Name) : Layer(_Name){}
+Dialog::Dialog(const std::string& _Name, const float& _MinWidth, const float& _MinHeight) : 
+    Layer(_Name), 
+    m_MinWidth(_MinWidth), 
+    m_MinHeight(_MinHeight){}
+
 Dialog::~Dialog(){}
 
 void Dialog::frame_update()
@@ -15,13 +19,13 @@ void Dialog::frame_update()
 
     ImGuiStyle& style = ImGui::GetStyle();
 
+    ImGui::SetNextWindowSizeConstraints(ImVec2(m_MinWidth, m_MinHeight), ImVec2(FLT_MAX, FLT_MAX));
+
     // press button
     auto wiondowFlags =
         ImGuiWindowFlags_::ImGuiWindowFlags_None        | 
         ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar | 
         ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollWithMouse;
-
-    ImGui::SetNextWindowSizeConstraints(ImVec2(512, 512), ImVec2(FLT_MAX, FLT_MAX));
 
     if(ImGui::BeginPopupModal(m_Name.c_str(), &m_Opened))
     {

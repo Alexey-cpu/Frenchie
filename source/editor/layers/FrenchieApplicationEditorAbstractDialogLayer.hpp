@@ -11,7 +11,11 @@ namespace Frenchie
             class Dialog : public Layer
             {
             public:
-                Dialog(const std::string&);
+                Dialog(
+                    const std::string& _Name, 
+                    const float&       _MinWidth  = 512, 
+                    const float&       _MinHeight = 512);
+                
                 virtual ~Dialog();
 
                 virtual void frame_update() override;
@@ -19,6 +23,11 @@ namespace Frenchie
 
                 virtual void draw_content() = 0;
                 virtual void draw_buttons() = 0;
+
+            protected:
+                // info
+                float m_MinWidth  = 512;
+                float m_MinHeight = 512;
             };
         }
     }

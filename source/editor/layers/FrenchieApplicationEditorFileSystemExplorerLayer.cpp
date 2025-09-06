@@ -1017,3 +1017,115 @@ bool Dialogs::GetOpenFiles::allows_multiple_instances() const
 {
     return false;
 }
+
+Dialogs::PathScannerModel::PathScannerModel(
+    const std::filesystem::path&                                       _Path,
+    const std::function<bool(const std::filesystem::path&)>&           _Predicate,
+    const std::function<bool(const std::set<std::filesystem::path>&)>& _OnFinished,
+    size_t                                                             _MaxSearchDepth) : 
+    m_Path(_Path),
+    m_Predicate(_Predicate),
+    m_OnFinished(_OnFinished),
+    m_MaxSearchDepth(_MaxSearchDepth){}
+
+Dialogs::PathScannerModel::~PathScannerModel(){}
+
+std::set<std::filesystem::path>& Dialogs::PathScannerModel::get_paths()
+{
+    return m_Paths;
+}
+
+bool Dialogs::PathScannerModel::awake()
+{
+    if(!std::filesystem::exists(m_Path) ||
+        m_Predicate == nullptr) 
+        return false;
+
+    try
+    {
+        m_Iterator = std::filesystem::recursive_directory_iterator(m_Path);
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->critical(e.what());
+        return false;
+    }
+
+    return m_Iterator != std::filesystem::recursive_directory_iterator();
+}
+
+std::string Dialogs::PathScannerModel::execute()
+{
+    try 
+    {
+        auto path = m_Iterator->path();
+
+        if (m_Iterator.depth() > m_MaxSearchDepth) 
+            const_cast<std::filesystem::recursive_directory_iterator&>(m_Iterator).disable_recursion_pending();
+        
+        if(m_Predicate(path))
+            m_Paths.insert(path);
+
+        m_Iterator++; // go ahead
+
+        return Frenchie::Core::String::as_utf8(path);
+    } 
+    catch (const std::exception& e) 
+    {
+        Frenchie::Core::Logger::instance()->error(e.what());
+        return std::string();
+    }
+}
+
+void Dialogs::PathScannerModel::finish()
+{
+    if(m_OnFinished != nullptr) 
+        m_OnFinished(m_Paths);
+}
+
+bool Dialogs::PathScannerModel::finished()
+{
+    return m_Iterator == std::filesystem::recursive_directory_iterator();
+}
+
+// PathScannerView
+Dialogs::PathScannerView::PathScannerView(std::shared_ptr<PathScannerModel> _Model, const std::string& _Name) : 
+    Dialog(_Name, 512.f, 128.f),
+    m_Model(_Model){}
+
+Dialogs::PathScannerView::~PathScannerView(){}
+
+bool Dialogs::PathScannerView::awake()
+{
+    return m_Model != nullptr && m_Model->awake();
+}
+
+void Dialogs::PathScannerView::draw_content()
+{
+    if(m_Model == nullptr || m_Model->finished()) 
+    {
+        close();
+        return;
+    }
+
+    // calculate progress percantage
+    std::string text = m_Model->execute();
+
+    // show progress
+    ImGui::Text("Scanning %s", text.c_str());
+}
+
+void Dialogs::PathScannerView::draw_buttons()
+{
+    if(ImGui::Button("Cancel")) 
+    {
+        m_Model = nullptr;
+        close();
+    }
+}
+
+void Dialogs::PathScannerView::finish()
+{
+    if(m_Model != nullptr) 
+        m_Model->finish();
+}
