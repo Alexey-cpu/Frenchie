@@ -126,13 +126,25 @@ void Config::scan_fonts(const std::filesystem::path& _Path)
         ->push<CallbackCommand>(
             [this, _Path]()
             {
-                Frenchie::Application::Application::instance()->push<Dialogs::PathScannerView>(
-                    std::make_shared<Dialogs::PathScannerModel>(
+                Frenchie::Application::Application::instance()->push<Dialogs::ScanPathsDialog>(
+                    std::make_shared<Dialogs::ScanPathsDialogModel>(
                         _Path,
                         [](const std::filesystem::path& _Entry)->bool
                         {
                             return !std::filesystem::is_directory(_Entry) && 
                                 Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".ttf";
+                        },
+                        [this](Dialogs::ScanPathsDialogModel* _Model)
+                        {
+                            std::set<std::filesystem::path> paths;
+
+                            for(auto&& entry : _Model->get_paths())
+                            {
+                                if(entry.second) 
+                                    paths.insert(entry.first);
+                            }
+
+                            load_fonts(paths, std::string());
                         }
                     )
                 );
@@ -144,6 +156,9 @@ void Config::load_fonts(
     const std::set<std::filesystem::path>& _Fonts, 
     const std::string&                     _Font)
 {
+    if(_Fonts.empty()) 
+        return;
+
     // setup new fonts location
     m_Fonts = _Fonts;
 

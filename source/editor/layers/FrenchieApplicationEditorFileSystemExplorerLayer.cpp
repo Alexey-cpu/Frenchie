@@ -951,13 +951,13 @@ void Explorer::drop_path_to(const std::filesystem::path& _Path)
 }
 
 // OpenFilesDialog
-Dialogs::GetOpenFiles::GetOpenFiles(const std::function<void()>& _OnAccpected, const std::string& _Name) : 
+Dialogs::OpenPathsDialog::OpenPathsDialog(const std::function<void()>& _OnAccpected, const std::string& _Name) : 
     FileSystem::Explorer(_Name, std::filesystem::current_path()), 
     m_OnAccepted(_OnAccpected){}
 
-Dialogs::GetOpenFiles::~GetOpenFiles(){}
+Dialogs::OpenPathsDialog::~OpenPathsDialog(){}
 
-void Dialogs::GetOpenFiles::frame_update()
+void Dialogs::OpenPathsDialog::frame_update()
 {
     ImGui::OpenPopup(m_Name.c_str());
 
@@ -1013,29 +1013,34 @@ void Dialogs::GetOpenFiles::frame_update()
     }
 }
 
-bool Dialogs::GetOpenFiles::allows_multiple_instances() const
+bool Dialogs::OpenPathsDialog::allows_multiple_instances() const
 {
     return false;
 }
 
-Dialogs::PathScannerModel::PathScannerModel(
-    const std::filesystem::path&                                       _Path,
-    const std::function<bool(const std::filesystem::path&)>&           _Predicate,
-    const std::function<bool(const std::set<std::filesystem::path>&)>& _OnFinished,
-    size_t                                                             _MaxSearchDepth) : 
+Dialogs::ScanPathsDialogModel::ScanPathsDialogModel(
+    const std::filesystem::path&                             _Path,
+    const std::function<bool(const std::filesystem::path&)>& _Predicate,
+    const std::function<void(ScanPathsDialogModel*)>&        _OnFinished,
+    size_t                                                   _MaxSearchDepth) : 
     m_Path(_Path),
     m_Predicate(_Predicate),
     m_OnFinished(_OnFinished),
     m_MaxSearchDepth(_MaxSearchDepth){}
 
-Dialogs::PathScannerModel::~PathScannerModel(){}
+Dialogs::ScanPathsDialogModel::~ScanPathsDialogModel(){}
 
-std::set<std::filesystem::path>& Dialogs::PathScannerModel::get_paths()
+std::map<std::filesystem::path, bool>& Dialogs::ScanPathsDialogModel::get_paths()
 {
     return m_Paths;
 }
 
-bool Dialogs::PathScannerModel::awake()
+void Dialogs::ScanPathsDialogModel::stop()
+{
+    m_Iterator = std::filesystem::recursive_directory_iterator();
+}
+
+bool Dialogs::ScanPathsDialogModel::awake()
 {
     if(!std::filesystem::exists(m_Path) ||
         m_Predicate == nullptr) 
@@ -1054,9 +1059,12 @@ bool Dialogs::PathScannerModel::awake()
     return m_Iterator != std::filesystem::recursive_directory_iterator();
 }
 
-std::string Dialogs::PathScannerModel::execute()
+std::string Dialogs::ScanPathsDialogModel::execute()
 {
-    try 
+    if(finished())
+        return "Finished";
+
+    try
     {
         auto path = m_Iterator->path();
 
@@ -1064,12 +1072,12 @@ std::string Dialogs::PathScannerModel::execute()
             const_cast<std::filesystem::recursive_directory_iterator&>(m_Iterator).disable_recursion_pending();
         
         if(m_Predicate(path))
-            m_Paths.insert(path);
+            m_Paths.insert({path, true});
 
         m_Iterator++; // go ahead
 
         return Frenchie::Core::String::as_utf8(path);
-    } 
+    }
     catch (const std::exception& e) 
     {
         Frenchie::Core::Logger::instance()->error(e.what());
@@ -1077,32 +1085,32 @@ std::string Dialogs::PathScannerModel::execute()
     }
 }
 
-void Dialogs::PathScannerModel::finish()
+void Dialogs::ScanPathsDialogModel::finish()
 {
     if(m_OnFinished != nullptr) 
-        m_OnFinished(m_Paths);
+        m_OnFinished(this);
 }
 
-bool Dialogs::PathScannerModel::finished()
+bool Dialogs::ScanPathsDialogModel::finished()
 {
     return m_Iterator == std::filesystem::recursive_directory_iterator();
 }
 
 // PathScannerView
-Dialogs::PathScannerView::PathScannerView(std::shared_ptr<PathScannerModel> _Model, const std::string& _Name) : 
+Dialogs::ScanPathsDialog::ScanPathsDialog(std::shared_ptr<ScanPathsDialogModel> _Model, const std::string& _Name) : 
     Dialog(_Name, 512.f, 128.f),
     m_Model(_Model){}
 
-Dialogs::PathScannerView::~PathScannerView(){}
+Dialogs::ScanPathsDialog::~ScanPathsDialog(){}
 
-bool Dialogs::PathScannerView::awake()
+bool Dialogs::ScanPathsDialog::awake()
 {
     return m_Model != nullptr && m_Model->awake();
 }
 
-void Dialogs::PathScannerView::draw_content()
+void Dialogs::ScanPathsDialog::draw_content()
 {
-    if(m_Model == nullptr || m_Model->finished()) 
+    if(m_Model == nullptr) 
     {
         close();
         return;
@@ -1111,20 +1119,69 @@ void Dialogs::PathScannerView::draw_content()
     // calculate progress percantage
     std::string text = m_Model->execute();
 
-    // show progress
-    ImGui::Text("Scanning %s", text.c_str());
+    // show currently processing path
+    if(!m_Model->finished()) 
+        ImGui::TextWrapped("Scanning %s", text.c_str());
+    else 
+        ImGui::TextWrapped("Finished...");
+
+    // show result
+    ImGui::BeginChild("Entries");
+    {
+        int id = 0;
+
+        for(auto&& entry : m_Model->get_paths())
+        {
+            ImGui::PushID(id++);
+            ImGui::Checkbox("##", &entry.second);
+            ImGui::PopID();
+
+            ImGui::SameLine();
+
+            ImGui::PushID(id++);
+            ImGui::Selectable(
+                Frenchie::Core::String::as_utf8(entry.first.wstring()).c_str(), 
+                &entry.second,
+                ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
+                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 
+                ImGuiSelectableFlags_::ImGuiSelectableFlags_NoAutoClosePopups |
+                ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowDoubleClick);
+            ImGui::PopID();
+        }
+
+        ImGui::EndChild();
+    }
 }
 
-void Dialogs::PathScannerView::draw_buttons()
+void Dialogs::ScanPathsDialog::draw_buttons()
 {
+    if(m_Model == nullptr) 
+    {
+        close();
+        return;
+    }
+
     if(ImGui::Button("Cancel")) 
     {
         m_Model = nullptr;
         close();
     }
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("Stop")) 
+        m_Model->stop();
+
+    if(m_Model->finished())
+    {
+        ImGui::SameLine();
+
+        if(ImGui::Button("Ok")) 
+            close();
+    }
 }
 
-void Dialogs::PathScannerView::finish()
+void Dialogs::ScanPathsDialog::finish()
 {
     if(m_Model != nullptr) 
         m_Model->finish();

@@ -71,14 +71,14 @@ namespace Frenchie
 
                 namespace Dialogs
                 {
-                    class GetOpenFiles : public FileSystem::Explorer 
+                    class OpenPathsDialog : public FileSystem::Explorer 
                     {
                     public:
-                        GetOpenFiles(
+                        OpenPathsDialog(
                             const std::function<void()>& _OnAccpected, 
-                            const std::string&           _Name = STRINGIFY(GetOpenFiles));
+                            const std::string&           _Name = STRINGIFY(OpenPathsDialog));
                         
-                        virtual ~GetOpenFiles();
+                        virtual ~OpenPathsDialog();
 
                         // Frenchie::Application::Layer
                         virtual void frame_update() override;
@@ -88,42 +88,46 @@ namespace Frenchie
                         std::function<void()> m_OnAccepted = nullptr;
                     };
 
-                    class PathScannerModel
+                    class ScanPathsDialogModel
                     {
                     public:
-                        PathScannerModel(
-                            const std::filesystem::path&                                       _Path,
-                            const std::function<bool(const std::filesystem::path&)>&           _Predicate,
-                            const std::function<bool(const std::set<std::filesystem::path>&)>& _OnFinished     = nullptr,
-                            size_t                                                             _MaxSearchDepth = 4);
+                        ScanPathsDialogModel(
+                            const std::filesystem::path&                             _Path,
+                            const std::function<bool(const std::filesystem::path&)>& _Predicate,
+                            const std::function<void(ScanPathsDialogModel*)>&            _OnFinished     = nullptr,
+                            size_t                                                   _MaxSearchDepth = 4);
                         
-                        virtual ~PathScannerModel();
+                        virtual ~ScanPathsDialogModel();
 
                         // getters
-                        std::set<std::filesystem::path>& get_paths();
+                        std::map<std::filesystem::path, bool>& get_paths();
 
-                        bool awake();
+                        void        stop();
+                        bool        awake();
                         std::string execute();
-                        void finish();
-                        bool finished();
+                        void        finish();
+                        bool        finished();
 
                     protected:
+                        // frineds
+                        friend class ScanPathsDialog;
+
                         // info
-                        std::filesystem::path                                       m_Path           =  std::filesystem::current_path();
-                        std::function<bool(const std::filesystem::path&)>           m_Predicate      = nullptr;
-                        std::function<bool(const std::set<std::filesystem::path>&)> m_OnFinished     = std::function<bool(const std::set<std::filesystem::path>&)>();
-                        size_t                                                      m_MaxSearchDepth = 4;
-                        std::filesystem::recursive_directory_iterator               m_Iterator       =  std::filesystem::recursive_directory_iterator();
-                        std::set<std::filesystem::path>                             m_Paths          = std::set<std::filesystem::path>();
+                        std::filesystem::path                               m_Path           =  std::filesystem::current_path();
+                        std::function<bool(const std::filesystem::path&)>   m_Predicate      = nullptr;
+                        std::function<void(ScanPathsDialogModel*)>          m_OnFinished     = std::function<void(ScanPathsDialogModel*)>();
+                        size_t                                              m_MaxSearchDepth = 4;
+                        std::filesystem::recursive_directory_iterator       m_Iterator       =  std::filesystem::recursive_directory_iterator();
+                        std::map<std::filesystem::path, bool>               m_Paths          = std::map<std::filesystem::path, bool>();
                     };
 
-                    class PathScannerView : public Dialog
+                    class ScanPathsDialog : public Dialog
                     {
                     public:
-                        PathScannerView(
-                            std::shared_ptr<PathScannerModel> _Model, 
-                            const std::string&                _Name = STRINGIFY(Frenchie::Application::Editor::ScannerView));
-                        virtual ~PathScannerView();
+                        ScanPathsDialog(
+                            std::shared_ptr<ScanPathsDialogModel> _Model, 
+                            const std::string&                    _Name = STRINGIFY(Frenchie::Application::Editor::ScannerView));
+                        virtual ~ScanPathsDialog();
                         
                         virtual bool awake() override;
                         virtual void finish() override;
@@ -131,7 +135,7 @@ namespace Frenchie
                         virtual void draw_buttons() override;
 
                     protected:
-                        std::shared_ptr<PathScannerModel> m_Model = nullptr; 
+                        std::shared_ptr<ScanPathsDialogModel> m_Model = nullptr; 
                     };
                 }
             }
