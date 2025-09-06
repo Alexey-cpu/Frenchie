@@ -276,11 +276,11 @@ void Style::draw_fonts_settings()
 
     if(ImGui::Button("Browse"))
     {
-        Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::GetOpenFiles>(
+        Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::OpenPathsDialog>(
             [this]()
             {
-                Reference<FileSystem::Dialogs::GetOpenFiles> dialog = 
-                    Frenchie::Application::Application::instance()->find<FileSystem::Dialogs::GetOpenFiles>();
+                Reference<FileSystem::Dialogs::OpenPathsDialog> dialog = 
+                    Frenchie::Application::Application::instance()->find<FileSystem::Dialogs::OpenPathsDialog>();
 
                 if(dialog != nullptr)
                 {
