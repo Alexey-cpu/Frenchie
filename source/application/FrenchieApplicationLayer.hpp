@@ -22,8 +22,13 @@ namespace Frenchie
             Layer(const std::string& _Name = std::string());
             virtual ~Layer();
 
+            // getters
+            std::string get_name() const;
+
+            // setters
+            void set_name(const std::string&);
+
             // API
-            virtual std::string get_name() const;
             bool is_closed() const;
             bool is_hidden() const;
             void close();

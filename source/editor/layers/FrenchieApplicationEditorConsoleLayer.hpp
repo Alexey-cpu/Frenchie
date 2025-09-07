@@ -1,5 +1,7 @@
 #pragma once
 
+#include <FrenchieApplicationEditorInputText.hpp>
+
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreISerializer.hpp>
 #include <FrenchieCoreHelpers.hpp>
@@ -11,6 +13,27 @@ namespace Frenchie
     {
         namespace Editor
         {
+            class Terminal : public Layer
+            {
+            public:
+                Terminal();
+                virtual ~Terminal();
+
+                // Layer
+                virtual bool awake() override;
+                virtual void frame_update() override;
+                virtual void finish() override;
+                virtual bool allows_multiple_instances() const override;
+
+            protected:
+                friend class TerminalSink;
+
+                mutable std::filesystem::path m_Path{std::filesystem::current_path()};
+                mutable InputText             m_Command;
+                mutable InputText             m_Output;
+                Frenchie::Core::Debug::Logger m_Logger = Frenchie::Core::Debug::Logger(STRINGIFY(Frenchie::Application::Editor::Terminal));
+            };
+
             class Console : 
                 public Layer, 
                 public Frenchie::Core::Serialization::ISerializer

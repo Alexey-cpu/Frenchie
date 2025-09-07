@@ -2,7 +2,9 @@
 
 using namespace Frenchie::Core::Debug;
 
-Logger::Logger()
+Logger::Logger(const std::string& _Name) : 
+    m_Name(_Name), 
+    m_Logger(std::make_shared<spdlog::logger>(m_Name))
 {
     spdlog::register_logger(m_Logger);
 }
