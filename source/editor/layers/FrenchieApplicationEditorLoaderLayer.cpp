@@ -6,59 +6,68 @@
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 
-// LoaderModel
-LoaderModel::LoaderModel(){}
-LoaderModel::~LoaderModel(){}
-
 // LoaderView
-LoaderView::LoaderView(std::shared_ptr<LoaderModel> _Model, const std::string& _Name) : 
-    Dialog(_Name), 
-    m_Model(_Model){}
+AsyncLoaderView::AsyncLoaderView(
+    const std::function<void(AsyncLoaderView*)>& _LoadFunction, 
+    const std::function<void()>&            _OnFinished,
+    const std::string&                      _Name) : 
+    Dialog(_Name),
+    m_LoadFunction(_LoadFunction), 
+    m_OnFinished(_OnFinished){}
 
-LoaderView::~LoaderView(){}
+AsyncLoaderView::~AsyncLoaderView(){}
 
-bool LoaderView::awake()
+void AsyncLoaderView::set_progress(const float& _Value)
 {
-    return m_Model != nullptr && m_Model->awake();
+    m_Progress = _Value;
 }
 
-void LoaderView::draw_content()
+bool AsyncLoaderView::awake()
 {
-    if(m_Model == nullptr) 
+    m_Task = std::make_shared<Frenchie::Core::Task>(
+        [this](Frenchie::Core::Task* _Task)
+        {
+            if(m_LoadFunction != nullptr)
+                m_LoadFunction(this);
+
+            _Task->finish();
+        }
+    );
+
+    return m_Task != nullptr;
+}
+
+void AsyncLoaderView::frame_update()
+{
+    if(m_Task == nullptr || m_Task->finished() || m_Task->canceled())
     {
         close();
         return;
     }
+    
+    Dialog::frame_update();
+}
 
+void AsyncLoaderView::draw_content()
+{
     // calculate progress percantage
-    float progress   = m_Model->execute();
-    int   percantage = (int)(progress * 100.f);
+    int percantage = (int)(m_Progress * 100.f);
 
     // show progress
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("100%").x);
-    ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), "");
+    ImGui::ProgressBar(m_Progress, ImVec2(0.0f, 0.0f), "");
     ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
     ImGui::TextUnformatted(fmt::format("{} %", percantage).c_str());
-
-    // check if we are done
-    if(percantage >= 100.f)
-    {
-        close(); // close self when finished
-        return;
-    }
 }
 
-void LoaderView::draw_buttons()
+void AsyncLoaderView::draw_buttons()
 {
     if(ImGui::Button("Cancel")) 
-    {
-        m_Model = nullptr;
         close();
-    }
 }
 
-void LoaderView::finish()
+void AsyncLoaderView::finish()
 {
-    if(m_Model != nullptr) 
-        m_Model->finish();
+    if(m_OnFinished != nullptr) 
+        m_OnFinished();
 }

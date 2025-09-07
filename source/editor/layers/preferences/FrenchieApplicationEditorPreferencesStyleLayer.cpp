@@ -24,13 +24,13 @@ using namespace Frenchie::Application::Editor::Preferences;
 
 // Style
 Style::Style() : 
-    Frenchie::Application::Layer::Registry<Style>(STRINGIFY(Style)){}
+    Frenchie::Application::Layer::Registry<Style>(STRINGIFY(Frenchie::Application::Editor::Preferences::Style)){}
 
 Style::~Style(){}
 
 std::string Style::factory_id()
 {
-    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::Preferences::Explorer), STRINGIFY(Style));
+    return STRINGIFY(Frenchie::Application::Editor::Preferences::Style);
 }
 
 bool Style::awake()
@@ -51,33 +51,28 @@ void Style::frame_update()
 
 void Style::draw_style_editor()
 {
-    if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
+    if (ImGui::TreeNode("Geometry"))
     {
-        if (ImGui::BeginTabItem("Geometry"))
-        {
-            draw_geometry_settings();
-            ImGui::EndTabItem();
-        }
+        draw_geometry_settings();
+        ImGui::TreePop();
+    }
 
-        if (ImGui::BeginTabItem("Colors"))
-        {
-            draw_color_settings();
-            ImGui::EndTabItem();
-        }
+    if (ImGui::TreeNode("Colors"))
+    {
+        draw_color_settings();
+        ImGui::TreePop();
+    }
 
-        if (ImGui::BeginTabItem("Fonts"))
-        {
-            draw_fonts_settings();
-            ImGui::EndTabItem();
-        }
+    if (ImGui::TreeNode("Fonts"))
+    {
+        draw_fonts_settings();
+        ImGui::TreePop();
+    }
 
-        if (ImGui::BeginTabItem("Rendering"))
-        {
-            draw_rendering_settings();
-            ImGui::EndTabItem();
-        }
-
-        ImGui::EndTabBar();
+    if (ImGui::TreeNode("Rendering"))
+    {
+        draw_rendering_settings();
+        ImGui::TreePop();
     }
 }
 
@@ -260,27 +255,33 @@ void Style::draw_color_settings()
 
 void Style::draw_fonts_settings()
 {
-    // font loader
-    //ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    // font selector
+    ImGuiIO& io = ImGui::GetIO();
+    ImFont* font_current = ImGui::GetFont();
 
+    if (ImGui::BeginCombo("##", font_current->GetDebugName()))
+    {
+        for (ImFont* font : io.Fonts->Fonts)
+        {
+            ImGui::PushID((void*)font);
+            if (ImGui::Selectable(font->GetDebugName(), font == font_current))
+                io.FontDefault = font;
+            if (font == font_current)
+                ImGui::SetItemDefaultFocus();
+            ImGui::PopID();
+        }
+        ImGui::EndCombo();
+    }
 
-    // m_FontsLocation.set_buffer(Frenchie::Application::Application::instance()->find_or_push<Config>()->get_fonts_location().string());
-    // if(m_FontsLocation.draw("##", 
-    //     ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
-    // {
-    //     Frenchie::Application::Application::instance()->find_or_push<Config>()->load_fonts(
-    //         std::filesystem::path(m_FontsLocation.get_buffer()));
-    // }
-
-    //ImGui::SameLine();
+    ImGui::SameLine();
 
     if(ImGui::Button("Browse"))
     {
-        Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::OpenPathsDialog>(
+        Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::ExplorerDialog>(
             [this]()
             {
-                Reference<FileSystem::Dialogs::OpenPathsDialog> dialog = 
-                    Frenchie::Application::Application::instance()->find<FileSystem::Dialogs::OpenPathsDialog>();
+                Reference<FileSystem::Dialogs::ExplorerDialog> dialog = 
+                    Frenchie::Application::Application::instance()->find<FileSystem::Dialogs::ExplorerDialog>();
 
                 if(dialog != nullptr)
                 {
@@ -296,24 +297,6 @@ void Style::draw_fonts_settings()
             },
             "Select directory where to look for the fonts .ttf files..."
         );
-    }
-
-    // font selector
-    ImGuiIO& io = ImGui::GetIO();
-    ImFont* font_current = ImGui::GetFont();
-
-    if (ImGui::BeginCombo("Fonts##Selector", font_current->GetDebugName()))
-    {
-        for (ImFont* font : io.Fonts->Fonts)
-        {
-            ImGui::PushID((void*)font);
-            if (ImGui::Selectable(font->GetDebugName(), font == font_current))
-                io.FontDefault = font;
-            if (font == font_current)
-                ImGui::SetItemDefaultFocus();
-            ImGui::PopID();
-        }
-        ImGui::EndCombo();
     }
 
     // font size
