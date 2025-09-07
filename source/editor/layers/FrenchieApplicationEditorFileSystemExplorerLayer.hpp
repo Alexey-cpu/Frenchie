@@ -77,8 +77,9 @@ namespace Frenchie
                     {
                     public:
                         ExplorerDialog(
-                            const std::function<void()>& _OnAccpected, 
-                            const std::string&           _Name = STRINGIFY(ExplorerDialog));
+                            const std::string&           _Name        = STRINGIFY(ExplorerDialog),
+                            const std::function<void()>& _OnAccpected = nullptr,
+                            const std::function<void()>& _OnCanceled  = nullptr);
                         
                         virtual ~ExplorerDialog();
 
@@ -88,17 +89,20 @@ namespace Frenchie
 
                     protected:
                         std::function<void()> m_OnAccepted = nullptr;
+                        std::function<void()> m_OnCanceled = nullptr;
                     };
 
                     class PathScannerDialog : public Dialog
                     {
                     public:
                         PathScannerDialog(
-                            const std::filesystem::path&                                _Path,
-                            const std::function<bool(const std::filesystem::path&)>&    _Predicate,
-                            std::function<void(std::map<std::filesystem::path, bool>&)> _OnFinished,
-                            const std::string&                                          _Name           = STRINGIFY(Frenchie::Application::Editor::ScannerView),
-                            size_t                                                      _MaxSearchDepth = 100);
+                            const std::filesystem::path&                                       _Path,
+                            const std::function<bool(const std::filesystem::path&)>&           _Predicate,
+                            const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished     = nullptr,
+                            const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled     = nullptr,
+                            const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed       = nullptr,
+                            const std::string&                                                 _Name           = STRINGIFY(Frenchie::Application::Editor::ScannerView),
+                            size_t                                                             _MaxSearchDepth = 100);
                         virtual ~PathScannerDialog();
                         
                         virtual bool awake() override;
@@ -108,13 +112,22 @@ namespace Frenchie
                         virtual void draw_buttons() override;
 
                     protected:
-                        std::shared_ptr<Frenchie::Core::Task>                       m_Task           = nullptr;
+
+                        // scanner
                         std::filesystem::path                                       m_Path           =  std::filesystem::current_path();
                         std::function<bool(const std::filesystem::path&)>           m_Predicate      = nullptr;
                         std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFinished     = nullptr;
+                        std::function<void(std::map<std::filesystem::path, bool>&)> m_OnCanceled     = nullptr;
+                        std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFailed       = nullptr;
                         std::filesystem::path                                       m_CurrentPath    =  std::filesystem::current_path();
                         size_t                                                      m_MaxSearchDepth = 4;
                         std::map<std::filesystem::path, bool>                       m_Paths          = std::map<std::filesystem::path, bool>();
+
+                        // task
+                        bool m_Paused   = false;
+                        bool m_Finished = false;
+                        bool m_Canceled = false;
+                        bool m_Failed   = false;
                     };
                 }
             }

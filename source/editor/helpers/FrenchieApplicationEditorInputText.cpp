@@ -14,10 +14,13 @@ InputText::~InputText()
 
 std::string InputText::get_buffer() const
 {
+    if(empty()) 
+        set_buffer("");
+
     return std::string(m_Buffer);
 }
 
-void InputText::set_buffer(const std::string& _Input)
+void InputText::set_buffer(const std::string& _Input) const
 {
     // allocate buffer if it's nullptr
     if(m_Buffer == nullptr)
@@ -52,12 +55,28 @@ bool InputText::empty() const
 bool InputText::draw(const std::string& _Name, ImGuiInputTextFlags _Flags)
 {
     if(empty()) 
-        set_buffer("Empty string...");
+        set_buffer("");
 
     return ImGui::InputText(
         _Name.c_str(), 
         m_Buffer, 
         m_BufferSize, 
+        _Flags | ImGuiInputTextFlags_::ImGuiInputTextFlags_CallbackResize,
+        InputText::InputTextResizeCallback, 
+        this
+    );
+}
+
+bool InputText::draw_multiline(const std::string& _Name, ImGuiInputTextFlags _Flags, float _Width, float _Height)
+{
+    if(empty()) 
+        set_buffer("");
+
+    return ImGui::InputTextMultiline(
+        _Name.c_str(), 
+        m_Buffer, 
+        m_BufferSize,
+        ImVec2(_Width, _Height),
         _Flags | ImGuiInputTextFlags_::ImGuiInputTextFlags_CallbackResize,
         InputText::InputTextResizeCallback, 
         this

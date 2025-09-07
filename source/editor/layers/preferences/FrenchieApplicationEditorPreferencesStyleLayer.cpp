@@ -278,6 +278,7 @@ void Style::draw_fonts_settings()
     if(ImGui::Button("Browse"))
     {
         Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::ExplorerDialog>(
+            "Select directory where to look for the fonts .ttf files...",
             [this]()
             {
                 Reference<FileSystem::Dialogs::ExplorerDialog> dialog = 
@@ -294,8 +295,7 @@ void Style::draw_fonts_settings()
                         }
                     );
                 }
-            },
-            "Select directory where to look for the fonts .ttf files..."
+            }
         );
     }
 

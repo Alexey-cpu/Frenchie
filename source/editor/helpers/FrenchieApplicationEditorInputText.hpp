@@ -20,14 +20,15 @@ namespace Frenchie
                 ~InputText();
 
                 std::string get_buffer() const;
-                void set_buffer(const std::string&);
+                void set_buffer(const std::string&) const;
                 bool empty() const;
                 void clear();
                 bool draw(const std::string&, ImGuiInputTextFlags = 0);
+                bool draw_multiline(const std::string&, ImGuiInputTextFlags = 0, float _Width = 0.f, float _Height = 0.f);
 
             protected:
-                char* m_Buffer     = nullptr;
-                int   m_BufferSize = 128;
+                mutable char* m_Buffer     = nullptr;
+                mutable int   m_BufferSize = 128;
 
             private:
                 static int InputTextResizeCallback(ImGuiInputTextCallbackData*);

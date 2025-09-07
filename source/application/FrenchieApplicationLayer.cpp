@@ -12,6 +12,11 @@ std::string Layer::get_name() const
     return m_Name;
 }
 
+void Layer::set_name(const std::string& _Value)
+{
+    m_Name = _Value;
+}
+
 bool Layer::is_closed() const
 {
     return !m_Opened;

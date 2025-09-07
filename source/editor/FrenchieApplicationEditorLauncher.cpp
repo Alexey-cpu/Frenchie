@@ -289,6 +289,9 @@ int Launcher::execute()
     //application->push<Loader>();
     application->push<Config>();
 
+    application->push<Terminal>();
+    application->push<Console>();
+
     application->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log

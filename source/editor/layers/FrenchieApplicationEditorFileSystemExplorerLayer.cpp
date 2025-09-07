@@ -955,9 +955,13 @@ void Explorer::drop_path_to(const std::filesystem::path& _Path)
 }
 
 // OpenFilesDialog
-Dialogs::ExplorerDialog::ExplorerDialog(const std::function<void()>& _OnAccpected, const std::string& _Name) : 
+Dialogs::ExplorerDialog::ExplorerDialog(
+    const std::string& _Name, 
+    const std::function<void()>& _OnAccpected,
+    const std::function<void()>& _OnCanceled): 
     FileSystem::Explorer(_Name, std::filesystem::current_path()), 
-    m_OnAccepted(_OnAccpected){}
+    m_OnAccepted(_OnAccpected),
+    m_OnCanceled(_OnAccpected){}
 
 Dialogs::ExplorerDialog::~ExplorerDialog(){}
 
@@ -1007,6 +1011,8 @@ void Dialogs::ExplorerDialog::frame_update()
 
             if(ImGui::Button("Cancel"))
             {
+                if(m_OnCanceled != nullptr) 
+                    m_OnCanceled();
                 close();
             }
 
@@ -1022,141 +1028,49 @@ bool Dialogs::ExplorerDialog::allows_multiple_instances() const
     return false;
 }
 
-// Dialogs::ScanPathsTask::ScanPathsTask(
-//     const std::filesystem::path&                             _Path,
-//     const std::function<bool(const std::filesystem::path&)>& _Predicate,
-//     size_t                                                   _MaxSearchDepth) : 
-//     m_Path(_Path),
-//     m_Predicate(_Predicate),
-//     m_MaxSearchDepth(_MaxSearchDepth){}
-
-// Dialogs::ScanPathsTask::~ScanPathsTask()
-// {
-//     pause(); // stop task
-// }
-
-// std::filesystem::path Dialogs::ScanPathsTask::get_current_path()
-// {
-//     return m_CurrentPath;
-// }
-
-// std::map<std::filesystem::path, bool>& Dialogs::ScanPathsTask::get_paths()
-// {
-//     return m_Paths;
-// }
-
-// bool Dialogs::ScanPathsTask::paused() const
-// {
-//     return m_Paused;
-// }
-
-// bool Dialogs::ScanPathsTask::finished() const
-// {
-//     return m_Finished;
-// }
-
-// bool Dialogs::ScanPathsTask::canceled() const
-// {
-//     return m_Canceled;
-// }
-
-// void Dialogs::ScanPathsTask::pause()
-// {
-//     m_Paused = true;
-// }
-
-// void Dialogs::ScanPathsTask::cancel()
-// {
-//     m_Canceled = true;
-// }
-
-// void Dialogs::ScanPathsTask::resume()
-// {
-//     m_Paused  = false;
-// }
-
-// bool Dialogs::ScanPathsTask::awake()
-// {
-//     if(!std::filesystem::exists(m_Path) ||
-//         m_Predicate == nullptr) 
-//         return false;
-
-//     m_Task = Frenchie::Core::TreadPool::instance()->enqueue(
-//         [this]()
-//         {
-//             try
-//             {
-//                 for(auto it = std::filesystem::recursive_directory_iterator(m_Path); 
-//                     it != std::filesystem::recursive_directory_iterator(); it++)
-//                 {
-//                     while (paused())
-//                     {
-//                         if(canceled()) 
-//                             return;
-//                     }
-
-//                     if(canceled()) 
-//                         return;
-
-//                     m_CurrentPath = it->path();
-
-//                     if (it.depth() > m_MaxSearchDepth)
-//                     {
-//                         const_cast<std::filesystem::recursive_directory_iterator&>(it)
-//                             .disable_recursion_pending();
-//                         continue;
-//                     }
-
-//                     if(m_Predicate(m_CurrentPath))
-//                         m_Paths.insert({m_CurrentPath, true});
-//                 }
-//             }
-//             catch(const std::exception& e)
-//             {
-//                 Frenchie::Core::Logger::instance()->critical(e.what());
-//                 m_Finished = true;
-//             }
-
-//             m_Finished = true;
-//         }
-//     );
-
-//     return true;
-// }
-
 // PathScannerView
 Dialogs::PathScannerDialog::PathScannerDialog(
-    const std::filesystem::path&                                _Path,
-    const std::function<bool(const std::filesystem::path&)>&    _Predicate,
-    std::function<void(std::map<std::filesystem::path, bool>&)> _OnFinished,
-    const std::string&                                          _Name,
-    size_t                                                      _MaxSearchDepth) : 
+    const std::filesystem::path&                                       _Path,
+    const std::function<bool(const std::filesystem::path&)>&           _Predicate,
+    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished,
+    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled,
+    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed,
+    const std::string&                                                 _Name,
+    size_t                                                             _MaxSearchDepth) :
     Dialog(_Name, 512.f, 128.f),
     m_Path(_Path),
     m_Predicate(_Predicate),
     m_OnFinished(_OnFinished),
+    m_OnCanceled(_OnCanceled),
+    m_OnFailed(_OnFailed),
     m_MaxSearchDepth(_MaxSearchDepth){}
 
-Dialogs::PathScannerDialog::~PathScannerDialog(){}
+Dialogs::PathScannerDialog::~PathScannerDialog()
+{
+    m_Canceled = true; // cancel process when destroyed
+}
 
 bool Dialogs::PathScannerDialog::awake()
 {
-    m_Task = std::make_shared<Task>(
-        [this](Task* _Task)
+    Frenchie::Core::ThreadPool::instance()->enqueue(
+        [this]()
         {
             try
             {
                 for(auto it = std::filesystem::recursive_directory_iterator(m_Path, std::filesystem::directory_options::skip_permission_denied); 
                     it != std::filesystem::recursive_directory_iterator(); it++)
                 {
-                    while (_Task->paused())
+                    // cancel task
+                    if(m_Canceled) 
+                        return;
+
+                    // pause task
+                    while(m_Paused)
                     {
-                        if(_Task->canceled()) 
+                        // cancel task during pause state
+                        if(m_Canceled) 
                             return;
                     }
-
-                    if(_Task->canceled()) 
-                        return;
 
                     m_CurrentPath = it->path();
 
@@ -1170,23 +1084,26 @@ bool Dialogs::PathScannerDialog::awake()
                     if(m_Predicate(m_CurrentPath))
                         m_Paths.insert({m_CurrentPath, true});
                 }
+
+                // finish task
+                m_Finished = true;
             }
             catch(const std::exception& e)
             {
                 Frenchie::Core::Logger::instance()->critical(e.what());
-                _Task->cancel();
+                
+                // fail task
+                m_Failed = true;
             }
-
-            _Task->finish();
         }
     );
 
-    return m_Task != nullptr;
+    return true;
 }
 
 void Dialogs::PathScannerDialog::frame_update()
 {
-    if(m_Task == nullptr || m_Task->canceled()) 
+    if(m_Canceled || m_Failed) 
     {
         close();
         return;
@@ -1197,12 +1114,6 @@ void Dialogs::PathScannerDialog::frame_update()
 
 void Dialogs::PathScannerDialog::draw_content()
 {
-    // show currently processing path
-    if(!m_Task->finished()) 
-        ImGui::TextWrapped("Scanning %s", Frenchie::Core::String::as_utf8(m_CurrentPath.wstring()).c_str());
-    else 
-        ImGui::TextWrapped("Finished...");
-
     // show result
     ImGui::BeginChild("Entries");
     {
@@ -1233,33 +1144,62 @@ void Dialogs::PathScannerDialog::draw_content()
 
 void Dialogs::PathScannerDialog::draw_buttons()
 {
+    if(ImGui::Button("Pause")) 
+    {
+        m_Paused   = true;
+        m_Finished = true;
+    }
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("Resume")) 
+    {
+        m_Paused   = false;
+        m_Finished = false;
+    }
+
+    ImGui::SameLine();
+
     if(ImGui::Button("Cancel")) 
     {
-        m_Task->cancel();
+        m_Canceled = true;
+        m_Finished = false;
         close();
     }
 
     ImGui::SameLine();
 
-    if(ImGui::Button("Pause")) 
-        m_Task->pause();
-
-    ImGui::SameLine();
-
-    if(ImGui::Button("Continue")) 
-        m_Task->resume();
-
-    if(m_Task->finished() || m_Task->paused())
+    if(m_Finished)
     {
         ImGui::SameLine();
 
         if(ImGui::Button("Ok")) 
             close();
     }
+
+    ImGui::SameLine();
+
+    // show currently processing path
+    if(m_Finished)
+        ImGui::TextWrapped("Finished...");
+    else 
+        ImGui::TextWrapped("Scanning %s", Frenchie::Core::String::as_utf8(m_CurrentPath.wstring()).c_str());
 }
 
 void Dialogs::PathScannerDialog::finish()
 {
-    if(m_OnFinished != nullptr)
+    if(m_Failed && m_OnFailed != nullptr)
+    {
+        m_OnFailed(m_Paths);
+        return;
+    }
+    
+    if(m_Canceled && m_OnCanceled != nullptr)
+    {
+        m_OnCanceled(m_Paths);
+        return;
+    }
+
+    if(m_Finished && m_OnFinished != nullptr)
         m_OnFinished(m_Paths);
 }
