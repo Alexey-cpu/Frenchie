@@ -1,5 +1,7 @@
 #pragma once
 
+#include <FrenchieCoreThreadPool.hpp>
+
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 
@@ -12,35 +14,31 @@ namespace Frenchie
     {
         namespace Editor
         {
-            // Loader
-            class LoaderModel
-            {
-            public:
-                LoaderModel();
-                virtual ~LoaderModel();
-                
-                // virtual API
-                virtual bool  awake()   = 0;
-                virtual float execute() = 0;
-                virtual void  finish()  = 0;
-            };
-
-            class LoaderView : public Dialog
+            class AsyncLoaderView : public Dialog
             {
             public:
 
-                LoaderView(
-                    std::shared_ptr<LoaderModel> _Model, 
-                    const std::string&           _Name = STRINGIFY(Frenchie::Application::Editor::LoaderView));
-                virtual ~LoaderView();
+                AsyncLoaderView(
+                    const std::function<void(AsyncLoaderView*)>& _LoadFunction,
+                    const std::function<void()>&            _OnFinished,
+                    const std::string&                      _Name = STRINGIFY(Frenchie::Application::Editor::AsyncLoaderView));
+                virtual ~AsyncLoaderView();
                 
+                // setters
+                void set_progress(const float&);
+
+                // Dialog
                 virtual bool awake() override;
                 virtual void finish() override;
+                virtual void frame_update() override;
                 virtual void draw_content() override;
                 virtual void draw_buttons() override;
 
             protected:
-                std::shared_ptr<LoaderModel> m_Model = nullptr;
+                std::function<void(AsyncLoaderView*)>      m_LoadFunction = nullptr;
+                std::function<void()>                 m_OnFinished   = nullptr;
+                std::shared_ptr<Frenchie::Core::Task> m_Task         = nullptr;
+                float                                 m_Progress     = 0.f;
             };
         }
     }

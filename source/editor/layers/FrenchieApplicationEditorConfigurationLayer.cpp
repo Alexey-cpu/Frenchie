@@ -24,101 +24,6 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 using namespace Frenchie::Application::Editor::FileSystem;
 
-namespace Frenchie
-{
-    namespace Application
-    {
-        namespace Editor
-        {
-            class FontsLoaderModel : public LoaderModel
-            {
-            public:
-                
-                FontsLoaderModel(
-                    const std::set<std::filesystem::path>& _Fonts,
-                    const std::string&                     _Font) :
-                    m_Fonts(_Fonts),
-                    m_Font(_Font),
-                    m_Iterator(m_Fonts.begin())
-                    {}
-                
-                virtual ~FontsLoaderModel(){}
-
-                virtual bool awake() override
-                {
-                    if(m_Fonts.empty()) 
-                        return false;
-
-                    // cache fonts that need to be removed
-                    for(ImFont* font : ImGui::GetIO().Fonts->Fonts)
-                        m_Cache.push_back(font);
-
-                    return true;
-                }
-
-                virtual float execute() override
-                {
-                    if(m_Iterator == m_Fonts.end()) 
-                        return 1.f;
-
-                    try
-                    {
-                        // retrive ImGui IO
-                        auto& io = ImGui::GetIO();
-
-                        // load font
-                        io.Fonts->AddFontFromFileTTF(
-                            Frenchie::Core::String::as_utf8(*m_Iterator).c_str(),
-                            ImGui::GetStyle().FontSizeBase,
-                            nullptr,
-                            io.Fonts->GetGlyphRangesCyrillic());
-
-                        // next
-                        m_Iterator++;
-                    }
-                    catch(const std::exception& e)
-                    {
-                        Frenchie::Core::Logger::instance()->critical(e.what());
-                    }
-
-                    return 1.f - (float)(++m_Progress) / (float)m_Fonts.size();
-                }
-
-                virtual void finish() override
-                {
-                    // remove old fonts
-                    for(size_t i = 0; i < m_Cache.size(); i++)
-                        ImGui::GetIO().Fonts->RemoveFont(m_Cache[i]);
-
-                    // apply new font
-                    for (ImFont* font : ImGui::GetIO().Fonts->Fonts)
-                    {
-                        font->Scale = 1.f;
-
-                        if (std::string(font->GetDebugName()) == m_Font)
-                        {
-                            ImGui::GetIO().FontDefault = font;
-                            break;
-                        }
-                    }
-
-                    // build fonts
-                    ImGui::GetIO().Fonts->Build();
-
-                    // reload app
-                    Frenchie::Application::Application::instance()->reload();
-                }
-
-            protected:
-                std::set<std::filesystem::path>           m_Fonts    = std::set<std::filesystem::path>();
-                std::string                               m_Font     = std::string();
-                std::set<std::filesystem::path>::iterator m_Iterator = std::set<std::filesystem::path>::iterator();
-                size_t                                    m_Progress = 0;
-                std::vector<ImFont*>                      m_Cache    = std::vector<ImFont*>();
-            };
-        }
-    }
-}
 
 // Config
 Config::Config() : 
@@ -133,27 +38,25 @@ void Config::scan_fonts(const std::filesystem::path& _Path)
         ->push<CallbackCommand>(
             [this, _Path]()
             {
-                Frenchie::Application::Application::instance()->push<Dialogs::ScanPathsDialog>(
-                    std::make_shared<Dialogs::ScanPathsDialogModel>(
-                        _Path,
-                        [](const std::filesystem::path& _Entry)->bool
-                        {
-                            return !std::filesystem::is_directory(_Entry) && 
-                                Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".ttf";
-                        },
-                        [this](Dialogs::ScanPathsDialogModel* _Model)
-                        {
-                            std::set<std::filesystem::path> paths;
+                Frenchie::Application::Application::instance()->push<Dialogs::PathScannerDialog>(
+                    _Path,
+                    [](const std::filesystem::path& _Entry)->bool
+                    {
+                        return !std::filesystem::is_directory(_Entry) && 
+                            Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".ttf";
+                    },
+                    [this](std::map<std::filesystem::path, bool>& _Paths)
+                    {
+                        std::set<std::filesystem::path> paths;
 
-                            for(auto&& entry : _Model->get_paths())
-                            {
-                                if(entry.second) 
-                                    paths.insert(entry.first);
-                            }
-
-                            load_fonts(paths, std::string());
+                        for(auto&& entry : _Paths)
+                        {
+                            if(entry.second) 
+                                paths.insert(entry.first);
                         }
-                    )
+
+                        load_fonts(paths, std::string());
+                    }
                 );
             }
         );  
@@ -166,18 +69,75 @@ void Config::load_fonts(
     if(_Fonts.empty()) 
         return;
 
-    // setup new fonts location
-    m_Fonts = _Fonts;
-
     // load fonts
     Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()
         ->push<CallbackCommand>(
-            [this, _Font]()
+            [this, _Font, _Fonts]()
             {
-                Frenchie::Application::Application::instance()->push<LoaderView>(
-                    std::shared_ptr<LoaderModel>(
-                        new FontsLoaderModel(m_Fonts, _Font))
-                    );
+                // remove old fonts
+                auto fonts = ImGui::GetIO().Fonts->Fonts;
+
+                for(ImFont* font : fonts)
+                {
+                    if(font != ImGui::GetIO().FontDefault)
+                        ImGui::GetIO().Fonts->RemoveFont(font);
+                }
+
+                Frenchie::Application::Application::instance()->push<AsyncLoaderView>(
+                    [_Fonts](AsyncLoaderView* _Loader)
+                    {
+                        std::set<std::filesystem::path> fonts;
+                        auto total   = _Fonts.size();
+                        auto current = 0;
+
+                        for(auto&& path : _Fonts)
+                        {
+                            if(!std::filesystem::exists(path) || 
+                                fonts.find(path) != fonts.end())
+                            {
+                                _Loader->set_progress((float)(++current) / (float)total);
+                                continue;
+                            }
+
+                            // retrive ImGui IO
+                            auto& io = ImGui::GetIO();
+
+                            // load font
+                            io.Fonts->AddFontFromFileTTF(
+                                Frenchie::Core::String::as_utf8(path).c_str(),
+                                ImGui::GetStyle().FontSizeBase,
+                                nullptr,
+                                io.Fonts->GetGlyphRangesCyrillic());
+
+                            _Loader->set_progress((float)(++current) / (float)total);
+
+                            fonts.insert(path);
+                        }
+                    },
+                    [this, _Font, _Fonts]()
+                    {
+                        // apply new font
+                        for (ImFont* font : ImGui::GetIO().Fonts->Fonts)
+                        {
+                            font->Scale = 1.f;
+
+                            if (std::string(font->GetDebugName()) == _Font)
+                            {
+                                ImGui::GetIO().FontDefault = font;
+                                break;
+                            }
+                        }
+
+                        // build fonts
+                        ImGui::GetIO().Fonts->Build();
+
+                        // reload app
+                        Frenchie::Application::Application::instance()->reload();
+
+                        // setup new fonts locations
+                        m_Fonts = _Fonts;
+                    }
+                );
             }
         );
 }
