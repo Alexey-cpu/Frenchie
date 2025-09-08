@@ -17,7 +17,7 @@ using namespace Frenchie::Application::Editor::Configuration;
 
 // Preferences
 Explorer::Explorer() : 
-    Layer(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_NAME_LOCALIZATION_KEY")){}
+    Layer(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_EXPLORER_NAME_LOCALIZATION_KEY")){}
 
 Explorer::~Explorer(){}
 
@@ -75,7 +75,8 @@ void Explorer::frame_update()
                 {
                     bool shown = !layer->is_hidden();
 
-                    if(ImGui::Selectable(layer->get_name().c_str(), &shown))
+                    if(ImGui::Selectable(
+                        fmt::format("{}##{}", layer->get_name(), layer->get_uuid().to_string()).c_str(), &shown))
                     {
                         for(auto&& layer : m_Topics) 
                             layer->hide();

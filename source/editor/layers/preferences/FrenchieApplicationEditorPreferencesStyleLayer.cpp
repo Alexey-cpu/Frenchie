@@ -27,7 +27,7 @@ using namespace Frenchie::Application::Editor::Configuration;
 // Style
 Style::Style() : 
     Frenchie::Application::Layer::Registry<Style>(
-        Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_NAME_LOCALIZATION_KEY")){}
+        Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_TOPIC_STYLE_NAME_LOCALIZATION_KEY")){}
 
 Style::~Style(){}
 
@@ -47,6 +47,11 @@ void Style::frame_update()
     ImGui::BeginChild(get_name().c_str());
     draw_style_editor();
     ImGui::EndChild();
+}
+
+bool Style::allows_multiple_instances() const
+{
+    return false;
 }
 
 void Style::draw_style_editor()

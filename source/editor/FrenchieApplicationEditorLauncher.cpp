@@ -192,15 +192,9 @@ std::filesystem::path Launcher::get_app_state_directory()
         Launcher::get_app_exe_directory().wstring().append(L"/appData/state")).make_preferred();
 }
 
-std::filesystem::path Launcher::get_app_console_directory()
+std::filesystem::path Launcher::get_app_translation_files_directory()
 {
-    return std::filesystem::path(
-        Launcher::get_app_exe_directory().wstring().append(L"/appData/console")).make_preferred();
-}
-
-std::filesystem::path Launcher::get_app_console_log_file_path()
-{
-    return Launcher::get_app_console_directory().wstring().append(L"/console.txt");
+    return Launcher::get_app_exe_directory().wstring().append(L"/appData/translations");
 }
 
 int Launcher::execute()
@@ -211,10 +205,10 @@ int Launcher::execute()
     application->set_maximized(true);
 
     // create directories for logs and application state
-    std::filesystem::path appExeDirectory     = Launcher::get_app_exe_directory();
-    std::filesystem::path appLogDirectory     = Launcher::get_app_log_directory();
-    std::filesystem::path appStateDirectory   = Launcher::get_app_state_directory();
-    std::filesystem::path appConsoleDirectory = Launcher::get_app_console_directory();
+    std::filesystem::path appExeDirectory              = Launcher::get_app_exe_directory();
+    std::filesystem::path appLogDirectory              = Launcher::get_app_log_directory();
+    std::filesystem::path appStateDirectory            = Launcher::get_app_state_directory();
+    std::filesystem::path appTranslationFilesDirectory = Launcher::get_app_translation_files_directory();
 
     if(std::filesystem::exists(appExeDirectory))
     {
@@ -244,12 +238,12 @@ int Launcher::execute()
             }
         }
 
-        // create app console directory
-        if(!std::filesystem::exists(appConsoleDirectory))
+        // create app translation files directory
+        if(!std::filesystem::exists(appTranslationFilesDirectory))
         {
             try
             {
-                std::filesystem::create_directory(appConsoleDirectory);
+                std::filesystem::create_directory(appTranslationFilesDirectory);
             }
             catch(const std::exception& e)
             {
@@ -313,20 +307,20 @@ int Launcher::execute()
     application->push<Frenchie::Application::Editor::MainMenu::Instance>();
 
     // configuration
-    application->push<Configuration::Fonts>();
-    application->push<Configuration::Style>();
-    application->push<Configuration::Localizator>();
+    application->find_or_push<Configuration::Fonts>();
+    application->find_or_push<Configuration::Style>();
+    application->find_or_push<Configuration::Localizator>()->set_translation_files_path(appTranslationFilesDirectory);
 
-    application->push<Terminal>();
-    application->push<Console>();
+    application->find_or_push<Terminal>();
+    application->find_or_push<Console>();
 
-    application->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
+    application->find_or_push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Frenchie::Core::String::as_utf8(appExeDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .ini directory: {}", Frenchie::Core::String::as_utf8(appLogDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appStateDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appConsoleDirectory.wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appTranslationFilesDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App log file path: {}", logFileName));
 
     // execute app and wait until it finishes it's job
