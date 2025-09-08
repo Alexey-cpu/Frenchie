@@ -22,12 +22,13 @@ namespace Frenchie
                     Style();
                     virtual ~Style();
 
-                    // Frenchie::Application::Editor::Preferences::Topic::Registry<Style>
+                    // Frenchie::Application::Layer::Registry<Style>
                     static std::string factory_id();
 
-                    // Frenchie::Application::Editor::Preferences::Topic
+                    // Frenchie::Application::Layer
                     virtual bool awake() override;
                     virtual void frame_update() override;
+                    virtual bool allows_multiple_instances() const override;
 
                 protected:
 

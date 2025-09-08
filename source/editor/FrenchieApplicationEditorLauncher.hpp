@@ -16,8 +16,7 @@ namespace Frenchie
                 static std::filesystem::path get_app_exe_directory();
                 static std::filesystem::path get_app_log_directory();
                 static std::filesystem::path get_app_state_directory();
-                static std::filesystem::path get_app_console_directory();
-                static std::filesystem::path get_app_console_log_file_path();
+                static std::filesystem::path get_app_translation_files_directory();
 
                 // API
                 static int execute();

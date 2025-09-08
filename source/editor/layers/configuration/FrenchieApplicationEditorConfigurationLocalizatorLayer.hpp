@@ -19,6 +19,15 @@ namespace Frenchie
                     Localizator();
                     virtual ~Localizator();
 
+                    // getters
+                    std::map<std::string, std::string>& get_translations() const;
+                    std::set<std::string>& get_supported_languages() const;
+                    std::string get_current_language() const;
+
+                    // setters
+                    void set_translation_files_path(const std::filesystem::path& _Path);
+                    void set_language(const std::string&);
+
                     // Frenchie::Application::Layer
                     virtual bool allows_multiple_instances() const override;
 
@@ -28,23 +37,15 @@ namespace Frenchie
 
                     // static API
                     static std::string translation(const std::string&);
-                    static void setup_translation_files_location(const std::filesystem::path&);
-                    static void setup_language(const std::string&);
 
                 protected:
 
-                    mutable std::filesystem::path m_Path = 
-                        std::filesystem::current_path();
+                    mutable std::filesystem::path              m_Path               = std::filesystem::path();
+                    mutable std::map<std::string, std::string> m_Translations       = std::map<std::string, std::string>();
+                    mutable std::string                        m_CurrentLanguage    = "English";
+                    mutable std::set<std::string>              m_SupportedLanguages = {"Russian","English"};
 
-                    mutable std::map<
-                        std::string, 
-                        std::string> m_Translations;
-
-                    mutable std::map<std::string, bool> m_Languages = 
-                    {
-                        {"Russian", false},
-                        {"English", true}
-                    };
+                    std::filesystem::path translation_file_path();
                 };
             }
         }
