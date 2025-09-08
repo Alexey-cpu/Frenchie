@@ -2,8 +2,9 @@
 
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorCommandsLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -21,10 +22,12 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 using namespace Frenchie::Application::Editor::Preferences;
+using namespace Frenchie::Application::Editor::Configuration;
 
 // Style
 Style::Style() : 
-    Frenchie::Application::Layer::Registry<Style>(STRINGIFY(Frenchie::Application::Editor::Preferences::Style)){}
+    Frenchie::Application::Layer::Registry<Style>(
+        Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_NAME_LOCALIZATION_KEY")){}
 
 Style::~Style(){}
 
@@ -42,34 +45,31 @@ bool Style::awake()
 void Style::frame_update() 
 {
     ImGui::BeginChild(get_name().c_str());
-    {
-        draw_style_editor();
-    }
-
+    draw_style_editor();
     ImGui::EndChild();
 }
 
 void Style::draw_style_editor()
 {
-    if (ImGui::TreeNode("Geometry"))
+    if (ImGui::TreeNode(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_SETTINGS_LOCALIZATION_KEY").c_str()))
     {
         draw_geometry_settings();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Colors"))
+    if (ImGui::TreeNode(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_COLORS_COLORS_SETTINGS_LOCALIZATION_KEY").c_str()))
     {
         draw_color_settings();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Fonts"))
+    if (ImGui::TreeNode(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_FONTS_SETTINGS_LOCALIZATION_KEY").c_str()))
     {
         draw_fonts_settings();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Rendering"))
+    if (ImGui::TreeNode(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_SETTINGS_LOCALIZATION_KEY").c_str()))
     {
         draw_rendering_settings();
         ImGui::TreePop();
@@ -80,7 +80,7 @@ void Style::draw_geometry_settings()
 {
     auto& style = ImGui::GetStyle();
 
-    ImGui::SeparatorText("Main");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_MAIN_LOCALIZATION_KEY").c_str());
     {
         ImGui::SliderFloat2("WindowPadding", (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2("FramePadding", (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
@@ -92,7 +92,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
     }
 
-    ImGui::SeparatorText("Borders");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_BORDERS_LOCALIZATION_KEY").c_str());
     {
         {
             bool checked = style.WindowBorderSize > 0.0;
@@ -131,7 +131,7 @@ void Style::draw_geometry_settings()
         }
     }
 
-    ImGui::SeparatorText("Rounding");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_ROUNDING_LOCALIZATION_KEY").c_str());
     {
         ImGui::SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 12.0f, "%.0f");
         ImGui::SliderFloat("ChildRounding", &style.ChildRounding, 0.0f, 12.0f, "%.0f");
@@ -142,7 +142,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat("TabRounding", &style.TabRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    ImGui::SeparatorText("Tabs");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_TABS_LOCALIZATION_KEY").c_str());
     {
         ImGui::SliderFloat("TabBarOverlineSize", &style.TabBarOverlineSize, 0.0f, 3.0f, "%.0f");
         ImGui::DragFloat("TabMinWidthBase", &style.TabMinWidthBase, 0.5f, 1.0f, 500.0f, "%.0f");
@@ -161,14 +161,14 @@ void Style::draw_geometry_settings()
         }
     }
 
-    ImGui::SeparatorText("Tables");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_TABLES_LOCALIZATION_KEY").c_str());
     {
         ImGui::SliderFloat2("CellPadding", (float*)&style.CellPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2("TableAngledHeadersTextAlign", (float*)&style.TableAngledHeadersTextAlign, 0.0f, 1.0f, "%.2f");
         ImGui::SliderAngle("TableAngledHeadersAngle", &style.TableAngledHeadersAngle, -50.0f, +50.0f);
     }
 
-    ImGui::SeparatorText("Trees");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_TREES_LOCALIZATION_KEY").c_str());
     {
         if (ImGui::BeginCombo("TreeLinesFlags", GetTreeLinesFlagsName(style.TreeLinesFlags)))
         {
@@ -191,7 +191,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat("TreeLinesRounding", &style.TreeLinesRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    ImGui::SeparatorText("Docking");
+    ImGui::SeparatorText(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_GEOMETRY_DOCKING_LOCALIZATION_KEY").c_str());
     {
         ImGui::SliderFloat("DockingSeparatorSize", &style.DockingSeparatorSize, 0.0f, 12.0f, "%.0f");
     }
@@ -204,18 +204,18 @@ void Style::draw_color_settings()
     if (ImGui::ShowStyleSelector("Colors##Selector")){}
 
     static ImGuiTextFilter filter;
-    filter.Draw("Filter colors", ImGui::GetFontSize() * 16);
+    filter.Draw(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_FILTER_LOCALIZATION_KEY").c_str(), ImGui::GetFontSize() * 16);
 
     static ImGuiColorEditFlags alpha_flags = 0;
-    if (ImGui::RadioButton("Opaque", alpha_flags == ImGuiColorEditFlags_AlphaOpaque))
+    if (ImGui::RadioButton(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_OPAQUE_LOCALIZATION_KEY").c_str(), alpha_flags == ImGuiColorEditFlags_AlphaOpaque))
         alpha_flags = ImGuiColorEditFlags_AlphaOpaque;
     ImGui::SameLine();
     
-    if (ImGui::RadioButton("Alpha", alpha_flags == ImGuiColorEditFlags_None))
+    if (ImGui::RadioButton(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_ALPHA_LOCALIZATION_KEY").c_str(), alpha_flags == ImGuiColorEditFlags_None))
         alpha_flags = ImGuiColorEditFlags_None;
     ImGui::SameLine();
     
-    if (ImGui::RadioButton("Both", alpha_flags == ImGuiColorEditFlags_AlphaPreviewHalf))
+    if (ImGui::RadioButton(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_BOTH_LOCALIZATION_KEY").c_str(), alpha_flags == ImGuiColorEditFlags_AlphaPreviewHalf))
         alpha_flags = ImGuiColorEditFlags_AlphaPreviewHalf;
 
     ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 10), ImVec2(FLT_MAX, FLT_MAX));
@@ -223,9 +223,14 @@ void Style::draw_color_settings()
     ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
     for (int i = 0; i < ImGuiCol_COUNT; i++)
     {
-        const char* name = ImGui::GetStyleColorName(i);
+        //const char* name = ImGui::GetStyleColorName(i);
+
+        std::string name = 
+            fmt::format(
+                Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_{}_LOCALIZATION_KEY").c_str(), 
+                Frenchie::Core::String::to_upper(ImGui::GetStyleColorName(i)));
         
-        if (!filter.PassFilter(name))
+        if (!filter.PassFilter(name.c_str()))
             continue;
         ImGui::PushID(i);
         
@@ -236,17 +241,17 @@ void Style::draw_color_settings()
         {
             ImGui::SameLine(0.0f, style.ItemInnerSpacing.x); 
             
-            if(ImGui::Button("Save")) 
+            if(ImGui::Button(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_COLOR_SAVE_LOCALIZATION_KEY").c_str())) 
                 m_ReferenceStyle.Colors[i] = style.Colors[i];
             
             ImGui::SameLine(0.0f, style.ItemInnerSpacing.x); 
             
-            if (ImGui::Button("Revert")) 
+            if (ImGui::Button(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_COLORS_COLOR_REVERT_LOCALIZATION_KEY").c_str())) 
                 style.Colors[i] = m_ReferenceStyle.Colors[i];
         }
 
         ImGui::SameLine(0.0f, style.ItemInnerSpacing.x);
-        ImGui::TextUnformatted(name);
+        ImGui::TextUnformatted(name.c_str());
         ImGui::PopID();
     }
     ImGui::PopItemWidth();
@@ -275,10 +280,10 @@ void Style::draw_fonts_settings()
 
     ImGui::SameLine();
 
-    if(ImGui::Button("Browse"))
+    if(ImGui::Button(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_FONTS_BROWSE_BUTTON_LOCALIZATION_KEY").c_str()))
     {
         Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::ExplorerDialog>(
-            "Select directory where to look for the fonts .ttf files...",
+            Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_FONTS_SEARCH_DIALOG_TITLE_LOCALIZATION_KEY").c_str(),
             [this]()
             {
                 Reference<FileSystem::Dialogs::ExplorerDialog> dialog = 
@@ -291,7 +296,7 @@ void Style::draw_fonts_settings()
                     Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push<CallbackCommand>(
                         [this, path]()
                         {
-                            Frenchie::Application::Application::instance()->find_or_push<Config>()->scan_fonts(path);
+                            Frenchie::Application::Application::instance()->find_or_push<Configuration::Fonts>()->scan_fonts(path);
                         }
                     );
                 }
@@ -300,7 +305,7 @@ void Style::draw_fonts_settings()
     }
 
     // font size
-    if (ImGui::DragFloat("Size", &ImGui::GetStyle().FontSizeBase, 0.20f, 5.0f, 100.0f, "%.0f"))
+    if (ImGui::DragFloat(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_FONTS_SIZE_LOCALIZATION_KEY").c_str(), &ImGui::GetStyle().FontSizeBase, 0.20f, 5.0f, 100.0f, "%.0f"))
         ImGui::GetStyle()._NextFrameFontSizeBase = ImGui::GetStyle().FontSizeBase;
 }
 
@@ -308,22 +313,19 @@ void Style::draw_rendering_settings()
 {
     auto& style = ImGui::GetStyle();
 
-    ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
-    ImGui::SameLine();
-
-    ImGui::Checkbox("Anti-aliased lines use texture", &style.AntiAliasedLinesUseTex);
-    ImGui::SameLine();
-
-    ImGui::Checkbox("Anti-aliased fill", &style.AntiAliasedFill);
+    ImGui::Checkbox(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_ANTIALIASED_LINES_LOCALIZATION_KEY").c_str(), &style.AntiAliasedLines);
+    ImGui::Checkbox(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_ANTIALIASED_LINES_USE_TEXTURE_LOCALIZATION_KEY").c_str(), &style.AntiAliasedLinesUseTex);
+    ImGui::Checkbox(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_ANTIALIASED_FILL_LOCALIZATION_KEY").c_str(), &style.AntiAliasedFill);
     ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
-    ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, 10.0f, "%.2f");
+    ImGui::DragFloat(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_CURVE_TESSELLATION_TOLERANCE_LOCALIZATION_KEY").c_str(), &style.CurveTessellationTol, 0.02f, 0.10f, 10.0f, "%.2f");
     if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
 
     // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-    ImGui::DragFloat("Circle Tessellation Max Error", &style.CircleTessellationMaxError , 0.005f, 0.10f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::DragFloat(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_CIRCLE_TESSELLATION_MAX_ERROR_LOCALIZATION_KEY").c_str(), &style.CircleTessellationMaxError , 0.005f, 0.10f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
     const bool show_samples = ImGui::IsItemActive();
     if (show_samples)
         ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
+
     if (show_samples && ImGui::BeginTooltip())
     {
         ImGui::TextUnformatted("(R = radius, N = approx number of segments)");
@@ -353,10 +355,8 @@ void Style::draw_rendering_settings()
         }
         ImGui::EndTooltip();
     }
-    ImGui::SameLine();
 
-    ImGui::DragFloat("Global Alpha", &style.Alpha, 0.005f, 0.20f, 1.0f, "%.2f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
-    ImGui::DragFloat("Disabled Alpha", &style.DisabledAlpha, 0.005f, 0.0f, 1.0f, "%.2f"); 
-    ImGui::SameLine();
+    ImGui::DragFloat(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_GLOBAL_ALPHA_LOCALIZATION_KEY").c_str(), &style.Alpha, 0.005f, 0.20f, 1.0f, "%.2f"); // Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets). But application code could have a toggle to switch between zero and non-zero.
+    ImGui::DragFloat(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_STYLE_RENDERING_DISABLED_ALPHA_LOCALIZATION_KEY").c_str(), &style.DisabledAlpha, 0.005f, 0.0f, 1.0f, "%.2f"); 
     ImGui::PopItemWidth();
 }

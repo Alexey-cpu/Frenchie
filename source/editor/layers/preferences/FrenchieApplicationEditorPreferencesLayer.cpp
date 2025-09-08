@@ -4,15 +4,21 @@
 #include <FrenchieCoreFactory.hpp>
 #include <FrenchieCoreHelpers.hpp>
 
+// Frenchie::Application
+#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
+
 // IMGUI
 #include <imgui.h>
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 using namespace Frenchie::Application::Editor::Preferences;
+using namespace Frenchie::Application::Editor::Configuration;
 
 // Preferences
-Explorer::Explorer() : Layer(STRINGIFY(Frenchie::Application::Editor::Preferences::Explorer)){}
+Explorer::Explorer() : 
+    Layer(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_NAME_LOCALIZATION_KEY")){}
+
 Explorer::~Explorer(){}
 
 bool Explorer::awake()

@@ -2,6 +2,7 @@
 
 // Application
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
+#include <FrenchieApplicationEditorAsyncProcessLayer.hpp>
 #include <FrenchieApplicationEditorInputText.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
@@ -16,6 +17,45 @@
 // STL
 #include <map>
 #include <future>
+
+namespace Frenchie
+{
+    namespace Application
+    {
+        namespace Editor
+        {
+            namespace Async
+            {
+                class FilesystemPathsSearchProcess : public Process
+                {
+                public:
+                    FilesystemPathsSearchProcess(
+                        const std::filesystem::path&                                       _Path,
+                        const std::function<bool(const std::filesystem::path&)>&           _Predicate,
+                        const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished     = nullptr,
+                        const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled     = nullptr,
+                        const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed       = nullptr,
+                        const std::string&                                                 _Name           = STRINGIFY(FilesystemPathsSearchProcess),
+                        size_t                                                             _MaxSearchDepth = 100);
+
+                    virtual ~FilesystemPathsSearchProcess();
+
+                    std::filesystem::path get_current_path() const;
+                    std::map<std::filesystem::path, bool> get_paths() const;
+
+                    virtual bool awake() override;
+
+                protected:
+                    mutable std::filesystem::path                                       m_Path           =  std::filesystem::current_path();
+                    mutable std::function<bool(const std::filesystem::path&)>           m_Predicate      = nullptr;
+                    mutable std::filesystem::path                                       m_CurrentPath    =  std::filesystem::current_path();
+                    mutable size_t                                                      m_MaxSearchDepth = 4;
+                    mutable std::map<std::filesystem::path, bool>                       m_Paths          = std::map<std::filesystem::path, bool>();
+                };
+            }
+        }
+    }
+}
 
 namespace Frenchie
 {
@@ -106,28 +146,15 @@ namespace Frenchie
                         virtual ~PathScannerDialog();
                         
                         virtual bool awake() override;
-                        virtual void finish() override;
                         virtual void frame_update() override;
                         virtual void draw_content() override;
                         virtual void draw_buttons() override;
+                        virtual void finish() override;
 
                     protected:
 
-                        // scanner
-                        std::filesystem::path                                       m_Path           =  std::filesystem::current_path();
-                        std::function<bool(const std::filesystem::path&)>           m_Predicate      = nullptr;
-                        std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFinished     = nullptr;
-                        std::function<void(std::map<std::filesystem::path, bool>&)> m_OnCanceled     = nullptr;
-                        std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFailed       = nullptr;
-                        std::filesystem::path                                       m_CurrentPath    =  std::filesystem::current_path();
-                        size_t                                                      m_MaxSearchDepth = 4;
-                        std::map<std::filesystem::path, bool>                       m_Paths          = std::map<std::filesystem::path, bool>();
-
-                        // task
-                        bool m_Paused   = false;
-                        bool m_Finished = false;
-                        bool m_Canceled = false;
-                        bool m_Failed   = false;
+                        std::function<void()>                                m_Launcher = nullptr;
+                        std::shared_ptr<Async::FilesystemPathsSearchProcess> m_Process  = nullptr;
                     };
                 }
             }

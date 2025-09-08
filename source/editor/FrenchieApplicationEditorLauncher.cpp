@@ -7,9 +7,13 @@
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
-#include <FrenchieApplicationEditorConfigurationLayer.hpp>
-
+#include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
 #include <FrenchieApplicationEditorCommandsLayer.hpp>
+
+// configuration
+#include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationStyleLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
 
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
@@ -142,6 +146,28 @@ namespace Frenchie
                     static std::string factory_id()
                     {
                         return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Preferences");
+                    }
+                };
+
+                class OpenDispatcherAction : 
+                    public Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>
+                {
+                public:
+
+                    OpenDispatcherAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>(_Sender){}
+                    virtual ~OpenDispatcherAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        Frenchie::Application::Application::instance()->push<Async::ProcessDispatcher>()->show();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Dispatcher");
                     }
                 };
             }
@@ -286,8 +312,10 @@ int Launcher::execute()
     // append basic layers
     application->push<Frenchie::Application::Editor::MainMenu::Instance>();
 
-    //application->push<Loader>();
-    application->push<Config>();
+    // configuration
+    application->push<Configuration::Fonts>();
+    application->push<Configuration::Style>();
+    application->push<Configuration::Localizator>();
 
     application->push<Terminal>();
     application->push<Console>();
