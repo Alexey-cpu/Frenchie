@@ -47,6 +47,8 @@ add_executable(
     # ImGUI
     tools/imgui/imconfig.h
     tools/imgui/imgui.h
+    tools/imgui/misc/cpp/imgui_stdlib.h
+    tools/imgui/misc/cpp/imgui_stdlib.cpp
     tools/imgui/imgui_internal.h
     tools/imgui/imgui.cpp
     tools/imgui/imgui_demo.cpp
@@ -82,11 +84,12 @@ target_include_directories(
     
     #GLAD
     "source/vendor/glad/include/"
+    "tools/glad/include/"
 
     #IMGUI
     "tools/imgui/"
     "tools/imgui/backends/"
-    "tools/glad/include/"
+    tools/imgui/misc/cpp/
     
     #RAPIDJSON
     "tools/rapidjson/include"
