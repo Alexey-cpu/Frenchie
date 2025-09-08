@@ -1,15 +1,25 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreISerializer.hpp>
+#include <FrenchieCoreSingleton.hpp>
 #include <FrenchieApplication.hpp>
 
+using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 
-Layer::Layer(const std::string& _Name) : m_Name(_Name){}
+Layer::Layer(const std::string& _Name) : 
+    m_Name(_Name), 
+    m_UUID(Singleton<UUID4Generator>::instance()->guid()){}
+
 Layer::~Layer(){}
 
 std::string Layer::get_name() const
 {
     return m_Name;
+}
+
+UUID4 Layer::get_uuid() const
+{
+    return m_UUID;
 }
 
 void Layer::set_name(const std::string& _Value)

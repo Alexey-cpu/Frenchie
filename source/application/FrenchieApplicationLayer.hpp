@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 
 #include <FrenchieCoreFactory.hpp>
+#include <FrenchieCoreUUID4Generator.hpp>
 
 namespace Frenchie
 {
@@ -24,6 +25,7 @@ namespace Frenchie
 
             // getters
             std::string get_name() const;
+            Frenchie::Core::UUID4 get_uuid() const;
 
             // setters
             void set_name(const std::string&);
@@ -44,9 +46,11 @@ namespace Frenchie
 
         protected:
 
-            std::string m_Name;
+            // info
+            std::string m_Name   = STRINGIFY(Layer);
             bool        m_Opened = true;
             bool        m_Shown  = true;
+            const Frenchie::Core::UUID4 m_UUID;
         };
 
         class IMouseCallbackHandler

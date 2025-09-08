@@ -222,6 +222,17 @@ bool Frenchie::Core::String::contains_substring(const std::string& _String, cons
     return !_Substring.empty() && !_String.empty() && iterator != _String.end();
 }
 
+bool Frenchie::Core::String::contains_symbol(const std::string& _Input, char _Symbol)
+{
+    for(size_t i = 0; i < _Input.size(); i++)
+    {
+        if( _Input[i] == _Symbol )
+            return true;
+    }
+
+    return false;
+}
+
 template<> float Frenchie::Core::String::from_string<float>(const std::string& _Input)
 {
     try

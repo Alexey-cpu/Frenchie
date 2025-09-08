@@ -210,6 +210,8 @@
 //     return 0;
 // }
 
+#include <FrenchieCoreUUID4Generator.hpp>
+
 int main(int, char**)
 {
     return Frenchie::Application::Editor::Launcher::execute();

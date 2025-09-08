@@ -67,5 +67,6 @@ void Pool::enqueue(const std::function<void()>& _Function)
             m_Tasks.emplace(std::move(_Function));
     }
     
+    // notify a single thread to start executing task
     m_Wait.notify_one();
 }
