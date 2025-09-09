@@ -194,7 +194,7 @@ namespace Frenchie
 }
 
 Fonts::Fonts() : 
-    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_FONTS")){}
+    Layer(STRINGIFY(Fonts)){}
 
 Fonts::~Fonts(){}
 
