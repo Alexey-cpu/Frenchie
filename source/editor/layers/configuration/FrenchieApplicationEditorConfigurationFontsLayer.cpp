@@ -3,7 +3,7 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorCommandsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 // Frenchie::Core
 #include <FrenchieCoreHelpers.hpp>
@@ -194,7 +194,7 @@ namespace Frenchie
 }
 
 Fonts::Fonts() : 
-    Layer(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_FONTS_NAME_LOCALIZATION_KEY")){}
+    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_FONTS")){}
 
 Fonts::~Fonts(){}
 
@@ -315,7 +315,7 @@ void Fonts::load_fonts(
                     {
                         m_Path = _Fonts;
                     },
-                    Localizator::translation("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_FONTS_LOADING_FONTS_LOCALIZATION_KEY").c_str());
+                    Translator::translate("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_FONTS_LOADING").c_str());
             }
         );
 }

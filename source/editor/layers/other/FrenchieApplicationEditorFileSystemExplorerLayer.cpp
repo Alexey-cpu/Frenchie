@@ -57,7 +57,10 @@ namespace Frenchie
                         // Command::TRegistryType
                         static std::string factory_id()
                         {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "create::folder");
+                            return fmt::format(
+                                "{}::{}", 
+                                STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
+                                "create::folder");
                         }
 
                     };
@@ -79,7 +82,10 @@ namespace Frenchie
                         // Command::TRegistryType
                         static std::string factory_id()
                         {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), "paste");
+                            return fmt::format(
+                                "{}::{}", 
+                                STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
+                                "paste");
                         }
                     };
                 }
@@ -116,7 +122,10 @@ namespace Frenchie
                         // Command::TRegistryType
                         static std::string factory_id()
                         {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "copy");
+                            return fmt::format(
+                                "{}::{}", 
+                                STRINGIFY(Frenchie::Application::Editor::FileMenu), 
+                                "copy");
                         }
                     };
 
@@ -368,6 +377,11 @@ Explorer::~Explorer(){}
 std::filesystem::path Explorer::get_path() const
 {
     return m_Path;
+}
+
+std::filesystem::path Explorer::get_file() const
+{
+    return fmt::format("{}/{}", get_path().string(), std::string(m_CurrentFile.get_buffer()));
 }
 
 std::set<std::filesystem::path> Explorer::get_selected_paths() const

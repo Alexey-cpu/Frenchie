@@ -3,7 +3,7 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorCommandsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 // Frenchie::Core
 #include <FrenchieCoreHelpers.hpp>
@@ -28,7 +28,7 @@ using namespace Frenchie::Application::Editor::FileSystem;
 using namespace Frenchie::Application::Editor::Configuration;
 
 Style::Style() : 
-    Layer(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_STYLE_NAME_LOCALIZATION_KEY")){}
+    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_STYLE")){}
 Style::~Style(){}
 
 // Frenchie::Application::Layer
