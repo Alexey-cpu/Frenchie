@@ -8,12 +8,17 @@ using namespace Frenchie::Application::Editor::Async;
 Process::Process(
     const std::function<void()>& _OnFinished, 
     const std::function<void()>& _OnCanceled, 
-    const std::function<void()>& _OnFailed) :
+    const std::function<void()>& _OnFailed,
+    const std::string&           _Name) :
+    Layer(_Name),
     m_OnFinished(_OnFinished), 
     m_OnCanceled(_OnCanceled), 
     m_OnFailed(_OnFailed){}
 
-Process::~Process(){}
+Process::~Process()
+{
+    cancel(); // cancel on destroy
+}
 
 void Process::pause()
 {
@@ -64,9 +69,9 @@ void Process::finish()
     if(finished())
         invokeOnFinished();
     else if(failed())
-        invokeOnCanceled();
-    else if(canceled()) 
         invokeOnFailed();
+    else if(canceled()) 
+        invokeOnCanceled();
 }
 
 void Process::invokeOnFinished()

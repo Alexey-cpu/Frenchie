@@ -5,7 +5,7 @@
 #include <FrenchieCoreHelpers.hpp>
 
 // Frenchie::Application
-#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -17,7 +17,7 @@ using namespace Frenchie::Application::Editor::Configuration;
 
 // Preferences
 Explorer::Explorer() : 
-    Layer(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_EXPLORER_NAME_LOCALIZATION_KEY")){}
+    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_PREFERENCES")){}
 
 Explorer::~Explorer(){}
 

@@ -13,7 +13,9 @@
 // configuration
 #include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationStyleLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
+
+#include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
 
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
@@ -309,10 +311,12 @@ int Launcher::execute()
     // configuration
     application->find_or_push<Configuration::Fonts>();
     application->find_or_push<Configuration::Style>();
-    application->find_or_push<Configuration::Localizator>()->set_translation_files_path(appTranslationFilesDirectory);
+    application->find_or_push<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
 
     application->find_or_push<Terminal>();
     application->find_or_push<Console>();
+
+    application->find_or_push<Async::ProcessDispatcher>();
 
     application->find_or_push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 

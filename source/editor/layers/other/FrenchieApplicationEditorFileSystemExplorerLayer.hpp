@@ -46,11 +46,11 @@ namespace Frenchie
                     virtual bool awake() override;
 
                 protected:
-                    mutable std::filesystem::path                                       m_Path           =  std::filesystem::current_path();
-                    mutable std::function<bool(const std::filesystem::path&)>           m_Predicate      = nullptr;
-                    mutable std::filesystem::path                                       m_CurrentPath    =  std::filesystem::current_path();
-                    mutable size_t                                                      m_MaxSearchDepth = 4;
-                    mutable std::map<std::filesystem::path, bool>                       m_Paths          = std::map<std::filesystem::path, bool>();
+                    mutable std::filesystem::path                             m_Path           =  std::filesystem::current_path();
+                    mutable std::function<bool(const std::filesystem::path&)> m_Predicate      = nullptr;
+                    mutable std::filesystem::path                             m_CurrentPath    =  std::filesystem::current_path();
+                    mutable size_t                                            m_MaxSearchDepth = 4;
+                    mutable std::map<std::filesystem::path, bool>             m_Paths          = std::map<std::filesystem::path, bool>();
                 };
             }
         }
@@ -76,6 +76,7 @@ namespace Frenchie
 
                     // static API
                     std::filesystem::path get_path() const;
+                    std::filesystem::path get_file() const;
                     std::set<std::filesystem::path> get_selected_paths() const;
                     void create_folder();
                     void copy_paths();
@@ -88,7 +89,7 @@ namespace Frenchie
                 protected:
 
                     // info
-                    std::filesystem::path           m_Path                         = std::filesystem::current_path();
+                    std::filesystem::path           m_Path = std::filesystem::current_path();
                     InputText                       m_CurrentDirectory;
                     InputText                       m_CurrentFile;
                     bool                            m_DrawCurrentDirectoryTextEdit = false;

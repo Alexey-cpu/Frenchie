@@ -10,12 +10,12 @@ namespace Frenchie
         {
             namespace Preferences
             {
-                class Localizations : 
-                    public Frenchie::Application::Layer::Registry<Localizations>
+                class Languages : 
+                    public Frenchie::Application::Layer::Registry<Languages>
                 {
                 public:
-                    Localizations();
-                    virtual ~Localizations();
+                    Languages();
+                    virtual ~Languages();
 
                     // Frenchie::Application::Layer::Registry<Localizations>
                     static std::string factory_id();

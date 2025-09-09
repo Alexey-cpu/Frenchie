@@ -1,9 +1,17 @@
-#include <FrenchieApplicationEditorPreferencesLocalizationsLayer.hpp>
-
-#include <FrenchieApplicationEditorConfigurationLocalizatorLayer.hpp>
+#include <FrenchieApplicationEditorPreferencesLanguageLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
+
+// IMGUI
 #include <imgui_stdlib.h>
+
+// STL
+#include <chrono>
+#include <regex>
+#include <fstream>
+#include <iostream>
+#include <functional>
 
 using namespace Frenchie;
 using namespace Frenchie::Application;
@@ -12,32 +20,32 @@ using namespace Frenchie::Application::Editor::FileSystem;
 using namespace Frenchie::Application::Editor::Preferences;
 using namespace Frenchie::Application::Editor::Configuration;
 
-Localizations::Localizations() : 
-    Frenchie::Application::Layer::Registry<Localizations>(
-        Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_TOPIC_LOCALIZATIONS_NAME_LOCALIZATION_KEY")){}
-Localizations::~Localizations(){}
+Languages::Languages() : 
+    Frenchie::Application::Layer::Registry<Languages>(
+        Translator::translate("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_LANGUAGE")){}
+Languages::~Languages(){}
 
-std::string Localizations::factory_id()
+std::string Languages::factory_id()
 {
-    return STRINGIFY(Frenchie::Application::Editor::Preferences::Localizations);
+    return STRINGIFY(Frenchie::Application::Editor::Preferences::Languagess);
 }
 
-void Localizations::frame_update()
+void Languages::frame_update()
 {
-    set_name(Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_TOPIC_LOCALIZATIONS_NAME_LOCALIZATION_KEY"));
+    set_name(Translator::translate("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_LANGUAGE"));
 
     auto localizator = 
-        Frenchie::Application::Application::instance()->find_or_push<Localizator>();
+        Frenchie::Application::Application::instance()->find_or_push<Translator>();
 
     ImGui::BeginChild(get_name().c_str());
     {
-        // draw language selector
+        // draw Languages selector
         for(auto&& supportedLanguage : localizator->get_supported_languages())
         {
-            bool isCurrentLanguage = 
+            bool isCurrentLanguages = 
                 supportedLanguage == localizator->get_current_language();
 
-            if(ImGui::Checkbox(supportedLanguage.c_str(), &isCurrentLanguage))
+            if(ImGui::Checkbox(supportedLanguage.c_str(), &isCurrentLanguages))
                 localizator->set_language(supportedLanguage);
         }
 
@@ -53,28 +61,28 @@ void Localizations::frame_update()
         {
             // setup columns
             ImGui::TableSetupColumn(
-                Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_LOCALIZATIONS_TABLE_KEY_LOCALIZATION_KEY").c_str(),
+                Translator::translate("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_LANGUAGE_TABLE_KEY").c_str(),
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch |
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
 
             ImGui::TableSetupColumn(
-                Localizator::translation("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_LOCALIZATIONS_TABLE_TRANSLATION_LOCALIZATION_KEY").c_str(),
+                Translator::translate("FRENCHIE_APPLICATION_EDITOR_PREFERENCES_LANGUAGE_TABLE_TRANSLATE").c_str(),
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
             
             ImGui::TableHeadersRow();
 
             int id = 0;
-            for(auto&& translation : localizator->get_translations())
+            for(auto&& translate : localizator->get_translations())
             {
                 ImGui::TableNextRow();
 
                 ImGui::TableSetColumnIndex(0);
-                ImGui::TextUnformatted(translation.first.c_str());
+                ImGui::TextUnformatted(translate.first.c_str());
                 ImGui::SameLine();
 
                 ImGui::TableSetColumnIndex(1);
                 ImGui::PushID(++id);
-                ImGui::InputText("##", &translation.second);
+                ImGui::InputText("##", &translate.second);
                 ImGui::PopID();
             }
 
@@ -84,7 +92,7 @@ void Localizations::frame_update()
     ImGui::EndChild();
 }
 
-bool Localizations::allows_multiple_instances() const
+bool Languages::allows_multiple_instances() const
 {
     return false;
 }

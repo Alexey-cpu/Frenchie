@@ -22,7 +22,7 @@ namespace Frenchie
 
             std::string get_file_extention(const std::filesystem::path& _Path);
 
-            FILE* open_file(std::string _Path, std::string _Mode);
+            FILE* open_file(const std::string& _Path, std::string _Mode);
 
             void create_directory(
                 const std::filesystem::path& _Path, 
@@ -423,6 +423,7 @@ namespace Frenchie
             std::string to_lower(std::string);
 
             std::string replace_symbol(std::string& _Input, const char& _From, const char& _To);
+            std::string remove_symbol(std::string& _Input, const char& _What);
             std::string replace_substring(const std::string& _String, const std::string& _Substring, const std::string& _NewSubstring);
             bool contains_substring(const std::string& _String, const std::string& _Substring);
             bool contains_symbol(const std::string& _Input, char _Symbol = ' ');

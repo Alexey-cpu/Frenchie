@@ -19,7 +19,8 @@ namespace Frenchie
                     Process(
                         const std::function<void()>& _OnFinished, 
                         const std::function<void()>& _OnCanceled, 
-                        const std::function<void()>& _OnFailed);
+                        const std::function<void()>& _OnFailed,
+                        const std::string&           _Name = std::string());
                     virtual ~Process();
 
                     // API

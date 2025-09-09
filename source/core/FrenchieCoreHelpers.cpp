@@ -64,7 +64,7 @@ std::string Frenchie::Core::FileSystem::get_file_extention(const std::filesystem
     return extention;
 }
 
-FILE* Frenchie::Core::FileSystem::open_file(std::string _Path, std::string _Mode)
+FILE* Frenchie::Core::FileSystem::open_file(const std::string& _Path, std::string _Mode)
 {
     auto to_wstring = [](const std::string _Value)->std::wstring
     {
@@ -175,6 +175,19 @@ std::string Frenchie::Core::String::replace_symbol(std::string& _Input, const ch
 
     for(int i = 0; i < (int)_Input.size(); i++)
         result.push_back(_Input[i] == _From ? _To: _Input[i]);
+    
+    return result;
+}
+
+std::string Frenchie::Core::String::remove_symbol(std::string& _Input, const char& _What)
+{
+    std::string result;
+
+    for(int i = 0; i < (int)_Input.size(); i++)
+    {
+        if(_Input[i] != _What)
+            result.push_back(_Input[i]);
+    }
     
     return result;
 }

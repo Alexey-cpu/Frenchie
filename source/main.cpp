@@ -171,49 +171,82 @@
 // // Editor
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplicationEditorLauncher.hpp>
-
-// int main(int argc, char** argv)
-// {
-//     // setup application logger
-//     Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
-//     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
-
-//     // compile program
-//     std::filesystem::current_path("C:/SDK/Qt_Projects/TestProject");
-
-//     //std::string command = "cmake --preset HabrPresetName"; // Redirect stderr to stdout
-
-//     std::string command = "cmake --build --preset debug 2>&1"; // Redirect stderr to stdout
-
-//     std::array<char, 1024> buffer;
-//     std::string result;
-
-//     std::cout << "Opening reading pipe" << std::endl;
-//     FILE* pipe = _popen(command.c_str(), "r");
-//     if (!pipe)
-//     {
-//         std::cerr << "Couldn't start command." << std::endl;
-//         return 0;
-//     }
-
-//     while (fgets(buffer.data(), (int)buffer.size(), pipe) != NULL) 
-//     {
-//         //Frenchie::Core::Logger::instance()->info(result);
-//         //std::cout << "Reading..." << std::endl;
-//         result += buffer.data();
-//     }
-//     auto returnCode = _pclose(pipe);
-
-//     //std::cout << result << std::endl;
-//     std::cout << returnCode << std::endl;
-
-//     return 0;
-// }
-
 #include <FrenchieCoreUUID4Generator.hpp>
+
+#include <regex>
+#include <memory>
+
+std::set<std::string> analyze_code_files(
+    const std::filesystem::path& _Path, 
+    const std::set<std::string>& _Extentions = {".cpp",".hpp",".cc", ".hh", ".c",".h"})
+{
+    if(!std::filesystem::exists(_Path) || _Extentions.empty()) 
+        return std::set<std::string>();
+
+    std::set<std::string> keys;
+
+    // setup patters...
+    std::regex translator_pattern(R"(Translator::translate\(\s*\"([^\"]*)\"\s*\))");
+    std::regex localization_key_pattern(R"(\s*\"([^\"]*)\"\s*)");
+
+    for(auto directoryIterator = std::filesystem::recursive_directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied); 
+                directoryIterator != std::filesystem::recursive_directory_iterator(); 
+                    directoryIterator++)
+    {
+        // get path
+        auto entry     = *directoryIterator;
+        auto path      = (*directoryIterator).path();
+        auto extention = Frenchie::Core::FileSystem::get_file_extention(*directoryIterator);
+
+        // skip not files and files of unsupported extention
+        if(entry.is_directory() || 
+            _Extentions.find(extention) == _Extentions.end())
+            continue;
+
+        FILE* file = Frenchie::Core::FileSystem::open_file(path.string(), "rb");
+
+        if(file == nullptr) 
+            continue;
+
+        std::string contents;
+
+        char buffer[1024];
+
+        while (fgets(buffer, sizeof(buffer), file) != NULL)
+            contents.append(buffer);
+
+        fclose(file);
+
+        // Using std::regex_iterator (finds all matches)
+        for (auto translatorIterator = std::sregex_iterator(contents.begin(), contents.end(), translator_pattern); 
+                    translatorIterator != std::sregex_iterator();
+                        ++translatorIterator) 
+        {
+            auto translatorEntry = (*translatorIterator).str();
+
+            for (auto localizationKeyIterator = 
+                        std::sregex_iterator(translatorEntry.begin(), translatorEntry.end(), localization_key_pattern); 
+                            localizationKeyIterator != std::sregex_iterator(); 
+                                ++localizationKeyIterator) 
+            {
+                keys.insert(Frenchie::Core::String::remove_symbol((*localizationKeyIterator).str(), '"'));
+            }
+        }
+    }
+
+    return keys;
+}
 
 int main(int, char**)
 {
+    // auto keys = analyze_code_files("C:/SDK/Qt_Projects/OpenGL/source/editor");
+
+    // std::cout << "\n\n";
+    // std::cout << "KEYS FOUND \n";
+
+    // for(auto&& key : keys)
+    //     std::cout << key << "\n";
+
     return Frenchie::Application::Editor::Launcher::execute();
 }
 
