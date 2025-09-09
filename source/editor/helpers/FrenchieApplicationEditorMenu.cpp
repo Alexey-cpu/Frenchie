@@ -1,9 +1,12 @@
 #include <FrenchieApplication.hpp>
+
 #include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application::Editor;
+using namespace Frenchie::Application::Editor::Configuration;
 
 // IMGUI
 #include <imgui.h>
@@ -57,13 +60,13 @@ namespace Frenchie
                 {
                     if(_Index == _Actions.size() - 1) 
                     {
-                        if(ImGui::MenuItem(_Actions.back().c_str()))
+                        if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
                             Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(_Path, _Sender);
 
                         return;
                     }
 
-                    if(ImGui::BeginMenu(_Actions[_Index].c_str()))
+                    if(ImGui::BeginMenu(Translator::translate(_Actions[_Index]).c_str()))
                     {
                         draw(_Actions, _Path, ++_Index, _Sender);
 
@@ -124,7 +127,7 @@ void Menu::draw(const std::string& _MenuPath, void* _Sender, bool _ForceUpdate)
         }
         else
         {
-            if(ImGui::BeginMenu(menu.first.c_str()))
+            if(ImGui::BeginMenu(Translator::translate(menu.first).c_str()))
             {
                 for (size_t i = 0; i < menu.second.Actions.size(); i++)
                     MenuPathsDrawer::draw(menu.second.Actions[i], menu.second.Paths[i], index, _Sender);             

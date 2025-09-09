@@ -34,7 +34,7 @@ using namespace Frenchie::Application::Editor::Configuration;
 
 // Translator
 Translator::Translator() : 
-    Layer(STRINGIFY(Frenchie::Application::Editor::Configuration::Translator)){}
+    Layer(STRINGIFY(Translator)){}
 
 Translator::~Translator(){}
 

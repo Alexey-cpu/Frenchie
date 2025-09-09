@@ -41,6 +41,8 @@ namespace Frenchie
                     void draw_color_settings();
                     void draw_fonts_settings();
                     void draw_rendering_settings();
+
+                    std::string get_style_color_name(ImGuiCol);
                 };
             }
         }

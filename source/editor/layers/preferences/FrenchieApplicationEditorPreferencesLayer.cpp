@@ -17,7 +17,7 @@ using namespace Frenchie::Application::Editor::Configuration;
 
 // Preferences
 Explorer::Explorer() : 
-    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_PREFERENCES")){}
+    Layer(Translator::translate("Preferences")){}
 
 Explorer::~Explorer(){}
 

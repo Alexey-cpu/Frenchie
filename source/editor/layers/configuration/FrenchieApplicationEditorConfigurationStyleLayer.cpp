@@ -28,7 +28,7 @@ using namespace Frenchie::Application::Editor::FileSystem;
 using namespace Frenchie::Application::Editor::Configuration;
 
 Style::Style() : 
-    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_CONFIGURATION_STYLE")){}
+    Layer(Translator::translate(STRINGIFY(Style))){}
 Style::~Style(){}
 
 // Frenchie::Application::Layer
