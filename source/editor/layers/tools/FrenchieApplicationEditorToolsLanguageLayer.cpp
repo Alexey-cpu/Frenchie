@@ -168,7 +168,7 @@ bool SaveTranslationFilesProcess::awake()
                 auto& path         = translationFile.Path;
                 auto& translations = translationFile.Translations;
 
-                m_Status   = m_Status.append(fmt::format("starting saving file {}", path.string())).append("\n");
+                m_Status = m_Status.append(fmt::format("starting saving file {}", path.string())).append("\n");
 
                 Frenchie::Core::Serialization::Document document;
 
@@ -242,7 +242,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Tools::Language::TranslationFilesEditor");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Language::translation files editor");
                     }
                 };
             }
@@ -407,7 +407,7 @@ namespace Frenchie
 // }
 
 TranslationFilesEditor::TranslationFilesEditor() : 
-    Layer(".xlf files editor"){}
+    Layer("Translation files editor"){}
 
 TranslationFilesEditor::~TranslationFilesEditor(){}
 
@@ -427,49 +427,33 @@ void TranslationFilesEditor::frame_update()
         
         if(ImGui::Button("Load"))
         {
-            if(!any_process_is_running())
-            {
-                Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                    "Select directory where translation files are...",
-                    [this]()
-                    {
-                        m_LoadProcess = 
-                            Frenchie::Application::application()->push_process<LoadTranslationFilesProcess>(
-                                Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
-                    }
-                );
-            }
+            Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+                "Select directory where translation files are...",
+                [this]()
+                {
+                    m_LoadProcess = 
+                        Frenchie::Application::application()->push_process<LoadTranslationFilesProcess>(
+                            Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
+                }
+            );
         }
 
         ImGui::SameLine();
 
         if(ImGui::Button("Save"))
         {
-            if(m_LoadProcess != nullptr && 
-                !m_LoadProcess->finished())
-            {
-                Frenchie::Core::Logger::instance()->critical(
-                    "Could not save translation files as they are still loaded.");
-            }
-            else if(m_SaveProcess != nullptr && 
-                    !m_SaveProcess->finished())
-            {
-            }
+            m_SaveProcess = 
+                Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
+                    m_LoadProcess->m_TranslationFiles);
         }
 
         ImGui::SameLine();
 
         if(ImGui::Button("Synchronize contents"))
         {
-            if(m_LoadProcess != nullptr && 
-                m_LoadProcess->finished())
+            if(!any_process_is_running())
             {
                 // write logic here...
-            }
-            else
-            {
-                Frenchie::Core::Logger::instance()->critical(
-                    "Could not synchronize contents of translation files as they are still loaded.");
             }
         }
 
@@ -492,43 +476,28 @@ void TranslationFilesEditor::frame_update()
                     {
                         if(ImGui::Button("Save"))
                         {
-                            Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
-                                [this, &translationFile]()
-                                {
-                                    if(m_SaveProcess == nullptr || 
-                                            m_SaveProcess->finished())
-                                    {
-                                        m_SaveProcess = Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
-                                            std::vector<TranslationFile>({translationFile}));
-                                    }
-                                    else
-                                    {
-                                        Frenchie::Core::Logger::instance()->critical("Another save process is running now");
-                                    }
-                                }
-                            );
+                            m_SaveProcess = Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
+                                std::vector<TranslationFile>({translationFile}));
                         }
+
+                        ImGui::SameLine();
 
                         if(ImGui::Button("Save as"))
                         {
-                            Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
+                            Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+                                "Save as",
                                 [this, &translationFile]()
                                 {
-                                    Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                                        "Save as",
-                                        [this, &translationFile]()
-                                        {
-                                            auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+                                    auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
 
-                                            if(dialog != nullptr) 
-                                            {
-                                                translationFile.Path = dialog->get_current_file();
+                                    if(dialog != nullptr) 
+                                    {
+                                        translationFile.Path = dialog->get_current_file();
 
-                                                m_SaveProcess = Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
-                                                    std::vector<TranslationFile>({translationFile}));
-                                            }
-                                        }
-                                    );
+                                        m_SaveProcess = 
+                                            Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
+                                                std::vector<TranslationFile>({translationFile}));
+                                    }
                                 }
                             );
                         }
@@ -557,7 +526,7 @@ void TranslationFilesEditor::frame_update()
                             ImGui::TableHeadersRow();
 
                             int id = 0;
-                            for(auto translation : translations)
+                            for(auto&& translation : translations)
                             {
                                 ImGui::TableNextRow();
 
@@ -568,6 +537,18 @@ void TranslationFilesEditor::frame_update()
                                 ImGui::TableSetColumnIndex(1);
                                 ImGui::PushID(++id);
                                 ImGui::InputText("##", &translation.second);
+                                ImGui::PopID();
+
+                                ImGui::SameLine();
+
+                                ImGui::PushID(++id);
+                                
+                                if(ImGui::Button("Remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
+                                {
+                                    Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
+                                        [&translations, &translation](){translations.erase(translation.first);});
+                                }
+
                                 ImGui::PopID();
                             }
 
@@ -580,7 +561,7 @@ void TranslationFilesEditor::frame_update()
             }
             else // draw progress indicator
             {
-                ImGui::TextUnformatted("NOT FINISHED YET...");
+                ImGui::TextUnformatted("Loading...");
             }
         }
     }
@@ -599,6 +580,11 @@ bool TranslationFilesEditor::allows_multiple_instances() const
 
 bool TranslationFilesEditor::any_process_is_running()
 {
-    return (m_LoadProcess != nullptr && !m_LoadProcess->finished()) && 
-            (m_SaveProcess != nullptr && !m_SaveProcess->finished());
+    if(m_LoadProcess == nullptr || m_SaveProcess == nullptr) 
+        return false;
+
+    if(m_LoadProcess->finished() || m_LoadProcess->canceled() || m_SaveProcess->finished() || m_SaveProcess->canceled()) 
+        return false;
+
+    return true;
 }
