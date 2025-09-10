@@ -23,173 +23,170 @@
 
 using namespace Frenchie;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::FileSystem;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::FileSystem;
+using namespace Frenchie::Editor::Configuration;
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        class FontsLoader : public Dialog
         {
-            class FontsLoader : public Dialog
+        public:
+
+            FontsLoader(
+                const std::set<std::filesystem::path>& _Paths,
+                const std::string                      _Font,
+                const std::function<void()>&           _OnFinished,
+                const std::string&                     _Name = STRINGIFY(Frenchie::Application::Editor::AsyncLoaderView)) : 
+                Dialog(_Name, 512.f, 128.f), 
+                m_Paths(_Paths), 
+                m_Font(_Font), 
+                m_OnFinished(_OnFinished){}
+            
+            virtual ~FontsLoader(){}
+
+            // Dialog
+            virtual bool awake() override
             {
-            public:
+                Frenchie::Core::ThreadPool::instance()->enqueue(
+                    [this]()
+                    {
+                        std::set<std::filesystem::path> fonts;
+                        auto total   = m_Paths.size();
+                        auto current = 0;
 
-                FontsLoader(
-                    const std::set<std::filesystem::path>& _Paths,
-                    const std::string                      _Font,
-                    const std::function<void()>&           _OnFinished,
-                    const std::string&                     _Name = STRINGIFY(Frenchie::Application::Editor::AsyncLoaderView)) : 
-                    Dialog(_Name, 512.f, 128.f), 
-                    m_Paths(_Paths), 
-                    m_Font(_Font), 
-                    m_OnFinished(_OnFinished){}
-                
-                virtual ~FontsLoader(){}
-
-                // Dialog
-                virtual bool awake() override
-                {
-                    Frenchie::Core::ThreadPool::instance()->enqueue(
-                        [this]()
+                        for(auto&& path : m_Paths)
                         {
-                            std::set<std::filesystem::path> fonts;
-                            auto total   = m_Paths.size();
-                            auto current = 0;
+                            if(m_Canceled) 
+                                return;
 
-                            for(auto&& path : m_Paths)
+                            while (m_Paused)
                             {
                                 if(m_Canceled) 
                                     return;
-
-                                while (m_Paused)
-                                {
-                                    if(m_Canceled) 
-                                        return;
-                                }
-
-                                if(!std::filesystem::exists(path) || 
-                                    fonts.find(path) != fonts.end())
-                                {
-                                    m_Progress = (float)(++current) / (float)total;
-                                    continue;
-                                }
-
-                                // retrive ImGui IO
-                                auto& io = ImGui::GetIO();
-
-                                // load font
-                                try
-                                {
-                                    io.Fonts->AddFontFromFileTTF(
-                                        Frenchie::Core::String::as_utf8(path).c_str(),
-                                        ImGui::GetStyle().FontSizeBase,
-                                        nullptr,
-                                        io.Fonts->GetGlyphRangesCyrillic());
-                                }
-                                catch(const std::exception& e)
-                                {
-                                    Frenchie::Core::Logger::instance()->critical(e.what());
-                                }
-
-                                m_Progress = (float)(++current) / (float)total;
-
-                                // add to cache
-                                fonts.insert(path);
                             }
 
-                            // finish
-                            m_Finished = true;
+                            if(!std::filesystem::exists(path) || 
+                                fonts.find(path) != fonts.end())
+                            {
+                                m_Progress = (float)(++current) / (float)total;
+                                continue;
+                            }
+
+                            // retrive ImGui IO
+                            auto& io = ImGui::GetIO();
+
+                            // load font
+                            try
+                            {
+                                io.Fonts->AddFontFromFileTTF(
+                                    Frenchie::Core::String::as_utf8(path).c_str(),
+                                    ImGui::GetStyle().FontSizeBase,
+                                    nullptr,
+                                    io.Fonts->GetGlyphRangesCyrillic());
+                            }
+                            catch(const std::exception& e)
+                            {
+                                Frenchie::Core::Logger::instance()->critical(e.what());
+                            }
+
+                            m_Progress = (float)(++current) / (float)total;
+
+                            // add to cache
+                            fonts.insert(path);
                         }
-                    );
 
-                    return true;
-                }
-
-                virtual void frame_update() override
-                {
-                    if(m_Canceled || m_Failed) 
-                    {
-                        close();
-                        return;
+                        // finish
+                        m_Finished = true;
                     }
+                );
 
-                    Dialog::frame_update();
-                }
+                return true;
+            }
 
-                virtual void draw_content() override
+            virtual void frame_update() override
+            {
+                if(m_Canceled || m_Failed) 
                 {
-                    if(m_Finished)
-                    {
-                        close(); // close dialog when finished
-                        return;
-                    }
-
-                    // calculate progress percantage
-                    int percantage = (int)(m_Progress * 100.f);
-
-                    // show progress
-                    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("100%").x);
-                    ImGui::ProgressBar(m_Progress, ImVec2(0.0f, 0.0f), "");
-                    ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-                    ImGui::TextUnformatted(fmt::format("{} %", percantage).c_str());
+                    close();
+                    return;
                 }
 
-                virtual void draw_buttons() override
+                Dialog::frame_update();
+            }
+
+            virtual void draw_content() override
+            {
+                if(m_Finished)
                 {
-                    if(ImGui::Button("Cancel"))
-                    {
-                        m_Finished = false;
-                        m_Canceled = true;
-                        close();
-                    }
+                    close(); // close dialog when finished
+                    return;
                 }
 
-                virtual void finish() override
+                // calculate progress percantage
+                int percantage = (int)(m_Progress * 100.f);
+
+                // show progress
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("100%").x);
+                ImGui::ProgressBar(m_Progress, ImVec2(0.0f, 0.0f), "");
+                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+                ImGui::TextUnformatted(fmt::format("{} %", percantage).c_str());
+            }
+
+            virtual void draw_buttons() override
+            {
+                if(ImGui::Button("Cancel"))
                 {
-                    if(!m_Finished) 
-                        return;
+                    m_Finished = false;
+                    m_Canceled = true;
+                    close();
+                }
+            }
 
-                    // apply new font
-                    for (ImFont* font : ImGui::GetIO().Fonts->Fonts)
+            virtual void finish() override
+            {
+                if(!m_Finished) 
+                    return;
+
+                // apply new font
+                for (ImFont* font : ImGui::GetIO().Fonts->Fonts)
+                {
+                    font->Scale = 1.f;
+
+                    if (std::string(font->GetDebugName()) == m_Font)
                     {
-                        font->Scale = 1.f;
-
-                        if (std::string(font->GetDebugName()) == m_Font)
-                        {
-                            ImGui::GetIO().FontDefault = font;
-                            break;
-                        }
+                        ImGui::GetIO().FontDefault = font;
+                        break;
                     }
-
-                    // build fonts
-                    ImGui::GetIO().Fonts->Build();
-
-                    // reload app
-                    application()->reload();
-
-                    //
-                    if(m_OnFinished != nullptr)
-                        m_OnFinished();
                 }
 
-            protected:
+                // build fonts
+                ImGui::GetIO().Fonts->Build();
 
-                // info
-                float                           m_Progress   = 0.f;
-                std::string                     m_Font       = std::string();
-                std::set<std::filesystem::path> m_Paths      = std::set<std::filesystem::path>();
-                std::function<void()>           m_OnFinished = nullptr;
+                // reload app
+                application()->reload();
 
-                // task
-                bool m_Paused   = false;
-                bool m_Finished = false;
-                bool m_Canceled = false;
-                bool m_Failed   = false;
-            };
-        }
+                //
+                if(m_OnFinished != nullptr)
+                    m_OnFinished();
+            }
+
+        protected:
+
+            // info
+            float                           m_Progress   = 0.f;
+            std::string                     m_Font       = std::string();
+            std::set<std::filesystem::path> m_Paths      = std::set<std::filesystem::path>();
+            std::function<void()>           m_OnFinished = nullptr;
+
+            // task
+            bool m_Paused   = false;
+            bool m_Finished = false;
+            bool m_Canceled = false;
+            bool m_Failed   = false;
+        };
     }
 }
 

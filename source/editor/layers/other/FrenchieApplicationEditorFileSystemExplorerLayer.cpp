@@ -11,354 +11,357 @@
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::FileSystem;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::FileSystem;
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        namespace FileSystem
         {
-            namespace FileSystem
+            namespace FolderMenu
             {
-                namespace FolderMenu
+                class Instance
                 {
-                    class Instance
+                public:
+                    Instance(){}
+                    virtual ~Instance(){}
+
+                    // API
+                    void draw(Explorer* _Explorer)
                     {
-                    public:
-                        Instance(){}
-                        virtual ~Instance(){}
+                        Menu().draw(STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), _Explorer);
+                    }
+                };
 
-                        // API
-                        void draw(Explorer* _Explorer)
-                        {
-                            Menu().draw(STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), _Explorer);
-                        }
-                    };
-
-                    class CreateFolderAction : 
-                        public Frenchie::Application::Command::Registry<CreateFolderAction, void*>
-                    {
-                    public:
-
-                        CreateFolderAction(void* _Sender) : 
-                            Frenchie::Application::Command::Registry<CreateFolderAction, void*>(_Sender){}
-                        virtual ~CreateFolderAction(){}
-
-                        // Frenchie::Application::Command
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->create_folder();
-                        }
-
-
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format(
-                                "{}::{}", 
-                                STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
-                                "create::folder");
-                        }
-
-                    };
-
-                    class PasteAction : 
-                        public Frenchie::Application::Command::Registry<PasteAction, void*>
-                    {
-                    public:
-                        PasteAction(void* _Sender) : 
-                            Frenchie::Application::Command::Registry<PasteAction, void*>(_Sender){}
-                        virtual ~PasteAction(){}
-
-                        // Frenchie::Application::Command
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->paste_paths();
-                        }
-
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format(
-                                "{}::{}", 
-                                STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
-                                "paste");
-                        }
-                    };
-                }
-            
-                namespace FileMenu
+                class CreateFolderAction : 
+                    public Frenchie::Application::Command::Registry<CreateFolderAction, void*>
                 {
-                    class Instnance
+                public:
+
+                    CreateFolderAction(void* _Sender) : 
+                        Frenchie::Application::Command::Registry<CreateFolderAction, void*>(_Sender){}
+                    virtual ~CreateFolderAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
                     {
-                    public:
-                        Instnance(){}
-                        virtual ~Instnance(){}
+                        get_sender<Explorer>()->create_folder();
+                    }
 
-                        // API
-                        void draw(Explorer* _Explorer)
-                        {
-                            Menu().draw(STRINGIFY(Frenchie::Application::Editor::FileMenu), _Explorer);
-                        }
-                    };
 
-                    class CopyAction : 
-                        public Frenchie::Application::Command::Registry<CopyAction, void*>
+                    // Command::TRegistryType
+                    static std::string factory_id()
                     {
-                    public:
-                        CopyAction(void* _Sender = nullptr) : 
-                            Frenchie::Application::Command::Registry<CopyAction, void*>(_Sender){}
-                        virtual ~CopyAction(){}
+                        return fmt::format(
+                            "{}::{}", 
+                            STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
+                            "create::folder");
+                    }
 
-                        // Frenchie::Application::Command
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->copy_paths();
-                        }
+                };
 
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format(
-                                "{}::{}", 
-                                STRINGIFY(Frenchie::Application::Editor::FileMenu), 
-                                "copy");
-                        }
-                    };
-
-                    class PasteAction : 
-                        public Frenchie::Application::Command::Registry<PasteAction, void*>
-                    {
-                    public:
-                        PasteAction(void* _Sender = nullptr) : 
-                            Frenchie::Application::Command::Registry<PasteAction, void*>(_Sender){}
-                        virtual ~PasteAction(){}
-
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->paste_paths();
-                        }
-
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "paste");
-                        }
-                    };
-
-                    class RemoveAction : 
-                        public Frenchie::Application::Command::Registry<RemoveAction, void*>
-                    {
-                    public:
-                        RemoveAction(void* _Sender = nullptr) : 
-                            Frenchie::Application::Command::Registry<RemoveAction, void*>(_Sender){}
-                        virtual ~RemoveAction(){}
-
-                        // Frenchie::Application::Command
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->remove_paths();
-                        }
-
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "remove");
-                        }
-                    };
-
-                    class RenameAction : 
-                        public Frenchie::Application::Command::Registry<RenameAction, void*>
-                    {
-                    public:
-
-                        RenameAction(void* _Sender = nullptr) : 
-                            Frenchie::Application::Command::Registry<RenameAction, void*>(_Sender){}
-                        virtual ~RenameAction(){}
-
-                        // Frenchie::Application::Command
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->rename_paths();
-                        }
-
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "rename");
-                        }
-                    };
-
-                    class CreateFolderAction : 
-                        public Frenchie::Application::Command::Registry<CreateFolderAction, void*>
-                    {
-                    public:
-                        CreateFolderAction(void* _Sender = nullptr) : 
-                            Frenchie::Application::Command::Registry<CreateFolderAction, void*>(_Sender){}
-                        virtual ~CreateFolderAction(){}
-
-                        // Frenchie::Application::Command
-                        virtual void execute() override
-                        {
-                            get_sender<Explorer>()->create_folder();
-                        }
-
-                        // Command::TRegistryType
-                        static std::string factory_id()
-                        {
-                            return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "create::folder");
-                        }
-                    };
-                }
-            
-                namespace Dialogs
+                class PasteAction : 
+                    public Frenchie::Application::Command::Registry<PasteAction, void*>
                 {
-                    class RemoveFiles : public Dialog
+                public:
+                    PasteAction(void* _Sender) : 
+                        Frenchie::Application::Command::Registry<PasteAction, void*>(_Sender){}
+                    virtual ~PasteAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
                     {
-                    public:
-                        RemoveFiles(const std::set<std::filesystem::path>& _Paths) : 
-                            Dialog("Are you sure you want to delete these files ?"), 
-                            m_Paths(_Paths){}
-                        virtual ~RemoveFiles(){}
+                        get_sender<Explorer>()->paste_paths();
+                    }
 
-                        // Frenchie::Application::Editor::Dialog
-                        virtual void draw_content() override
-                        {
-                            for(auto&& path : m_Paths)
-                                ImGui::TextUnformatted(path.string().c_str());
-                        }
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format(
+                            "{}::{}", 
+                            STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
+                            "paste");
+                    }
+                };
+            }
+        
+            namespace FileMenu
+            {
+                class Instnance
+                {
+                public:
+                    Instnance(){}
+                    virtual ~Instnance(){}
 
-                        virtual void draw_buttons() override
+                    // API
+                    void draw(Explorer* _Explorer)
+                    {
+                        Menu().draw(STRINGIFY(Frenchie::Application::Editor::FileMenu), _Explorer);
+                    }
+                };
+
+                class CopyAction : 
+                    public Frenchie::Application::Command::Registry<CopyAction, void*>
+                {
+                public:
+                    CopyAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<CopyAction, void*>(_Sender){}
+                    virtual ~CopyAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        get_sender<Explorer>()->copy_paths();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format(
+                            "{}::{}", 
+                            STRINGIFY(Frenchie::Application::Editor::FileMenu), 
+                            "copy");
+                    }
+                };
+
+                class PasteAction : 
+                    public Frenchie::Application::Command::Registry<PasteAction, void*>
+                {
+                public:
+                    PasteAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<PasteAction, void*>(_Sender){}
+                    virtual ~PasteAction(){}
+
+                    virtual void execute() override
+                    {
+                        get_sender<Explorer>()->paste_paths();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "paste");
+                    }
+                };
+
+                class RemoveAction : 
+                    public Frenchie::Application::Command::Registry<RemoveAction, void*>
+                {
+                public:
+                    RemoveAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<RemoveAction, void*>(_Sender){}
+                    virtual ~RemoveAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        get_sender<Explorer>()->remove_paths();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "remove");
+                    }
+                };
+
+                class RenameAction : 
+                    public Frenchie::Application::Command::Registry<RenameAction, void*>
+                {
+                public:
+
+                    RenameAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<RenameAction, void*>(_Sender){}
+                    virtual ~RenameAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        get_sender<Explorer>()->rename_paths();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "rename");
+                    }
+                };
+
+                class CreateFolderAction : 
+                    public Frenchie::Application::Command::Registry<CreateFolderAction, void*>
+                {
+                public:
+                    CreateFolderAction(void* _Sender = nullptr) : 
+                        Frenchie::Application::Command::Registry<CreateFolderAction, void*>(_Sender){}
+                    virtual ~CreateFolderAction(){}
+
+                    // Frenchie::Application::Command
+                    virtual void execute() override
+                    {
+                        get_sender<Explorer>()->create_folder();
+                    }
+
+                    // Command::TRegistryType
+                    static std::string factory_id()
+                    {
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "create::folder");
+                    }
+                };
+            }
+        
+            namespace Dialogs
+            {
+                class RemoveFiles : public Dialog
+                {
+                public:
+                    RemoveFiles(const std::set<std::filesystem::path>& _Paths) : 
+                        Dialog("Are you sure you want to delete these files ?"), 
+                        m_Paths(_Paths){}
+                    virtual ~RemoveFiles(){}
+
+                    // Frenchie::Application::Editor::Dialog
+                    virtual void draw_content() override
+                    {
+                        for(auto&& path : m_Paths)
+                            ImGui::TextUnformatted(path.string().c_str());
+                    }
+
+                    virtual void draw_buttons() override
+                    {
+                        if(ImGui::Button("Yes"))
                         {
-                            if(ImGui::Button("Yes"))
+                            if(m_Paths.empty())
+                                return;
+
+                            for(auto& path : m_Paths)
                             {
-                                if(m_Paths.empty())
-                                    return;
-
-                                for(auto& path : m_Paths)
+                                try
                                 {
-                                    try
+                                    std::filesystem::remove_all(path);
+                                }
+                                catch(...)
+                                {
+                                    Frenchie::Core::Logger::instance()->critical(fmt::format("Could not remove {}", path.string()));
+                                }
+                            }
+
+                            close();
+                        }
+                        
+                        ImGui::SameLine();
+                        
+                        if(ImGui::Button("No"))
+                            close();
+                    }
+
+                protected:
+                    std::set<std::filesystem::path> m_Paths;
+                };
+            
+                class RenameFiles : public Dialog
+                {
+                public:
+
+                    RenameFiles(const std::set<std::filesystem::path>& _Paths) : 
+                        Dialog("Rename files")
+                    {
+                        for(auto&& path : _Paths)
+                        {
+                            m_Paths.insert(
+                                {
+                                    path, 
                                     {
-                                        std::filesystem::remove_all(path);
-                                    }
-                                    catch(...)
-                                    {
-                                        Frenchie::Core::Logger::instance()->critical(fmt::format("Could not remove {}", path.string()));
+                                        Frenchie::Core::String::as_utf8(path.filename().wstring()), 
+                                        true
                                     }
                                 }
+                            );
+                        }
+                    }
 
+                    virtual ~RenameFiles(){}
+
+                    // Frenchie::Application::Editor::Dialog
+                    virtual void draw_content() override
+                    {
+                        int checkboxID = 0;
+
+                        for(auto&& path : m_Paths)
+                        {
+                            ImGui::PushID(checkboxID++);
+                            ImGui::Checkbox("##", &path.second.second);
+                            ImGui::PopID();
+                            ImGui::SameLine();
+                            ImGui::PushID(checkboxID++);
+                            ImGui::InputText("###", &path.second.first);
+
+                            ImGui::PopID();
+                        }
+                    }
+
+                    virtual void draw_buttons() override
+                    {
+                            if(ImGui::Button("Apply"))
+                            {
+                                // rename files
+                                for(auto& item : m_Paths)
+                                {
+                                    auto source   = item.first;
+                                    auto& text    = item.second.first;
+                                    auto selected = item.second.second;
+
+                                    if(!std::filesystem::exists(source) || !selected) 
+                                        continue;
+
+                                    auto target = std::filesystem::path(
+                                        source.parent_path().wstring()
+                                        .append(L"/")
+                                        .append(Frenchie::Core::String::as_wide(text))
+                                    );
+
+                                    if(source == target) 
+                                        continue;
+
+                                    while (std::filesystem::exists(target))
+                                    {
+                                        auto extention = Frenchie::Core::String::as_wide(
+                                            Frenchie::Core::FileSystem::get_file_extention(target));
+
+                                        target = source.parent_path().wstring()
+                                            .append(L"/")
+                                            .append(target.filename().stem().wstring())
+                                            .append(L"_Copy")
+                                            .append(extention);
+                                    }
+                                    
+                                    try
+                                    {
+                                        std::filesystem::rename(source, target);
+                                    }
+                                    catch(const std::exception& e)
+                                    {
+                                        Frenchie::Core::Logger::instance()->critical(e.what());
+                                    }
+                                    
+                                }
+
+                                // close dialog
                                 close();
                             }
                             
                             ImGui::SameLine();
                             
-                            if(ImGui::Button("No"))
+                            if(ImGui::Button("Cancel"))
                                 close();
-                        }
+                    }
 
-                    protected:
-                        std::set<std::filesystem::path> m_Paths;
-                    };
-                
-                    class RenameFiles : public Dialog
-                    {
-                    public:
-
-                        RenameFiles(const std::set<std::filesystem::path>& _Paths) : 
-                            Dialog("Rename files")
-                        {
-                            for(auto&& path : _Paths)
-                            {
-                                auto textInput = std::make_shared<InputText>();
-                                textInput->set_buffer(Frenchie::Core::String::as_utf8(path.filename().wstring()));
-                                m_Paths.insert({path, {textInput, true}});
-                            }
-                        }
-
-                        virtual ~RenameFiles(){}
-
-                        // Frenchie::Application::Editor::Dialog
-                        virtual void draw_content() override
-                        {
-                            int checkboxID = 0;
-
-                            for(auto&& path : m_Paths)
-                            {
-                                ImGui::PushID(checkboxID++);
-                                ImGui::Checkbox("##", &path.second.second);
-                                ImGui::PopID();
-                                ImGui::SameLine();
-                                ImGui::PushID(checkboxID++);
-                                path.second.first->draw("###");
-
-                                ImGui::PopID();
-                            }
-                        }
-
-                        virtual void draw_buttons() override
-                        {
-                                if(ImGui::Button("Apply"))
-                                {
-                                    // rename files
-                                    for(auto& item : m_Paths)
-                                    {
-                                        auto source   = item.first;
-                                        auto text     = item.second.first->get_buffer();
-                                        auto selected = item.second.second;
-
-                                        if(!std::filesystem::exists(source) || !selected) 
-                                            continue;
-
-                                        auto target = std::filesystem::path(
-                                            source.parent_path().wstring()
-                                            .append(L"/")
-                                            .append(Frenchie::Core::String::as_wide(text))
-                                        );
-
-                                        if(source == target) 
-                                            continue;
-
-                                        while (std::filesystem::exists(target))
-                                        {
-                                            auto extention = Frenchie::Core::String::as_wide(
-                                                Frenchie::Core::FileSystem::get_file_extention(target));
-
-                                            target = source.parent_path().wstring()
-                                                .append(L"/")
-                                                .append(target.filename().stem().wstring())
-                                                .append(L"_Copy")
-                                                .append(extention);
-                                        }
-                                        
-                                        try
-                                        {
-                                            std::filesystem::rename(source, target);
-                                        }
-                                        catch(const std::exception& e)
-                                        {
-                                            Frenchie::Core::Logger::instance()->critical(e.what());
-                                        }
-                                        
-                                    }
-
-                                    // close dialog
-                                    close();
-                                }
-                                
-                                ImGui::SameLine();
-                                
-                                if(ImGui::Button("Cancel"))
-                                    close();
-                        }
-
-                    protected:
-                        std::map<
-                            std::filesystem::path, 
-                            std::pair<std::shared_ptr<InputText>, bool>> m_Paths;
-                    };
-                }
+                protected:
+                    std::map<
+                        std::filesystem::path, 
+                        std::pair<std::string, bool>> m_Paths;
+                };
             }
         }
     }

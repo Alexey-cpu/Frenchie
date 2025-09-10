@@ -23,9 +23,8 @@
 
 using namespace Frenchie;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::FileSystem;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor::FileSystem;
+using namespace Frenchie::Editor::Configuration;
 
 Style::Style() : 
     Layer(Translator::translate(STRINGIFY(Style))){}

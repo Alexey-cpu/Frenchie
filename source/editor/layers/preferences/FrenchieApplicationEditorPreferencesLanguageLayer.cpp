@@ -15,10 +15,10 @@
 
 using namespace Frenchie;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::FileSystem;
-using namespace Frenchie::Application::Editor::Preferences;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::FileSystem;
+using namespace Frenchie::Editor::Preferences;
+using namespace Frenchie::Editor::Configuration;
 
 Languages::Languages() : 
     Frenchie::Application::Layer::Registry<Languages>(

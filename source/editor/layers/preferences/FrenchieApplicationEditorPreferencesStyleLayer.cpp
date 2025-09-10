@@ -20,9 +20,9 @@ static const char* GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Preferences;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::Preferences;
+using namespace Frenchie::Editor::Configuration;
 
 // Style
 Style::Style() : 

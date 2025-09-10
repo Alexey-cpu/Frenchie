@@ -8,30 +8,26 @@
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        namespace Preferences
         {
-            namespace Preferences
+            class Explorer : public Frenchie::Application::Layer
             {
-                // explorer
-                class Explorer : public Layer
-                {
-                public:
-                    Explorer();
-                    virtual ~Explorer();
+            public:
+                Explorer();
+                virtual ~Explorer();
 
-                    // Frenchie::Application::Layer
-                    virtual bool awake() override;
-                    virtual void frame_update() override;
-                    virtual bool allows_multiple_instances() const;
+                // Frenchie::Application::Layer
+                virtual bool awake() override;
+                virtual void frame_update() override;
+                virtual bool allows_multiple_instances() const;
 
-                protected:
+            protected:
 
-                    std::vector<std::shared_ptr<Layer>> m_Topics = 
-                        std::vector<std::shared_ptr<Layer>>();
-                };
-            }
+                std::vector<std::shared_ptr<Layer>> m_Topics = 
+                    std::vector<std::shared_ptr<Layer>>();
+            };
         }
     }
 }

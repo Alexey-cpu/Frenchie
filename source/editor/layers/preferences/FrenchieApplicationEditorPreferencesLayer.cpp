@@ -11,9 +11,9 @@
 #include <imgui.h>
 
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Preferences;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::Preferences;
+using namespace Frenchie::Editor::Configuration;
 
 // Preferences
 Explorer::Explorer() : 

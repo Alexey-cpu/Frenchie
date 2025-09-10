@@ -241,7 +241,7 @@ std::set<std::string> analyze_code_files(
 
 int main(int, char**)
 {
-    return Frenchie::Application::Editor::Launcher::execute();
+    return Frenchie::Editor::Launcher::execute();
 }
 
 //---------------------------------------------------------------------------------------------------

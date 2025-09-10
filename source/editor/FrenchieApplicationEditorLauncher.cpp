@@ -36,143 +36,140 @@
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
+using namespace Frenchie::Editor;
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        namespace MainMenu
         {
-            namespace MainMenu
+            class Instance : public Layer
             {
-                class Instance : public Layer
+            public:
+                Instance() : Layer(STRINGIFY(Instance)){}
+                virtual ~Instance(){}
+
+                // Frenchie::Application::Layer
+                virtual void frame_update() override
                 {
-                public:
-                    Instance() : Layer(STRINGIFY(Instance)){}
-                    virtual ~Instance(){}
-
-                    // Frenchie::Application::Layer
-                    virtual void frame_update() override
+                    if(ImGui::BeginMainMenuBar())
                     {
-                        if(ImGui::BeginMainMenuBar())
-                        {
-                            Frenchie::Application::Editor::Menu().draw(STRINGIFY(Frenchie::Application::Editor::MainMenu));
-                            ImGui::EndMainMenuBar();
-                        }
+                        Frenchie::Editor::Menu().draw(STRINGIFY(Frenchie::Editor::MainMenu));
+                        ImGui::EndMainMenuBar();
                     }
-                };
+                }
+            };
 
-                class ExitAction : 
-                    public Frenchie::Application::Command::Registry<ExitAction, void*>
+            class ExitAction : 
+                public Frenchie::Application::Command::Registry<ExitAction, void*>
+            {
+            public:
+
+                ExitAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<ExitAction, void*>(_Sender){}
+                virtual ~ExitAction(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
                 {
-                public:
+                    application()->close();
+                }
 
-                    ExitAction(void* _Sender = nullptr) : 
-                        Frenchie::Application::Command::Registry<ExitAction, void*>(_Sender){}
-                    virtual ~ExitAction(){}
-
-                    // Frenchie::Application::Command
-                    virtual void execute() override
-                    {
-                        application()->close();
-                    }
-
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Frenchie::Exit");
-                    }
-                };
-
-                class OpenConsoleAction : 
-                    public Frenchie::Application::Command::Registry<OpenConsoleAction, void*>
+                // Command::TRegistryType
+                static std::string factory_id()
                 {
-                public:
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Frenchie::Exit");
+                }
+            };
 
-                    OpenConsoleAction(void* _Sender = nullptr) : 
-                        Frenchie::Application::Command::Registry<OpenConsoleAction, void*>(_Sender){}
-                    virtual ~OpenConsoleAction(){}
+            class OpenConsoleAction : 
+                public Frenchie::Application::Command::Registry<OpenConsoleAction, void*>
+            {
+            public:
 
-                    // Frenchie::Application::Command
-                    virtual void execute() override
-                    {
-                        application()->push_layer<Console>()->show();
-                    }
+                OpenConsoleAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenConsoleAction, void*>(_Sender){}
+                virtual ~OpenConsoleAction(){}
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Console");
-                    }
-                };
-
-                class OpenFileSystemExplorerAction : 
-                    public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>
+                // Frenchie::Application::Command
+                virtual void execute() override
                 {
-                public:
+                    application()->push_layer<Console>()->show();
+                }
 
-                    OpenFileSystemExplorerAction(void* _Sender = nullptr) : 
-                        Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>(_Sender){}
-                    virtual ~OpenFileSystemExplorerAction(){}
-
-                    // Frenchie::Application::Command
-                    virtual void execute() override
-                    {
-                        application()->push_layer<FileSystem::Explorer>()->show();
-                    }
-
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::FileSystem");
-                    }
-                };
-
-                class OpenPreferencesAction : 
-                    public Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>
+                // Command::TRegistryType
+                static std::string factory_id()
                 {
-                public:
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Console");
+                }
+            };
 
-                    OpenPreferencesAction(void* _Sender = nullptr) : 
-                        Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>(_Sender){}
-                    virtual ~OpenPreferencesAction(){}
+            class OpenFileSystemExplorerAction : 
+                public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>
+            {
+            public:
 
-                    // Frenchie::Application::Command
-                    virtual void execute() override
-                    {
-                        application()->push_layer<Preferences::Explorer>()->show();
-                    }
+                OpenFileSystemExplorerAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>(_Sender){}
+                virtual ~OpenFileSystemExplorerAction(){}
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Preferences");
-                    }
-                };
-
-                class OpenDispatcherAction : 
-                    public Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>
+                // Frenchie::Application::Command
+                virtual void execute() override
                 {
-                public:
+                    application()->push_layer<FileSystem::Explorer>()->show();
+                }
 
-                    OpenDispatcherAction(void* _Sender = nullptr) : 
-                        Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>(_Sender){}
-                    virtual ~OpenDispatcherAction(){}
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::FileSystem");
+                }
+            };
 
-                    // Frenchie::Application::Command
-                    virtual void execute() override
-                    {
-                        application()->push_layer<ProcessDispatcher>()->show();
-                    }
+            class OpenPreferencesAction : 
+                public Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>
+            {
+            public:
 
-                    // Command::TRegistryType
-                    static std::string factory_id()
-                    {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::MainMenu), "Windows::Dispatcher");
-                    }
-                };
-            }
+                OpenPreferencesAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>(_Sender){}
+                virtual ~OpenPreferencesAction(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
+                {
+                    application()->push_layer<Preferences::Explorer>()->show();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Preferences");
+                }
+            };
+
+            class OpenDispatcherAction : 
+                public Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>
+            {
+            public:
+
+                OpenDispatcherAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>(_Sender){}
+                virtual ~OpenDispatcherAction(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
+                {
+                    application()->push_layer<ProcessDispatcher>()->show();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Dispatcher");
+                }
+            };
         }
     }
 }
@@ -305,14 +302,12 @@ int Launcher::execute()
     application()->load_state(std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
 
     // append basic layers
-    application()->push_layer<Frenchie::Application::Editor::MainMenu::Instance>();
+    application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
 
     // configuration
     application()->push_layer<Configuration::Fonts>();
     application()->push_layer<Configuration::Style>();
     application()->push_layer<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
-
-    application()->push_layer<Terminal>();
     application()->push_layer<Console>();
     application()->push_layer<ProcessDispatcher>();
 
