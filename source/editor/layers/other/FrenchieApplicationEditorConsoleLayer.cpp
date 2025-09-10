@@ -18,155 +18,152 @@
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
+using namespace Frenchie::Editor;
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        // class TerminalSink : public spdlog::sinks::base_sink<std::mutex>
+        // {
+        // public:
+        //     TerminalSink(const Terminal* _Console) : m_Console(_Console){}
+        //     virtual ~TerminalSink(){}
+
+        // protected:
+
+        //     virtual void sink_it_(const spdlog::details::log_msg& _Message) override
+        //     {
+        //         if(m_Console != nullptr)
+        //         {
+        //             auto message = std::string(m_Console->m_Output.get_buffer()).append(fmt::to_string(_Message.payload));
+
+        //             m_Console->m_Output.set_buffer(message);
+        //         }
+        //     }
+
+        //     virtual void flush_() override{}
+
+        // private:
+
+        //     // info
+        //     const Terminal* m_Console = nullptr;
+        // };
+
+        class ConsoleSink : public spdlog::sinks::base_sink<std::mutex>
         {
-            class TerminalSink : public spdlog::sinks::base_sink<std::mutex>
+        public:
+            ConsoleSink(const Console* _Console) : m_Console(_Console){}
+            virtual ~ConsoleSink(){}
+
+        protected:
+
+            virtual void sink_it_(const spdlog::details::log_msg& _Message) override
             {
-            public:
-                TerminalSink(const Terminal* _Console) : m_Console(_Console){}
-                virtual ~TerminalSink(){}
+                if (m_Console == nullptr || 
+                        m_Console->m_Messages.size() >= m_Console->m_MaximumMessageCount) 
+                        return;
 
-            protected:
-
-                virtual void sink_it_(const spdlog::details::log_msg& _Message) override
-                {
-                    if(m_Console != nullptr)
-                    {
-                        auto message = std::string(m_Console->m_Output.get_buffer()).append(fmt::to_string(_Message.payload));
-
-                        m_Console->m_Output.set_buffer(message);
-                    }
-                }
-
-                virtual void flush_() override{}
-
-            private:
-
-                // info
-                const Terminal* m_Console = nullptr;
-            };
-
-            class ConsoleSink : public spdlog::sinks::base_sink<std::mutex>
-            {
-            public:
-                ConsoleSink(const Console* _Console) : m_Console(_Console){}
-                virtual ~ConsoleSink(){}
-
-            protected:
-
-                virtual void sink_it_(const spdlog::details::log_msg& _Message) override
-                {
-                    if (m_Console == nullptr || 
-                            m_Console->m_Messages.size() >= m_Console->m_MaximumMessageCount) 
-                            return;
-
-                    // create message
-                    m_Console->m_Messages[_Message.level].push_back(
-                        Console::Message(
-                            {
-                                _Message.time,
-                                _Message.level,
-                                fmt::to_string(_Message.payload)
-                            }
-                        )
-                    );
-                }
-
-                virtual void flush_() override{}
-
-            private:
-
-                // info
-                const Console* m_Console = nullptr;
-            };
-        }
-    }
-}
-
-Terminal::Terminal() : Layer(STRINGIFY(Frenchie::Application::Editor::Terminal)){}
-Terminal::~Terminal(){}
-
-bool Terminal::awake()
-{
-    m_Logger.register_sink<TerminalSink>(this);
-    return true;
-}
-
-void Terminal::frame_update()
-{
-    ImGui::Begin(get_name().c_str(), &m_Shown);
-    {
-        // ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 255));
-        // ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(0, 0, 0, 255));
-        // ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IM_COL32(0, 0, 0, 255));
-        // ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IM_COL32(0, 0, 0, 255));
-
-        m_Output.draw_multiline(
-            "Result",
-            0,
-            0.f,
-            ImGui::CalcTextSize(m_Output.get_buffer().c_str()).y + 2.f * ImGui::GetStyle().FramePadding.y);
-            
-
-        ImGui::TextUnformatted(Frenchie::Core::String::as_utf8(m_Path.wstring()).c_str());
-        ImGui::SameLine();
-        
-        if(m_Command.draw(
-            "Command",
-            ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            // execute command
-            {
-                // launch command
-                std::string command = 
-                    fmt::format("cd {} && {} 2>&1", 
-                        Frenchie::Core::String::as_utf8(m_Path.wstring()),
-                        std::string(m_Command.get_buffer()));
-
-                std::array<char, 128> buffer;
-                std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(command.c_str(), "r"), _pclose);
-                
-                if (!pipe) 
-                {
-                    Frenchie::Core::Logger::instance()->critical("Could not open pipe for {}", command);
-                    return;
-                }
-
-                // retrieve log
-                while(fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) 
-                    m_Logger.info(Frenchie::Core::String::as_utf8(Frenchie::Core::String::as_wide(buffer.data())));
+                // create message
+                m_Console->m_Messages[_Message.level].push_back(
+                    Console::Message(
+                        {
+                            _Message.time,
+                            _Message.level,
+                            fmt::to_string(_Message.payload)
+                        }
+                    )
+                );
             }
 
-            // clear command buffer
-            m_Command.set_buffer("");
-        }
+            virtual void flush_() override{}
 
-        //ImGui::PopStyleColor(4);
+        private:
 
-        ImGui::End();
+            // info
+            const Console* m_Console = nullptr;
+        };
     }
 }
 
-void Terminal::finish()
-{
-    m_Logger.unregister_sink(
-        [](spdlog::sink_ptr _Sink)->bool
-        {
-            return std::dynamic_pointer_cast<TerminalSink>(_Sink) != nullptr;
-        }
-    );
-}
+// Terminal::Terminal() : Layer(STRINGIFY(Frenchie::Application::Editor::Terminal)){}
+// Terminal::~Terminal(){}
 
-bool Terminal::allows_multiple_instances() const
-{
-    return true;
-}
+// bool Terminal::awake()
+// {
+//     m_Logger.register_sink<TerminalSink>(this);
+//     return true;
+// }
+
+// void Terminal::frame_update()
+// {
+//     ImGui::Begin(get_name().c_str(), &m_Shown);
+//     {
+//         // ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 255));
+//         // ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(0, 0, 0, 255));
+//         // ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IM_COL32(0, 0, 0, 255));
+//         // ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IM_COL32(0, 0, 0, 255));
+
+//         m_Output.draw_multiline(
+//             "Result",
+//             0,
+//             0.f,
+//             ImGui::CalcTextSize(m_Output.get_buffer().c_str()).y + 2.f * ImGui::GetStyle().FramePadding.y);
+            
+
+//         ImGui::TextUnformatted(Frenchie::Core::String::as_utf8(m_Path.wstring()).c_str());
+//         ImGui::SameLine();
+        
+//         if(m_Command.draw(
+//             "Command",
+//             ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+//         {
+//             // execute command
+//             {
+//                 // launch command
+//                 std::string command = 
+//                     fmt::format("cd {} && {} 2>&1", 
+//                         Frenchie::Core::String::as_utf8(m_Path.wstring()),
+//                         std::string(m_Command.get_buffer()));
+
+//                 std::array<char, 128> buffer;
+//                 std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(command.c_str(), "r"), _pclose);
+                
+//                 if (!pipe) 
+//                 {
+//                     Frenchie::Core::Logger::instance()->critical("Could not open pipe for {}", command);
+//                     return;
+//                 }
+
+//                 // retrieve log
+//                 while(fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) 
+//                     m_Logger.info(Frenchie::Core::String::as_utf8(Frenchie::Core::String::as_wide(buffer.data())));
+//             }
+
+//             // clear command buffer
+//             m_Command.set_buffer("");
+//         }
+
+//         //ImGui::PopStyleColor(4);
+
+//         ImGui::End();
+//     }
+// }
+
+// void Terminal::finish()
+// {
+//     m_Logger.unregister_sink(
+//         [](spdlog::sink_ptr _Sink)->bool
+//         {
+//             return std::dynamic_pointer_cast<TerminalSink>(_Sink) != nullptr;
+//         }
+//     );
+// }
+
+// bool Terminal::allows_multiple_instances() const
+// {
+//     return true;
+// }
 
 // Console
 Console::Console() : Layer(STRINGIFY(Console))

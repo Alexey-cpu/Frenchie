@@ -5,8 +5,8 @@
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 using namespace Frenchie::Core;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::Configuration;
 
 // IMGUI
 #include <imgui.h>
@@ -14,67 +14,64 @@ using namespace Frenchie::Application::Editor::Configuration;
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        class MenuPathsParser
         {
-            class MenuPathsParser
+        public:
+            MenuPathsParser(const std::string& _AbsolutePath) : 
+                m_AbsolutePath(_AbsolutePath), 
+                m_AbsoluteTokenizedPath(Frenchie::Core::String::split(m_AbsolutePath, "::")){}
+
+            ~MenuPathsParser(){}
+        
+            void parse(const std::vector<std::string>& _Path)
             {
-            public:
-                MenuPathsParser(const std::string& _AbsolutePath) : 
-                    m_AbsolutePath(_AbsolutePath), 
-                    m_AbsoluteTokenizedPath(Frenchie::Core::String::split(m_AbsolutePath, "::")){}
+                if(!is_main_menu(_Path)) 
+                    return;
 
-                ~MenuPathsParser(){}
-            
-                void parse(const std::vector<std::string>& _Path)
-                {
-                    if(!is_main_menu(_Path)) 
-                        return;
+                std::string result;
 
-                    std::string result;
+                for (size_t i = m_AbsoluteTokenizedPath.size(); i < _Path.size(); i++) 
+                    result = (i < _Path.size() - 1) ? result.append(_Path[i]).append("::") : result.append(_Path[i]);
 
-                    for (size_t i = m_AbsoluteTokenizedPath.size(); i < _Path.size(); i++) 
-                        result = (i < _Path.size() - 1) ? result.append(_Path[i]).append("::") : result.append(_Path[i]);
+                if(!result.empty()) 
+                    m_RelativePaths.insert(result);
+            }
 
-                    if(!result.empty()) 
-                        m_RelativePaths.insert(result);
-                }
-
-                bool is_main_menu(const std::vector<std::string>& _Path)
-                {
-                    return _Path.size() >= m_AbsoluteTokenizedPath.size() && 
-                        _Path[m_AbsoluteTokenizedPath.size()-1] == m_AbsoluteTokenizedPath.back();
-                }
-
-                std::string              m_AbsolutePath          = std::string();
-                std::set<std::string>    m_RelativePaths         = std::set<std::string>();
-                std::vector<std::string> m_AbsoluteTokenizedPath = std::vector<std::string>();
-            };
-
-            class MenuPathsDrawer
+            bool is_main_menu(const std::vector<std::string>& _Path)
             {
-            public:
+                return _Path.size() >= m_AbsoluteTokenizedPath.size() && 
+                    _Path[m_AbsoluteTokenizedPath.size()-1] == m_AbsoluteTokenizedPath.back();
+            }
 
-                static void draw(std::vector<std::string>& _Actions, std::string& _Path, int& _Index, void* _Sender)
+            std::string              m_AbsolutePath          = std::string();
+            std::set<std::string>    m_RelativePaths         = std::set<std::string>();
+            std::vector<std::string> m_AbsoluteTokenizedPath = std::vector<std::string>();
+        };
+
+        class MenuPathsDrawer
+        {
+        public:
+
+            static void draw(std::vector<std::string>& _Actions, std::string& _Path, int& _Index, void* _Sender)
+            {
+                if(_Index == _Actions.size() - 1) 
                 {
-                    if(_Index == _Actions.size() - 1) 
-                    {
-                        if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
-                            Frenchie::Application::application()->push_command(_Path, _Sender);
+                    if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
+                        Frenchie::Application::application()->push_command(_Path, _Sender);
 
-                        return;
-                    }
-
-                    if(ImGui::BeginMenu(Translator::translate(_Actions[_Index]).c_str()))
-                    {
-                        draw(_Actions, _Path, ++_Index, _Sender);
-
-                        ImGui::EndMenu();
-                    }
+                    return;
                 }
-            };
-        }
+
+                if(ImGui::BeginMenu(Translator::translate(_Actions[_Index]).c_str()))
+                {
+                    draw(_Actions, _Path, ++_Index, _Sender);
+
+                    ImGui::EndMenu();
+                }
+            }
+        };
     }
 }
 

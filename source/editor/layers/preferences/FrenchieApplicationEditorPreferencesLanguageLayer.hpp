@@ -4,27 +4,24 @@
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        namespace Preferences
         {
-            namespace Preferences
+            class Languages : 
+                public Frenchie::Application::Layer::Registry<Languages>
             {
-                class Languages : 
-                    public Frenchie::Application::Layer::Registry<Languages>
-                {
-                public:
-                    Languages();
-                    virtual ~Languages();
+            public:
+                Languages();
+                virtual ~Languages();
 
-                    // Frenchie::Application::Layer::Registry<Localizations>
-                    static std::string factory_id();
+                // Frenchie::Application::Layer::Registry<Localizations>
+                static std::string factory_id();
 
-                    // Frenchie::Application::Layer
-                    virtual void frame_update();
-                    virtual bool allows_multiple_instances() const;
-                };
-            }
+                // Frenchie::Application::Layer
+                virtual void frame_update();
+                virtual bool allows_multiple_instances() const;
+            };
         }
     }
 }

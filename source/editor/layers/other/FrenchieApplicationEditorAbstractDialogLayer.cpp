@@ -4,7 +4,7 @@
 #include <imgui.h>
 
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
+using namespace Frenchie::Editor;
 
 Dialog::Dialog(const std::string& _Name, const float& _MinWidth, const float& _MinHeight) : 
     Layer(_Name), 

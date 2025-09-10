@@ -10,32 +10,29 @@
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        class Menu
         {
-            class Menu
+        public:
+            Menu();
+            ~Menu();
+        
+            // Layer
+            void draw(const std::string& _MenuPath, void* _Sender = nullptr, bool _ForceUpdate = false);
+
+        protected:
+
+            // nested types
+            struct MenuData
             {
-            public:
-                Menu();
-                ~Menu();
-            
-                // Layer
-                void draw(const std::string& _MenuPath, void* _Sender = nullptr, bool _ForceUpdate = false);
-
-            protected:
-
-                // nested types
-                struct MenuData
-                {
-                    std::string                           Name;
-                    std::vector<std::string>              Paths;
-                    std::vector<std::vector<std::string>> Actions;
-                };
-
-                // info
-                std::map<std::string, MenuData> m_Menus;
+                std::string                           Name;
+                std::vector<std::string>              Paths;
+                std::vector<std::vector<std::string>> Actions;
             };
-        }
+
+            // info
+            std::map<std::string, MenuData> m_Menus;
+        };
     }
 }

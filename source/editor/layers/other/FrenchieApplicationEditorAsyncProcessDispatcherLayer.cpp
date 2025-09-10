@@ -9,8 +9,8 @@
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Configuration;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::Configuration;
 
 ProcessDispatcher::ProcessDispatcher() : 
     Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_ASYNC_PROCESS_DISPATCHER")){}

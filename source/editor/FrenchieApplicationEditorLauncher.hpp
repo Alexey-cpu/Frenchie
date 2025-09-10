@@ -4,23 +4,20 @@
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        class Launcher
         {
-            class Launcher
-            {
-            public:
+        public:
 
-                // getters
-                static std::filesystem::path get_app_exe_directory();
-                static std::filesystem::path get_app_log_directory();
-                static std::filesystem::path get_app_state_directory();
-                static std::filesystem::path get_app_translation_files_directory();
+            // getters
+            static std::filesystem::path get_app_exe_directory();
+            static std::filesystem::path get_app_log_directory();
+            static std::filesystem::path get_app_state_directory();
+            static std::filesystem::path get_app_translation_files_directory();
 
-                // API
-                static int execute();
-            };
-        }
+            // API
+            static int execute();
+        };
     }
 }

@@ -17,8 +17,8 @@
 
 using namespace Frenchie;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Tools;
+using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::Tools;
 
 // LoadTranslationFiles
 LoadTranslationFilesProcess::LoadTranslationFilesProcess(

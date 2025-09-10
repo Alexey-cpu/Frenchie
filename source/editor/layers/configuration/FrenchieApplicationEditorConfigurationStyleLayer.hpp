@@ -5,28 +5,25 @@
 
 namespace Frenchie
 {
-    namespace Application
+    namespace Editor
     {
-        namespace Editor
+        namespace Configuration
         {
-            namespace Configuration
+            class Style : 
+                public Frenchie::Application::Layer, 
+                public Frenchie::Core::Serialization::ISerializer
             {
-                class Style : 
-                    public Layer, 
-                    public Frenchie::Core::Serialization::ISerializer
-                {
-                public:
-                    Style();
-                    virtual ~Style();
+            public:
+                Style();
+                virtual ~Style();
 
-                    // Frenchie::Application::Layer
-                    virtual bool allows_multiple_instances() const override;
+                // Frenchie::Application::Layer
+                virtual bool allows_multiple_instances() const override;
 
-                    // Frenchie::Core::Serialization::ISerializer
-                    virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
-                    virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
-                };
-            }
+                // Frenchie::Core::Serialization::ISerializer
+                virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
+                virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
+            };
         }
     }
 }
