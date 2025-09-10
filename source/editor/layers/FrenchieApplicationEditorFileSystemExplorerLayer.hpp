@@ -1,8 +1,8 @@
 #pragma once
 
 // Application
+#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
-#include <FrenchieApplicationProcessesLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 

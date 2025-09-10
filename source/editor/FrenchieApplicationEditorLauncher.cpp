@@ -1,26 +1,25 @@
 #include <FrenchieApplicationEditorLauncher.hpp>
 
-// Frenchie::Application
+// Application
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
+
+// Editor
 #include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationEditorConsoleLayer.hpp>
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-
-#include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplicationEditorProcessesDispatcherLayer.hpp>
 
 // configuration
 #include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationStyleLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
-#include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
-
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
 
-// Frenchie::Core
+// Core
 #include <FrenchieCoreHelpers.hpp>
 
 // SPDLOG
@@ -159,7 +158,7 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Application::application()->push_layer<ProcessDispatcher>()->show();
+                    Frenchie::Application::application()->push_layer<ProcessesDispatcher>()->show();
                 }
 
                 // Command::TRegistryType
@@ -307,7 +306,7 @@ int Launcher::execute()
     Frenchie::Application::application()->push_layer<Configuration::Style>();
     Frenchie::Application::application()->push_layer<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
     Frenchie::Application::application()->push_layer<Console>();
-    Frenchie::Application::application()->push_layer<ProcessDispatcher>();
+    Frenchie::Application::application()->push_layer<ProcessesDispatcher>();
 
     Frenchie::Application::application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 

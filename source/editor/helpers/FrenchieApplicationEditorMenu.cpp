@@ -58,7 +58,7 @@ namespace Frenchie
                 if(_Index == _Actions.size() - 1) 
                 {
                     if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
-                        Frenchie::Application::application()->push_command(_Path, _Sender);
+                        Frenchie::Application::CommandsQueue::instance()->push(_Path, _Sender);
 
                     return;
                 }

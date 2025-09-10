@@ -417,44 +417,48 @@ void TranslationFilesEditor::frame_update()
     std::lock_guard<std::mutex> lock(m_Mutex);
 
     // draw
-    ImGui::Begin(fmt::format("{}##{}", get_name().c_str(), get_uuid().to_string().c_str()).c_str());
+    ImGui::Begin(get_name().c_str(), &m_Opened);
 
     int id = 0;
 
     ImGui::TextUnformatted("Tools");
     {
         ImGui::PushID(id++);
-        
+
         if(ImGui::Button("Load"))
         {
-            Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                "Select directory where translation files are...",
-                [this]()
-                {
-                    m_LoadProcess = 
-                        Frenchie::Application::application()->push_process<LoadTranslationFilesProcess>(
-                            Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
-                }
-            );
+            try_execute_command([this]()
+            {
+                Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+                    "Select directory where translation files are...",
+                    [this]()
+                    {
+                        m_LoadProcess = 
+                            Frenchie::Application::ProcessQueue::instance()->push<LoadTranslationFilesProcess>(
+                                Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
+                    }
+                );
+            }, "Load");
         }
 
         ImGui::SameLine();
 
         if(ImGui::Button("Save"))
         {
-            m_SaveProcess = 
-                Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
-                    m_LoadProcess->m_TranslationFiles);
+            try_execute_command([this]()
+            {
+                m_SaveProcess = 
+                    Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
+                        m_LoadProcess->m_TranslationFiles);
+            }, 
+            "Save");
         }
 
         ImGui::SameLine();
 
         if(ImGui::Button("Synchronize contents"))
         {
-            if(!any_process_is_running())
-            {
-                // write logic here...
-            }
+            // Take the file with the largest number of keys and inline all other files contents by this
         }
 
         ImGui::PopID();
@@ -476,30 +480,102 @@ void TranslationFilesEditor::frame_update()
                     {
                         if(ImGui::Button("Save"))
                         {
-                            m_SaveProcess = Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
+                            try_execute_command([this, &translationFile]()
+                            {
+                                m_SaveProcess = Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
                                 std::vector<TranslationFile>({translationFile}));
+                            }, "Save");
                         }
 
                         ImGui::SameLine();
 
                         if(ImGui::Button("Save as"))
                         {
-                            Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                                "Save as",
-                                [this, &translationFile]()
-                                {
-                                    auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
-
-                                    if(dialog != nullptr) 
+                            try_execute_command([this, &translationFile]()
+                            {
+                                Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+                                    "Save as",
+                                    [this, &translationFile]()
                                     {
+                                        auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+
+                                        if(dialog == nullptr) 
+                                            return;
+
                                         translationFile.Path = dialog->get_current_file();
 
                                         m_SaveProcess = 
-                                            Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
+                                            Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
                                                 std::vector<TranslationFile>({translationFile}));
                                     }
-                                }
-                            );
+                                );
+                            }, "Save as");
+                        }
+
+                        ImGui::SameLine();
+
+                        if(ImGui::Button("Clear all"))
+                        {
+                            try_execute_command([this, &translationFile]()
+                            {
+                                if(!translationFile.Translations.empty())
+                                    translationFile.Translations.clear();
+                            }, 
+                            "Clear all");
+                        }
+
+                        ImGui::SameLine();
+
+                        if(ImGui::Button("Add translation unit"))
+                            m_NewKeys.push_back({"NEW_KEY", "NEY_VALUE"});
+
+                        if(!m_NewKeys.empty())
+                        {
+                            ImGui::SameLine();
+
+                            if(ImGui::Button("Insert translation units"))
+                            {
+                                try_execute_command(
+                                    [this, &translations]()
+                                    {
+                                        for(auto&& newKey : m_NewKeys)
+                                            translations.insert({newKey.Name, newKey.Value});
+
+                                        m_NewKeys.clear();
+                                    }, 
+                                    "Insert translation units");
+                            }
+
+                            ImGui::SameLine();
+
+                            if(ImGui::Button("Clear"))
+                            {
+                                try_execute_command(
+                                    [this, &translations](){m_NewKeys.clear();}, 
+                                    "Clear");
+                            }
+
+                            int id = 0;
+                            for(auto&& newKey : m_NewKeys)
+                            {
+                                ImGui::PushID(++id);
+                                ImGui::Checkbox("##", &newKey.Selected);
+                                ImGui::PopID();
+
+                                ImGui::SameLine();
+
+                                ImGui::TableSetColumnIndex(1);
+                                ImGui::PushID(++id);
+                                ImGui::InputText("##", &newKey.Name);
+                                ImGui::PopID();
+
+                                ImGui::SameLine();
+
+                                ImGui::TableSetColumnIndex(1);
+                                ImGui::PushID(++id);
+                                ImGui::InputText("##", &newKey.Value);
+                                ImGui::PopID();
+                            }
                         }
 
                         // draw localization keys (table)
@@ -545,8 +621,12 @@ void TranslationFilesEditor::frame_update()
                                 
                                 if(ImGui::Button("Remove", ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
                                 {
-                                    Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
-                                        [&translations, &translation](){translations.erase(translation.first);});
+                                    try_execute_command([&translations, &translation]()
+                                    {
+                                        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+                                            [&translations, &translation](){translations.erase(translation.first);});
+                                    }, 
+                                    "Remove");
                                 }
 
                                 ImGui::PopID();
@@ -578,13 +658,21 @@ bool TranslationFilesEditor::allows_multiple_instances() const
     return false;
 }
 
-bool TranslationFilesEditor::any_process_is_running()
+void TranslationFilesEditor::try_execute_command(std::function<void()> _Function, const std::string& _Name)
 {
-    if(m_LoadProcess == nullptr || m_SaveProcess == nullptr) 
-        return false;
+    if(m_LoadProcess != nullptr && !m_LoadProcess->finished() && !m_LoadProcess->canceled())
+    {
+        Frenchie::Core::Logger::instance()->error("{}: cannot '{}' as someting is loading...", get_name(), _Name);
+        return;
+    }
 
-    if(m_LoadProcess->finished() || m_LoadProcess->canceled() || m_SaveProcess->finished() || m_SaveProcess->canceled()) 
-        return false;
+    if(m_SaveProcess != nullptr && !m_SaveProcess->finished() && !m_SaveProcess->canceled())
+    {
+        Frenchie::Core::Logger::instance()->error("{}: cannot '{}' as someting is saving...", get_name(), _Name);
+        return;
+    }
 
-    return true;
+    // execute
+    if(_Function != nullptr)
+        _Function();
 }

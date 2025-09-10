@@ -6,11 +6,11 @@ namespace Frenchie
 {
     namespace Editor
     {
-        class ProcessDispatcher : public Frenchie::Application::Layer
+        class ProcessesDispatcher : public Frenchie::Application::Layer
         {
         public:
-            ProcessDispatcher();
-            virtual ~ProcessDispatcher();
+            ProcessesDispatcher();
+            virtual ~ProcessesDispatcher();
 
             // Frenchie::Application::Layer
             virtual void frame_update() override;

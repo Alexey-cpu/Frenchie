@@ -497,7 +497,7 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
         return;
     }
 
-    application()->push_command<Frenchie::Application::CallbackCommand>(
+    Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this, _Path]()
             {
                 try
@@ -805,20 +805,20 @@ void Explorer::handle_current_directory_hot_keys()
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        application()->push_command(FileMenu::CopyAction::factory_id(), this);
+        Frenchie::Application::CommandsQueue::instance()->push(FileMenu::CopyAction::factory_id(), this);
     }
 
     // Ctrl + V
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        application()->push_command(FileMenu::PasteAction::factory_id(), this);
+        Frenchie::Application::CommandsQueue::instance()->push(FileMenu::PasteAction::factory_id(), this);
     }
 
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
-        application()->push_command(FileMenu::RemoveAction::factory_id(), this);
+        Frenchie::Application::CommandsQueue::instance()->push(FileMenu::RemoveAction::factory_id(), this);
     }
 
     // Escape
@@ -1146,7 +1146,7 @@ PathScannerDialog::PathScannerDialog(
         _Name, 
         _MaxSearchDepth]()
     {
-        m_Process = application()->push_process<FilesystemPathsSearchProcess>(
+        m_Process = Frenchie::Application::ProcessQueue::instance()->push<FilesystemPathsSearchProcess>(
             _Path,
             _Predicate,
             _OnFinished,

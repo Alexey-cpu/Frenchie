@@ -1,7 +1,7 @@
 #pragma once
 
 // Application
-#include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 // Core
 #include <FrenchieCoreHelpers.hpp>
@@ -59,7 +59,6 @@ namespace Frenchie
             std::function<void()> m_Callback = nullptr;
         };
 
-        // CommandsQueue
         class CommandsQueue : public Layer
         {
         public:
@@ -84,6 +83,17 @@ namespace Frenchie
             // Frenchie::Application::Layer
             virtual void frame_start() override;
             virtual bool allows_multiple_instances() const;
+
+            // static API
+            static Frenchie::Core::Reference<CommandsQueue> instance()
+            {
+                auto commands = Frenchie::Application::application()->find_layer<CommandsQueue>();
+                
+                if(commands == nullptr) 
+                    commands = Frenchie::Application::application()->push_layer<CommandsQueue>();
+
+                return commands;
+            }
 
         protected:
             std::queue<std::unique_ptr<Command>> m_Commands = 
