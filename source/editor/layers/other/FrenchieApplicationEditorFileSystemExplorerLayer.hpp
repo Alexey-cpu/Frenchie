@@ -2,8 +2,8 @@
 
 // Application
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
-#include <FrenchieApplicationEditorAsyncProcessLayer.hpp>
 #include <FrenchieApplicationEditorInputText.hpp>
+#include <FrenchieApplicationProcessesLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 
@@ -13,6 +13,7 @@
 
 // IMGUI
 #include <imgui.h>
+#include <imgui_stdlib.h>
 
 // STL
 #include <map>
@@ -24,9 +25,9 @@ namespace Frenchie
     {
         namespace Editor
         {
-            namespace Async
+            namespace FileSystem
             {
-                class FilesystemPathsSearchProcess : public Process
+                class FilesystemPathsSearchProcess : public Frenchie::Application::Process
                 {
                 public:
                     FilesystemPathsSearchProcess(
@@ -52,19 +53,7 @@ namespace Frenchie
                     mutable size_t                                            m_MaxSearchDepth = 4;
                     mutable std::map<std::filesystem::path, bool>             m_Paths          = std::map<std::filesystem::path, bool>();
                 };
-            }
-        }
-    }
-}
 
-namespace Frenchie
-{
-    namespace Application
-    {
-        namespace Editor
-        {
-            namespace FileSystem
-            {
                 // Explorer
                 class Explorer : public Layer
                 {
@@ -75,9 +64,9 @@ namespace Frenchie
                     virtual ~Explorer();
 
                     // static API
-                    std::filesystem::path get_path() const;
-                    std::filesystem::path get_file() const;
                     std::set<std::filesystem::path> get_selected_paths() const;
+                    std::filesystem::path get_current_path() const;
+                    std::filesystem::path get_current_file() const;
                     void create_folder();
                     void copy_paths();
                     void paste_paths();
@@ -86,14 +75,53 @@ namespace Frenchie
 
                     // Frenchie::Application::Layer
                     virtual void frame_update() override;
+
                 protected:
 
+                    class Selection
+                    {
+                    public:
+
+                        std::set<std::filesystem::path> get_selected_paths() const
+                        {
+                            auto selection = m_SelectedPaths;
+
+                            for(auto&& path : selection)
+                            {
+                                if(!std::filesystem::exists(path))
+                                    m_SelectedPaths.erase(path);
+                            }
+
+                            return m_SelectedPaths;
+                        }
+
+                        void select_path(const std::filesystem::path& _Path)
+                        {
+                            m_SelectedPaths.insert(_Path);
+                            m_CurrentFile = Frenchie::Core::String::as_utf8(_Path.filename().wstring());
+                        }
+
+                        void clear_selection()
+                        {
+                            m_SelectedPaths.clear();
+                            m_CurrentFile = "Nothing selected...";
+                        }
+
+                        bool contains(const std::filesystem::path& _Path) const
+                        {
+                            return m_SelectedPaths.find(_Path) != m_SelectedPaths.end();
+                        }
+
+                        mutable std::string m_CurrentFile;
+
+                    protected:
+                        mutable std::set<std::filesystem::path> m_SelectedPaths;
+                    } m_Selection;
+
                     // info
-                    std::filesystem::path           m_Path = std::filesystem::current_path();
-                    InputText                       m_CurrentDirectory;
-                    InputText                       m_CurrentFile;
-                    bool                            m_DrawCurrentDirectoryTextEdit = false;
-                    mutable std::set<std::filesystem::path> m_SelectedPaths;
+                    std::filesystem::path                   m_Path = std::filesystem::current_path();
+                    std::string                             m_CurrentDirectory;
+                    bool                                    m_DrawCurrentDirectoryTextEdit = false;
                     mutable std::set<std::filesystem::path> m_CopiedPaths;
 
                     // servive methods
@@ -101,7 +129,6 @@ namespace Frenchie
                     
                     // drawers
                     void draw_contents();
-                    
                     void draw_current_directory_path_editor();
                     void draw_current_filename_editor();
                     void draw_current_directory_paths_table();
@@ -112,52 +139,49 @@ namespace Frenchie
                     void drag_selected_paths(const std::filesystem::path&);
                 };
 
-                namespace Dialogs
+                class ExplorerDialog : public FileSystem::Explorer 
                 {
-                    class ExplorerDialog : public FileSystem::Explorer 
-                    {
-                    public:
-                        ExplorerDialog(
-                            const std::string&           _Name        = STRINGIFY(ExplorerDialog),
-                            const std::function<void()>& _OnAccpected = nullptr,
-                            const std::function<void()>& _OnCanceled  = nullptr);
-                        
-                        virtual ~ExplorerDialog();
+                public:
+                    ExplorerDialog(
+                        const std::string&           _Name        = STRINGIFY(ExplorerDialog),
+                        const std::function<void()>& _OnAccpected = nullptr,
+                        const std::function<void()>& _OnCanceled  = nullptr);
+                    
+                    virtual ~ExplorerDialog();
 
-                        // Frenchie::Application::Layer
-                        virtual void frame_update() override;
-                        virtual bool allows_multiple_instances() const override;
+                    // Frenchie::Application::Layer
+                    virtual void frame_update() override;
+                    virtual bool allows_multiple_instances() const override;
 
-                    protected:
-                        std::function<void()> m_OnAccepted = nullptr;
-                        std::function<void()> m_OnCanceled = nullptr;
-                    };
+                protected:
+                    std::function<void()> m_OnAccepted = nullptr;
+                    std::function<void()> m_OnCanceled = nullptr;
+                };
 
-                    class PathScannerDialog : public Dialog
-                    {
-                    public:
-                        PathScannerDialog(
-                            const std::filesystem::path&                                       _Path,
-                            const std::function<bool(const std::filesystem::path&)>&           _Predicate,
-                            const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished     = nullptr,
-                            const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled     = nullptr,
-                            const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed       = nullptr,
-                            const std::string&                                                 _Name           = STRINGIFY(Frenchie::Application::Editor::ScannerView),
-                            size_t                                                             _MaxSearchDepth = 100);
-                        virtual ~PathScannerDialog();
-                        
-                        virtual bool awake() override;
-                        virtual void frame_update() override;
-                        virtual void draw_content() override;
-                        virtual void draw_buttons() override;
-                        virtual void finish() override;
+                class PathScannerDialog : public Dialog
+                {
+                public:
+                    PathScannerDialog(
+                        const std::filesystem::path&                                       _Path,
+                        const std::function<bool(const std::filesystem::path&)>&           _Predicate,
+                        const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished     = nullptr,
+                        const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled     = nullptr,
+                        const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed       = nullptr,
+                        const std::string&                                                 _Name           = STRINGIFY(Frenchie::Application::Editor::ScannerView),
+                        size_t                                                             _MaxSearchDepth = 100);
+                    virtual ~PathScannerDialog();
+                    
+                    virtual bool awake() override;
+                    virtual void frame_update() override;
+                    virtual void draw_content() override;
+                    virtual void draw_buttons() override;
+                    virtual void finish() override;
 
-                    protected:
+                protected:
 
-                        std::function<void()>                                m_Launcher = nullptr;
-                        std::shared_ptr<Async::FilesystemPathsSearchProcess> m_Process  = nullptr;
-                    };
-                }
+                    std::function<void()>                         m_Launcher = nullptr;
+                    std::shared_ptr<FilesystemPathsSearchProcess> m_Process  = nullptr;
+                };
             }
         }
     }

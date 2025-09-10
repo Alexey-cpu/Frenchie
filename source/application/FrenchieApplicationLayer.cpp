@@ -60,9 +60,7 @@ bool Layer::awake()
 
     if(serializer != nullptr)
     {
-        auto& appState = 
-            Frenchie::Application::Application::instance()->get_state();
-
+        auto& appState = application()->get_state();
         serializer->deserialize(appState.find_node(STRINGIFY(Application)));
     }
 
@@ -90,7 +88,7 @@ void Layer::finish()
     if(serializer != nullptr)
     {
         auto& appState = 
-            Frenchie::Application::Application::instance()->get_state();
+            application()->get_state();
 
         auto appInfoNode = appState.find_node(STRINGIFY(Application));
 

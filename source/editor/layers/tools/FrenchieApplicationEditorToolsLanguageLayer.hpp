@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 
-#include <FrenchieApplicationEditorAsyncProcessLayer.hpp>
+#include <FrenchieApplicationProcessesLayer.hpp>
 
 // STL
 #include <set>
@@ -13,13 +13,19 @@ namespace Frenchie
     {
         namespace Editor
         {
-            namespace Async
+            namespace Tools
             {
+                struct TranslationFile
+                {
+                    std::filesystem::path              Path;
+                    std::map<std::string, std::string> Translations;
+                };
+
                 // LoadTranslationFiles
                 class LoadTranslationFilesProcess : 
-                    public Async::Process, 
-                    public Async::IProcessStatus,
-                    public Async::IProcessProgress
+                    public Process, 
+                    public IProcessStatus,
+                    public IProcessProgress
                 {
                 public:
                     LoadTranslationFilesProcess(
@@ -29,15 +35,6 @@ namespace Frenchie
                         const std::function<void()>&           _OnFailed   = nullptr);
                     
                     virtual ~LoadTranslationFilesProcess();
-                
-                    // getters
-                    std::map<
-                        std::filesystem::path, 
-                        std::map<std::string, std::string>>& get_translation_files()
-                    {
-                        std::unique_lock<std::mutex> lock(m_Mutex);
-                        return m_TranslationFiles;
-                    }
 
                     //
                     virtual bool awake() override;
@@ -48,28 +45,24 @@ namespace Frenchie
                     // Async::IProcessProgress
                     virtual float iprocess_progress_request_progress() override;
 
-                protected:
                     // info
-                    std::map<
-                        std::filesystem::path, 
-                        std::map<std::string, std::string>> m_TranslationFiles;
-
-                    float       m_Progress = 0.f;
-                    std::string m_Status   = std::string();
+                    std::vector<TranslationFile> m_TranslationFiles;
+                    float                        m_Progress = 0.f;
+                    std::string                  m_Status   = std::string();
                 };
 
                 // SaveTranslationFiles
                 class SaveTranslationFilesProcess :
-                    public Async::Process, 
-                    public Async::IProcessStatus,
-                    public Async::IProcessProgress
+                    public Process, 
+                    public IProcessStatus,
+                    public IProcessProgress
                 {
                 public:
                     SaveTranslationFilesProcess(
-                        const std::map<std::filesystem::path, std::map<std::string, std::string>>& _Translations,
-                        const std::function<void()>& _OnFinished  = nullptr,
-                        const std::function<void()>& _OnCanceled  = nullptr, 
-                        const std::function<void()>& _OnFailed    = nullptr);
+                        const std::vector<TranslationFile>& _Translations,
+                        const std::function<void()>&        _OnFinished  = nullptr,
+                        const std::function<void()>&        _OnCanceled  = nullptr, 
+                        const std::function<void()>&        _OnFailed    = nullptr);
                     
                     virtual ~SaveTranslationFilesProcess();
                 
@@ -81,20 +74,12 @@ namespace Frenchie
                     // Async::IProcessProgress
                     virtual float iprocess_progress_request_progress() override;
 
-                protected:
-
                     // info
-                    std::map<
-                        std::filesystem::path, 
-                        std::map<std::string, std::string>> m_TranslationFiles;
-
-                    float       m_Progress = 0.f;
-                    std::string m_Status   = std::string();
+                    std::vector<TranslationFile> m_TranslationFiles;
+                    float                        m_Progress = 0.f;
+                    std::string                  m_Status   = std::string();
                 };
-            }
 
-            namespace Tools
-            {
                 class TranslationFilesEditor : public Layer
                 {
                 public:
@@ -103,12 +88,14 @@ namespace Frenchie
 
                     virtual void frame_update() override;
                     virtual void finish() override;
+                    virtual bool allows_multiple_instances() const;
                 
                 protected:
-                    std::filesystem::path m_TranslationFilesLocation;
+                    std::shared_ptr<LoadTranslationFilesProcess> m_LoadProcess;
+                    std::shared_ptr<SaveTranslationFilesProcess> m_SaveProcess;
+                    std::mutex                                   m_Mutex;
 
-                    Frenchie::Core::Reference<Async::LoadTranslationFilesProcess> m_LoadProcess;
-                    Frenchie::Core::Reference<Async::SaveTranslationFilesProcess> m_SaveProcess;
+                    bool any_process_is_running();
                 };
             }
         }

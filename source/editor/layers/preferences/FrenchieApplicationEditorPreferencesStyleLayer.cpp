@@ -1,7 +1,7 @@
 #include <FrenchieApplicationEditorPreferencesStyleLayer.hpp>
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
@@ -282,20 +282,18 @@ void Style::draw_fonts_settings()
 
     if(ImGui::Button(Translator::translate("Browse").c_str()))
     {
-        auto application = Frenchie::Application::Application::instance();
-
-        application->push<FileSystem::Dialogs::ExplorerDialog>(
+        application()->push<FileSystem::ExplorerDialog>(
             Translator::translate("Select path where to search for fonts...").c_str(),
-            [this, application]()
+            [this]()
             {
-                auto dialog = application->find<FileSystem::Dialogs::ExplorerDialog>();
+                auto dialog = application()->find<FileSystem::ExplorerDialog>();
 
                 if(dialog == nullptr) 
                     return;
 
-                auto path = dialog->get_path();
-                application->find_or_push<CommandsQueue>()->push<CallbackCommand>(
-                    [this, path, application](){application->find_or_push<Configuration::Fonts>()->scan_fonts(path);});
+                auto path = dialog->get_current_path();
+                application()->push_command<CallbackCommand>(
+                    [this, path](){application()->push<Configuration::Fonts>()->scan_fonts(path);});
             }
         );
     }

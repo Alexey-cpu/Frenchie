@@ -1,7 +1,7 @@
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 // Frenchie::Core
@@ -165,11 +165,10 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 std::string Translator::translate(const std::string& _Key)
 {
-    auto localizator = 
-        Frenchie::Application::Application::instance()->find_or_push<Translator>();
+    auto localizator = application()->find<Translator>();
 
     if(localizator == nullptr) 
-        return _Key;
+        localizator = application()->push<Translator>();
 
     auto translation = localizator->m_Translations[_Key];
 

@@ -1,7 +1,7 @@
 #include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
@@ -168,7 +168,7 @@ namespace Frenchie
                     ImGui::GetIO().Fonts->Build();
 
                     // reload app
-                    Frenchie::Application::Application::instance()->reload();
+                    application()->reload();
 
                     //
                     if(m_OnFinished != nullptr)
@@ -257,11 +257,10 @@ bool Fonts::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 void Fonts::scan_fonts(const std::filesystem::path& _Path)
 {
     // load fonts
-    Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()
-        ->push<CallbackCommand>(
+    application()->push_command<CallbackCommand>(
             [this, _Path]()
             {
-                Frenchie::Application::Application::instance()->push<Dialogs::PathScannerDialog>(
+                application()->push<PathScannerDialog>(
                     _Path,
                     [](const std::filesystem::path& _Entry)->bool
                     {
@@ -293,8 +292,7 @@ void Fonts::load_fonts(
         return;
 
     // load fonts
-    Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()
-        ->push<CallbackCommand>(
+    application()->push_command<CallbackCommand>(
             [this, _Font, _Fonts]()
             {
                 // remove old fonts besides the current font
@@ -308,7 +306,7 @@ void Fonts::load_fonts(
                 }
 
                 // load new fonts
-                Frenchie::Application::Application::instance()->push<FontsLoader>(
+                application()->push<FontsLoader>(
                     _Fonts, 
                     _Font,
                     [this, _Fonts]()

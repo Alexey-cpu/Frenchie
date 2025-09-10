@@ -8,19 +8,16 @@ namespace Frenchie
     {
         namespace Editor
         {
-            namespace Async
+            class ProcessDispatcher : public Layer
             {
-                class ProcessDispatcher : public Layer
-                {
-                public:
-                    ProcessDispatcher();
-                    virtual ~ProcessDispatcher();
+            public:
+                ProcessDispatcher();
+                virtual ~ProcessDispatcher();
 
-                    // Frenchie::Application::Layer
-                    virtual void frame_update() override;
-                    virtual bool allows_multiple_instances() const;
-                };
-            }
+                // Frenchie::Application::Layer
+                virtual void frame_update() override;
+                virtual bool allows_multiple_instances() const;
+            };
         }
     }
 }

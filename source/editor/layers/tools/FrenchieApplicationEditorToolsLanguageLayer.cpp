@@ -1,9 +1,8 @@
 #include <FrenchieApplicationEditorToolsLanguageLayer.hpp>
 
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorAsyncProcessLayer.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -20,7 +19,6 @@ using namespace Frenchie;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
 using namespace Frenchie::Application::Editor::Tools;
-using namespace Frenchie::Application::Editor::Async;
 
 // LoadTranslationFiles
 LoadTranslationFilesProcess::LoadTranslationFilesProcess(
@@ -32,6 +30,8 @@ LoadTranslationFilesProcess::LoadTranslationFilesProcess(
 {
     for(auto&& path : _Path)
     {
+        Frenchie::Core::Logger::instance()->warn(path.string());
+
         if(!std::filesystem::exists(path)       || 
             std::filesystem::is_directory(path) || 
             Frenchie::Core::FileSystem::get_file_extention(path) != ".xlf") 
@@ -39,7 +39,7 @@ LoadTranslationFilesProcess::LoadTranslationFilesProcess(
             continue;
         }
 
-        m_TranslationFiles.insert(
+        m_TranslationFiles.push_back(
             {
                 path, 
                 std::map<std::string, std::string>()
@@ -76,10 +76,8 @@ bool LoadTranslationFilesProcess::awake()
                 if(m_Canceled) 
                     return;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-                auto& path         = translationFile.first;
-                auto& translations = translationFile.second;
+                auto& path         = translationFile.Path;
+                auto& translations = translationFile.Translations;
 
                 // load XLIFF
                 {
@@ -135,7 +133,7 @@ float LoadTranslationFilesProcess::iprocess_progress_request_progress()
 
 // SaveTranslationFiles
 SaveTranslationFilesProcess::SaveTranslationFilesProcess(
-    const std::map<std::filesystem::path, std::map<std::string, std::string>>& _Translations,
+    const std::vector<TranslationFile>& _Translations,
     const std::function<void()>& _OnFinished,
     const std::function<void()>& _OnCanceled, 
     const std::function<void()>& _OnFailed) :
@@ -169,8 +167,8 @@ bool SaveTranslationFilesProcess::awake()
                 if(m_Canceled) 
                     return;
 
-                auto& path         = translationFile.first;
-                auto& translations = translationFile.second;
+                auto& path         = translationFile.Path;
+                auto& translations = translationFile.Translations;
 
                 m_Status   = m_Status.append(fmt::format("starting saving file {}", path.string())).append("\n");
 
@@ -197,6 +195,8 @@ bool SaveTranslationFilesProcess::awake()
                 m_Progress = (float)(++progress) / (float)(total);
                 m_Status   = m_Status.append(fmt::format("finished...")).append("\n");
                 document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(path);
+
+                Frenchie::Core::Logger::instance()->warn("Saving {}", path.string());
             }
 
             m_Finished = true;
@@ -238,7 +238,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        Frenchie::Application::Application::instance()->find_or_push<TranslationFilesEditor>()->show();
+                        application()->push<TranslationFilesEditor>()->show();
                     }
 
                     // Command::TRegistryType
@@ -409,62 +409,70 @@ namespace Frenchie
 // }
 
 TranslationFilesEditor::TranslationFilesEditor() : 
-    Layer("UpdateLocalizationFiles"){}
+    Layer(".xlf files editor"){}
 
 TranslationFilesEditor::~TranslationFilesEditor(){}
 
 void TranslationFilesEditor::frame_update()
 {
-    ImGui::Begin(get_name().c_str());
-    
+    // lock mutex to guarantee sage access to process data
+    std::lock_guard<std::mutex> lock(m_Mutex);
+
+    // draw
+    ImGui::Begin(fmt::format("{}##{}", get_name().c_str(), get_uuid().to_string().c_str()).c_str());
+
     int id = 0;
 
-    ImGui::TextUnformatted("XLIFF files search path");
+    ImGui::TextUnformatted("Tools");
     {
-        auto path   = Frenchie::Core::String::as_utf8(m_TranslationFilesLocation.wstring());
-        bool status = std::filesystem::exists(m_TranslationFilesLocation);
-
-        ImGui::PushID(id++);
-        ImGui::Checkbox("##", &status);
-        ImGui::PopID();
-
-        ImGui::SameLine();
-
-        ImGui::PushID(id++);
-        ImGui::InputText("##", &path, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
-        ImGui::PopID();
-        
-        ImGui::SameLine();
-
         ImGui::PushID(id++);
         
         if(ImGui::Button("Load"))
         {
-            Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push<CallbackCommand>(
-                [this]()
-                {
-                    Frenchie::Application::Application::instance()->push<FileSystem::Dialogs::ExplorerDialog>(
-                        "Select directory where translation files are...",
-                        [this]()
-                        {
-                            auto dialog = Frenchie::Application::Application::instance()->find<FileSystem::Dialogs::ExplorerDialog>();
+            if(!any_process_is_running())
+            {
+                application()->push<FileSystem::ExplorerDialog>(
+                    "Select directory where translation files are...",
+                    [this]()
+                    {
+                        m_LoadProcess = 
+                            application()->push_process<LoadTranslationFilesProcess>(
+                                application()->find<FileSystem::ExplorerDialog>()->get_selected_paths());
+                    }
+                );
+            }
+        }
 
-                            if(dialog == nullptr) 
-                                return;
+        ImGui::SameLine();
 
-                            // setup path
-                            m_TranslationFilesLocation = dialog->get_path();
+        if(ImGui::Button("Save"))
+        {
+            if(m_LoadProcess != nullptr && 
+                !m_LoadProcess->finished())
+            {
+                Frenchie::Core::Logger::instance()->critical(
+                    "Could not save translation files as they are still loaded.");
+            }
+            else if(m_SaveProcess != nullptr && 
+                    !m_SaveProcess->finished())
+            {
+            }
+        }
 
-                            // finish previously launched process
-                            if(m_LoadProcess != nullptr)
-                                m_LoadProcess->close();
+        ImGui::SameLine();
 
-                            // launch new process
-                            m_LoadProcess = Frenchie::Application::Application::instance()->push<LoadTranslationFilesProcess>(dialog->get_selected_paths());
-                        }
-                    );
-                }
-            );
+        if(ImGui::Button("Synchronize contents"))
+        {
+            if(m_LoadProcess != nullptr && 
+                m_LoadProcess->finished())
+            {
+                // write logic here...
+            }
+            else
+            {
+                Frenchie::Core::Logger::instance()->critical(
+                    "Could not synchronize contents of translation files as they are still loaded.");
+            }
         }
 
         ImGui::PopID();
@@ -477,13 +485,56 @@ void TranslationFilesEditor::frame_update()
         {
             if(m_LoadProcess->finished()) // draw table on finished
             {
-                for(auto&& translationFile : m_LoadProcess->get_translation_files())
+                for(auto&& translationFile : m_LoadProcess->m_TranslationFiles)
                 {
-                    auto& path         = translationFile.first;
-                    auto& translations = translationFile.second;
+                    auto& path         = translationFile.Path;
+                    auto& translations = translationFile.Translations;
 
                     if(ImGui::TreeNode(path.string().c_str()))
                     {
+                        if(ImGui::Button("Save"))
+                        {
+                            application()->push<CommandsQueue>()->push<CallbackCommand>(
+                                [this, &translationFile]()
+                                {
+                                    if(m_SaveProcess == nullptr || 
+                                            m_SaveProcess->finished())
+                                    {
+                                        m_SaveProcess = application()->push_process<SaveTranslationFilesProcess>(
+                                            std::vector<TranslationFile>({translationFile}));
+                                    }
+                                    else
+                                    {
+                                        Frenchie::Core::Logger::instance()->critical("Another save process is running now");
+                                    }
+                                }
+                            );
+                        }
+
+                        if(ImGui::Button("Save as"))
+                        {
+                            application()->push_command<CallbackCommand>(
+                                [this, &translationFile]()
+                                {
+                                    application()->push<FileSystem::ExplorerDialog>(
+                                        "Save as",
+                                        [this, &translationFile]()
+                                        {
+                                            auto dialog = application()->find<FileSystem::ExplorerDialog>();
+
+                                            if(dialog != nullptr) 
+                                            {
+                                                translationFile.Path = dialog->get_current_file();
+
+                                                m_SaveProcess = application()->push_process<SaveTranslationFilesProcess>(
+                                                    std::vector<TranslationFile>({translationFile}));
+                                            }
+                                        }
+                                    );
+                                }
+                            );
+                        }
+
                         // draw localization keys (table)
                         if(ImGui::BeginTable("FileSystemContentTable", 
                             2,
@@ -531,6 +582,7 @@ void TranslationFilesEditor::frame_update()
             }
             else // draw progress indicator
             {
+                ImGui::TextUnformatted("NOT FINISHED YET...");
             }
         }
     }
@@ -540,4 +592,15 @@ void TranslationFilesEditor::frame_update()
 
 void TranslationFilesEditor::finish()
 {
+}
+
+bool TranslationFilesEditor::allows_multiple_instances() const
+{
+    return false;
+}
+
+bool TranslationFilesEditor::any_process_is_running()
+{
+    return (m_LoadProcess != nullptr && !m_LoadProcess->finished()) && 
+            (m_SaveProcess != nullptr && !m_SaveProcess->finished());
 }

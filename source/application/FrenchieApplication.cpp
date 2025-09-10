@@ -66,7 +66,7 @@ Application::Application()
     glfwSetWindowMaximizeCallback(m_Window, OnWindowMaximizedCallback);
 
     // custom callbackcs
-    glfwSetCursorPosCallback(get_window(), Application::mouse_callback);
+    //glfwSetCursorPosCallback(get_window(), Application::mouse_callback);
 
     // load OpenGL interface using GLAD
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -338,14 +338,14 @@ size_t Application::size() const
     return m_Layers.size();
 }
 
-void Application::mouse_callback(GLFWwindow* _Window, double _X, double _Y)
-{
-    for(auto&& layer : Frenchie::Application::Application::instance()->m_Layers)
-    {
-        auto mouseCallbackHandler = 
-            dynamic_cast<IMouseCallbackHandler*>(layer.get());
+// void Application::mouse_callback(GLFWwindow* _Window, double _X, double _Y)
+// {
+//     for(auto&& layer : Frenchie::Application::Application::instance()->m_Layers)
+//     {
+//         auto mouseCallbackHandler = 
+//             dynamic_cast<IMouseCallbackHandler*>(layer.get());
 
-        if(mouseCallbackHandler != nullptr) 
-            mouseCallbackHandler->mouse_callback(_Window, _X, _Y);
-    }
-}
+//         if(mouseCallbackHandler != nullptr) 
+//             mouseCallbackHandler->mouse_callback(_Window, _X, _Y);
+//     }
+// }

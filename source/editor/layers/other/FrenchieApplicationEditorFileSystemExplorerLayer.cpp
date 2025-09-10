@@ -6,13 +6,12 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationEditorMenu.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Async;
 using namespace Frenchie::Application::Editor::FileSystem;
 
 namespace Frenchie
@@ -374,27 +373,20 @@ Explorer::Explorer(
 
 Explorer::~Explorer(){}
 
-std::filesystem::path Explorer::get_path() const
+std::filesystem::path Explorer::get_current_path() const
 {
     return m_Path;
 }
 
-std::filesystem::path Explorer::get_file() const
+std::filesystem::path Explorer::get_current_file() const
 {
-    return fmt::format("{}/{}", get_path().string(), std::string(m_CurrentFile.get_buffer()));
+    return std::filesystem::path(
+        fmt::format("{}/{}", get_current_path().string(), m_Selection.m_CurrentFile)).make_preferred();
 }
 
 std::set<std::filesystem::path> Explorer::get_selected_paths() const
-{    
-    auto selection = m_SelectedPaths;
-
-    for(auto&& path : selection)
-    {
-        if(!std::filesystem::exists(path))
-            m_SelectedPaths.erase(path);
-    }
-
-    return m_SelectedPaths;
+{
+    return m_Selection.get_selected_paths();
 }
 
 void Explorer::create_folder()
@@ -470,7 +462,7 @@ void Explorer::remove_paths()
     auto selectedPaths = get_selected_paths();
 
     if(!selectedPaths.empty()) 
-        Application::instance()->push<Dialogs::RemoveFiles>(selectedPaths);
+        application()->push<Dialogs::RemoveFiles>(selectedPaths);
 }
 
 void Explorer::rename_paths()
@@ -478,13 +470,13 @@ void Explorer::rename_paths()
     auto selectedPaths = get_selected_paths();
 
     if(!selectedPaths.empty()) 
-        Application::instance()->push<Dialogs::RenameFiles>(selectedPaths);
+        application()->push<Dialogs::RenameFiles>(selectedPaths);
 }
 
 void Explorer::frame_update()
 {
     // draw content
-    ImGui::Begin(get_name().c_str(), &m_Shown);
+    ImGui::Begin(fmt::format("{}##{}", get_name(), get_uuid().to_string()).c_str(), &m_Shown);
     {
         draw_contents();
         ImGui::End();
@@ -505,9 +497,7 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
         return;
     }
 
-    Application::instance()
-        ->find_or_push<Frenchie::Application::CommandsQueue>()
-        ->push<Frenchie::Application::CallbackCommand>(
+    application()->push_command<Frenchie::Application::CallbackCommand>(
             [this, _Path]()
             {
                 try
@@ -518,7 +508,7 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
                     m_Path = path.make_preferred();
 
                     // clear selection
-                    m_SelectedPaths.clear();
+                    m_Selection.clear_selection();
                 }
                 catch(const std::exception& e)
                 {
@@ -645,12 +635,14 @@ void Explorer::draw_current_directory_path_editor()
 
         // draw current path editor
         if(m_CurrentDirectory.empty())
-            m_CurrentDirectory.set_buffer(Frenchie::Core::String::as_utf8(m_Path.make_preferred().wstring()));
+            m_CurrentDirectory = Frenchie::Core::String::as_utf8(m_Path.make_preferred().wstring());
 
-        if(m_CurrentDirectory.draw("###", ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+        if(ImGui::InputText(
+            fmt::format("{}##{}", "Current directory", get_uuid().to_string()).c_str(), 
+                &m_CurrentDirectory, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {            
             change_current_directory(
-                std::filesystem::path(Frenchie::Core::String::as_wide(m_CurrentDirectory.get_buffer())));
+                std::filesystem::path(Frenchie::Core::String::as_wide(m_CurrentDirectory)));
 
             m_DrawCurrentDirectoryTextEdit = false;
         }
@@ -665,10 +657,9 @@ void Explorer::draw_current_directory_path_editor()
 
 void Explorer::draw_current_filename_editor()
 {
-    m_CurrentFile.set_buffer(
-        m_SelectedPaths.empty() ? "No file selected..." : Frenchie::Core::String::as_utf8((*m_SelectedPaths.begin()).filename().wstring()));
-
-    m_CurrentFile.draw("CurrentFile");
+    ImGui::InputText(
+        fmt::format("{}##{}", "Current file", get_uuid().to_string()).c_str(), 
+            &m_Selection.m_CurrentFile, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
 }
 
 void Explorer::draw_current_directory_paths_table()
@@ -727,7 +718,7 @@ void Explorer::draw_current_directory_paths_table()
                 // draw name
                 ImGui::TableSetColumnIndex(0);
 
-                bool selected = m_SelectedPaths.find(path) != m_SelectedPaths.end();
+                bool selected = m_Selection.contains(path);
 
                 if(ImGui::Selectable(
                     Frenchie::Core::String::as_utf8(path.filename().wstring()).c_str(), 
@@ -740,12 +731,12 @@ void Explorer::draw_current_directory_paths_table()
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
                         ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
                     {
-                        m_SelectedPaths.insert(path);
+                        m_Selection.select_path(path);
                     }
                     else
                     {
-                        m_SelectedPaths.clear();
-                        m_SelectedPaths.insert(path);
+                        m_Selection.clear_selection();
+                        m_Selection.select_path(path);
                     }
 
                     if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
@@ -760,7 +751,7 @@ void Explorer::draw_current_directory_paths_table()
                 if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Right))
                 {
                     // // select this item
-                    m_SelectedPaths.insert(path);
+                    m_Selection.select_path(path);
 
                     // show context menu
                     draw_current_directory_popup_menu();
@@ -807,36 +798,33 @@ void Explorer::draw_current_directory_popup_menu()
 
 void Explorer::handle_current_directory_hot_keys()
 {
-    if(Application::instance()->find<Dialog>() != nullptr) 
+    if(application()->find<Dialog>() != nullptr) 
         return;
 
     // Ctrl + C
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            FileMenu::CopyAction::factory_id(), this);
+        application()->push_command(FileMenu::CopyAction::factory_id(), this);
     }
 
     // Ctrl + V
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            FileMenu::PasteAction::factory_id(), this);
+        application()->push_command(FileMenu::PasteAction::factory_id(), this);
     }
 
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
-        Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(
-            FileMenu::RemoveAction::factory_id(), this);
+        application()->push_command(FileMenu::RemoveAction::factory_id(), this);
     }
 
     // Escape
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
     {
-        m_SelectedPaths.clear();
+        m_Selection.clear_selection();
     }
 }
 
@@ -970,7 +958,7 @@ void Explorer::drop_path_to(const std::filesystem::path& _Path)
 }
 
 // OpenFilesDialog
-Dialogs::ExplorerDialog::ExplorerDialog(
+ExplorerDialog::ExplorerDialog(
     const std::string& _Name, 
     const std::function<void()>& _OnAccpected,
     const std::function<void()>& _OnCanceled): 
@@ -978,9 +966,9 @@ Dialogs::ExplorerDialog::ExplorerDialog(
     m_OnAccepted(_OnAccpected),
     m_OnCanceled(_OnAccpected){}
 
-Dialogs::ExplorerDialog::~ExplorerDialog(){}
+ExplorerDialog::~ExplorerDialog(){}
 
-void Dialogs::ExplorerDialog::frame_update()
+void ExplorerDialog::frame_update()
 {
     ImGui::OpenPopup(m_Name.c_str());
 
@@ -1038,7 +1026,7 @@ void Dialogs::ExplorerDialog::frame_update()
     }
 }
 
-bool Dialogs::ExplorerDialog::allows_multiple_instances() const
+bool ExplorerDialog::allows_multiple_instances() const
 {
     return false;
 }
@@ -1139,7 +1127,7 @@ bool FilesystemPathsSearchProcess::awake()
     return true;
 }
 
-Dialogs::PathScannerDialog::PathScannerDialog(
+PathScannerDialog::PathScannerDialog(
     const std::filesystem::path&                                       _Path,
     const std::function<bool(const std::filesystem::path&)>&           _Predicate,
     const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished,
@@ -1158,7 +1146,7 @@ Dialogs::PathScannerDialog::PathScannerDialog(
         _Name, 
         _MaxSearchDepth]()
     {
-        m_Process = Frenchie::Application::Application::instance()->push<FilesystemPathsSearchProcess>(
+        m_Process = application()->push_process<FilesystemPathsSearchProcess>(
             _Path,
             _Predicate,
             _OnFinished,
@@ -1169,9 +1157,9 @@ Dialogs::PathScannerDialog::PathScannerDialog(
     }
     ){}
 
-Dialogs::PathScannerDialog::~PathScannerDialog(){}
+PathScannerDialog::~PathScannerDialog(){}
 
-bool Dialogs::PathScannerDialog::awake()
+bool PathScannerDialog::awake()
 {
     // start process
     if(m_Launcher != nullptr) 
@@ -1181,13 +1169,13 @@ bool Dialogs::PathScannerDialog::awake()
     return true;
 }
 
-void Dialogs::PathScannerDialog::finish()
+void PathScannerDialog::finish()
 {
     if(m_Process != nullptr)
         m_Process->close(); // don't forget to finish process
 }
 
-void Dialogs::PathScannerDialog::frame_update()
+void PathScannerDialog::frame_update()
 {
     if(m_Process == nullptr   || 
         m_Process->canceled() || 
@@ -1200,7 +1188,7 @@ void Dialogs::PathScannerDialog::frame_update()
     Dialog::frame_update();
 }
 
-void Dialogs::PathScannerDialog::draw_content()
+void PathScannerDialog::draw_content()
 {
     // show result
     ImGui::BeginChild("Entries");
@@ -1232,7 +1220,7 @@ void Dialogs::PathScannerDialog::draw_content()
     }
 }
 
-void Dialogs::PathScannerDialog::draw_buttons()
+void PathScannerDialog::draw_buttons()
 {
     if(ImGui::Button("Pause")) 
         m_Process->pause();
