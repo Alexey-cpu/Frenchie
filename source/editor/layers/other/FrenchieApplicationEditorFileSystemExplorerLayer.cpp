@@ -462,7 +462,7 @@ void Explorer::remove_paths()
     auto selectedPaths = get_selected_paths();
 
     if(!selectedPaths.empty()) 
-        application()->push<Dialogs::RemoveFiles>(selectedPaths);
+        application()->push_layer<Dialogs::RemoveFiles>(selectedPaths);
 }
 
 void Explorer::rename_paths()
@@ -470,7 +470,7 @@ void Explorer::rename_paths()
     auto selectedPaths = get_selected_paths();
 
     if(!selectedPaths.empty()) 
-        application()->push<Dialogs::RenameFiles>(selectedPaths);
+        application()->push_layer<Dialogs::RenameFiles>(selectedPaths);
 }
 
 void Explorer::frame_update()
@@ -798,7 +798,7 @@ void Explorer::draw_current_directory_popup_menu()
 
 void Explorer::handle_current_directory_hot_keys()
 {
-    if(application()->find<Dialog>() != nullptr) 
+    if(application()->find_layer<Dialog>() != nullptr) 
         return;
 
     // Ctrl + C

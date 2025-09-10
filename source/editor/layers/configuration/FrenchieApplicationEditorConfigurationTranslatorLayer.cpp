@@ -165,10 +165,10 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 std::string Translator::translate(const std::string& _Key)
 {
-    auto localizator = application()->find<Translator>();
+    auto localizator = application()->find_layer<Translator>();
 
     if(localizator == nullptr) 
-        localizator = application()->push<Translator>();
+        localizator = application()->push_layer<Translator>();
 
     auto translation = localizator->m_Translations[_Key];
 

@@ -32,7 +32,7 @@ std::string Languages::factory_id()
 
 void Languages::frame_update()
 {
-    auto localizator = application()->find<Translator>();
+    auto localizator = application()->find_layer<Translator>();
 
     ImGui::BeginChild(get_name().c_str());
     {

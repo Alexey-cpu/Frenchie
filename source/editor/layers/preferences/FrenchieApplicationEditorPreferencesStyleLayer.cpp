@@ -282,18 +282,18 @@ void Style::draw_fonts_settings()
 
     if(ImGui::Button(Translator::translate("Browse").c_str()))
     {
-        application()->push<FileSystem::ExplorerDialog>(
+        application()->push_layer<FileSystem::ExplorerDialog>(
             Translator::translate("Select path where to search for fonts...").c_str(),
             [this]()
             {
-                auto dialog = application()->find<FileSystem::ExplorerDialog>();
+                auto dialog = application()->find_layer<FileSystem::ExplorerDialog>();
 
                 if(dialog == nullptr) 
                     return;
 
                 auto path = dialog->get_current_path();
                 application()->push_command<CallbackCommand>(
-                    [this, path](){application()->push<Configuration::Fonts>()->scan_fonts(path);});
+                    [this, path](){application()->push_layer<Configuration::Fonts>()->scan_fonts(path);});
             }
         );
     }
