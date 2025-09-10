@@ -83,22 +83,22 @@ namespace Frenchie
                 template<typename Type, typename ... Arguments>
                 Frenchie::Core::Reference<Type> push_process(Arguments... _Parameters)
                 {
-                    return push<Type>(_Parameters...);
+                    return push_layer<Type>(_Parameters...);
                 }
 
                 // layers
                 template<typename Type, typename ... Arguments>
-                Core::Reference<Type> push(Arguments... _Parameters)
+                Core::Reference<Type> push_layer(Arguments... _Parameters)
                 {
                     // create layer
                     auto layer = std::make_shared<Type>(_Parameters...);
 
                     // check if layer allows multiple instances
-                    if(contains<Type>() && 
+                    if(contains_layer<Type>() && 
                         !layer->allows_multiple_instances())
                     {
                        // Frenchie::Core::Logger::instance()->warn(fmt::format("Application queue already contains '{}'", layer->get_name()));
-                        return find<Type>();
+                        return find_layer<Type>();
                     }
 
                     // awake layer
@@ -114,7 +114,7 @@ namespace Frenchie
                 }
 
                 template<typename Type>
-                Core::Reference<Type> find()
+                Core::Reference<Type> find_layer()
                 {
                     auto layer = std::find_if(
                         m_Layers.begin(),
@@ -129,7 +129,7 @@ namespace Frenchie
                 }
 
                 template<typename Type>
-                bool contains()
+                bool contains_layer()
                 {
                     return std::find_if(
                             m_Layers.begin(),
@@ -152,10 +152,10 @@ namespace Frenchie
                 // service methods
                 Frenchie::Core::Reference<CommandsQueue> commands_queue()
                 {
-                    auto commands = find<CommandsQueue>();
+                    auto commands = find_layer<CommandsQueue>();
                     
                     if(commands == nullptr) 
-                        commands = push<CommandsQueue>();
+                        commands = push_layer<CommandsQueue>();
 
                     return commands;
                 }

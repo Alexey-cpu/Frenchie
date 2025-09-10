@@ -97,7 +97,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        application()->push<Console>()->show();
+                        application()->push_layer<Console>()->show();
                     }
 
                     // Command::TRegistryType
@@ -119,7 +119,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        application()->push<FileSystem::Explorer>()->show();
+                        application()->push_layer<FileSystem::Explorer>()->show();
                     }
 
                     // Command::TRegistryType
@@ -141,7 +141,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        application()->push<Preferences::Explorer>()->show();
+                        application()->push_layer<Preferences::Explorer>()->show();
                     }
 
                     // Command::TRegistryType
@@ -163,7 +163,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        application()->push<ProcessDispatcher>()->show();
+                        application()->push_layer<ProcessDispatcher>()->show();
                     }
 
                     // Command::TRegistryType
@@ -305,18 +305,18 @@ int Launcher::execute()
     application()->load_state(std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
 
     // append basic layers
-    application()->push<Frenchie::Application::Editor::MainMenu::Instance>();
+    application()->push_layer<Frenchie::Application::Editor::MainMenu::Instance>();
 
     // configuration
-    application()->push<Configuration::Fonts>();
-    application()->push<Configuration::Style>();
-    application()->push<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
+    application()->push_layer<Configuration::Fonts>();
+    application()->push_layer<Configuration::Style>();
+    application()->push_layer<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
 
-    application()->push<Terminal>();
-    application()->push<Console>();
-    application()->push<ProcessDispatcher>();
+    application()->push_layer<Terminal>();
+    application()->push_layer<Console>();
+    application()->push_layer<ProcessDispatcher>();
 
-    application()->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
+    application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Frenchie::Core::String::as_utf8(appExeDirectory.wstring())));

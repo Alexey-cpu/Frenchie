@@ -52,13 +52,5 @@ namespace Frenchie
             bool        m_Shown  = true;
             const Frenchie::Core::UUID4 m_UUID;
         };
-
-        // class IMouseCallbackHandler
-        // {
-        // public:
-        //     IMouseCallbackHandler(){}
-        //     virtual ~IMouseCallbackHandler(){}
-        //     virtual void mouse_callback(GLFWwindow* _Window, double _X, double _Y) = 0;
-        // };
     };    
 };

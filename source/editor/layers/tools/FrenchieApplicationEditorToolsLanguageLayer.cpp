@@ -238,7 +238,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        application()->push<TranslationFilesEditor>()->show();
+                        application()->push_layer<TranslationFilesEditor>()->show();
                     }
 
                     // Command::TRegistryType
@@ -431,13 +431,13 @@ void TranslationFilesEditor::frame_update()
         {
             if(!any_process_is_running())
             {
-                application()->push<FileSystem::ExplorerDialog>(
+                application()->push_layer<FileSystem::ExplorerDialog>(
                     "Select directory where translation files are...",
                     [this]()
                     {
                         m_LoadProcess = 
                             application()->push_process<LoadTranslationFilesProcess>(
-                                application()->find<FileSystem::ExplorerDialog>()->get_selected_paths());
+                                application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
                     }
                 );
             }
@@ -494,7 +494,7 @@ void TranslationFilesEditor::frame_update()
                     {
                         if(ImGui::Button("Save"))
                         {
-                            application()->push<CommandsQueue>()->push<CallbackCommand>(
+                            application()->push_layer<CommandsQueue>()->push<CallbackCommand>(
                                 [this, &translationFile]()
                                 {
                                     if(m_SaveProcess == nullptr || 
@@ -516,11 +516,11 @@ void TranslationFilesEditor::frame_update()
                             application()->push_command<CallbackCommand>(
                                 [this, &translationFile]()
                                 {
-                                    application()->push<FileSystem::ExplorerDialog>(
+                                    application()->push_layer<FileSystem::ExplorerDialog>(
                                         "Save as",
                                         [this, &translationFile]()
                                         {
-                                            auto dialog = application()->find<FileSystem::ExplorerDialog>();
+                                            auto dialog = application()->find_layer<FileSystem::ExplorerDialog>();
 
                                             if(dialog != nullptr) 
                                             {

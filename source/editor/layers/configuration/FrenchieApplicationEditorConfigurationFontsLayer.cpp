@@ -257,31 +257,26 @@ bool Fonts::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 void Fonts::scan_fonts(const std::filesystem::path& _Path)
 {
     // load fonts
-    application()->push_command<CallbackCommand>(
-            [this, _Path]()
+    application()->push_layer<PathScannerDialog>(
+        _Path,
+        [](const std::filesystem::path& _Entry)->bool
+        {
+            return !std::filesystem::is_directory(_Entry) && 
+                Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".ttf";
+        },
+        [this](std::map<std::filesystem::path, bool>& _Paths)
+        {
+            std::set<std::filesystem::path> paths;
+
+            for(auto&& entry : _Paths)
             {
-                application()->push<PathScannerDialog>(
-                    _Path,
-                    [](const std::filesystem::path& _Entry)->bool
-                    {
-                        return !std::filesystem::is_directory(_Entry) && 
-                            Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".ttf";
-                    },
-                    [this](std::map<std::filesystem::path, bool>& _Paths)
-                    {
-                        std::set<std::filesystem::path> paths;
-
-                        for(auto&& entry : _Paths)
-                        {
-                            if(entry.second) 
-                                paths.insert(entry.first);
-                        }
-
-                        load_fonts(paths, std::string());
-                    }
-                );
+                if(entry.second) 
+                    paths.insert(entry.first);
             }
-        );  
+
+            load_fonts(paths, std::string());
+        }
+    ); 
 }
 
 void Fonts::load_fonts(
@@ -306,7 +301,7 @@ void Fonts::load_fonts(
                 }
 
                 // load new fonts
-                application()->push<FontsLoader>(
+                application()->push_layer<FontsLoader>(
                     _Fonts, 
                     _Font,
                     [this, _Fonts]()

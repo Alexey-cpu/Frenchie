@@ -15,6 +15,7 @@ namespace Frenchie
         {
             namespace Tools
             {
+                // TranslationFile
                 struct TranslationFile
                 {
                     std::filesystem::path              Path;
@@ -80,6 +81,7 @@ namespace Frenchie
                     std::string                  m_Status   = std::string();
                 };
 
+                // TranslationFilesEditor
                 class TranslationFilesEditor : public Layer
                 {
                 public:
