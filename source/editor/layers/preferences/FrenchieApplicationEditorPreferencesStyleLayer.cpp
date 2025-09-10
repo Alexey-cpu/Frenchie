@@ -290,7 +290,7 @@ void Style::draw_fonts_settings()
                     return;
 
                 auto path = dialog->get_current_path();
-                Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
+                Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                     [this, path]()
                     {
                         Frenchie::Application::application()->push_layer<Configuration::Fonts>()->scan_fonts(path);

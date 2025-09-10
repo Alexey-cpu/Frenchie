@@ -282,7 +282,7 @@ void Fonts::load_fonts(
         return;
 
     // load fonts
-    Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
+    Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this, _Font, _Fonts]()
             {
                 // remove old fonts besides the current font

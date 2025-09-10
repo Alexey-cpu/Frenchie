@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 
-#include <FrenchieApplicationProcessesLayer.hpp>
+#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 
 // STL
 #include <set>
@@ -91,11 +91,21 @@ namespace Frenchie
                 virtual bool allows_multiple_instances() const;
             
             protected:
+                struct TranslationUnit
+                {
+                    std::string Name     = "NEW_KEY";
+                    std::string Value    = "NEW_VALUE";
+                    bool        Selected = false;
+                };
+
                 std::shared_ptr<LoadTranslationFilesProcess> m_LoadProcess;
                 std::shared_ptr<SaveTranslationFilesProcess> m_SaveProcess;
                 std::mutex                                   m_Mutex;
+                std::vector<TranslationUnit>                 m_NewKeys;
 
-                bool any_process_is_running();
+                void try_execute_command(
+                    std::function<void()> _Function, 
+                    const std::string&    _Name);
             };
         }
     }

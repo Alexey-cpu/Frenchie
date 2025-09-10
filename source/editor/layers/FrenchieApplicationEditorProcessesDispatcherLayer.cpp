@@ -1,7 +1,7 @@
-#include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
+#include <FrenchieApplicationEditorProcessesDispatcherLayer.hpp>
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationProcessesLayer.hpp>
+#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
@@ -12,11 +12,11 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Configuration;
 
-ProcessDispatcher::ProcessDispatcher() : 
+ProcessesDispatcher::ProcessesDispatcher() : 
     Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_ASYNC_PROCESS_DISPATCHER")){}
-ProcessDispatcher::~ProcessDispatcher(){}
+ProcessesDispatcher::~ProcessesDispatcher(){}
 
-void ProcessDispatcher::frame_update()
+void ProcessesDispatcher::frame_update()
 {
     ImGui::Begin(get_name().c_str(), &m_Opened);
     {
@@ -73,7 +73,7 @@ void ProcessDispatcher::frame_update()
     }
 }
 
-bool ProcessDispatcher::allows_multiple_instances() const
+bool ProcessesDispatcher::allows_multiple_instances() const
 {
     return false;
 }

@@ -108,32 +108,32 @@ bool Translator::serialize(const Frenchie::Core::Serialization::Node& _Parent)
     }
 
     // save .xlf file
-    {
-        if(!std::filesystem::exists(m_Path)) 
-            return true;
+    // {
+    //     if(!std::filesystem::exists(m_Path)) 
+    //         return true;
 
-        Frenchie::Core::Serialization::Document document;
+    //     Frenchie::Core::Serialization::Document document;
 
-        auto xliff = document.append_node("xliff");
-        xliff.append_node("version", "1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
-        xliff.append_node("xmlns", "urn:oasis:names:tc:xliff:document:1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+    //     auto xliff = document.append_node("xliff");
+    //     xliff.append_node("version", "1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+    //     xliff.append_node("xmlns", "urn:oasis:names:tc:xliff:document:1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
 
-        auto file = xliff.append_node("file");
-        file.append_node("source-language", "frenchie", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
-        file.append_node("target-language", m_CurrentLanguage.c_str(), Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
-        file.append_node("datatype", "plaintext", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+    //     auto file = xliff.append_node("file");
+    //     file.append_node("source-language", "frenchie", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+    //     file.append_node("target-language", m_CurrentLanguage.c_str(), Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+    //     file.append_node("datatype", "plaintext", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
 
-        auto body = file.append_node("body");
+    //     auto body = file.append_node("body");
 
-        for(auto translation : m_Translations)
-        {
-            auto transUnit = body.append_node("trans-unit");
-            transUnit.append_node("source", translation.first.c_str());
-            transUnit.append_node("target", translation.second.c_str());
-        }
+    //     for(auto translation : m_Translations)
+    //     {
+    //         auto transUnit = body.append_node("trans-unit");
+    //         transUnit.append_node("source", translation.first.c_str());
+    //         transUnit.append_node("target", translation.second.c_str());
+    //     }
 
-        document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(translation_file_path());
-    }
+    //     document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(translation_file_path());
+    // }
 
     return true;
 }
@@ -146,29 +146,29 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
         return false;
 
     // read a list of supported languages
-    {
-        auto node = main.find_node("Languages");
+    // {
+    //     auto node = main.find_node("Languages");
 
-        if(node.is_valid())
-        {
-            m_SupportedLanguages.clear();
+    //     if(node.is_valid())
+    //     {
+    //         m_SupportedLanguages.clear();
 
-            for(auto&& language : node)
-                m_SupportedLanguages.insert(language.get_name());
-        }
-    }
+    //         for(auto&& language : node)
+    //             m_SupportedLanguages.insert(language.get_name());
+    //     }
+    // }
 
     return true;
 }
 
 std::string Translator::translate(const std::string& _Key)
 {
-    auto localizator = Frenchie::Application::application()->find_layer<Translator>();
+    auto translator = Frenchie::Application::application()->find_layer<Translator>();
 
-    if(localizator == nullptr) 
-        localizator = Frenchie::Application::application()->push_layer<Translator>();
+    if(translator == nullptr) 
+        translator = Frenchie::Application::application()->push_layer<Translator>();
 
-    auto translation = localizator->m_Translations[_Key];
+    auto translation = translator->m_Translations[_Key];
 
     return translation.empty() ? _Key : translation;
 }

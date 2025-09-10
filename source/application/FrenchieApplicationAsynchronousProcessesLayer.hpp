@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 // STL
 #include <functional>
@@ -52,6 +52,30 @@ namespace Frenchie
             void invokeOnFinished();
             void invokeOnCanceled();
             void invokeOnFailed();
+        };
+
+        class ProcessQueue : public Layer
+        {
+        public:
+            ProcessQueue(){}
+            virtual ~ProcessQueue(){}
+
+            template<typename Type, typename ... Arguments>
+            Frenchie::Core::Reference<Type> push(Arguments... _Parameters)
+            {
+                return Frenchie::Application::application()->push_layer<Type>(_Parameters...);
+            }
+
+            // static API
+            static Frenchie::Core::Reference<ProcessQueue> instance()
+            {
+                auto layer = Frenchie::Application::application()->find_layer<ProcessQueue>();
+                
+                if(layer == nullptr) 
+                    layer = Frenchie::Application::application()->push_layer<ProcessQueue>();
+
+                return layer;
+            }
         };
 
         class IProcessStatus

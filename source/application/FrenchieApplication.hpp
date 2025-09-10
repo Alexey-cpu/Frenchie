@@ -1,7 +1,7 @@
 #pragma once
 
-#include <FrenchieApplicationProcessesLayer.hpp>
-#include <FrenchieApplicationCommandsLayer.hpp>
+//#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
+// #include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
@@ -67,24 +67,12 @@ namespace Frenchie
                 std::list<std::shared_ptr<Layer>>::const_iterator end() const;
                 size_t size() const;
 
-                // commands
-                template<typename Type, typename ... Arguments>
-                void push_command(Arguments... _Parameters)
-                {
-                    commands_queue()->push<Type>(_Parameters...);
-                }
-
-                inline void push_command(const std::string& _Command, void* _Sender = nullptr)
-                {
-                    commands_queue()->push(_Command, _Sender);
-                }
-
-                // processes
-                template<typename Type, typename ... Arguments>
-                Frenchie::Core::Reference<Type> push_process(Arguments... _Parameters)
-                {
-                    return push_layer<Type>(_Parameters...);
-                }
+                // // processes
+                // template<typename Type, typename ... Arguments>
+                // Frenchie::Core::Reference<Type> push_process(Arguments... _Parameters)
+                // {
+                //     return push_layer<Type>(_Parameters...);
+                // }
 
                 // layers
                 template<typename Type, typename ... Arguments>
@@ -148,17 +136,6 @@ namespace Frenchie
                 bool                                            m_Opened = true;
                 GLFWwindow*                                     m_Window = nullptr;
                 mutable Frenchie::Core::Serialization::Document m_State;
-
-                // service methods
-                Frenchie::Core::Reference<CommandsQueue> commands_queue()
-                {
-                    auto commands = find_layer<CommandsQueue>();
-                    
-                    if(commands == nullptr) 
-                        commands = push_layer<CommandsQueue>();
-
-                    return commands;
-                }
             };
         };
 
