@@ -40,7 +40,7 @@ LoadTranslationFilesProcess::LoadTranslationFilesProcess(
         m_TranslationFiles.push_back(
             {
                 path, 
-                std::map<std::string, std::string>()
+                std::set<TranslationUnit, TranslationUnit::TransparentComparator>(),
             }
         );
     }
@@ -97,8 +97,13 @@ bool LoadTranslationFilesProcess::awake()
 
                     for (auto item : body)
                     {
-                        translations[item.find_node("source").get_value()] = 
-                            item.find_node("target").get_value();
+                        translations.insert(
+                            {
+                                item.find_node("source").get_value(),
+                                item.find_node("target").get_value(),
+                                false    
+                            }
+                        );
                     }
 
                     // update progress
@@ -186,8 +191,8 @@ bool SaveTranslationFilesProcess::awake()
                 for(auto translation : translations)
                 {
                     auto transUnit = body.append_node("trans-unit");
-                    transUnit.append_node("source", translation.first.c_str());
-                    transUnit.append_node("target", translation.second.c_str());
+                    transUnit.append_node("source", translation.Key.c_str());
+                    transUnit.append_node("target", translation.Value.c_str());
                 }
 
                 m_Progress = (float)(++progress) / (float)(total);
@@ -417,7 +422,7 @@ void TranslationFilesEditor::frame_update()
     std::lock_guard<std::mutex> lock(m_Mutex);
 
     // draw
-    ImGui::Begin(get_name().c_str(), &m_Opened);
+    ImGui::Begin(fmt::format("{}###translation file editor", get_name()).c_str(), &m_Opened);
 
     int id = 0;
 
@@ -443,7 +448,7 @@ void TranslationFilesEditor::frame_update()
 
         ImGui::SameLine();
 
-        if(ImGui::Button("Save"))
+        if(ImGui::Button("Save all files"))
         {
             try_execute_command([this]()
             {
@@ -454,16 +459,8 @@ void TranslationFilesEditor::frame_update()
             "Save");
         }
 
-        ImGui::SameLine();
-
-        if(ImGui::Button("Synchronize contents"))
-        {
-            // Take the file with the largest number of keys and inline all other files contents by this
-        }
-
         ImGui::PopID();
     }
-
 
     ImGui::SeparatorText("Files");
     {
@@ -539,7 +536,7 @@ void TranslationFilesEditor::frame_update()
                                     [this, &translations]()
                                     {
                                         for(auto&& newKey : m_NewKeys)
-                                            translations.insert({newKey.Name, newKey.Value});
+                                            translations.insert({newKey.Key, newKey.Value});
 
                                         m_NewKeys.clear();
                                     }, 
@@ -555,7 +552,6 @@ void TranslationFilesEditor::frame_update()
                                     "Clear");
                             }
 
-                            int id = 0;
                             for(auto&& newKey : m_NewKeys)
                             {
                                 ImGui::PushID(++id);
@@ -566,7 +562,7 @@ void TranslationFilesEditor::frame_update()
 
                                 ImGui::TableSetColumnIndex(1);
                                 ImGui::PushID(++id);
-                                ImGui::InputText("##", &newKey.Name);
+                                ImGui::InputText("##", &newKey.Key);
                                 ImGui::PopID();
 
                                 ImGui::SameLine();
@@ -601,18 +597,17 @@ void TranslationFilesEditor::frame_update()
                             
                             ImGui::TableHeadersRow();
 
-                            int id = 0;
                             for(auto&& translation : translations)
                             {
                                 ImGui::TableNextRow();
 
                                 ImGui::TableSetColumnIndex(0);
-                                ImGui::TextUnformatted(translation.first.c_str());
+                                ImGui::TextUnformatted(translation.Key.c_str());
                                 ImGui::SameLine();
 
                                 ImGui::TableSetColumnIndex(1);
                                 ImGui::PushID(++id);
-                                ImGui::InputText("##", &translation.second);
+                                ImGui::InputText("##", &translation.Value);
                                 ImGui::PopID();
 
                                 ImGui::SameLine();
@@ -624,7 +619,7 @@ void TranslationFilesEditor::frame_update()
                                     try_execute_command([&translations, &translation]()
                                     {
                                         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
-                                            [&translations, &translation](){translations.erase(translation.first);});
+                                            [&translations, &translation](){translations.erase(translation);});
                                     }, 
                                     "Remove");
                                 }

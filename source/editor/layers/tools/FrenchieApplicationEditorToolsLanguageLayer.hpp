@@ -14,10 +14,31 @@ namespace Frenchie
         namespace Tools
         {
             // TranslationFile
+            struct TranslationUnit
+            {
+                std::string Key           = "NEW_KEY";
+                mutable std::string Value = "NEW_VALUE";
+                mutable bool        Selected = false;
+
+                // nested types
+                struct TransparentComparator
+                {
+                    using is_transparent = TranslationUnit;
+
+                public:
+
+                    bool operator()(const TranslationUnit& _A, const TranslationUnit& _B) const
+                    {
+                        return  _A.Key < _B.Key;
+                    }
+                };
+            };
+
             struct TranslationFile
             {
-                std::filesystem::path              Path;
-                std::map<std::string, std::string> Translations;
+                std::filesystem::path     Path;
+                std::set<TranslationUnit, 
+                    TranslationUnit::TransparentComparator> Translations;
             };
 
             // LoadTranslationFiles
@@ -91,13 +112,6 @@ namespace Frenchie
                 virtual bool allows_multiple_instances() const;
             
             protected:
-                struct TranslationUnit
-                {
-                    std::string Name     = "NEW_KEY";
-                    std::string Value    = "NEW_VALUE";
-                    bool        Selected = false;
-                };
-
                 std::shared_ptr<LoadTranslationFilesProcess> m_LoadProcess;
                 std::shared_ptr<SaveTranslationFilesProcess> m_SaveProcess;
                 std::mutex                                   m_Mutex;
