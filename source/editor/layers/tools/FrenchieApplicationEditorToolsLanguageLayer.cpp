@@ -15,8 +15,6 @@
 #include <iostream>
 #include <functional>
 
-using namespace Frenchie;
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Tools;
 
@@ -431,13 +429,13 @@ void TranslationFilesEditor::frame_update()
         {
             if(!any_process_is_running())
             {
-                application()->push_layer<FileSystem::ExplorerDialog>(
+                Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
                     "Select directory where translation files are...",
                     [this]()
                     {
                         m_LoadProcess = 
-                            application()->push_process<LoadTranslationFilesProcess>(
-                                application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
+                            Frenchie::Application::application()->push_process<LoadTranslationFilesProcess>(
+                                Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
                     }
                 );
             }
@@ -494,13 +492,13 @@ void TranslationFilesEditor::frame_update()
                     {
                         if(ImGui::Button("Save"))
                         {
-                            application()->push_layer<CommandsQueue>()->push<CallbackCommand>(
+                            Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
                                 [this, &translationFile]()
                                 {
                                     if(m_SaveProcess == nullptr || 
                                             m_SaveProcess->finished())
                                     {
-                                        m_SaveProcess = application()->push_process<SaveTranslationFilesProcess>(
+                                        m_SaveProcess = Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
                                             std::vector<TranslationFile>({translationFile}));
                                     }
                                     else
@@ -513,20 +511,20 @@ void TranslationFilesEditor::frame_update()
 
                         if(ImGui::Button("Save as"))
                         {
-                            application()->push_command<CallbackCommand>(
+                            Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
                                 [this, &translationFile]()
                                 {
-                                    application()->push_layer<FileSystem::ExplorerDialog>(
+                                    Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
                                         "Save as",
                                         [this, &translationFile]()
                                         {
-                                            auto dialog = application()->find_layer<FileSystem::ExplorerDialog>();
+                                            auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
 
                                             if(dialog != nullptr) 
                                             {
                                                 translationFile.Path = dialog->get_current_file();
 
-                                                m_SaveProcess = application()->push_process<SaveTranslationFilesProcess>(
+                                                m_SaveProcess = Frenchie::Application::application()->push_process<SaveTranslationFilesProcess>(
                                                     std::vector<TranslationFile>({translationFile}));
                                             }
                                         }

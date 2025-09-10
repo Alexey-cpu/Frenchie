@@ -13,8 +13,6 @@
 #include <iostream>
 #include <functional>
 
-using namespace Frenchie;
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Preferences;
@@ -32,7 +30,7 @@ std::string Languages::factory_id()
 
 void Languages::frame_update()
 {
-    auto localizator = application()->find_layer<Translator>();
+    auto localizator = Frenchie::Application::application()->find_layer<Translator>();
 
     ImGui::BeginChild(get_name().c_str());
     {

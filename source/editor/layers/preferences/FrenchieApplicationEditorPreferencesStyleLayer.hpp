@@ -2,8 +2,6 @@
 
 #include <FrenchieApplicationEditorPreferencesLayer.hpp>
 
-#include <FrenchieApplicationEditorInputText.hpp>
-
 // IMGUI
 #include <imgui.h>
 

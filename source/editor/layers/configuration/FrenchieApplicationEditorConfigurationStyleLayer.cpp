@@ -21,8 +21,6 @@
 // IMGUI
 #include <imgui.h>
 
-using namespace Frenchie;
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Configuration;
 
