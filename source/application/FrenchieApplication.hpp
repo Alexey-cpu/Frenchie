@@ -1,5 +1,7 @@
 #pragma once
 
+#include <FrenchieApplicationProcessesLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
@@ -65,17 +67,38 @@ namespace Frenchie
                 std::list<std::shared_ptr<Layer>>::const_iterator end() const;
                 size_t size() const;
 
+                // commands
+                template<typename Type, typename ... Arguments>
+                void push_command(Arguments... _Parameters)
+                {
+                    commands_queue()->push<Type>(_Parameters...);
+                }
+
+                inline void push_command(const std::string& _Command, void* _Sender = nullptr)
+                {
+                    commands_queue()->push(_Command, _Sender);
+                }
+
+                // processes
+                template<typename Type, typename ... Arguments>
+                Frenchie::Core::Reference<Type> push_process(Arguments... _Parameters)
+                {
+                    return push<Type>(_Parameters...);
+                }
+
+                // layers
                 template<typename Type, typename ... Arguments>
                 Core::Reference<Type> push(Arguments... _Parameters)
                 {
+                    // create layer
                     auto layer = std::make_shared<Type>(_Parameters...);
-                    
-                    // check if layer allowns multiple instances
+
+                    // check if layer allows multiple instances
                     if(contains<Type>() && 
                         !layer->allows_multiple_instances())
                     {
-                        Frenchie::Core::Logger::instance()->error(fmt::format("Application queue already contains {}", layer->get_name()));
-                        return nullptr;
+                       // Frenchie::Core::Logger::instance()->warn(fmt::format("Application queue already contains '{}'", layer->get_name()));
+                        return find<Type>();
                     }
 
                     // awake layer
@@ -88,18 +111,6 @@ namespace Frenchie
                     // push layer into layers stack
                     m_Layers.push_back(layer);
                     return Core::Reference<Type>(layer);
-                }
-
-                template<typename Type>
-                bool contains()
-                {
-                    return std::find_if(
-                            m_Layers.begin(),
-                            m_Layers.end(),
-                            [](std::shared_ptr<Layer> _Layer)->bool
-                            {
-                                return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
-                            }) != m_Layers.end();
                 }
 
                 template<typename Type>
@@ -117,15 +128,16 @@ namespace Frenchie
                     return layer != m_Layers.end() ? std::dynamic_pointer_cast<Type>(*layer) : nullptr;
                 }
 
-                template<typename Type, typename ... Arguments>
-                Core::Reference<Type> find_or_push(Arguments... _Parameters)
+                template<typename Type>
+                bool contains()
                 {
-                    auto layer = find<Type>();
-
-                    if(layer == nullptr) 
-                        layer = push<Type>(std::forward(_Parameters)...);
-
-                    return layer;
+                    return std::find_if(
+                            m_Layers.begin(),
+                            m_Layers.end(),
+                            [](std::shared_ptr<Layer> _Layer)->bool
+                            {
+                                return std::dynamic_pointer_cast<Type>(_Layer) != nullptr;
+                            }) != m_Layers.end();
                 }
 
                 typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
@@ -137,12 +149,22 @@ namespace Frenchie
                 GLFWwindow*                                     m_Window = nullptr;
                 mutable Frenchie::Core::Serialization::Document m_State;
 
-                friend class Layer;
+                // service methods
+                Frenchie::Core::Reference<CommandsQueue> commands_queue()
+                {
+                    auto commands = find<CommandsQueue>();
+                    
+                    if(commands == nullptr) 
+                        commands = push<CommandsQueue>();
 
-                static void mouse_callback(GLFWwindow* _Window, double _X, double _Y);
+                    return commands;
+                }
             };
         };
 
-        typedef Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application> Application;
+        inline Frenchie::Application::OpenGL::Application* application()
+        {
+            return Frenchie::Core::Singleton<Frenchie::Application::OpenGL::Application>::instance();
+        }
     };
 };

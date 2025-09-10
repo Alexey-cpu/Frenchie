@@ -8,7 +8,7 @@
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 
 #include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 
 // configuration
 #include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
@@ -75,7 +75,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        Frenchie::Application::Application::instance()->close();
+                        application()->close();
                     }
 
                     // Command::TRegistryType
@@ -97,7 +97,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        Frenchie::Application::Application::instance()->find_or_push<Console>()->show();
+                        application()->push<Console>()->show();
                     }
 
                     // Command::TRegistryType
@@ -119,7 +119,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        Frenchie::Application::Application::instance()->find_or_push<FileSystem::Explorer>()->show();
+                        application()->push<FileSystem::Explorer>()->show();
                     }
 
                     // Command::TRegistryType
@@ -141,7 +141,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        Frenchie::Application::Application::instance()->find_or_push<Preferences::Explorer>()->show();
+                        application()->push<Preferences::Explorer>()->show();
                     }
 
                     // Command::TRegistryType
@@ -163,7 +163,7 @@ namespace Frenchie
                     // Frenchie::Application::Command
                     virtual void execute() override
                     {
-                        Frenchie::Application::Application::instance()->push<Async::ProcessDispatcher>()->show();
+                        application()->push<ProcessDispatcher>()->show();
                     }
 
                     // Command::TRegistryType
@@ -202,9 +202,8 @@ std::filesystem::path Launcher::get_app_translation_files_directory()
 int Launcher::execute()
 {
     // create and configure application
-    auto application = Frenchie::Application::Application::instance();
-    application->set_window_size(glm::vec2(2048, 1024));
-    application->set_maximized(true);
+    application()->set_window_size(glm::vec2(2048, 1024));
+    application()->set_maximized(true);
 
     // create directories for logs and application state
     std::filesystem::path appExeDirectory              = Launcher::get_app_exe_directory();
@@ -303,22 +302,21 @@ int Launcher::execute()
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
 
     // load application state
-    application->load_state(std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
+    application()->load_state(std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
 
     // append basic layers
-    application->push<Frenchie::Application::Editor::MainMenu::Instance>();
+    application()->push<Frenchie::Application::Editor::MainMenu::Instance>();
 
     // configuration
-    application->find_or_push<Configuration::Fonts>();
-    application->find_or_push<Configuration::Style>();
-    application->find_or_push<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
+    application()->push<Configuration::Fonts>();
+    application()->push<Configuration::Style>();
+    application()->push<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
 
-    application->find_or_push<Terminal>();
-    application->find_or_push<Console>();
+    application()->push<Terminal>();
+    application()->push<Console>();
+    application()->push<ProcessDispatcher>();
 
-    application->find_or_push<Async::ProcessDispatcher>();
-
-    application->find_or_push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
+    application()->push<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Frenchie::Core::String::as_utf8(appExeDirectory.wstring())));
@@ -328,10 +326,10 @@ int Launcher::execute()
     Frenchie::Core::Logger::instance()->info(fmt::format("App log file path: {}", logFileName));
 
     // execute app and wait until it finishes it's job
-    auto execution = Frenchie::Application::Application::instance()->execute();
+    auto execution = application()->execute();
 
     // save application state
-    Frenchie::Application::Application::instance()->save_state(
+    application()->save_state(
         std::filesystem::path(Launcher::get_app_state_directory().wstring().append(L"/State.xml"))
     );
 

@@ -1,9 +1,8 @@
-#include <FrenchieApplicationEditorAsyncProcessLayer.hpp>
+#include <FrenchieApplicationProcessesLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
-using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Async;
 
 Process::Process(
     const std::function<void()>& _OnFinished, 
@@ -62,16 +61,24 @@ bool Process::failed() const
     return m_Failed;
 }
 
+void Process::frame_finish()
+{
+    // remove process out-of application queue
+    // when it finished...
+    if(finished() || canceled() || failed()) 
+        close();
+}
+
 void Process::finish()
 {
     Frenchie::Core::Logger::instance()->warn("Process::finish()");
 
     if(finished())
         invokeOnFinished();
-    else if(failed())
-        invokeOnFailed();
     else if(canceled()) 
         invokeOnCanceled();
+    else if(failed())
+        invokeOnFailed();
 }
 
 void Process::invokeOnFinished()

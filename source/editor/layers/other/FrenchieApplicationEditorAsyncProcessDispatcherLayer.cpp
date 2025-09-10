@@ -1,7 +1,7 @@
 #include <FrenchieApplicationEditorAsyncProcessDispatcherLayer.hpp>
 
-// Frenchie::Application::Editor::Async
-#include <FrenchieApplicationEditorAsyncProcessLayer.hpp>
+#include <FrenchieApplication.hpp>
+#include <FrenchieApplicationProcessesLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
@@ -10,7 +10,6 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Editor;
-using namespace Frenchie::Application::Editor::Async;
 using namespace Frenchie::Application::Editor::Configuration;
 
 ProcessDispatcher::ProcessDispatcher() : 
@@ -21,12 +20,11 @@ void ProcessDispatcher::frame_update()
 {
     ImGui::Begin(get_name().c_str(), &m_Opened);
     {
-        auto application       = Frenchie::Application::Application::instance();
         auto asyncProcessCount = 0;
 
-        for(auto it = application->begin(); it != application->end(); ++it)
+        for(auto it = application()->begin(); it != application()->end(); ++it)
         {
-            auto process = std::dynamic_pointer_cast<Async::Process>(*it);
+            auto process = std::dynamic_pointer_cast<Process>(*it);
 
             if(process == nullptr)  // is not async process
                 continue;
@@ -35,8 +33,8 @@ void ProcessDispatcher::frame_update()
 
             if(ImGui::TreeNode(process->get_name().c_str()))
             {
-                auto status   = std::dynamic_pointer_cast<Async::IProcessStatus>(process);
-                auto progress = std::dynamic_pointer_cast<Async::IProcessProgress>(process);
+                auto status   = std::dynamic_pointer_cast<IProcessStatus>(process);
+                auto progress = std::dynamic_pointer_cast<IProcessProgress>(process);
 
                 if(progress != nullptr)
                 {

@@ -237,16 +237,10 @@ std::set<std::string> analyze_code_files(
     return keys;
 }
 
+#include <FrenchieCoreThreadPool.hpp>
+
 int main(int, char**)
 {
-    // auto keys = analyze_code_files("C:/SDK/Qt_Projects/OpenGL/source/editor");
-
-    // std::cout << "\n\n";
-    // std::cout << "KEYS FOUND \n";
-
-    // for(auto&& key : keys)
-    //     std::cout << key << "\n";
-
     return Frenchie::Application::Editor::Launcher::execute();
 }
 

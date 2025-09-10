@@ -1,7 +1,7 @@
 #include <FrenchieApplicationEditorConfigurationStyleLayer.hpp>
 
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 

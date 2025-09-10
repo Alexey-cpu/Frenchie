@@ -1,7 +1,7 @@
 #include <FrenchieApplication.hpp>
 
 #include <FrenchieApplicationEditorMenu.hpp>
-#include <FrenchieApplicationEditorCommandsLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
 using namespace Frenchie::Core;
@@ -61,7 +61,7 @@ namespace Frenchie
                     if(_Index == _Actions.size() - 1) 
                     {
                         if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
-                            Frenchie::Application::Application::instance()->find_or_push<CommandsQueue>()->push(_Path, _Sender);
+                            Frenchie::Application::application()->push_command(_Path, _Sender);
 
                         return;
                     }
