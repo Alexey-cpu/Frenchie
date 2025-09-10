@@ -21,8 +21,6 @@
 // IMGUI
 #include <imgui.h>
 
-using namespace Frenchie;
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Configuration;
@@ -166,7 +164,7 @@ namespace Frenchie
                 ImGui::GetIO().Fonts->Build();
 
                 // reload app
-                application()->reload();
+                Frenchie::Application::application()->reload();
 
                 //
                 if(m_OnFinished != nullptr)
@@ -254,7 +252,7 @@ bool Fonts::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 void Fonts::scan_fonts(const std::filesystem::path& _Path)
 {
     // load fonts
-    application()->push_layer<PathScannerDialog>(
+    Frenchie::Application::application()->push_layer<PathScannerDialog>(
         _Path,
         [](const std::filesystem::path& _Entry)->bool
         {
@@ -284,7 +282,7 @@ void Fonts::load_fonts(
         return;
 
     // load fonts
-    application()->push_command<CallbackCommand>(
+    Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
             [this, _Font, _Fonts]()
             {
                 // remove old fonts besides the current font
@@ -298,7 +296,7 @@ void Fonts::load_fonts(
                 }
 
                 // load new fonts
-                application()->push_layer<FontsLoader>(
+                Frenchie::Application::application()->push_layer<FontsLoader>(
                     _Fonts, 
                     _Font,
                     [this, _Fonts]()

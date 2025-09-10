@@ -2,7 +2,6 @@
 
 // Application
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
-#include <FrenchieApplicationEditorInputText.hpp>
 #include <FrenchieApplicationProcessesLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>

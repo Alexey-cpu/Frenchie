@@ -10,7 +10,6 @@
 // IMGUI
 #include <imgui.h>
 
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Preferences;
 using namespace Frenchie::Editor::Configuration;

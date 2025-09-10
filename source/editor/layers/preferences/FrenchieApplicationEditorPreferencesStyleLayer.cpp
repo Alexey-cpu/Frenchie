@@ -18,8 +18,6 @@ static const char* GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
     return "";
 }
 
-using namespace Frenchie::Core;
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Preferences;
 using namespace Frenchie::Editor::Configuration;
@@ -282,18 +280,22 @@ void Style::draw_fonts_settings()
 
     if(ImGui::Button(Translator::translate("Browse").c_str()))
     {
-        application()->push_layer<FileSystem::ExplorerDialog>(
+        Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
             Translator::translate("Select path where to search for fonts...").c_str(),
             [this]()
             {
-                auto dialog = application()->find_layer<FileSystem::ExplorerDialog>();
+                auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
 
                 if(dialog == nullptr) 
                     return;
 
                 auto path = dialog->get_current_path();
-                application()->push_command<CallbackCommand>(
-                    [this, path](){application()->push_layer<Configuration::Fonts>()->scan_fonts(path);});
+                Frenchie::Application::application()->push_command<Frenchie::Application::CallbackCommand>(
+                    [this, path]()
+                    {
+                        Frenchie::Application::application()->push_layer<Configuration::Fonts>()->scan_fonts(path);
+                    }
+                );
             }
         );
     }

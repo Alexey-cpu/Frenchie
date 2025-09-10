@@ -1,7 +1,5 @@
 #pragma once
 
-#include <FrenchieApplicationEditorInputText.hpp>
-
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieCoreISerializer.hpp>
 #include <FrenchieCoreHelpers.hpp>

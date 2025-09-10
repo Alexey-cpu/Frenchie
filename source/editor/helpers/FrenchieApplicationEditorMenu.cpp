@@ -4,7 +4,6 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
-using namespace Frenchie::Core;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Configuration;
 
@@ -89,7 +88,7 @@ void Menu::draw(const std::string& _MenuPath, void* _Sender, bool _ForceUpdate)
     {
         // parse main menu paths
         MenuPathsParser parser(_MenuPath);
-        for(auto&& creator : Factory::registry()) 
+        for(auto&& creator : Frenchie::Core::Factory::registry()) 
             parser.parse(Frenchie::Core::String::split(creator.first, "::"));
 
         // fill menu infos

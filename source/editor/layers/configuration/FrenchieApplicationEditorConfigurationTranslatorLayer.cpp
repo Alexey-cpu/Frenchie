@@ -25,8 +25,6 @@
 // IMGUI
 #include <imgui.h>
 
-using namespace Frenchie;
-using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Configuration;
@@ -165,10 +163,10 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 std::string Translator::translate(const std::string& _Key)
 {
-    auto localizator = application()->find_layer<Translator>();
+    auto localizator = Frenchie::Application::application()->find_layer<Translator>();
 
     if(localizator == nullptr) 
-        localizator = application()->push_layer<Translator>();
+        localizator = Frenchie::Application::application()->push_layer<Translator>();
 
     auto translation = localizator->m_Translations[_Key];
 
