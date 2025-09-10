@@ -56,7 +56,7 @@ namespace Frenchie
                     {
                         return fmt::format(
                             "{}::{}", 
-                            STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
+                            STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), 
                             "create::folder");
                     }
 
@@ -81,7 +81,7 @@ namespace Frenchie
                     {
                         return fmt::format(
                             "{}::{}", 
-                            STRINGIFY(Frenchie::Application::Editor::FileSystem::FolderMenu), 
+                            STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), 
                             "paste");
                     }
                 };
@@ -98,7 +98,7 @@ namespace Frenchie
                     // API
                     void draw(Explorer* _Explorer)
                     {
-                        Menu().draw(STRINGIFY(Frenchie::Application::Editor::FileMenu), _Explorer);
+                        Menu().draw(STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), _Explorer);
                     }
                 };
 
@@ -119,10 +119,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format(
-                            "{}::{}", 
-                            STRINGIFY(Frenchie::Application::Editor::FileMenu), 
-                            "copy");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "copy");
                     }
                 };
 
@@ -142,7 +139,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "paste");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "paste");
                     }
                 };
 
@@ -163,7 +160,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "remove");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "remove");
                     }
                 };
 
@@ -185,7 +182,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "rename");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "rename");
                     }
                 };
 
@@ -206,7 +203,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::FileMenu), "create::folder");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "create::folder");
                     }
                 };
             }
