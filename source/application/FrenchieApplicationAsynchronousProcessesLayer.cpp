@@ -4,10 +4,10 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 
 Process::Process(
+    const std::string&           _Name,
     const std::function<void()>& _OnFinished, 
     const std::function<void()>& _OnCanceled, 
-    const std::function<void()>& _OnFailed,
-    const std::string&           _Name) :
+    const std::function<void()>& _OnFailed) :
     Layer(_Name),
     m_OnFinished(_OnFinished), 
     m_OnCanceled(_OnCanceled), 

@@ -1,14 +1,17 @@
 #pragma once
 
+// Core
+#include <FrenchieCoreISerializer.hpp>
+#include <FrenchieCoreThreadPool.hpp>
+
 // Application
 #include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 
-// Core
-#include <FrenchieCoreISerializer.hpp>
-#include <FrenchieCoreThreadPool.hpp>
+// Editor
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -24,6 +27,8 @@ namespace Frenchie
     {
         namespace FileSystem
         {
+            using namespace Configuration;
+
             class FilesystemPathsSearchProcess : public Frenchie::Application::Process
             {
             public:
@@ -101,7 +106,7 @@ namespace Frenchie
                     void clear_selection()
                     {
                         m_SelectedPaths.clear();
-                        m_CurrentFile = "Nothing selected...";
+                        m_CurrentFile = Translator::translate("Nothing selected...");
                     }
 
                     bool contains(const std::filesystem::path& _Path) const

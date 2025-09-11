@@ -5,16 +5,10 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
-#include <FrenchieApplicationEditorMenu.hpp>
-#include <FrenchieApplicationEditorConsoleLayer.hpp>
-#include <FrenchieApplicationEditorPreferencesLayer.hpp>
-#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorProcessesDispatcherLayer.hpp>
+#include <FrenchieEditorHelpers.hpp>
 
 // configuration
-#include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationStyleLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
@@ -52,7 +46,7 @@ namespace Frenchie
                 {
                     if(ImGui::BeginMainMenuBar())
                     {
-                        Frenchie::Editor::Menu().draw(STRINGIFY(Frenchie::Editor::MainMenu));
+                        Frenchie::Editor::Helpers::draw_menu(STRINGIFY(Frenchie::Editor::MainMenu));
                         ImGui::EndMainMenuBar();
                     }
                 }
@@ -77,94 +71,6 @@ namespace Frenchie
                 static std::string factory_id()
                 {
                     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Frenchie::Exit");
-                }
-            };
-
-            class OpenConsoleAction : 
-                public Frenchie::Application::Command::Registry<OpenConsoleAction, void*>
-            {
-            public:
-
-                OpenConsoleAction(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenConsoleAction, void*>(_Sender){}
-                virtual ~OpenConsoleAction(){}
-
-                // Frenchie::Application::Command
-                virtual void execute() override
-                {
-                    Frenchie::Application::application()->push_layer<Console>()->show();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Console");
-                }
-            };
-
-            class OpenFileSystemExplorerAction : 
-                public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>
-            {
-            public:
-
-                OpenFileSystemExplorerAction(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>(_Sender){}
-                virtual ~OpenFileSystemExplorerAction(){}
-
-                // Frenchie::Application::Command
-                virtual void execute() override
-                {
-                    Frenchie::Application::application()->push_layer<FileSystem::Explorer>()->show();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::FileSystem");
-                }
-            };
-
-            class OpenPreferencesAction : 
-                public Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>
-            {
-            public:
-
-                OpenPreferencesAction(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>(_Sender){}
-                virtual ~OpenPreferencesAction(){}
-
-                // Frenchie::Application::Command
-                virtual void execute() override
-                {
-                    Frenchie::Application::application()->push_layer<Preferences::Explorer>()->show();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Preferences");
-                }
-            };
-
-            class OpenDispatcherAction : 
-                public Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>
-            {
-            public:
-
-                OpenDispatcherAction(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>(_Sender){}
-                virtual ~OpenDispatcherAction(){}
-
-                // Frenchie::Application::Command
-                virtual void execute() override
-                {
-                    Frenchie::Application::application()->push_layer<ProcessesDispatcher>()->show();
-                }
-
-                // Command::TRegistryType
-                static std::string factory_id()
-                {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Dispatcher");
                 }
             };
         }
@@ -302,12 +208,6 @@ int Launcher::execute()
     Frenchie::Application::application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
 
     // configuration
-    Frenchie::Application::application()->push_layer<Configuration::Fonts>();
-    Frenchie::Application::application()->push_layer<Configuration::Style>();
-    Frenchie::Application::application()->push_layer<Configuration::Translator>()->set_translation_files_path(appTranslationFilesDirectory);
-    Frenchie::Application::application()->push_layer<Console>();
-    Frenchie::Application::application()->push_layer<ProcessesDispatcher>();
-
     Frenchie::Application::application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log

@@ -1,8 +1,12 @@
-#include <FrenchieApplicationEditorProcessesDispatcherLayer.hpp>
+#include <FrenchieEditorProcessesDispatcherLayer.hpp>
 
+// Application
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
+
+// Editor
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -12,13 +16,40 @@ using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Configuration;
 
+// add to main menu
+class OpenDispatcherAction : 
+    public Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>
+{
+public:
+
+    OpenDispatcherAction(void* _Sender = nullptr) : 
+        Frenchie::Application::Command::Registry<OpenDispatcherAction, void*>(_Sender){}
+    virtual ~OpenDispatcherAction(){}
+
+    // Frenchie::Application::Command
+    virtual void execute() override
+    {
+        Frenchie::Application::application()->push_layer<ProcessesDispatcher>()->show();
+    }
+
+    // Command::TRegistryType
+    static std::string factory_id()
+    {
+        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Dispatcher");
+    }
+};
+
 ProcessesDispatcher::ProcessesDispatcher() : 
-    Layer(Translator::translate("FRENCHIE_APPLICATION_EDITOR_ASYNC_PROCESS_DISPATCHER")){}
+    Layer(Translator::translate("Asynchronous process dispatcher")){}
 ProcessesDispatcher::~ProcessesDispatcher(){}
 
 void ProcessesDispatcher::frame_update()
 {
-    ImGui::Begin(get_name().c_str(), &m_Opened);
+    // update name
+    set_name(Translator::translate("Asynchronous process dispatcher"));
+
+    // draw
+    ImGui::Begin(fmt::format("{}###Asynchronous process dispatcher", get_name()).c_str(), &m_Opened);
     {
         auto asyncProcessCount = 0;
 
@@ -31,7 +62,9 @@ void ProcessesDispatcher::frame_update()
 
             asyncProcessCount++;
 
-            if(ImGui::TreeNode(process->get_name().c_str()))
+            ImGui::PushID(process->get_uuid().to_string().c_str());
+
+            if(ImGui::TreeNode(process->get_name().empty() ? process->get_uuid().to_string().c_str() : process->get_name().c_str()))
             {
                 auto status   = std::dynamic_pointer_cast<IProcessStatus>(process);
                 auto progress = std::dynamic_pointer_cast<IProcessProgress>(process);
@@ -50,7 +83,7 @@ void ProcessesDispatcher::frame_update()
                 }
                 else
                 {
-                    ImGui::TextUnformatted(Translator::translate("FRENCHIE_APPLICATION_EDITOR_ASYNC_PROCESS_DISPATCHER_NO_PROGRESS_DATA").c_str());
+                    ImGui::TextUnformatted(Translator::translate("There is no information about the process progress...").c_str());
                 }
 
                 if(status != nullptr)
@@ -59,15 +92,17 @@ void ProcessesDispatcher::frame_update()
                 }
                 else 
                 {
-                    ImGui::TextUnformatted(Translator::translate("FRENCHIE_APPLICATION_EDITOR_ASYNC_PROCESS_DISPATCHER_NO_STATUS_DATA").c_str());
+                    ImGui::TextUnformatted(Translator::translate("There is no information about the process status...").c_str());
                 }
 
                 ImGui::TreePop();
             }
+
+            ImGui::PopID();
         }
 
         if(asyncProcessCount <= 0) 
-            ImGui::TextUnformatted(Translator::translate("FRENCHIE_APPLICATION_EDITOR_ASYNC_PROCESS_DISPATCHER_NOTHING_IS_RUNNING_NOW").c_str());
+            ImGui::TextUnformatted(Translator::translate("Nothing is processing asynchronously now ...").c_str());
 
         ImGui::End();
     }

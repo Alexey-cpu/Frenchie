@@ -13,10 +13,10 @@ namespace Frenchie
         {
         public:
             Process(
-                const std::function<void()>& _OnFinished, 
-                const std::function<void()>& _OnCanceled, 
-                const std::function<void()>& _OnFailed,
-                const std::string&           _Name = std::string());
+                const std::string&           _Name       = std::string(),
+                const std::function<void()>& _OnFinished = nullptr, 
+                const std::function<void()>& _OnCanceled = nullptr, 
+                const std::function<void()>& _OnFailed   = nullptr);
             virtual ~Process();
 
             // API
@@ -28,6 +28,25 @@ namespace Frenchie
             bool canceled() const;
             bool finished() const;
             bool failed()   const;
+
+            void on_finished(const std::function<void()>& _Callback)
+            {
+                std::lock_guard<std::mutex> lock(m_Mutex);
+                m_OnFinished = _Callback;
+            }
+
+            void on_canceled(const std::function<void()>& _Callback)
+            {
+                std::lock_guard<std::mutex> lock(m_Mutex);
+                m_OnCanceled = _Callback;
+            }
+
+            void on_failed(const std::function<void()>& _Callback)
+            {
+                std::lock_guard<std::mutex> lock(m_Mutex);
+                m_OnFailed = _Callback;
+            }
+
 
             // Frenchie::Application::Layer
             virtual void frame_finish() override;
