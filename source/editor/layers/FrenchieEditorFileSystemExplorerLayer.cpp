@@ -1,18 +1,55 @@
-#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieEditorFileSystemExplorerLayer.hpp>
 
 // Core
 #include <FrenchieCoreThreadPool.hpp>
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationEditorMenu.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
+
+// Editor
+#include <FrenchieEditorHelpers.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 
 using namespace Frenchie::Core;
+
 using namespace Frenchie::Application;
+
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
+using namespace Frenchie::Editor::Configuration;
+
+// Add to main menu
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace MainMenu
+        {
+            class OpenFileSystemExplorerAction : 
+                public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>
+            {
+            public:
+
+                OpenFileSystemExplorerAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, void*>(_Sender){}
+                virtual ~OpenFileSystemExplorerAction(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
+                {
+                    Frenchie::Application::application()->push_layer<Frenchie::Editor::FileSystem::Explorer>()->show();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::FileSystem");
+                }
+            };
+        }
+    }
+}
 
 namespace Frenchie
 {
@@ -31,7 +68,7 @@ namespace Frenchie
                     // API
                     void draw(Explorer* _Explorer)
                     {
-                        Menu().draw(STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), _Explorer);
+                        Frenchie::Editor::Helpers::draw_menu(STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), _Explorer);
                     }
                 };
 
@@ -54,10 +91,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format(
-                            "{}::{}", 
-                            STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), 
-                            "create::folder");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "create::folder");
                     }
 
                 };
@@ -79,10 +113,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format(
-                            "{}::{}", 
-                            STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), 
-                            "paste");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "paste");
                     }
                 };
             }
@@ -98,7 +129,7 @@ namespace Frenchie
                     // API
                     void draw(Explorer* _Explorer)
                     {
-                        Menu().draw(STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), _Explorer);
+                        Frenchie::Editor::Helpers::draw_menu(STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), _Explorer);
                     }
                 };
 
@@ -214,7 +245,7 @@ namespace Frenchie
                 {
                 public:
                     RemoveFiles(const std::set<std::filesystem::path>& _Paths) : 
-                        Dialog("Are you sure you want to delete these files ?"), 
+                        Dialog(Translator::translate("Are you sure you want to delete these files ?")), 
                         m_Paths(_Paths){}
                     virtual ~RemoveFiles(){}
 
@@ -227,7 +258,7 @@ namespace Frenchie
 
                     virtual void draw_buttons() override
                     {
-                        if(ImGui::Button("Yes"))
+                        if(ImGui::Button(Translator::translate("Yes").c_str()))
                         {
                             if(m_Paths.empty())
                                 return;
@@ -249,7 +280,7 @@ namespace Frenchie
                         
                         ImGui::SameLine();
                         
-                        if(ImGui::Button("No"))
+                        if(ImGui::Button(Translator::translate("No").c_str()))
                             close();
                     }
 
@@ -262,7 +293,7 @@ namespace Frenchie
                 public:
 
                     RenameFiles(const std::set<std::filesystem::path>& _Paths) : 
-                        Dialog("Rename files")
+                        Dialog(Translator::translate("Rename files"))
                     {
                         for(auto&& path : _Paths)
                         {
@@ -300,7 +331,7 @@ namespace Frenchie
 
                     virtual void draw_buttons() override
                     {
-                            if(ImGui::Button("Apply"))
+                            if(ImGui::Button(Translator::translate("Apply").c_str()))
                             {
                                 // rename files
                                 for(auto& item : m_Paths)
@@ -350,7 +381,7 @@ namespace Frenchie
                             
                             ImGui::SameLine();
                             
-                            if(ImGui::Button("Cancel"))
+                            if(ImGui::Button(Translator::translate("Cancel").c_str()))
                                 close();
                     }
 
@@ -638,7 +669,7 @@ void Explorer::draw_current_directory_path_editor()
             m_CurrentDirectory = Frenchie::Core::String::as_utf8(m_Path.make_preferred().wstring());
 
         if(ImGui::InputText(
-            fmt::format("{}##{}", "Current directory", get_uuid().to_string()).c_str(), 
+            Translator::translate("Current directory").c_str(), 
                 &m_CurrentDirectory, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {            
             change_current_directory(
@@ -658,7 +689,7 @@ void Explorer::draw_current_directory_path_editor()
 void Explorer::draw_current_filename_editor()
 {
     ImGui::InputText(
-        fmt::format("{}##{}", "Current file", get_uuid().to_string()).c_str(), 
+        Translator::translate("Current file").c_str(), 
             &m_Selection.m_CurrentFile, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
 }
 
@@ -686,15 +717,15 @@ void Explorer::draw_current_directory_paths_table()
             ImVec2(0.0, ImGui::GetContentRegionAvail().y - 2.0f * ImGui::GetTextLineHeightWithSpacing())))
     {
         // setup columns
-        ImGui::TableSetupColumn("name", 
+        ImGui::TableSetupColumn(Translator::translate("name").c_str(), 
             ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch |
             ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
         
-        ImGui::TableSetupColumn("last write time", 
+        ImGui::TableSetupColumn(Translator::translate("last write time").c_str(), 
             ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthFixed |
             ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
 
-        ImGui::TableSetupColumn("type", 
+        ImGui::TableSetupColumn(Translator::translate("type").c_str(), 
             ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
         
         ImGui::TableHeadersRow();
@@ -774,7 +805,7 @@ void Explorer::draw_current_directory_paths_table()
 
                 // draw type
                 ImGui::TableSetColumnIndex(2);
-                ImGui::TextUnformatted((std::filesystem::is_directory(path) ? "folder" : "file"));
+                ImGui::TextUnformatted((std::filesystem::is_directory(path) ? Translator::translate("folder").c_str() : Translator::translate("file").c_str()));
 
             }
         }
@@ -1003,7 +1034,7 @@ void ExplorerDialog::frame_update()
             wiondowFlags);
 
         {
-            if(ImGui::Button("Ok"))
+            if(ImGui::Button(Translator::translate("Ok").c_str()))
             {
                 if(m_OnAccepted != nullptr) 
                     m_OnAccepted();
@@ -1012,7 +1043,7 @@ void ExplorerDialog::frame_update()
 
              ImGui::SameLine();
 
-            if(ImGui::Button("Cancel"))
+            if(ImGui::Button(Translator::translate("Cancel").c_str()))
             {
                 if(m_OnCanceled != nullptr) 
                     m_OnCanceled();
@@ -1041,6 +1072,7 @@ FilesystemPathsSearchProcess::FilesystemPathsSearchProcess(
     const std::string&                                                 _Name,
     size_t                                                             _MaxSearchDepth) :
     Process(
+        STRINGIFY(FilesystemPathsSearchProcess),
         [_OnFinished, this]()
         {
             if(_OnFinished != nullptr) 
@@ -1110,8 +1142,6 @@ bool FilesystemPathsSearchProcess::awake()
                     if(m_Predicate(m_CurrentPath))
                         m_Paths.insert({m_CurrentPath, true});
                 }
-
-                Frenchie::Core::Logger::instance()->warn("FilesystemPathsSearchProcess FINISHED !!!");
 
                 // finish task
                 m_Finished = true;
@@ -1222,17 +1252,17 @@ void PathScannerDialog::draw_content()
 
 void PathScannerDialog::draw_buttons()
 {
-    if(ImGui::Button("Pause")) 
+    if(ImGui::Button(Translator::translate("Pause").c_str())) 
         m_Process->pause();
 
     ImGui::SameLine();
 
-    if(ImGui::Button("Resume")) 
+    if(ImGui::Button(Translator::translate("Resume").c_str())) 
         m_Process->resume();
 
     ImGui::SameLine();
 
-    if(ImGui::Button("Cancel")) 
+    if(ImGui::Button(Translator::translate("Cancel").c_str())) 
         m_Process->cancel();
 
     ImGui::SameLine();
@@ -1241,7 +1271,7 @@ void PathScannerDialog::draw_buttons()
     {
         ImGui::SameLine();
 
-        if(ImGui::Button("Ok")) 
+        if(ImGui::Button(Translator::translate("Ok").c_str())) 
             close();
     }
 
@@ -1250,10 +1280,12 @@ void PathScannerDialog::draw_buttons()
     // show currently processing path
     if(m_Process->finished())
     {
-        ImGui::TextWrapped("Finished...");
+        ImGui::TextWrapped(Translator::translate("Finished...").c_str());
     }
     else 
-    {
-        ImGui::Text("Scanning %s", Frenchie::Core::String::as_utf8(m_Process->get_current_path().wstring()).c_str());
+    {    
+       ImGui::Text(
+        fmt::format("{} %s", Translator::translate("Scaning ")).c_str(), 
+        Frenchie::Core::String::as_utf8(m_Process->get_current_path().wstring()).c_str());
     }
 }

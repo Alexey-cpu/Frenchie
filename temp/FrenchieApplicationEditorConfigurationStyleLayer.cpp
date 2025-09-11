@@ -1,11 +1,14 @@
 #include <FrenchieApplicationEditorConfigurationStyleLayer.hpp>
 
+// Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
 
-// Frenchie::Core
+// Editor
+#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
+
+// Core
 #include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreThreadPool.hpp>
 

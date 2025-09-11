@@ -1,11 +1,14 @@
-#include <FrenchieApplicationEditorPreferencesLayer.hpp>
+#include <FrenchieEditorPreferencesLayer.hpp>
 
-// Frenchie::Core
+// Core
 #include <FrenchieCoreFactory.hpp>
 #include <FrenchieCoreHelpers.hpp>
 
-// Frenchie::Application
-#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
+// Application
+#include <FrenchieApplicationCommandsLayer.hpp>
+
+// Editor
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -13,6 +16,38 @@
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Preferences;
 using namespace Frenchie::Editor::Configuration;
+
+// Add to main menu
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace MainMenu
+        {
+            class OpenPreferencesAction : 
+                public Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>
+            {
+            public:
+
+                OpenPreferencesAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenPreferencesAction, void*>(_Sender){}
+                virtual ~OpenPreferencesAction(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
+                {
+                    Frenchie::Application::application()->push_layer<Frenchie::Editor::Preferences::Explorer>()->show();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Preferences");
+                }
+            };
+        }
+    }
+}
 
 // Preferences
 Explorer::Explorer() : 

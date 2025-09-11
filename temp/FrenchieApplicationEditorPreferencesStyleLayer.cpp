@@ -4,7 +4,8 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
+
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>

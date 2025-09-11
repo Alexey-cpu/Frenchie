@@ -2,8 +2,10 @@
 
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
+
+// Editor
 #include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationTranslatorLayer.hpp>
+#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // Frenchie::Core
 #include <FrenchieCoreHelpers.hpp>
