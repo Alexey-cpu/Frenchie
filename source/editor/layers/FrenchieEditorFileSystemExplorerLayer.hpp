@@ -29,33 +29,6 @@ namespace Frenchie
         {
             using namespace Configuration;
 
-            class FilesystemPathsSearchProcess : public Frenchie::Application::Process
-            {
-            public:
-                FilesystemPathsSearchProcess(
-                    const std::filesystem::path&                                       _Path,
-                    const std::function<bool(const std::filesystem::path&)>&           _Predicate,
-                    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished     = nullptr,
-                    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled     = nullptr,
-                    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed       = nullptr,
-                    const std::string&                                                 _Name           = STRINGIFY(FilesystemPathsSearchProcess),
-                    size_t                                                             _MaxSearchDepth = 100);
-
-                virtual ~FilesystemPathsSearchProcess();
-
-                std::filesystem::path get_current_path() const;
-                std::map<std::filesystem::path, bool> get_paths() const;
-
-                virtual bool awake() override;
-
-            protected:
-                mutable std::filesystem::path                             m_Path           =  std::filesystem::current_path();
-                mutable std::function<bool(const std::filesystem::path&)> m_Predicate      = nullptr;
-                mutable std::filesystem::path                             m_CurrentPath    =  std::filesystem::current_path();
-                mutable size_t                                            m_MaxSearchDepth = 4;
-                mutable std::map<std::filesystem::path, bool>             m_Paths          = std::map<std::filesystem::path, bool>();
-            };
-
             // Explorer
             class Explorer : public Frenchie::Application::Layer
             {
@@ -144,45 +117,73 @@ namespace Frenchie
             class ExplorerDialog : public FileSystem::Explorer 
             {
             public:
-                ExplorerDialog(
-                    const std::string&           _Name        = STRINGIFY(ExplorerDialog),
-                    const std::function<void()>& _OnAccpected = nullptr,
-                    const std::function<void()>& _OnCanceled  = nullptr);
-                
+                ExplorerDialog(const std::string& _Name = STRINGIFY(ExplorerDialog));
                 virtual ~ExplorerDialog();
 
                 // Frenchie::Application::Layer
                 virtual void frame_update() override;
                 virtual bool allows_multiple_instances() const override;
 
+                // API
+                void on_accepted(const std::function<void()>& _Callback)
+                {
+                    m_OnAccepted = _Callback;
+                }
+                
+                void on_canceled(const std::function<void()>& _Callback)
+                {
+                    m_OnCanceled = _Callback;
+                }
+
             protected:
                 std::function<void()> m_OnAccepted = nullptr;
                 std::function<void()> m_OnCanceled = nullptr;
             };
 
-            class PathScannerDialog : public Dialog
+            class FilesystemPathsSearchProcess : public Frenchie::Application::Process
+            {
+            public:
+                FilesystemPathsSearchProcess(
+                    const std::filesystem::path&                             _Path,
+                    const std::function<bool(const std::filesystem::path&)>& _Predicate,
+                    const std::string&                                       _Name           = STRINGIFY(FilesystemPathsSearchProcess),
+                    size_t                                                   _MaxSearchDepth = 100);
+
+                virtual ~FilesystemPathsSearchProcess();
+
+                virtual bool awake() override;
+
+                mutable std::filesystem::path                 m_CurrentPath =  std::filesystem::current_path();
+                mutable std::map<std::filesystem::path, bool> m_Paths       = std::map<std::filesystem::path, bool>();
+
+            protected:
+                mutable std::filesystem::path                             m_Path           =  std::filesystem::current_path();
+                mutable std::function<bool(const std::filesystem::path&)> m_Predicate      = nullptr;
+                mutable size_t                                            m_MaxSearchDepth = 4;
+            };
+
+            class PathScannerDialog : public Explorer
             {
             public:
                 PathScannerDialog(
-                    const std::filesystem::path&                                       _Path,
-                    const std::function<bool(const std::filesystem::path&)>&           _Predicate,
-                    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFinished     = nullptr,
-                    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnCanceled     = nullptr,
-                    const std::function<void(std::map<std::filesystem::path, bool>&)>& _OnFailed       = nullptr,
-                    const std::string&                                                 _Name           = STRINGIFY(Frenchie::Application::Editor::ScannerView),
-                    size_t                                                             _MaxSearchDepth = 100);
+                    const std::function<bool(const std::filesystem::path&)>& _Predicate,
+                    const std::string&                                       _Name = STRINGIFY(Frenchie::Application::Editor::ScannerView));
+
                 virtual ~PathScannerDialog();
                 
-                virtual bool awake() override;
+                // Frenchie::Application::Layer
                 virtual void frame_update() override;
-                virtual void draw_content() override;
-                virtual void draw_buttons() override;
-                virtual void finish() override;
+                virtual bool allows_multiple_instances() const override;
+
+                // API
+                void on_finished(const std::function<void(std::map<std::filesystem::path, bool>&)>& _Callback);
+                void on_canceled(const std::function<void(std::map<std::filesystem::path, bool>&)>& _Callback);
+                void on_failed(const std::function<void(std::map<std::filesystem::path, bool>&)>& _Callback);
 
             protected:
-
-                std::function<void()>                         m_Launcher = nullptr;
-                std::shared_ptr<FilesystemPathsSearchProcess> m_Process  = nullptr;
+                std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFinished;
+                std::function<void(std::map<std::filesystem::path, bool>&)> m_OnCanceled;
+                std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFailed;
             };
         }
     }

@@ -67,13 +67,6 @@ namespace Frenchie
                 std::list<std::shared_ptr<Layer>>::const_iterator end() const;
                 size_t size() const;
 
-                // // processes
-                // template<typename Type, typename ... Arguments>
-                // Frenchie::Core::Reference<Type> push_process(Arguments... _Parameters)
-                // {
-                //     return push_layer<Type>(_Parameters...);
-                // }
-
                 // layers
                 template<typename Type, typename ... Arguments>
                 Core::Reference<Type> push_layer(Arguments... _Parameters)
