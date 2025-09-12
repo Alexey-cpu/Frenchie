@@ -28,7 +28,7 @@ using namespace Frenchie::Editor::Configuration;
 // Style
 Style::Style() : 
     Frenchie::Application::Layer::Registry<Style>(
-        Translator::translate("Style")){}
+        Translator::translate("Style settings")){}
 
 Style::~Style(){}
 
@@ -45,7 +45,12 @@ bool Style::awake()
 
 void Style::frame_update() 
 {
-    ImGui::BeginChild(get_name().c_str());
+    // update name
+    set_name(Translator::translate("Style settings"));
+
+    // draw
+    ImGui::BeginChild(fmt::format("{}###Style settings", get_name()).c_str());
+
     draw_style_editor();
     ImGui::EndChild();
 }
@@ -57,25 +62,25 @@ bool Style::allows_multiple_instances() const
 
 void Style::draw_style_editor()
 {
-    if (ImGui::TreeNode(Translator::translate("Geometry").c_str()))
+    if (ImGui::TreeNode(Translator::translate("Geometry settings").c_str()))
     {
         draw_geometry_settings();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode(Translator::translate("Colors").c_str()))
+    if (ImGui::TreeNode(Translator::translate("Color settings").c_str()))
     {
         draw_color_settings();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode(Translator::translate("Fonts").c_str()))
+    if (ImGui::TreeNode(Translator::translate("Font settings").c_str()))
     {
         draw_fonts_settings();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode(Translator::translate("Rendering").c_str()))
+    if (ImGui::TreeNode(Translator::translate("Rendering settings").c_str()))
     {
         draw_rendering_settings();
         ImGui::TreePop();
@@ -86,7 +91,7 @@ void Style::draw_geometry_settings()
 {
     auto& style = ImGui::GetStyle();
 
-    ImGui::SeparatorText(Translator::translate("Main").c_str());
+    ImGui::SeparatorText(Translator::translate("Main geometry settings").c_str());
     {
         ImGui::SliderFloat2(Translator::translate("WindowPadding").c_str(), (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2(Translator::translate("FramePadding").c_str(), (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
@@ -98,7 +103,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat(Translator::translate("GrabMinSize").c_str(), &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
     }
 
-    ImGui::SeparatorText(Translator::translate("Borders").c_str());
+    ImGui::SeparatorText(Translator::translate("Borders geometry settings").c_str());
     {
         {
             bool checked = style.WindowBorderSize > 0.0;
@@ -137,7 +142,7 @@ void Style::draw_geometry_settings()
         }
     }
 
-    ImGui::SeparatorText(Translator::translate(Translator::translate("Rounding").c_str()).c_str());
+    ImGui::SeparatorText(Translator::translate(Translator::translate("Geometry rounding settings").c_str()).c_str());
     {
         ImGui::SliderFloat(Translator::translate("WindowRounding").c_str(), &style.WindowRounding, 0.0f, 12.0f, "%.0f");
         ImGui::SliderFloat(Translator::translate("ChildRounding").c_str(), &style.ChildRounding, 0.0f, 12.0f, "%.0f");
@@ -148,7 +153,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat(Translator::translate("TabRounding").c_str(), &style.TabRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    ImGui::SeparatorText(Translator::translate("Tabs").c_str());
+    ImGui::SeparatorText(Translator::translate("Tabs geometry settings").c_str());
     {
         ImGui::SliderFloat(Translator::translate("TabBarOverlineSize").c_str(), &style.TabBarOverlineSize, 0.0f, 3.0f, "%.0f");
         ImGui::DragFloat(Translator::translate("TabMinWidthBase").c_str(), &style.TabMinWidthBase, 0.5f, 1.0f, 500.0f, "%.0f");
@@ -167,14 +172,14 @@ void Style::draw_geometry_settings()
         }
     }
 
-    ImGui::SeparatorText(Translator::translate("Tables").c_str());
+    ImGui::SeparatorText(Translator::translate("Tables geometry settings").c_str());
     {
         ImGui::SliderFloat2(Translator::translate("CellPadding").c_str(), (float*)&style.CellPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2(Translator::translate("TableAngledHeadersTextAlign").c_str(), (float*)&style.TableAngledHeadersTextAlign, 0.0f, 1.0f, "%.2f");
         ImGui::SliderAngle("TableAngledHeadersAngle", &style.TableAngledHeadersAngle, -50.0f, +50.0f);
     }
 
-    ImGui::SeparatorText(Translator::translate("Trees").c_str());
+    ImGui::SeparatorText(Translator::translate("Trees geometry settings").c_str());
     {
         if (ImGui::BeginCombo(Translator::translate("TreeLinesFlags").c_str(), GetTreeLinesFlagsName(style.TreeLinesFlags)))
         {
@@ -197,7 +202,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat(Translator::translate("TreeLinesRounding").c_str(), &style.TreeLinesRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    ImGui::SeparatorText(Translator::translate("Docking").c_str());
+    ImGui::SeparatorText(Translator::translate("Dock windows geometry settings").c_str());
     {
         ImGui::SliderFloat(Translator::translate("DockingSeparatorSize").c_str(), &style.DockingSeparatorSize, 0.0f, 12.0f, "%.0f");
     }
@@ -210,7 +215,7 @@ void Style::draw_color_settings()
     if (ImGui::ShowStyleSelector("Colors##Selector")){}
 
     static ImGuiTextFilter filter;
-    filter.Draw(Translator::translate("Filter").c_str(), ImGui::GetFontSize() * 16);
+    filter.Draw(Translator::translate("Colors filter").c_str(), ImGui::GetFontSize() * 16);
 
     static ImGuiColorEditFlags alpha_flags = 0;
     if (ImGui::RadioButton(Translator::translate("Opaque").c_str(), alpha_flags == ImGuiColorEditFlags_AlphaOpaque))
@@ -306,25 +311,6 @@ void Style::draw_fonts_settings()
                 Frenchie::Editor::Configuration::Fonts::instance()->load_fonts(paths);
             }
         );
-
-        // Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-        //     Translator::translate("Select path where to search for fonts...").c_str(),
-        //     [this]()
-        //     {
-        //         auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
-
-        //         if(dialog == nullptr) 
-        //             return;
-
-        //         auto path = dialog->get_current_path();
-        //         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
-        //             [this, path]()
-        //             {
-        //                 Frenchie::Application::application()->push_layer<Configuration::Fonts>()->scan_fonts(path);
-        //             }
-        //         );
-        //     }
-        // );
     }
 
     // font size

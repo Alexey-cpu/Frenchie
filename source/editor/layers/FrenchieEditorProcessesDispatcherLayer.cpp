@@ -35,7 +35,7 @@ public:
     // Command::TRegistryType
     static std::string factory_id()
     {
-        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Dispatcher");
+        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Asynchronous process dispatcher");
     }
 };
 

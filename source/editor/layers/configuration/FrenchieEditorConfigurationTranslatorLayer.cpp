@@ -392,7 +392,7 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
         {
             if(!supportedLanguage.is_valid() || 
                 std::string(supportedLanguage.get_name()).empty() || 
-                std::string(supportedLanguage.get_value()).empty()) 
+                !std::filesystem::exists(std::string(supportedLanguage.get_value()))) 
                 continue;
 
             m_SupportedLanguages.push_back(

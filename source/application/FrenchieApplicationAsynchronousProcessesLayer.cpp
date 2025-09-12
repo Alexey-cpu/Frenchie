@@ -12,6 +12,16 @@ Process::~Process()
     cancel(); // cancel on destroy
 }
 
+std::string Process::get_name() const
+{
+    return m_Name;
+}
+
+Frenchie::Core::UUID4 Process::get_uuid() const
+{
+    return m_UUID;
+}
+
 void Process::pause()
 {
     std::unique_lock<std::mutex> lock(m_Mutex);

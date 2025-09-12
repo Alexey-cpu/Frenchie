@@ -46,7 +46,7 @@ namespace Frenchie
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Language::Translation files updater");
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Translation files::Translation files updater");
                 }
             };
         }
