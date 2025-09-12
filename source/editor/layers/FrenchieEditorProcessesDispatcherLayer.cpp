@@ -52,10 +52,12 @@ void ProcessesDispatcher::frame_update()
     ImGui::Begin(fmt::format("{}###Asynchronous process dispatcher", get_name()).c_str(), &m_Opened);
     {
         auto asyncProcessCount = 0;
+        auto asyncProcessQueue = Frenchie::Application::ProcessQueue::instance();
 
-        for(auto it = application()->begin(); it != application()->end(); ++it)
+
+        for(auto it = asyncProcessQueue->begin(); it != asyncProcessQueue->end(); ++it)
         {
-            auto process = std::dynamic_pointer_cast<Process>(*it);
+            auto process = *it;
 
             if(process == nullptr)  // is not async process
                 continue;

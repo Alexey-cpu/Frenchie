@@ -279,7 +279,7 @@ void TranslationFilesUpdater::frame_update()
         if(ImGui::Button(Translator::translate("Load localization keys from source code").c_str()))
         {
             Frenchie::Application::application()->push_layer<Frenchie::Editor::FileSystem::ExplorerDialog>(
-                Translator::translate("Select directory where the source code files are located..."),
+                Translator::translate("Select directory where the source code files are located..."))->on_accepted(
                 [this]()
                 {
                     auto dialog = 
@@ -309,7 +309,7 @@ void TranslationFilesUpdater::frame_update()
             if(ImGui::Button(Translator::translate("Update translation files").c_str()))
             {
                 Frenchie::Application::application()->push_layer<Frenchie::Editor::FileSystem::ExplorerDialog>(
-                    Translator::translate("Select translation files you need to update..."),
+                    Translator::translate("Select translation files you need to update..."))->on_accepted(
                     [this]()
                     {
                         auto dialog = 

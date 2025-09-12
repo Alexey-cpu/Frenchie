@@ -80,7 +80,8 @@ void TranslationFilesEditor::frame_update()
             try_execute_command([this]()
             {
                 Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                    Translator::translate("Select directory where translation files are..."),
+                    Translator::translate("Select directory where translation files are..."))
+                    ->on_accepted(
                     [this]()
                     {
                         m_LoadProcess = 
@@ -162,7 +163,7 @@ Then, when finished 'Save files' to save your changes in ALL files. If you don't
                         try_execute_command([this, &translationFile]()
                         {
                             Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                                Translator::translate("Save file"),
+                                Translator::translate("Save file"))->on_accepted(
                                 [this, &translationFile]()
                                 {
                                     auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
@@ -178,6 +179,19 @@ Then, when finished 'Save files' to save your changes in ALL files. If you don't
                                 }
                             );
                         }, "Save as");
+                    }
+
+                    ImGui::SameLine();
+
+                    // draw button 'Use all as is'
+                    if(ImGui::Button(Translator::translate("Use all as is").c_str()))
+                    {
+                        try_execute_command([this, &translations]()
+                        {
+                            for(auto&& translation : translations)
+                                translation.Value = translation.Key;                      
+                        }, 
+                        "Use all as is");
                     }
 
                     ImGui::SameLine();
@@ -209,7 +223,7 @@ Then, when finished 'Save files' to save your changes in ALL files. If you don't
                                 }
                             }                                    
                         }, 
-                        "Clear");
+                        "Close");
                     }
 
                     ImGui::SameLine();
@@ -314,11 +328,18 @@ Then, when finished 'Save files' to save your changes in ALL files. If you don't
                             if(!m_TextFilter.PassFilter(translation.Key.c_str())) 
                                 continue;
 
+                            if(translation.Value.empty())
+                                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(200, 0, 0, 255));
+                            else 
+                                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 200, 0, 255));
+
                             ImGui::TableNextRow();
 
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted(translation.Key.c_str());
                             ImGui::SameLine();
+
+                            ImGui::PopStyleColor();
 
                             ImGui::TableSetColumnIndex(1);
                             ImGui::PushID(++widgetID);
@@ -327,8 +348,23 @@ Then, when finished 'Save files' to save your changes in ALL files. If you don't
 
                             ImGui::SameLine();
 
+                            ImVec2 size = ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0.f);
+
                             ImGui::PushID(++widgetID);
-                            if(ImGui::Button(Translator::translate("Remove").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
+                            if(ImGui::Button(Translator::translate("Use as is").c_str(), size))
+                            {
+                                try_execute_command([&translation]()
+                                {
+                                    translation.Value = translation.Key;
+                                }, 
+                                "Use as is");
+                            }
+                            ImGui::PopID();
+
+                            ImGui::SameLine();
+
+                            ImGui::PushID(++widgetID);
+                            if(ImGui::Button(Translator::translate("Remove").c_str(), size))
                             {
                                 try_execute_command([&translations, &translation]()
                                 {

@@ -43,36 +43,26 @@ void Languages::frame_update()
             
             if(ImGui::Button("Load"))
             {
-                Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                    Translator::translate("Select directory where to search translation files are..."),
-                    [this]()
+                auto dialog = Frenchie::Application::application()->push_layer<FileSystem::PathScannerDialog>(
+                    [](const std::filesystem::path& _Entry)->bool
                     {
-                        auto dialog = 
-                            Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+                        return !std::filesystem::is_directory(_Entry) && 
+                            Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".xlf";
+                    }
+                );
 
-                        if(dialog == nullptr) 
-                            return;
+                dialog->on_finished(
+                    [this](std::map<std::filesystem::path, bool>& _Paths)
+                    {
+                        std::set<std::filesystem::path> paths;
 
-                        Frenchie::Application::application()->push_layer<FileSystem::PathScannerDialog>(
-                            dialog->get_current_path(),
-                            [](const std::filesystem::path& _Entry)->bool
-                            {
-                                return !std::filesystem::is_directory(_Entry) && 
-                                    Frenchie::Core::FileSystem::get_file_extention(_Entry) == ".xlf";
-                            },
-                            [this](std::map<std::filesystem::path, bool>& _Paths)
-                            {
-                                std::set<std::filesystem::path> paths;
+                        for(auto&& entry : _Paths)
+                        {
+                            if(entry.second)
+                                paths.insert(entry.first);
+                        }
 
-                                for(auto&& entry : _Paths)
-                                {
-                                    if(entry.second)
-                                        paths.insert(entry.first);
-                                }
-
-                                Translator::instance()->set_supported_languages(paths);
-                            }
-                        );
+                        Translator::instance()->set_supported_languages(paths);
                     }
                 );
             }

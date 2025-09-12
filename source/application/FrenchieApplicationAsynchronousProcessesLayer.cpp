@@ -3,15 +3,9 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 
-Process::Process(
-    const std::string&           _Name,
-    const std::function<void()>& _OnFinished, 
-    const std::function<void()>& _OnCanceled, 
-    const std::function<void()>& _OnFailed) :
-    Layer(_Name),
-    m_OnFinished(_OnFinished), 
-    m_OnCanceled(_OnCanceled), 
-    m_OnFailed(_OnFailed){}
+Process::Process(const std::string& _Name) : 
+    m_Name(_Name), 
+    m_UUID(Singleton<UUID4Generator>::instance()->guid()){}
 
 Process::~Process()
 {
@@ -60,13 +54,31 @@ bool Process::failed() const
     return m_Failed;
 }
 
-void Process::frame_finish()
+void Process::on_finished(const std::function<void()>& _Callback)
 {
-    // remove process out-of application queue
-    // when it finished...
-    if(finished() || canceled() || failed()) 
-        close();
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    m_OnFinished = _Callback;
 }
+
+void Process::on_canceled(const std::function<void()>& _Callback)
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    m_OnCanceled = _Callback;
+}
+
+void Process::on_failed(const std::function<void()>& _Callback)
+{
+    std::lock_guard<std::mutex> lock(m_Mutex);
+    m_OnFailed = _Callback;
+}
+
+// void Process::frame_finish()
+// {
+//     // remove process out-of application queue
+//     // when it finished...
+//     if(finished() || canceled() || failed()) 
+//         close();
+// }
 
 void Process::finish()
 {
