@@ -54,15 +54,15 @@ void Layer::show()
 
 bool Layer::awake()
 {
-    // read self state
-    Frenchie::Core::Serialization::ISerializer* serializer = 
-        dynamic_cast<Frenchie::Core::Serialization::ISerializer*>(this);
+    // // read self state
+    // Frenchie::Core::Serialization::ISerializer* serializer = 
+    //     dynamic_cast<Frenchie::Core::Serialization::ISerializer*>(this);
 
-    if(serializer != nullptr)
-    {
-        auto& appState = application()->get_state();
-        serializer->deserialize(appState.find_node(STRINGIFY(Application)));
-    }
+    // if(serializer != nullptr)
+    // {
+    //     auto& appState = application()->get_state();
+    //     serializer->deserialize(appState.find_node(STRINGIFY(Application)));
+    // }
 
     return true;
 }
@@ -81,22 +81,22 @@ void Layer::frame_finish()
 
 void Layer::finish()
 {
-    // save self state
-    Frenchie::Core::Serialization::ISerializer* serializer = 
-        dynamic_cast<Frenchie::Core::Serialization::ISerializer*>(this);
+    // // save self state
+    // Frenchie::Core::Serialization::ISerializer* serializer = 
+    //     dynamic_cast<Frenchie::Core::Serialization::ISerializer*>(this);
 
-    if(serializer != nullptr)
-    {
-        auto& appState = 
-            application()->get_state();
+    // if(serializer != nullptr)
+    // {
+    //     auto& appState = 
+    //         application()->get_state();
 
-        auto appInfoNode = appState.find_node(STRINGIFY(Application));
+    //     auto appInfoNode = appState.find_node(STRINGIFY(Application));
 
-        if(!appInfoNode.is_valid()) 
-            appInfoNode = appState.append_node(STRINGIFY(Application));
+    //     if(!appInfoNode.is_valid()) 
+    //         appInfoNode = appState.append_node(STRINGIFY(Application));
 
-        serializer->serialize(appInfoNode);
-    }
+    //     serializer->serialize(appInfoNode);
+    // }
 }
 
 bool Layer::allows_multiple_instances() const

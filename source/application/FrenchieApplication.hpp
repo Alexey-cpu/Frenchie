@@ -60,9 +60,9 @@ namespace Frenchie
 
                 int execute();
 
-                void load_state(std::filesystem::path _Path);
-                void save_state(std::filesystem::path _Path);
-                Frenchie::Core::Serialization::Document& get_state() const;
+                // void load_state(std::filesystem::path _Path);
+                // void save_state(std::filesystem::path _Path);
+                // Frenchie::Core::Serialization::Document& get_state() const;
                 std::list<std::shared_ptr<Layer>>::const_iterator begin() const;
                 std::list<std::shared_ptr<Layer>>::const_iterator end() const;
                 size_t size() const;
@@ -128,7 +128,7 @@ namespace Frenchie
                 std::string                                     m_Name   = "Frenchie::Application";
                 bool                                            m_Opened = true;
                 GLFWwindow*                                     m_Window = nullptr;
-                mutable Frenchie::Core::Serialization::Document m_State;
+                //mutable Frenchie::Core::Serialization::Document m_State;
             };
         };
 

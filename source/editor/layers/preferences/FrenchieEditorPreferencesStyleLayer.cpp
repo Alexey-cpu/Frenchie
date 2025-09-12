@@ -1,9 +1,12 @@
-#include <FrenchieApplicationEditorPreferencesStyleLayer.hpp>
+#include <FrenchieEditorPreferencesStyleLayer.hpp>
 
+// Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationEditorConfigurationFontsLayer.hpp>
-#include <FrenchieApplicationEditorFileSystemExplorerLayer.hpp>
+
+// Editor
+#include <FrenchieEditorConfigurationFontsLayer.hpp>
+#include <FrenchieEditorFileSystemExplorerLayer.hpp>
 
 #include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
@@ -281,24 +284,48 @@ void Style::draw_fonts_settings()
 
     if(ImGui::Button(Translator::translate("Browse").c_str()))
     {
-        Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-            Translator::translate("Select path where to search for fonts...").c_str(),
-            [this]()
+        auto dialog = Frenchie::Application::application()->push_layer<FileSystem::PathScannerDialog>(
+            [](const std::filesystem::path& _Path)->bool
             {
-                auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+                return !std::filesystem::is_directory(_Path) && 
+                    Frenchie::Core::FileSystem::get_file_extention(_Path) == ".ttf";
+            },
+            Translator::translate("Select path where to search for fonts...")
+        );
 
-                if(dialog == nullptr) 
-                    return;
+        dialog->on_finished(
+            [this](const std::map<std::filesystem::path, bool>& _Paths)
+            {
+                std::set<std::filesystem::path> paths;
 
-                auto path = dialog->get_current_path();
-                Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
-                    [this, path]()
-                    {
-                        Frenchie::Application::application()->push_layer<Configuration::Fonts>()->scan_fonts(path);
-                    }
-                );
+                for(auto&& path : _Paths) 
+                {
+                    if(path.second) 
+                        paths.insert(path.first);
+                }
+
+                Frenchie::Editor::Configuration::Fonts::instance()->load_fonts(paths);
             }
         );
+
+        // Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+        //     Translator::translate("Select path where to search for fonts...").c_str(),
+        //     [this]()
+        //     {
+        //         auto dialog = Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+
+        //         if(dialog == nullptr) 
+        //             return;
+
+        //         auto path = dialog->get_current_path();
+        //         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        //             [this, path]()
+        //             {
+        //                 Frenchie::Application::application()->push_layer<Configuration::Fonts>()->scan_fonts(path);
+        //             }
+        //         );
+        //     }
+        // );
     }
 
     // font size

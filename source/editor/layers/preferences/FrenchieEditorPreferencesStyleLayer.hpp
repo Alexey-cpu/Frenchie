@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrenchieApplicationEditorPreferencesLayer.hpp>
+#include <FrenchieEditorPreferencesLayer.hpp>
 
 // IMGUI
 #include <imgui.h>

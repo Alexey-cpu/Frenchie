@@ -4,10 +4,9 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
 
-// Frenchie::Core
+// Core
 #include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreThreadPool.hpp>
-
 #include <FrenchieCoreSerializationFormatXML.hpp>
 #include <FrenchieCoreSerializationFormatJSON.hpp>
 #include <FrenchieCoreSerializationFormatYAML.hpp>
@@ -25,8 +24,38 @@
 // IMGUI
 #include <imgui.h>
 
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace Configuration
+        {
+            class PushTranslatorIntoAppQueue : 
+                public Frenchie::Application::Command::Registry<PushTranslatorIntoAppQueue, void*>
+            {
+            public:
+
+                PushTranslatorIntoAppQueue(void* _Sender) : 
+                    Frenchie::Application::Command::Registry<PushTranslatorIntoAppQueue, void*>(_Sender){}
+                virtual ~PushTranslatorIntoAppQueue(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
+                {
+                    Frenchie::Editor::Configuration::Translator::instance();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::Configuration), STRINGIFY(Translator));
+                }
+            };
+        }
+    }
+}
+
 using namespace Frenchie::Editor;
-//using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Configuration;
 
 // LoadTranslationFiles
@@ -83,18 +112,19 @@ bool LoadTranslationFilesProcess::awake()
     Frenchie::Core::ThreadPool::instance()->enqueue(
         [this]()
         {
+            // run process
             size_t total    = m_TranslationFiles.size();
             size_t progress = 0;
 
             for(auto&& translationFile : m_TranslationFiles)
             {
-                while(m_Paused)
+                while(paused())
                 {
-                    if(m_Canceled) 
+                    if(canceled()) 
                         return;
                 }
 
-                if(m_Canceled) 
+                if(canceled()) 
                     return;
 
                 auto& path         = translationFile.Path;
@@ -356,39 +386,71 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
     // retrieve supported languages
     auto supportedLanguages = main.find_node("Languages");
 
-    for(auto&& supportedLanguage : supportedLanguages)
+    if(supportedLanguages.is_valid())
     {
-        if(!supportedLanguage.is_valid() || 
-            std::string(supportedLanguage.get_name()).empty() || 
-            std::string(supportedLanguage.get_value()).empty()) 
-            continue;
+        for(auto&& supportedLanguage : supportedLanguages)
+        {
+            if(!supportedLanguage.is_valid() || 
+                std::string(supportedLanguage.get_name()).empty() || 
+                std::string(supportedLanguage.get_value()).empty()) 
+                continue;
 
-        m_SupportedLanguages.push_back(
-            std::make_unique<Language>(
-                std::filesystem::path(supportedLanguage.get_value()), 
-                this
-            )
-        );
+            m_SupportedLanguages.push_back(
+                std::make_unique<Language>(
+                    std::filesystem::path(supportedLanguage.get_value()), 
+                    this
+                )
+            );
+        }
+    }
+    else // try to to load translation files from default path
+    {
+        std::filesystem::path defaultTranslationFilesPath = 
+            std::filesystem::path(
+                Frenchie::Core::FileSystem::get_exe_absolute_directory().wstring().append(L"/appData/translations/")).make_preferred();
+
+        if(std::filesystem::exists(defaultTranslationFilesPath))
+        {
+            try
+            {
+                for(auto directory : std::filesystem::directory_iterator(defaultTranslationFilesPath, 
+                                     std::filesystem::directory_options::skip_permission_denied))
+                {
+                    if(!directory.is_directory() &&
+                        Frenchie::Core::FileSystem::get_file_extention(directory.path()) == ".xlf") 
+                    {
+                        m_SupportedLanguages.push_back(std::make_unique<Language>(directory.path(), this));
+                    }
+                }
+            }
+            catch(const std::exception& e)
+            {
+                Frenchie::Core::Logger::instance()->critical(e.what());
+            }
+        }
     }
 
     // select current language
     auto currentLanguage = main.find_node("CurrentLanguage");
 
-    if(!currentLanguage.is_valid() || 
-        std::string(currentLanguage.get_name()).empty() || 
-        std::string(currentLanguage.get_value()).empty()) 
+    if(currentLanguage.is_valid() &&
+        !std::string(currentLanguage.get_name()).empty() && 
+        !std::string(currentLanguage.get_value()).empty()) 
     {
-        return true;
-    }
-
-    for (auto&& supportedLanguage : m_SupportedLanguages)
-    {
-        if(supportedLanguage->get_name() == 
-            std::string(currentLanguage.get_value()))
+        for (auto&& supportedLanguage : m_SupportedLanguages)
         {
-            supportedLanguage->setup();
-            break;
+            if(supportedLanguage->get_name() == 
+                std::string(currentLanguage.get_value()))
+            {
+                supportedLanguage->setup();
+                break;
+            }
         }
+    }
+    else // try to setup default language
+    {
+        if(!m_SupportedLanguages.empty())
+            m_SupportedLanguages.front()->setup();
     }
 
     return true;
@@ -404,10 +466,10 @@ std::string Translator::translate(const std::string& _Key)
 
 Frenchie::Core::Reference<Translator> Translator::instance()
 {
-    auto translator = Frenchie::Application::application()->find_layer<Translator>();
+    auto layer = Frenchie::Application::application()->find_layer<Translator>();
 
-    if(translator == nullptr) 
-        translator = Frenchie::Application::application()->push_layer<Translator>();
+    if(layer == nullptr) 
+        layer = Frenchie::Application::application()->push_layer<Translator>();
 
-    return translator;
+    return layer;
 }
