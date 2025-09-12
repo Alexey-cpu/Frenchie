@@ -15,15 +15,8 @@ namespace Frenchie
             Process(const std::string& _Name = std::string());
             virtual ~Process();
 
-            std::string get_name() const
-            {
-                return m_Name;
-            }
-
-            Frenchie::Core::UUID4 get_uuid() const
-            {
-                return m_UUID;
-            }
+            std::string get_name() const;
+            Frenchie::Core::UUID4 get_uuid() const;
 
             // API
             void pause();

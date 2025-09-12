@@ -84,8 +84,11 @@ bool Explorer::awake()
 
 void Explorer::frame_update()
 {
-    // draw content
-    ImGui::Begin(get_name().c_str(), &m_Shown);
+    // update name
+    set_name(Translator::translate("Preferences"));
+
+    // draw
+    ImGui::Begin(fmt::format("{}###Preferences", get_name()).c_str(), &m_Opened);
     {
         if(ImGui::BeginTable(
             fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Editor::Preferences), "Splitter").c_str(), 

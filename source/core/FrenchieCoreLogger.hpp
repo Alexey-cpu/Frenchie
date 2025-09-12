@@ -1,7 +1,9 @@
 #pragma once
 
 // Custom
+#include <FrenchieCoreNonCopyable.hpp>
 #include <FrenchieCoreSingleton.hpp>
+#include <FrenchieCoreHelpers.hpp>
 
 // STL
 #include <memory>
@@ -21,11 +23,11 @@ namespace Frenchie
     {
         namespace Debug
         {
-            class Logger
+            class Logger : public NonCopyable
             {
             public:
 
-                Logger(const std::string& = "Frenchie::Core::Logger");
+                Logger(const std::string& = STRINGIFY(Frenchie::Core::Debug::Logger));
                 virtual ~Logger();
 
                 template<typename __sink, typename ... __sink_arguments>
@@ -83,13 +85,23 @@ namespace Frenchie
 
             private:
 
-                const std::string                       m_Name   = "Frenchie::Core::Logger";
+                const std::string                       m_Name   = STRINGIFY(Frenchie::Core::Debug::Logger);
                 mutable std::shared_ptr<spdlog::logger> m_Logger = nullptr;
 
                 std::shared_ptr<spdlog::logger>& get_logger() const;
             };
         }
 
-        typedef Singleton<Debug::Logger> Logger;
+        class Logger : public Debug::Logger
+        {
+        public:
+            Logger() : Debug::Logger(STRINGIFY(Frenchie::Core::Logger)){}
+            virtual ~Logger(){}
+
+            static Logger* instance()
+            {
+                return Singleton<Logger>::instance();
+            }
+        };
     }
 }

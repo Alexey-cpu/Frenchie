@@ -48,7 +48,7 @@ namespace Frenchie
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Language::Translation files editor");
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Translation files::Translation files editor");
                 }
             };
         }
@@ -120,14 +120,6 @@ void TranslationFilesEditor::frame_update()
             "Close files");
         }
     }
-
-    ImGui::SeparatorText(Translator::translate("Description").c_str());
-
-    ImGui::TextUnformatted(Translator::translate(
-R"(This is is a simple manual .xlf translation files editor that lets to load several .xlf files and manually add/remove translation 'key:value' pairs. Press 'Load files' button to load select and load .xlf files. 
-Then, when finished 'Save files' to save your changes in ALL files. If you don't want to save changes press 'Close files' button. To start edit a file after it's loaded navigate to files tree and unpop the tree node of the file you want to edit.
-)"
-).c_str());
 
     ImGui::SeparatorText(Translator::translate("Files").c_str());
     {
@@ -237,7 +229,7 @@ Then, when finished 'Save files' to save your changes in ALL files. If you don't
                         ImGui::SameLine();
 
                         // draw 'Insert translation units' button
-                        if(ImGui::Button("Insert translation units"))
+                        if(ImGui::Button(Translator::translate("Insert translation units").c_str()))
                         {
                             try_execute_command(
                                 [this, &translations]()

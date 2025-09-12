@@ -21,7 +21,7 @@ using namespace Frenchie::Editor::Configuration;
 
 Languages::Languages() : 
     Frenchie::Application::Layer::Registry<Languages>(
-        Translator::translate(STRINGIFY(Languages))){}
+        Translator::translate("Language settings")){}
 Languages::~Languages(){}
 
 std::string Languages::factory_id()
@@ -31,7 +31,11 @@ std::string Languages::factory_id()
 
 void Languages::frame_update()
 {
-    ImGui::BeginChild(get_name().c_str());
+    // update name
+    set_name(Translator::translate("Language settings"));
+
+    // draw
+    ImGui::BeginChild(fmt::format("{}###Language settings", get_name()).c_str());
     {
         auto& supportedLanguages = Translator::instance()->get_supported_languages();
 
@@ -69,6 +73,15 @@ void Languages::frame_update()
         }
         else
         {
+            if(ImGui::Button(Translator::translate("Reload translation files").c_str()))
+            {
+                for(auto&& supportedLanguage : supportedLanguages)
+                {
+                    if(supportedLanguage->is_current()) 
+                        supportedLanguage->setup();
+                }
+            }
+
             int id = 0;
             for(auto&& supportedLanguage : supportedLanguages)
             {
