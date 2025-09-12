@@ -6,8 +6,7 @@
 
 // Editor
 #include <FrenchieEditorConfigurationFontsLayer.hpp>
-#include <FrenchieEditorFileSystemExplorerLayer.hpp>
-
+#include <FrenchieEditorFileSystemPathScannerDialog.hpp>
 #include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI

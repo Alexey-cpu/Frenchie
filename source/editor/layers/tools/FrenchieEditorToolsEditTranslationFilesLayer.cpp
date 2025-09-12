@@ -6,7 +6,7 @@
 #include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 
 // Editor
-#include <FrenchieEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieEditorFileSystemExplorerDialogLayer.hpp>
 
 // IMGUI
 #include <imgui.h>
