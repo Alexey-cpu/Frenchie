@@ -1,20 +1,18 @@
 #include <FrenchieApplicationEditorLauncher.hpp>
 
+// Core
+#include <FrenchieCoreHelpers.hpp>
+
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
-
-// configuration
-#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
+#include <FrenchieEditorConfigurationLoader.hpp>
 
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
-
-// Core
-#include <FrenchieCoreHelpers.hpp>
 
 // SPDLOG
 #include "spdlog/sinks/basic_file_sink.h"
@@ -201,13 +199,13 @@ int Launcher::execute()
 
     Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
 
-    // load application state
-    Frenchie::Application::application()->load_state(std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
-
     // append basic layers
     Frenchie::Application::application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
 
     // configuration
+    Frenchie::Application::application()->push_layer<Frenchie::Editor::Configuration::ConfigurationLoader>(
+            std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
+
     Frenchie::Application::application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
@@ -219,11 +217,6 @@ int Launcher::execute()
 
     // execute app and wait until it finishes it's job
     auto execution = Frenchie::Application::application()->execute();
-
-    // save application state
-    Frenchie::Application::application()->save_state(
-        std::filesystem::path(Launcher::get_app_state_directory().wstring().append(L"/State.xml"))
-    );
 
     return 1;
 }

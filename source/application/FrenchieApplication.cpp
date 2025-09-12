@@ -289,39 +289,39 @@ int Application::execute()
     return 1;
 }
 
-void Application::load_state(std::filesystem::path _Path)
-{
-    if(!m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path)) 
-        Frenchie::Core::Logger::instance()->error(fmt::format("{} could not load state", _Path.string()));
+// void Application::load_state(std::filesystem::path _Path)
+// {
+//     if(!m_State.read<Frenchie::Core::Serialization::XMLReader>(_Path)) 
+//         Frenchie::Core::Logger::instance()->error(fmt::format("{} could not load state", _Path.string()));
 
-    // load .ini file
-    ImGui::LoadIniSettingsFromMemory(m_State.find_node(STRINGIFY(Application)).get_value());
-}
+//     // load .ini file
+//     ImGui::LoadIniSettingsFromMemory(m_State.find_node(STRINGIFY(Application)).get_value());
+// }
 
-void Application::save_state(std::filesystem::path _Path)
-{
-    // save state of only opened nodes
-    m_State.reset();
+// void Application::save_state(std::filesystem::path _Path)
+// {
+//     // save state of only opened nodes
+//     m_State.reset();
 
-    // append self
-    auto application = m_State.append_node(STRINGIFY(Application), ImGui::SaveIniSettingsToMemory());
+//     // append self
+//     auto application = m_State.append_node(STRINGIFY(Application), ImGui::SaveIniSettingsToMemory());
 
-    for(auto it = begin(); it != end(); ++it)
-    {
-        auto serializer = 
-            std::dynamic_pointer_cast<Frenchie::Core::Serialization::ISerializer>(*it);
+//     for(auto it = begin(); it != end(); ++it)
+//     {
+//         auto serializer = 
+//             std::dynamic_pointer_cast<Frenchie::Core::Serialization::ISerializer>(*it);
 
-        if(serializer != nullptr) 
-            serializer->serialize(application);
-    }
+//         if(serializer != nullptr) 
+//             serializer->serialize(application);
+//     }
 
-    m_State.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(_Path);
-}
+//     m_State.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(_Path);
+// }
 
-Frenchie::Core::Serialization::Document& Application::get_state() const
-{
-    return m_State;
-}
+// Frenchie::Core::Serialization::Document& Application::get_state() const
+// {
+//     return m_State;
+// }
 
 Application::const_iterator Application::begin() const
 {

@@ -181,6 +181,7 @@ namespace Frenchie
                 void on_failed(const std::function<void(std::map<std::filesystem::path, bool>&)>& _Callback);
 
             protected:
+                std::function<bool(const std::filesystem::path&)>           m_Predicate;
                 std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFinished;
                 std::function<void(std::map<std::filesystem::path, bool>&)> m_OnCanceled;
                 std::function<void(std::map<std::filesystem::path, bool>&)> m_OnFailed;

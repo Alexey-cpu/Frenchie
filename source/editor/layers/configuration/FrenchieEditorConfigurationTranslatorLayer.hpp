@@ -85,13 +85,13 @@ namespace Frenchie
                 LoadTranslationFilesProcess(const std::filesystem::path& _Path);
                 virtual ~LoadTranslationFilesProcess();
 
-                //
+                // Frenchie::Application::Process
                 virtual bool awake() override;
 
-                // Async::IProcessStatus
+                // Frenchie::Application::IProcessStatus
                 virtual std::string iprocess_status_request_status() override;
 
-                // Async::IProcessProgress
+                // Frenchie::Application::IProcessProgress
                 virtual float iprocess_progress_request_progress() override;
 
                 // info
@@ -113,13 +113,13 @@ namespace Frenchie
             
                 virtual bool awake() override;
 
-                // Async::IProcessStatus
+                // Frenchie::Application::Process
                 virtual std::string iprocess_status_request_status() override;
 
                 // Async::IProcessProgress
                 virtual float iprocess_progress_request_progress() override;
 
-                // info
+                // Frenchie::Application::IProcessStatus
                 std::vector<TranslationFile> m_TranslationFiles;
 
             protected:

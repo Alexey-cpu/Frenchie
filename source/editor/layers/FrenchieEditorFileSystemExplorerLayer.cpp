@@ -93,7 +93,6 @@ namespace Frenchie
                     {
                         return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "create::folder");
                     }
-
                 };
 
                 class PasteAction : 
@@ -1285,7 +1284,7 @@ bool FilesystemPathsSearchProcess::awake()
 PathScannerDialog::PathScannerDialog(
     const std::function<bool(const std::filesystem::path&)>& _Predicate,
     const std::string&                                       _Name) : 
-    Explorer(_Name){}
+    Explorer(_Name), m_Predicate(_Predicate){}
 
 PathScannerDialog::~PathScannerDialog(){}
 
@@ -1327,7 +1326,15 @@ void PathScannerDialog::frame_update()
         {
             if(ImGui::Button(Translator::translate("Ok").c_str()))
             {
-                // launch scan paths here
+                auto dialog = 
+                    Frenchie::Application::application()->push_layer<FileSystem::Dialogs::ScanPaths>(
+                        get_current_path(), 
+                        m_Predicate, 
+                        m_OnFinished, 
+                        m_OnCanceled, 
+                        m_OnFailed
+                    );
+
                 close();
             }
 
