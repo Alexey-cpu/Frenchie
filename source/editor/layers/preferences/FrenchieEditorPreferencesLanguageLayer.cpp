@@ -1,7 +1,7 @@
 #include <FrenchieEditorPreferencesLanguageLayer.hpp>
 
 // Editor
-#include <FrenchieEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieEditorFileSystemPathScannerDialog.hpp>
 #include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // IMGUI
