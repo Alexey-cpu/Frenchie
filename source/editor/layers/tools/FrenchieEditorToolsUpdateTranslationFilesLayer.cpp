@@ -57,7 +57,9 @@ namespace Frenchie
 {
     namespace Editor
     {
-        class LoadLocalizationKeysFromSourceCodeProcess : public Frenchie::Application::Process, public Frenchie::Application::IProcessStatus
+        class LoadLocalizationKeysFromSourceCodeProcess : 
+            public Frenchie::Application::Process, 
+            public Frenchie::Application::IProcessStatus
         {
         public:
             LoadLocalizationKeysFromSourceCodeProcess(
@@ -70,26 +72,81 @@ namespace Frenchie
             virtual ~LoadLocalizationKeysFromSourceCodeProcess(){}
 
             // Frenchie::Application::Layer
-            virtual bool awake() override
+            virtual void execute() override
             {
-                Frenchie::Core::ThreadPool::instance()->enqueue(
-                    [this]()
+                if(!std::filesystem::exists(m_SourceFilesPath) || 
+                    m_Extentions.empty()) 
+                    return;
+
+                m_Status.append(fmt::format("Start searching localization keys in {}", m_SourceFilesPath.string()));
+
+                // setup patters...
+                std::regex translator_pattern(R"(Translator::translate\(\s*\"([^\"]*)\"\s*\))");
+                std::regex localization_key_pattern(R"(\s*\"([^\"]*)\"\s*)");
+
+                try
+                {
+                    for(auto directoryIterator = std::filesystem::recursive_directory_iterator(m_SourceFilesPath, std::filesystem::directory_options::skip_permission_denied); 
+                        directoryIterator != std::filesystem::recursive_directory_iterator(); 
+                            directoryIterator++)
                     {
-                        if(!std::filesystem::exists(m_SourceFilesPath) || 
-                            m_Extentions.empty()) 
+                        // handle pause and cancel events
+                        while (paused())
+                        {
+                            if(canceled())
+                                return;
+                        }
+
+                        if(canceled())
                             return;
 
-                        m_Status.append(fmt::format("Start searching localization keys in {}", m_SourceFilesPath.string()));
+                        // get path
+                        auto entry     = *directoryIterator;
+                        auto path      = (*directoryIterator).path();
+                        auto extention = Frenchie::Core::FileSystem::get_file_extention(*directoryIterator);
 
-                        // setup patters...
-                        std::regex translator_pattern(R"(Translator::translate\(\s*\"([^\"]*)\"\s*\))");
-                        std::regex localization_key_pattern(R"(\s*\"([^\"]*)\"\s*)");
+                        // skip not files and files of unsupported extention
+                        if(entry.is_directory() || 
+                            m_Extentions.find(extention) == m_Extentions.end())
+                            continue;
 
-                        try
+                        FILE* file = Frenchie::Core::FileSystem::open_file(path.string(), "rb");
+
+                        if(file == nullptr) 
+                            continue;
+
+                        m_Status.append(fmt::format("{}\n", path.filename().string()));
+
+                        std::string contents;
+
+                        char buffer[1024];
+
+                        while (fgets(buffer, sizeof(buffer), file) != NULL)
+                            contents.append(buffer);
+
+                        fclose(file);
+
+                        // Using std::regex_iterator (finds all matches)
+                        for (auto translatorIterator = std::sregex_iterator(contents.begin(), contents.end(), translator_pattern); 
+                                    translatorIterator != std::sregex_iterator();
+                                        ++translatorIterator) 
                         {
-                            for(auto directoryIterator = std::filesystem::recursive_directory_iterator(m_SourceFilesPath, std::filesystem::directory_options::skip_permission_denied); 
-                                directoryIterator != std::filesystem::recursive_directory_iterator(); 
-                                    directoryIterator++)
+                            // handle pause and cancel events
+                            while (m_Paused)
+                            {
+                                if(m_Canceled)
+                                    return;
+                            }
+
+                            if(m_Canceled)
+                                return;
+
+                            auto translatorEntry = (*translatorIterator).str();
+
+                            for (auto localizationKeyIterator = 
+                                        std::sregex_iterator(translatorEntry.begin(), translatorEntry.end(), localization_key_pattern); 
+                                            localizationKeyIterator != std::sregex_iterator(); 
+                                                ++localizationKeyIterator) 
                             {
                                 // handle pause and cancel events
                                 while (m_Paused)
@@ -101,85 +158,23 @@ namespace Frenchie
                                 if(m_Canceled)
                                     return;
 
-                                // get path
-                                auto entry     = *directoryIterator;
-                                auto path      = (*directoryIterator).path();
-                                auto extention = Frenchie::Core::FileSystem::get_file_extention(*directoryIterator);
+                                auto key = Frenchie::Core::String::remove_symbol((*localizationKeyIterator).str(), '"');
 
-                                // skip not files and files of unsupported extention
-                                if(entry.is_directory() || 
-                                    m_Extentions.find(extention) == m_Extentions.end())
-                                    continue;
+                                m_LocalizationKeys.insert(key);
 
-                                FILE* file = Frenchie::Core::FileSystem::open_file(path.string(), "rb");
-
-                                if(file == nullptr) 
-                                    continue;
-
-                                m_Status.append(fmt::format("{}\n", path.filename().string()));
-
-                                std::string contents;
-
-                                char buffer[1024];
-
-                                while (fgets(buffer, sizeof(buffer), file) != NULL)
-                                    contents.append(buffer);
-
-                                fclose(file);
-
-                                // Using std::regex_iterator (finds all matches)
-                                for (auto translatorIterator = std::sregex_iterator(contents.begin(), contents.end(), translator_pattern); 
-                                            translatorIterator != std::sregex_iterator();
-                                                ++translatorIterator) 
-                                {
-                                    // handle pause and cancel events
-                                    while (m_Paused)
-                                    {
-                                        if(m_Canceled)
-                                            return;
-                                    }
-
-                                    if(m_Canceled)
-                                        return;
-
-                                    auto translatorEntry = (*translatorIterator).str();
-
-                                    for (auto localizationKeyIterator = 
-                                                std::sregex_iterator(translatorEntry.begin(), translatorEntry.end(), localization_key_pattern); 
-                                                    localizationKeyIterator != std::sregex_iterator(); 
-                                                        ++localizationKeyIterator) 
-                                    {
-                                        // handle pause and cancel events
-                                        while (m_Paused)
-                                        {
-                                            if(m_Canceled)
-                                                return;
-                                        }
-
-                                        if(m_Canceled)
-                                            return;
-
-                                        auto key = Frenchie::Core::String::remove_symbol((*localizationKeyIterator).str(), '"');
-
-                                        m_LocalizationKeys.insert(key);
-
-                                        m_Status.append(fmt::format("\t{}\n", key));
-                                    }
-                                }
+                                m_Status.append(fmt::format("\t{}\n", key));
                             }
-
-                            // finish process
-                            m_Finished = true;
-                        }
-                        catch(const std::exception& e)
-                        {
-                            Frenchie::Core::Logger::instance()->critical(e.what());
-                            m_Failed = true;
                         }
                     }
-                );
 
-                return true;
+                    // finish process
+                    m_Finished = true;
+                }
+                catch(const std::exception& e)
+                {
+                    Frenchie::Core::Logger::instance()->critical(e.what());
+                    m_Failed = true;
+                }
             }
 
             virtual std::string iprocess_status_request_status() override
@@ -209,7 +204,7 @@ namespace Frenchie
             virtual ~UpdateLocalizationKeysInTranslationFilesProcess(){}
 
             // Frenchie::Application::Layer
-            virtual bool awake() override
+            virtual void execute() override
             {
                 auto localizationKeysLoadProcess = 
                     Frenchie::Application::ProcessQueue::instance()->push<LoadTranslationFilesProcess>(m_Paths);
@@ -239,8 +234,6 @@ namespace Frenchie
                             localizationKeysLoadProcess->m_TranslationFiles);
                     }
                 );
-
-                return true;
             }
 
             virtual std::string iprocess_status_request_status() override

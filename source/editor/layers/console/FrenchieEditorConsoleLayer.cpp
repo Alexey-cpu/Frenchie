@@ -1,6 +1,8 @@
 #include <FrenchieEditorConsoleLayer.hpp>
 
+// Application
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 
 // SPDLOG
 #include <spdlog/sinks/base_sink.h>
@@ -8,6 +10,7 @@
 
 // IMGUI
 #include <imgui.h>
+#include <imgui_stdlib.h>
 #include <imgui_internal.h>
 
 // STL
@@ -20,78 +23,110 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 
-namespace Frenchie
-{
-    namespace Editor
-    {
-        // class TerminalSink : public spdlog::sinks::base_sink<std::mutex>
-        // {
-        // public:
-        //     TerminalSink(const Terminal* _Console) : m_Console(_Console){}
-        //     virtual ~TerminalSink(){}
+// Add to main menu
+// namespace Frenchie
+// {
+//     namespace Editor
+//     {
+//         namespace MainMenu
+//         {
+//             class OpenTerminalAction : 
+//                 public Frenchie::Application::Command::Registry<OpenTerminalAction, void*>
+//             {
+//             public:
 
-        // protected:
+//                 OpenTerminalAction(void* _Sender = nullptr) : 
+//                     Frenchie::Application::Command::Registry<OpenTerminalAction, void*>(_Sender){}
+//                 virtual ~OpenTerminalAction(){}
 
-        //     virtual void sink_it_(const spdlog::details::log_msg& _Message) override
-        //     {
-        //         if(m_Console != nullptr)
-        //         {
-        //             auto message = std::string(m_Console->m_Output.get_buffer()).append(fmt::to_string(_Message.payload));
+//                 // Frenchie::Application::Command
+//                 virtual void execute() override
+//                 {
+//                     Frenchie::Application::application()->push_layer<Console>()->show();
+//                 }
 
-        //             m_Console->m_Output.set_buffer(message);
-        //         }
-        //     }
+//                 // Command::TRegistryType
+//                 static std::string factory_id()
+//                 {
+//                     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Console");
+//                 }
+//             };
+//         }
+//     }
+// }
 
-        //     virtual void flush_() override{}
+// namespace Frenchie
+// {
+//     namespace Editor
+//     {
+//         // class TerminalSink : public spdlog::sinks::base_sink<std::mutex>
+//         // {
+//         // public:
+//         //     TerminalSink(const Terminal* _Console) : m_Console(_Console){}
+//         //     virtual ~TerminalSink(){}
 
-        // private:
+//         // protected:
 
-        //     // info
-        //     const Terminal* m_Console = nullptr;
-        // };
+//         //     virtual void sink_it_(const spdlog::details::log_msg& _Message) override
+//         //     {
+//         //         if(m_Console != nullptr)
+//         //         {
+//         //             auto message = std::string(m_Console->m_Output.get_buffer()).append(fmt::to_string(_Message.payload));
 
-        // class ConsoleSink : public spdlog::sinks::base_sink<std::mutex>
-        // {
-        // public:
-        //     ConsoleSink(const Console* _Console) : m_Console(_Console){}
-        //     virtual ~ConsoleSink(){}
+//         //             m_Console->m_Output.set_buffer(message);
+//         //         }
+//         //     }
 
-        // protected:
+//         //     virtual void flush_() override{}
 
-        //     virtual void sink_it_(const spdlog::details::log_msg& _Message) override
-        //     {
-        //         if (m_Console == nullptr || 
-        //                 m_Console->m_Messages.size() >= m_Console->m_MaximumMessageCount) 
-        //                 return;
+//         // private:
 
-        //         // create message
-        //         m_Console->m_Messages[_Message.level].push_back(
-        //             Console::Message(
-        //                 {
-        //                     _Message.time,
-        //                     _Message.level,
-        //                     fmt::to_string(_Message.payload)
-        //                 }
-        //             )
-        //         );
-        //     }
+//         //     // info
+//         //     const Terminal* m_Console = nullptr;
+//         // };
 
-        //     virtual void flush_() override{}
+//         // class ConsoleSink : public spdlog::sinks::base_sink<std::mutex>
+//         // {
+//         // public:
+//         //     ConsoleSink(const Console* _Console) : m_Console(_Console){}
+//         //     virtual ~ConsoleSink(){}
 
-        // private:
+//         // protected:
 
-        //     // info
-        //     const Console* m_Console = nullptr;
-        // };
-    }
-}
+//         //     virtual void sink_it_(const spdlog::details::log_msg& _Message) override
+//         //     {
+//         //         if (m_Console == nullptr || 
+//         //                 m_Console->m_Messages.size() >= m_Console->m_MaximumMessageCount) 
+//         //                 return;
+
+//         //         // create message
+//         //         m_Console->m_Messages[_Message.level].push_back(
+//         //             Console::Message(
+//         //                 {
+//         //                     _Message.time,
+//         //                     _Message.level,
+//         //                     fmt::to_string(_Message.payload)
+//         //                 }
+//         //             )
+//         //         );
+//         //     }
+
+//         //     virtual void flush_() override{}
+
+//         // private:
+
+//         //     // info
+//         //     const Console* m_Console = nullptr;
+//         // };
+//     }
+// }
 
 // Terminal::Terminal() : Layer(STRINGIFY(Frenchie::Application::Editor::Terminal)){}
 // Terminal::~Terminal(){}
 
 // bool Terminal::awake()
 // {
-//     m_Logger.register_sink<TerminalSink>(this);
+//     //m_Logger.register_sink<TerminalSink>(this);
 //     return true;
 // }
 
@@ -104,18 +139,17 @@ namespace Frenchie
 //         // ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IM_COL32(0, 0, 0, 255));
 //         // ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IM_COL32(0, 0, 0, 255));
 
-//         m_Output.draw_multiline(
-//             "Result",
-//             0,
-//             0.f,
-//             ImGui::CalcTextSize(m_Output.get_buffer().c_str()).y + 2.f * ImGui::GetStyle().FramePadding.y);
-            
+//         ImGui::InputTextMultiline(
+//             "Result", 
+//             &m_Output,
+//             ImVec2(0.f, ImGui::CalcTextSize(m_Output.c_str()).y + 2.f * ImGui::GetStyle().FramePadding.y));
 
 //         ImGui::TextUnformatted(Frenchie::Core::String::as_utf8(m_Path.wstring()).c_str());
 //         ImGui::SameLine();
         
-//         if(m_Command.draw(
+//         if(ImGui::InputText(
 //             "Command",
+//             &m_Command,
 //             ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
 //         {
 //             // execute command
@@ -124,7 +158,7 @@ namespace Frenchie
 //                 std::string command = 
 //                     fmt::format("cd {} && {} 2>&1", 
 //                         Frenchie::Core::String::as_utf8(m_Path.wstring()),
-//                         std::string(m_Command.get_buffer()));
+//                         std::string(m_Command));
 
 //                 std::array<char, 128> buffer;
 //                 std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(command.c_str(), "r"), _pclose);
@@ -141,7 +175,7 @@ namespace Frenchie
 //             }
 
 //             // clear command buffer
-//             m_Command.set_buffer("");
+//             m_Command.clear();
 //         }
 
 //         //ImGui::PopStyleColor(4);
@@ -152,12 +186,12 @@ namespace Frenchie
 
 // void Terminal::finish()
 // {
-//     m_Logger.unregister_sink(
-//         [](spdlog::sink_ptr _Sink)->bool
-//         {
-//             return std::dynamic_pointer_cast<TerminalSink>(_Sink) != nullptr;
-//         }
-//     );
+//     // m_Logger.unregister_sink(
+//     //     [](spdlog::sink_ptr _Sink)->bool
+//     //     {
+//     //         return std::dynamic_pointer_cast<TerminalSink>(_Sink) != nullptr;
+//     //     }
+//     // );
 // }
 
 // bool Terminal::allows_multiple_instances() const

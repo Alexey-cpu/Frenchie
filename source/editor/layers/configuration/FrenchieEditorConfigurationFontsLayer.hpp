@@ -23,7 +23,7 @@ namespace Frenchie
                 LoadFontsProcess(const std::filesystem::path& _Path);
                 virtual ~LoadFontsProcess();
 
-                virtual bool awake() override;
+                virtual void execute() override;
                 virtual std::string iprocess_status_request_status() override;
                 virtual float iprocess_progress_request_progress() override;
 

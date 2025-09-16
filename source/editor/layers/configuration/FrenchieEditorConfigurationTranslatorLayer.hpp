@@ -86,7 +86,7 @@ namespace Frenchie
                 virtual ~LoadTranslationFilesProcess();
 
                 // Frenchie::Application::Process
-                virtual bool awake() override;
+                virtual void execute() override;
 
                 // Frenchie::Application::IProcessStatus
                 virtual std::string iprocess_status_request_status() override;
@@ -111,7 +111,7 @@ namespace Frenchie
                 SaveTranslationFilesProcess(const std::vector<TranslationFile>& _Translations);
                 virtual ~SaveTranslationFilesProcess();
             
-                virtual bool awake() override;
+                virtual void execute() override;
 
                 // Frenchie::Application::Process
                 virtual std::string iprocess_status_request_status() override;

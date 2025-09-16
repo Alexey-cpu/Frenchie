@@ -101,6 +101,8 @@ void Explorer::frame_update()
             ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
             ImGuiTableFlags_::ImGuiTableFlags_Hideable))
         {
+            ImGui::TableSetupColumn("Tree", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+
             ImGui::TableNextRow();
 
             // draw tree
