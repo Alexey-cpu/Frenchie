@@ -187,54 +187,47 @@ FilesystemPathsSearchProcess::FilesystemPathsSearchProcess(
 
 FilesystemPathsSearchProcess::~FilesystemPathsSearchProcess(){}
 
-bool FilesystemPathsSearchProcess::awake()
+void FilesystemPathsSearchProcess::execute()
 {
-    Frenchie::Core::ThreadPool::instance()->enqueue(
-        [this]()
+    try
+    {
+        for(auto it = std::filesystem::recursive_directory_iterator(m_Path, std::filesystem::directory_options::skip_permission_denied); 
+            it != std::filesystem::recursive_directory_iterator(); it++)
         {
-            try
+            // cancel task
+            if(canceled()) 
+                return;
+
+            // pause task
+            while(paused())
             {
-                for(auto it = std::filesystem::recursive_directory_iterator(m_Path, std::filesystem::directory_options::skip_permission_denied); 
-                    it != std::filesystem::recursive_directory_iterator(); it++)
-                {
-                    // cancel task
-                    if(m_Canceled) 
-                        return;
-
-                    // pause task
-                    while(m_Paused)
-                    {
-                        // cancel task during pause state
-                        if(m_Canceled) 
-                            return;
-                    }
-
-                    // update current path
-                    m_CurrentPath = it->path();
-
-                    if (it.depth() > m_MaxSearchDepth)
-                    {
-                        const_cast<std::filesystem::recursive_directory_iterator&>(it)
-                            .disable_recursion_pending();
-                        continue;
-                    }
-
-                    if(m_Predicate(m_CurrentPath))
-                        m_Paths.insert({m_CurrentPath, true});
-                }
-
-                // finish task
-                m_Finished = true;
+                // cancel task during pause state
+                if(canceled()) 
+                    return;
             }
-            catch(const std::exception& e)
+
+            // update current path
+            m_CurrentPath = it->path();
+
+            if (it.depth() > m_MaxSearchDepth)
             {
-                Frenchie::Core::Logger::instance()->critical(e.what());
-                m_Failed = true;
+                const_cast<std::filesystem::recursive_directory_iterator&>(it)
+                    .disable_recursion_pending();
+                continue;
             }
+
+            if(m_Predicate(m_CurrentPath))
+                m_Paths.insert({m_CurrentPath, true});
         }
-    );
 
-    return true;
+        // finish task
+        m_Finished = true;
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->critical(e.what());
+        m_Failed = true;
+    }
 }
 
 PathScannerDialog::PathScannerDialog(

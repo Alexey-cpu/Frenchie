@@ -1,5 +1,7 @@
 #include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 
+#include <FrenchieCoreThreadPool.hpp>
+
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 
@@ -82,13 +84,12 @@ void Process::on_failed(const std::function<void()>& _Callback)
     m_OnFailed = _Callback;
 }
 
-// void Process::frame_finish()
-// {
-//     // remove process out-of application queue
-//     // when it finished...
-//     if(finished() || canceled() || failed()) 
-//         close();
-// }
+bool Process::awake()
+{
+    // push some operation onto thread pool queue
+    Frenchie::Core::ThreadPool::instance()->enqueue([this](){execute();});
+    return true;
+}
 
 void Process::finish()
 {

@@ -19,7 +19,7 @@ namespace Frenchie
 
                 virtual ~FilesystemPathsSearchProcess();
 
-                virtual bool awake() override;
+                virtual void execute() override;
 
                 mutable std::filesystem::path                 m_CurrentPath =  std::filesystem::current_path();
                 mutable std::map<std::filesystem::path, bool> m_Paths       = std::map<std::filesystem::path, bool>();

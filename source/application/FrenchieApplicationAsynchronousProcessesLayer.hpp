@@ -32,8 +32,10 @@ namespace Frenchie
             void on_canceled(const std::function<void()>& _Callback);
             void on_failed(const std::function<void()>& _Callback);
 
+            bool awake();
+
             // virtual API
-            virtual bool awake() = 0;
+            virtual void execute() = 0;
 
         protected:
 

@@ -76,9 +76,9 @@ LoadFontsProcess::LoadFontsProcess(const std::filesystem::path& _Path)
 
 LoadFontsProcess::~LoadFontsProcess(){}
 
-bool LoadFontsProcess::awake()
+void LoadFontsProcess::execute()
 {
-    // on finish build fonts atlas
+    // cache user defined callback
     auto finished = m_OnFinished;
 
     on_finished(
@@ -95,67 +95,60 @@ bool LoadFontsProcess::awake()
     );
 
     // load fonts
-    Frenchie::Core::ThreadPool::instance()->enqueue(
-        [this]()
+    if(m_Paths.empty())
+    {
+        m_Failed = true;
+        return;
+    }
+
+    // go on...
+    std::set<std::filesystem::path> fonts;
+    auto total   = m_Paths.size();
+    auto current = 0;
+
+    for(auto&& path : m_Paths)
+    {
+        if(canceled()) 
+            return;
+
+        while (paused())
         {
-            if(m_Paths.empty())
-            {
-                m_Failed = true;
+            if(canceled()) 
                 return;
-            }
-
-            // go on...
-            std::set<std::filesystem::path> fonts;
-            auto total   = m_Paths.size();
-            auto current = 0;
-
-            for(auto&& path : m_Paths)
-            {
-                if(canceled()) 
-                    return;
-
-                while (paused())
-                {
-                    if(canceled()) 
-                        return;
-                }
-
-                if(!std::filesystem::exists(path) || 
-                    fonts.find(path) != fonts.end())
-                {
-                    m_Progress = (float)(++current) / (float)total;
-                    continue;
-                }
-
-                // retrive ImGui IO
-                auto& io = ImGui::GetIO();
-
-                // load font
-                try
-                {
-                    io.Fonts->AddFontFromFileTTF(
-                        Frenchie::Core::String::as_utf8(path).c_str(),
-                        ImGui::GetStyle().FontSizeBase,
-                        nullptr,
-                        io.Fonts->GetGlyphRangesCyrillic());
-                }
-                catch(const std::exception& e)
-                {
-                    Frenchie::Core::Logger::instance()->critical(e.what());
-                }
-
-                m_Progress = (float)(++current) / (float)total;
-
-                // add to cache
-                fonts.insert(path);
-            }
-
-            // finish
-            m_Finished = true;
         }
-    );
 
-    return true;
+        if(!std::filesystem::exists(path) || 
+            fonts.find(path) != fonts.end())
+        {
+            m_Progress = (float)(++current) / (float)total;
+            continue;
+        }
+
+        // retrive ImGui IO
+        auto& io = ImGui::GetIO();
+
+        // load font
+        try
+        {
+            io.Fonts->AddFontFromFileTTF(
+                Frenchie::Core::String::as_utf8(path).c_str(),
+                ImGui::GetStyle().FontSizeBase,
+                nullptr,
+                io.Fonts->GetGlyphRangesCyrillic());
+        }
+        catch(const std::exception& e)
+        {
+            Frenchie::Core::Logger::instance()->critical(e.what());
+        }
+
+        m_Progress = (float)(++current) / (float)total;
+
+        // add to cache
+        fonts.insert(path);
+    }
+
+    // finish
+    m_Finished = true;
 }
 
 std::string LoadFontsProcess::iprocess_status_request_status()
