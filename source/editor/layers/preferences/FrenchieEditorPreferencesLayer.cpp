@@ -45,6 +45,8 @@ namespace Frenchie
                     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Preferences");
                 }
             };
+
+            const bool openPreferencesRegistry = OpenPreferencesAction::registerFactory();
         }
     }
 }

@@ -9,6 +9,12 @@ using namespace Frenchie::Core;
 #ifdef _MSC_VER
 #include <windows.h>
 #include <libloaderapi.h>
+#else
+#include <unistd.h>
+#endif
+
+#if defined(__APPLE__) || defined(MACH)
+#include <mach-o/dyld.h>
 #endif
 
 // PUGIXML
@@ -23,28 +29,30 @@ using namespace Frenchie::Core;
 // Frenchie::Core::FileSystem
 std::filesystem::path Frenchie::Core::FileSystem::get_exe_absolute_path()
 {
-    #if defined(_MSC_VER)
+    #ifdef IS_WINDOWS
         wchar_t path[FILENAME_MAX] = { 0 };
         GetModuleFileNameW(nullptr, path, FILENAME_MAX);
         return std::filesystem::path(path);
-    #else
+    #endif
+
+    #ifdef IS_LINUX
         char path[FILENAME_MAX];
         ssize_t count = readlink("/proc/self/exe", path, FILENAME_MAX);
         return std::filesystem::path(std::string(path, (count > 0) ? count: 0));
+    #endif
+
+    #ifdef IS_MACOS
+        char path[FILENAME_MAX];
+        uint32_t size = sizeof(path);
+        if (_NSGetExecutablePath(path, &size) == 0)
+            return std::filesystem::path(std::string(path));
+        return std::filesystem::path();
     #endif
 }
 
 std::filesystem::path Frenchie::Core::FileSystem::get_exe_absolute_directory()
 {
-    #if defined(_MSC_VER)
-        wchar_t path[FILENAME_MAX] = { 0 };
-        GetModuleFileNameW(nullptr, path, FILENAME_MAX);
-        return std::filesystem::path(path).parent_path().string();
-    #else
-        char path[FILENAME_MAX];
-        ssize_t count = readlink("/proc/self/exe", path, FILENAME_MAX);
-        return std::filesystem::path(std::string(path, (count > 0) ? count: 0)).parent_path().string();
-    #endif
+    return get_exe_absolute_path().parent_path();
 }
 
 std::string Frenchie::Core::FileSystem::get_file_extention(const std::filesystem::path& _Path)
@@ -101,39 +109,6 @@ void Frenchie::Core::FileSystem::create_directory(
                 _OnFail(e);
         }
     }
-}
-
-//Frenchie::Core::CommandLine
-Frenchie::Core::CommandLine::Command Frenchie::Core::CommandLine::execute_command(const std::string& _Command)
-{
-    // start command
-    #ifdef _WIN32
-        FILE* pipe = _popen(_Command.c_str(), "r");
-    #else
-        FILE* pipe = popen(command.c_str(), "r");
-    #endif
-
-    if (!pipe)
-    {
-        return 
-        {
-            0,
-            fmt::format("Could not start command {}", _Command)
-        };
-    }
-
-    // read command output
-    std::array<char, 1024> buffer;
-    std::string result;
-
-    while (fgets(buffer.data(), (int)buffer.size(), pipe) != NULL) 
-        result.append(buffer.data());
-
-    return 
-    {
-        _pclose(pipe),
-        result
-    };
 }
 
 // Frenchie::Core::String

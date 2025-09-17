@@ -82,7 +82,7 @@ namespace Frenchie
 
             // Frenchie::Application::Layer
             virtual void frame_start() override;
-            virtual bool allows_multiple_instances() const;
+            virtual bool allows_multiple_instances() const override;
 
             // static API
             static Frenchie::Core::Reference<CommandsQueue> instance()

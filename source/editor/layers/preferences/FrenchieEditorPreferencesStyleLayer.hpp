@@ -39,6 +39,8 @@ namespace Frenchie
 
                 std::string get_style_color_name(ImGuiCol);
             };
+
+            const bool preferencesStyleRegistry = Style::registerFactory();
         }
     }
 }

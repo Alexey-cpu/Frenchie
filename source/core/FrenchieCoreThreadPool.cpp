@@ -5,7 +5,7 @@ using namespace Frenchie::Core::Thread;
 Pool::Pool(const size_t& _Threads)
 {
     for (size_t thread = 0; thread < 
-        std::min<size_t>(std::max<size_t>(_Threads, 2), std::thread::hardware_concurrency()); thread++)
+        std::min<size_t>(_Threads, std::thread::hardware_concurrency()); thread++)
     {
         m_Threads.emplace_back(
             [this]()

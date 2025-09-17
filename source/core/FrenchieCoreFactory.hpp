@@ -66,10 +66,11 @@ namespace Frenchie
                     using TRegistryType = Registry<Type, FactoryArgs ...>;
                     using TReturnType   = std::unique_ptr<Base>;
 
-                protected:
-
-                    static bool registerFactory()
+                    inline static bool registerFactory()
                     {
+                        if(TRegistryType::m_Registered) 
+                            return true;
+
                         Factory::registry()[Type::factory_id()] = 
                             std::function<TReturnType(FactoryArgs ...)>(
                                 [](FactoryArgs ... _Args)->TReturnType
@@ -81,7 +82,9 @@ namespace Frenchie
                         return true;
                     }
 
-                    inline static bool m_Registered = TRegistryType::registerFactory();
+                protected:
+                    inline static bool m_Registered = 
+                        TRegistryType::registerFactory();
                 };
             };
 

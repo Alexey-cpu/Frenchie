@@ -10,6 +10,22 @@
 
 #define STRINGIFY(_VALUE) #_VALUE
 
+#if defined(unix) || defined(__unix) || defined(__unix__)
+#define IS_LINUX
+#endif
+
+#if defined(__APPLE__) || defined(__MACH__)
+#define IS_MACOS
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+#define IS_WINDOWS
+#endif
+
+#if defined(IS_LINUX) || defined(IS_MACOS)
+#define IS_UNIX
+#endif
+
 namespace Frenchie
 {
     namespace Core
@@ -28,52 +44,6 @@ namespace Frenchie
                 const std::filesystem::path& _Path, 
                 const std::function<void()>& _OnSuccess, 
                 const std::function<void(const std::exception&)>& _OnFail);
-        }
-
-        namespace CommandLine
-        {
-            struct Command
-            {
-                int         Code;
-                std::string Message;
-            };
-
-            Command execute_command(const std::string& _Command);
-
-            // std::string Launcher::get_system_path_variable(const std::string& _Name)
-            // {
-            //     // remove 'console.txt' file
-            //     try
-            //     {
-            //         std::filesystem::remove_all(Launcher::get_app_console_log_file_path());
-            //     }
-            //     catch(const std::exception& e)
-            //     {
-            //         Frenchie::Core::Logger::instance()->critical(e.what());
-            //     }
-
-            //     // write system PATH variable contents into a new 'console.txt' file
-            // #ifdef _WIN32
-            //     Frenchie::Core::launch_command(
-            //         "echo", 
-            //         fmt::format("%{}%", _Name).c_str(), 
-            //         Frenchie::Core::String::as_utf8(Launcher::get_app_console_log_file_path()).c_str()
-            //     );
-            // #else
-            //     Frenchie::Core::Helpers::launch_command(
-            //         "echo", 
-            //         fmt::format("${}", _Name).c_str(), 
-            //         Frenchie::Core::Helpers::String::as_utf8(Launcher::get_app_console_log_file_path()).c_str()
-            //     );
-            // #endif
-
-            //     // read 'console.txt'
-            //     std::ifstream ifsream(Launcher::get_app_console_log_file_path());
-
-            //     return std::string(
-            //             (std::istreambuf_iterator<char>(ifsream)), 
-            //             (std::istreambuf_iterator<char>()));
-            // }
         }
 
         template<typename T, int S = 512>
