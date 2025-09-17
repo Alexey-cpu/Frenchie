@@ -5,6 +5,7 @@
 
 using namespace Frenchie::Core;
 
+// Platform independent code
 Process::Process(const std::string& _Command, const std::string& _Arguments)
 {
     m_Pool.enqueue(
@@ -17,10 +18,10 @@ Process::Process(const std::string& _Command, const std::string& _Arguments)
 
 Process::~Process()
 {
-    stop(); // stop process on destroy
+    stop();
 }
 
-std::string Process::get_status() const
+std::string Process::status() const
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
     return m_Status.m_Buffer;
@@ -36,63 +37,57 @@ std::string Process::get_status() const
 void Process::stop()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    kill(m_PID, SIGKILL);
+
+    try
+    {
+        kill(std::any_cast<int>(m_Info), SIGKILL);
+    }
+    catch(...)
+    {
+    }
 }
 
 void Process::pause()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    kill(m_PID, SIGSTOP);
+
+    try
+    {
+        kill(std::any_cast<int>(m_Info), SIGSTOP);
+    }
+    catch(...)
+    {
+    }
 }
 
 void Process::resume()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    kill(m_PID, SIGCONT);
+    
+    try
+    {
+       kill(std::any_cast<int>(m_Info), SIGCONT);
+    }
+    catch(...)
+    {
+    }
 }
 
 bool Process::alive() const
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    return kill(m_PID, 0) == 0;
-}
 
-bool Process::exited() const
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    int status = 0;
-    waitpid(m_PID, &status, WNOHANG | WUNTRACED | WCONTINUED);
-    return WIFEXITED(status);
-}
-
-bool Process::paused() const
-{
-    // guarantee safe access
-    std::lock_guard<std::mutex> lock(m_Mutex);
-
-    // know if a process has been stopped
-    bool paused = false;
-    int  status = 0;
-
-    if(waitpid(m_PID, &status, WNOHANG | WUNTRACED | WCONTINUED) > 0) 
+    try
     {
-        if (WIFSTOPPED(status))
-            paused = true;
-        else if (WIFCONTINUED(status))
-            paused = false;
+        return kill(std::any_cast<int>(m_Info), 0) == 0;
     }
-
-    return paused;
+    catch(...)
+    {
+        return false;
+    }
 }
 
-bool Process::stopped() const
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    int status = 0;
-    return waitpid(m_PID, &status, WNOHANG | WUNTRACED | WCONTINUED) > 0 && WIFSIGNALED(status);
-}
-
-void Process::execute(const std::string& _Command, const std::string& _Arguments = std::string())
+void Process::execute(const std::string& _Command, const std::string& _Arguments)
 {
     enum PIPE : int
     {
@@ -111,9 +106,14 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
     }
 
     // fork() child process
+    int m_PID = -1;
+
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
         m_PID = fork();
+
+        // cache process info
+        m_Info = m_PID;
 
         if (m_PID < 0)
         {
@@ -195,7 +195,7 @@ void Process::stop()
     try
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_ProcessInfo);
+        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
         TerminateProcess(pi.hProcess, 1);
     }
     catch(const std::exception& e)
@@ -209,7 +209,7 @@ void Process::pause()
     try
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_ProcessInfo);
+        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
         DebugActiveProcess(pi.dwProcessId);
     }
     catch(const std::exception& e)
@@ -223,7 +223,7 @@ void Process::resume()
     try
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_ProcessInfo);
+        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
         DebugActiveProcessStop(pi.dwProcessId);
     }
     catch(const std::exception& e)
@@ -236,7 +236,7 @@ bool Process::alive() const
 {
     try
     {
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_ProcessInfo);
+        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
         DWORD exitCode;
         return GetExitCodeProcess(pi.hProcess, &exitCode) && exitCode == STILL_ACTIVE;
     }
@@ -245,31 +245,6 @@ bool Process::alive() const
         m_Status.push(e.what());
         return false;
     }
-}
-
-bool Process::exited() const
-{
-    return !alive();
-}
-
-bool Process::paused() const
-{
-    try
-    {
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_ProcessInfo);
-        BOOL bDebuggerPresent = false;
-        return CheckRemoteDebuggerPresent(pi.hProcess, &bDebuggerPresent) && bDebuggerPresent;
-    }
-    catch(const std::exception& e)
-    {
-        m_Status.push(e.what());
-        return false;
-    }
-}
-
-bool Process::stopped() const
-{
-    return !alive();
 }
 
 void Process::execute(const std::string& _Command, const std::string& _Arguments)
@@ -325,7 +300,7 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
         return;
     }
 
-    m_ProcessInfo = pi;
+    m_Info = pi;
 
     // Close the write end of the pipe in the parent process
     CloseHandle(hWritePipe);
