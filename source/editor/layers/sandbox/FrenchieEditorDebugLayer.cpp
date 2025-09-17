@@ -54,9 +54,10 @@ void DebugIPC::frame_update()
     
     if(m_Process != nullptr) 
     {
-        if(m_Process->paused()) ImGui::TextUnformatted("Paused");
-        if(m_Process->stopped()) ImGui::TextUnformatted("Paused");
-        if(m_Process->exited()) ImGui::TextUnformatted("Exited");
+        if(m_Process->alive()) 
+            ImGui::TextUnformatted("Alive");
+        else 
+            ImGui::TextUnformatted("Dead");
     }
     else 
         ImGui::TextUnformatted("Nothing is running now...");
@@ -88,7 +89,7 @@ void DebugIPC::frame_update()
     }
 
     if(m_Process != nullptr) 
-        m_Status = m_Process->get_status();
+        m_Status = m_Process->status();
 
     ImGui::InputTextMultiline(
         "Status", 

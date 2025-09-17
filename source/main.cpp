@@ -7,7 +7,8 @@ class Task
 {
 public:
 
-    Task(std::function<void()> _Worker){}
+    Task(std::function<void()> _Worker) : 
+        m_Worker(_Worker){}
     
     void execute()
     {
@@ -30,8 +31,8 @@ public:
             }
 
             // launch worker
-            if(m_Execution)
-                m_Execution();
+            if(m_Worker)
+                m_Worker();
 
             // finish task
             m_Finished = true;
@@ -39,7 +40,7 @@ public:
     }
 
 protected:
-    std::function<void()> m_Execution;
+    std::function<void()> m_Worker;
     std::function<void()> m_OnCanceled;
     std::function<void()> m_OnFinished;
 

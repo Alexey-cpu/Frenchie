@@ -21,7 +21,7 @@ namespace Frenchie
             ~Process();
 
             // getters
-            std::string get_status() const;
+            std::string status() const;
 
             // API
             void stop();
@@ -29,9 +29,6 @@ namespace Frenchie
             void resume();
 
             bool alive() const;
-            bool exited() const;
-            bool paused() const;
-            bool stopped() const;
 
         private:
 
@@ -58,7 +55,7 @@ namespace Frenchie
 
             mutable std::mutex                   m_Mutex;
             mutable Frenchie::Core::Thread::Pool m_Pool{1};
-            mutable std::any                     m_ProcessInfo;
+            mutable std::any                     m_Info;
 
             // service methods
             void execute(const std::string& _Command, const std::string& _Arguments = std::string());
