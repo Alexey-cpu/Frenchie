@@ -5,6 +5,7 @@
 #include <FrenchieCoreThreadPool.hpp>
 
 // STL
+#include <any>
 #include <queue>
 #include <string>
 #include <functional>
@@ -34,6 +35,7 @@ namespace Frenchie
 
         private:
 
+            // info
             class Status final
             {
             public:
@@ -52,11 +54,14 @@ namespace Frenchie
 
                 std::string m_Buffer          = std::string();
                 size_t      m_CurrentPosition = 0;
-            } m_Status;
+            } mutable m_Status;
 
-            mutable int                          m_PID    = -1;
             mutable std::mutex                   m_Mutex;
             mutable Frenchie::Core::Thread::Pool m_Pool{1};
+            mutable std::any                     m_ProcessInfo;
+
+            // service methods
+            void execute(const std::string& _Command, const std::string& _Arguments = std::string());
         };
     }
 }

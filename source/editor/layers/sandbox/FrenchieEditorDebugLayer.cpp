@@ -52,6 +52,15 @@ void DebugIPC::frame_update()
     ImGui::InputText("Command", &m_Command);
     ImGui::InputText("Arguments", &m_Arguments);
     
+    if(m_Process != nullptr) 
+    {
+        if(m_Process->paused()) ImGui::TextUnformatted("Paused");
+        if(m_Process->stopped()) ImGui::TextUnformatted("Paused");
+        if(m_Process->exited()) ImGui::TextUnformatted("Exited");
+    }
+    else 
+        ImGui::TextUnformatted("Nothing is running now...");
+    
     if(ImGui::Button("Launch"))
     {
         m_Process = std::make_shared<Frenchie::Core::Process>(m_Command, m_Arguments);
