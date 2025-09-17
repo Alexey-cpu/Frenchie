@@ -6,6 +6,8 @@
 class Task
 {
 public:
+
+    Task(std::function<void()> _Worker){}
     
     void execute()
     {
@@ -22,11 +24,25 @@ public:
                 }
             );
 
-            if(m_Canceled) break;
+            if(m_Canceled) 
+            {
+                return;
+            }
+
+            // launch worker
+            if(m_Execution)
+                m_Execution();
+
+            // finish task
+            m_Finished = true;
         }
     }
 
 protected:
+    std::function<void()> m_Execution;
+    std::function<void()> m_OnCanceled;
+    std::function<void()> m_OnFinished;
+
     std::atomic<bool> m_Paused{false};
     std::atomic<bool> m_Canceled{false};
     std::atomic<bool> m_Finished{false};
