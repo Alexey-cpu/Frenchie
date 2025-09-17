@@ -11,6 +11,8 @@
 #include <FrenchieEditorHelpers.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 
+#include <ctime>
+
 using namespace Frenchie::Core;
 
 using namespace Frenchie::Application;
@@ -795,7 +797,8 @@ void Explorer::draw_current_directory_paths_table()
                 {
                     auto time    = std::filesystem::last_write_time(path);
                     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
-                    ImGui::TextUnformatted(asctime(std::localtime(&seconds)));
+                    //ImGui::TextUnformatted(asctime(std::localtime(&seconds)));
+                    ImGui::TextUnformatted("Unknown");
                 }
                 catch(const std::exception& e)
                 {
@@ -958,7 +961,7 @@ void Explorer::drop_path_to(const std::filesystem::path& _Path)
                 if(!std::filesystem::exists(oldAdress)) 
                     continue;
 
-                std::filesystem::path newAdress(_Path.wstring().append(L"/").append(oldAdress.filename()));
+                std::filesystem::path newAdress(_Path.wstring().append(L"/").append(oldAdress.filename().wstring()));
 
                 if(oldAdress.parent_path() == newAdress.parent_path()) 
                     return;

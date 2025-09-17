@@ -17,7 +17,7 @@ namespace Frenchie
             virtual ~Dialog();
 
             virtual void frame_update() override;
-            virtual bool allows_multiple_instances() const;
+            virtual bool allows_multiple_instances() const override;
 
             virtual void draw_content() = 0;
             virtual void draw_buttons() = 0;

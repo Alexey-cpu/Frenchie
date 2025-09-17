@@ -158,7 +158,8 @@ namespace Frenchie
                                 if(m_Canceled)
                                     return;
 
-                                auto key = Frenchie::Core::String::remove_symbol((*localizationKeyIterator).str(), '"');
+                                auto str = (*localizationKeyIterator).str();
+                                auto key = Frenchie::Core::String::remove_symbol(str, '"');
 
                                 m_LocalizationKeys.insert(key);
 

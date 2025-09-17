@@ -131,7 +131,7 @@ void LoadFontsProcess::execute()
         try
         {
             io.Fonts->AddFontFromFileTTF(
-                Frenchie::Core::String::as_utf8(path).c_str(),
+                Frenchie::Core::String::as_utf8(path.wstring()).c_str(),
                 ImGui::GetStyle().FontSizeBase,
                 nullptr,
                 io.Fonts->GetGlyphRangesCyrillic());

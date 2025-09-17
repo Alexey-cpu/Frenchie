@@ -22,6 +22,8 @@ namespace Frenchie
                 virtual void frame_update();
                 virtual bool allows_multiple_instances() const;
             };
+
+            const bool preferencesLanguageRegistry = Languages::registerFactory();
         }
     }
 }

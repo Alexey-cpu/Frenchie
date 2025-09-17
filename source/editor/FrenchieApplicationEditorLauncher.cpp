@@ -71,6 +71,8 @@ namespace Frenchie
                     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Frenchie::Exit");
                 }
             };
+
+            const bool exitActionRegistry = ExitAction::registerFactory();
         }
     }
 }
@@ -80,21 +82,24 @@ std::filesystem::path Launcher::get_app_exe_directory()
     return Frenchie::Core::FileSystem::get_exe_absolute_directory();
 }
 
+std::filesystem::path Launcher::get_app_data_directory()
+{
+    return std::filesystem::path(Launcher::get_app_exe_directory().wstring().append(L"/appData")).make_preferred(); 
+}
+
 std::filesystem::path Launcher::get_app_log_directory()
 {
-    return std::filesystem::path(
-        Launcher::get_app_exe_directory().wstring().append(L"/appData/logs")).make_preferred();
+    return std::filesystem::path(Launcher::get_app_data_directory().wstring().append(L"/logs")).make_preferred();
 }
 
 std::filesystem::path Launcher::get_app_state_directory()
 {
-    return std::filesystem::path(
-        Launcher::get_app_exe_directory().wstring().append(L"/appData/state")).make_preferred();
+    return std::filesystem::path(Launcher::get_app_data_directory().wstring().append(L"/state")).make_preferred();
 }
 
 std::filesystem::path Launcher::get_app_translation_files_directory()
 {
-    return Launcher::get_app_exe_directory().wstring().append(L"/appData/translations");
+    return Launcher::get_app_data_directory().wstring().append(L"/translations");
 }
 
 int Launcher::execute()
@@ -180,24 +185,46 @@ int Launcher::execute()
 
     // setup application logger
     Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
-    Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
 
-    auto rawtime     = time(nullptr);
-    auto localTime   = localtime(&rawtime);
-    auto logFileName = Frenchie::Core::String::as_utf8(appLogDirectory.wstring())
-        .append("/")
-        .append(fmt::format("protocol_{}_{}_{}_{}_{}_{}_{}.txt", 
-            localTime->tm_mday,
-            localTime->tm_mon  + 1,
-            localTime->tm_year + 1900,
-            localTime->tm_hour,
-            localTime->tm_min,
-            localTime->tm_sec,
-            rawtime
-        )
-    );
+    try
+    {
+        Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->info(e.what());
+    }
 
-    Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
+    try
+    {
+        auto rawtime     = time(nullptr);
+        auto localTime   = localtime(&rawtime);
+        auto logFileName = Frenchie::Core::String::as_utf8(appLogDirectory.wstring())
+            .append("/")
+            .append(fmt::format("protocol_{}_{}_{}_{}_{}_{}_{}.txt", 
+                localTime->tm_mday,
+                localTime->tm_mon  + 1,
+                localTime->tm_year + 1900,
+                localTime->tm_hour,
+                localTime->tm_min,
+                localTime->tm_sec,
+                rawtime
+            )
+        );
+
+        Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->info(e.what());
+    }
+
+    Frenchie::Core::Logger::instance()->info("Factory registry...");
+    for (auto&& creator : Frenchie::Core::Factory::registry())
+    {
+        Frenchie::Core::Logger::instance()->info(creator.first);
+    }
+    
 
     // append basic layers
     Frenchie::Application::application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
@@ -210,10 +237,8 @@ int Launcher::execute()
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Frenchie::Core::String::as_utf8(appExeDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .ini directory: {}", Frenchie::Core::String::as_utf8(appLogDirectory.wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appStateDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appTranslationFilesDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App log file path: {}", logFileName));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xlf directory: {}", Frenchie::Core::String::as_utf8(appTranslationFilesDirectory.wstring())));
 
     // execute app and wait until it finishes it's job
     auto execution = Frenchie::Application::application()->execute();
