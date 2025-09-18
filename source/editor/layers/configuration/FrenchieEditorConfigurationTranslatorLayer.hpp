@@ -4,7 +4,7 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
+#include <FrenchieApplicationThreadQueueLayer.hpp>
 
 // Core
 #include <FrenchieCoreISerializer.hpp>
@@ -75,58 +75,6 @@ namespace Frenchie
                     TranslationUnit::TransparentComparator> Translations;
             };
 
-            class LoadTranslationFilesProcess : 
-                public Frenchie::Application::Process, 
-                public Frenchie::Application::IProcessStatus,
-                public Frenchie::Application::IProcessProgress
-            {
-            public:
-                LoadTranslationFilesProcess(const std::set<std::filesystem::path>& _Path);
-                LoadTranslationFilesProcess(const std::filesystem::path& _Path);
-                virtual ~LoadTranslationFilesProcess();
-
-                // Frenchie::Application::Process
-                virtual void execute() override;
-
-                // Frenchie::Application::IProcessStatus
-                virtual std::string iprocess_status_request_status() override;
-
-                // Frenchie::Application::IProcessProgress
-                virtual float iprocess_progress_request_progress() override;
-
-                // info
-                std::vector<TranslationFile> m_TranslationFiles;
-
-            protected:
-                float                        m_Progress = 0.f;
-                std::string                  m_Status   = std::string();
-            };
-
-            class SaveTranslationFilesProcess :
-                public Frenchie::Application::Process, 
-                public Frenchie::Application::IProcessStatus,
-                public Frenchie::Application::IProcessProgress
-            {
-            public:
-                SaveTranslationFilesProcess(const std::vector<TranslationFile>& _Translations);
-                virtual ~SaveTranslationFilesProcess();
-            
-                virtual void execute() override;
-
-                // Frenchie::Application::Process
-                virtual std::string iprocess_status_request_status() override;
-
-                // Async::IProcessProgress
-                virtual float iprocess_progress_request_progress() override;
-
-                // Frenchie::Application::IProcessStatus
-                std::vector<TranslationFile> m_TranslationFiles;
-
-            protected:
-                float       m_Progress = 0.f;
-                std::string m_Status   = std::string();
-            };
-
             class Translator : 
                 public Frenchie::Application::Layer, 
                 public Frenchie::Core::Serialization::ISerializer
@@ -140,6 +88,8 @@ namespace Frenchie
                 void set_supported_languages(const std::set<std::filesystem::path>&);
 
                 // Frenchie::Application::Layer
+                virtual bool awake() override;
+                virtual void finish() override;
                 virtual bool allows_multiple_instances() const override;
 
                 // Frenchie::Core::Serialization::ISerializer
@@ -156,9 +106,9 @@ namespace Frenchie
                 friend class Language;
 
                 // info
-                mutable TranslationFile                              m_TranslationFile;
-                mutable std::vector<std::unique_ptr<Language>>       m_SupportedLanguages;
-                mutable std::shared_ptr<LoadTranslationFilesProcess> m_Process;
+                mutable TranslationFile                                               m_TranslationFile;
+                mutable std::vector<std::unique_ptr<Language>>                        m_SupportedLanguages;
+                mutable Frenchie::Core::Reference<Frenchie::Application::ThreadQueue> m_ThreadsQueue;
             };
         }
     }

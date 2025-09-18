@@ -1,6 +1,6 @@
 #include <FrenchieCoreThreadPool.hpp>
 
-using namespace Frenchie::Core::Thread;
+using namespace Frenchie::Core::Threads;
 
 Pool::Pool(const size_t& _Threads)
 {

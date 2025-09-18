@@ -59,201 +59,201 @@ using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Configuration;
 
 // LoadTranslationFiles
-LoadTranslationFilesProcess::LoadTranslationFilesProcess(const std::set<std::filesystem::path>& _Path) : 
-    Process(STRINGIFY(LoadTranslationFilesProcess))
-{
-    for(auto&& path : _Path)
-    {
-        Frenchie::Core::Logger::instance()->warn(path.string());
+// LoadTranslationFilesProcess::LoadTranslationFilesProcess(const std::set<std::filesystem::path>& _Path) : 
+//     Thread(STRINGIFY(LoadTranslationFilesProcess))
+// {
+//     for(auto&& path : _Path)
+//     {
+//         Frenchie::Core::Logger::instance()->warn(path.string());
 
-        if(!std::filesystem::exists(path)       || 
-            std::filesystem::is_directory(path) || 
-            Frenchie::Core::FileSystem::get_file_extention(path) != ".xlf") 
-        {
-            continue;
-        }
+//         if(!std::filesystem::exists(path)       || 
+//             std::filesystem::is_directory(path) || 
+//             Frenchie::Core::FileSystem::get_file_extention(path) != ".xlf") 
+//         {
+//             continue;
+//         }
 
-        m_TranslationFiles.push_back(
-            {
-                path, 
-                std::set<TranslationUnit, TranslationUnit::TransparentComparator>(),
-            }
-        );
-    }
-}
+//         m_TranslationFiles.push_back(
+//             {
+//                 path, 
+//                 std::set<TranslationUnit, TranslationUnit::TransparentComparator>(),
+//             }
+//         );
+//     }
+// }
 
-LoadTranslationFilesProcess::LoadTranslationFilesProcess(const std::filesystem::path& _Path) : 
-    Process(STRINGIFY(LoadTranslationFilesProcess))
-{
-    if(std::filesystem::exists(_Path)         && 
-        !std::filesystem::is_directory(_Path) && 
-        Frenchie::Core::FileSystem::get_file_extention(_Path) == ".xlf") 
-    {
-        m_TranslationFiles.push_back(
-            {
-                _Path, 
-                std::set<TranslationUnit, TranslationUnit::TransparentComparator>(),
-            }
-        );
-    }
-}
+// LoadTranslationFilesProcess::LoadTranslationFilesProcess(const std::filesystem::path& _Path) : 
+//     Thread(STRINGIFY(LoadTranslationFilesProcess))
+// {
+//     if(std::filesystem::exists(_Path)         && 
+//         !std::filesystem::is_directory(_Path) && 
+//         Frenchie::Core::FileSystem::get_file_extention(_Path) == ".xlf") 
+//     {
+//         m_TranslationFiles.push_back(
+//             {
+//                 _Path, 
+//                 std::set<TranslationUnit, TranslationUnit::TransparentComparator>(),
+//             }
+//         );
+//     }
+// }
 
-LoadTranslationFilesProcess::~LoadTranslationFilesProcess(){}
+// LoadTranslationFilesProcess::~LoadTranslationFilesProcess(){}
 
-void LoadTranslationFilesProcess::execute() 
-{
-    // finish on empty
-    if(m_TranslationFiles.empty())
-    {
-        m_Finished = true;
-        return;
-    }
+// void LoadTranslationFilesProcess::execute() 
+// {
+//     // finish on empty
+//     if(m_TranslationFiles.empty())
+//     {
+//         m_Finished = true;
+//         return;
+//     }
 
-    // run process
-    size_t total    = m_TranslationFiles.size();
-    size_t progress = 0;
+//     // run process
+//     size_t total    = m_TranslationFiles.size();
+//     size_t progress = 0;
 
-    for(auto&& translationFile : m_TranslationFiles)
-    {
-        while(paused())
-        {
-            if(canceled()) 
-                return;
-        }
+//     for(auto&& translationFile : m_TranslationFiles)
+//     {
+//         while(paused())
+//         {
+//             if(stopped()) 
+//                 return;
+//         }
 
-        if(canceled()) 
-            return;
+//         if(stopped()) 
+//             return;
 
-        auto& path         = translationFile.Path;
-        auto& translations = translationFile.Translations;
+//         auto& path         = translationFile.Path;
+//         auto& translations = translationFile.Translations;
 
-        // load XLIFF
-        {
-            // update status
-            m_Status = m_Status.append(fmt::format("Trying to load: {}", path.string())).append("\n");
+//         // load XLIFF
+//         {
+//             // update status
+//             m_Status = m_Status.append(fmt::format("Trying to load: {}", path.string())).append("\n");
 
-            // load translations from .xlf file
-            Frenchie::Core::Serialization::Document document;
+//             // load translations from .xlf file
+//             Frenchie::Core::Serialization::Document document;
 
-            if(!document.read<Frenchie::Core::Serialization::XMLReader>(path)) 
-            {
-                // update progress
-                m_Progress = (float)(++progress) / (float)(total);
-                m_Status   = m_Status.append("could not load...").append("\n");
-                continue;
-            }
+//             if(!document.read<Frenchie::Core::Serialization::XMLReader>(path)) 
+//             {
+//                 // update progress
+//                 m_Progress = (float)(++progress) / (float)(total);
+//                 m_Status   = m_Status.append("could not load...").append("\n");
+//                 continue;
+//             }
 
-            auto body = document.find_node("xliff").find_node("file").find_node("body");
+//             auto body = document.find_node("xliff").find_node("file").find_node("body");
 
-            for (auto item : body)
-            {
-                translations.insert(
-                    {
-                        item.find_node("source").get_value(),
-                        item.find_node("target").get_value(),
-                        false    
-                    }
-                );
-            }
+//             for (auto item : body)
+//             {
+//                 translations.insert(
+//                     {
+//                         item.find_node("source").get_value(),
+//                         item.find_node("target").get_value(),
+//                         false    
+//                     }
+//                 );
+//             }
 
-            // update progress
-            m_Progress = (float)(++progress) / (float)(total);
-            m_Status   = m_Status.append("success").append("\n");
-        }
-    }
+//             // update progress
+//             m_Progress = (float)(++progress) / (float)(total);
+//             m_Status   = m_Status.append("success").append("\n");
+//         }
+//     }
 
-    // finishs
-    m_Progress = (float)(total) / (float)(total);
-    m_Status   = m_Status.append("completed").append("\n");
-    m_Finished = true;
-}
+//     // finishs
+//     m_Progress = (float)(total) / (float)(total);
+//     m_Status   = m_Status.append("completed").append("\n");
+//     m_Finished = true;
+// }
 
-std::string LoadTranslationFilesProcess::iprocess_status_request_status()
-{
-    std::unique_lock<std::mutex> lock(m_Mutex);
-    return m_Status;
-}
+// std::string LoadTranslationFilesProcess::iprocess_status_request_status()
+// {
+//     std::unique_lock<std::mutex> lock(m_Mutex);
+//     return m_Status;
+// }
 
-float LoadTranslationFilesProcess::iprocess_progress_request_progress()
-{
-    std::unique_lock<std::mutex> lock(m_Mutex);
-    return m_Progress;
-}
+// float LoadTranslationFilesProcess::iprocess_progress_request_progress()
+// {
+//     std::unique_lock<std::mutex> lock(m_Mutex);
+//     return m_Progress;
+// }
 
-// SaveTranslationFiles
-SaveTranslationFilesProcess::SaveTranslationFilesProcess(const std::vector<TranslationFile>& _Translations) :
-    Process(STRINGIFY(SaveTranslationFilesProcess)), m_TranslationFiles(_Translations){}
+// // SaveTranslationFiles
+// SaveTranslationFilesProcess::SaveTranslationFilesProcess(const std::vector<TranslationFile>& _Translations) :
+//     Thread(STRINGIFY(SaveTranslationFilesProcess)), m_TranslationFiles(_Translations){}
 
-SaveTranslationFilesProcess::~SaveTranslationFilesProcess(){}
+// SaveTranslationFilesProcess::~SaveTranslationFilesProcess(){}
 
-void SaveTranslationFilesProcess::execute()
-{
-    if(m_TranslationFiles.empty())
-    {
-        m_Finished = true;
-        return;
-    }
+// void SaveTranslationFilesProcess::execute()
+// {
+//     if(m_TranslationFiles.empty())
+//     {
+//         m_Finished = true;
+//         return;
+//     }
 
-    size_t total    = m_TranslationFiles.size();
-    size_t progress = 0;
+//     size_t total    = m_TranslationFiles.size();
+//     size_t progress = 0;
 
-    for(auto&& translationFile : m_TranslationFiles)
-    {
-        while(paused())
-        {
-            if(canceled()) 
-                return;
-        }
+//     for(auto&& translationFile : m_TranslationFiles)
+//     {
+//         while(paused())
+//         {
+//             if(stopped()) 
+//                 return;
+//         }
 
-        if(canceled()) 
-            return;
+//         if(stopped()) 
+//             return;
 
-        auto& path         = translationFile.Path;
-        auto& translations = translationFile.Translations;
+//         auto& path         = translationFile.Path;
+//         auto& translations = translationFile.Translations;
 
-        m_Status = m_Status.append(fmt::format("starting saving file {}", path.string())).append("\n");
+//         m_Status = m_Status.append(fmt::format("starting saving file {}", path.string())).append("\n");
 
-        Frenchie::Core::Serialization::Document document;
+//         Frenchie::Core::Serialization::Document document;
 
-        auto xliff = document.append_node("xliff");
-        xliff.append_node("version", "1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
-        xliff.append_node("xmlns", "urn:oasis:names:tc:xliff:document:1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+//         auto xliff = document.append_node("xliff");
+//         xliff.append_node("version", "1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+//         xliff.append_node("xmlns", "urn:oasis:names:tc:xliff:document:1.2", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
 
-        auto file = xliff.append_node("file");
-        file.append_node("source-language", "frenchie", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
-        file.append_node("target-language", path.filename().stem().string().c_str(), Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
-        file.append_node("datatype", "plaintext", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+//         auto file = xliff.append_node("file");
+//         file.append_node("source-language", "frenchie", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+//         file.append_node("target-language", path.filename().stem().string().c_str(), Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
+//         file.append_node("datatype", "plaintext", Frenchie::Core::Serialization::NodeType::ATTRIBUTE);
 
-        auto body = file.append_node("body");
+//         auto body = file.append_node("body");
 
-        for(auto translation : translations)
-        {
-            auto transUnit = body.append_node("trans-unit");
-            transUnit.append_node("source", translation.Key.c_str());
-            transUnit.append_node("target", translation.Value.c_str());
-        }
+//         for(auto translation : translations)
+//         {
+//             auto transUnit = body.append_node("trans-unit");
+//             transUnit.append_node("source", translation.Key.c_str());
+//             transUnit.append_node("target", translation.Value.c_str());
+//         }
 
-        m_Progress = (float)(++progress) / (float)(total);
-        m_Status   = m_Status.append(fmt::format("finished...")).append("\n");
-        document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(path);
+//         m_Progress = (float)(++progress) / (float)(total);
+//         m_Status   = m_Status.append(fmt::format("finished...")).append("\n");
+//         document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(path);
 
-        Frenchie::Core::Logger::instance()->warn("Saving {}", path.string());
-    }
+//         Frenchie::Core::Logger::instance()->warn("Saving {}", path.string());
+//     }
 
-    m_Finished = true;
-}
+//     m_Finished = true;
+// }
 
-std::string SaveTranslationFilesProcess::iprocess_status_request_status()
-{
-    std::unique_lock<std::mutex> lock(m_Mutex);
-    return m_Status;
-}
+// std::string SaveTranslationFilesProcess::iprocess_status_request_status()
+// {
+//     std::unique_lock<std::mutex> lock(m_Mutex);
+//     return m_Status;
+// }
 
-float SaveTranslationFilesProcess::iprocess_progress_request_progress()
-{
-    std::unique_lock<std::mutex> lock(m_Mutex);
-    return m_Progress;
-}
+// float SaveTranslationFilesProcess::iprocess_progress_request_progress()
+// {
+//     std::unique_lock<std::mutex> lock(m_Mutex);
+//     return m_Progress;
+// }
 
 Language::Language(const std::filesystem::path& _Path, const Translator* _Translator) : 
     m_Path(_Path), 
@@ -290,17 +290,97 @@ void Language::setup()
     m_Current = true;
 
     // load translation file
-    m_Translator->m_Process = Frenchie::Application::ProcessQueue::instance()->push<LoadTranslationFilesProcess>(m_Path);
-    m_Translator->m_Process->on_finished(
-        [this]()
+    auto loadTranslationFile = m_Translator->m_ThreadsQueue->push(
+        [this](const Frenchie::Application::Thread* _Thread)
         {
-            if(m_Translator->m_Process->m_TranslationFiles.empty()) 
+            auto progress = _Thread->find_component<Frenchie::Application::ThreadProgressComponent>();
+            auto status   = _Thread->find_component<Frenchie::Application::ThreadStatusComponent>();
+
+            // scan translation files within a given path
+            if(status != nullptr)
+                status->push_message(fmt::format("Scanning for .xlf files within {}...\n", m_Path.string()));
+
+            std::vector<TranslationFile> m_TranslationFiles;
+
+            if(std::filesystem::exists(m_Path)         && 
+                !std::filesystem::is_directory(m_Path) && 
+                Frenchie::Core::FileSystem::get_file_extention(m_Path) == ".xlf") 
+            {
+                m_TranslationFiles.push_back(
+                    {
+                        m_Path, 
+                        std::set<TranslationUnit, TranslationUnit::TransparentComparator>(),
+                    }
+                );
+            }
+
+            if (m_TranslationFiles.empty())
                 return;
 
-            m_Translator->m_TranslationFile = 
-                m_Translator->m_Process->m_TranslationFiles.front();
+            // run process
+            size_t total   = m_TranslationFiles.size();
+            size_t current = 0;
 
-            m_Translator->m_Process = nullptr;
+            for(auto&& translationFile : m_TranslationFiles)
+            {
+                if(_Thread->requested_stop()) 
+                    return;
+
+                auto& path         = translationFile.Path;
+                auto& translations = translationFile.Translations;
+
+                // load XLIFF
+                {
+                    // update status
+                    if(status != nullptr)
+                        status->push_message(fmt::format("Trying to load: {}\n", path.string()));
+
+                    // load translations from .xlf file
+                    Frenchie::Core::Serialization::Document document;
+
+                    if(!document.read<Frenchie::Core::Serialization::XMLReader>(path)) 
+                    {
+                        if(status != nullptr)
+                            status->push_message("Could not load...\n");
+
+                        if(progress != nullptr) 
+                            progress->set_progress((float)(++current) / (float)(total));
+
+                        continue;
+                    }
+
+                    auto body = document.find_node("xliff").find_node("file").find_node("body");
+
+                    for (auto item : body)
+                    {
+                        translations.insert(
+                            {
+                                item.find_node("source").get_value(),
+                                item.find_node("target").get_value(),
+                                false    
+                            }
+                        );
+                    }
+
+                    // update progress
+                    if(status != nullptr)
+                        status->push_message("Success...\n");
+
+                    if(progress != nullptr) 
+                        progress->set_progress((float)(++current) / (float)(total));
+                }
+            }
+
+            // update progress
+            if(status != nullptr)
+                status->push_message("Completed...\n");
+
+            if(progress != nullptr) 
+                progress->set_progress((float)(++current) / (float)(total));
+
+            // setup translation file
+            if(!m_TranslationFiles.empty()) 
+                m_Translator->m_TranslationFile = m_TranslationFiles.front();
         }
     );
 }
@@ -331,6 +411,18 @@ void Translator::set_supported_languages(const std::set<std::filesystem::path>& 
 
     if(!m_SupportedLanguages.empty())
         m_SupportedLanguages.front()->setup();
+}
+
+bool Translator::awake()
+{
+    m_ThreadsQueue = Frenchie::Application::application()->push_layer<Frenchie::Application::ThreadQueue>();
+    return true;
+}
+
+void Translator::finish()
+{
+    if(m_ThreadsQueue != nullptr) 
+        m_ThreadsQueue->close();
 }
 
 bool Translator::allows_multiple_instances() const

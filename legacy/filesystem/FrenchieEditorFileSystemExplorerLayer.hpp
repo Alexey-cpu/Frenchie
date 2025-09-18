@@ -5,7 +5,6 @@
 #include <FrenchieCoreThreadPool.hpp>
 
 // Application
-#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
 #include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>

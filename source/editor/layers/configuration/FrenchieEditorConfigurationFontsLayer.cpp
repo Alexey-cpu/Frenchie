@@ -9,7 +9,6 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
-#include <FrenchieEditorFileSystemExplorerLayer.hpp>
 #include <FrenchieEditorConfigurationTranslatorLayer.hpp>
 
 // SPDLOG
@@ -25,7 +24,6 @@
 #include <imgui.h>
 
 using namespace Frenchie::Editor;
-using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Configuration;
 
 namespace Frenchie
@@ -34,14 +32,14 @@ namespace Frenchie
     {
         namespace Configuration
         {
-            class PushFontsIntoAppQueue : 
-                public Frenchie::Application::Command::Registry<PushFontsIntoAppQueue, void*>
+            class PushFontsLoaderIntoAppQueue : 
+                public Frenchie::Application::Command::Registry<PushFontsLoaderIntoAppQueue, void*>
             {
             public:
 
-                PushFontsIntoAppQueue(void* _Sender) : 
-                    Frenchie::Application::Command::Registry<PushFontsIntoAppQueue, void*>(_Sender){}
-                virtual ~PushFontsIntoAppQueue(){}
+                PushFontsLoaderIntoAppQueue(void* _Sender) : 
+                    Frenchie::Application::Command::Registry<PushFontsLoaderIntoAppQueue, void*>(_Sender){}
+                virtual ~PushFontsLoaderIntoAppQueue(){}
 
                 // Frenchie::Application::Command
                 virtual void execute() override
@@ -55,118 +53,28 @@ namespace Frenchie
                     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::Configuration), STRINGIFY(Fonts));
                 }
             };
+
+            const bool PushFontsLoaderIntoAppQueueStatus = PushFontsLoaderIntoAppQueue::registerFactory();
         }
     }
-}
-
-LoadFontsProcess::LoadFontsProcess(const std::set<std::filesystem::path>& _Paths)
-{
-    for(auto&& path : _Paths)
-    {
-        if(std::filesystem::exists(path)) 
-            m_Paths.insert(path);
-    }
-}
-
-LoadFontsProcess::LoadFontsProcess(const std::filesystem::path& _Path)
-{
-    if(std::filesystem::exists(_Path)) 
-        m_Paths.insert(_Path);
-}
-
-LoadFontsProcess::~LoadFontsProcess(){}
-
-void LoadFontsProcess::execute()
-{
-    // cache user defined callback
-    auto finished = m_OnFinished;
-
-    on_finished(
-        [this, finished]()
-        {
-            // build fonts and reload app
-            ImGui::GetIO().Fonts->Build();
-            Frenchie::Application::application()->reload();
-
-            // launch user-defined callback
-            if(finished != nullptr)
-                finished();
-        }
-    );
-
-    // load fonts
-    if(m_Paths.empty())
-    {
-        m_Failed = true;
-        return;
-    }
-
-    // go on...
-    std::set<std::filesystem::path> fonts;
-    auto total   = m_Paths.size();
-    auto current = 0;
-
-    for(auto&& path : m_Paths)
-    {
-        if(canceled()) 
-            return;
-
-        while (paused())
-        {
-            if(canceled()) 
-                return;
-        }
-
-        if(!std::filesystem::exists(path) || 
-            fonts.find(path) != fonts.end())
-        {
-            m_Progress = (float)(++current) / (float)total;
-            continue;
-        }
-
-        // retrive ImGui IO
-        auto& io = ImGui::GetIO();
-
-        // load font
-        try
-        {
-            io.Fonts->AddFontFromFileTTF(
-                Frenchie::Core::String::as_utf8(path.wstring()).c_str(),
-                ImGui::GetStyle().FontSizeBase,
-                nullptr,
-                io.Fonts->GetGlyphRangesCyrillic());
-        }
-        catch(const std::exception& e)
-        {
-            Frenchie::Core::Logger::instance()->critical(e.what());
-        }
-
-        m_Progress = (float)(++current) / (float)total;
-
-        // add to cache
-        fonts.insert(path);
-    }
-
-    // finish
-    m_Finished = true;
-}
-
-std::string LoadFontsProcess::iprocess_status_request_status()
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    return m_Status;
-}
-
-float LoadFontsProcess::iprocess_progress_request_progress()
-{
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    return m_Progress;
 }
 
 // Fonts
 Fonts::Fonts() : Layer(STRINGIFY(Fonts)){}
 
 Fonts::~Fonts(){}
+
+bool Fonts::awake()
+{
+    m_ThreadsQueue = Frenchie::Application::application()->push_layer<Frenchie::Application::ThreadQueue>();
+    return true;
+}
+
+void Fonts::finish()
+{
+    if(m_ThreadsQueue != nullptr) 
+        m_ThreadsQueue->close();
+}
 
 bool Fonts::allows_multiple_instances() const 
 {
@@ -214,42 +122,45 @@ bool Fonts::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
                 m_Paths.insert(path);
         }
 
-        Frenchie::Application::ProcessQueue::instance()->push<LoadFontsProcess>(m_Paths)->on_failed(
-            [this]()
-            {
-                Frenchie::Core::Logger::instance()->critical("NO FONTS FOUND !!!!");
+        load_fonts(m_Paths);
 
-                std::filesystem::path defaultFontsFilesPath = 
-                    std::filesystem::path(Frenchie::Core::FileSystem::get_exe_absolute_directory().wstring().append(L"/appData/fonts/")).make_preferred();
+        // TODO: fix it
+        // Frenchie::Application::ThreadQueue::instance()->push<LoadFontsProcess>(m_Paths)->on_failed(
+        //     [this]()
+        //     {
+        //         Frenchie::Core::Logger::instance()->critical("NO FONTS FOUND !!!!");
 
-                if(std::filesystem::exists(defaultFontsFilesPath))
-                {
-                    Frenchie::Core::Logger::instance()->critical("TRYING TO LOAD DEFAULT FONTS");
+        //         std::filesystem::path defaultFontsFilesPath = 
+        //             std::filesystem::path(Frenchie::Core::FileSystem::get_exe_absolute_directory().wstring().append(L"/appData/fonts/")).make_preferred();
 
-                    m_Paths.clear();
+        //         if(std::filesystem::exists(defaultFontsFilesPath))
+        //         {
+        //             Frenchie::Core::Logger::instance()->critical("TRYING TO LOAD DEFAULT FONTS");
 
-                    try
-                    {
-                        for(auto directory : std::filesystem::directory_iterator(defaultFontsFilesPath, 
-                                            std::filesystem::directory_options::skip_permission_denied))
-                        {
-                            if(!directory.is_directory() &&
-                                Frenchie::Core::FileSystem::get_file_extention(directory.path()) == ".ttf") 
-                            {
-                                m_Paths.insert(directory.path());
-                            }
-                        }
+        //             m_Paths.clear();
 
-                        // once again
-                        Frenchie::Application::ProcessQueue::instance()->push<LoadFontsProcess>(m_Paths);
-                    }
-                    catch(const std::exception& e)
-                    {
-                        Frenchie::Core::Logger::instance()->critical(e.what());
-                    }
-                }
-            }
-        );
+        //             try
+        //             {
+        //                 for(auto directory : std::filesystem::directory_iterator(defaultFontsFilesPath, 
+        //                                     std::filesystem::directory_options::skip_permission_denied))
+        //                 {
+        //                     if(!directory.is_directory() &&
+        //                         Frenchie::Core::FileSystem::get_file_extention(directory.path()) == ".ttf") 
+        //                     {
+        //                         m_Paths.insert(directory.path());
+        //                     }
+        //                 }
+
+        //                 // once again
+        //                 Frenchie::Application::ThreadQueue::instance()->push<LoadFontsProcess>(m_Paths);
+        //             }
+        //             catch(const std::exception& e)
+        //             {
+        //                 Frenchie::Core::Logger::instance()->critical(e.what());
+        //             }
+        //         }
+        //     }
+        // );
     }
 
     return true;
@@ -262,9 +173,107 @@ void Fonts::load_fonts(
     if(_Fonts.empty()) 
         return;
 
-    Frenchie::Application::ProcessQueue::instance()
-        ->push<Frenchie::Editor::Configuration::LoadFontsProcess>(_Fonts)
-        ->on_finished([this, _Fonts](){m_Paths = _Fonts;});
+    auto loadProcess = m_ThreadsQueue->push(
+        [_Fonts, _Font](const Frenchie::Application::Thread* _Thread)
+        {
+            // load fonts
+            if(_Fonts.empty())
+                return;
+
+            auto progress = _Thread->find_component<Frenchie::Application::ThreadProgressComponent>();
+            auto status   = _Thread->find_component<Frenchie::Application::ThreadStatusComponent>();
+
+            // go on...
+            std::set<std::filesystem::path> fonts;
+            auto total   = _Fonts.size();
+            auto current = 0;
+
+            if(status != nullptr) 
+                status->push_message("Loading started...\n");
+
+            for(auto&& path : _Fonts)
+            {
+                // wait on pause
+                while(_Thread->paused() && !_Thread->stopped());
+
+                // stop on pause
+                if(_Thread->stopped()) 
+                    return;
+
+                if(status != nullptr) 
+                {
+                    status->push_message(
+                        fmt::format("Trying to load font {}\n", 
+                        Frenchie::Core::String::as_utf8(path.wstring())
+                    ));
+                }
+
+                if(fonts.find(path) != fonts.end())
+                {
+                    if(progress != nullptr)
+                        progress->set_progress((float)(++current) / (float)total);
+
+                    status->push_message(
+                        fmt::format("already loaded font {}\n", 
+                        Frenchie::Core::String::as_utf8(path.wstring())
+                    ));
+                    
+                    continue;
+                }
+
+                if(!std::filesystem::exists(path))
+                {
+                    if(progress != nullptr)
+                        progress->set_progress((float)(++current) / (float)total);
+
+                    status->push_message(
+                        fmt::format("font at following path does not exist: {}\n", 
+                        Frenchie::Core::String::as_utf8(path.wstring())
+                    ));
+                    
+                    continue; 
+                }
+
+                // retrive ImGui IO
+                auto& io = ImGui::GetIO();
+
+                // load font
+                try
+                {
+                    io.Fonts->AddFontFromFileTTF(
+                        Frenchie::Core::String::as_utf8(path.wstring()).c_str(),
+                        ImGui::GetStyle().FontSizeBase,
+                        nullptr,
+                        io.Fonts->GetGlyphRangesCyrillic());
+                }
+                catch(const std::exception& e)
+                {
+                }
+
+                if(progress != nullptr)
+                    progress->set_progress((float)(++current) / (float)total);
+
+                if(status != nullptr) 
+                    status->push_message("font loading succeded...\n");
+
+                // add to cache
+                fonts.insert(path);
+            }
+        }, 
+        "Load fonts...");
+
+        // what we do on finish
+        loadProcess->on_finished(
+            [this, _Fonts](const Frenchie::Application::Thread*)
+            {
+                // build fonts and reload app
+                ImGui::GetIO().Fonts->Build();
+                Frenchie::Application::application()->reload();
+
+                // setup fonts loading path
+                m_Paths = _Fonts;
+            }
+        );
 }
 
 Frenchie::Core::Reference<Fonts> Fonts::instance()

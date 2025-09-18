@@ -53,9 +53,9 @@ namespace Frenchie
                 size_t      m_CurrentPosition = 0;
             } mutable m_Status;
 
-            mutable std::mutex                   m_Mutex;
-            mutable Frenchie::Core::Thread::Pool m_Pool{1};
-            mutable std::any                     m_Info;
+            mutable std::mutex                    m_Mutex;
+            mutable Frenchie::Core::Threads::Pool m_Pool{1};
+            mutable std::any                      m_Info;
 
             // service methods
             void execute(const std::string& _Command, const std::string& _Arguments = std::string());

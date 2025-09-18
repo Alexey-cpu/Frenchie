@@ -19,7 +19,7 @@ namespace Frenchie
 {
     namespace Core
     {
-        namespace Thread
+        namespace Threads
         {
             class Pool final : public NonCopyable
             {
@@ -39,6 +39,6 @@ namespace Frenchie
             };
         }
 
-        typedef Singleton<Thread::Pool> ThreadPool;
+        typedef Singleton<Threads::Pool> ThreadPool;
     }
 }
