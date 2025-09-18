@@ -85,7 +85,7 @@ void TranslationFilesEditor::frame_update()
                     [this]()
                     {
                         m_LoadProcess = 
-                            Frenchie::Application::ProcessQueue::instance()->push<LoadTranslationFilesProcess>(
+                            Frenchie::Application::ThreadQueue::instance()->push<LoadTranslationFilesProcess>(
                                 Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>()->get_selected_paths());
                     }
                 );
@@ -101,7 +101,7 @@ void TranslationFilesEditor::frame_update()
                 if(m_LoadProcess != nullptr)
                 {
                     m_SaveProcess = 
-                        Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
+                        Frenchie::Application::ThreadQueue::instance()->push<SaveTranslationFilesProcess>(
                             m_LoadProcess->m_TranslationFiles);
                 }
             }, 
@@ -142,7 +142,7 @@ void TranslationFilesEditor::frame_update()
                     {
                         try_execute_command([this, &translationFile]()
                         {
-                            m_SaveProcess = Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
+                            m_SaveProcess = Frenchie::Application::ThreadQueue::instance()->push<SaveTranslationFilesProcess>(
                             std::vector<TranslationFile>({translationFile}));
                         }, "Save");
                     }
@@ -166,7 +166,7 @@ void TranslationFilesEditor::frame_update()
                                     translationFile.Path = dialog->get_current_file();
 
                                     m_SaveProcess = 
-                                        Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
+                                        Frenchie::Application::ThreadQueue::instance()->push<SaveTranslationFilesProcess>(
                                             std::vector<TranslationFile>({translationFile}));
                                 }
                             );
@@ -379,7 +379,7 @@ void TranslationFilesEditor::frame_update()
         }
         else // draw progress indicator
         {
-            if(m_LoadProcess != nullptr && !m_LoadProcess->failed() && !m_LoadProcess->canceled() && !m_LoadProcess->canceled() && !m_LoadProcess->finished()) 
+            if(m_LoadProcess != nullptr && !m_LoadProcess->failed() && !m_LoadProcess->stopped() && !m_LoadProcess->stopped() && !m_LoadProcess->finished()) 
                 ImGui::TextUnformatted(Translator::translate("Loading...").c_str());
         }
     }
@@ -398,13 +398,13 @@ bool TranslationFilesEditor::allows_multiple_instances() const
 
 void TranslationFilesEditor::try_execute_command(std::function<void()> _Function, const std::string& _Name)
 {
-    if(m_LoadProcess != nullptr && !m_LoadProcess->finished() && !m_LoadProcess->canceled())
+    if(m_LoadProcess != nullptr && !m_LoadProcess->finished() && !m_LoadProcess->stopped())
     {
         Frenchie::Core::Logger::instance()->error("{}: cannot '{}' as someting is loading...", get_name(), _Name);
         return;
     }
 
-    if(m_SaveProcess != nullptr && !m_SaveProcess->finished() && !m_SaveProcess->canceled())
+    if(m_SaveProcess != nullptr && !m_SaveProcess->finished() && !m_SaveProcess->stopped())
     {
         Frenchie::Core::Logger::instance()->error("{}: cannot '{}' as someting is saving...", get_name(), _Name);
         return;

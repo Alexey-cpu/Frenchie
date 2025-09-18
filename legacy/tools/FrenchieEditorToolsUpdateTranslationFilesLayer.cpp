@@ -58,14 +58,14 @@ namespace Frenchie
     namespace Editor
     {
         class LoadLocalizationKeysFromSourceCodeProcess : 
-            public Frenchie::Application::Process, 
-            public Frenchie::Application::IProcessStatus
+            public Frenchie::Application::Thread, 
+            public Frenchie::Application::IThreadStatus
         {
         public:
             LoadLocalizationKeysFromSourceCodeProcess(
                 const std::filesystem::path& _SourceFilesPath,
                 const std::set<std::string>& _Extentions = {".cpp",".hpp",".cc", ".hh", ".c",".h"}
-            ) : Process(STRINGIFY(LoadLocalizationKeysFromSourceCodeProcess)), 
+            ) : Thread(STRINGIFY(LoadLocalizationKeysFromSourceCodeProcess)), 
                 m_SourceFilesPath(_SourceFilesPath),
                 m_Extentions(_Extentions){}
 
@@ -93,11 +93,11 @@ namespace Frenchie
                         // handle pause and cancel events
                         while (paused())
                         {
-                            if(canceled())
+                            if(stopped())
                                 return;
                         }
 
-                        if(canceled())
+                        if(stopped())
                             return;
 
                         // get path
@@ -134,11 +134,11 @@ namespace Frenchie
                             // handle pause and cancel events
                             while (m_Paused)
                             {
-                                if(m_Canceled)
+                                if(m_Stopped)
                                     return;
                             }
 
-                            if(m_Canceled)
+                            if(m_Stopped)
                                 return;
 
                             auto translatorEntry = (*translatorIterator).str();
@@ -151,11 +151,11 @@ namespace Frenchie
                                 // handle pause and cancel events
                                 while (m_Paused)
                                 {
-                                    if(m_Canceled)
+                                    if(m_Stopped)
                                         return;
                                 }
 
-                                if(m_Canceled)
+                                if(m_Stopped)
                                     return;
 
                                 auto str = (*localizationKeyIterator).str();
@@ -192,13 +192,13 @@ namespace Frenchie
             std::string           m_Status;
         };
     
-        class UpdateLocalizationKeysInTranslationFilesProcess : public Frenchie::Application::Process, public Frenchie::Application::IProcessStatus
+        class UpdateLocalizationKeysInTranslationFilesProcess : public Frenchie::Application::Thread, public Frenchie::Application::IThreadStatus
         {
         public:
             UpdateLocalizationKeysInTranslationFilesProcess(
                 const std::set<std::filesystem::path> _Paths,
                 const std::set<std::string>&          _LocalizationKeys) : 
-                Process(STRINGIFY(UpdateLocalizationKeysInTranslationFilesProcess)), 
+                Thread(STRINGIFY(UpdateLocalizationKeysInTranslationFilesProcess)), 
                 m_Paths(_Paths), 
                 m_LocalizationKeys(_LocalizationKeys){}
 
@@ -208,7 +208,7 @@ namespace Frenchie
             virtual void execute() override
             {
                 auto localizationKeysLoadProcess = 
-                    Frenchie::Application::ProcessQueue::instance()->push<LoadTranslationFilesProcess>(m_Paths);
+                    Frenchie::Application::ThreadQueue::instance()->push<LoadTranslationFilesProcess>(m_Paths);
 
                 localizationKeysLoadProcess->on_finished(
                     [this, localizationKeysLoadProcess]()
@@ -231,7 +231,7 @@ namespace Frenchie
                         }
 
                         // save files
-                        Frenchie::Application::ProcessQueue::instance()->push<SaveTranslationFilesProcess>(
+                        Frenchie::Application::ThreadQueue::instance()->push<SaveTranslationFilesProcess>(
                             localizationKeysLoadProcess->m_TranslationFiles);
                     }
                 );
@@ -280,7 +280,7 @@ void TranslationFilesUpdater::frame_update()
                         Frenchie::Application::application()->find_layer<Frenchie::Editor::FileSystem::ExplorerDialog>();
 
                     auto process = 
-                        Frenchie::Application::ProcessQueue::instance()
+                        Frenchie::Application::ThreadQueue::instance()
                             ->push<LoadLocalizationKeysFromSourceCodeProcess>(dialog->get_current_path());
 
                     m_SourceCodeFilesPath = Frenchie::Core::String::as_utf8(dialog->get_current_path().wstring());
@@ -310,7 +310,7 @@ void TranslationFilesUpdater::frame_update()
                             Frenchie::Application::application()->find_layer<Frenchie::Editor::FileSystem::ExplorerDialog>();
 
                         auto process = 
-                            Frenchie::Application::ProcessQueue::instance()
+                            Frenchie::Application::ThreadQueue::instance()
                                 ->push<UpdateLocalizationKeysInTranslationFilesProcess>(dialog->get_selected_paths(), m_LocalizationKeys);
                     }
                 );

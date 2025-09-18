@@ -8,27 +8,27 @@ namespace Frenchie
     {
         namespace FileSystem
         {
-            class FilesystemPathsSearchProcess : public Frenchie::Application::Process
-            {
-            public:
-                FilesystemPathsSearchProcess(
-                    const std::filesystem::path&                             _Path,
-                    const std::function<bool(const std::filesystem::path&)>& _Predicate,
-                    const std::string&                                       _Name           = STRINGIFY(FilesystemPathsSearchProcess),
-                    size_t                                                   _MaxSearchDepth = 100);
+            // class FilesystemPathsSearchProcess : public Frenchie::Application::Thread
+            // {
+            // public:
+            //     FilesystemPathsSearchProcess(
+            //         const std::filesystem::path&                             _Path,
+            //         const std::function<bool(const std::filesystem::path&)>& _Predicate,
+            //         const std::string&                                       _Name           = STRINGIFY(FilesystemPathsSearchProcess),
+            //         size_t                                                   _MaxSearchDepth = 100);
 
-                virtual ~FilesystemPathsSearchProcess();
+            //     virtual ~FilesystemPathsSearchProcess();
 
-                virtual void execute() override;
+            //     virtual void execute() override;
 
-                mutable std::filesystem::path                 m_CurrentPath =  std::filesystem::current_path();
-                mutable std::map<std::filesystem::path, bool> m_Paths       = std::map<std::filesystem::path, bool>();
+            //     mutable std::filesystem::path                 m_CurrentPath =  std::filesystem::current_path();
+            //     mutable std::map<std::filesystem::path, bool> m_Paths       = std::map<std::filesystem::path, bool>();
 
-            protected:
-                mutable std::filesystem::path                             m_Path           =  std::filesystem::current_path();
-                mutable std::function<bool(const std::filesystem::path&)> m_Predicate      = nullptr;
-                mutable size_t                                            m_MaxSearchDepth = 4;
-            };
+            // protected:
+            //     mutable std::filesystem::path                             m_Path           =  std::filesystem::current_path();
+            //     mutable std::function<bool(const std::filesystem::path&)> m_Predicate      = nullptr;
+            //     mutable size_t                                            m_MaxSearchDepth = 4;
+            // };
 
             class PathScannerDialog : public Frenchie::Editor::FileSystem::Explorer
             {

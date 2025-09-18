@@ -5,7 +5,7 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
+#include <FrenchieApplicationThreadQueueLayer.hpp>
 
 namespace Frenchie
 {
@@ -13,28 +13,6 @@ namespace Frenchie
     {
         namespace Configuration
         {
-            class LoadFontsProcess : 
-                public Frenchie::Application::Process,
-                public Frenchie::Application::IProcessStatus,
-                public Frenchie::Application::IProcessProgress
-            {
-            public:
-                LoadFontsProcess(const std::set<std::filesystem::path>& _Paths);
-                LoadFontsProcess(const std::filesystem::path& _Path);
-                virtual ~LoadFontsProcess();
-
-                virtual void execute() override;
-                virtual std::string iprocess_status_request_status() override;
-                virtual float iprocess_progress_request_progress() override;
-
-            protected:
-                std::set<std::filesystem::path> m_Paths = 
-                    std::set<std::filesystem::path>();
-
-                std::string m_Status;
-                float       m_Progress;
-            };
-
             class Fonts : 
                 public Frenchie::Application::Layer, 
                 public Frenchie::Core::Serialization::ISerializer
@@ -44,6 +22,8 @@ namespace Frenchie
                 virtual ~Fonts();
 
                 // Frenchie::Application::Layer
+                virtual bool awake() override;
+                virtual void finish() override;
                 virtual bool allows_multiple_instances() const override;
 
                 // Frenchie::Core::Serialization::ISerializer
@@ -51,8 +31,6 @@ namespace Frenchie
                 virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
 
                 // API
-                //void scan_fonts(const std::filesystem::path& _Paths);
-
                 void load_fonts(
                     const std::set<std::filesystem::path>& _Paths, 
                     const std::string&                     _Font = std::string());
@@ -61,7 +39,8 @@ namespace Frenchie
                 static Frenchie::Core::Reference<Fonts> instance();
 
             protected:
-                std::set<std::filesystem::path> m_Paths;
+                std::set<std::filesystem::path>                               m_Paths;
+                Frenchie::Core::Reference<Frenchie::Application::ThreadQueue> m_ThreadsQueue;
             };
         }
     }

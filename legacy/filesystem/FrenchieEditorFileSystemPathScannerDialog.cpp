@@ -31,7 +31,7 @@ namespace Frenchie
                         _Name, 
                         _MaxSearchDepth]()
                     {
-                        m_Process = Frenchie::Application::ProcessQueue::instance()->push<FilesystemPathsSearchProcess>(
+                        m_Process = Frenchie::Application::ThreadQueue::instance()->push<FilesystemPathsSearchProcess>(
                             _Path,
                             _Predicate,
                             _Name,
@@ -45,7 +45,7 @@ namespace Frenchie
                             }
                         );
 
-                        m_Process->on_canceled(
+                        m_Process->on_stopped(
                             [this, _OnCanceled]()
                             {
                                 if(_OnCanceled)
@@ -80,7 +80,7 @@ namespace Frenchie
                 void frame_update()
                 {
                     if(m_Process == nullptr   || 
-                        m_Process->canceled() || 
+                        m_Process->stopped() || 
                         m_Process->failed()) 
                     {
                         close();
@@ -137,7 +137,7 @@ namespace Frenchie
                     ImGui::SameLine();
 
                     if(ImGui::Button(Translator::translate("Cancel").c_str())) 
-                        m_Process->cancel();
+                        m_Process->stop();
 
                     ImGui::SameLine();
 
@@ -180,7 +180,7 @@ FilesystemPathsSearchProcess::FilesystemPathsSearchProcess(
     const std::function<bool(const std::filesystem::path&)>& _Predicate,
     const std::string&                                       _Name,
     size_t                                                   _MaxSearchDepth) :
-    Process(_Name),
+    Thread(_Name),
     m_Path(_Path),
     m_Predicate(_Predicate),
     m_MaxSearchDepth(_MaxSearchDepth){}
@@ -195,14 +195,14 @@ void FilesystemPathsSearchProcess::execute()
             it != std::filesystem::recursive_directory_iterator(); it++)
         {
             // cancel task
-            if(canceled()) 
+            if(stopped()) 
                 return;
 
             // pause task
             while(paused())
             {
                 // cancel task during pause state
-                if(canceled()) 
+                if(stopped()) 
                     return;
             }
 
