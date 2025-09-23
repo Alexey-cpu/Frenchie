@@ -102,52 +102,44 @@ std::filesystem::path Launcher::get_app_translation_files_directory()
     return Launcher::get_app_data_directory().wstring().append(L"/translations");
 }
 
+std::filesystem::path Launcher::get_app_fonts_files_directory()
+{
+    return Launcher::get_app_data_directory().wstring().append(L"/fonts");
+}
+
+std::filesystem::path Launcher::get_app_themes_files_directory()
+{
+    return Launcher::get_app_data_directory().wstring().append(L"/themes");
+}
+
+std::set<std::filesystem::path> Launcher::get_app_data_directories()
+{
+    return
+    {
+        get_app_log_directory(),
+        get_app_state_directory(),
+        get_app_translation_files_directory(),
+        get_app_fonts_files_directory(),
+        get_app_themes_files_directory()
+    };
+}
+
 int Launcher::execute()
 {
     // create and configure application
     Frenchie::Application::application()->set_window_size(glm::vec2(2048, 1024));
     Frenchie::Application::application()->set_maximized(true);
 
-    // create directories for logs and application state
-    std::filesystem::path appExeDirectory              = Launcher::get_app_exe_directory();
-    std::filesystem::path appLogDirectory              = Launcher::get_app_log_directory();
-    std::filesystem::path appStateDirectory            = Launcher::get_app_state_directory();
-    std::filesystem::path appTranslationFilesDirectory = Launcher::get_app_translation_files_directory();
+    // create app state directories
+    auto appDataDirectories = get_app_data_directories();
 
-    if(std::filesystem::exists(appExeDirectory))
+    for(auto&& appDataDirectory : appDataDirectories )
     {
-        // create app logs directory
-        if(!std::filesystem::exists(appLogDirectory)) 
+        if(!std::filesystem::exists(appDataDirectory)) 
         {
             try
             {
-                std::filesystem::create_directory(appLogDirectory);
-            }
-            catch(const std::exception& e)
-            {
-                Frenchie::Core::Logger::instance()->critical(e.what());
-            }
-        }
-
-        // create app state directory
-        if(!std::filesystem::exists(appStateDirectory))
-        {
-            try
-            {
-                std::filesystem::create_directory(appStateDirectory);
-            }
-            catch(const std::exception& e)
-            {
-                Frenchie::Core::Logger::instance()->critical(e.what());
-            }
-        }
-
-        // create app translation files directory
-        if(!std::filesystem::exists(appTranslationFilesDirectory))
-        {
-            try
-            {
-                std::filesystem::create_directory(appTranslationFilesDirectory);
+                std::filesystem::create_directory(appDataDirectory);
             }
             catch(const std::exception& e)
             {
@@ -157,6 +149,8 @@ int Launcher::execute()
     }
 
     // clean-up logs if there are too many of them
+    std::filesystem::path appLogDirectory = Launcher::get_app_log_directory();
+
     if(std::filesystem::exists(appLogDirectory))
     {
         std::vector<std::filesystem::path> paths;
@@ -226,19 +220,19 @@ int Launcher::execute()
     }
     
 
-    // append basic layers
+    // setup main menu
     Frenchie::Application::application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
 
-    // configuration
+    // load configuration
     Frenchie::Application::application()->push_layer<Frenchie::Editor::Configuration::ConfigurationLoader>(
-            std::filesystem::path(appStateDirectory.wstring().append(L"/State.xml")).make_preferred());
-
+        std::filesystem::path(get_app_state_directory().wstring().append(L"/State.xml")).make_preferred());
     Frenchie::Application::application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .exe directory: {}", Frenchie::Core::String::as_utf8(appExeDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml directory: {}", Frenchie::Core::String::as_utf8(appStateDirectory.wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xlf directory: {}", Frenchie::Core::String::as_utf8(appTranslationFilesDirectory.wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .exe file directory: {}", Frenchie::Core::String::as_utf8(get_app_exe_directory().wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml state directory: {}", Frenchie::Core::String::as_utf8(get_app_state_directory().wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xlf files directory: {}", Frenchie::Core::String::as_utf8(get_app_translation_files_directory().wstring())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .ttf files directory: {}", Frenchie::Core::String::as_utf8(get_app_fonts_files_directory().wstring())));
 
     // execute app and wait until it finishes it's job
     auto execution = Frenchie::Application::application()->execute();

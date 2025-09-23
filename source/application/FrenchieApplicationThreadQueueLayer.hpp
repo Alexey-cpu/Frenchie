@@ -90,9 +90,9 @@ namespace Frenchie
             Frenchie::Core::UUID4 get_uuid() const;
 
             // API
-            void stop();
-            void pause();
-            void resume();
+            void stop() const;
+            void pause() const;
+            void resume() const;
 
             bool stopped() const;
             bool paused() const;
@@ -103,7 +103,7 @@ namespace Frenchie
             void on_stopped(const std::function<void(const Thread*)>& _Callback);
             void on_failed(const std::function<void(const Thread*)>& _Callback);
 
-            bool awake();
+            bool launch();
 
             bool requested_stop() const
             {
@@ -113,7 +113,6 @@ namespace Frenchie
                     return true;
 
                 return false;
-                
             }
 
             template<typename Type, typename ... Arguments>
@@ -143,10 +142,10 @@ namespace Frenchie
             // info
             std::string           m_Name     = STRINGIFY(Thread);
             Frenchie::Core::UUID4 m_UUID;
-            bool                  m_Paused   = false;
-            bool                  m_Finished = false;
-            bool                  m_Stopped  = false;
-            bool                  m_Failed   = false;
+            mutable bool          m_Paused   = false;
+            mutable bool          m_Finished = false;
+            mutable bool          m_Stopped  = false;
+            mutable bool          m_Failed   = false;
 
             std::function<void(const Thread*)> m_Worker;
             std::function<void(const Thread*)> m_OnFinished;
@@ -163,68 +162,19 @@ namespace Frenchie
         class ThreadQueue : public Layer
         {
         public:
-            ThreadQueue(){}
-            virtual ~ThreadQueue(){}
+            ThreadQueue();
+            virtual ~ThreadQueue();
 
-            virtual void frame_start()
-            {
-                // launch
-                while(!m_Queue.empty())
-                {
-                    auto process = m_Queue.front();
+            virtual void frame_start();
+            virtual void finish();
+            virtual bool allows_multiple_instances() const;
 
-                    if(process != nullptr && process->awake())
-                        m_Executed.push_back(process);
-                    m_Queue.pop();
-                }
+            Frenchie::Core::Reference<Thread> push(std::function<void(const Thread*)> _Worker, const std::string& _Name = std::string());
+            std::list<std::shared_ptr<Thread>>::const_iterator begin() const;
+            std::list<std::shared_ptr<Thread>>::const_iterator end() const;
+            bool empty() const;
 
-                // finish
-                for(auto it = m_Executed.begin(); it != m_Executed.end(); it++)
-                {
-                    if((*it)->finished() || (*it)->stopped() || (*it)->failed())
-                    {
-                        // call finish method only if thread has not been stopped
-                        // and has not failed it's operation
-                        if(!(*it)->stopped() && !(*it)->failed())
-                            (*it)->finish();
-
-                        auto rm = it;
-                        it++;
-                        m_Executed.erase(rm);
-
-                        if(it == m_Executed.end())
-                            break;
-                    }
-                }
-            }
-            
-            virtual void finish()
-            {
-                // cancel all on finish
-                for(auto it = m_Executed.begin(); it != m_Executed.end(); it++)
-                    (*it)->stop();
-            }
-
-            virtual bool allows_multiple_instances() const
-            {
-                return true;
-            }
-
-            Frenchie::Core::Reference<Thread> push(std::function<void(const Thread*)> _Worker, const std::string& _Name = std::string())
-            {
-                m_Queue.push(std::make_shared<Thread>(_Worker, _Name));
-                return m_Queue.back();
-            }
-
-            std::list<std::shared_ptr<Thread>>::const_iterator begin() const
-            {
-                return m_Executed.begin();
-            }
-
-            std::list<std::shared_ptr<Thread>>::const_iterator end() const
-            {
-                return m_Executed.end();
-            }
+            typedef std::list<std::shared_ptr<Thread>>::const_iterator const_iterator;
 
         protected:
 

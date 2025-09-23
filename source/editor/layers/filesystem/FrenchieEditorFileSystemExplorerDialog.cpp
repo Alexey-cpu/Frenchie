@@ -1,4 +1,4 @@
-#include <FrenchieEditorFileSystemExplorerDialogLayer.hpp>
+#include <FrenchieEditorFileSystemExplorerDialog.hpp>
 
 using namespace Frenchie::Editor::FileSystem;
 
@@ -53,11 +53,7 @@ void ExplorerDialog::frame_update()
              ImGui::SameLine();
 
             if(ImGui::Button(Translator::translate("Cancel").c_str()))
-            {
-                if(m_OnCanceled != nullptr) 
-                    m_OnCanceled();
                 close();
-            }
 
             ImGui::EndChild();
         }
@@ -69,4 +65,9 @@ void ExplorerDialog::frame_update()
 bool ExplorerDialog::allows_multiple_instances() const
 {
     return false;
+}
+
+void ExplorerDialog::on_accepted(const std::function<void()>& _Callback)
+{
+    m_OnAccepted = _Callback;
 }

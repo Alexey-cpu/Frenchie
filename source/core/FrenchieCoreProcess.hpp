@@ -55,7 +55,7 @@ namespace Frenchie
 
             mutable std::mutex                    m_Mutex;
             mutable Frenchie::Core::Threads::Pool m_Pool{1};
-            mutable std::any                      m_Info;
+            mutable void*                         m_Info{nullptr};
 
             // service methods
             void execute(const std::string& _Command, const std::string& _Arguments = std::string());

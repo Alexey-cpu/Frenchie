@@ -1,13 +1,13 @@
 #pragma once
 
-
+// Core
+#include <FrenchieCoreISerializer.hpp>
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationThreadQueueLayer.hpp>
 
-// Core
-#include <FrenchieCoreISerializer.hpp>
+// Editor
+#include <FrenchieEditorLocalThreadQueue.hpp>
 
 namespace Frenchie
 {
@@ -18,30 +18,9 @@ namespace Frenchie
             class Language;
             class Translator;
 
-            class Language
+            struct TranslationUnit final
             {
-            public:
-                Language(const std::filesystem::path& _Path, const Translator* _Translator);
-                ~Language();
-
-                // getters
-                std::string get_name() const;
-                std::filesystem::path get_path() const;
-                bool is_current() const;
-
-                // API
-                void setup();
-
-            protected:
-
-                const std::filesystem::path m_Path;
-                const Translator*           m_Translator;
-                bool                        m_Current   = false;
-            };
-
-            struct TranslationUnit
-            {
-                std::string         Key      = "NEW_KEY";
+                mutable std::string Key      = "NEW_KEY";
                 mutable std::string Value    = "NEW_VALUE";
                 mutable bool        Selected = false;
 
@@ -68,11 +47,39 @@ namespace Frenchie
                 };
             };
 
-            struct TranslationFile
+            struct TranslationFile final
             {
                 mutable std::filesystem::path Path;
                 mutable std::set<TranslationUnit, 
                     TranslationUnit::TransparentComparator> Translations;
+
+                typedef std::set<TranslationUnit, 
+                    TranslationUnit::TransparentComparator> translations;
+            };
+
+            class Language final
+            {
+            public:
+                Language(const std::filesystem::path& _Path, const Translator* _Translator);
+                ~Language();
+
+                // getters
+                std::string get_name() const;
+                std::filesystem::path get_path() const;
+                bool is_current() const;
+
+                TranslationFile& get_translation_file() const;
+
+                // API
+                void setup();
+                void save();
+
+            protected:
+
+                const   std::filesystem::path m_Path   {std::filesystem::path()};
+                const   Translator*           m_Owner  {nullptr};
+                mutable bool                  m_Current{false};
+                mutable TranslationFile       m_TranslationFile;
             };
 
             class Translator : 
@@ -84,31 +91,34 @@ namespace Frenchie
                 virtual ~Translator();
 
                 // getters
-                std::vector<std::unique_ptr<Language>>& get_supported_languages() const;
+                std::vector<Frenchie::Core::Reference<Language>> get_supported_languages() const;
+                Frenchie::Core::Reference<Language> get_current_language() const;
+
+                // setters
                 void set_supported_languages(const std::set<std::filesystem::path>&);
 
                 // Frenchie::Application::Layer
-                virtual bool awake() override;
-                virtual void finish() override;
                 virtual bool allows_multiple_instances() const override;
 
                 // Frenchie::Core::Serialization::ISerializer
                 virtual bool serialize(const Frenchie::Core::Serialization::Node& _Parent) override;
                 virtual bool deserialize(const Frenchie::Core::Serialization::Node& _Parent) override;
 
+                // API
+                Frenchie::Core::Reference<Language> create_new_translation_file(const std::filesystem::path&);
+
                 // static API
                 static std::string translate(const std::string&);
                 static Frenchie::Core::Reference<Translator> instance();
 
-            protected:
+            //protected:
 
                 // friends
                 friend class Language;
 
                 // info
-                mutable TranslationFile                                               m_TranslationFile;
-                mutable std::vector<std::unique_ptr<Language>>                        m_SupportedLanguages;
-                mutable Frenchie::Core::Reference<Frenchie::Application::ThreadQueue> m_ThreadsQueue;
+                mutable std::vector<std::shared_ptr<Language>> m_SupportedLanguages;
+                mutable LocalThreadQueue                       m_ThreadsQueue;
             };
         }
     }
