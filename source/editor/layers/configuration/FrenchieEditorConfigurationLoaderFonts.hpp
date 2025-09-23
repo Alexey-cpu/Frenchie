@@ -5,7 +5,9 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationThreadQueueLayer.hpp>
+
+// Editor
+#include <FrenchieEditorLocalThreadQueue.hpp>
 
 namespace Frenchie
 {
@@ -22,8 +24,6 @@ namespace Frenchie
                 virtual ~Fonts();
 
                 // Frenchie::Application::Layer
-                virtual bool awake() override;
-                virtual void finish() override;
                 virtual bool allows_multiple_instances() const override;
 
                 // Frenchie::Core::Serialization::ISerializer
@@ -39,8 +39,8 @@ namespace Frenchie
                 static Frenchie::Core::Reference<Fonts> instance();
 
             protected:
-                std::set<std::filesystem::path>                               m_Paths;
-                Frenchie::Core::Reference<Frenchie::Application::ThreadQueue> m_ThreadsQueue;
+                mutable std::set<std::filesystem::path> m_Paths;
+                mutable LocalThreadQueue                m_ThreadsQueue;
             };
         }
     }

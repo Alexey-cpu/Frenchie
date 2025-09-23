@@ -1,4 +1,4 @@
-#include <FrenchieEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieEditorFileSystemExplorer.hpp>
 
 // Core
 #include <FrenchieCoreThreadPool.hpp>
@@ -9,9 +9,7 @@
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
-#include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
-
-#include <ctime>
+#include <FrenchieApplicationEditorDialog.hpp>
 
 using namespace Frenchie::Core;
 
@@ -93,7 +91,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "create::folder");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "Create::Create folder");
                     }
                 };
 
@@ -114,7 +112,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "paste");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu), "Paste");
                     }
                 };
             }
@@ -151,7 +149,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "copy");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "Copy");
                     }
                 };
 
@@ -171,7 +169,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "paste");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "Paste");
                     }
                 };
 
@@ -192,7 +190,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "remove");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "Remove");
                     }
                 };
 
@@ -214,7 +212,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "rename");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "Rename");
                     }
                 };
 
@@ -235,7 +233,7 @@ namespace Frenchie
                     // Command::TRegistryType
                     static std::string factory_id()
                     {
-                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "create::folder");
+                        return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::FileMenu), "Create::Create folder");
                     }
                 };
             }
@@ -246,7 +244,7 @@ namespace Frenchie
                 {
                 public:
                     RemoveFiles(const std::set<std::filesystem::path>& _Paths) : 
-                        Dialog(Translator::translate("Are you sure you want to delete these files ?")), 
+                        Dialog(Translator::translate("Are you sure you want to remove these files ?")), 
                         m_Paths(_Paths){}
                     virtual ~RemoveFiles(){}
 
@@ -332,7 +330,7 @@ namespace Frenchie
 
                     virtual void draw_buttons() override
                     {
-                            if(ImGui::Button(Translator::translate("Apply").c_str()))
+                            if(ImGui::Button(Translator::translate("Ok").c_str()))
                             {
                                 // rename files
                                 for(auto& item : m_Paths)
@@ -708,7 +706,7 @@ void Explorer::draw_current_directory_paths_table()
 
     if (ImGui::BeginTable(
             "CurrentDirectoryContentTable",
-            3,
+            1,
             ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
             ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
             ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
@@ -718,20 +716,6 @@ void Explorer::draw_current_directory_paths_table()
             ImGuiTableFlags_::ImGuiTableFlags_Hideable, 
             ImVec2(0.0, ImGui::GetContentRegionAvail().y - 2.0f * ImGui::GetTextLineHeightWithSpacing())))
     {
-        // setup columns
-        ImGui::TableSetupColumn(Translator::translate("name").c_str(), 
-            ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch |
-            ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
-        
-        ImGui::TableSetupColumn(Translator::translate("last write time").c_str(), 
-            ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthFixed |
-            ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
-
-        ImGui::TableSetupColumn(Translator::translate("type").c_str(), 
-            ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch);
-        
-        ImGui::TableHeadersRow();
-
         // draw content of current directory
         auto pathIterator = 
             std::filesystem::directory_iterator(m_Path.make_preferred(), 
@@ -789,27 +773,6 @@ void Explorer::draw_current_directory_paths_table()
                     // show context menu
                     draw_current_directory_popup_menu();
                 }
-
-                // draw last write time
-                ImGui::TableSetColumnIndex(1);
-
-                try
-                {
-                    auto time    = std::filesystem::last_write_time(path);
-                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
-                    //ImGui::TextUnformatted(asctime(std::localtime(&seconds)));
-                    ImGui::TextUnformatted("Unknown");
-                }
-                catch(const std::exception& e)
-                {
-                    Frenchie::Core::Logger::instance()->critical(e.what());
-                    ImGui::TextUnformatted("UNKNOWN");
-                }
-
-                // draw type
-                ImGui::TableSetColumnIndex(2);
-                ImGui::TextUnformatted((std::filesystem::is_directory(path) ? Translator::translate("folder").c_str() : Translator::translate("file").c_str()));
-
             }
         }
 

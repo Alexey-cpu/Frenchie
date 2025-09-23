@@ -1,0 +1,415 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2"><file source-language="english" target-language="Russian" datatype="plaintext"><body><trans-unit><source>Add</source>
+				<target>Добавить</target>
+			</trans-unit>
+			<trans-unit><source>Antialiased lines</source>
+				<target>Сглаживать линий</target>
+			</trans-unit>
+			<trans-unit><source>Antialiased lines fill</source>
+				<target>Заполнять стыки на изгибах при сглаживании линий</target>
+			</trans-unit>
+			<trans-unit><source>Antialiased lines use texture</source>
+				<target>Использовать текстуру при сглаживании линий</target>
+			</trans-unit>
+			<trans-unit><source>Application color scheme settings</source>
+				<target>Настройки цветовой схемы (темы)</target>
+			</trans-unit>
+			<trans-unit><source>Application font settings</source>
+				<target>Настройки шрифтов</target>
+			</trans-unit>
+			<trans-unit><source>Application layout settings</source>
+				<target>Настройки алгоритмов компоновки окон и виджетов</target>
+			</trans-unit>
+			<trans-unit><source>Application renderer settings</source>
+				<target>Настройки алгоритмов рисовки графических примитивов и виджетов</target>
+			</trans-unit>
+			<trans-unit><source>Are you sure you want to remove these files ?</source>
+				<target>Вы уверены, что хотите удалить эти файлы ?</target>
+			</trans-unit>
+			<trans-unit><source>Border</source>
+				<target>Ограничивающая рамка</target>
+			</trans-unit>
+			<trans-unit><source>BorderShadow</source>
+				<target>Подсветка ограничивающей рамки</target>
+			</trans-unit>
+			<trans-unit><source>Borders layout settings</source>
+				<target>Настройки алгоритмов отображения рамок вокруг окон и виджетов</target>
+			</trans-unit>
+			<trans-unit><source>Browse</source>
+				<target>Искать</target>
+			</trans-unit>
+			<trans-unit><source>Button</source>
+				<target>Кнопка</target>
+			</trans-unit>
+			<trans-unit><source>ButtonActive</source>
+				<target>Кнопка в активном состоянии</target>
+			</trans-unit>
+			<trans-unit><source>ButtonHovered</source>
+				<target>Кнопка под курсором мыши</target>
+			</trans-unit>
+			<trans-unit><source>Cancel</source>
+				<target>Отменить</target>
+			</trans-unit>
+			<trans-unit><source>CellPadding</source>
+				<target>Отсупы вокруг ячеек</target>
+			</trans-unit>
+			<trans-unit><source>CheckMark</source>
+				<target>Галочка checkbox-ов и кружок радиокнопок</target>
+			</trans-unit>
+			<trans-unit><source>ChildBg</source>
+				<target>Задний фон дочернего окна</target>
+			</trans-unit>
+			<trans-unit><source>ChildRounding</source>
+				<target>Радиус скругления дочерних окон</target>
+			</trans-unit>
+			<trans-unit><source>Circle tessellation maximum error</source>
+				<target>Максимальная погрешность рисовки окружностей</target>
+			</trans-unit>
+			<trans-unit><source>Clear all</source>
+				<target>Очистить всё</target>
+			</trans-unit>
+			<trans-unit><source>Copy</source>
+				<target>Копировать</target>
+			</trans-unit>
+			<trans-unit><source>Create</source>
+				<target>Создать</target>
+			</trans-unit>
+			<trans-unit><source>Create folder</source>
+				<target>Создать папку</target>
+			</trans-unit>
+			<trans-unit><source>Create new</source>
+				<target>Создать новый</target>
+			</trans-unit>
+			<trans-unit><source>Current directory</source>
+				<target>Текущая директория</target>
+			</trans-unit>
+			<trans-unit><source>Current file</source>
+				<target>Выбранный файл</target>
+			</trans-unit>
+			<trans-unit><source>Curve tessellation tolerance</source>
+				<target>Точность заполнения изгибов линий</target>
+			</trans-unit>
+			<trans-unit><source>Disabled alpha</source>
+				<target>Глобальная прозрачность в неактивном состоянии</target>
+			</trans-unit>
+			<trans-unit><source>Dock windows geometry settings</source>
+				<target>Настройки алгоритмов рисовки плавающих окон</target>
+			</trans-unit>
+			<trans-unit><source>DockingEmptyBg</source>
+				<target>Задний фон пустого плавающего окна</target>
+			</trans-unit>
+			<trans-unit><source>DockingPreview</source>
+				<target>Предпросмотр плавающего окна</target>
+			</trans-unit>
+			<trans-unit><source>DockingSeparatorSize</source>
+				<target>Толщина разделительной линий между плавающими окнами</target>
+			</trans-unit>
+			<trans-unit><source>Exit</source>
+				<target>Выйти</target>
+			</trans-unit>
+			<trans-unit><source>Filter colors</source>
+				<target>Фильтровать цвета</target>
+			</trans-unit>
+			<trans-unit><source>FrameBg</source>
+				<target>Задний фон элементов ввода и управления</target>
+			</trans-unit>
+			<trans-unit><source>FrameBgActive</source>
+				<target>Задний фон элементов ввода и управления в активной состоянии</target>
+			</trans-unit>
+			<trans-unit><source>FrameBgHovered</source>
+				<target>Задний фон элементов ввода и управления при наведении мыши</target>
+			</trans-unit>
+			<trans-unit><source>FrameBorder</source>
+				<target>Показывать внешние границы ограничивающих рамок окон</target>
+			</trans-unit>
+			<trans-unit><source>FramePadding</source>
+				<target>Отступы вокруг ограничивающих рамок окон</target>
+			</trans-unit>
+			<trans-unit><source>FrameRounding</source>
+				<target>Радиус скругления ограничивающих рамок</target>
+			</trans-unit>
+			<trans-unit><source>Global alpha</source>
+				<target>Глобальная прозрачность</target>
+			</trans-unit>
+			<trans-unit><source>GrabMinSize</source>
+				<target>Размер ползунка</target>
+			</trans-unit>
+			<trans-unit><source>GrabRounding</source>
+				<target>Радиус скругления ползунка</target>
+			</trans-unit>
+			<trans-unit><source>Header</source>
+				<target>Заголовок</target>
+			</trans-unit>
+			<trans-unit><source>HeaderActive</source>
+				<target>Заголовок в активном состоянии</target>
+			</trans-unit>
+			<trans-unit><source>HeaderHovered</source>
+				<target>Заголовок под курсором мыши</target>
+			</trans-unit>
+			<trans-unit><source>IndentSpacing</source>
+				<target>Отступы вокруг расталкивающих элементов (филлеров)</target>
+			</trans-unit>
+			<trans-unit><source>InputTextCursor</source>
+				<target>Курсор ввода текста</target>
+			</trans-unit>
+			<trans-unit><source>Insert in file</source>
+				<target>Добавить в файл</target>
+			</trans-unit>
+			<trans-unit><source>ItemInnerSpacing</source>
+				<target>Внутренние отступы между виджетами</target>
+			</trans-unit>
+			<trans-unit><source>ItemSpacing</source>
+				<target>Отступы вокруг виджетов</target>
+			</trans-unit>
+			<trans-unit><source>Key</source>
+				<target>Ключ</target>
+			</trans-unit>
+			<trans-unit><source>Language settings</source>
+				<target>Настройки перевода</target>
+			</trans-unit>
+			<trans-unit><source>Layout rounding settings</source>
+				<target>Настройка радиусов скругления окон и виджетов</target>
+			</trans-unit>
+			<trans-unit><source>Main layout settings</source>
+				<target>Основные настройки алгоритмов компоновки окон и виджетов</target>
+			</trans-unit>
+			<trans-unit><source>MenuBarBg</source>
+				<target>Панель меню</target>
+			</trans-unit>
+			<trans-unit><source>New localization keys</source>
+				<target>Новые ключи локализации</target>
+			</trans-unit>
+			<trans-unit><source>No</source>
+				<target>Нет</target>
+			</trans-unit>
+			<trans-unit><source>Ok</source>
+				<target>Хорошо</target>
+			</trans-unit>
+			<trans-unit><source>PopupBg</source>
+				<target>Задний фон всплывающего окна</target>
+			</trans-unit>
+			<trans-unit><source>PopupBorder</source>
+				<target>Показывать ограничивающие рамки всплывающих окон</target>
+			</trans-unit>
+			<trans-unit><source>PopupRounding</source>
+				<target>Радиус скругления всплывающих окон</target>
+			</trans-unit>
+			<trans-unit><source>Preferences</source>
+				<target>Настройки</target>
+			</trans-unit>
+			<trans-unit><source>R = radius, N = approx number of segments</source>
+				<target>R = радиус, N = примерное число сегментов</target>
+			</trans-unit>
+			<trans-unit><source>Remove</source>
+				<target>Удалить</target>
+			</trans-unit>
+			<trans-unit><source>Remove all</source>
+				<target>Удалить всё</target>
+			</trans-unit>
+			<trans-unit><source>Rename</source>
+				<target>Переименовать</target>
+			</trans-unit>
+			<trans-unit><source>Rename files</source>
+				<target>Переименовать файлы</target>
+			</trans-unit>
+			<trans-unit><source>Rename key</source>
+				<target>Переименовать ключ</target>
+			</trans-unit>
+			<trans-unit><source>ResizeGrip</source>
+				<target>Ручка для изменения размера окна</target>
+			</trans-unit>
+			<trans-unit><source>ResizeGripActive</source>
+				<target>Ручка для изменения размера окна в активном состоянии</target>
+			</trans-unit>
+			<trans-unit><source>ResizeGripHovered</source>
+				<target>Ручка для изменения размера окна по курсором мыши</target>
+			</trans-unit>
+			<trans-unit><source>Save</source>
+				<target>Сохранить</target>
+			</trans-unit>
+			<trans-unit><source>Save as</source>
+				<target>Сохранить как</target>
+			</trans-unit>
+			<trans-unit><source>ScrollbarGrab</source>
+				<target>Полоса прокрутки в режиме прокрутки</target>
+			</trans-unit>
+			<trans-unit><source>ScrollbarGrabActive</source>
+				<target>Полоса прокрутки в активном состоянии</target>
+			</trans-unit>
+			<trans-unit><source>ScrollbarGrabHovered</source>
+				<target>Полоса прокрутки под курсором мыши</target>
+			</trans-unit>
+			<trans-unit><source>ScrollbarRounding</source>
+				<target>Радиус скругления полосы прокрутки</target>
+			</trans-unit>
+			<trans-unit><source>ScrollbarSize</source>
+				<target>Размер полосы прокручивания</target>
+			</trans-unit>
+			<trans-unit><source>Select built-in theme</source>
+				<target>Выбрать встроенную тему</target>
+			</trans-unit>
+			<trans-unit><source>Select directory where to look for translation files ...</source>
+				<target>Выберите папку, в которой нужно искать файлы перевода</target>
+			</trans-unit>
+			<trans-unit><source>Separator</source>
+				<target>Разделитель</target>
+			</trans-unit>
+			<trans-unit><source>SeparatorActive</source>
+				<target>Разделитель в активном состоянии</target>
+			</trans-unit>
+			<trans-unit><source>SeparatorHovered</source>
+				<target>Разделитель под курсором мыши</target>
+			</trans-unit>
+			<trans-unit><source>ShowCloseButtonOnSelectedTab</source>
+				<target>Показывать кнопку 'Закрыть' у текущей вкладки</target>
+			</trans-unit>
+			<trans-unit><source>ShowCloseButtonOnUnselectedTab</source>
+				<target>Показывать кнопку 'Закрыть' у неактивных вкладок</target>
+			</trans-unit>
+			<trans-unit><source>Size</source>
+				<target>Размер</target>
+			</trans-unit>
+			<trans-unit><source>SliderGrab</source>
+				<target>Ползунок в режиме перетаскивания</target>
+			</trans-unit>
+			<trans-unit><source>SliderGrabActive</source>
+				<target>Активный ползунок в режиме перетаскивания</target>
+			</trans-unit>
+			<trans-unit><source>Style settings</source>
+				<target>Настройки стиля</target>
+			</trans-unit>
+			<trans-unit><source>Tab</source>
+				<target>Вкладка</target>
+			</trans-unit>
+			<trans-unit><source>TabBarBorder</source>
+				<target>Показывать ограничивающие рамки окна-вкладки</target>
+			</trans-unit>
+			<trans-unit><source>TabBarOverlineSize</source>
+				<target>Толщина полосы обводки выбранных вкладок</target>
+			</trans-unit>
+			<trans-unit><source>TabBorder</source>
+				<target>Показывать ограничивающие рамки вкладок</target>
+			</trans-unit>
+			<trans-unit><source>TabDimmed</source>
+				<target>Затемненная вкладка</target>
+			</trans-unit>
+			<trans-unit><source>TabDimmedSelected</source>
+				<target>Затемненная выбранная вкладка</target>
+			</trans-unit>
+			<trans-unit><source>TabDimmedSelectedOverline</source>
+				<target>Окантовка затемненной выбранной вкладки</target>
+			</trans-unit>
+			<trans-unit><source>TabHovered</source>
+				<target>Вкладка под курсором мыши</target>
+			</trans-unit>
+			<trans-unit><source>TabMinWidthBase</source>
+				<target>Минимальная ширина вкладок</target>
+			</trans-unit>
+			<trans-unit><source>TabMinWidthShrink</source>
+				<target>Минимальная ширина вкладок после сжатия</target>
+			</trans-unit>
+			<trans-unit><source>TabRounding</source>
+				<target>Радиус скругления вкладок</target>
+			</trans-unit>
+			<trans-unit><source>TabSelected</source>
+				<target>Выбранная вкладка</target>
+			</trans-unit>
+			<trans-unit><source>TabSelectedOverline</source>
+				<target>Окантовка выбранной вкладки</target>
+			</trans-unit>
+			<trans-unit><source>TableAngledHeadersAngle</source>
+				<target>Угол наклона заголовков столбцов таблиц</target>
+			</trans-unit>
+			<trans-unit><source>TableAngledHeadersTextAlign</source>
+				<target>Отсутпы для выравнивания заголовков внутри ячеек</target>
+			</trans-unit>
+			<trans-unit><source>TableBorderLight</source>
+				<target>Внутренние границы таблицы</target>
+			</trans-unit>
+			<trans-unit><source>TableBorderStrong</source>
+				<target>Границы заголовоков столбцов и внешние границы таблицы</target>
+			</trans-unit>
+			<trans-unit><source>TableHeader</source>
+				<target>Заголовок таблицы</target>
+			</trans-unit>
+			<trans-unit><source>TableHeaderBg</source>
+				<target>Задний фон заголовка таблицы</target>
+			</trans-unit>
+			<trans-unit><source>TableRowBg</source>
+				<target>Задний четной строки таблицы</target>
+			</trans-unit>
+			<trans-unit><source>TableRowBgAlt</source>
+				<target>Задний нечетной строки таблицы</target>
+			</trans-unit>
+			<trans-unit><source>Tables layout settings</source>
+				<target>Настройки алгоритмов расчета геометрии таблиц</target>
+			</trans-unit>
+			<trans-unit><source>Tabs layout settings</source>
+				<target>Настройки алгоритмов расчета геометрии окон с вкладками</target>
+			</trans-unit>
+			<trans-unit><source>Text</source>
+				<target>Текст</target>
+			</trans-unit>
+			<trans-unit><source>TextDisabled</source>
+				<target>Неактивный текст</target>
+			</trans-unit>
+			<trans-unit><source>TextLink</source>
+				<target>Гипперссылка</target>
+			</trans-unit>
+			<trans-unit><source>TextSelectedBg</source>
+				<target>Задний фон выбранного текста</target>
+			</trans-unit>
+			<trans-unit><source>TitleBg</source>
+				<target>Заголовок</target>
+			</trans-unit>
+			<trans-unit><source>TitleBgActive</source>
+				<target>Активный заголовок</target>
+			</trans-unit>
+			<trans-unit><source>TitleBgCollapsed</source>
+				<target>Заголовок в свернутом состоянии</target>
+			</trans-unit>
+			<trans-unit><source>TouchExtraPadding</source>
+				<target>Расширение зоны скликивания окон и виджетов</target>
+			</trans-unit>
+			<trans-unit><source>Translation file</source>
+				<target>Файл перевода</target>
+			</trans-unit>
+			<trans-unit><source>TreeLines</source>
+				<target>Линии окантовки иерархии дерева</target>
+			</trans-unit>
+			<trans-unit><source>TreeLinesFlags</source>
+				<target>Режим работы алгоритма рисовки линий окантовки иерархии</target>
+			</trans-unit>
+			<trans-unit><source>TreeLinesRounding</source>
+				<target>Радиус скругления линий окантовки иерархии</target>
+			</trans-unit>
+			<trans-unit><source>TreeLinesSize</source>
+				<target>Толщина линий окантовки иерархии</target>
+			</trans-unit>
+			<trans-unit><source>Trees layout settings</source>
+				<target>Настройки алгоритмов рисовки иерархий</target>
+			</trans-unit>
+			<trans-unit><source>Value</source>
+				<target>Значение</target>
+			</trans-unit>
+			<trans-unit><source>WindowBg</source>
+				<target>Задний фон окна</target>
+			</trans-unit>
+			<trans-unit><source>WindowBorder</source>
+				<target>Показывать ограничивающие рамки окон</target>
+			</trans-unit>
+			<trans-unit><source>WindowPadding</source>
+				<target>Отступы вокруг окон</target>
+			</trans-unit>
+			<trans-unit><source>WindowRounding</source>
+				<target>Радиус скругления окон</target>
+			</trans-unit>
+			<trans-unit><source>Windows</source>
+				<target>Окна</target>
+			</trans-unit>
+			<trans-unit><source>Yes</source>
+				<target>Да</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

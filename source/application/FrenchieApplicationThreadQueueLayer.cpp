@@ -5,6 +5,7 @@
 using namespace Frenchie::Core;
 using namespace Frenchie::Application;
 
+// Thread
 Thread::Thread(std::function<void(const Thread*)> _Worker, const std::string& _Name) : 
     m_Worker(_Worker),
     m_Name(_Name), 
@@ -25,19 +26,19 @@ Frenchie::Core::UUID4 Thread::get_uuid() const
     return m_UUID;
 }
 
-void Thread::stop()
+void Thread::stop() const
 {
     std::unique_lock<std::mutex> lock(m_Mutex);
     m_Stopped = true;
 }
 
-void Thread::pause()
+void Thread::pause() const
 {
     std::unique_lock<std::mutex> lock(m_Mutex);
     m_Paused = true;
 }
 
-void Thread::resume()
+void Thread::resume() const
 {
     std::unique_lock<std::mutex> lock(m_Mutex);
     m_Paused = false;
@@ -85,7 +86,7 @@ void Thread::on_failed(const std::function<void(const Thread*)>& _Callback)
     m_OnFailed = _Callback;
 }
 
-bool Thread::awake()
+bool Thread::launch()
 {
     Frenchie::Core::ThreadPool::instance()->enqueue(
         [this]()
@@ -132,4 +133,72 @@ void Thread::finish()
         if(m_OnFailed != nullptr)
             m_OnFailed(this);
     }
+}
+
+ThreadQueue::ThreadQueue(){}
+ThreadQueue::~ThreadQueue(){}
+
+void ThreadQueue::frame_start()
+{
+    // launch
+    while(!m_Queue.empty())
+    {
+        auto process = m_Queue.front();
+
+        if(process != nullptr && process->launch())
+            m_Executed.push_back(process);
+        m_Queue.pop();
+    }
+
+    // finish
+    for(auto it = m_Executed.begin(); it != m_Executed.end(); it++)
+    {
+        if((*it)->finished() || (*it)->stopped() || (*it)->failed())
+        {
+            // call finish method only if thread has not been stopped
+            // and has not failed it's operation
+            if(!(*it)->stopped() && !(*it)->failed())
+                (*it)->finish();
+
+            auto rm = it;
+            it++;
+            m_Executed.erase(rm);
+
+            if(it == m_Executed.end())
+                break;
+        }
+    }
+}
+
+void ThreadQueue::finish()
+{
+    // cancel all on finish
+    for(auto it = m_Executed.begin(); it != m_Executed.end(); it++)
+        (*it)->stop();
+}
+
+bool ThreadQueue::allows_multiple_instances() const
+{
+    return true;
+}
+
+Frenchie::Core::Reference<Thread> ThreadQueue::push(std::function<void(const Thread*)> _Worker, const std::string& _Name)
+{
+    m_Queue.push(std::make_shared<Thread>(_Worker, _Name));
+    return m_Queue.back();
+}
+
+std::list<std::shared_ptr<Thread>>::const_iterator ThreadQueue::begin() const
+{
+    return m_Executed.begin();
+}
+
+std::list<std::shared_ptr<Thread>>::const_iterator ThreadQueue::end() const
+{
+    return m_Executed.end();
+}
+
+bool ThreadQueue::empty() const
+{
+    return m_Queue.empty() && m_Executed.empty();
 }

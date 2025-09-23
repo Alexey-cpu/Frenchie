@@ -1,41 +1,149 @@
-#include <FrenchieEditorPreferencesStyleLayer.hpp>
+#include <FrenchieEditorPreferencesExplorerStyle.hpp>
 
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
-#include <FrenchieEditorConfigurationFontsLayer.hpp>
-#include <FrenchieEditorFileSystemPathScannerDialog.hpp>
-#include <FrenchieEditorConfigurationTranslatorLayer.hpp>
-
-// IMGUI
-#include <imgui.h>
-#include <imgui_internal.h>
-
-static const char* GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
-{
-    if (flags == ImGuiTreeNodeFlags_DrawLinesNone) return "DrawLinesNone";
-    if (flags == ImGuiTreeNodeFlags_DrawLinesFull) return "DrawLinesFull";
-    if (flags == ImGuiTreeNodeFlags_DrawLinesToNodes) return "DrawLinesToNodes";
-    return "";
-}
+#include <FrenchieApplicationEditorDialog.hpp>
+#include <FrenchieEditorConfigurationLoaderFonts.hpp>
+#include <FrenchieEditorConfigurationLoaderThemes.hpp>
+#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieEditorFileSystemExplorerDialog.hpp>
+#include <FrenchieEditorFileSystemExplorerPathScannerDialog.hpp>
 
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Preferences;
 using namespace Frenchie::Editor::Configuration;
 
+// Add to main menu
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace MainMenu
+        {
+            class OpenStyleSettingsAction : 
+                public Frenchie::Application::Command::Registry<OpenStyleSettingsAction, void*>
+            {
+            public:
+
+                OpenStyleSettingsAction(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenStyleSettingsAction, void*>(_Sender){}
+                
+                virtual ~OpenStyleSettingsAction(){}
+
+                // Frenchie::Application::Command
+                virtual void execute() override
+                {
+                    Frenchie::Application::application()->push_layer<Frenchie::Editor::Preferences::Style>()->show();
+                }
+
+                // Command::TRegistryType
+                static std::string factory_id()
+                {
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Windows::Preferences::Style settings");
+                }
+            };
+
+            const bool openStyleSettingsAction = OpenStyleSettingsAction::registerFactory();
+        }
+    }
+}
+
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace Preferences
+        {
+            class SelectBuiltInTheme : public Dialog
+            {
+            public:
+                SelectBuiltInTheme() : 
+                    Dialog(Translator::translate("Select built-in theme...")){}
+
+                virtual ~SelectBuiltInTheme(){}
+
+                virtual bool awake() override
+                {
+                    m_ReferenceStyle = ImGui::GetStyle();
+                    return true;
+                }
+
+                // Frenchie::Application::Editor::Dialog
+                virtual void draw_content() override
+                {
+                    if (ImGui::Combo("##", &m_StyleIndex, "Dark\0Light\0Classic\0"))
+                    {
+                        switch (m_StyleIndex)
+                        {
+                            case 0:
+                            {
+                                ImGui::StyleColorsDark(); 
+                                break;
+                            }
+
+                            case 1: 
+                            {
+                                ImGui::StyleColorsLight(); 
+                                break;
+                            }
+
+                            case 2: 
+                            {
+                                ImGui::StyleColorsClassic(); 
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                virtual void draw_buttons() override
+                {
+                    if(ImGui::Button(Translator::translate("Ok").c_str()))
+                    {
+                        m_Accepted = true;
+                        close();
+                    }
+                    
+                    ImGui::SameLine();
+                    
+                    if(ImGui::Button(Translator::translate("Cancel").c_str()))
+                    {
+                        ImGui::GetStyle() = m_ReferenceStyle;
+                        close();
+                    }
+                }
+
+                virtual void finish() override
+                {
+                    if(m_Accepted) 
+                        m_OnAccepted();
+                }
+
+                void on_accepted(const std::function<void()>& _Callback)
+                {
+                    m_OnAccepted = _Callback;
+                }
+                
+            protected:
+
+                int        m_StyleIndex = -1;
+                ImGuiStyle m_ReferenceStyle;
+                std::function<void()> m_OnAccepted;
+
+                bool m_Accepted{false};
+            };
+        }
+    }
+}
+
 // Style
 Style::Style() : 
-    Frenchie::Application::Layer::Registry<Style>(
-        Translator::translate("Style settings")){}
+    Frenchie::Application::Layer(Translator::translate("Style settings")){}
 
 Style::~Style(){}
-
-std::string Style::factory_id()
-{
-    return STRINGIFY(Frenchie::Application::Editor::Preferences::Style);
-}
 
 bool Style::awake()
 {
@@ -49,10 +157,33 @@ void Style::frame_update()
     set_name(Translator::translate("Style settings"));
 
     // draw
-    ImGui::BeginChild(fmt::format("{}###Style settings", get_name()).c_str());
+    ImGui::Begin(fmt::format("{}###Style settings", get_name()).c_str(), &m_Opened);
+    {
+        if (ImGui::TreeNode(Translator::translate("Application layout settings").c_str()))
+        {
+            draw_geometry_settings();
+            ImGui::TreePop();
+        }
 
-    draw_style_editor();
-    ImGui::EndChild();
+        if (ImGui::TreeNode(Translator::translate("Application color scheme settings").c_str()))
+        {
+            draw_color_settings();
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode(Translator::translate("Application font settings").c_str()))
+        {
+            draw_fonts_settings();
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode(Translator::translate("Application renderer settings").c_str()))
+        {
+            draw_rendering_settings();
+            ImGui::TreePop();
+        }
+    }
+    ImGui::End();
 }
 
 bool Style::allows_multiple_instances() const
@@ -60,38 +191,11 @@ bool Style::allows_multiple_instances() const
     return false;
 }
 
-void Style::draw_style_editor()
-{
-    if (ImGui::TreeNode(Translator::translate("Geometry settings").c_str()))
-    {
-        draw_geometry_settings();
-        ImGui::TreePop();
-    }
-
-    if (ImGui::TreeNode(Translator::translate("Color settings").c_str()))
-    {
-        draw_color_settings();
-        ImGui::TreePop();
-    }
-
-    if (ImGui::TreeNode(Translator::translate("Font settings").c_str()))
-    {
-        draw_fonts_settings();
-        ImGui::TreePop();
-    }
-
-    if (ImGui::TreeNode(Translator::translate("Rendering settings").c_str()))
-    {
-        draw_rendering_settings();
-        ImGui::TreePop();
-    }
-}
-
 void Style::draw_geometry_settings()
 {
     auto& style = ImGui::GetStyle();
 
-    ImGui::SeparatorText(Translator::translate("Main geometry settings").c_str());
+    ImGui::SeparatorText(Translator::translate("Main layout settings").c_str());
     {
         ImGui::SliderFloat2(Translator::translate("WindowPadding").c_str(), (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2(Translator::translate("FramePadding").c_str(), (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
@@ -103,7 +207,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat(Translator::translate("GrabMinSize").c_str(), &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
     }
 
-    ImGui::SeparatorText(Translator::translate("Borders geometry settings").c_str());
+    ImGui::SeparatorText(Translator::translate("Borders layout settings").c_str());
     {
         {
             bool checked = style.WindowBorderSize > 0.0;
@@ -137,12 +241,12 @@ void Style::draw_geometry_settings()
 
         {
             bool checked = style.TabBarBorderSize > 0.0f;
-            if(ImGui::Checkbox("TabBarBorder", &checked))
+            if(ImGui::Checkbox(Translator::translate("TabBarBorder").c_str(), &checked))
                 style.TabBarBorderSize = (float)(checked);
         }
     }
 
-    ImGui::SeparatorText(Translator::translate(Translator::translate("Geometry rounding settings").c_str()).c_str());
+    ImGui::SeparatorText(Translator::translate(Translator::translate("Layout rounding settings").c_str()).c_str());
     {
         ImGui::SliderFloat(Translator::translate("WindowRounding").c_str(), &style.WindowRounding, 0.0f, 12.0f, "%.0f");
         ImGui::SliderFloat(Translator::translate("ChildRounding").c_str(), &style.ChildRounding, 0.0f, 12.0f, "%.0f");
@@ -153,7 +257,7 @@ void Style::draw_geometry_settings()
         ImGui::SliderFloat(Translator::translate("TabRounding").c_str(), &style.TabRounding, 0.0f, 12.0f, "%.0f");
     }
 
-    ImGui::SeparatorText(Translator::translate("Tabs geometry settings").c_str());
+    ImGui::SeparatorText(Translator::translate("Tabs layout settings").c_str());
     {
         ImGui::SliderFloat(Translator::translate("TabBarOverlineSize").c_str(), &style.TabBarOverlineSize, 0.0f, 3.0f, "%.0f");
         ImGui::DragFloat(Translator::translate("TabMinWidthBase").c_str(), &style.TabMinWidthBase, 0.5f, 1.0f, 500.0f, "%.0f");
@@ -172,14 +276,14 @@ void Style::draw_geometry_settings()
         }
     }
 
-    ImGui::SeparatorText(Translator::translate("Tables geometry settings").c_str());
+    ImGui::SeparatorText(Translator::translate("Tables layout settings").c_str());
     {
         ImGui::SliderFloat2(Translator::translate("CellPadding").c_str(), (float*)&style.CellPadding, 0.0f, 20.0f, "%.0f");
         ImGui::SliderFloat2(Translator::translate("TableAngledHeadersTextAlign").c_str(), (float*)&style.TableAngledHeadersTextAlign, 0.0f, 1.0f, "%.2f");
-        ImGui::SliderAngle("TableAngledHeadersAngle", &style.TableAngledHeadersAngle, -50.0f, +50.0f);
+        ImGui::SliderAngle(Translator::translate("TableAngledHeadersAngle").c_str(), &style.TableAngledHeadersAngle, -50.0f, +50.0f);
     }
 
-    ImGui::SeparatorText(Translator::translate("Trees geometry settings").c_str());
+    ImGui::SeparatorText(Translator::translate("Trees layout settings").c_str());
     {
         if (ImGui::BeginCombo(Translator::translate("TreeLinesFlags").c_str(), GetTreeLinesFlagsName(style.TreeLinesFlags)))
         {
@@ -212,35 +316,142 @@ void Style::draw_color_settings()
 {
     auto& style = ImGui::GetStyle();
 
-    if (ImGui::ShowStyleSelector("Colors##Selector")){}
+    auto themes       = Frenchie::Editor::Configuration::Themes::instance()->get_supported_themes();
+    auto currentTheme = Frenchie::Editor::Configuration::Themes::instance()->get_current_theme();
 
-    static ImGuiTextFilter filter;
-    filter.Draw(Translator::translate("Colors filter").c_str(), ImGui::GetFontSize() * 16);
+    if(ImGui::BeginCombo(
+        "##", 
+        (currentTheme != nullptr ? currentTheme->get_name().c_str() : Translator::translate("There are not preconfigured themes...").c_str())))
+    {
+        for(auto&& theme : themes)
+        {
+            bool current = theme->is_current();
+            if(ImGui::Checkbox(theme->get_name().c_str(), &current)) 
+                theme->setup();
+        }
 
-    static ImGuiColorEditFlags alpha_flags = 0;
-    if (ImGui::RadioButton(Translator::translate("Opaque").c_str(), alpha_flags == ImGuiColorEditFlags_AlphaOpaque))
-        alpha_flags = ImGuiColorEditFlags_AlphaOpaque;
-    ImGui::SameLine();
+        ImGui::EndCombo();
+    }
+
+    // button callbacks
+    auto onBrowseAction = [this]()
+    {
+        auto dialog = Frenchie::Application::application()->push_layer<FileSystem::PathScannerDialog>(
+            [](const std::filesystem::path& _Path)->bool
+            {
+                return !std::filesystem::is_directory(_Path) && 
+                    Frenchie::Core::FileSystem::get_file_extention(_Path) == ".theme";
+            },
+            Translator::translate("Select path where to search for themes ...")
+        );
+
+        dialog->on_accepted(
+            [this](const std::map<std::filesystem::path, bool>& _Paths)
+            {
+                std::set<std::filesystem::path> paths;
+
+                for(auto&& path : _Paths) 
+                {
+                    if(path.second) 
+                        paths.insert(path.first);
+                }
+
+                Frenchie::Editor::Configuration::Themes::instance()->set_supported_themes(paths);
+            }
+        );
+    };
+
+    auto onSaveAction = [this]()
+    {
+        auto currentTheme = Frenchie::Editor::Configuration::Themes::instance()->get_current_theme();
     
-    if (ImGui::RadioButton(Translator::translate("Alpha").c_str(), alpha_flags == ImGuiColorEditFlags_None))
-        alpha_flags = ImGuiColorEditFlags_None;
-    ImGui::SameLine();
-    
-    if (ImGui::RadioButton(Translator::translate("Both").c_str(), alpha_flags == ImGuiColorEditFlags_AlphaPreviewHalf))
-        alpha_flags = ImGuiColorEditFlags_AlphaPreviewHalf;
+        if(currentTheme != nullptr) 
+            currentTheme->save();
+    };
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 10), ImVec2(FLT_MAX, FLT_MAX));
-    ImGui::BeginChild("##colors", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar);
+    auto onSaveAsAction = [this]()
+    {
+        Frenchie::Application::application()->push_layer<Frenchie::Editor::FileSystem::ExplorerDialog>(
+            Translator::translate("Select folder where to save theme ...")
+        )->on_accepted(
+            [this]()
+            {
+                Frenchie::Core::Reference<Frenchie::Editor::FileSystem::ExplorerDialog> dialog = 
+                    Frenchie::Application::application()->find_layer<Frenchie::Editor::FileSystem::ExplorerDialog>();
+
+                if(dialog == nullptr) 
+                    return;
+
+                auto currentPath = dialog->get_current_path();
+                auto currentFile = dialog->get_current_file();
+
+                if(!std::filesystem::exists(currentPath) || 
+                    currentFile.wstring().empty()) 
+                    return;
+
+                Frenchie::Editor::Configuration::Themes::instance()->create_theme(
+                    std::filesystem::path(
+                        currentPath.wstring().append(L"/").append(currentFile.filename())
+                    ).make_preferred()
+                )->save();
+            }
+        );
+    };
+
+    auto onSelectBuiltInThemeAction = 
+    [this, onSaveAsAction]()
+    {
+        Frenchie::Application::application()->push_layer<SelectBuiltInTheme>()->on_accepted(
+            [this, onSaveAsAction]()
+            {
+                // suggest user to save a selected built in style
+                onSaveAsAction();
+            }
+        );
+    };
+
+    ImGui::SameLine();
+    if(ImGui::Button(Translator::translate("Browse").c_str())) 
+        onBrowseAction();
+
+    ImGui::SameLine();
+    if(ImGui::Button("Save"))
+        onSaveAction();
+    
+    ImGui::SameLine();
+    if(ImGui::Button(Translator::translate("Save as").c_str()))
+        onSaveAsAction();
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(Translator::translate("Select built-in theme").c_str()))
+        onSelectBuiltInThemeAction();
+
+    m_ColorFilter.Draw(Translator::translate(Translator::translate("Filter colors").c_str()).c_str());
+
+    ImGui::SetNextWindowSizeConstraints(
+        ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 10), 
+        ImVec2(FLT_MAX, FLT_MAX));
+    
+    ImGui::BeginChild(
+        "##colors", 
+        ImVec2(0, 0), 
+        ImGuiChildFlags_Borders | 
+        ImGuiChildFlags_NavFlattened, 
+        ImGuiWindowFlags_AlwaysVerticalScrollbar | 
+        ImGuiWindowFlags_AlwaysHorizontalScrollbar);
+    
     ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
+
     for (int i = 0; i < ImGuiCol_COUNT; i++)
     {
         std::string name = get_style_color_name(i);
         
-        if (!filter.PassFilter(name.c_str()))
+        if (!m_ColorFilter.PassFilter(name.c_str()))
             continue;
         ImGui::PushID(i);
         
-        ImGui::ColorEdit4("##color", (float*)&style.Colors[i], ImGuiColorEditFlags_AlphaBar | alpha_flags);
+        ImGui::ColorEdit4("##color", (float*)&style.Colors[i], ImGuiColorEditFlags_AlphaBar);
         
         // apply / revert functionality...
         if (memcmp(&style.Colors[i], &m_ReferenceStyle.Colors[i], sizeof(ImVec4)) != 0)
@@ -294,10 +505,10 @@ void Style::draw_fonts_settings()
                 return !std::filesystem::is_directory(_Path) && 
                     Frenchie::Core::FileSystem::get_file_extention(_Path) == ".ttf";
             },
-            Translator::translate("Select path where to search for fonts...")
+            Translator::translate("Select path where to search for fonts ...")
         );
 
-        dialog->on_finished(
+        dialog->on_accepted(
             [this](const std::map<std::filesystem::path, bool>& _Paths)
             {
                 std::set<std::filesystem::path> paths;
@@ -330,7 +541,7 @@ void Style::draw_rendering_settings()
     if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
 
     // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-    ImGui::DragFloat(Translator::translate("Circle tesseletion maimum error").c_str(), &style.CircleTessellationMaxError , 0.005f, 0.10f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::DragFloat(Translator::translate("Circle tessellation maximum error").c_str(), &style.CircleTessellationMaxError , 0.005f, 0.10f, 5.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
     const bool show_samples = ImGui::IsItemActive();
     if (show_samples)
         ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
@@ -438,4 +649,12 @@ std::string Style::get_style_color_name(ImGuiCol idx)
     }
 
     return Translator::translate("Unknown");
+}
+
+const char* Style::GetTreeLinesFlagsName(ImGuiTreeNodeFlags flags)
+{
+    if (flags == ImGuiTreeNodeFlags_DrawLinesNone) return "DrawLinesNone";
+    if (flags == ImGuiTreeNodeFlags_DrawLinesFull) return "DrawLinesFull";
+    if (flags == ImGuiTreeNodeFlags_DrawLinesToNodes) return "DrawLinesToNodes";
+    return "";
 }

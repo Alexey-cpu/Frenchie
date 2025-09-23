@@ -5,7 +5,7 @@
 
 using namespace Frenchie::Core;
 
-// Platform independent code
+// Platform agnostic code
 Process::Process(const std::string& _Command, const std::string& _Arguments)
 {
     m_Pool.enqueue(
@@ -18,7 +18,12 @@ Process::Process(const std::string& _Command, const std::string& _Arguments)
 
 Process::~Process()
 {
+    // stop process
     stop();
+
+    // remove process info
+    if(m_Info != nullptr) 
+        delete m_Info;
 }
 
 std::string Process::status() const
@@ -27,7 +32,7 @@ std::string Process::status() const
     return m_Status.m_Buffer;
 }
 
-// Platform dependent code
+// Platform specific code
 #ifdef IS_UNIX
 
 // Unix
@@ -190,61 +195,31 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
 #include <windows.h>
 #include <stdio.h>
 
+struct ProcessInfo
+{
+    PROCESS_INFORMATION pi;
+};
+
 void Process::stop()
 {
-    try
-    {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
-        TerminateProcess(pi.hProcess, 1);
-    }
-    catch(const std::exception& e)
-    {
-        m_Status.push(e.what());
-    }
+    TerminateProcess(reinterpret_cast<ProcessInfo*>(m_Info)->pi.hProcess, 1);
 }
 
 void Process::pause()
 {
-    try
-    {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
-        DebugActiveProcess(pi.dwProcessId);
-    }
-    catch(const std::exception& e)
-    {
-        m_Status.push(e.what());
-    }
+    DebugActiveProcess(reinterpret_cast<ProcessInfo*>(m_Info)->pi.dwProcessId);
 }
 
 void Process::resume()
 {
-    try
-    {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
-        DebugActiveProcessStop(pi.dwProcessId);
-    }
-    catch(const std::exception& e)
-    {
-        m_Status.push(e.what());
-    }
+    DebugActiveProcessStop(reinterpret_cast<ProcessInfo*>(m_Info)->pi.dwProcessId);
 }
 
 bool Process::alive() const
 {
-    try
-    {
-        PROCESS_INFORMATION pi = std::any_cast<PROCESS_INFORMATION>(m_Info);
-        DWORD exitCode;
-        return GetExitCodeProcess(pi.hProcess, &exitCode) && exitCode == STILL_ACTIVE;
-    }
-    catch(const std::exception& e)
-    {
-        m_Status.push(e.what());
-        return false;
-    }
+    DWORD exitCode;
+    return GetExitCodeProcess(reinterpret_cast<ProcessInfo*>(m_Info)->pi.hProcess, &exitCode) && 
+            exitCode == STILL_ACTIVE;
 }
 
 void Process::execute(const std::string& _Command, const std::string& _Arguments)
@@ -253,7 +228,10 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
     HANDLE              hWritePipe;
     SECURITY_ATTRIBUTES sa;
     STARTUPINFO         si;
-    PROCESS_INFORMATION pi;
+
+    // allocate process info
+    ProcessInfo* process = new ProcessInfo();
+    m_Info = process;
 
     // Set up security attributes for pipe handles
     sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
@@ -281,26 +259,28 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
     si.hStdOutput = hWritePipe;
     si.hStdError  = hWritePipe; // Redirect stderr to the same pipe
 
+    char cmd[ MAX_PATH ];
+    size_t nSize = _countof(cmd);
+    getenv_s(&nSize, cmd, "COMSPEC" );
+
     // Create the child process
     if (!CreateProcess(
-        NULL,                                                      // No module name (use command line)
-        (LPSTR)fmt::format("{} {}", _Command, _Arguments).c_str(), // Command line
-        NULL,                                                      // Process security attributes
-        NULL,                                                      // Thread security attributes
-        TRUE,                                                      // Inherit handles
-        0,                                                         // Creation flags
-        NULL,                                                      // Environment
-        NULL,                                                      // Current directory
-        &si,                                                       // STARTUPINFO
-        &pi                                                        // PROCESS_INFORMATION
+        NULL,                                                                 // No module name (use command line)
+        (LPSTR)fmt::format("{} /c {} {}", cmd, _Command, _Arguments).c_str(), // Command line
+        NULL,                                                                 // Process security attributes
+        NULL,                                                                 // Thread security attributes
+        TRUE,                                                                 // Inherit handles
+        0,                                                                    // Creation flags
+        NULL,                                                                 // Environment
+        NULL,                                                                 // Current directory
+        &si,                                                                  // STARTUPINFO
+        &process->pi                                                          // PROCESS_INFORMATION
     )) {
         // Handle error
         CloseHandle(hReadPipe);
         CloseHandle(hWritePipe);
         return;
     }
-
-    m_Info = pi;
 
     // Close the write end of the pipe in the parent process
     CloseHandle(hWritePipe);
@@ -316,12 +296,12 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
     }
 
     // Wait for the child process to exit (optional)
-    WaitForSingleObject(pi.hProcess, INFINITE);
+    WaitForSingleObject(process->pi.hProcess, INFINITE);
 
     // Close remaining handles
     CloseHandle(hReadPipe);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    CloseHandle(process->pi.hProcess);
+    CloseHandle(process->pi.hThread);
 }
 
 #endif

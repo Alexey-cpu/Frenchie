@@ -1,4 +1,4 @@
-#include <FrenchieApplicationEditorAbstractDialogLayer.hpp>
+#include <FrenchieApplicationEditorDialog.hpp>
 
 // IMGUI
 #include <imgui.h>

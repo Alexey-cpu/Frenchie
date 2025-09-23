@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FrenchieEditorFileSystemExplorerLayer.hpp>
+#include <FrenchieEditorFileSystemExplorer.hpp>
 
 namespace Frenchie
 {
@@ -19,19 +19,10 @@ namespace Frenchie
                 virtual bool allows_multiple_instances() const override;
 
                 // API
-                void on_accepted(const std::function<void()>& _Callback)
-                {
-                    m_OnAccepted = _Callback;
-                }
-                
-                void on_canceled(const std::function<void()>& _Callback)
-                {
-                    m_OnCanceled = _Callback;
-                }
+                void on_accepted(const std::function<void()>& _Callback);
 
             protected:
                 std::function<void()> m_OnAccepted = nullptr;
-                std::function<void()> m_OnCanceled = nullptr;
             };
         }
     }
