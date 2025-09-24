@@ -159,8 +159,12 @@ enum DrawLayers : int
 {
 	Text,
 	Cursor,
+	Lines,
 	Count
 };
+
+const char ENTER = '\n';
+const char TAB   = '\t';
 
 // view
 TextEditor::TextEditor() : Frenchie::Application::Layer(STRINGIFY(TextEditor)){}
@@ -196,15 +200,8 @@ bool TextEditor::awake()
 
 void TextEditor::frame_update()
 {
-    // constants
-    const char ENTER = '\n';
-    const char TAB   = '\t';
-
     ImGui::Begin("TextEditor", &m_Opened);
     {
-		// handle mouse events
-		handle_mouse_events();
-
 		// setup next window content size
 		ImGui::SetNextWindowContentSize(m_TextContentsRect.GetSize());
 
@@ -214,23 +211,26 @@ void TextEditor::frame_update()
 			ImGuiChildFlags_::ImGuiChildFlags_None, 
 			ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar);
         {
+			// split draw list on channels
+			auto     drawList = ImGui::GetWindowDrawList();
+			drawList->ChannelsSplit(DrawLayers::Count);
+
+			// handle mouse events
+			handle_mouse_events();
+
+			ImVec2 mouse = ImGui::GetMousePos() - ImGui::GetCursorScreenPos();
+
             // retrieve io and draw list
             ImGuiIO& imguiIo  = ImGui::GetIO();
-            auto     drawList = ImGui::GetWindowDrawList();
-
-			// split draw list on channels
-			drawList->ChannelsSplit(DrawLayers::Count);
 
             // draw cursor
             {
 				drawList->ChannelsSetCurrent(DrawLayers::Cursor);
 
-                auto mouse = ImGui::GetMousePos() - ImGui::GetCursorScreenPos();
-
 				m_CursorShowEndTime     = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 				m_CursorShowElapsedTime = m_CursorShowEndTime - m_CursorShowStartTime;
 
-				if(m_CursorShowElapsedTime > 1000)
+				if(m_CursorShowElapsedTime > 500)
 				{
 					drawList->AddText(
 						m_CursorPosition,
@@ -238,7 +238,7 @@ void TextEditor::frame_update()
 						"|"
 					);
 
-					if(m_CursorShowElapsedTime > 1500) 
+					if(m_CursorShowElapsedTime > 1000) 
 						m_CursorShowStartTime = m_CursorShowEndTime;
 				}
 
@@ -250,11 +250,11 @@ void TextEditor::frame_update()
             }
 
             // draw text line by line
+			update_text_line_offset();
+
 			drawList->ChannelsSetCurrent(DrawLayers::Text);
 
-            ImVec2 inputTextLineOffset = ImVec2(0.f, 0.f);
-
-			for (size_t textBegin = 0, textEnd = 0, lineNumber = 0; textBegin < m_TextBuffer.size(); ++textEnd, textBegin = textEnd)       
+			for (size_t textBegin = 0, textEnd = 0, lineNumber = 0; textBegin < m_TextBuffer.size(); ++textEnd, textBegin = textEnd)
 			{
 				// identify text line borders
 				while(textEnd < m_TextBuffer.size() && m_TextBuffer[textEnd] != ENTER) ++textEnd;
@@ -262,7 +262,7 @@ void TextEditor::frame_update()
 				// draw line number rectangle
 				{
 					drawList->AddText(
-						m_TextLineNumbersRect.GetTL() + ImVec2(0.f, inputTextLineOffset.y),
+						m_TextLineNumbersRect.GetTL() + ImVec2(0.f, m_TextLineOffset.y),
 						IM_COL32(0, 255, 0, 255),
 						std::to_string(++lineNumber).c_str()
 					);
@@ -271,38 +271,21 @@ void TextEditor::frame_update()
 				// draw text line
 				{
 					drawList->AddText(
-						m_TextContentsRect.GetTL() + ImVec2(0.f, inputTextLineOffset.y),
+						m_TextContentsRect.GetTL() + ImVec2(0.f, m_TextLineOffset.y),
 						IM_COL32(0, 255, 0, 255),
 						&m_TextBuffer[textBegin],
 						&m_TextBuffer[textEnd]
 					);
 				}
 
-				// compute geometry
-				inputTextLineOffset = ImVec2(
-					std::max<float>(inputTextLineOffset.x, ImGui::CalcTextSize(&m_TextBuffer[textBegin], &m_TextBuffer[textEnd]).x), 
-					inputTextLineOffset.y + ImGui::GetFontSize());
-
-				// compute input text bounding rectangle
-				m_TextContentsRect = ImRect(
-					ImGui::GetCursorScreenPos() + ImVec2(m_TextLineNumbersRect.GetSize().x, 0.f), 
-					ImGui::GetCursorScreenPos() + ImVec2(m_TextLineNumbersRect.GetSize().x, 0.f) + inputTextLineOffset);
-
-				// compute line number rect
-				m_TextLineNumbersRect = ImRect(
-					ImGui::GetCursorScreenPos(), 
-					ImGui::GetCursorScreenPos() + ImVec2(ImGui::CalcTextSize(std::to_string(INT_MAX).append("\t\t").c_str()).x, inputTextLineOffset.y));
+				update_text_line_offset(&m_TextBuffer[textBegin], &m_TextBuffer[textEnd], m_TextLineOffset);
 			}
 
-			// draw text bounding rectangle
-			{
-				drawList->AddRect(m_TextContentsRect.Min, m_TextContentsRect.Max, IM_COL32(255, 0, 0, 255));
-			}
+			update_text_geometry();
 
-			// draw line number rect
-			{
-				drawList->AddRect(m_TextLineNumbersRect.Min, m_TextLineNumbersRect.Max, IM_COL32(0, 255, 0, 255));
-			}
+			// debug
+			drawList->AddRect(m_TextContentsRect.Min, m_TextContentsRect.Max, IM_COL32(255, 0, 0, 255));
+			drawList->AddRect(m_TextLineNumbersRect.Min, m_TextLineNumbersRect.Max, IM_COL32(0, 255, 0, 255));
         }
 
         ImGui::EndChild();
@@ -328,4 +311,62 @@ bool TextEditor::allows_multiple_instances() const
 void TextEditor::handle_mouse_events()
 {
 	m_CursorPosition = m_TextContentsRect.Min;
+
+	// get a mouse position relative to window
+	auto mouse = ImGui::GetMousePos() - ImGui::GetCursorScreenPos();
+
+	// update cursor position
+	// if (ImGui::IsWindowFocused() && 
+	// 	ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) &&
+	// 	m_TextContentsRect.Contains(ImGui::GetMousePos()))
+	{
+		 auto     drawList = ImGui::GetWindowDrawList();
+
+		drawList->ChannelsSetCurrent(DrawLayers::Cursor);
+
+		// look for a text line containing cursor
+		update_text_line_offset();
+
+		for (size_t textBegin = 0, textEnd = 0, lineNumber = 0; textBegin < m_TextBuffer.size(); ++lineNumber, ++textEnd, textBegin = textEnd)
+		{
+			while(textEnd < m_TextBuffer.size() && m_TextBuffer[textEnd] != ENTER) ++textEnd;
+
+			auto prev = m_TextLineOffset;
+
+			update_text_line_offset(&m_TextBuffer[textBegin], &m_TextBuffer[textEnd], prev);
+
+			auto curr = m_TextLineOffset;
+
+			ImRect textLineBoundingRect = ImRect(m_TextContentsRect.GetTL() + ImVec2(0.f, prev.y), m_TextContentsRect.GetTL() + curr);
+
+			if(textLineBoundingRect.Contains(ImGui::GetMousePos()))
+			{
+				std::cout << "contains at " << lineNumber << " line \n";
+			}
+		}
+	}
+}
+
+void TextEditor::update_text_line_offset(const char* _Begin, const char* _End, ImVec2 _PreviousValue)
+{
+	if(_Begin == nullptr || _End == nullptr) 
+	{
+		m_TextLineOffset = ImVec2(0.f, 0.f);
+		return;
+	}
+
+	m_TextLineOffset = ImVec2(
+		std::max<float>(_PreviousValue.x, ImGui::CalcTextSize(_Begin, _End).x), 
+		_PreviousValue.y + ImGui::GetFontSize());
+}
+
+void TextEditor::update_text_geometry()
+{
+	m_TextContentsRect = ImRect(
+		ImGui::GetCursorScreenPos() + ImVec2(m_TextLineNumbersRect.GetSize().x, 0.f), 
+		ImGui::GetCursorScreenPos() + ImVec2(m_TextLineNumbersRect.GetSize().x, 0.f) + m_TextLineOffset);
+
+	m_TextLineNumbersRect = ImRect(
+		ImGui::GetCursorScreenPos(), 
+		ImGui::GetCursorScreenPos() + ImVec2(ImGui::CalcTextSize(std::to_string(INT_MAX).append("\t\t").c_str()).x, m_TextLineOffset.y));
 }

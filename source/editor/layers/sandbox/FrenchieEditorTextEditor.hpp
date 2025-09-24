@@ -29,6 +29,7 @@ namespace Frenchie
         protected:
             ImRect      m_TextContentsRect;
             ImRect      m_TextLineNumbersRect;
+            ImVec2      m_TextLineOffset;
             std::string m_TextBuffer;
 
             // cursor attributes
@@ -39,6 +40,9 @@ namespace Frenchie
 
             // service methods
             void handle_mouse_events();
+
+            void update_text_line_offset(const char* _Begin = nullptr, const char* _End = nullptr, ImVec2 _PreviousValue = ImVec2(0.f, 0.f));
+            void update_text_geometry();
         };
     }
 }
