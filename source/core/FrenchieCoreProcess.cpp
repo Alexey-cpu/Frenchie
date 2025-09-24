@@ -23,7 +23,7 @@ Process::~Process()
 
     // remove process info
     if(m_Info != nullptr) 
-        delete m_Info;
+        free(m_Info);
 }
 
 std::string Process::status() const
@@ -35,6 +35,11 @@ std::string Process::status() const
 // Platform specific code
 #ifdef IS_UNIX
 
+struct ProcessInfo
+{
+    int PID = -1;
+};
+
 // Unix
 #include <unistd.h>
 #include <signal.h>
@@ -42,54 +47,25 @@ std::string Process::status() const
 void Process::stop()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-
-    try
-    {
-        kill(std::any_cast<int>(m_Info), SIGKILL);
-    }
-    catch(...)
-    {
-    }
+    kill(reinterpret_cast<ProcessInfo*>(m_Info)->PID, SIGKILL);
 }
 
 void Process::pause()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-
-    try
-    {
-        kill(std::any_cast<int>(m_Info), SIGSTOP);
-    }
-    catch(...)
-    {
-    }
+    kill(reinterpret_cast<ProcessInfo*>(m_Info)->PID, SIGSTOP);
 }
 
 void Process::resume()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    
-    try
-    {
-       kill(std::any_cast<int>(m_Info), SIGCONT);
-    }
-    catch(...)
-    {
-    }
+    kill(reinterpret_cast<ProcessInfo*>(m_Info)->PID, SIGCONT);
 }
 
 bool Process::alive() const
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-
-    try
-    {
-        return kill(std::any_cast<int>(m_Info), 0) == 0;
-    }
-    catch(...)
-    {
-        return false;
-    }
+    return kill(reinterpret_cast<ProcessInfo*>(m_Info)->PID, 0) == 0;
 }
 
 void Process::execute(const std::string& _Command, const std::string& _Arguments)
@@ -111,23 +87,26 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
     }
 
     // fork() child process
-    int m_PID = -1;
+    int pid = -1;
 
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        m_PID = fork();
+        pid = fork();
 
         // cache process info
-        m_Info = m_PID;
+        ProcessInfo* info = (ProcessInfo*)malloc(sizeof(ProcessInfo));
+        info->PID = pid;
+        m_Info = info;
 
-        if (m_PID < 0)
+
+        if (pid < 0)
         {
             m_Status.push("Could start process");
             return;
         }
     }
 
-    if(m_PID == 0)
+    if(pid == 0)
     {
         // here we have child code
 
@@ -166,7 +145,7 @@ void Process::execute(const std::string& _Command, const std::string& _Arguments
 
         // wait until finish
         int status = 0;
-        waitpid(m_PID, &status, 0);
+        waitpid(pid, &status, 0);
 
         // TODO: update status below
         if(WIFEXITED(status))

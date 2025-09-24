@@ -27,11 +27,18 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         protected:
-            ImRect      m_TextBufferRect;
-            ImRect      m_LineNumbersRect;
+            ImRect      m_TextContentsRect;
+            ImRect      m_TextLineNumbersRect;
             std::string m_TextBuffer;
 
-            uint64_t mStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            // cursor attributes
+            ImVec2   m_CursorPosition{ImVec2(0.f, 0.f)};
+            uint64_t m_CursorShowStartTime{0};
+            uint64_t m_CursorShowEndTime{0};
+            uint64_t m_CursorShowElapsedTime{0};
+
+            // service methods
+            void handle_mouse_events();
         };
     }
 }
