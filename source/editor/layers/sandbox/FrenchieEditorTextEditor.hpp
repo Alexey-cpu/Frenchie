@@ -1,0 +1,37 @@
+#pragma once
+
+// Core
+#include <FrenchieCoreProcess.hpp>
+
+// Application
+#include <FrenchieApplication.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
+
+// IMGUI
+#include <imgui.h>
+#include <imgui_stdlib.h>
+#include <imgui_internal.h>
+
+namespace Frenchie
+{
+    namespace Editor
+    {
+        class TextEditor : public Frenchie::Application::Layer
+        {
+        public:
+            TextEditor();
+            virtual ~TextEditor();
+
+            virtual bool awake() override;
+            virtual void frame_update() override;
+            virtual bool allows_multiple_instances() const override;
+
+        protected:
+            ImRect      m_TextBufferRect;
+            ImRect      m_LineNumbersRect;
+            std::string m_TextBuffer;
+
+            uint64_t mStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        };
+    }
+}
