@@ -391,7 +391,7 @@ void Style::draw_color_settings()
 
                 Frenchie::Editor::Configuration::Themes::instance()->create_theme(
                     std::filesystem::path(
-                        currentPath.wstring().append(L"/").append(currentFile.filename())
+                        currentPath.wstring().append(L"/").append(currentFile.filename().wstring())
                     ).make_preferred()
                 )->save();
             }

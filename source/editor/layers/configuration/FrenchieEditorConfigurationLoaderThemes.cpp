@@ -612,7 +612,7 @@ bool Themes::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 Frenchie::Core::Reference<Theme> Themes::create_theme(const std::filesystem::path& _Path)
 {
-    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem()).append(L".theme"));
+    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".theme"));
     auto theme = std::make_shared<Theme>(path, this);
     m_Themes.insert({path, theme});
 

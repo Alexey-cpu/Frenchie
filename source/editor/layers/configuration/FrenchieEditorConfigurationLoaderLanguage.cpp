@@ -423,7 +423,7 @@ std::string Translator::translate(const std::string& _Key)
 
 Frenchie::Core::Reference<Language> Translator::create_new_translation_file(const std::filesystem::path& _Path)
 {
-    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem()).append(L".xlf"));
+    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".xlf"));
     auto theme = std::make_shared<Language>(path, this);
     m_SupportedLanguages.push_back(theme);
 

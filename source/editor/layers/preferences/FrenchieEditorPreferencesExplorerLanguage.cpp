@@ -174,9 +174,9 @@ void Languages::frame_update()
         ImGui::SeparatorText(Translator::translate("Translation file").c_str());
 
         // draw combobox
-        auto& supportedLanguages = Translator::instance()->get_supported_languages();
-        auto& currentLanguage    = Translator::instance()->get_current_language();
-        int   id                 = 0;
+        auto supportedLanguages = Translator::instance()->get_supported_languages();
+        auto currentLanguage    = Translator::instance()->get_current_language();
+        int  id                 = 0;
 
         if(ImGui::BeginCombo(
             "##", 
@@ -268,7 +268,7 @@ void Languages::frame_update()
             Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
-                    auto& currentLanguage = Translator::instance()->get_current_language();
+                    auto currentLanguage = Translator::instance()->get_current_language();
 
                     if(currentLanguage != nullptr)
                         currentLanguage->get_translation_file().Translations.clear();
@@ -283,7 +283,7 @@ void Languages::frame_update()
             Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
-                    auto& currentLanguage = Translator::instance()->get_current_language();
+                    auto currentLanguage = Translator::instance()->get_current_language();
 
                     if(currentLanguage != nullptr)
                     {
@@ -301,7 +301,7 @@ void Languages::frame_update()
             Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
-                    auto& currentLanguage = 
+                    auto currentLanguage = 
                         Translator::instance()->get_current_language();
 
                     if(currentLanguage != nullptr)
@@ -362,7 +362,7 @@ void Languages::frame_update()
             Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
-                    auto& currentLanguage  = Translator::instance()->get_current_language();
+                    auto currentLanguage  = Translator::instance()->get_current_language();
 
                     if(currentLanguage == nullptr) 
                         return;
@@ -536,7 +536,7 @@ void Languages::frame_update()
                         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                             [this, translation]()
                             {
-                                auto& currentLanguage = Translator::instance()->get_current_language();
+                                auto currentLanguage = Translator::instance()->get_current_language();
 
                                 if(currentLanguage != nullptr)
                                     currentLanguage->get_translation_file().Translations.erase(translation);

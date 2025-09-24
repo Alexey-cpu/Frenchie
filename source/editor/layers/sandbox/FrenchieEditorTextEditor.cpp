@@ -4,122 +4,122 @@ using namespace Frenchie::Editor;
 
 #include <string>
 
-static inline int ImTextCharToUtf8(char* buf, int buf_size, unsigned int c)
-{
-	if (c < 0x80)
-	{
-		buf[0] = (char)c;
-		return 1;
-	}
-	if (c < 0x800)
-	{
-		if (buf_size < 2) return 0;
-		buf[0] = (char)(0xc0 + (c >> 6));
-		buf[1] = (char)(0x80 + (c & 0x3f));
-		return 2;
-	}
-	if (c >= 0xdc00 && c < 0xe000)
-	{
-		return 0;
-	}
-	if (c >= 0xd800 && c < 0xdc00)
-	{
-		if (buf_size < 4) return 0;
-		buf[0] = (char)(0xf0 + (c >> 18));
-		buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
-		buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
-		buf[3] = (char)(0x80 + ((c) & 0x3f));
-		return 4;
-	}
-	//else if (c < 0x10000)
-	{
-		if (buf_size < 3) return 0;
-		buf[0] = (char)(0xe0 + (c >> 12));
-		buf[1] = (char)(0x80 + ((c >> 6) & 0x3f));
-		buf[2] = (char)(0x80 + ((c) & 0x3f));
-		return 3;
-	}
-}
+// static inline int ImTextCharToUtf8(char* buf, int buf_size, unsigned int c)
+// {
+// 	if (c < 0x80)
+// 	{
+// 		buf[0] = (char)c;
+// 		return 1;
+// 	}
+// 	if (c < 0x800)
+// 	{
+// 		if (buf_size < 2) return 0;
+// 		buf[0] = (char)(0xc0 + (c >> 6));
+// 		buf[1] = (char)(0x80 + (c & 0x3f));
+// 		return 2;
+// 	}
+// 	if (c >= 0xdc00 && c < 0xe000)
+// 	{
+// 		return 0;
+// 	}
+// 	if (c >= 0xd800 && c < 0xdc00)
+// 	{
+// 		if (buf_size < 4) return 0;
+// 		buf[0] = (char)(0xf0 + (c >> 18));
+// 		buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
+// 		buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
+// 		buf[3] = (char)(0x80 + ((c) & 0x3f));
+// 		return 4;
+// 	}
+// 	//else if (c < 0x10000)
+// 	{
+// 		if (buf_size < 3) return 0;
+// 		buf[0] = (char)(0xe0 + (c >> 12));
+// 		buf[1] = (char)(0x80 + ((c >> 6) & 0x3f));
+// 		buf[2] = (char)(0x80 + ((c) & 0x3f));
+// 		return 3;
+// 	}
+// }
 
-static void HandleKeyboardInputs()
-{
-	ImGuiIO& io = ImGui::GetIO();
-	auto shift = io.KeyShift;
-	auto ctrl = io.ConfigMacOSXBehaviors ? io.KeySuper : io.KeyCtrl;
-	auto alt = io.ConfigMacOSXBehaviors ? io.KeyCtrl : io.KeyAlt;
+// static void HandleKeyboardInputs()
+// {
+// 	ImGuiIO& io = ImGui::GetIO();
+// 	auto shift = io.KeyShift;
+// 	auto ctrl = io.ConfigMacOSXBehaviors ? io.KeySuper : io.KeyCtrl;
+// 	auto alt = io.ConfigMacOSXBehaviors ? io.KeyCtrl : io.KeyAlt;
 
-	if (ImGui::IsWindowFocused())
-	{
-		if (ImGui::IsWindowHovered())
-			ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
-		//ImGui::CaptureKeyboardFromApp(true);
+// 	if (ImGui::IsWindowFocused())
+// 	{
+// 		if (ImGui::IsWindowHovered())
+// 			ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+// 		//ImGui::CaptureKeyboardFromApp(true);
 
-		io.WantCaptureKeyboard = true;
-		io.WantTextInput = true;
+// 		io.WantCaptureKeyboard = true;
+// 		io.WantTextInput = true;
 
-		// if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)))
-		// 	Undo();
-		// else if (!IsReadOnly() && !ctrl && !shift && alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Backspace)))
-		// 	Undo();
-		// else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)))
-		// 	Redo();
-		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
-		// 	MoveUp(1, shift);
-		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
-		// 	MoveDown(1, shift);
-		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_LeftArrow)))
-		// 	MoveLeft(1, shift, ctrl);
-		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)))
-		// 	MoveRight(1, shift, ctrl);
-		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageUp)))
-		// 	MoveUp(GetPageSize() - 4, shift);
-		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageDown)))
-		// 	MoveDown(GetPageSize() - 4, shift);
-		// else if (!alt && ctrl && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Home)))
-		// 	MoveTop(shift);
-		// else if (ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_End)))
-		// 	MoveBottom(shift);
-		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Home)))
-		// 	MoveHome(shift);
-		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_End)))
-		// 	MoveEnd(shift);
-		// else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
-		// 	Delete();
-		// else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Backspace)))
-		// 	Backspace();
-		// else if (!ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
-		// 	mOverwrite ^= true;
-		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
-		// 	Copy();
-		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_C)))
-		// 	Copy();
-		// else if (!IsReadOnly() && !ctrl && shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
-		// 	Paste();
-		// else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_V)))
-		// 	Paste();
-		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_X)))
-		// 	Cut();
-		// else if (!ctrl && shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
-		// 	Cut();
-		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_A)))
-		// 	SelectAll();
-		// else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
-		// 	EnterCharacter('\n', false);
-		// else if (!IsReadOnly() && !ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Tab)))
-		// 	EnterCharacter('\t', shift);
+// 		// if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Z)))
+// 		// 	Undo();
+// 		// else if (!IsReadOnly() && !ctrl && !shift && alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Backspace)))
+// 		// 	Undo();
+// 		// else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Y)))
+// 		// 	Redo();
+// 		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
+// 		// 	MoveUp(1, shift);
+// 		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
+// 		// 	MoveDown(1, shift);
+// 		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_LeftArrow)))
+// 		// 	MoveLeft(1, shift, ctrl);
+// 		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)))
+// 		// 	MoveRight(1, shift, ctrl);
+// 		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageUp)))
+// 		// 	MoveUp(GetPageSize() - 4, shift);
+// 		// else if (!alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageDown)))
+// 		// 	MoveDown(GetPageSize() - 4, shift);
+// 		// else if (!alt && ctrl && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Home)))
+// 		// 	MoveTop(shift);
+// 		// else if (ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_End)))
+// 		// 	MoveBottom(shift);
+// 		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Home)))
+// 		// 	MoveHome(shift);
+// 		// else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_End)))
+// 		// 	MoveEnd(shift);
+// 		// else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
+// 		// 	Delete();
+// 		// else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Backspace)))
+// 		// 	Backspace();
+// 		// else if (!ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
+// 		// 	mOverwrite ^= true;
+// 		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
+// 		// 	Copy();
+// 		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_C)))
+// 		// 	Copy();
+// 		// else if (!IsReadOnly() && !ctrl && shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Insert)))
+// 		// 	Paste();
+// 		// else if (!IsReadOnly() && ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_V)))
+// 		// 	Paste();
+// 		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_X)))
+// 		// 	Cut();
+// 		// else if (!ctrl && shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
+// 		// 	Cut();
+// 		// else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_A)))
+// 		// 	SelectAll();
+// 		// else if (!IsReadOnly() && !ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
+// 		// 	EnterCharacter('\n', false);
+// 		// else if (!IsReadOnly() && !ctrl && !alt && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Tab)))
+// 		// 	EnterCharacter('\t', shift);
 
-		// if (!io.InputQueueCharacters.empty())
-		// {
-		// 	for (int i = 0; i < io.InputQueueCharacters.Size; i++)
-		// 	{
-		// 		auto c = io.InputQueueCharacters[i];
-		// 		if (c != 0 && (c == '\n' || c >= 32)) 
-        //             std::cout << ImTextCharToUtf8(с, 1) << "\n";
-		// 	}
-		// 	io.InputQueueCharacters.resize(0);
-		// }
-	}
-}
+// 		// if (!io.InputQueueCharacters.empty())
+// 		// {
+// 		// 	for (int i = 0; i < io.InputQueueCharacters.Size; i++)
+// 		// 	{
+// 		// 		auto c = io.InputQueueCharacters[i];
+// 		// 		if (c != 0 && (c == '\n' || c >= 32)) 
+//         //             std::cout << ImTextCharToUtf8(с, 1) << "\n";
+// 		// 	}
+// 		// 	io.InputQueueCharacters.resize(0);
+// 		// }
+// 	}
+// }
 
 // add sandbox elements into main menu
 namespace Frenchie
@@ -155,12 +155,11 @@ namespace Frenchie
     }
 }
 
-class TextEditorGeometry
+enum DrawLayers : int
 {
-public:
-protected:
-	ImRect m_TextBufferRect;
-	ImRect m_LineNumbersRect;
+	Text,
+	Cursor,
+	Count
 };
 
 // view
@@ -186,20 +185,28 @@ bool TextEditor::awake()
 		m_TextBuffer.append("\n");
 	}
 
+	// cursor attributes
+	m_CursorShowStartTime   = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	m_CursorShowEndTime     = m_CursorShowStartTime;
+	m_CursorShowElapsedTime = 0;
+	m_CursorPosition        = ImVec2(0.f, 0.f);
+
     return true;
 }
 
 void TextEditor::frame_update()
 {
-
     // constants
     const char ENTER = '\n';
     const char TAB   = '\t';
 
     ImGui::Begin("TextEditor", &m_Opened);
     {
+		// handle mouse events
+		handle_mouse_events();
+
 		// setup next window content size
-		ImGui::SetNextWindowContentSize(m_TextBufferRect.GetSize());
+		ImGui::SetNextWindowContentSize(m_TextContentsRect.GetSize());
 
         ImGui::BeginChild(
 			"TextEditorContents", 
@@ -208,17 +215,34 @@ void TextEditor::frame_update()
 			ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar);
         {
             // retrieve io and draw list
-            ImGuiIO& io = ImGui::GetIO();
-            auto     dl = ImGui::GetWindowDrawList();
+            ImGuiIO& imguiIo  = ImGui::GetIO();
+            auto     drawList = ImGui::GetWindowDrawList();
 
-            // paddings
-            auto textInterLinesPadding = ImGui::GetFontSize();
+			// split draw list on channels
+			drawList->ChannelsSplit(DrawLayers::Count);
 
             // draw cursor
             {
+				drawList->ChannelsSetCurrent(DrawLayers::Cursor);
+
                 auto mouse = ImGui::GetMousePos() - ImGui::GetCursorScreenPos();
 
-                dl->AddText(
+				m_CursorShowEndTime     = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+				m_CursorShowElapsedTime = m_CursorShowEndTime - m_CursorShowStartTime;
+
+				if(m_CursorShowElapsedTime > 1000)
+				{
+					drawList->AddText(
+						m_CursorPosition,
+						IM_COL32(255, 0, 0, 255),
+						"|"
+					);
+
+					if(m_CursorShowElapsedTime > 1500) 
+						m_CursorShowStartTime = m_CursorShowEndTime;
+				}
+
+                drawList->AddText(
                     ImGui::GetMousePos(),
                     IM_COL32(255, 0, 0, 255),
                     fmt::format("X:{} Y:{}", mouse.x, mouse.y).c_str()
@@ -226,56 +250,58 @@ void TextEditor::frame_update()
             }
 
             // draw text line by line
+			drawList->ChannelsSetCurrent(DrawLayers::Text);
+
             ImVec2 inputTextLineOffset = ImVec2(0.f, 0.f);
 
 			for (size_t textBegin = 0, textEnd = 0, lineNumber = 0; textBegin < m_TextBuffer.size(); ++textEnd, textBegin = textEnd)       
 			{
-				// identify text line
-				while (textEnd < m_TextBuffer.size() && m_TextBuffer[textEnd] != ENTER) ++textEnd;
+				// identify text line borders
+				while(textEnd < m_TextBuffer.size() && m_TextBuffer[textEnd] != ENTER) ++textEnd;
 
-				// draw line number
+				// draw line number rectangle
 				{
-					dl->AddText(
-						m_LineNumbersRect.GetTL() + ImVec2(0.f, inputTextLineOffset.y),
+					drawList->AddText(
+						m_TextLineNumbersRect.GetTL() + ImVec2(0.f, inputTextLineOffset.y),
 						IM_COL32(0, 255, 0, 255),
 						std::to_string(++lineNumber).c_str()
 					);
 				}
 
-				// draw colorified text line
+				// draw text line
 				{
-
-					dl->AddText(
-						m_TextBufferRect.GetTL() + ImVec2(0.f, inputTextLineOffset.y),
+					drawList->AddText(
+						m_TextContentsRect.GetTL() + ImVec2(0.f, inputTextLineOffset.y),
 						IM_COL32(0, 255, 0, 255),
 						&m_TextBuffer[textBegin],
 						&m_TextBuffer[textEnd]
 					);
 				}
 
+				// compute geometry
 				inputTextLineOffset = ImVec2(
 					std::max<float>(inputTextLineOffset.x, ImGui::CalcTextSize(&m_TextBuffer[textBegin], &m_TextBuffer[textEnd]).x), 
-					inputTextLineOffset.y + textInterLinesPadding);
+					inputTextLineOffset.y + ImGui::GetFontSize());
 
 				// compute input text bounding rectangle
-				m_TextBufferRect = ImRect(
-					ImGui::GetCursorScreenPos() + ImVec2(m_LineNumbersRect.GetSize().x, 0.f), 
-					ImGui::GetCursorScreenPos() + ImVec2(m_LineNumbersRect.GetSize().x, 0.f) + inputTextLineOffset);
+				m_TextContentsRect = ImRect(
+					ImGui::GetCursorScreenPos() + ImVec2(m_TextLineNumbersRect.GetSize().x, 0.f), 
+					ImGui::GetCursorScreenPos() + ImVec2(m_TextLineNumbersRect.GetSize().x, 0.f) + inputTextLineOffset);
 
 				// compute line number rect
-				m_LineNumbersRect = ImRect(
+				m_TextLineNumbersRect = ImRect(
 					ImGui::GetCursorScreenPos(), 
 					ImGui::GetCursorScreenPos() + ImVec2(ImGui::CalcTextSize(std::to_string(INT_MAX).append("\t\t").c_str()).x, inputTextLineOffset.y));
 			}
 
 			// draw text bounding rectangle
 			{
-				dl->AddRect(m_TextBufferRect.Min, m_TextBufferRect.Max, IM_COL32(255, 0, 0, 255));
+				drawList->AddRect(m_TextContentsRect.Min, m_TextContentsRect.Max, IM_COL32(255, 0, 0, 255));
 			}
 
 			// draw line number rect
 			{
-				dl->AddRect(m_LineNumbersRect.Min, m_LineNumbersRect.Max, IM_COL32(0, 255, 0, 255));
+				drawList->AddRect(m_TextLineNumbersRect.Min, m_TextLineNumbersRect.Max, IM_COL32(0, 255, 0, 255));
 			}
         }
 
@@ -294,7 +320,12 @@ void TextEditor::frame_update()
 	// }
 }
 
-bool TextEditor::TextEditor::allows_multiple_instances() const 
+bool TextEditor::allows_multiple_instances() const 
 {
     return false;
+}
+
+void TextEditor::handle_mouse_events()
+{
+	m_CursorPosition = m_TextContentsRect.Min;
 }
