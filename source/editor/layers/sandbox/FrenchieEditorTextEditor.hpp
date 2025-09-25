@@ -39,8 +39,8 @@ namespace Frenchie
 
             struct Cursor
             {
-                size_t PositionInBuffer = 0;
                 size_t LineNumber       = 0;
+                size_t PositionInBuffer = 0;
                 ImVec2 PositionInView   = ImVec2(0.f, 0.f);
             };
 
@@ -50,6 +50,9 @@ namespace Frenchie
                 uint64_t CurrentTime{0};
                 uint64_t Elapsed    {0};
             };
+
+            std::vector<std::string> m_Chunks;
+            float m_ScrollY = 0.f;
 
             // cursors
             Cursor m_NavigationCursor;
@@ -63,7 +66,7 @@ namespace Frenchie
 
             void draw_navigation_cursor();
 
-            static ImRect calculate_row_rect(const size_t& _Row, const ImVec2& _NextLineOffset = ImVec2(), const ImVec2& _LineNumberOffset = ImVec2());
+            static ImRect calculate_row_rect(const char* _Begin, const char* _End = nullptr);
             static ImVec2 calculate_text_size(const char* _Begin, const char* _End = nullptr);
         };
     }
