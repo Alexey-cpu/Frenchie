@@ -159,9 +159,9 @@ namespace Frenchie
 
 enum DrawLayers : int
 {
+	Background,
 	Text,
 	Cursor,
-	Lines,
 	Count
 };
 
@@ -207,12 +207,16 @@ bool TextEditor::awake()
 					(std::istreambuf_iterator<char>(ifsream)), 
 					(std::istreambuf_iterator<char>()));
 		
+			std::vector<std::string> chunks;
+
 			for (size_t textBegin = 0, textEnd = 0, lineNumber = 0; textBegin < textBuffer.size(); textBegin = ++textEnd, ++lineNumber)
 			{
 				while(textEnd < textBuffer.size() && textBuffer[textEnd] != ENTER) ++textEnd;
 
 				m_Chunks.push_back(std::string().append(&textBuffer[textBegin], &textBuffer[textEnd]));
 			}
+
+			//m_Chunks = chunks;
 		}
 	);
 
@@ -246,14 +250,15 @@ void TextEditor::frame_update()
 
     ImGui::Begin("TextEditor", &m_Opened);
     {
-		float maximumRowWidth = 0.f;
-
 		ImGui::BeginChild(
 			"TextBufferLineNumbers", 
 			ImVec2(TextEditor::calculate_text_size(std::to_string(INT_MAX).c_str()).x, ImGui::GetContentRegionAvail().y),
 			ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 			ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar);
 		{
+			ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
+			ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
+
 			ImGuiListClipper clipper;
 			clipper.Begin((int)m_Chunks.size());
 
@@ -261,7 +266,7 @@ void TextEditor::frame_update()
 			{
 				for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 				{
-					maximumRowWidth = std::max<float>(maximumRowWidth, TextEditor::calculate_row_rect(m_Chunks[lineNumber].c_str()).GetSize().x);
+					m_LineWidth = std::max<float>(m_LineWidth, TextEditor::calculate_row_rect(m_Chunks[lineNumber].c_str()).GetSize().x);
 
 					// draw text
 					ImRect textLineRect = TextEditor::calculate_row_rect(std::to_string(lineNumber).c_str());
@@ -286,27 +291,63 @@ void TextEditor::frame_update()
 			ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 			ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoNavInputs);
 		{
+			// move text edit cursor
 			if(ImGui::IsWindowHovered())
 			{
 				if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
 				{
-					if(m_EditorCursor.PositionInLine > 0) 
+					if(m_EditorCursor.PositionInLine > 0)
 						--m_EditorCursor.PositionInLine;
+
+					m_EditorCursor.isMoving = true;
 				}
 				else if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
 				{
-					if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size() - 1) 
-						++m_EditorCursor.PositionInLine;
+					if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size()) 
+					{
+						m_EditorCursor.PositionInLine = 
+							std::min<size_t(m_EditorCursor.PositionInLine + 1, m_Chunks[m_EditorCursor.LineNumber].size() - 1);
+					}
+
+					m_EditorCursor.isMoving = true;
 				}
 				else if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
 				{
+					if(m_EditorCursor.LineNumber > 0)
+					{
+						// move up
+						--m_EditorCursor.LineNumber;
+
+						// adjust postion
+						if(m_EditorCursor.PositionInLine >= m_Chunks[m_EditorCursor.LineNumber].size())
+							m_EditorCursor.PositionInLine = 0;
+
+						m_EditorCursor.isMoving = true;
+					}
 				}
 				else if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow))
 				{
+					if(m_EditorCursor.LineNumber < m_Chunks.size() - 1)
+					{
+						// move down
+						++m_EditorCursor.LineNumber;
+
+						// adjust postion
+						if(m_EditorCursor.PositionInLine >= m_Chunks[m_EditorCursor.LineNumber].size())
+							m_EditorCursor.PositionInLine = 0;
+
+						m_EditorCursor.isMoving = true;
+					}
+				}
+				else
+				{
+					m_EditorCursor.isMoving = false;
 				}
 			}
 
+			// draw text
 			ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
+			ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
 
 			ImGuiListClipper clipper;
 			clipper.Begin((int)m_Chunks.size());
@@ -320,20 +361,15 @@ void TextEditor::frame_update()
 
 					textLineBoundingRect = ImRect(
 						textLineBoundingRect.Min, 
-						textLineBoundingRect.Min + ImVec2(maximumRowWidth, textLineBoundingRect.GetSize().y));
+						textLineBoundingRect.Min + ImVec2(m_LineWidth, textLineBoundingRect.GetSize().y));
 					
 					ImGui::GetWindowDrawList()->AddText(textLineBoundingRect.GetTL(), IM_COL32(0, 255, 0, 255), m_Chunks[lineNumber].c_str());
 					ImGui::ItemSize(textLineBoundingRect.GetSize(), 0.0f);
 					ImGui::ItemAdd(textLineBoundingRect, 0);
 
-					// draw text line bounding rectangle
-					if(ImGui::IsWindowHovered() && ImRect(textLineBoundingRect.Min, textLineBoundingRect.Max).Contains(ImGui::GetMousePos()))
-					{
-						ImGui::GetWindowDrawList()->AddRect(textLineBoundingRect.Min, textLineBoundingRect.Max, IM_COL32(255, 255, 255, 255));
-					}
-
-					ImVec2 symbolOffset = ImVec2(0.f, 0.f);
-					Cursor symbolCursor = Cursor();
+					// setup and draw cursor
+					ImVec2 symbolOffset    = ImVec2(0.f, 0.f);
+					bool   symbolIsHovered = false;
 
 					for (size_t positionInLine = 0; positionInLine < m_Chunks[lineNumber].size(); positionInLine++)
 					{
@@ -351,15 +387,18 @@ void TextEditor::frame_update()
 						{
 							m_EditorCursor.LineNumber     = lineNumber;
 							m_EditorCursor.PositionInLine = positionInLine;
+							symbolIsHovered               = true;
 						}
 
 						// draw cursor
+						ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Cursor);
+
 						if(m_EditorCursor.LineNumber == lineNumber && 
 							m_EditorCursor.PositionInLine == positionInLine)
-						{
-							if(m_EditorCursorTimer.Elapsed > 500)
+						{	
+							// animated
+							if(m_EditorCursorTimer.Elapsed > 500 || m_EditorCursor.isMoving)
 							{
-								// draw cursor
 								ImGui::GetWindowDrawList()->AddText(
 									symbolRect.Min - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
 									IM_COL32(255, 0, 0, 255), 
@@ -372,6 +411,22 @@ void TextEditor::frame_update()
 						}
 
 						symbolOffset = ImVec2(symbolOffset.x + symbolSize.x, 0.f);
+					}
+
+					// draw text line bounding rectangle
+					ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Background);
+
+					if(ImGui::IsWindowHovered() && 
+						ImRect(textLineBoundingRect.Min, textLineBoundingRect.Max).Contains(ImGui::GetMousePos()))
+					{
+						ImGui::GetWindowDrawList()->AddRect(textLineBoundingRect.Min, textLineBoundingRect.Max, IM_COL32(255, 255, 255, 255));
+
+						if(!symbolIsHovered && 
+							(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+						{
+							m_EditorCursor.LineNumber     = lineNumber;
+							m_EditorCursor.PositionInLine = 0;
+						}
 					}
 				}
 			}

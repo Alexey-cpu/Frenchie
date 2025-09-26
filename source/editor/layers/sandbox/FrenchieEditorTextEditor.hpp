@@ -32,6 +32,7 @@ namespace Frenchie
             {
                 size_t LineNumber     = 0;
                 size_t PositionInLine = 0;
+                bool   isMoving       = false;
             };
 
             struct Timer
@@ -44,8 +45,9 @@ namespace Frenchie
             std::mutex m_Mutex;
 
             std::vector<std::string> m_Chunks;
-            float m_ScrollY = 0.f;
-            float m_ScrollX = 0.f;
+            float m_ScrollY   = 0.f;
+            float m_ScrollX   = 0.f;
+            float m_LineWidth = 0.f;
 
             // cursors
             Cursor m_NavigationCursor;
