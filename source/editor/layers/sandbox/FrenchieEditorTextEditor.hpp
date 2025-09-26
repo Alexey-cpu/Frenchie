@@ -28,20 +28,10 @@ namespace Frenchie
 
         protected:
 
-            struct Status
-            {
-                size_t TextBufferLength       = 0;
-                size_t TextBufferLinesCount   = 0;
-                size_t CursorPositionInBuffer = 0;
-                size_t CursorLineNumber       = 0;
-                ImVec2 CursorPositionInView   = ImVec2(0.f, 0.f);
-            } m_Status;
-
             struct Cursor
             {
-                size_t LineNumber       = 0;
-                size_t PositionInBuffer = 0;
-                ImVec2 PositionInView   = ImVec2(0.f, 0.f);
+                size_t LineNumber     = 0;
+                size_t PositionInLine = 0;
             };
 
             struct Timer
@@ -51,8 +41,11 @@ namespace Frenchie
                 uint64_t Elapsed    {0};
             };
 
+            std::mutex m_Mutex;
+
             std::vector<std::string> m_Chunks;
             float m_ScrollY = 0.f;
+            float m_ScrollX = 0.f;
 
             // cursors
             Cursor m_NavigationCursor;
@@ -61,10 +54,7 @@ namespace Frenchie
             // timers
             Timer m_EditorCursorTimer;
 
-            // buffer
-            std::string m_TextBuffer;
-
-            void draw_navigation_cursor();
+            void handle_key_events();
 
             static ImRect calculate_row_rect(const char* _Begin, const char* _End = nullptr);
             static ImVec2 calculate_text_size(const char* _Begin, const char* _End = nullptr);

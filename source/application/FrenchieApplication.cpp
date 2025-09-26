@@ -227,7 +227,10 @@ void Application::Application::frame_finish()
 void Application::Application::finish()
 {
     for(auto layer : m_Layers) 
+    {
+        layer->close();
         layer->finish();
+    }
     glfwTerminate();
 }
 
