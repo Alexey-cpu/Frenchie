@@ -30,9 +30,9 @@ namespace Frenchie
 
             struct Cursor
             {
-                size_t LineNumber     = 0;
-                size_t PositionInLine = 0;
-                bool   isMoving       = false;
+                int  LineNumber     = 0;
+                int  PositionInLine = 0;
+                bool isMoving       = false;
             };
 
             struct Timer
