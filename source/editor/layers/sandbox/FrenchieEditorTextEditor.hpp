@@ -44,7 +44,7 @@ namespace Frenchie
 
             std::mutex m_Mutex;
 
-            std::vector<std::string> m_Chunks;
+            std::vector<std::wstring> m_Chunks;
             float m_ScrollY   = 0.f;
             float m_ScrollX   = 0.f;
             float m_LineWidth = 0.f;
@@ -59,7 +59,10 @@ namespace Frenchie
             void handle_key_events();
 
             static ImRect calculate_row_rect(const char* _Begin, const char* _End = nullptr);
+            static ImRect calculate_row_rect(const std::wstring&);
+
             static ImVec2 calculate_text_size(const char* _Begin, const char* _End = nullptr);
+            static ImVec2 calculate_text_size(const std::wstring&);
         };
     }
 }

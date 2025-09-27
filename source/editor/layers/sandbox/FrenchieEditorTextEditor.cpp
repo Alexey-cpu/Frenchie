@@ -52,16 +52,6 @@ public:
 	}
 };
 
-// static void OnCharPressed(unsigned int c)
-// {
-//     // Convert the key to a UTF8 byte sequence.
-//     // The changes we had to make to stb_textedit_key made it very much UTF-8 specific which is not too great.
-//     char utf8[5];
-//     ImTextCharToUtf8(utf8, c);
-
-// 	std::cout << "user input: " << utf8 << "\n";
-// }
-
 // add sandbox elements into main menu
 namespace Frenchie
 {
@@ -150,7 +140,8 @@ bool TextEditor::awake()
 			{
 				while(textEnd < textBuffer.size() && textBuffer[textEnd] != ENTER) ++textEnd;
 
-				m_Chunks.push_back(std::string().append(&textBuffer[textBegin], &textBuffer[textEnd]));
+				m_Chunks.push_back(
+					Frenchie::Core::String::as_wide(std::string().append(&textBuffer[textBegin], &textBuffer[textEnd])));
 			}
 
 			//m_Chunks = chunks;
@@ -199,7 +190,9 @@ void TextEditor::frame_update()
 			{
 				for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 				{
-					m_LineWidth = std::max<float>(m_LineWidth, TextEditor::calculate_row_rect(m_Chunks[lineNumber].c_str()).GetSize().x);
+					m_LineWidth = std::max<float>(
+						m_LineWidth, 
+						TextEditor::calculate_row_rect(m_Chunks[lineNumber]).GetSize().x);
 
 					// draw text
 					ImRect textLineRect = TextEditor::calculate_row_rect(std::to_string(lineNumber).c_str());
@@ -263,40 +256,101 @@ void TextEditor::frame_update()
 					m_EditorCursor.isMoving = false;
 				}
 
+				if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter))
+				{
+					Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+						[this]()
+						{
+							if(m_EditorCursor.PositionInLine < 
+								m_Chunks[m_EditorCursor.LineNumber].size())
+							{
+								std::wstring copy = std::wstring(
+									&m_Chunks[m_EditorCursor.LineNumber][m_EditorCursor.PositionInLine], 
+									m_Chunks[m_EditorCursor.LineNumber].size() - m_EditorCursor.PositionInLine);
+
+								m_Chunks[m_EditorCursor.LineNumber].erase(m_EditorCursor.PositionInLine, m_Chunks[m_EditorCursor.LineNumber].size());
+
+									// m_EditorCursor.LineNumber + 1, copy
+
+								m_EditorCursor.LineNumber++;
+								m_EditorCursor.PositionInLine = 0;
+								m_Chunks.insert(m_Chunks.begin() + m_EditorCursor.LineNumber, copy);
+							}
+							else
+							{
+								m_EditorCursor.LineNumber++;
+								m_EditorCursor.PositionInLine = 0;
+								m_Chunks.insert(m_Chunks.begin() + m_EditorCursor.LineNumber, L" ");
+							}
+						}
+					);
+				}
+
+				if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
+				{
+					Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+						[this]()
+						{
+							if(!m_Chunks[m_EditorCursor.LineNumber].empty())
+							{
+								if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size())
+									m_Chunks[m_EditorCursor.LineNumber].erase(m_EditorCursor.PositionInLine, 1);
+								else 
+									m_Chunks[m_EditorCursor.LineNumber].pop_back();
+
+								m_EditorCursor.PositionInLine = std::max(--m_EditorCursor.PositionInLine, 0);
+							}
+							else
+							{
+								m_EditorCursor.LineNumber     = std::max(--m_EditorCursor.LineNumber, 0);
+								m_EditorCursor.PositionInLine = (int)m_Chunks[m_EditorCursor.LineNumber].size() - 1;
+							}
+						}
+					);
+				}
+
 				// Process regular text input (before we check for Return because using some IME will effectively send a Return?)
 				// We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
-				// ImGuiIO& io = ImGui::GetIO();
+				ImGuiIO& io = ImGui::GetIO();
 
-				// const bool is_osx = io.ConfigMacOSXBehaviors;
+				const bool is_osx = io.ConfigMacOSXBehaviors;
 				
-				// const bool ignore_char_inputs = (io.KeyCtrl && !io.KeyAlt) || (is_osx && io.KeyCtrl);
+				const bool ignore_char_inputs = (io.KeyCtrl && !io.KeyAlt) || (is_osx && io.KeyCtrl);
 				
-				// if (io.InputQueueCharacters.Size > 0)
-				// {
-				// 	if (!ignore_char_inputs)
-				// 	{
-				// 		for (int n = 0; n < io.InputQueueCharacters.Size; n++)
-				// 		{
-				// 			// Insert character if they pass filtering
-				// 			unsigned int c = (unsigned int)io.InputQueueCharacters[n];
-				// 			if (c == '\t') // Skip Tab, see above.
-				// 				continue;
+				auto onCharPressed = [this](unsigned int c)
+				{
+					// retrieve user input in UTF-8 codec
+					char utf8[5];
+					int  count = Helpers::ImTextCharToUtf8(utf8, c);
 
-				// 			// retrieve user input in UTF-8 codec
-				// 			char utf8[5];
-				// 			int count = Helpers::ImTextCharToUtf8(utf8, c);
+					// insert user input into a given line as wide character string
+					m_Chunks[m_EditorCursor.LineNumber].insert(m_EditorCursor.PositionInLine++, Frenchie::Core::String::as_wide(std::string(utf8, count)));
+				};
 
-				// 			// insert user input into a given line
-				// 			for (int i = 0; i < count; i++)
-				// 			{
-				// 				m_Chunks[m_EditorCursor.LineNumber].insert(m_EditorCursor.PositionInLine++, std::string(1, utf8[i]));
-				// 			}
-				// 		}
-				// 	}
+				if (ImGui::Shortcut(ImGuiKey_Tab, ImGuiInputFlags_Repeat))
+				{
+					unsigned int c = '\t'; // Insert TAB
+					onCharPressed(c);
+				}
 
-				// 	// Consume characters
-				// 	io.InputQueueCharacters.resize(0);
-				// }
+				if (io.InputQueueCharacters.Size > 0)
+				{
+					if (!ignore_char_inputs)
+					{
+						for (int n = 0; n < io.InputQueueCharacters.Size; n++)
+						{
+							// Insert character if they pass filtering
+							unsigned int c = (unsigned int)io.InputQueueCharacters[n];
+							if (c == '\t') // Skip Tab, see above.
+								continue;
+
+							onCharPressed(c);
+						}
+					}
+
+					// Consume characters
+					io.InputQueueCharacters.resize(0);
+				}
 			}
 
 			m_LineWidth = std::max<float>(m_LineWidth, ImGui::GetContentRegionAvail().x);
@@ -319,7 +373,12 @@ void TextEditor::frame_update()
 						textLineBoundingRect.Min, 
 						textLineBoundingRect.Min + ImVec2(m_LineWidth, textLineBoundingRect.GetSize().y));
 					
-					ImGui::GetWindowDrawList()->AddText(textLineBoundingRect.GetTL(), IM_COL32(0, 255, 0, 255), m_Chunks[lineNumber].c_str());
+					ImGui::GetWindowDrawList()->AddText(
+						textLineBoundingRect.GetTL(), 
+						IM_COL32(0, 255, 0, 255), 
+						Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str()
+					);
+					
 					ImGui::ItemSize(textLineBoundingRect.GetSize(), 0.0f);
 					ImGui::ItemAdd(textLineBoundingRect, 0);
 
@@ -330,11 +389,9 @@ void TextEditor::frame_update()
 					ImRect symbolRect      = ImRect();
 					bool   symbolIsHovered = false;
 
-					auto wstring = Frenchie::Core::String::as_wide(m_Chunks[lineNumber]);
-
-					for (size_t positionInLine = 0; positionInLine < wstring.size(); positionInLine++)
+					for (size_t positionInLine = 0; positionInLine < m_Chunks[lineNumber].size(); positionInLine++)
 					{
-						auto utf8 = Frenchie::Core::String::as_utf8(std::wstring(1, wstring[positionInLine]));
+						auto utf8 = Frenchie::Core::String::as_utf8(std::wstring(1, m_Chunks[lineNumber][positionInLine]));
 
 						symbolSize = TextEditor::calculate_text_size(utf8.c_str());
 						
@@ -429,7 +486,19 @@ ImRect TextEditor::calculate_row_rect(const char* _Begin, const char* _End)
 		ImGui::GetCursorScreenPos() + ImVec2(std::max<float>(ImGui::GetContentRegionAvail().x, calculate_text_size(_Begin, _End).x), ImGui::GetFontSize()));
 }
 
+ImRect TextEditor::calculate_row_rect(const std::wstring& _Input)
+{
+	return ImRect(
+		ImGui::GetCursorScreenPos(), 
+		ImGui::GetCursorScreenPos() + ImVec2(std::max<float>(ImGui::GetContentRegionAvail().x, calculate_text_size(_Input).x), ImGui::GetFontSize()));
+}
+
 ImVec2 TextEditor::calculate_text_size(const char* _Begin, const char* _End)
 {
 	return ImGui::GetCurrentContext()->Font->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.f, _Begin, _End, NULL);
+}
+
+ImVec2 TextEditor::calculate_text_size(const std::wstring& _Input)
+{
+	return TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(_Input).c_str());
 }
