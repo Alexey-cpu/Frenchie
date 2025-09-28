@@ -33,9 +33,9 @@ namespace Frenchie
 
             struct Cursor
             {
-                int  LineNumber     = 0;
-                int  PositionInLine = 0;
-                bool isMoving       = false;
+                int    Line     = 0;
+                int    Column   = 0;
+                ImVec2 Position = ImVec2(0.f, 0.f);
             };
 
             struct Timer
@@ -45,22 +45,11 @@ namespace Frenchie
                 uint64_t Elapsed    {0};
             };
 
-            std::mutex m_Mutex;
-
+            std::mutex                m_Mutex;
             std::vector<std::wstring> m_Chunks;
-            float m_ScrollY{0.f};
-            float m_ScrollX{0.f};
-
-            // cursors
-            Cursor m_EditorCursor;
-
-            // timers
-            Timer m_EditorCursorTimer;
-
-            void handle_key_events();
-
-            static ImRect calculate_row_rect(const char* _Begin, const char* _End = nullptr);
-            static ImRect calculate_row_rect(const std::wstring&);
+            Cursor                    m_Cursor;
+            Timer                     m_Timer;
+            ImVec2                    m_Scroll;
 
             static ImVec2 calculate_text_size(const char* _Begin, const char* _End = nullptr);
             static ImVec2 calculate_text_size(const std::wstring&);
