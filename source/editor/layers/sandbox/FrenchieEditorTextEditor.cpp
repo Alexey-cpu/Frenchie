@@ -148,10 +148,6 @@ bool TextEditor::awake()
 		}
 	);
 
-	// initialize navigation cursor
-	m_NavigationCursor.PositionInLine = 0;
-	m_NavigationCursor.LineNumber     = 0;
-
 	// initialize editor cursor
 	m_EditorCursor.PositionInLine = 0;
 	m_EditorCursor.LineNumber     = 0;
@@ -190,13 +186,7 @@ void TextEditor::frame_update()
 			{
 				for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 				{
-					m_LineWidth = std::max<float>(
-						m_LineWidth, 
-						TextEditor::calculate_row_rect(m_Chunks[lineNumber]).GetSize().x);
-
-					// draw text
 					ImRect textLineRect = TextEditor::calculate_row_rect(std::to_string(lineNumber).c_str());
-					
 					ImGui::GetWindowDrawList()->AddText(textLineRect.GetTL(), IM_COL32(0, 255, 0, 255), std::to_string(lineNumber).c_str());
 					ImGui::ItemSize(textLineRect.GetSize(), 0.0f);
 					ImGui::ItemAdd(textLineRect, 0);
@@ -261,16 +251,16 @@ void TextEditor::frame_update()
 					Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
 						[this]()
 						{
-							if(m_EditorCursor.PositionInLine < 
-								m_Chunks[m_EditorCursor.LineNumber].size())
+							if(m_EditorCursor.LineNumber < 0 || m_EditorCursor.LineNumber > m_Chunks.size()) 
+								return;
+
+							if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size())
 							{
 								std::wstring copy = std::wstring(
 									&m_Chunks[m_EditorCursor.LineNumber][m_EditorCursor.PositionInLine], 
 									m_Chunks[m_EditorCursor.LineNumber].size() - m_EditorCursor.PositionInLine);
 
 								m_Chunks[m_EditorCursor.LineNumber].erase(m_EditorCursor.PositionInLine, m_Chunks[m_EditorCursor.LineNumber].size());
-
-									// m_EditorCursor.LineNumber + 1, copy
 
 								m_EditorCursor.LineNumber++;
 								m_EditorCursor.PositionInLine = 0;
@@ -291,19 +281,31 @@ void TextEditor::frame_update()
 					Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
 						[this]()
 						{
-							if(!m_Chunks[m_EditorCursor.LineNumber].empty())
-							{
-								if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size())
-									m_Chunks[m_EditorCursor.LineNumber].erase(m_EditorCursor.PositionInLine, 1);
-								else 
-									m_Chunks[m_EditorCursor.LineNumber].pop_back();
+							// remove element at specific index
+							int index = m_EditorCursor.PositionInLine - 1;
+							if(index >= 0 && !m_Chunks[m_EditorCursor.LineNumber].empty()) 
+								m_Chunks[m_EditorCursor.LineNumber].erase(index, 1);
+							
+							// decrement cursor position
+							--m_EditorCursor.PositionInLine;
 
-								m_EditorCursor.PositionInLine = std::max(--m_EditorCursor.PositionInLine, 0);
-							}
-							else
+							if(m_EditorCursor.PositionInLine < 0)
 							{
-								m_EditorCursor.LineNumber     = std::max(--m_EditorCursor.LineNumber, 0);
-								m_EditorCursor.PositionInLine = (int)m_Chunks[m_EditorCursor.LineNumber].size() - 1;
+								if(m_EditorCursor.LineNumber > 0)
+								{
+									std::wstring copy = std::wstring(m_Chunks[m_EditorCursor.LineNumber].begin(), m_Chunks[m_EditorCursor.LineNumber].end()); 
+
+									if(m_EditorCursor.LineNumber >= 0)
+										m_Chunks.erase(m_Chunks.begin() + m_EditorCursor.LineNumber);
+
+									--m_EditorCursor.LineNumber;
+
+									if(m_EditorCursor.LineNumber >= 0) 
+									{
+										m_EditorCursor.PositionInLine = (int)m_Chunks[m_EditorCursor.LineNumber].size();
+										m_Chunks[m_EditorCursor.LineNumber].append(copy);
+									}
+								}
 							}
 						}
 					);
@@ -353,7 +355,9 @@ void TextEditor::frame_update()
 				}
 			}
 
-			m_LineWidth = std::max<float>(m_LineWidth, ImGui::GetContentRegionAvail().x);
+			// adjust cursor line number and line position
+			m_EditorCursor.LineNumber     = std::max(m_EditorCursor.LineNumber, 0);
+			m_EditorCursor.PositionInLine = std::max(m_EditorCursor.PositionInLine, 0);
 
 			// draw text
 			ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
@@ -371,7 +375,7 @@ void TextEditor::frame_update()
 
 					textLineBoundingRect = ImRect(
 						textLineBoundingRect.Min, 
-						textLineBoundingRect.Min + ImVec2(m_LineWidth, textLineBoundingRect.GetSize().y));
+						textLineBoundingRect.Min + ImVec2((float)INT_MAX, textLineBoundingRect.GetSize().y));
 					
 					ImGui::GetWindowDrawList()->AddText(
 						textLineBoundingRect.GetTL(), 
@@ -417,8 +421,13 @@ void TextEditor::frame_update()
 						symbolOffset = ImVec2(symbolOffset.x + symbolSize.x, 0.f);
 					}
 
+					// draw cursor at the very end
 					if(m_EditorCursor.PositionInLine >= m_Chunks[lineNumber].size()) 
 						cursorPosition = ImVec2(symbolRect.Max.x, symbolRect.Min.y);
+
+					// draw cursor at the very start
+					if(m_EditorCursor.PositionInLine <= 0) 
+						cursorPosition = textLineBoundingRect.Min;
 
 					// draw cursor
 					if(m_EditorCursor.LineNumber == lineNumber)
@@ -445,13 +454,16 @@ void TextEditor::frame_update()
 					if(ImGui::IsWindowHovered() && 
 						ImRect(textLineBoundingRect.Min, textLineBoundingRect.Max).Contains(ImGui::GetMousePos()))
 					{
-						ImGui::GetWindowDrawList()->AddRect(textLineBoundingRect.Min, textLineBoundingRect.Max, IM_COL32(255, 255, 255, 255));
-
-						ImGui::GetWindowDrawList()->AddText(textLineBoundingRect.Min, IM_COL32(255, 0, 0, 255), std::to_string(m_Chunks[lineNumber].size()).c_str());
+						ImGui::GetWindowDrawList()->AddRect(
+							textLineBoundingRect.Min, 
+							textLineBoundingRect.Max, 
+							IM_COL32(255, 255, 255, 255));
 
 						// reset cursor position
 						if(!symbolIsHovered && 
-							(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+							(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
+							ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+							ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
 						{
 							m_EditorCursor.LineNumber     = lineNumber;
 							m_EditorCursor.PositionInLine = 0;

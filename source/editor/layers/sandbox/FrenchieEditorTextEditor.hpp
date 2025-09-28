@@ -7,6 +7,9 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
 
+// STL
+#include <optional>
+
 // IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -45,12 +48,10 @@ namespace Frenchie
             std::mutex m_Mutex;
 
             std::vector<std::wstring> m_Chunks;
-            float m_ScrollY   = 0.f;
-            float m_ScrollX   = 0.f;
-            float m_LineWidth = 0.f;
+            float m_ScrollY{0.f};
+            float m_ScrollX{0.f};
 
             // cursors
-            Cursor m_NavigationCursor;
             Cursor m_EditorCursor;
 
             // timers
