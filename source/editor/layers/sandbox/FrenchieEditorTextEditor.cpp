@@ -120,7 +120,7 @@ bool TextEditor::awake()
 
 			for (size_t j = 0; j < 100; j++)
 			{
-				//for (size_t i = 0; i < 100; i++)
+				for (size_t i = 0; i < 100; i++)
 				{
 					textBuffer.append("Привет");
 				}
@@ -336,7 +336,7 @@ void TextEditor::frame_update()
 			m_Timer.Elapsed     = m_Timer.CurrentTime - m_Timer.LaunchTime;
 
 			// adjust cursor position
-			m_Cursor.Line     = std::max(m_Cursor.Line, 0);
+			m_Cursor.Line   = std::max(m_Cursor.Line, 0);
 			m_Cursor.Column = std::max(m_Cursor.Column, 0);
 
 			ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
@@ -344,7 +344,6 @@ void TextEditor::frame_update()
 
 			// draw text
 			ImGuiListClipper clipper;
-
 			clipper.Begin((int)m_Chunks.size());
 
 			while(clipper.Step())
@@ -437,13 +436,31 @@ void TextEditor::frame_update()
 				}
 			}
 
+			if(ImGui::IsWindowHovered())
+			{
+				for (int key = ImGuiKey_NamedKey_BEGIN; key < ImGuiKey_NamedKey_END; ++key)
+				{
+					if(ImGui::IsKeyPressed((ImGuiKey)key))
+					{
+						if(m_Cursor.Line > clipper.DisplayEnd - 1) 
+						{
+							ImGui::SetScrollY(ImGui::GetScrollY() + ImGui::GetFontSize() * 4.f);
+						}
+						else if(m_Cursor.Line < clipper.DisplayStart + 1)
+						{
+							ImGui::SetScrollY(ImGui::GetScrollY() - ImGui::GetFontSize() * 4.f);
+						}
+					}
+				}
+			}
+
 			m_Scroll = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 
 			ImGui::EndChild();
 		}
-    }
 
-    ImGui::End();
+		ImGui::End();
+    }
 }
 
 bool TextEditor::allows_multiple_instances() const 
