@@ -149,13 +149,13 @@ bool TextEditor::awake()
 	);
 
 	// initialize editor cursor
-	m_EditorCursor.PositionInLine = 0;
-	m_EditorCursor.LineNumber     = 0;
+	m_Cursor.Column = 0;
+	m_Cursor.Line     = 0;
 
 	// initialize navigation cursor timer
-	m_EditorCursorTimer.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	m_EditorCursorTimer.CurrentTime = 0;
-	m_EditorCursorTimer.Elapsed     = 0;
+	m_Timer.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	m_Timer.CurrentTime = 0;
+	m_Timer.Elapsed     = 0;
 
     return true;
 }
@@ -164,17 +164,9 @@ void TextEditor::frame_update()
 {
 	std::lock_guard<std::mutex> lock(m_Mutex);
 
-	// timers
-	m_EditorCursorTimer.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	m_EditorCursorTimer.Elapsed     = m_EditorCursorTimer.CurrentTime - m_EditorCursorTimer.LaunchTime;
-
     ImGui::Begin("TextEditor", &m_Opened);
     {
-		ImGui::BeginChild(
-			"TextBufferLineNumbers", 
-			ImVec2(TextEditor::calculate_text_size(std::to_string(INT_MAX).c_str()).x, ImGui::GetContentRegionAvail().y),
-			ImGuiChildFlags_::ImGuiChildFlags_Borders, 
-			ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar);
+		ImGui::BeginChild("TextBufferLineNumbers", ImVec2(TextEditor::calculate_text_size(std::to_string(INT_MAX).c_str()).x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_::ImGuiChildFlags_Borders, ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar);
 		{
 			ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
 			ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
@@ -186,64 +178,53 @@ void TextEditor::frame_update()
 			{
 				for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 				{
-					ImRect textLineRect = TextEditor::calculate_row_rect(std::to_string(lineNumber).c_str());
-					ImGui::GetWindowDrawList()->AddText(textLineRect.GetTL(), IM_COL32(0, 255, 0, 255), std::to_string(lineNumber).c_str());
-					ImGui::ItemSize(textLineRect.GetSize(), 0.0f);
-					ImGui::ItemAdd(textLineRect, 0);
+					ImRect rowRect = ImRect(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, ImGui::GetFontSize()));
+					ImGui::GetWindowDrawList()->AddText(rowRect.GetTL(), IM_COL32(0, 255, 0, 255), std::to_string(lineNumber).c_str());
+					ImGui::ItemSize(rowRect.GetSize(), 0.0f);
+					ImGui::ItemAdd(rowRect, 0);
 				}
 			}
 
-			ImGui::SetScrollY(m_ScrollY);
-
+			ImGui::SetScrollY(m_Scroll.y);
 			ImGui::EndChild();
 		}
 
 		// draw text
 		ImGui::SameLine();
 
-		ImGui::BeginChild(
-			"TextBufferContents", 
-			ImGui::GetContentRegionAvail(),
-			ImGuiChildFlags_::ImGuiChildFlags_Borders, 
-			ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoNavInputs);
+		ImGui::BeginChild("TextBufferContents", ImGui::GetContentRegionAvail(), ImGuiChildFlags_::ImGuiChildFlags_Borders, ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoNavInputs);
 		{
-			// handle keys
 			if(ImGui::IsWindowHovered())
 			{
-				// move cursors
 				if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
 				{
-					if(m_EditorCursor.PositionInLine > 0)
-						--m_EditorCursor.PositionInLine;
-
-					m_EditorCursor.isMoving = true;
+					if(m_Cursor.Column > 0)
+						--m_Cursor.Column;
 				}
 				else if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
 				{
-					if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size()) 
-						m_EditorCursor.PositionInLine++;
-
-					m_EditorCursor.isMoving = true;
+					if(m_Cursor.Column < m_Chunks[m_Cursor.Line].size()) 
+						m_Cursor.Column++;
 				}
 				else if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
 				{
-					if(m_EditorCursor.LineNumber > 0)
+					if(m_Cursor.Line > 0)
 					{
-						--m_EditorCursor.LineNumber;
-						m_EditorCursor.isMoving = true;
+						--m_Cursor.Line;
+
+						if(m_Cursor.Column > m_Chunks[m_Cursor.Line].size())
+							m_Cursor.Column = 0;
 					}
 				}
 				else if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow))
 				{
-					if(m_EditorCursor.LineNumber < m_Chunks.size() - 1)
+					if(m_Cursor.Line < m_Chunks.size() - 1)
 					{
-						++m_EditorCursor.LineNumber;
-						m_EditorCursor.isMoving = true;
+						++m_Cursor.Line;
+
+						if(m_Cursor.Column > m_Chunks[m_Cursor.Line].size())
+							m_Cursor.Column = 0;
 					}
-				}
-				else
-				{
-					m_EditorCursor.isMoving = false;
 				}
 
 				if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter))
@@ -251,26 +232,26 @@ void TextEditor::frame_update()
 					Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
 						[this]()
 						{
-							if(m_EditorCursor.LineNumber < 0 || m_EditorCursor.LineNumber > m_Chunks.size()) 
+							if(m_Cursor.Line < 0 || m_Cursor.Line > m_Chunks.size()) 
 								return;
 
-							if(m_EditorCursor.PositionInLine < m_Chunks[m_EditorCursor.LineNumber].size())
+							if(m_Cursor.Column < m_Chunks[m_Cursor.Line].size())
 							{
 								std::wstring copy = std::wstring(
-									&m_Chunks[m_EditorCursor.LineNumber][m_EditorCursor.PositionInLine], 
-									m_Chunks[m_EditorCursor.LineNumber].size() - m_EditorCursor.PositionInLine);
+									&m_Chunks[m_Cursor.Line][m_Cursor.Column], 
+									m_Chunks[m_Cursor.Line].size() - m_Cursor.Column);
 
-								m_Chunks[m_EditorCursor.LineNumber].erase(m_EditorCursor.PositionInLine, m_Chunks[m_EditorCursor.LineNumber].size());
+								m_Chunks[m_Cursor.Line].erase(m_Cursor.Column, m_Chunks[m_Cursor.Line].size());
 
-								m_EditorCursor.LineNumber++;
-								m_EditorCursor.PositionInLine = 0;
-								m_Chunks.insert(m_Chunks.begin() + m_EditorCursor.LineNumber, copy);
+								m_Cursor.Line++;
+								m_Cursor.Column = 0;
+								m_Chunks.insert(m_Chunks.begin() + m_Cursor.Line, copy);
 							}
 							else
 							{
-								m_EditorCursor.LineNumber++;
-								m_EditorCursor.PositionInLine = 0;
-								m_Chunks.insert(m_Chunks.begin() + m_EditorCursor.LineNumber, L" ");
+								m_Cursor.Line++;
+								m_Cursor.Column = 0;
+								m_Chunks.insert(m_Chunks.begin() + m_Cursor.Line, L" ");
 							}
 						}
 					);
@@ -282,29 +263,26 @@ void TextEditor::frame_update()
 						[this]()
 						{
 							// remove element at specific index
-							int index = m_EditorCursor.PositionInLine - 1;
-							if(index >= 0 && !m_Chunks[m_EditorCursor.LineNumber].empty()) 
-								m_Chunks[m_EditorCursor.LineNumber].erase(index, 1);
+							int index = m_Cursor.Column - 1;
+							if(index >= 0 && !m_Chunks[m_Cursor.Line].empty()) 
+								m_Chunks[m_Cursor.Line].erase(index, 1);
 							
-							// decrement cursor position
-							--m_EditorCursor.PositionInLine;
+							// decrement cursor position in line
+							--m_Cursor.Column;
 
-							if(m_EditorCursor.PositionInLine < 0)
+							if(m_Cursor.Column < 0 && m_Cursor.Line > 0)
 							{
-								if(m_EditorCursor.LineNumber > 0)
+								std::wstring copy = std::wstring(m_Chunks[m_Cursor.Line].begin(), m_Chunks[m_Cursor.Line].end()); 
+
+								if(m_Cursor.Line >= 0)
+									m_Chunks.erase(m_Chunks.begin() + m_Cursor.Line);
+
+								--m_Cursor.Line;
+
+								if(m_Cursor.Line >= 0) 
 								{
-									std::wstring copy = std::wstring(m_Chunks[m_EditorCursor.LineNumber].begin(), m_Chunks[m_EditorCursor.LineNumber].end()); 
-
-									if(m_EditorCursor.LineNumber >= 0)
-										m_Chunks.erase(m_Chunks.begin() + m_EditorCursor.LineNumber);
-
-									--m_EditorCursor.LineNumber;
-
-									if(m_EditorCursor.LineNumber >= 0) 
-									{
-										m_EditorCursor.PositionInLine = (int)m_Chunks[m_EditorCursor.LineNumber].size();
-										m_Chunks[m_EditorCursor.LineNumber].append(copy);
-									}
+									m_Cursor.Column = (int)m_Chunks[m_Cursor.Line].size();
+									m_Chunks[m_Cursor.Line].append(copy);
 								}
 							}
 						}
@@ -326,7 +304,7 @@ void TextEditor::frame_update()
 					int  count = Helpers::ImTextCharToUtf8(utf8, c);
 
 					// insert user input into a given line as wide character string
-					m_Chunks[m_EditorCursor.LineNumber].insert(m_EditorCursor.PositionInLine++, Frenchie::Core::String::as_wide(std::string(utf8, count)));
+					m_Chunks[m_Cursor.Line].insert(m_Cursor.Column++, Frenchie::Core::String::as_wide(std::string(utf8, count)));
 				};
 
 				if (ImGui::Shortcut(ImGuiKey_Tab, ImGuiInputFlags_Repeat))
@@ -334,8 +312,7 @@ void TextEditor::frame_update()
 					unsigned int c = '\t'; // Insert TAB
 					onCharPressed(c);
 				}
-
-				if (io.InputQueueCharacters.Size > 0)
+				else if (io.InputQueueCharacters.Size > 0)
 				{
 					if (!ignore_char_inputs)
 					{
@@ -350,130 +327,117 @@ void TextEditor::frame_update()
 						}
 					}
 
-					// Consume characters
 					io.InputQueueCharacters.resize(0);
 				}
 			}
 
-			// adjust cursor line number and line position
-			m_EditorCursor.LineNumber     = std::max(m_EditorCursor.LineNumber, 0);
-			m_EditorCursor.PositionInLine = std::max(m_EditorCursor.PositionInLine, 0);
+			// process cursor timer
+			m_Timer.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			m_Timer.Elapsed     = m_Timer.CurrentTime - m_Timer.LaunchTime;
 
-			// draw text
+			// adjust cursor position
+			m_Cursor.Line     = std::max(m_Cursor.Line, 0);
+			m_Cursor.Column = std::max(m_Cursor.Column, 0);
+
 			ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
 			ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
 
+			// draw text
 			ImGuiListClipper clipper;
+
 			clipper.Begin((int)m_Chunks.size());
 
 			while(clipper.Step())
 			{
 				for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
-				{
-					// draw text
-					ImRect textLineBoundingRect = TextEditor::calculate_row_rect(m_Chunks[lineNumber].c_str());
-
-					textLineBoundingRect = ImRect(
-						textLineBoundingRect.Min, 
-						textLineBoundingRect.Min + ImVec2((float)INT_MAX, textLineBoundingRect.GetSize().y));
+				{				
+					ImRect rowRect = ImRect(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, ImGui::GetFontSize()));
 					
 					ImGui::GetWindowDrawList()->AddText(
-						textLineBoundingRect.GetTL(), 
+						rowRect.GetTL(), 
 						IM_COL32(0, 255, 0, 255), 
-						Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str()
-					);
+						Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str());
 					
-					ImGui::ItemSize(textLineBoundingRect.GetSize(), 0.0f);
-					ImGui::ItemAdd(textLineBoundingRect, 0);
+					ImGui::ItemSize(rowRect.GetSize(), 0.0f);
+					ImGui::ItemAdd(rowRect, 0);
 
 					// highlight current symbol and calculate cursor position
 					ImVec2 symbolOffset    = ImVec2(0.f, 0.f);
-					ImVec2 cursorPosition  = ImVec2(0.f, 0.f);
 					ImVec2 symbolSize      = ImVec2(0.f, 0.f);
 					ImRect symbolRect      = ImRect();
 					bool   symbolIsHovered = false;
 
-					for (size_t positionInLine = 0; positionInLine < m_Chunks[lineNumber].size(); positionInLine++)
+					for(int positionInLine = 0; positionInLine < (int)m_Chunks[lineNumber].size(); positionInLine++)
 					{
-						auto utf8 = Frenchie::Core::String::as_utf8(std::wstring(1, m_Chunks[lineNumber][positionInLine]));
-
-						symbolSize = TextEditor::calculate_text_size(utf8.c_str());
-						
-						symbolRect = ImRect(textLineBoundingRect.Min + symbolOffset, textLineBoundingRect.Min + symbolOffset + symbolSize);
+						symbolSize = TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(std::wstring(1, m_Chunks[lineNumber][positionInLine])).c_str());
+						symbolRect = ImRect(rowRect.Min + symbolOffset, rowRect.Min + symbolOffset + symbolSize);
 
 						// highlight symbol
 						if(symbolRect.Contains(ImGui::GetMousePos()))
 							ImGui::GetWindowDrawList()->AddRect(symbolRect.Min, symbolRect.Max, IM_COL32(255, 0, 0, 255));
 
 						// setup cursor position
-						if(ImGui::IsWindowFocused() && 
-							(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)) && 
-							symbolRect.Contains(ImGui::GetMousePos()))
+						if(ImGui::IsWindowFocused() &&
+							symbolRect.Contains(ImGui::GetMousePos()) &&
+							(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
+							ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+							ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
 						{
-							m_EditorCursor.LineNumber     = (int)lineNumber;
-							m_EditorCursor.PositionInLine = (int)positionInLine;
-							symbolIsHovered               = true;
+							m_Cursor.Line   = lineNumber;
+							m_Cursor.Column = positionInLine;
+							symbolIsHovered = true;
 						}
 
-						if(m_EditorCursor.LineNumber == lineNumber && m_EditorCursor.PositionInLine == positionInLine) 
-							cursorPosition = symbolRect.Min;
+						if(m_Cursor.Line == lineNumber && m_Cursor.Column == positionInLine) 
+							m_Cursor.Position = symbolRect.Min;
 
 						symbolOffset = ImVec2(symbolOffset.x + symbolSize.x, 0.f);
 					}
 
-					// draw cursor at the very end
-					if(m_EditorCursor.PositionInLine >= m_Chunks[lineNumber].size()) 
-						cursorPosition = ImVec2(symbolRect.Max.x, symbolRect.Min.y);
+					// move cursor at the very end
+					if(m_Cursor.Column >= m_Chunks[lineNumber].size()) 
+						m_Cursor.Position = ImVec2(symbolRect.Max.x, symbolRect.Min.y);
 
-					// draw cursor at the very start
-					if(m_EditorCursor.PositionInLine <= 0) 
-						cursorPosition = textLineBoundingRect.Min;
+					// move cursor at the very start
+					if(m_Cursor.Column <= 0) 
+						m_Cursor.Position = rowRect.Min;
+
+					// move cursor at the very start
+					if(!symbolIsHovered &&
+						ImGui::IsWindowHovered() && 
+						ImRect(rowRect.Min, rowRect.Max).Contains(ImGui::GetMousePos()) &&
+						(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
+						ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+						ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+					{
+						m_Cursor.Line   = lineNumber;
+						m_Cursor.Column = 0;
+					}
 
 					// draw cursor
-					if(m_EditorCursor.LineNumber == lineNumber)
+					if(m_Cursor.Line == lineNumber)
 					{	
 						ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Cursor);
 
 						// animated
-						if(m_EditorCursorTimer.Elapsed > 500 || m_EditorCursor.isMoving)
+						if(m_Timer.Elapsed > 500)
 						{
-							ImGui::GetWindowDrawList()->AddText(
-								cursorPosition - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
-								IM_COL32(255, 0, 0, 255), 
-								"|");
+							ImGui::GetWindowDrawList()->AddText(m_Cursor.Position - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, IM_COL32(255, 0, 0, 255), "|");
 
 							// relaunch timer
-							if(m_EditorCursorTimer.Elapsed > 1000) 
-								m_EditorCursorTimer.LaunchTime = m_EditorCursorTimer.CurrentTime;
+							if(m_Timer.Elapsed > 1000) 
+								m_Timer.LaunchTime = m_Timer.CurrentTime;
 						}
 					}
 
 					// draw text line bounding rectangle
 					ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Background);
-
-					if(ImGui::IsWindowHovered() && 
-						ImRect(textLineBoundingRect.Min, textLineBoundingRect.Max).Contains(ImGui::GetMousePos()))
-					{
-						ImGui::GetWindowDrawList()->AddRect(
-							textLineBoundingRect.Min, 
-							textLineBoundingRect.Max, 
-							IM_COL32(255, 255, 255, 255));
-
-						// reset cursor position
-						if(!symbolIsHovered && 
-							(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
-							ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-							ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-						{
-							m_EditorCursor.LineNumber     = lineNumber;
-							m_EditorCursor.PositionInLine = 0;
-						}
-					}
+					if(ImRect(rowRect.Min, rowRect.Max).Contains(ImGui::GetMousePos()))
+						ImGui::GetWindowDrawList()->AddRect(rowRect.Min, rowRect.Max, IM_COL32(255, 255, 255, 255));
 				}
 			}
 
-			m_ScrollY = ImGui::GetScrollY();
-			m_ScrollX = ImGui::GetScrollY();
+			m_Scroll = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 
 			ImGui::EndChild();
 		}
@@ -485,24 +449,6 @@ void TextEditor::frame_update()
 bool TextEditor::allows_multiple_instances() const 
 {
     return false;
-}
-
-void TextEditor::handle_key_events()
-{
-}
-
-ImRect TextEditor::calculate_row_rect(const char* _Begin, const char* _End)
-{
-	return ImRect(
-		ImGui::GetCursorScreenPos(), 
-		ImGui::GetCursorScreenPos() + ImVec2(std::max<float>(ImGui::GetContentRegionAvail().x, calculate_text_size(_Begin, _End).x), ImGui::GetFontSize()));
-}
-
-ImRect TextEditor::calculate_row_rect(const std::wstring& _Input)
-{
-	return ImRect(
-		ImGui::GetCursorScreenPos(), 
-		ImGui::GetCursorScreenPos() + ImVec2(std::max<float>(ImGui::GetContentRegionAvail().x, calculate_text_size(_Input).x), ImGui::GetFontSize()));
 }
 
 ImVec2 TextEditor::calculate_text_size(const char* _Begin, const char* _End)
