@@ -50,7 +50,24 @@ namespace Frenchie
             Cursor                    m_Cursor;
             Timer                     m_Timer;
             ImVec2                    m_Scroll;
+            ImVec2                    m_RowSize;
+            ImRect                    m_TextViewPort;
+            int                       m_CurrentlyHoveredLine = 0;
 
+            // commands
+            void moveCursorLeft();
+            void moveCursorRight();
+            void moveCursorDown();
+            void moveCursorUp();
+            void moveNextLine();
+            void removeSymbol();
+            void handleUserInput();
+
+            // drawers
+            void drawTextLineNumbers();
+            void drawTextContents();
+
+            // static API
             static ImVec2 calculate_text_size(const char* _Begin, const char* _End = nullptr);
             static ImVec2 calculate_text_size(const std::wstring&);
         };
