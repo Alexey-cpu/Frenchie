@@ -54,6 +54,8 @@ namespace Frenchie
             ImRect                    m_TextViewPort;
             int                       m_CurrentlyHoveredLine = 0;
 
+            Timer                     m_Timer1;
+
             // commands
             void moveCursorLeft();
             void moveCursorRight();
@@ -70,6 +72,7 @@ namespace Frenchie
             // static API
             static ImVec2 calculate_text_size(const char* _Begin, const char* _End = nullptr);
             static ImVec2 calculate_text_size(const std::wstring&);
+            static ImU32  calculate_color(const ImVec4&);
         };
     }
 }

@@ -5,10 +5,128 @@ using namespace Frenchie::Editor;
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <regex>
+#include <map>
+
+// PCRE
+#define PCRE2_CODE_UNIT_WIDTH 16
+#include <pcre2.h>
+
+class Colors
+{
+public:
+	struct RegularExpressionRule
+	{
+		RegularExpressionRule(const std::wstring& Pattern, const unsigned int& _Color) : 
+			Pattern(Pattern), Color(_Color){}
+
+		std::wstring Pattern = std::wstring();
+		unsigned int Color   = 0;
+	};
+
+	struct RegularExpressionEstimationResult
+	{
+		RegularExpressionEstimationResult(){}
+
+		RegularExpressionEstimationResult(const int& _Position, const int& _Length, const unsigned int& _Color) : 
+			Position(_Position), Length(_Length), Color(_Color){}
+
+		int          Position = 0;
+		int          Length   = 0;
+		unsigned int Color    = 0;
+	};
+
+	static std::map<int, RegularExpressionEstimationResult> colorize(
+		const std::wstring&                       _Contents, 
+		const std::vector<RegularExpressionRule>& _Rules, 
+		unsigned int                              _DefaultColor = 1)
+	{
+		std::map<int, RegularExpressionEstimationResult> colors;
+
+		colors[0] = RegularExpressionEstimationResult(0, 0, _DefaultColor);
+
+		PCRE2_SPTR subject = (PCRE2_SPTR)_Contents.c_str();
+
+		for(auto&& rule : _Rules)
+		{
+			PCRE2_SPTR pattern = (PCRE2_SPTR)rule.Pattern.c_str();
+
+			int errorcode;
+			PCRE2_SIZE erroroffset;
+
+			pcre2_code *re = pcre2_compile(pattern, PCRE2_ZERO_TERMINATED, 0, &errorcode, &erroroffset, NULL);
+
+			if (re == NULL) 
+			{
+				std::cout << "Handle compilation error " << "\n";
+				return  colors;
+			}
+
+			pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
+			if (match_data == NULL) 
+			{
+				// Handle compilation error
+				pcre2_code_free(re);
+				return colors;
+			}
+
+			PCRE2_SIZE startoffset = 0;
+			int rc;
+
+			while ((rc = pcre2_match(re, subject, (PCRE2_SIZE)wcslen((wchar_t*)subject), startoffset, 0, match_data, NULL)) >= 0) 
+			{
+				PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
+
+				colors[(int)ovector[0]] = RegularExpressionEstimationResult((int)ovector[0], (int)(ovector[1] - ovector[0]), rule.Color);
+
+				// Advance startoffset for the next search
+				startoffset = ovector[1];
+
+				if (ovector[0] == ovector[1]) 
+				{ // Handle zero-length matches to prevent infinite loops
+					startoffset++;
+				}
+			}
+
+			if (rc != PCRE2_ERROR_NOMATCH) 
+			{
+				// Handle other matching errors
+			}
+
+			pcre2_match_data_free(match_data);
+			pcre2_code_free(re);
+		}
+
+		auto result = colors;
+
+		// handle untill the end
+		for(auto&& color : colors)
+		{
+			int source = color.second.Position + color.second.Length;
+			int target = color.second.Position + color.second.Length;
+
+			do
+			{
+				target++;
+			} 
+			while(colors.find(target) == colors.end() && target < (int)_Contents.size());
+
+			if(source < (int)_Contents.size())
+			{
+				result[source] = RegularExpressionEstimationResult(
+					source, 
+					target - source, _DefaultColor);
+			}
+		}
+
+		return result;
+	}
+};
 
 class Helpers
 {
 public:
+
 	static inline int ImTextCharToUtf8_inline(char* buf, int buf_size, unsigned int c)
 	{
 		if (c < 0x80)
@@ -120,15 +238,15 @@ bool TextEditor::awake()
 
 			for (size_t j = 0; j < 100; j++)
 			{
-				for (size_t i = 0; i < 100; i++)
+				for (size_t i = 0; i < 4; i++)
 				{
-					textBuffer.append("Привет");
+					textBuffer.append("for(int i = 0; i < 10; i++)");
 				}
 
 				textBuffer.append("\n");
 			}
 
-			// // load text
+			// load text
 			// std::ifstream ifsream(std::filesystem::path(L"C:/SDK/Qt_Projects/PowerCAD/tests/models/rastrWin3/computable/Центр/Центр неопознанное/1_Летний минимум_2027_ГОСТ_п.5.3_Г.pwrct"));
 
 			// std::string textBuffer = 
@@ -156,6 +274,10 @@ bool TextEditor::awake()
 	m_Timer.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	m_Timer.CurrentTime = 0;
 	m_Timer.Elapsed     = 0;
+
+	m_Timer1.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	m_Timer1.CurrentTime = 0;
+	m_Timer1.Elapsed     = 0;
 
     return true;
 }
@@ -391,7 +513,7 @@ void TextEditor::drawTextLineNumbers()
 									ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt].w * 255.f));
 				}
 
-				// draw background
+				// draw text
 				ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
 				ImGui::GetWindowDrawList()->AddText(
 					rowRect.GetTL(), 
@@ -460,6 +582,12 @@ void TextEditor::drawTextContents()
 		m_Timer.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		m_Timer.Elapsed     = m_Timer.CurrentTime - m_Timer.LaunchTime;
 
+		float threshold = 3000;
+		m_Timer1.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		m_Timer1.Elapsed     = m_Timer1.CurrentTime - m_Timer1.LaunchTime;
+
+		if(m_Timer1.Elapsed > threshold) m_Timer1.LaunchTime = m_Timer1.CurrentTime;
+
 		// adjust cursor position
 		m_Cursor.Line   = std::max(m_Cursor.Line, 0);
 		m_Cursor.Column = std::max(m_Cursor.Column, 0);
@@ -472,24 +600,60 @@ void TextEditor::drawTextContents()
 		clipper.Begin((int)m_Chunks.size());
 
 		while(clipper.Step())
-		{
+		{	
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
+				auto text = Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]);
+
 				m_RowSize = ImVec2(
-					std::max(TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str()).x, ImGui::GetContentRegionAvail().x), 
+					std::max(TextEditor::calculate_text_size(text.c_str()).x, ImGui::GetContentRegionAvail().x), 
 					ImGui::GetFontSize());
 
 				ImRect rowRect = ImRect(
 					ImGui::GetCursorScreenPos(), 
 					ImGui::GetCursorScreenPos() + m_RowSize);
-				
-				ImGui::GetWindowDrawList()->AddText(
-					rowRect.GetTL(), 
-					IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_Text].x * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_Text].y * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_Text].z * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_Text].w * 255.f), 
-					Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str());
+
+				//data.append(m_Chunks[lineNumber]).append(L"\n");
+
+				//Helpers::colorize1(m_Chunks[lineNumber]);
+
+				//--------------------------------------------------------------------------------------------
+				// colorify text here
+				//--------------------------------------------------------------------------------------------
+
+				std::vector<Colors::RegularExpressionRule> patterns = 
+				{
+				    Colors::RegularExpressionRule(
+						L"alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|reflexpr|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|synchronized|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq", 
+						IM_COL32(255, 0, 0, 255))
+				};
+
+				auto colors = Colors::colorize(
+					m_Chunks[lineNumber], 
+					patterns, 
+					TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
+
+				ImVec2 offset    = ImVec2(0.f, 0.f);
+
+				for(auto&& color : colors)
+				{
+				    auto result = color.second;
+
+					ImGui::GetWindowDrawList()->AddText(
+						rowRect.Min + offset,
+						result.Color, 
+						Frenchie::Core::String::as_utf8(
+							std::wstring(
+								&m_Chunks[lineNumber][result.Position], 
+								&m_Chunks[lineNumber][result.Position + result.Length])).c_str());
+
+					offset.x += TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(
+							std::wstring(
+								&m_Chunks[lineNumber][result.Position], 
+								&m_Chunks[lineNumber][result.Position + result.Length])).c_str()).x;
+				}
+
+				//--------------------------------------------------------------------------------------------
 
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
@@ -601,12 +765,28 @@ void TextEditor::drawTextContents()
 			}
 		}
 
+		//Helpers::colorize1(data);
+
+		// if(m_Timer1.Elapsed > threshold)
+		// {
+		// 	if(!Helpers::colorize1(data).empty()) std::cout << "colorize !!! " << m_Timer1.Elapsed << "\n";
+		// }
+
 		if(ImGui::IsWindowHovered())
 		{
 			for(int key = ImGuiKey::ImGuiKey_NamedKey_BEGIN; key < ImGuiKey::ImGuiKey_NamedKey_END; ++key)
 			{
-				if(!ImGui::IsKeyPressed((ImGuiKey)key))
+				if(!ImGui::IsKeyPressed((ImGuiKey)key)              ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseLeft   ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseRight  ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseMiddle ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseX1     ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseX2     ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseWheelX ||
+					(ImGuiKey)key == ImGuiKey::ImGuiKey_MouseWheelY)
+				{
 					continue;
+				}
 
 				// adjust Y scroll
 				if(m_Cursor.Line > clipper.DisplayEnd - 1)
@@ -639,3 +819,10 @@ ImVec2 TextEditor::calculate_text_size(const std::wstring& _Input)
 {
 	return TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(_Input).c_str());
 }
+
+ImU32 TextEditor::calculate_color(const ImVec4& _Vector)
+{
+	return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
+}
+
+#undef PCRE2_CODE_UNIT_WIDTH
