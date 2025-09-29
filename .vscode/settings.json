@@ -112,6 +112,10 @@
         "csetjmp": "cpp",
         "unordered_set": "cpp",
         "resumable": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "csignal": "cpp",
+        "scoped_allocator": "cpp",
+        "shared_mutex": "cpp",
+        "valarray": "cpp"
     }
 }

@@ -23,3 +23,6 @@
 [submodule "tools/ryml"]
 	path = tools/ryml
 	url = https://github.com/biojppm/rapidyaml.git
+[submodule "tools/pcre2"]
+	path = tools/pcre2
+	url = https://github.com/PCRE2Project/pcre2.git
