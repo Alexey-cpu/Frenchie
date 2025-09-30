@@ -89,23 +89,12 @@ namespace Frenchie
     }
 }
 
-const char CURSOR = '|';
-const char ENTER  = '\n';
-const char TAB    = '\t';
-
 // view
 TextEditor::TextEditor() : Frenchie::Application::Layer(STRINGIFY(TextEditor)){}
 TextEditor::~TextEditor(){}
 
 bool TextEditor::awake()
 {
-//     m_TextBuffer = R"(#include <iostream>
-// int main(int, int)
-// {
-//     std::cout << "Hello world \n";
-//     return 0;
-// })";
-
 	// fill buffer
 	Frenchie::Core::ThreadPool::instance()->enqueue(
 		[this]()
@@ -123,29 +112,10 @@ bool TextEditor::awake()
 				textBuffer.append("\n");
 			}
 
-			// load text
-			// std::ifstream ifsream(std::filesystem::path(L"C:/SDK/Qt_Projects/PowerCAD/tests/models/rastrWin3/computable/Центр/Центр неопознанное/1_Летний минимум_2027_ГОСТ_п.5.3_Г.pwrct"));
-
-			// std::string textBuffer = 
-			// 	std::string(
-			// 		(std::istreambuf_iterator<char>(ifsream)), 
-			// 		(std::istreambuf_iterator<char>()));
-
-			for (size_t textBegin = 0, textEnd = 0, lineNumber = 0; textBegin < textBuffer.size(); textBegin = ++textEnd, ++lineNumber)
-			{
-				while(textEnd < textBuffer.size() && textBuffer[textEnd] != ENTER) ++textEnd;
-
-				m_Chunks.push_back(
-					Frenchie::Core::String::as_wide(std::string().append(&textBuffer[textBegin], &textBuffer[textEnd])));
-			}
-
-			//m_Chunks = chunks;
+			m_TextModel = std::make_shared<TextEditorModel>();
+			//m_TextModel->append(textBuffer);
 		}
 	);
-
-	// initialize editor cursor
-	m_Cursor.Column = 0;
-	m_Cursor.Line     = 0;
 
 	// initialize navigation cursor timer
 	m_Timer.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -166,14 +136,16 @@ void TextEditor::frame_update()
 			ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 			ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar);
 		{
-			drawTextLineNumbers();
+			draw_text_line_numbers();
 			
 			ImGui::SameLine();
 			
-			drawTextContents();
-			
-			ImGui::EndChild();
+			draw_text_contents();
 		}
+
+		ImGui::EndChild();
+
+		draw_status_panel();
 
 		ImGui::End();
     }
@@ -184,120 +156,93 @@ bool TextEditor::allows_multiple_instances() const
     return false;
 }
 
-void TextEditor::moveCursorLeft()
-{
-	if(m_Cursor.Column > 0)
-		--m_Cursor.Column;
-}
-
-void TextEditor::moveCursorRight()
-{
-	if(m_Cursor.Column < m_Chunks[m_Cursor.Line].size()) 
-		m_Cursor.Column++;
-}
-
-void TextEditor::moveCursorDown()
-{
-	if(m_Cursor.Line >= m_Chunks.size() - 1) 
-		return;
-
-	++m_Cursor.Line;
-
-	if(m_Cursor.Column > m_Chunks[m_Cursor.Line].size())
-		m_Cursor.Column = 0;
-}
-
-void TextEditor::moveCursorUp()
-{
-	if(m_Cursor.Line < 0) 
-		return;
-
-	--m_Cursor.Line;
-
-	if(m_Cursor.Column > m_Chunks[m_Cursor.Line].size())
-		m_Cursor.Column = 0;
-}
-
-void TextEditor::moveNextLine()
+void TextEditor::move_cursor_left_command()
 {
 	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
 		[this]()
 		{
-			if(m_Cursor.Line < 0 || m_Cursor.Line > m_Chunks.size()) 
-				return;
-
-			if(m_Cursor.Column < m_Chunks[m_Cursor.Line].size())
-			{
-				std::wstring copy = std::wstring(
-					&m_Chunks[m_Cursor.Line][m_Cursor.Column], 
-					m_Chunks[m_Cursor.Line].size() - m_Cursor.Column);
-
-				m_Chunks[m_Cursor.Line].erase(m_Cursor.Column, m_Chunks[m_Cursor.Line].size());
-
-				m_Cursor.Line++;
-				m_Cursor.Column = 0;
-				m_Chunks.insert(m_Chunks.begin() + m_Cursor.Line, copy);
-			}
-			else
-			{
-				m_Cursor.Line++;
-				m_Cursor.Column = 0;
-				m_Chunks.insert(m_Chunks.begin() + m_Cursor.Line, L"");
-			}
+			if(m_TextModel != nullptr)
+				m_TextModel->move_cursor_left();
 		}
 	);
 }
 
-void TextEditor::removeSymbol()
+void TextEditor::move_cursor_right_command()
 {
 	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
 		[this]()
 		{
-			// remove element at specific index
-			int index = m_Cursor.Column - 1;
-			if(index >= 0 && !m_Chunks[m_Cursor.Line].empty()) 
-				m_Chunks[m_Cursor.Line].erase(index, 1);
-			
-			// decrement cursor position in line
-			--m_Cursor.Column;
-
-			if(m_Cursor.Column < 0 && m_Cursor.Line > 0)
-			{
-				std::wstring copy = std::wstring(m_Chunks[m_Cursor.Line].begin(), m_Chunks[m_Cursor.Line].end()); 
-
-				if(m_Cursor.Line >= 0)
-					m_Chunks.erase(m_Chunks.begin() + m_Cursor.Line);
-
-				--m_Cursor.Line;
-
-				if(m_Cursor.Line >= 0) 
-				{
-					m_Cursor.Column = (int)m_Chunks[m_Cursor.Line].size();
-					m_Chunks[m_Cursor.Line].append(copy);
-				}
-			}
+			if(m_TextModel != nullptr)
+				m_TextModel->move_cursor_right();
 		}
 	);
 }
 
-void TextEditor::handleUserInput()
+void TextEditor::move_cursor_down_command()
 {
-	// Process regular text input (before we check for Return because using some IME will effectively send a Return?)
-	// We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
+	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+		[this]()
+		{
+			if(m_TextModel != nullptr)
+				m_TextModel->move_cursor_down();
+		}
+	);
+}
+
+void TextEditor::move_cursor_up_command()
+{
+	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+		[this]()
+		{
+			if(m_TextModel != nullptr)
+				m_TextModel->move_cursor_up();
+		}
+	);
+}
+
+void TextEditor::move_next_line_command()
+{
+	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+		[this]()
+		{
+			if(m_TextModel != nullptr)
+				m_TextModel->next_line();
+		}
+	);
+}
+
+void TextEditor::move_back_commnad()
+{
+	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+		[this]()
+		{
+			if(m_TextModel != nullptr)
+				m_TextModel->move_back();
+		}
+	);
+}
+
+void TextEditor::insert_symbol_command()
+{
 	ImGuiIO& io = ImGui::GetIO();
-
-	const bool is_osx = io.ConfigMacOSXBehaviors;
-	
-	const bool ignore_char_inputs = (io.KeyCtrl && !io.KeyAlt) || (is_osx && io.KeyCtrl);
 	
 	auto onCharPressed = [this](unsigned int c)
 	{
-		// retrieve user input in UTF-8 codec
-		char utf8[5];
-		int  count = Helpers::ImTextCharToUtf8(utf8, c);
-
+		if(m_TextModel == nullptr) 
+			return;
 		// insert user input into a given line as wide character string
-		m_Chunks[m_Cursor.Line].insert(m_Cursor.Column++, Frenchie::Core::String::as_wide(std::string(utf8, count)));
+
+		Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+			[this, c]()
+			{
+				// retrieve user input in UTF-8 codec
+				char utf8[5];
+				int  count = Helpers::ImTextCharToUtf8(utf8, c);
+
+				m_TextModel->insert(m_TextModel->get_cursros_line(), m_TextModel->get_cursros_column(), Frenchie::Core::String::as_wide(std::string(utf8, count)));
+				m_TextModel->move_cursor_right();
+			}
+		);
 	};
 
 	if (ImGui::Shortcut(ImGuiKey_Tab, ImGuiInputFlags_Repeat))
@@ -307,7 +252,7 @@ void TextEditor::handleUserInput()
 	}
 	else if (io.InputQueueCharacters.Size > 0)
 	{
-		if (!ignore_char_inputs)
+		if (!((io.KeyCtrl && !io.KeyAlt) || (io.ConfigMacOSXBehaviors && io.KeyCtrl)))
 		{
 			for (int n = 0; n < io.InputQueueCharacters.Size; n++)
 			{
@@ -320,30 +265,33 @@ void TextEditor::handleUserInput()
 			}
 		}
 
+		// consume user input
 		io.InputQueueCharacters.resize(0);
 	}
 }
 
-void TextEditor::drawTextLineNumbers()
+void TextEditor::draw_text_line_numbers()
 {
 	ImGui::BeginChild("TextBufferLineNumbers", 
 		ImVec2(TextEditor::calculate_text_size(std::to_string(INT_MAX).c_str()).x, ImGui::GetContentRegionAvail().y), 
 		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 		ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoInputs);
+	
+	// get ready to draw
+	ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
+
+	// draw background
+	ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
+	ImGui::GetWindowDrawList()->AddRectFilled(
+		ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()), 
+		ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
+		TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+
+	if(m_TextModel != nullptr)
 	{
-		// get ready to draw
-		ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
-
-		// draw background
-		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
-
-		ImGui::GetWindowDrawList()->AddRectFilled(
-			ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()), 
-			ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
-			TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
-
 		ImGuiListClipper clipper;
-		clipper.Begin((int)m_Chunks.size());
+		clipper.Begin(m_TextModel->get_text_lines_count());
 
 		while(clipper.Step())
 		{
@@ -390,12 +338,13 @@ void TextEditor::drawTextLineNumbers()
 			}
 		}
 
-		ImGui::SetScrollY(m_Scroll.y);
-		ImGui::EndChild();
+		ImGui::SetScrollY(m_ScrollPos.y);
 	}
+
+	ImGui::EndChild();
 }
 
-void TextEditor::drawTextContents()
+void TextEditor::draw_text_contents()
 {
 	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ScrollbarBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 
@@ -403,64 +352,62 @@ void TextEditor::drawTextContents()
 		ImGui::GetContentRegionAvail(), 
 		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 		ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoNavInputs);
+	
+	// get ready for drawing
+	ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
+
+	// draw background
+	ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
+	ImRect backgroundRect = ImRect(
+		ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
+		ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX));
+
+	ImGui::GetWindowDrawList()->AddRectFilled(
+		backgroundRect.Min,
+		backgroundRect.Max,
+		TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+
+	if(m_TextModel != nullptr)
 	{
-		// get ready for drawing
-		ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
-
-		// draw background
-		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
-
-		ImRect backgroundRect = ImRect(
-			ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
-			ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX));
-
-		ImGui::GetWindowDrawList()->AddRectFilled(
-			backgroundRect.Min,
-			backgroundRect.Max,
-			TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
-
 		// calculate text viewport
-		m_TextViewPort = ImRect(
-			ImGui::GetCursorScreenPos() + m_Scroll, 
-			ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetContentRegionAvail());
+		m_TextRect = ImRect(
+			ImGui::GetCursorScreenPos() + m_ScrollPos, 
+			ImGui::GetCursorScreenPos() + m_ScrollPos + ImGui::GetContentRegionAvail());
 
 		// process commands
 		if(ImGui::IsWindowHovered())
 		{
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow)) 
-				moveCursorLeft();
+				move_cursor_left_command();
 			
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow)) 
-				moveCursorRight();
+				move_cursor_right_command();
 			
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow)) 
-				moveCursorUp();
+				move_cursor_up_command();
 			
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow)) 
-				moveCursorDown();
+				move_cursor_down_command();
 
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter)) 
-				moveNextLine();
+				move_next_line_command();
 
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace)) 
-				removeSymbol();
+				move_back_commnad();
 
-			handleUserInput();
+			insert_symbol_command();
 		}
 
 		// process cursor timer
 		m_Timer.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		m_Timer.Elapsed     = m_Timer.CurrentTime - m_Timer.LaunchTime;
 
-		// adjust cursor position
-		m_Cursor.Line   = std::max(m_Cursor.Line, 0);
-		m_Cursor.Column = std::max(m_Cursor.Column, 0);
-
 		// draw text
 		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::TEXT);
 
 		ImGuiListClipper clipper;
-		clipper.Begin((int)m_Chunks.size());
+		clipper.Begin(m_TextModel->get_text_lines_count());
 
 		while(clipper.Step())
 		{	
@@ -470,13 +417,13 @@ void TextEditor::drawTextContents()
 				ImRect rowRect = ImRect(
 					ImGui::GetCursorScreenPos(), 
 					ImGui::GetCursorScreenPos() + 
-						ImVec2(std::max(TextEditor::calculate_text_size(
-							Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
+						ImVec2(std::max(TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(m_TextModel->get_text_line(lineNumber)).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
 
 				SyntaxHighlighter::regexEstimationResults matches = 
-					SyntaxHighlighter::highlight(
-						m_Chunks[lineNumber], 
-						m_Patterns, 
+					m_Highlighter.highlight(
+						m_TextModel->get_text_line(lineNumber), 
+						m_Patterns,
+						lineNumber,
 						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
 
 				ImVec2 offset = ImVec2(0.f, 0.f);
@@ -484,7 +431,7 @@ void TextEditor::drawTextContents()
 				for(auto&& match : matches)
 				{
 					std::wstring highlightedText = 
-						Frenchie::Core::Regex::substring(m_Chunks[lineNumber], match.second.Match);
+						Frenchie::Core::Regex::substring(m_TextModel->get_text_line(lineNumber), match.second.Match);
 
 					ImGui::GetWindowDrawList()->AddText(
 						rowRect.Min + offset,
@@ -503,9 +450,11 @@ void TextEditor::drawTextContents()
 				ImRect symbolRect      = ImRect();
 				bool   symbolIsHovered = false;
 
-				for(int positionInLine = 0; positionInLine < (int)m_Chunks[lineNumber].size(); positionInLine++)
+				for(int positionInLine = 0; positionInLine < (int)m_TextModel->get_text_line(lineNumber).size(); positionInLine++)
 				{
-					symbolSize = TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(std::wstring(1, m_Chunks[lineNumber][positionInLine])).c_str());
+					symbolSize = TextEditor::calculate_text_size(
+						Frenchie::Core::String::as_utf8(std::wstring(1, m_TextModel->get_text_line(lineNumber)[positionInLine])).c_str());
+					
 					symbolRect = ImRect(rowRect.Min + symbolOffset, rowRect.Min + symbolOffset + symbolSize);
 
 					// highlight symbol
@@ -519,46 +468,46 @@ void TextEditor::drawTextContents()
 
 					// update cursor position
 					if(ImGui::IsWindowFocused() &&
-						m_TextViewPort.Contains(ImGui::GetMousePos()) &&
+						m_TextRect.Contains(ImGui::GetMousePos()) &&
 						symbolRect.Contains(ImGui::GetMousePos()) &&
 						(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
 						ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
 						ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
 					{
-						m_Cursor.Line   = lineNumber;
-						m_Cursor.Column = positionInLine;
+						m_TextModel->set_cursor_line(lineNumber);
+						m_TextModel->set_cursor_column(positionInLine);
 						symbolIsHovered = true;
 					}
 
-					if(m_Cursor.Line == lineNumber && m_Cursor.Column == positionInLine) 
-						m_Cursor.Position = symbolRect.Min;
+					if(m_TextModel->get_cursros_line() == lineNumber && m_TextModel->get_cursros_column() == positionInLine) 
+						m_CursorPosition = symbolRect.Min;
 
 					symbolOffset = ImVec2(symbolOffset.x + symbolSize.x, 0.f);
 				}
 
 				// move cursor at the very end
-				if(m_Cursor.Column >= m_Chunks[lineNumber].size()) 
-					m_Cursor.Position = ImVec2(symbolRect.Max.x, symbolRect.Min.y);
+				if(m_TextModel->get_cursros_column() >= m_TextModel->get_text_line(lineNumber).size()) 
+					m_CursorPosition = ImVec2(symbolRect.Max.x, symbolRect.Min.y);
 
 				// move cursor at the very start
-				if(m_Cursor.Column <= 0) 
-					m_Cursor.Position = rowRect.Min;
+				if(m_TextModel->get_cursros_column() <= 0) 
+					m_CursorPosition = rowRect.Min;
 
 				// move cursor at the very start
 				if(!symbolIsHovered &&
-					m_TextViewPort.Contains(ImGui::GetMousePos()) &&
+					m_TextRect.Contains(ImGui::GetMousePos()) &&
 					ImGui::IsWindowHovered() &&
 					rowRect.Contains(ImGui::GetMousePos()) &&
 					(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
 					ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
 					ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
 				{
-					m_Cursor.Line   = lineNumber;
-					m_Cursor.Column = 0;
+					m_TextModel->set_cursor_line(lineNumber);
+					m_TextModel->set_cursor_column(0);
 				}
 
 				// draw cursor
-				if(m_Cursor.Line == lineNumber)
+				if(ImGui::IsWindowHovered() && m_TextModel->get_cursros_line() == lineNumber)
 				{	
 					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
@@ -566,7 +515,7 @@ void TextEditor::drawTextContents()
 					if(m_Timer.Elapsed > 500)
 					{
 						ImGui::GetWindowDrawList()->AddText(
-							m_Cursor.Position - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
+							m_CursorPosition - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
 							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor]),
 							"|"
 						);
@@ -578,7 +527,7 @@ void TextEditor::drawTextContents()
 				}
 
 				// draw text line bounding rectangle
-				if(m_Cursor.Line == lineNumber)
+				if(m_TextModel->get_cursros_line() == lineNumber)
 				{
 					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
 
@@ -611,14 +560,14 @@ void TextEditor::drawTextContents()
 				}
 
 				// adjust Y scroll
-				if(m_Cursor.Line > clipper.DisplayEnd - 1)
+				if(m_TextModel->get_cursros_line() > clipper.DisplayEnd - 1)
 					ImGui::SetScrollY(ImGui::GetScrollY() + ImGui::GetFontSize() * 4.f);
-				else if(m_Cursor.Line < clipper.DisplayStart + 1)
+				else if(m_TextModel->get_cursros_line() < clipper.DisplayStart + 1)
 					ImGui::SetScrollY(ImGui::GetScrollY() - ImGui::GetFontSize() * 4.f);
 
 				// adjust X scroll
-				if(!m_TextViewPort.Contains(m_Cursor.Position))
-					ImGui::SetScrollX(ImGui::GetScrollX() + m_Cursor.Position.x - m_TextViewPort.Max.x);
+				if(!m_TextRect.Contains(m_CursorPosition))
+					ImGui::SetScrollX(ImGui::GetScrollX() + m_CursorPosition.x - m_TextRect.Max.x);
 
 				// on enter we move cursor back onto it's position
 				if((ImGuiKey)key == ImGuiKey::ImGuiKey_Enter)
@@ -626,12 +575,29 @@ void TextEditor::drawTextContents()
 			}
 		}
 
-		m_Scroll = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
-
-		ImGui::EndChild();
+		m_ScrollPos = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 	}
 
+	ImGui::EndChild();
+
 	ImGui::PopStyleColor();
+}
+
+void TextEditor::draw_status_panel()
+{
+	ImGui::BeginChild("StatusBar", 
+		ImGui::GetContentRegionAvail(), 
+		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
+		ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoInputs);
+	
+	if(m_TextModel != nullptr)
+	{
+		ImGui::TextUnformatted(
+			fmt::format("Line: {} Column: {}", m_TextModel->get_cursros_line(), m_TextModel->get_cursros_column()).c_str()
+		);
+	}
+
+	ImGui::EndChild();
 }
 
 ImVec2 TextEditor::calculate_text_size(const char* _Begin, const char* _End)
@@ -648,5 +614,3 @@ ImU32 TextEditor::calculate_color(const ImVec4& _Vector)
 {
 	return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
 }
-
-#undef PCRE2_CODE_UNIT_WIDTH
