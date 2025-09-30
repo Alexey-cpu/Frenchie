@@ -113,7 +113,7 @@ bool TextEditor::awake()
 			}
 
 			m_TextModel = std::make_shared<TextEditorModel>();
-			//m_TextModel->append(textBuffer);
+			m_TextModel->reset(textBuffer);
 		}
 	);
 
@@ -291,7 +291,7 @@ void TextEditor::draw_text_line_numbers()
 	if(m_TextModel != nullptr)
 	{
 		ImGuiListClipper clipper;
-		clipper.Begin(m_TextModel->get_text_lines_count());
+		clipper.Begin(m_TextModel->get_text_lines_count(), ImGui::GetFontSize());
 
 		while(clipper.Step())
 		{
@@ -407,10 +407,10 @@ void TextEditor::draw_text_contents()
 		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::TEXT);
 
 		ImGuiListClipper clipper;
-		clipper.Begin(m_TextModel->get_text_lines_count());
+		clipper.Begin(m_TextModel->get_text_lines_count(), ImGui::GetFontSize());
 
 		while(clipper.Step())
-		{	
+		{
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
 				// highlight and draw text
@@ -419,11 +419,13 @@ void TextEditor::draw_text_contents()
 					ImGui::GetCursorScreenPos() + 
 						ImVec2(std::max(TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(m_TextModel->get_text_line(lineNumber)).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
 
+				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
+				ImGui::ItemAdd(rowRect, 0);
+
 				SyntaxHighlighter::regexEstimationResults matches = 
 					m_Highlighter.highlight(
 						m_TextModel->get_text_line(lineNumber), 
 						m_Patterns,
-						lineNumber,
 						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
 
 				ImVec2 offset = ImVec2(0.f, 0.f);
@@ -440,9 +442,6 @@ void TextEditor::draw_text_contents()
 
 					offset.x += TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(highlightedText).c_str()).x;
 				}
-
-				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
-				ImGui::ItemAdd(rowRect, 0);
 
 				// highlight current symbol and calculate cursor position
 				ImVec2 symbolOffset    = ImVec2(0.f, 0.f);
