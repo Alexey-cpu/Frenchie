@@ -95,25 +95,34 @@ TextEditor::~TextEditor(){}
 
 bool TextEditor::awake()
 {
+	m_TextModel = std::make_shared<TextEditorModel>();
+
+	// for (size_t j = 0; j < 1e6; j++)
+	// {
+	// 	for (size_t i = 0; i < 4; i++)
+	// 	{
+	// 		m_TextModel->append("for(int i = 0; i < 10; i++)");
+	// 	}
+	// }
+
 	// fill buffer
+	m_TextModel->m_IsDirty = true;
+
 	Frenchie::Core::ThreadPool::instance()->enqueue(
 		[this]()
 		{
 			//	setup text buffer
-			std::string textBuffer;
+			//std::string textBuffer;
 
-			for (size_t j = 0; j < 100; j++)
+			for (size_t j = 0; j < 1e6; j++)
 			{
 				for (size_t i = 0; i < 4; i++)
 				{
-					textBuffer.append("for(int i = 0; i < 10; i++)");
+					m_TextModel->append("for(int i = 0; i < 10; i++)");
 				}
-
-				textBuffer.append("\n");
 			}
 
-			m_TextModel = std::make_shared<TextEditorModel>();
-			m_TextModel->reset(textBuffer);
+			m_TextModel->m_IsDirty = false;
 		}
 	);
 
@@ -127,8 +136,6 @@ bool TextEditor::awake()
 
 void TextEditor::frame_update()
 {
-	std::lock_guard<std::mutex> lock(m_Mutex);
-
     ImGui::Begin("TextEditor", &m_Opened);
     {
 		ImGui::BeginChild("TextEditorContents", 
@@ -272,6 +279,8 @@ void TextEditor::insert_symbol_command()
 
 void TextEditor::draw_text_line_numbers()
 {
+	std::lock_guard<std::mutex> lock(m_Mutex);
+
 	ImGui::BeginChild("TextBufferLineNumbers", 
 		ImVec2(TextEditor::calculate_text_size(std::to_string(INT_MAX).c_str()).x, ImGui::GetContentRegionAvail().y), 
 		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
@@ -346,6 +355,8 @@ void TextEditor::draw_text_line_numbers()
 
 void TextEditor::draw_text_contents()
 {
+	std::lock_guard<std::mutex> lock(m_Mutex);
+
 	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ScrollbarBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 
 	ImGui::BeginChild("TextBufferContents", 
@@ -422,25 +433,35 @@ void TextEditor::draw_text_contents()
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
 
-				SyntaxHighlighter::regexEstimationResults matches = 
-					m_Highlighter.highlight(
-						m_TextModel->get_text_line(lineNumber), 
-						m_Patterns,
-						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
-
-				ImVec2 offset = ImVec2(0.f, 0.f);
-
-				for(auto&& match : matches)
+				if(m_TextModel->m_IsDirty)
 				{
-					std::wstring highlightedText = 
-						Frenchie::Core::Regex::substring(m_TextModel->get_text_line(lineNumber), match.second.Match);
-
 					ImGui::GetWindowDrawList()->AddText(
-						rowRect.Min + offset,
-						match.second.Color, 
-						Frenchie::Core::String::as_utf8(highlightedText).c_str());
+						rowRect.Min,
+						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), 
+						Frenchie::Core::String::as_utf8(m_TextModel->get_text_line(lineNumber)).c_str());
+				}
+				else
+				{
+					SyntaxHighlighter::regexEstimationResults matches = 
+						m_Highlighter.highlight(
+							m_TextModel->get_text_line(lineNumber), 
+							m_Patterns,
+							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
 
-					offset.x += TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(highlightedText).c_str()).x;
+					ImVec2 offset = ImVec2(0.f, 0.f);
+
+					for(auto&& match : matches)
+					{
+						std::wstring highlightedText = 
+							Frenchie::Core::Regex::substring(m_TextModel->get_text_line(lineNumber), match.second.Match);
+
+						ImGui::GetWindowDrawList()->AddText(
+							rowRect.Min + offset,
+							match.second.Color, 
+							Frenchie::Core::String::as_utf8(highlightedText).c_str());
+
+						offset.x += TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(highlightedText).c_str()).x;
+					}
 				}
 
 				// highlight current symbol and calculate cursor position
@@ -539,6 +560,8 @@ void TextEditor::draw_text_contents()
 				if(rowRect.Contains(ImGui::GetMousePos()))
 					m_CurrentlyHoveredLine = lineNumber;
 			}
+		
+			//std::cout << clipper.DisplayStart << "\t" << clipper.DisplayEnd << "\n";
 		}
 
 		// adjust scroll bar

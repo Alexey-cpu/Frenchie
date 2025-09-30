@@ -61,7 +61,7 @@ namespace Frenchie
 				const std::vector<RegularExpressionRule>& _Rules,
 				const unsigned int&                       _DefaultColor)
 			{
-                bool m_ResetMultilineRule = false;
+                bool resetMultilineRule = false;
 
 				regexEstimationResults colors = 
 					{{0, RegularExpressionEstimationResult(Frenchie::Core::Regex::Match(), _DefaultColor)}};
@@ -75,9 +75,13 @@ namespace Frenchie
                     if(!matches.empty())
                     {
                         if(rule.Type == RegularExpressionRule::Type::MULTILINE_START)
+                        {
                             m_MultilineRule = rule;
+                        }
                         else if(rule.Type == RegularExpressionRule::Type::MULTILINE_FINISH)
-                            m_ResetMultilineRule = true;
+                        {
+                            resetMultilineRule = true;
+                        }
                     }
 
 					for(auto&& match : matches)
@@ -129,7 +133,7 @@ namespace Frenchie
                 }
 
                 // reset multiline color
-                if(m_ResetMultilineRule) 
+                if(resetMultilineRule) 
                     m_MultilineRule.reset();
 
                 return colors;
@@ -351,6 +355,7 @@ namespace Frenchie
                 adjust_cursor_position();
             }
 
+            mutable bool m_IsDirty{false};
 
         protected:
 
