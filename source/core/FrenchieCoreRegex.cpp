@@ -12,6 +12,9 @@ Frenchie::Core::Regex::match(const std::string& _Contents, const std::string _Pa
 {
     Frenchie::Core::Regex::Matches result;
 
+    if(_Contents.empty()) 
+        return result;
+
     PCRE2_SPTR8 subject = (PCRE2_SPTR8)_Contents.c_str();
     PCRE2_SPTR8 pattern = (PCRE2_SPTR8)_Pattern.c_str();
 
@@ -62,6 +65,9 @@ Frenchie::Core::Regex::Matches
 Frenchie::Core::Regex::match(const std::wstring& _Contents, const std::wstring _Pattern)
 {
     Frenchie::Core::Regex::Matches result;
+
+    if(_Contents.empty()) 
+        return result;
 
     if(sizeof(wchar_t) == 2) // 16 bit
     {
