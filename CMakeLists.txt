@@ -31,22 +31,8 @@ include("tools/spdlog.cmake")
 include("tools/rapidjson.cmake")
 include("tools/ryml.cmake")
 include("tools/pugixml.cmake")
+include("tools/pcre2.cmake")
 
-# include("tools/abseil-cpp-master/CMake/AbseilDll.cmake")
-# include("tools/abseil-cpp-master/CMake/AbseilHelpers.cmake")
-# include("tools/abseil-cpp-master/CMake/AbseilHelpers.cmake")
-
-# option(PCRE2_BUILD_PCRE2_8 "Build 8 bit PCRE2 library" ON)
-
-# option(PCRE2_BUILD_PCRE2_16 "Build 16 bit PCRE2 library" OFF)
-
-# option(PCRE2_BUILD_PCRE2_32 "Build 32 bit PCRE2 library" OFF)
-
-set(PCRE2_BUILD_PCRE2_8 ON CACHE BOOL "Build 8 bit PCRE2 library" FORCE)
-set(PCRE2_BUILD_PCRE2_16 ON CACHE BOOL "Build 16 bit PCRE2 library" FORCE)
-set(PCRE2_BUILD_PCRE2_32 ON CACHE BOOL "Build 32 bit PCRE2 library" FORCE)
-
-add_subdirectory("tools/pcre2/")
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
@@ -91,16 +77,28 @@ add_executable(
     "source/main.cpp"
     )
 target_link_libraries(
-    OpenGL 
+    OpenGL
+
+    # OpenGL backend
     glfw
+
+    # FMT
     fmt::fmt
+
+    # GLM
     glm::glm
+
+    # RYML
     ryml::ryml
-    spdlog::spdlog
     pugixml::pugixml
 
-    # pcre2-8
+    # SPDLOG
+    spdlog::spdlog
+
+    # PCRE
+    pcre2-8
     pcre2-16
+    pcre2-32
     )
 
 target_include_directories(

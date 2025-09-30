@@ -8,121 +8,6 @@ using namespace Frenchie::Editor;
 #include <regex>
 #include <map>
 
-// PCRE
-#define PCRE2_CODE_UNIT_WIDTH 16
-#include <pcre2.h>
-
-class Colors
-{
-public:
-	struct RegularExpressionRule
-	{
-		RegularExpressionRule(const std::wstring& Pattern, const unsigned int& _Color) : 
-			Pattern(Pattern), Color(_Color){}
-
-		std::wstring Pattern = std::wstring();
-		unsigned int Color   = 0;
-	};
-
-	struct RegularExpressionEstimationResult
-	{
-		RegularExpressionEstimationResult(){}
-
-		RegularExpressionEstimationResult(const int& _Position, const int& _Length, const unsigned int& _Color) : 
-			Position(_Position), Length(_Length), Color(_Color){}
-
-		int          Position = 0;
-		int          Length   = 0;
-		unsigned int Color    = 0;
-	};
-
-	static std::map<int, RegularExpressionEstimationResult> colorize(
-		const std::wstring&                       _Contents, 
-		const std::vector<RegularExpressionRule>& _Rules, 
-		unsigned int                              _DefaultColor = 1)
-	{
-		std::map<int, RegularExpressionEstimationResult> colors;
-
-		colors[0] = RegularExpressionEstimationResult(0, 0, _DefaultColor);
-
-		PCRE2_SPTR subject = (PCRE2_SPTR)_Contents.c_str();
-
-		for(auto&& rule : _Rules)
-		{
-			PCRE2_SPTR pattern = (PCRE2_SPTR)rule.Pattern.c_str();
-
-			int errorcode;
-			PCRE2_SIZE erroroffset;
-
-			pcre2_code *re = pcre2_compile(pattern, PCRE2_ZERO_TERMINATED, 0, &errorcode, &erroroffset, NULL);
-
-			if (re == NULL) 
-			{
-				std::cout << "Handle compilation error " << "\n";
-				return  colors;
-			}
-
-			pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
-			if (match_data == NULL) 
-			{
-				// Handle compilation error
-				pcre2_code_free(re);
-				return colors;
-			}
-
-			PCRE2_SIZE startoffset = 0;
-			int rc;
-
-			while ((rc = pcre2_match(re, subject, (PCRE2_SIZE)wcslen((wchar_t*)subject), startoffset, 0, match_data, NULL)) >= 0) 
-			{
-				PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
-
-				colors[(int)ovector[0]] = RegularExpressionEstimationResult((int)ovector[0], (int)(ovector[1] - ovector[0]), rule.Color);
-
-				// Advance startoffset for the next search
-				startoffset = ovector[1];
-
-				if (ovector[0] == ovector[1]) 
-				{ // Handle zero-length matches to prevent infinite loops
-					startoffset++;
-				}
-			}
-
-			if (rc != PCRE2_ERROR_NOMATCH) 
-			{
-				// Handle other matching errors
-			}
-
-			pcre2_match_data_free(match_data);
-			pcre2_code_free(re);
-		}
-
-		auto result = colors;
-
-		// handle untill the end
-		for(auto&& color : colors)
-		{
-			int source = color.second.Position + color.second.Length;
-			int target = color.second.Position + color.second.Length;
-
-			do
-			{
-				target++;
-			} 
-			while(colors.find(target) == colors.end() && target < (int)_Contents.size());
-
-			if(source < (int)_Contents.size())
-			{
-				result[source] = RegularExpressionEstimationResult(
-					source, 
-					target - source, _DefaultColor);
-			}
-		}
-
-		return result;
-	}
-};
-
 class Helpers
 {
 public:
@@ -204,14 +89,6 @@ namespace Frenchie
     }
 }
 
-enum DrawLayers : int
-{
-	Background,
-	Text,
-	Cursor,
-	Count
-};
-
 const char CURSOR = '|';
 const char ENTER  = '\n';
 const char TAB    = '\t';
@@ -274,10 +151,6 @@ bool TextEditor::awake()
 	m_Timer.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	m_Timer.CurrentTime = 0;
 	m_Timer.Elapsed     = 0;
-
-	m_Timer1.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	m_Timer1.CurrentTime = 0;
-	m_Timer1.Elapsed     = 0;
 
     return true;
 }
@@ -369,7 +242,7 @@ void TextEditor::moveNextLine()
 			{
 				m_Cursor.Line++;
 				m_Cursor.Column = 0;
-				m_Chunks.insert(m_Chunks.begin() + m_Cursor.Line, L" ");
+				m_Chunks.insert(m_Chunks.begin() + m_Cursor.Line, L"");
 			}
 		}
 	);
@@ -458,17 +331,16 @@ void TextEditor::drawTextLineNumbers()
 		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 		ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoInputs);
 	{
-		ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
+		// get ready to draw
+		ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
 
 		// draw background
-		ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Background);
+		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
 		ImGui::GetWindowDrawList()->AddRectFilled(
-			ImGui::GetCursorScreenPos(),
-			ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX),
-			IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_FrameBg].x * 255.f,
-						ImGui::GetStyle().Colors[ImGuiCol_FrameBg].y * 255.f,
-						ImGui::GetStyle().Colors[ImGuiCol_FrameBg].z * 255.f,
-						ImGui::GetStyle().Colors[ImGuiCol_FrameBg].w * 255.f));
+			ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()), 
+			ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
+			TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
 
 		ImGuiListClipper clipper;
 		clipper.Begin((int)m_Chunks.size());
@@ -477,52 +349,42 @@ void TextEditor::drawTextLineNumbers()
 		{
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
-				ImRect rowRect = ImRect(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos() + ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize()));
+				ImRect rowRect = ImRect(
+					ImGui::GetCursorScreenPos(), 
+					ImGui::GetCursorScreenPos() + ImVec2(ImGui::GetContentRegionAvail().x, 
+					ImGui::GetFontSize()));
 
-				ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Background);
+				ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
 
 				if(lineNumber == m_CurrentlyHoveredLine)
 				{
 					ImGui::GetWindowDrawList()->AddRectFilled(
-						rowRect.Min, 
-						rowRect.Max, 
-						IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].x * 255.f,
-							ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].y * 255.f,
-							ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].z * 255.f,
-							ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].w * 255.f)
-						);
+						rowRect.Min,
+						rowRect.Max,
+						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg]));
 				}
 				else if(lineNumber % 2 == 0)
 				{
 					ImGui::GetWindowDrawList()->AddRectFilled(
 						rowRect.Min,
 						rowRect.Max,
-						IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg].x * 255.f,
-									ImGui::GetStyle().Colors[ImGuiCol_TableRowBg].y * 255.f,
-									ImGui::GetStyle().Colors[ImGuiCol_TableRowBg].z * 255.f,
-									ImGui::GetStyle().Colors[ImGuiCol_TableRowBg].w * 255.f));
+						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]));
 				}
-				else
+				else 
 				{
 					ImGui::GetWindowDrawList()->AddRectFilled(
 						rowRect.Min,
 						rowRect.Max,
-						IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt].x * 255.f,
-									ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt].y * 255.f,
-									ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt].z * 255.f,
-									ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt].w * 255.f));
+						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt]));
 				}
 
 				// draw text
-				ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
+				ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::TEXT);
 				ImGui::GetWindowDrawList()->AddText(
 					rowRect.GetTL(), 
-					IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_Text].x * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_Text].y * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_Text].z * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_Text].w * 255.f),
+					TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), 
 					std::to_string(lineNumber).c_str());
-
+				
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
 			}
@@ -535,26 +397,34 @@ void TextEditor::drawTextLineNumbers()
 
 void TextEditor::drawTextContents()
 {
+	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ScrollbarBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
+
 	ImGui::BeginChild("TextBufferContents", 
 		ImGui::GetContentRegionAvail(), 
 		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
 		ImGuiWindowFlags_::ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_::ImGuiWindowFlags_NoNavInputs);
 	{
-		// draw background
-		ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Background);
-		ImGui::GetWindowDrawList()->AddRectFilled(
-			ImGui::GetCursorScreenPos(),
-			ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX),
-			IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_FrameBg].x * 255.f,
-						ImGui::GetStyle().Colors[ImGuiCol_FrameBg].y * 255.f,
-						ImGui::GetStyle().Colors[ImGuiCol_FrameBg].z * 255.f,
-						ImGui::GetStyle().Colors[ImGuiCol_FrameBg].w * 255.f));
+		// get ready for drawing
+		ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
 
-		// get text viewport
+		// draw background
+		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
+		ImRect backgroundRect = ImRect(
+			ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
+			ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX));
+
+		ImGui::GetWindowDrawList()->AddRectFilled(
+			backgroundRect.Min,
+			backgroundRect.Max,
+			TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+
+		// calculate text viewport
 		m_TextViewPort = ImRect(
 			ImGui::GetCursorScreenPos() + m_Scroll, 
 			ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetContentRegionAvail());
 
+		// process commands
 		if(ImGui::IsWindowHovered())
 		{
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow)) 
@@ -582,20 +452,13 @@ void TextEditor::drawTextContents()
 		m_Timer.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		m_Timer.Elapsed     = m_Timer.CurrentTime - m_Timer.LaunchTime;
 
-		float threshold = 3000;
-		m_Timer1.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-		m_Timer1.Elapsed     = m_Timer1.CurrentTime - m_Timer1.LaunchTime;
-
-		if(m_Timer1.Elapsed > threshold) m_Timer1.LaunchTime = m_Timer1.CurrentTime;
-
 		// adjust cursor position
 		m_Cursor.Line   = std::max(m_Cursor.Line, 0);
 		m_Cursor.Column = std::max(m_Cursor.Column, 0);
 
-		ImGui::GetWindowDrawList()->ChannelsSplit(DrawLayers::Count);
-		ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Text);
-
 		// draw text
+		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::TEXT);
+
 		ImGuiListClipper clipper;
 		clipper.Begin((int)m_Chunks.size());
 
@@ -603,57 +466,33 @@ void TextEditor::drawTextContents()
 		{	
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
-				auto text = Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]);
-
-				m_RowSize = ImVec2(
-					std::max(TextEditor::calculate_text_size(text.c_str()).x, ImGui::GetContentRegionAvail().x), 
-					ImGui::GetFontSize());
-
+				// highlight and draw text
 				ImRect rowRect = ImRect(
 					ImGui::GetCursorScreenPos(), 
-					ImGui::GetCursorScreenPos() + m_RowSize);
+					ImGui::GetCursorScreenPos() + 
+						ImVec2(std::max(TextEditor::calculate_text_size(
+							Frenchie::Core::String::as_utf8(m_Chunks[lineNumber]).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
 
-				//data.append(m_Chunks[lineNumber]).append(L"\n");
+				SyntaxHighlighter::regexEstimationResults matches = 
+					SyntaxHighlighter::highlight(
+						m_Chunks[lineNumber], 
+						m_Patterns, 
+						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
 
-				//Helpers::colorize1(m_Chunks[lineNumber]);
+				ImVec2 offset = ImVec2(0.f, 0.f);
 
-				//--------------------------------------------------------------------------------------------
-				// colorify text here
-				//--------------------------------------------------------------------------------------------
-
-				std::vector<Colors::RegularExpressionRule> patterns = 
+				for(auto&& match : matches)
 				{
-				    Colors::RegularExpressionRule(
-						L"alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|reflexpr|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|synchronized|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq", 
-						IM_COL32(255, 0, 0, 255))
-				};
-
-				auto colors = Colors::colorize(
-					m_Chunks[lineNumber], 
-					patterns, 
-					TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
-
-				ImVec2 offset    = ImVec2(0.f, 0.f);
-
-				for(auto&& color : colors)
-				{
-				    auto result = color.second;
+					std::wstring highlightedText = 
+						Frenchie::Core::Regex::substring(m_Chunks[lineNumber], match.second.Match);
 
 					ImGui::GetWindowDrawList()->AddText(
 						rowRect.Min + offset,
-						result.Color, 
-						Frenchie::Core::String::as_utf8(
-							std::wstring(
-								&m_Chunks[lineNumber][result.Position], 
-								&m_Chunks[lineNumber][result.Position + result.Length])).c_str());
+						match.second.Color, 
+						Frenchie::Core::String::as_utf8(highlightedText).c_str());
 
-					offset.x += TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(
-							std::wstring(
-								&m_Chunks[lineNumber][result.Position], 
-								&m_Chunks[lineNumber][result.Position + result.Length])).c_str()).x;
+					offset.x += TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(highlightedText).c_str()).x;
 				}
-
-				//--------------------------------------------------------------------------------------------
 
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
@@ -675,11 +514,7 @@ void TextEditor::drawTextContents()
 						ImGui::GetWindowDrawList()->AddRectFilled(
 							symbolRect.Min,
 							symbolRect.Max,
-							IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].x * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].y * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].z * 255.f,
-								ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].w * 255.f)
-						);
+							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg]));
 					}
 
 					// update cursor position
@@ -725,17 +560,14 @@ void TextEditor::drawTextContents()
 				// draw cursor
 				if(m_Cursor.Line == lineNumber)
 				{	
-					ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Cursor);
+					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
 					// animated
 					if(m_Timer.Elapsed > 500)
 					{
 						ImGui::GetWindowDrawList()->AddText(
 							m_Cursor.Position - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
-							IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor].x * 255.f,
-										ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor].y * 255.f,
-										ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor].z * 255.f,
-										ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor].w * 255.f),
+							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor]),
 							"|"
 						);
 
@@ -746,18 +578,14 @@ void TextEditor::drawTextContents()
 				}
 
 				// draw text line bounding rectangle
-				ImGui::GetWindowDrawList()->ChannelsSetCurrent(DrawLayers::Background);
-
 				if(m_Cursor.Line == lineNumber)
 				{
+					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
 					ImGui::GetWindowDrawList()->AddRectFilled(
 						rowRect.Min, 
 						rowRect.Max, 
-						IM_COL32(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].x * 255.f,
-							ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].y * 255.f,
-							ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].z * 255.f,
-							ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg].w * 255.f)
-						);
+						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg]));
 				}
 
 				if(rowRect.Contains(ImGui::GetMousePos()))
@@ -765,13 +593,7 @@ void TextEditor::drawTextContents()
 			}
 		}
 
-		//Helpers::colorize1(data);
-
-		// if(m_Timer1.Elapsed > threshold)
-		// {
-		// 	if(!Helpers::colorize1(data).empty()) std::cout << "colorize !!! " << m_Timer1.Elapsed << "\n";
-		// }
-
+		// adjust scroll bar
 		if(ImGui::IsWindowHovered())
 		{
 			for(int key = ImGuiKey::ImGuiKey_NamedKey_BEGIN; key < ImGuiKey::ImGuiKey_NamedKey_END; ++key)
@@ -808,6 +630,8 @@ void TextEditor::drawTextContents()
 
 		ImGui::EndChild();
 	}
+
+	ImGui::PopStyleColor();
 }
 
 ImVec2 TextEditor::calculate_text_size(const char* _Begin, const char* _End)
