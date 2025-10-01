@@ -114,13 +114,13 @@ bool TextEditor::awake()
 			//	setup text buffer
 			//std::string textBuffer;
 
-			for (size_t j = 0; j < 1e3; j++)
-			{
-				for (size_t i = 0; i < 4; i++)
-				{
-					m_TextModel->append("for(int i = 0; i < 10; i++)");
-				}
-			}
+			// for (size_t j = 0; j < 1e3; j++)
+			// {
+			// 	for (size_t i = 0; i < 4; i++)
+			// 	{
+			// 		m_TextModel->append("for(int i = 0; i < 10; i++)");
+			// 	}
+			// }
 
 			m_TextModel->m_IsDirty = false;
 		}

@@ -72,7 +72,7 @@ namespace Frenchie
                         Frenchie::Core::Regex::Matches matches = 
                             Frenchie::Core::Regex::match(_Chunks[lineNumber], rule.Pattern);
 
-                        m_MultilineColor = rule.Color;
+                        //m_MultilineColor = rule.Color;
 
                         int min = INT_MAX;
                         int max = INT_MIN;
@@ -155,27 +155,28 @@ namespace Frenchie
 
                     for(auto&& multilineRange : multilineRanges)
                     {
+                        auto color = m_MultilineStart[multilineRange.first].Color;
+
                         if(_LineNumber == multilineRange.first && 
                             uniqueRange.second.Match.Start >= m_MultilineStart[multilineRange.first].Match.Start)
                         {
-                            uniqueRange.second.Color = m_MultilineColor;
+                            uniqueRange.second.Color = color;
                             break;
                         }
                         else if(_LineNumber == multilineRange.second && 
                                 uniqueRange.second.Match.Start <= m_MultilineFinish[multilineRange.second].Match.Start)
                         {
-                            uniqueRange.second.Color = m_MultilineColor;
+                            uniqueRange.second.Color = color;
                             break;
                         }
                         else if(_LineNumber > multilineRange.first && 
                                 _LineNumber < multilineRange.second)
                         {
-                            uniqueRange.second.Color = m_MultilineColor;
+                            uniqueRange.second.Color = color;
                             break;
                         }
                     }
                 }
-                
 
                 // optimize
                 regexEstimationResults optimized;
@@ -205,7 +206,6 @@ namespace Frenchie
         protected:
             std::map<int, RegexResult> m_MultilineStart;
             std::map<int, RegexResult> m_MultilineFinish;
-            unsigned int m_MultilineColor = 0;
 		};
 
         class TextEditorModel
@@ -218,7 +218,7 @@ namespace Frenchie
 
             TextEditorModel()
             {
-                m_Chunks.push_back(L" ");
+                m_Chunks.push_back(std::wstring());
                 m_Cursor = {0, 0};
             }
 
@@ -477,10 +477,23 @@ namespace Frenchie
                 SyntaxHighlighter::RegexRule(
                     L"for", 
                     IM_COL32(255, 0, 0, 255)),
+
+                SyntaxHighlighter::RegexRule(
+                    LR"([\(\)\{\}\[\]])", 
+                    IM_COL32(0, 255, 0, 255)),
+
+                // single line comment
+                SyntaxHighlighter::RegexRule(
+                    L"//.*", 
+                    IM_COL32(0, 255, 0, 255)),
+
+                // multiline comment start
                 SyntaxHighlighter::RegexRule(
                     LR"(/\*)", 
                     IM_COL32(0, 255, 0, 255), 
                     SyntaxHighlighter::RegexRule::MULTILINE_START),
+                
+                // multiline comment end
                 SyntaxHighlighter::RegexRule(
                     LR"(\*/)", 
                     IM_COL32(0, 255, 0, 255), 
