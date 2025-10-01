@@ -422,6 +422,9 @@ void TextEditor::draw_text_contents()
 
 		while(clipper.Step())
 		{
+			if(!m_TextModel->m_IsDirty)
+				m_Highlighter.preprocessTextBlock(m_TextModel->m_Chunks, clipper.DisplayStart, clipper.DisplayEnd, m_Patterns);
+
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
 				// highlight and draw text
@@ -443,10 +446,10 @@ void TextEditor::draw_text_contents()
 				else
 				{
 					SyntaxHighlighter::regexEstimationResults matches = 
-						m_Highlighter.highlight(
+						m_Highlighter.processTextLine(
 							m_TextModel->get_text_line(lineNumber), 
 							m_Patterns,
-							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]));
+							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), lineNumber);
 
 					ImVec2 offset = ImVec2(0.f, 0.f);
 
