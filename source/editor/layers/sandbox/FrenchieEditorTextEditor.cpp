@@ -114,7 +114,7 @@ bool TextEditor::awake()
 			//	setup text buffer
 			//std::string textBuffer;
 
-			for (size_t j = 0; j < 1e6; j++)
+			for (size_t j = 0; j < 1e3; j++)
 			{
 				for (size_t i = 0; i < 4; i++)
 				{

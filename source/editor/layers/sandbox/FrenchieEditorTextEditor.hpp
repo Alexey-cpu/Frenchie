@@ -63,84 +63,61 @@ namespace Frenchie
 			{
                 bool resetMultilineRule = false;
 
-				regexEstimationResults colors = 
-					{{0, RegularExpressionEstimationResult(Frenchie::Core::Regex::Match(), _DefaultColor)}};
-
-                std::set<int> indexes;
+                regexEstimationResults uniqueRanges;
 
 				for(auto&& rule : _Rules)
 				{
 					auto matches = Frenchie::Core::Regex::match(_Contents, rule.Pattern);
 
-                    if(!matches.empty())
-                    {
-                        if(rule.Type == RegularExpressionRule::Type::MULTILINE_START)
-                        {
-                            m_MultilineRule = rule;
-                        }
-                        else if(rule.Type == RegularExpressionRule::Type::MULTILINE_FINISH)
-                        {
-                            resetMultilineRule = true;
-                        }
-                    }
-
 					for(auto&& match : matches)
 					{
-                        if(indexes.find(match.Start) != indexes.end() || 
-                            indexes.find(match.Finish) != indexes.end())
-                            continue;
-
-						colors[match.Start] = 
-                            RegularExpressionEstimationResult(match, rule.Color);
-
                         for(int i = match.Start; i < match.Finish; i++)
-                            indexes.insert(i);
+                        {
+                            uniqueRanges[i] = RegularExpressionEstimationResult(
+                                Frenchie::Core::Regex::Match(i, i + 1), 
+                                rule.Color
+                            );
+                        }
 					}
 				}
 
                 // add missing ranges
-				regexEstimationResults results;
-
-				for(auto&& color : colors)
-				{
-					int source = color.second.Match.Finish;
-					int target = color.second.Match.Finish;
-
-					do
-					{
-						target++;
-					} 
-					while(colors.find(target) == colors.end() && target < (int)_Contents.size());
-
-					if(source < (int)_Contents.size())
-					{
-						results[source] = 
-							RegularExpressionEstimationResult(
-								Frenchie::Core::Regex::Match(source, target),
-                                _DefaultColor
-							);
-					}
-				}
-
-				for(auto&& result : results) 
-					colors[result.first] = result.second;
-
-                // postprocess colors
-                for(auto&& color : colors)
+                for (int i = 0; i < (int)_Contents.size(); i++)
                 {
-                    color.second.Color = 
-                        m_MultilineRule.has_value() ? m_MultilineRule.value().Color : color.second.Color;
+                    uniqueRanges.insert({i, RegularExpressionEstimationResult(
+                                Frenchie::Core::Regex::Match(i, i + 1), 
+                                _DefaultColor
+                            )});
                 }
 
-                // reset multiline color
-                if(resetMultilineRule) 
-                    m_MultilineRule.reset();
+                // optimize ranges
+                regexEstimationResults optimized;
 
-                return colors;
+                int source = 0;
+                int target = 0;
+
+                for (source = 0; source < (int)_Contents.size(); source++)
+                {
+                    auto sourceColor = uniqueRanges[source].Color;
+
+                    for (target = source + 1; target < (int)_Contents.size(); target++)
+                    {
+                        auto targetColor = uniqueRanges[target].Color;
+
+                        if(sourceColor != targetColor)
+                            break;
+                    }
+
+                    optimized.insert({source, RegularExpressionEstimationResult(
+                                Frenchie::Core::Regex::Match(source, target), 
+                                sourceColor
+                            )});
+
+                    source = --target;
+                }
+
+                return optimized;
 			}
-
-        protected:
-            std::optional<RegularExpressionRule> m_MultilineRule;
 		};
 
         class TextEditorModel
@@ -411,6 +388,9 @@ namespace Frenchie
                 SyntaxHighlighter::RegularExpressionRule(
                     L"alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|reflexpr|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|synchronized|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq", 
                     IM_COL32(0, 0, 255, 255)),
+                SyntaxHighlighter::RegularExpressionRule(
+                    L"for", 
+                    IM_COL32(255, 0, 0, 255)),
                 SyntaxHighlighter::RegularExpressionRule(
                     LR"(/\*)", 
                     IM_COL32(0, 255, 0, 255), 
