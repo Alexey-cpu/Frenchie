@@ -1,5 +1,8 @@
 #include <FrenchieEditorFileSystemExplorerPathScannerDialog.hpp>
 
+using namespace Frenchie::Application;
+using namespace Frenchie::Application::Configuration;
+
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 

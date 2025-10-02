@@ -1,4 +1,4 @@
-#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 
 // Core
 #include <FrenchieCoreHelpers.hpp>
@@ -6,13 +6,11 @@
 #include <FrenchieCoreSerializationFormatXML.hpp>
 #include <FrenchieCoreSerializationFormatJSON.hpp>
 #include <FrenchieCoreSerializationFormatYAML.hpp>
+#include <FrenchieApplicationConfigurationLoader.hpp>
 
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-
-// Editor
-#include <FrenchieApplicationEditorLauncher.hpp>
 
 // STL
 #include <chrono>
@@ -24,12 +22,11 @@
 // IMGUI
 #include <imgui.h>
 
-using namespace Frenchie::Editor;
-using namespace Frenchie::Editor::Configuration;
+using namespace Frenchie::Application::Configuration;
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
         namespace Configuration
         {
@@ -45,13 +42,13 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Editor::Configuration::Translator::instance();
+                    Frenchie::Application::Configuration::Translator::instance();
                 }
 
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::Configuration), STRINGIFY(Translator));
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Configuration), STRINGIFY(Translator));
                 }
             };
 
@@ -264,6 +261,35 @@ Translator::Translator() :
 
 Translator::~Translator(){}
 
+std::filesystem::path Translator::get_app_translation_files_path() const
+{
+    if(std::filesystem::exists(m_AppTranslationFilesPath))
+        return m_AppTranslationFilesPath;
+
+    auto configurationLoader = 
+        Frenchie::Application::application()
+            ->find_layer<Frenchie::Application::Configuration::ConfigurationLoader>();
+
+    if(configurationLoader == nullptr) 
+        return m_AppTranslationFilesPath;
+        
+    m_AppTranslationFilesPath = configurationLoader->get_app_data_path().wstring().append(L"/fonts");
+
+    if(!std::filesystem::exists(m_AppTranslationFilesPath)) 
+    {
+        try
+        {
+            std::filesystem::create_directory(m_AppTranslationFilesPath);
+        }
+        catch(...)
+        {
+            // TODO: put a log here...
+        }
+    }
+
+    return m_AppTranslationFilesPath;
+}
+
 std::vector<Frenchie::Core::Reference<Language>> Translator::get_supported_languages() const
 {
     std::vector<Frenchie::Core::Reference<Language>> supportedLanguages;
@@ -353,7 +379,7 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
             m_SupportedLanguages.push_back(
                 std::make_unique<Language>(
-                    std::filesystem::path(supportedLanguage.get_value()), 
+                    std::filesystem::path(supportedLanguage.get_value()).make_preferred(), 
                     this
                 )
             );
@@ -361,8 +387,7 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
     }
     else // try to to load translation files from default path
     {
-        std::filesystem::path defaultTranslationFilesPath = 
-            Frenchie::Editor::Launcher::get_app_translation_files_directory();
+        std::filesystem::path defaultTranslationFilesPath = get_app_translation_files_path();
 
         if(std::filesystem::exists(defaultTranslationFilesPath))
         {
@@ -423,7 +448,7 @@ std::string Translator::translate(const std::string& _Key)
 
 Frenchie::Core::Reference<Language> Translator::create_new_translation_file(const std::filesystem::path& _Path)
 {
-    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".xlf"));
+    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".xlf")).make_preferred();
     auto theme = std::make_shared<Language>(path, this);
     m_SupportedLanguages.push_back(theme);
 

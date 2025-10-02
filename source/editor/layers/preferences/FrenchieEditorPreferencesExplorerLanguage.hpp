@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 
-#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 
 // STL
 #include <vector>
@@ -28,7 +28,7 @@ namespace Frenchie
                 virtual bool allows_multiple_instances() const override;
 
             protected:
-                std::vector<Frenchie::Editor::Configuration::TranslationUnit> m_NewKeys;
+                std::vector<Frenchie::Application::Configuration::TranslationUnit> m_NewKeys;
 
                 ImGuiTextFilter m_KeyFilter;
                 ImGuiTextFilter m_ValueFilter;

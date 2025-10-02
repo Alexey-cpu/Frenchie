@@ -11,7 +11,7 @@
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
         namespace Configuration
         {
@@ -91,6 +91,7 @@ namespace Frenchie
                 virtual ~Translator();
 
                 // getters
+                std::filesystem::path get_app_translation_files_path() const;
                 std::vector<Frenchie::Core::Reference<Language>> get_supported_languages() const;
                 Frenchie::Core::Reference<Language> get_current_language() const;
 
@@ -111,12 +112,13 @@ namespace Frenchie
                 static std::string translate(const std::string&);
                 static Frenchie::Core::Reference<Translator> instance();
 
-            //protected:
+            protected:
 
                 // friends
                 friend class Language;
 
                 // info
+                mutable std::filesystem::path                  m_AppTranslationFilesPath;
                 mutable std::vector<std::shared_ptr<Language>> m_SupportedLanguages;
                 mutable LocalThreadQueue                       m_ThreadsQueue;
             };

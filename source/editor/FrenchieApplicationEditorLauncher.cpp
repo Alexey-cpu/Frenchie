@@ -9,7 +9,7 @@
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
-#include <FrenchieEditorConfigurationLoader.hpp>
+#include <FrenchieApplicationConfigurationLoader.hpp>
 
 // TODO: remove this when finished !!!
 #include <FrenchieImGuiDemoLayer.hpp>
@@ -97,30 +97,12 @@ std::filesystem::path Launcher::get_app_state_directory()
     return std::filesystem::path(Launcher::get_app_data_directory().wstring().append(L"/state")).make_preferred();
 }
 
-std::filesystem::path Launcher::get_app_translation_files_directory()
-{
-    return Launcher::get_app_data_directory().wstring().append(L"/translations");
-}
-
-std::filesystem::path Launcher::get_app_fonts_files_directory()
-{
-    return Launcher::get_app_data_directory().wstring().append(L"/fonts");
-}
-
-std::filesystem::path Launcher::get_app_themes_files_directory()
-{
-    return Launcher::get_app_data_directory().wstring().append(L"/themes");
-}
-
 std::set<std::filesystem::path> Launcher::get_app_data_directories()
 {
     return
     {
         get_app_log_directory(),
-        get_app_state_directory(),
-        get_app_translation_files_directory(),
-        get_app_fonts_files_directory(),
-        get_app_themes_files_directory()
+        get_app_state_directory()
     };
 }
 
@@ -224,16 +206,13 @@ int Launcher::execute()
     Frenchie::Application::application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
 
     // load configuration
-    Frenchie::Application::application()->push_layer<Frenchie::Editor::Configuration::ConfigurationLoader>(
+    Frenchie::Application::application()->push_layer<Frenchie::Application::Configuration::ConfigurationLoader>(
         std::filesystem::path(get_app_state_directory().wstring().append(L"/State.xml")).make_preferred());
     Frenchie::Application::application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe file directory: {}", Frenchie::Core::String::as_utf8(get_app_exe_directory().wstring())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .xml state directory: {}", Frenchie::Core::String::as_utf8(get_app_state_directory().wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xlf files directory: {}", Frenchie::Core::String::as_utf8(get_app_translation_files_directory().wstring())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .ttf files directory: {}", Frenchie::Core::String::as_utf8(get_app_fonts_files_directory().wstring())));
-
     // execute app and wait until it finishes it's job
     auto execution = Frenchie::Application::application()->execute();
 

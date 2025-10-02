@@ -1,4 +1,4 @@
-#include <FrenchieEditorConfigurationLoader.hpp>
+#include <FrenchieApplicationConfigurationLoader.hpp>
 
 // Core
 #include <FrenchieCoreFactory.hpp>
@@ -12,15 +12,17 @@
 
 using namespace Frenchie::Core;
 
-using namespace Frenchie::Application;
-
-using namespace Frenchie::Editor;
-using namespace Frenchie::Editor::Configuration;
+using namespace Frenchie::Application::Configuration;
 
 ConfigurationLoader::ConfigurationLoader(const std::filesystem::path& _Path) : 
     Layer(STRINGIFY(ConfigurationLoader)), m_Path(_Path){}
 
 ConfigurationLoader::~ConfigurationLoader(){}
+
+std::filesystem::path ConfigurationLoader::get_app_data_path() const
+{
+    return m_Path;
+}
 
 bool ConfigurationLoader::awake()
 {
@@ -29,7 +31,7 @@ bool ConfigurationLoader::awake()
     {
         if(!Frenchie::Core::String::contains_substring(
             creator.first, 
-            STRINGIFY(Frenchie::Editor::Configuration))) 
+            STRINGIFY(Frenchie::Application::Configuration))) 
             continue;
 
         // create new configuration loader by a command

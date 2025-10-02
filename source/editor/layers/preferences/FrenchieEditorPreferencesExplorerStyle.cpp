@@ -6,15 +6,17 @@
 
 // Editor
 #include <FrenchieApplicationEditorDialog.hpp>
-#include <FrenchieEditorConfigurationLoaderFonts.hpp>
-#include <FrenchieEditorConfigurationLoaderThemes.hpp>
-#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderFonts.hpp>
+#include <FrenchieApplicationConfigurationLoaderThemes.hpp>
+#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 #include <FrenchieEditorFileSystemExplorerDialog.hpp>
 #include <FrenchieEditorFileSystemExplorerPathScannerDialog.hpp>
 
+using namespace Frenchie::Application;
+using namespace Frenchie::Application::Configuration;
+
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::Preferences;
-using namespace Frenchie::Editor::Configuration;
 
 // Add to main menu
 namespace Frenchie
@@ -316,8 +318,8 @@ void Style::draw_color_settings()
 {
     auto& style = ImGui::GetStyle();
 
-    auto themes       = Frenchie::Editor::Configuration::Themes::instance()->get_supported_themes();
-    auto currentTheme = Frenchie::Editor::Configuration::Themes::instance()->get_current_theme();
+    auto themes       = Frenchie::Application::Configuration::Themes::instance()->get_supported_themes();
+    auto currentTheme = Frenchie::Application::Configuration::Themes::instance()->get_current_theme();
 
     if(ImGui::BeginCombo(
         "##", 
@@ -328,6 +330,8 @@ void Style::draw_color_settings()
             bool current = theme->is_current();
             if(ImGui::Checkbox(theme->get_name().c_str(), &current)) 
                 theme->setup();
+
+            ImGui::SetItemTooltip(Frenchie::Core::String::as_utf8(theme->get_path().wstring()).c_str());
         }
 
         ImGui::EndCombo();
@@ -356,14 +360,14 @@ void Style::draw_color_settings()
                         paths.insert(path.first);
                 }
 
-                Frenchie::Editor::Configuration::Themes::instance()->set_supported_themes(paths);
+                Frenchie::Application::Configuration::Themes::instance()->set_supported_themes(paths);
             }
         );
     };
 
     auto onSaveAction = [this]()
     {
-        auto currentTheme = Frenchie::Editor::Configuration::Themes::instance()->get_current_theme();
+        auto currentTheme = Frenchie::Application::Configuration::Themes::instance()->get_current_theme();
     
         if(currentTheme != nullptr) 
             currentTheme->save();
@@ -389,7 +393,7 @@ void Style::draw_color_settings()
                     currentFile.wstring().empty()) 
                     return;
 
-                Frenchie::Editor::Configuration::Themes::instance()->create_theme(
+                Frenchie::Application::Configuration::Themes::instance()->create_theme(
                     std::filesystem::path(
                         currentPath.wstring().append(L"/").append(currentFile.filename().wstring())
                     ).make_preferred()
@@ -483,7 +487,7 @@ void Style::draw_fonts_settings()
 
     if (ImGui::BeginCombo("##", font_current->GetDebugName()))
     {
-        for (ImFont* font : io.Fonts->Fonts)
+        for(ImFont* font : io.Fonts->Fonts)
         {
             ImGui::PushID((void*)font);
             if (ImGui::Selectable(font->GetDebugName(), font == font_current))
@@ -519,7 +523,7 @@ void Style::draw_fonts_settings()
                         paths.insert(path.first);
                 }
 
-                Frenchie::Editor::Configuration::Fonts::instance()->load_fonts(paths);
+                Frenchie::Application::Configuration::Fonts::instance()->load_fonts(paths);
             }
         );
     }

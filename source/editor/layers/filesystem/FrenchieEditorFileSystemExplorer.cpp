@@ -14,10 +14,11 @@
 using namespace Frenchie::Core;
 
 using namespace Frenchie::Application;
+using namespace Frenchie::Application::Configuration;
 
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
-using namespace Frenchie::Editor::Configuration;
+using namespace Frenchie::Application;
 
 // Add to main menu
 namespace Frenchie

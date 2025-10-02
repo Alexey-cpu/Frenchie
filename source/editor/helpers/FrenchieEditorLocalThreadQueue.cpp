@@ -3,7 +3,7 @@
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
 
-using namespace Frenchie::Editor;
+using namespace Frenchie::Application;
 
 LocalThreadQueue::LocalThreadQueue(){}
 LocalThreadQueue::~LocalThreadQueue(){}
