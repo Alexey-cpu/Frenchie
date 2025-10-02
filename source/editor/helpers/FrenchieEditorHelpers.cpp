@@ -5,10 +5,11 @@
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
-#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 
 using namespace Frenchie::Editor;
-using namespace Frenchie::Editor::Configuration;
+
+using namespace Frenchie::Application::Configuration;
 
 // IMGUI
 #include <imgui.h>

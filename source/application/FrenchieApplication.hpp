@@ -1,14 +1,14 @@
 #pragma once
 
-//#include <FrenchieApplicationAsynchronousProcessesLayer.hpp>
-// #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationLayer.hpp>
+// Core
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
-
 #include <FrenchieCoreISerializer.hpp>
 #include <FrenchieCoreSerializationNode.hpp>
 #include <FrenchieCoreSerializationFormatXML.hpp>
+
+// Application
+#include <FrenchieApplicationLayer.hpp>
 
 // STL
 #include <iostream>

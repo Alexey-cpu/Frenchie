@@ -1,4 +1,4 @@
-#include <FrenchieEditorConfigurationLoaderThemes.hpp>
+#include <FrenchieApplicationConfigurationLoaderThemes.hpp>
 
 // Core
 #include <FrenchieCoreSerializationNode.hpp>
@@ -7,24 +7,20 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-
-// Editor
-#include <FrenchieApplicationEditorLauncher.hpp>
+#include <FrenchieApplicationConfigurationLoader.hpp>
 
 // IMGUI
 #include <imgui.h>
 
 using namespace Frenchie::Core;
-using namespace Frenchie::Application;
 
-using namespace Frenchie::Editor;
-using namespace Frenchie::Editor::Configuration;
+using namespace Frenchie::Application::Configuration;
 
 namespace Frenchie
 {
     namespace Editor
     {
-        namespace Configuration
+        namespace Application
         {
             class PushThemesIntoAppQueue : 
                 public Frenchie::Application::Command::Registry<PushThemesIntoAppQueue, void*>
@@ -39,13 +35,13 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Editor::Configuration::Themes::instance();
+                    Frenchie::Application::Configuration::Themes::instance();
                 }
 
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::Configuration), STRINGIFY(Themes));
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Configuration), STRINGIFY(Themes));
                 }
             };
 
@@ -459,6 +455,35 @@ void Theme::save()
 Themes::Themes() : Layer(STRINGIFY(Themes)){}
 Themes::~Themes(){}
 
+std::filesystem::path Themes::get_app_theme_files_path() const
+{
+    if(std::filesystem::exists(m_AppThemeFilesPath))
+        return m_AppThemeFilesPath;
+
+    auto configurationLoader = 
+        Frenchie::Application::application()
+            ->find_layer<Frenchie::Application::Configuration::ConfigurationLoader>();
+
+    if(configurationLoader == nullptr) 
+        return m_AppThemeFilesPath;
+        
+    m_AppThemeFilesPath = configurationLoader->get_app_data_path().wstring().append(L"/fonts");
+
+    if(!std::filesystem::exists(m_AppThemeFilesPath)) 
+    {
+        try
+        {
+            std::filesystem::create_directory(m_AppThemeFilesPath);
+        }
+        catch(...)
+        {
+            // TODO: put a log here...
+        }
+    }
+
+    return m_AppThemeFilesPath;
+}
+
 Frenchie::Core::Reference<Theme> Themes::get_current_theme() const
 {
     for(auto&& theme : m_Themes) 
@@ -548,7 +573,7 @@ bool Themes::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
                 !std::filesystem::exists(std::string(theme.get_value()))) 
                 continue;
 
-            auto path = std::filesystem::path(theme.get_value());
+            auto path = std::filesystem::path(theme.get_value()).make_preferred();
             m_Themes.insert(
                 {
                     path, 
@@ -559,8 +584,7 @@ bool Themes::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
     }
     else // try to to load theme files from default path
     {
-        std::filesystem::path defaultTranslationFilesPath = 
-            Frenchie::Editor::Launcher::get_app_themes_files_directory();
+        std::filesystem::path defaultTranslationFilesPath = get_app_theme_files_path();
 
         if(std::filesystem::exists(defaultTranslationFilesPath))
         {
@@ -612,7 +636,7 @@ bool Themes::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 Frenchie::Core::Reference<Theme> Themes::create_theme(const std::filesystem::path& _Path)
 {
-    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".theme"));
+    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".theme")).make_preferred();
     auto theme = std::make_shared<Theme>(path, this);
     m_Themes.insert({path, theme});
 

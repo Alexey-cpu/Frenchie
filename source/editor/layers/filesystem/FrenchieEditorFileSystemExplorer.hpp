@@ -9,7 +9,7 @@
 #include <FrenchieApplication.hpp>
 
 // Editor
-#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -25,8 +25,6 @@ namespace Frenchie
     {
         namespace FileSystem
         {
-            using namespace Configuration;
-
             // Explorer
             class Explorer : public Frenchie::Application::Layer
             {
@@ -77,7 +75,7 @@ namespace Frenchie
                     void clear_selection()
                     {
                         m_SelectedPaths.clear();
-                        m_CurrentFile = Translator::translate("Nothing selected...");
+                        m_CurrentFile = Frenchie::Application::Configuration::Translator::translate("Nothing selected...");
                     }
 
                     bool contains(const std::filesystem::path& _Path) const

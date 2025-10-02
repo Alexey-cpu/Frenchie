@@ -1,4 +1,4 @@
-#include <FrenchieEditorConfigurationLoaderFonts.hpp>
+#include <FrenchieApplicationConfigurationLoaderFonts.hpp>
 
 // Core
 #include <FrenchieCoreHelpers.hpp>
@@ -7,12 +7,7 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-
-// Editor
-#include <FrenchieApplicationEditorLauncher.hpp>
-
-// SPDLOG
-#include "spdlog/sinks/basic_file_sink.h"
+#include <FrenchieApplicationConfigurationLoader.hpp>
 
 // STL
 #include <chrono>
@@ -23,12 +18,11 @@
 // IMGUI
 #include <imgui.h>
 
-using namespace Frenchie::Editor;
-using namespace Frenchie::Editor::Configuration;
+using namespace Frenchie::Application::Configuration;
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
         namespace Configuration
         {
@@ -44,13 +38,13 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Editor::Configuration::Fonts::instance();
+                    Frenchie::Application::Configuration::Fonts::instance();
                 }
 
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::Configuration), STRINGIFY(Fonts));
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Configuration), STRINGIFY(Fonts));
                 }
             };
 
@@ -63,6 +57,35 @@ namespace Frenchie
 Fonts::Fonts() : Layer(STRINGIFY(Fonts)){}
 
 Fonts::~Fonts(){}
+
+std::filesystem::path Fonts::get_app_fonts_files_directory() const
+{
+    if(std::filesystem::exists(m_AppFontsFilesPath))
+        return m_AppFontsFilesPath;
+
+    auto configurationLoader = 
+        Frenchie::Application::application()
+            ->find_layer<Frenchie::Application::Configuration::ConfigurationLoader>();
+
+    if(configurationLoader == nullptr) 
+        return m_AppFontsFilesPath;
+        
+    m_AppFontsFilesPath = configurationLoader->get_app_data_path().wstring().append(L"/fonts");
+
+    if(!std::filesystem::exists(m_AppFontsFilesPath)) 
+    {
+        try
+        {
+            std::filesystem::create_directory(m_AppFontsFilesPath);
+        }
+        catch(...)
+        {
+            // TODO: put a log here...
+        }
+    }
+
+    return m_AppFontsFilesPath;
+}
 
 bool Fonts::allows_multiple_instances() const 
 {
@@ -229,8 +252,7 @@ void Fonts::load_fonts(
             if(m_Paths.empty())
             {
                 // try to load from default paths
-                std::filesystem::path defaultFontsFilesPath = 
-                    Frenchie::Editor::Launcher::get_app_fonts_files_directory();
+                std::filesystem::path defaultFontsFilesPath = get_app_fonts_files_directory();
 
                 if(std::filesystem::exists(defaultFontsFilesPath))
                 {

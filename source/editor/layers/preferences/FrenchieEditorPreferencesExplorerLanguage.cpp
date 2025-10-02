@@ -4,7 +4,7 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
-#include <FrenchieEditorConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 #include <FrenchieEditorFileSystemExplorerDialog.hpp>
 #include <FrenchieEditorFileSystemExplorerPathScannerDialog.hpp>
 #include <FrenchieApplicationEditorDialog.hpp>
@@ -20,10 +20,12 @@
 #include <iostream>
 #include <functional>
 
+using namespace Frenchie::Application;
+using namespace Frenchie::Application::Configuration;
+
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 using namespace Frenchie::Editor::Preferences;
-using namespace Frenchie::Editor::Configuration;
 
 // Add to main menu
 namespace Frenchie
@@ -70,8 +72,8 @@ namespace Frenchie
             {
             public:
                 RenameKeysDialog(
-                    Frenchie::Core::Reference<Frenchie::Editor::Configuration::Language> _Language, 
-                    const std::vector<Frenchie::Editor::Configuration::TranslationUnit>& _Units) : 
+                    Frenchie::Core::Reference<Frenchie::Application::Configuration::Language> _Language, 
+                    const std::vector<Frenchie::Application::Configuration::TranslationUnit>& _Units) : 
                     Dialog(Translator::translate("RenameKeys")),
                     m_Language(_Language),
                     m_Cache(_Units),
@@ -151,10 +153,10 @@ namespace Frenchie
 
                 bool m_Accepted{false};
 
-                Frenchie::Core::Reference<Frenchie::Editor::Configuration::Language> m_Language;
+                Frenchie::Core::Reference<Frenchie::Application::Configuration::Language> m_Language;
 
-                std::vector<Frenchie::Editor::Configuration::TranslationUnit> m_Cache;
-                std::vector<Frenchie::Editor::Configuration::TranslationUnit> m_Units;
+                std::vector<Frenchie::Application::Configuration::TranslationUnit> m_Cache;
+                std::vector<Frenchie::Application::Configuration::TranslationUnit> m_Units;
             };
         }
     }
@@ -186,6 +188,7 @@ void Languages::frame_update()
             {
                 ImGui::PushID(++id);
                 bool selected = supportedLanguage->is_current();
+                
                 if(ImGui::Checkbox(supportedLanguage->get_name().c_str(), &selected))
                 {
                     // setup current language
@@ -201,6 +204,9 @@ void Languages::frame_update()
                     // close current popup
                     ImGui::CloseCurrentPopup();
                 }
+
+                ImGui::SetItemTooltip(Frenchie::Core::String::as_utf8(supportedLanguage->get_path().wstring()).c_str());
+
                 ImGui::PopID();
             }
 
@@ -319,7 +325,7 @@ void Languages::frame_update()
             Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
-                    m_NewKeys.push_back(Frenchie::Editor::Configuration::TranslationUnit());
+                    m_NewKeys.push_back(Frenchie::Application::Configuration::TranslationUnit());
                 }
             );
         }
@@ -427,7 +433,7 @@ void Languages::frame_update()
                                     std::find_if(
                                         m_NewKeys.begin(), 
                                         m_NewKeys.end(), 
-                                        [newKey](const Frenchie::Editor::Configuration::TranslationUnit& _Unit)->bool
+                                        [newKey](const Frenchie::Application::Configuration::TranslationUnit& _Unit)->bool
                                         {
                                             return newKey.Key == _Unit.Key;
                                         }
@@ -555,7 +561,7 @@ void Languages::frame_update()
                             {
                                 Frenchie::Application::application()->push_layer<Frenchie::Editor::Preferences::RenameKeysDialog>(
                                     Translator::instance()->get_current_language(),
-                                    std::vector<Frenchie::Editor::Configuration::TranslationUnit>({translation})
+                                    std::vector<Frenchie::Application::Configuration::TranslationUnit>({translation})
                                 );
                             }
                         );

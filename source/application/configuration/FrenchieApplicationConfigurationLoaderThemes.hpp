@@ -8,7 +8,7 @@
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
         namespace Configuration
         {
@@ -46,6 +46,7 @@ namespace Frenchie
                 virtual ~Themes();
 
                 // getters
+                std::filesystem::path get_app_theme_files_path() const;
                 Frenchie::Core::Reference<Theme> get_current_theme() const;
                 std::vector<Frenchie::Core::Reference<Theme>> get_supported_themes() const;
 
@@ -69,6 +70,7 @@ namespace Frenchie
 
                 friend class Theme;
 
+                mutable std::filesystem::path                                   m_AppThemeFilesPath;
                 mutable std::map<std::filesystem::path, std::shared_ptr<Theme>> m_Themes;
             };
         }

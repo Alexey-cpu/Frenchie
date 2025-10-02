@@ -11,7 +11,7 @@
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
         namespace Configuration
         {
@@ -22,6 +22,10 @@ namespace Frenchie
             public:
                 Fonts();
                 virtual ~Fonts();
+
+
+                // getters
+                std::filesystem::path get_app_fonts_files_directory() const;
 
                 // Frenchie::Application::Layer
                 virtual bool allows_multiple_instances() const override;
@@ -39,6 +43,8 @@ namespace Frenchie
                 static Frenchie::Core::Reference<Fonts> instance();
 
             protected:
+
+                mutable std::filesystem::path           m_AppFontsFilesPath;
                 mutable std::set<std::filesystem::path> m_Paths;
                 mutable LocalThreadQueue                m_ThreadsQueue;
             };

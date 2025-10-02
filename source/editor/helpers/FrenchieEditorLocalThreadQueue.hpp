@@ -4,7 +4,7 @@
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
         class LocalThreadQueue final
         {
