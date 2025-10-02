@@ -1,4 +1,6 @@
-#include <FrenchieEditorTextEditor.hpp>
+#include <FrenchieTextEditorView.hpp>
+
+#include <FrenchieCoreThreadPool.hpp>
 
 using namespace Frenchie::Editor;
 
@@ -95,7 +97,10 @@ TextEditor::~TextEditor(){}
 
 bool TextEditor::awake()
 {
-	m_TextModel = std::make_shared<TextEditorModel>();
+	// launch timers
+	m_CursorTimer = Frenchie::Application::application()
+		->push_layer<Frenchie::Application::SynchronousTimer<std::chrono::milliseconds>>(
+			1000.0, true, "TextEditorCursorTimer");
 
 	// for (size_t j = 0; j < 1e6; j++)
 	// {
@@ -106,7 +111,7 @@ bool TextEditor::awake()
 	// }
 
 	// fill buffer
-	m_TextModel->m_IsDirty = true;
+	m_TextModel->set_dirty(true);
 
 	Frenchie::Core::ThreadPool::instance()->enqueue(
 		[this]()
@@ -126,14 +131,9 @@ bool TextEditor::awake()
 
 			m_TextModel->append(textBuffer);
 
-			m_TextModel->m_IsDirty = false;
+			m_TextModel->set_dirty(false);
 		}
 	);
-
-	// initialize navigation cursor timer
-	m_Timer.LaunchTime  = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	m_Timer.CurrentTime = 0;
-	m_Timer.Elapsed     = 0;
 
     return true;
 }
@@ -241,8 +241,8 @@ void TextEditor::insert_symbol_command()
 	{
 		if(m_TextModel == nullptr) 
 			return;
-		// insert user input into a given line as wide character string
 
+		// insert user input into a given line as wide character string
 		Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
 			[this, c]()
 			{
@@ -414,10 +414,6 @@ void TextEditor::draw_text_contents()
 			insert_symbol_command();
 		}
 
-		// process cursor timer
-		m_Timer.CurrentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-		m_Timer.Elapsed     = m_Timer.CurrentTime - m_Timer.LaunchTime;
-
 		// draw text
 		ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::TEXT);
 
@@ -426,9 +422,6 @@ void TextEditor::draw_text_contents()
 
 		while(clipper.Step())
 		{
-			if(!m_TextModel->m_IsDirty)
-				m_Highlighter.preprocessTextBlock(m_TextModel->m_Chunks, clipper.DisplayStart, clipper.DisplayEnd, m_Patterns);
-
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
 				// highlight and draw text
@@ -440,7 +433,7 @@ void TextEditor::draw_text_contents()
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
 
-				if(m_TextModel->m_IsDirty)
+				if(m_TextModel->is_dirty())
 				{
 					ImGui::GetWindowDrawList()->AddText(
 						rowRect.Min,
@@ -450,7 +443,7 @@ void TextEditor::draw_text_contents()
 				else
 				{
 					SyntaxHighlighter::regexEstimationResults matches = 
-						m_Highlighter.processTextLine(
+						m_SyntaxHighlighter.highlight(
 							m_TextModel->get_text_line(lineNumber), 
 							m_Patterns,
 							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), lineNumber);
@@ -539,17 +532,13 @@ void TextEditor::draw_text_contents()
 					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
 					// animated
-					if(m_Timer.Elapsed > 500)
+					if(m_CursorTimer->get_elapsed_time() > 500)
 					{
 						ImGui::GetWindowDrawList()->AddText(
 							m_CursorPosition - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
 							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_InputTextCursor]),
 							"|"
 						);
-
-						// relaunch timer
-						if(m_Timer.Elapsed > 1000) 
-							m_Timer.LaunchTime = m_Timer.CurrentTime;
 					}
 				}
 
@@ -567,8 +556,6 @@ void TextEditor::draw_text_contents()
 				if(rowRect.Contains(ImGui::GetMousePos()))
 					m_CurrentlyHoveredLine = lineNumber;
 			}
-		
-			//std::cout << clipper.DisplayStart << "\t" << clipper.DisplayEnd << "\n";
 		}
 
 		// adjust scroll bar

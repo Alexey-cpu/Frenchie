@@ -32,9 +32,9 @@ namespace Frenchie
             Type         Type    = Type::DEFAULT;
         };
 
-        struct RegexResult
+        struct RegexEstimationResult
         {
-            RegexResult(
+            RegexEstimationResult(
                 const Frenchie::Core::Regex::Match& _Match = Frenchie::Core::Regex::Match(), 
                 const unsigned int&                 _Color = 0) : 
                 Match(_Match), Color(_Color){}
@@ -47,23 +47,17 @@ namespace Frenchie
 		{
 		public:
 
-			typedef std::map<int, RegexResult> regexEstimationResults;
+			typedef std::map<int, RegexEstimationResult> regexEstimationResults;
 
-            void preprocessTextBlock(
-                const std::vector<std::wstring>& _Chunks, 
-                int                              _Start, 
-                int                              _End, 
-                const std::vector<RegexRule>&    _Rules);
-
-			regexEstimationResults processTextLine(
+			regexEstimationResults highlight(
 				const std::wstring&           _Contents, 
 				const std::vector<RegexRule>& _Rules,
 				const unsigned int&           _DefaultColor, 
                 const int&                    _LineNumber);
 
         protected:
-            std::map<int, RegexResult> m_MultilineStart;
-            std::map<int, RegexResult> m_MultilineFinish;
+            std::map<int, RegexEstimationResult> m_MultilineStart;
+            std::map<int, RegexEstimationResult> m_MultilineFinish;
 		};
     }
 }

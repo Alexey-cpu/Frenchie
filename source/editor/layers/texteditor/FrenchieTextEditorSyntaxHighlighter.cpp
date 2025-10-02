@@ -4,55 +4,7 @@ using namespace Frenchie::Core;
 
 using namespace Frenchie::TextEditor;
 
-void SyntaxHighlighter::preprocessTextBlock(
-    const std::vector<std::wstring>& _Chunks, 
-    int                              _Start, 
-    int                              _End, 
-    const std::vector<RegexRule>&    _Rules)
-{
-    for(int lineNumber = _Start; lineNumber < std::min<int>(_End, (int)_Chunks.size()); lineNumber++)
-    {
-        for(auto&& rule : _Rules)
-        {
-            if(rule.Type != RegexRule::Type::MULTILINE_START && 
-                rule.Type != RegexRule::Type::MULTILINE_FINISH) continue;
-
-            Frenchie::Core::Regex::Matches matches = 
-                Frenchie::Core::Regex::match(_Chunks[lineNumber], rule.Pattern);
-
-            //m_MultilineColor = rule.Color;
-
-            int min = INT_MAX;
-            int max = INT_MIN;
-
-            for(auto&& match : matches)
-            {
-                min = std::min<int>(min, match.Start);
-                max = std::max<int>(max, match.Start);
-            }
-
-            if(rule.Type == RegexRule::Type::MULTILINE_START)
-            {
-                m_MultilineStart[lineNumber] = 
-                    RegexResult(Frenchie::Core::Regex::Match(min), rule.Color);
-
-                if(matches.empty()) 
-                    m_MultilineStart.erase(lineNumber);
-            }
-
-            if(rule.Type == RegexRule::Type::MULTILINE_FINISH)
-            {
-                m_MultilineFinish[lineNumber] = 
-                    RegexResult(Frenchie::Core::Regex::Match(max), rule.Color);
-
-                if(matches.empty()) 
-                    m_MultilineFinish.erase(lineNumber);
-            }
-        }
-    }
-}
-
-SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::processTextLine(
+SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::highlight(
     const std::wstring&           _Contents, 
     const std::vector<RegexRule>& _Rules,
     const unsigned int&           _DefaultColor, 
@@ -66,21 +18,45 @@ SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::processTextLine(
     {
         auto matches = Frenchie::Core::Regex::match(_Contents, rule.Pattern);
 
+        int min = INT_MAX;
+        int max = INT_MIN;
+
         for(auto&& match : matches)
         {
             for(int i = match.Start; i < match.Finish; i++)
             {
-                uniqueRanges[i] = RegexResult(
+                uniqueRanges[i] = RegexEstimationResult(
                     Frenchie::Core::Regex::Match(i, i + 1), 
                     rule.Color
                 );
             }
+
+            min = std::min<int>(min, match.Start);
+            max = std::max<int>(max, match.Start);
+        }
+
+        if(rule.Type == RegexRule::Type::MULTILINE_START)
+        {
+            m_MultilineStart[_LineNumber] = 
+                RegexEstimationResult(Frenchie::Core::Regex::Match(min), rule.Color);
+
+            if(matches.empty()) 
+                m_MultilineStart.erase(_LineNumber);
+        }
+
+        if(rule.Type == RegexRule::Type::MULTILINE_FINISH)
+        {
+            m_MultilineFinish[_LineNumber] = 
+                RegexEstimationResult(Frenchie::Core::Regex::Match(max), rule.Color);
+
+            if(matches.empty()) 
+                m_MultilineFinish.erase(_LineNumber);
         }
     }
 
     // add missing ranges
     for (int i = 0; i < (int)_Contents.size(); i++)
-        uniqueRanges.insert({i, RegexResult(Frenchie::Core::Regex::Match(i, i + 1), _DefaultColor)});
+        uniqueRanges.insert({i, RegexEstimationResult(Frenchie::Core::Regex::Match(i, i + 1), _DefaultColor)});
 
     // multiline recoloring
     for(auto&& uniqueRange : uniqueRanges)
@@ -144,7 +120,7 @@ SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::processTextLine(
                 break;
         }
 
-        optimized.insert({source, RegexResult(Frenchie::Core::Regex::Match(source, target), sourceColor)});
+        optimized.insert({source, RegexEstimationResult(Frenchie::Core::Regex::Match(source, target), sourceColor)});
         source = --target;
     }
 
