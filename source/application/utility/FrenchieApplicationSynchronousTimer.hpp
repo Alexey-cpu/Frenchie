@@ -12,7 +12,7 @@ namespace Frenchie
         public:
             
             SynchronousTimer(
-                const double&    _Threshold, 
+                const double&      _Threshold, 
                 const bool&        _AutoReset = true, 
                 const std::string& _Name      = STRINGIFY(SynchronousTimer)) :
                 Layer(_Name),

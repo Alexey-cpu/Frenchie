@@ -68,7 +68,6 @@ namespace Frenchie
                 RegexRule(
                     L"for", 
                     IM_COL32(255, 0, 0, 255)),
-
                 RegexRule(
                     LR"([\(\)\{\}\[\]])", 
                     IM_COL32(0, 255, 0, 255)),

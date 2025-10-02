@@ -59,6 +59,7 @@ Application::Application()
     }
 
     glfwMakeContextCurrent(m_Window);
+    glfwSwapInterval(1);
 
     // setup callbacks
     glfwSetWindowSizeCallback(m_Window, &OnWindowResize);

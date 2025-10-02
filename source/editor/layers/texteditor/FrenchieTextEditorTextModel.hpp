@@ -25,10 +25,10 @@ namespace Frenchie
             void set_cursor_column(const int&);
             void set_dirty(const bool&);
 
-            void reset(const std::string& _TextBuffer);
-            void reset(const std::wstring& _TextBuffer);
-            void append(const std::string& _TextBuffer);
-            void append(const std::wstring& _TextBuffer);
+            void reset(const std::string&);
+            void reset(const std::wstring&);
+            void append(const std::string&);
+            void append(const std::wstring&);
 
             void move_cursor_left();
             void move_cursor_right();
@@ -37,8 +37,8 @@ namespace Frenchie
             void next_line();
             void move_back();
 
-            void insert(int _Line, int _Position, std::string _What);
-            void insert(int _Line, int _Position, std::wstring _What);
+            void insert(const int& _Line, const int& _Position, const std::string& _What);
+            void insert(const int& _Line, const int& _Position, const std::wstring& _What);
 
         protected:
 
