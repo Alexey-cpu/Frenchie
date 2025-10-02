@@ -8,6 +8,11 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
 
+// TextEditor
+#include <FrenchieTextEditorSyntaxHighlighter.hpp>
+
+using namespace Frenchie::TextEditor;
+
 // STL
 #include <optional>
 
@@ -20,194 +25,6 @@ namespace Frenchie
 {
     namespace Editor
     {
-		class SyntaxHighlighter
-		{
-		public:
-			struct RegexRule
-			{
-                enum Type
-                {
-                    DEFAULT,
-                    MULTILINE_START,
-                    MULTILINE_FINISH,
-                };
-
-				RegexRule(
-                    const std::wstring& _Pattern = std::wstring(), 
-                    const unsigned int& _Color   = 0, 
-                    Type                _Type    = Type::DEFAULT) : 
-					Pattern(_Pattern), Color(_Color), Type(_Type){}
-
-				std::wstring Pattern = std::wstring();
-				unsigned int Color   = 0;
-                Type         Type    = Type::DEFAULT;
-			};
-
-			struct RegexResult
-			{
-				RegexResult(
-					const Frenchie::Core::Regex::Match& _Match = Frenchie::Core::Regex::Match(), 
-					const unsigned int&                 _Color = 0) : 
-					Match(_Match), Color(_Color){}
-
-				Frenchie::Core::Regex::Match Match;
-				unsigned int                 Color  = 0;
-			};
-
-			typedef std::map<int, RegexResult> regexEstimationResults;
-
-            void preprocessTextBlock(
-                const std::vector<std::wstring>& _Chunks, 
-                int                              _Start, 
-                int                              _End, 
-                const std::vector<RegexRule>&    _Rules)
-            {
-                for(int lineNumber = _Start; lineNumber < std::min<int>(_End, (int)_Chunks.size()); lineNumber++)
-                {
-                    for(auto&& rule : _Rules)
-                    {
-                        if(rule.Type != RegexRule::Type::MULTILINE_START && 
-                            rule.Type != RegexRule::Type::MULTILINE_FINISH) continue;
-
-                        Frenchie::Core::Regex::Matches matches = 
-                            Frenchie::Core::Regex::match(_Chunks[lineNumber], rule.Pattern);
-
-                        //m_MultilineColor = rule.Color;
-
-                        int min = INT_MAX;
-                        int max = INT_MIN;
-
-                        for(auto&& match : matches)
-                        {
-                            min = std::min<int>(min, match.Start);
-                            max = std::max<int>(max, match.Start);
-                        }
-
-                        if(rule.Type == RegexRule::Type::MULTILINE_START)
-                        {
-                            m_MultilineStart[lineNumber] = 
-                                RegexResult(Frenchie::Core::Regex::Match(min), rule.Color);
-
-                            if(matches.empty()) 
-                                m_MultilineStart.erase(lineNumber);
-                        }
-
-                        if(rule.Type == RegexRule::Type::MULTILINE_FINISH)
-                        {
-                            m_MultilineFinish[lineNumber] = 
-                                RegexResult(Frenchie::Core::Regex::Match(max), rule.Color);
-
-                            if(matches.empty()) 
-                                m_MultilineFinish.erase(lineNumber);
-                        }
-                    }
-                }
-            }
-
-			regexEstimationResults processTextLine(
-				const std::wstring&           _Contents, 
-				const std::vector<RegexRule>& _Rules,
-				const unsigned int&           _DefaultColor, 
-                const int&                    _LineNumber)
-			{
-                bool resetMultilineRule = false;
-
-                regexEstimationResults uniqueRanges;
-
-				for(auto&& rule : _Rules)
-				{
-					auto matches = Frenchie::Core::Regex::match(_Contents, rule.Pattern);
-
-					for(auto&& match : matches)
-					{
-                        for(int i = match.Start; i < match.Finish; i++)
-                        {
-                            uniqueRanges[i] = RegexResult(
-                                Frenchie::Core::Regex::Match(i, i + 1), 
-                                rule.Color
-                            );
-                        }
-					}
-				}
-
-                // add missing ranges
-                for (int i = 0; i < (int)_Contents.size(); i++)
-                    uniqueRanges.insert({i, RegexResult(Frenchie::Core::Regex::Match(i, i + 1), _DefaultColor)});
-
-                // multiline recoloring
-                for(auto&& uniqueRange : uniqueRanges)
-                {
-                    std::map<int, int> multilineRanges;
-
-                    for(auto multilineStart : m_MultilineStart)
-                    {
-                        multilineRanges[multilineStart.first] = INT_MAX;
-
-                        for(auto multilineFinish : m_MultilineFinish)
-                        {
-                            if(multilineFinish.first < multilineStart.first) 
-                                continue;
-
-                            multilineRanges[multilineStart.first] = 
-                                std::min<int>(multilineRanges[multilineStart.first], multilineFinish.first);
-                        }
-                    }
-
-                    for(auto&& multilineRange : multilineRanges)
-                    {
-                        auto color = m_MultilineStart[multilineRange.first].Color;
-
-                        if(_LineNumber == multilineRange.first && 
-                            uniqueRange.second.Match.Start >= m_MultilineStart[multilineRange.first].Match.Start)
-                        {
-                            uniqueRange.second.Color = color;
-                            break;
-                        }
-                        else if(_LineNumber == multilineRange.second && 
-                                uniqueRange.second.Match.Start <= m_MultilineFinish[multilineRange.second].Match.Start)
-                        {
-                            uniqueRange.second.Color = color;
-                            break;
-                        }
-                        else if(_LineNumber > multilineRange.first && 
-                                _LineNumber < multilineRange.second)
-                        {
-                            uniqueRange.second.Color = color;
-                            break;
-                        }
-                    }
-                }
-
-                // optimize
-                regexEstimationResults optimized;
-
-                int source = 0;
-                int target = 0;
-
-                for (source = 0; source < (int)_Contents.size(); source++)
-                {
-                    auto sourceColor = uniqueRanges[source].Color;
-
-                    for (target = source + 1; target < (int)_Contents.size(); target++)
-                    {
-                        auto targetColor = uniqueRanges[target].Color;
-
-                        if(sourceColor != targetColor)
-                            break;
-                    }
-
-                    optimized.insert({source, RegexResult(Frenchie::Core::Regex::Match(source, target), sourceColor)});
-                    source = --target;
-                }
-
-                return optimized;
-			}
-
-        protected:
-            std::map<int, RegexResult> m_MultilineStart;
-            std::map<int, RegexResult> m_MultilineFinish;
-		};
-
         class TextEditorModel
         {
         public:
@@ -469,35 +286,35 @@ namespace Frenchie
 
             SyntaxHighlighter m_Highlighter;
 
-            std::vector<SyntaxHighlighter::RegexRule> m_Patterns = 
+            std::vector<RegexRule> m_Patterns = 
             {
-                SyntaxHighlighter::RegexRule(
+                RegexRule(
                     L"alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|reflexpr|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|synchronized|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq", 
                     IM_COL32(0, 0, 255, 255)),
-                SyntaxHighlighter::RegexRule(
+                RegexRule(
                     L"for", 
                     IM_COL32(255, 0, 0, 255)),
 
-                SyntaxHighlighter::RegexRule(
+                RegexRule(
                     LR"([\(\)\{\}\[\]])", 
                     IM_COL32(0, 255, 0, 255)),
 
                 // single line comment
-                SyntaxHighlighter::RegexRule(
+                RegexRule(
                     L"//.*", 
                     IM_COL32(0, 255, 0, 255)),
 
                 // multiline comment start
-                SyntaxHighlighter::RegexRule(
+                RegexRule(
                     LR"(/\*)", 
                     IM_COL32(0, 255, 0, 255), 
-                    SyntaxHighlighter::RegexRule::MULTILINE_START),
+                    RegexRule::MULTILINE_START),
                 
                 // multiline comment end
-                SyntaxHighlighter::RegexRule(
+                RegexRule(
                     LR"(\*/)", 
                     IM_COL32(0, 255, 0, 255), 
-                    SyntaxHighlighter::RegexRule::MULTILINE_FINISH)
+                    RegexRule::MULTILINE_FINISH)
             };
 
             std::shared_ptr<TextEditorModel> m_TextModel{nullptr};
