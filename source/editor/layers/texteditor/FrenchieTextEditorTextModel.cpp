@@ -188,7 +188,7 @@ void TextEditorModel::move_back()
     adjust_cursor_position();
 }
 
-void TextEditorModel::insert(int _Line, int _Position, std::string _What)
+void TextEditorModel::insert(const int& _Line, const int& _Position, const std::string& _What)
 {
     if(_Line >= (int)m_Chunks.size() || _What.empty()) 
         return;
@@ -198,7 +198,7 @@ void TextEditorModel::insert(int _Line, int _Position, std::string _What)
     adjust_cursor_position();
 }
 
-void TextEditorModel::insert(int _Line, int _Position, std::wstring _What)
+void TextEditorModel::insert(const int& _Line, const int& _Position, const std::wstring& _What)
 {
     if(_Line >= (int)m_Chunks.size() || _What.empty()) 
         return;

@@ -102,38 +102,46 @@ bool TextEditor::awake()
 		->push_layer<Frenchie::Application::SynchronousTimer<std::chrono::milliseconds>>(
 			1000.0, true, "TextEditorCursorTimer");
 
-	// for (size_t j = 0; j < 1e6; j++)
-	// {
-	// 	for (size_t i = 0; i < 4; i++)
-	// 	{
-	// 		m_TextModel->append("for(int i = 0; i < 10; i++)");
-	// 	}
-	// }
-
 	// fill buffer
 	m_TextModel->set_dirty(true);
 
-	Frenchie::Core::ThreadPool::instance()->enqueue(
-		[this]()
-		{
-			//	setup text buffer
-			std::string textBuffer;
-
-			for (size_t j = 0; j < 1e3; j++)
-			{
-				for (size_t i = 0; i < 4; i++)
-				{
-					textBuffer.append("for(int i = 0; i < 10; i++)");
-				}
-
-				textBuffer.append("\n");
-			}
-
-			m_TextModel->append(textBuffer);
-
-			m_TextModel->set_dirty(false);
-		}
+	Frenchie::Core::Serialization::Document document;
+	document.read<Frenchie::Core::Serialization::XMLReader>(
+		"C:/SDK/Qt_Projects/OpenGL/shared/cpp.xml"
 	);
+
+	auto highlighting = document.find_node("Highlighting");
+
+	auto keywords = highlighting.find_node("Keywords");
+
+	for(auto&& keyword : keywords)
+	{
+		std::cout << keyword.get_value() << "\n";
+	}
+
+	m_TextModel->set_dirty(false);
+
+	// Frenchie::Core::ThreadPool::instance()->enqueue(
+	// 	[this]()
+	// 	{
+	// 		//	setup text buffer
+	// 		std::string textBuffer;
+
+	// 		for (size_t j = 0; j < 1e3; j++)
+	// 		{
+	// 			for (size_t i = 0; i < 4; i++)
+	// 			{
+	// 				textBuffer.append("for(int i = 0; i < 10; i++)");
+	// 			}
+
+	// 			textBuffer.append("\n");
+	// 		}
+
+	// 		m_TextModel->append(textBuffer);
+
+	// 		m_TextModel->set_dirty(false);
+	// 	}
+	// );
 
     return true;
 }
