@@ -3,8 +3,6 @@
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplicationEditorLauncher.hpp>
 
-#include <FrenchieEditorTextEditor.hpp>
-
 int main(int argc, char *argv[])
 {
     // std::wstring contents = L"/*/asdasd for(int i = 0; i < 10; i++)";
