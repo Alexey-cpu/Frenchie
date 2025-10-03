@@ -232,12 +232,45 @@ namespace Frenchie
 
                     for(auto&& node : _Node)
                     {
+                        // write bool
+                        if(node.get_type() == NodeType::BOOL)
+                        {                                
+                            _Parent.AddMember(
+                                rapidjson::Value().SetString(node.get_name(), (int)strlen(node.get_name())), 
+                                rapidjson::Value().Set<bool>(String::from_string<bool>(node.get_value())), 
+                                _JSON.GetAllocator());
+                            continue;
+                        }
+                        
+                        // write number
+                        if(node.get_type() == NodeType::NUMBER)
+                        {
+                            _Parent.AddMember(
+                                rapidjson::Value().SetString(node.get_name(), (int)strlen(node.get_name())), 
+                                rapidjson::Value().Set<double>(String::from_string<double>(node.get_value())), 
+                                _JSON.GetAllocator());
+                            continue;
+                        }
+                        
+                        // write string/attribute
+                        if(node.get_type() == NodeType::STRING || 
+                            node.get_type() == NodeType::ATTRIBUTE)
+                        {
+                            _Parent.AddMember(
+                                rapidjson::Value().SetString(node.get_name(), (int)strlen(node.get_name())), 
+                                rapidjson::Value().SetString(node.get_value(), (int)strlen(node.get_value())), 
+                                _JSON.GetAllocator());
+                            continue;
+                        }
+
+                        // write array
                         if(node.get_type() == NodeType::ARRAY)
                         {
                             JSON::write_array(node, _Parent, _JSON);
                             continue;
                         }
 
+                        // write object
                         if(node.get_type() != NodeType::OBJECT) 
                             continue;
 

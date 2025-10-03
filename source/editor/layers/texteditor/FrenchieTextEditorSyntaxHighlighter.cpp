@@ -102,7 +102,7 @@ SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::highlight(
         }
     }
 
-    // optimize
+    // color scheme range optimization
     regexEstimationResults optimized;
 
     int source = 0;
