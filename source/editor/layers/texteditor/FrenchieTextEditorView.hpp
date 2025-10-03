@@ -51,7 +51,6 @@ namespace Frenchie
             ImRect     m_TextRect;
             ImRect     m_LineNumbersRect;
             ImVec2     m_CursorPosition;
-            int        m_CurrentlyHoveredLine = 0;
 
             SyntaxHighlighter m_SyntaxHighlighter;
 
@@ -60,21 +59,41 @@ namespace Frenchie
 
             std::shared_ptr<TextEditorModel> m_TextModel{std::make_shared<TextEditorModel>()};
 
-            std::vector<RegexRule> m_Patterns = 
+            std::vector<RegexRule> m_Patterns =
             {
+                // keywords
                 RegexRule(
-                    L"alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|reflexpr|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|synchronized|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq", 
-                    IM_COL32(0, 0, 255, 255)),
+                    LR"(alignof|alignas|asm|auto|class|consteval|constinit|constexpr|const_cast|decltype|delete|dynamic_cast|enum|explicit|false|final|friend|inline|namespace|new|noexcept|nullptr|operator|override|private|protected|public|reinterpret_cast|sizeof|static_assert|static_cast|struct|template|this|true|typedef|typeid|typename|union|using|virtual|and|and_eq|bitand|bitor|compl|not|not_eq|or|or_eq|xor|xor_eq|concept|requires|import|module|export)", 
+                    IM_COL32(10, 8, 156, 255)),
+
+                // types
                 RegexRule(
-                    L"for", 
-                    IM_COL32(255, 0, 0, 255)),
+                    LR"(bool|char|char8_t|char16_t|char32_t|double|float|int|long|short|signed|unsigned|void|int8_t|int16_t|int32_t|int64_t|uint8_t|uint16_t|uint32_t|uint64_t|int_least8_t|int_least16_t|int_least32_t|int_least64_t|uint_least8_t|uint_least16_t|uint_least32_t|uint_least64_t|int_fast8_t|int_fast16_t|int_fast32_t|int_fast64_t|uint_fast8_t|uint_fast16_t|uint_fast32_t|uint_fast64_t|size_t|size_t|wchar_t|intptr_t|uintptr_t|intmax_t|uintmax_t|ptrdiff_t|sig_atomic_t|wint_t|va_list|FILE|fpos_t|time_t)", 
+                    IM_COL32(10, 8, 156, 255)),
+
+                // modifiers
                 RegexRule(
-                    LR"([\(\)\{\}\[\]])", 
-                    IM_COL32(0, 255, 0, 255)),
+                    LR"(const|extern|mutable|register|static|thread_local|volatile)", 
+                    IM_COL32(10, 8, 156, 255)),
+
+                // controlflow
+                RegexRule(
+                    LR"(break|case|catch|continue|default|do|else|for|goto|if|return|switch|throw|try|while|co_await|co_return|co_yield)", 
+                    IM_COL32(146, 8, 156, 255)),
+
+                // attributes
+                RegexRule(
+                    LR"(\[\[(.*)\]\])", 
+                    IM_COL32(57, 247, 5, 255)),
+
+                // preprocessor directives
+                RegexRule(
+                    LR"(\#.*)", 
+                    IM_COL32(61, 45, 1, 255)),
 
                 // single line comment
                 RegexRule(
-                    L"//.*", 
+                    LR"(//.*)", 
                     IM_COL32(0, 255, 0, 255)),
 
                 // multiline comment start

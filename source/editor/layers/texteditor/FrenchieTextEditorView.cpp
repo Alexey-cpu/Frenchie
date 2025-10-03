@@ -2,6 +2,8 @@
 
 #include <FrenchieCoreThreadPool.hpp>
 
+#include <FrenchieCoreSerializationFormatJSON.hpp>
+
 using namespace Frenchie::Editor;
 
 #include <string>
@@ -105,19 +107,40 @@ bool TextEditor::awake()
 	// fill buffer
 	m_TextModel->set_dirty(true);
 
-	Frenchie::Core::Serialization::Document document;
-	document.read<Frenchie::Core::Serialization::XMLReader>(
-		"C:/SDK/Qt_Projects/OpenGL/shared/cpp.xml"
-	);
+	// Frenchie::Core::Serialization::Document document;
+	// auto items = document.append_node("patterns", "", Frenchie::Core::Serialization::NodeType::ARRAY);
 
-	auto highlighting = document.find_node("Highlighting");
+	// for(auto&& pattern : m_Patterns)
+	// {
+	// 	auto item = items.append_node("", "", Frenchie::Core::Serialization::NodeType::OBJECT);
 
-	auto keywords = highlighting.find_node("Keywords");
+	// 	item.append_node("match", Frenchie::Core::String::as_utf8(pattern.Pattern).c_str(), Frenchie::Core::Serialization::NodeType::STRING);
+		
+	// 	switch (pattern.Type)
+	// 	{
+	// 	case RegexRule::Type::DEFAULT:
+	// 		item.append_node("type", "DEFAULT", Frenchie::Core::Serialization::NodeType::STRING);
+	// 		break;
+		
+	// 	case RegexRule::Type::MULTILINE_START:
+	// 		item.append_node("type", "MULTILINE_START", Frenchie::Core::Serialization::NodeType::STRING);
+	// 		break;
 
-	for(auto&& keyword : keywords)
-	{
-		std::cout << keyword.get_value() << "\n";
-	}
+	// 	case RegexRule::Type::MULTILINE_FINISH:
+	// 		item.append_node("type", "MULTILINE_FINISH", Frenchie::Core::Serialization::NodeType::STRING);
+	// 		break;
+
+	// 	default:
+	// 		item.append_node("type", "DEFAULT", Frenchie::Core::Serialization::NodeType::STRING);
+	// 		break;
+	// 	}
+		
+	// 	item.append_node("color", fmt::format("0x{:x}", (unsigned int)pattern.Color).c_str(), Frenchie::Core::Serialization::NodeType::STRING);
+	// }
+
+	// document.write<Frenchie::Core::Serialization::JSONBeautifulWriter>(
+	// 	"C:/SDK/Qt_Projects/OpenGL/shared/cpp.json"
+	// );
 
 	m_TextModel->set_dirty(false);
 
@@ -325,14 +348,7 @@ void TextEditor::draw_text_line_numbers()
 
 				ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
 
-				if(lineNumber == m_CurrentlyHoveredLine)
-				{
-					ImGui::GetWindowDrawList()->AddRectFilled(
-						rowRect.Min,
-						rowRect.Max,
-						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg]));
-				}
-				else if(lineNumber % 2 == 0)
+				if(lineNumber % 2 == 0)
 				{
 					ImGui::GetWindowDrawList()->AddRectFilled(
 						rowRect.Min,
@@ -555,14 +571,13 @@ void TextEditor::draw_text_contents()
 				{
 					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
 
+					ImVec4 color = ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg];
+
 					ImGui::GetWindowDrawList()->AddRectFilled(
 						rowRect.Min, 
 						rowRect.Max, 
-						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg]));
+						TextEditor::calculate_color(ImVec4(color.x, color.y, color.z, 0.1f)));
 				}
-
-				if(rowRect.Contains(ImGui::GetMousePos()))
-					m_CurrentlyHoveredLine = lineNumber;
 			}
 		}
 
