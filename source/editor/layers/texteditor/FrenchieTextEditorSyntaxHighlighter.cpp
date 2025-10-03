@@ -10,8 +10,6 @@ SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::highlight(
     const unsigned int&           _DefaultColor, 
     const int&                    _LineNumber)
 {
-    bool resetMultilineRule = false;
-
     regexEstimationResults uniqueRanges;
 
     for(auto&& rule : _Rules)
