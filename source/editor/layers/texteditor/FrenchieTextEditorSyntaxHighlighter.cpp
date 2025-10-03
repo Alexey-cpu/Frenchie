@@ -35,20 +35,18 @@ SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::highlight(
 
         if(rule.Type == RegexRule::Type::MULTILINE_START)
         {
-            m_MultilineStart[_LineNumber] = 
-                RegexEstimationResult(Frenchie::Core::Regex::Match(min), rule.Color);
-
-            if(matches.empty()) 
+            if(matches.empty())
                 m_MultilineStart.erase(_LineNumber);
+            else 
+                m_MultilineStart[_LineNumber] = RegexEstimationResult(Frenchie::Core::Regex::Match(min), rule.Color);
         }
 
         if(rule.Type == RegexRule::Type::MULTILINE_FINISH)
         {
-            m_MultilineFinish[_LineNumber] = 
-                RegexEstimationResult(Frenchie::Core::Regex::Match(max), rule.Color);
-
             if(matches.empty()) 
                 m_MultilineFinish.erase(_LineNumber);
+            else 
+                m_MultilineFinish[_LineNumber] = RegexEstimationResult(Frenchie::Core::Regex::Match(max), rule.Color);
         }
     }
 
