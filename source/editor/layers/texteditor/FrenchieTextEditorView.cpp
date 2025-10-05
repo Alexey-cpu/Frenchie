@@ -142,29 +142,29 @@ bool TextEditor::awake()
 	// 	"C:/SDK/Qt_Projects/OpenGL/shared/cpp.json"
 	// );
 
-	m_TextModel->set_dirty(false);
+	//m_TextModel->set_dirty(false);
 
-	// Frenchie::Core::ThreadPool::instance()->enqueue(
-	// 	[this]()
-	// 	{
-	// 		//	setup text buffer
-	// 		std::string textBuffer;
+	Frenchie::Core::ThreadPool::instance()->enqueue(
+		[this]()
+		{
+			//	setup text buffer
+			std::string textBuffer;
 
-	// 		for (size_t j = 0; j < 1e3; j++)
-	// 		{
-	// 			for (size_t i = 0; i < 4; i++)
-	// 			{
-	// 				textBuffer.append("for(int i = 0; i < 10; i++)");
-	// 			}
+			for (size_t j = 0; j < 1e3; j++)
+			{
+				for (size_t i = 0; i < 4; i++)
+				{
+					textBuffer.append("for(int i = 0; i < 10; i++)");
+				}
 
-	// 			textBuffer.append("\n");
-	// 		}
+				textBuffer.append("\n");
+			}
 
-	// 		m_TextModel->append(textBuffer);
+			m_TextModel->append(textBuffer);
 
-	// 		m_TextModel->set_dirty(false);
-	// 	}
-	// );
+			m_TextModel->set_dirty(false);
+		}
+	);
 
     return true;
 }
@@ -248,7 +248,7 @@ void TextEditor::move_next_line_command()
 		[this]()
 		{
 			if(m_TextModel != nullptr)
-				m_TextModel->next_line();
+				m_TextModel->move_next_line();
 		}
 	);
 }
@@ -310,6 +310,17 @@ void TextEditor::insert_symbol_command()
 		// consume user input
 		io.InputQueueCharacters.resize(0);
 	}
+}
+
+void TextEditor::clear_selection_command()
+{
+	Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+		[this]()
+		{
+			if(m_TextModel != nullptr)
+				m_TextModel->clear_selection();
+		}
+	);
 }
 
 void TextEditor::draw_text_line_numbers()
@@ -435,6 +446,16 @@ void TextEditor::draw_text_contents()
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace)) 
 				move_back_commnad();
 
+			for(int key = ImGuiKey::ImGuiKey_NamedKey_BEGIN; key < ImGuiKey::ImGuiKey_NamedKey_END; ++key)
+			{
+				if(ImGui::IsKeyPressed((ImGuiKey)key) && 
+					!ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) && 
+					!ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
+				{
+					clear_selection_command();
+				}
+			}
+
 			insert_symbol_command();
 		}
 
@@ -521,6 +542,26 @@ void TextEditor::draw_text_contents()
 						m_TextModel->set_cursor_line(lineNumber);
 						m_TextModel->set_cursor_column(positionInLine);
 						symbolIsHovered = true;
+					}
+
+					// select symbol
+					if(ImGui::IsWindowFocused() &&
+						m_TextRect.Contains(ImGui::GetMousePos()) &&
+						symbolRect.Contains(ImGui::GetMousePos()) &&
+						(ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) || 
+						ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+						ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+					{
+						m_TextModel->select(lineNumber, positionInLine);
+					}
+
+					// draw selection
+					if(m_TextModel->is_selected(lineNumber, positionInLine))
+					{
+						ImGui::GetWindowDrawList()->AddRectFilled(
+							symbolRect.Min,
+							symbolRect.Max,
+							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TextSelectedBg]));
 					}
 
 					if(m_TextModel->get_cursros_line() == lineNumber && m_TextModel->get_cursros_column() == positionInLine) 
