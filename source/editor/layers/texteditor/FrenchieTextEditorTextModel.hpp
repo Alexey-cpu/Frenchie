@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+#include <set>
 #include <vector>
 #include <string>
 
@@ -25,6 +27,7 @@ namespace Frenchie
             void set_cursor_column(const int&);
             void set_dirty(const bool&);
 
+            // API
             void reset(const std::string&);
             void reset(const std::wstring&);
             void append(const std::string&);
@@ -34,16 +37,22 @@ namespace Frenchie
             void move_cursor_right();
             void move_cursor_up();
             void move_cursor_down();
-            void next_line();
+            void move_next_line();
             void move_back();
 
             void insert(const int& _Line, const int& _Position, const std::string& _What);
             void insert(const int& _Line, const int& _Position, const std::wstring& _What);
+            
+            void select(const int& _Line, const int& _Position);
+            bool is_selected(const int& _Line, const int& _Position) const;
+            void clear_selection();
 
         protected:
 
             mutable std::vector<std::wstring> m_Chunks {std::vector<std::wstring>()};
             mutable bool                      m_Dirty{false};
+
+            std::map<int, std::pair<int, int>> m_Selection;
 
             struct Cursor
             {

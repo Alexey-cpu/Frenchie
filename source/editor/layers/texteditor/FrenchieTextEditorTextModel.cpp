@@ -129,7 +129,7 @@ void TextEditorModel::move_cursor_down()
     adjust_cursor_position();
 }
 
-void TextEditorModel::next_line()
+void TextEditorModel::move_next_line()
 {
     if(m_Cursor.Line < 0 || m_Cursor.Line > m_Chunks.size()) 
     {
@@ -206,6 +206,40 @@ void TextEditorModel::insert(const int& _Line, const int& _Position, const std::
     m_Chunks[_Line].insert(_Position, _What);
 
     adjust_cursor_position();
+}
+
+void TextEditorModel::select(const int& _Line, const int& _Position)
+{
+    if(_Line >= m_Chunks.size() || _Position >= m_Chunks[_Line].size()) 
+        return;
+
+    if(m_Selection.find(_Line) == m_Selection.end())
+    {
+        m_Selection[_Line] =
+        {
+            m_Selection.find(_Line - 1) == m_Selection.end() ? INT_MAX : 0,
+            m_Selection.find(_Line + 1) == m_Selection.end() ? INT_MIN : m_Chunks[_Line].size() - 1
+        };
+    }
+
+    m_Selection[_Line].first  = std::min<int>(m_Selection[_Line].first, _Position);
+    m_Selection[_Line].second = std::max<int>(m_Selection[_Line].second, _Position);
+}
+
+bool TextEditorModel::is_selected(const int& _Line, const int& _Position) const
+{
+    auto iterator = m_Selection.find(_Line);
+
+    if(iterator == m_Selection.end()) 
+        return false;
+
+    return _Position >= iterator->second.first && 
+           _Position <= iterator->second.second;
+}
+
+void TextEditorModel::clear_selection()
+{
+    m_Selection.clear();
 }
 
 void TextEditorModel::adjust_cursor_position()

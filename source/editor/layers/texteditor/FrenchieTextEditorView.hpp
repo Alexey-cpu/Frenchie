@@ -117,6 +117,7 @@ namespace Frenchie
             void move_next_line_command();
             void move_back_commnad();
             void insert_symbol_command();
+            void clear_selection_command();
 
             // drawers
             void draw_text_line_numbers();
