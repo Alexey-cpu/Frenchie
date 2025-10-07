@@ -323,6 +323,21 @@ void TextEditor::clear_selection_command()
 	);
 }
 
+void TextEditor::copy_command()
+{
+	if(m_TextModel != nullptr)
+		ImGui::SetClipboardText(Frenchie::Core::String::as_utf8(m_TextModel->get_selection()).c_str());
+}
+
+void TextEditor::paste_command()
+{
+	if(m_TextModel == nullptr) return;
+
+	std::string clipboard = ImGui::GetClipboardText();
+
+	m_TextModel->insert(m_TextModel->get_cursros_line(), m_TextModel->get_cursros_column(), clipboard);
+}
+
 void TextEditor::draw_text_line_numbers()
 {
 	std::lock_guard<std::mutex> lock(m_Mutex);
@@ -446,15 +461,18 @@ void TextEditor::draw_text_contents()
 			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace)) 
 				move_back_commnad();
 
-			for(int key = ImGuiKey::ImGuiKey_NamedKey_BEGIN; key < ImGuiKey::ImGuiKey_NamedKey_END; ++key)
-			{
-				if(ImGui::IsKeyPressed((ImGuiKey)key) && 
-					!ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) && 
-					!ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl))
-				{
-					clear_selection_command();
-				}
-			}
+			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Escape))
+				clear_selection_command();
+
+			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
+				(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
+				ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
+				copy_command();
+
+			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V) && 
+				(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || 
+				ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
+				paste_command();
 
 			insert_symbol_command();
 		}
