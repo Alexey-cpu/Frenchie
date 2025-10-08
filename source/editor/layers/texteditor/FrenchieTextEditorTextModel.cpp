@@ -39,7 +39,7 @@ int TextEditorModel::get_cursros_column() const
     return m_Cursor.Column;
 }
 
-std::wstring& TextEditorModel::get_text_line(int _Line) const
+std::wstring TextEditorModel::get_text_line(int _Line) const
 {
     if(m_Chunks.empty()) 
         m_Chunks.push_back(std::wstring());

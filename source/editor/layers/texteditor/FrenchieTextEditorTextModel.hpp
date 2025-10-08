@@ -19,7 +19,7 @@ namespace Frenchie
             int get_text_lines_count() const;
             int get_cursros_line() const;
             int get_cursros_column() const;
-            std::wstring& get_text_line(int) const;
+            std::wstring get_text_line(int) const;
 
             std::wstring get_selection() const;
 
