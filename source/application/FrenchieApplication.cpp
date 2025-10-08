@@ -227,12 +227,15 @@ void Application::Application::frame_finish()
 
 void Application::Application::finish()
 {
+    // finish all layers execution
     for(auto layer : m_Layers) 
     {
         layer->close();
         layer->finish();
     }
-    glfwTerminate();
+
+    // remove all layers
+    m_Layers.clear();
 }
 
 std::string Application::get_name() const
