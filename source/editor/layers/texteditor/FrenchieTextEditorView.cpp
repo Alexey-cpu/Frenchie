@@ -475,27 +475,29 @@ void TextEditor::draw_text_contents()
 		{
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
+				auto text = m_TextModel->get_text_line(lineNumber);
+
 				// highlight and draw text
 				ImRect rowRect = ImRect(
 					ImGui::GetCursorScreenPos(), 
 					ImGui::GetCursorScreenPos() + 
-						ImVec2(std::max(TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(m_TextModel->get_text_line(lineNumber)).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
+						ImVec2(std::max(TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(text).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
 
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
 
-				if(m_TextModel->is_dirty())
+				if(false)
 				{
 					ImGui::GetWindowDrawList()->AddText(
 						rowRect.Min,
 						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), 
-						Frenchie::Core::String::as_utf8(m_TextModel->get_text_line(lineNumber)).c_str());
+						Frenchie::Core::String::as_utf8(text).c_str());
 				}
 				else
 				{
 					SyntaxHighlighter::regexEstimationResults matches = 
 						m_SyntaxHighlighter.highlight(
-							m_TextModel->get_text_line(lineNumber), 
+							text, 
 							m_Patterns,
 							TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), lineNumber);
 
@@ -504,7 +506,7 @@ void TextEditor::draw_text_contents()
 					for(auto&& match : matches)
 					{
 						std::wstring highlightedText = 
-							Frenchie::Core::Regex::substring(m_TextModel->get_text_line(lineNumber), match.second.Match);
+							Frenchie::Core::Regex::substring(text, match.second.Match);
 
 						ImGui::GetWindowDrawList()->AddText(
 							rowRect.Min + offset,
@@ -521,10 +523,10 @@ void TextEditor::draw_text_contents()
 				ImRect symbolRect      = ImRect();
 				bool   symbolIsHovered = false;
 
-				for(int positionInLine = 0; positionInLine < (int)m_TextModel->get_text_line(lineNumber).size(); positionInLine++)
+				for(int positionInLine = 0; positionInLine < (int)text.size(); positionInLine++)
 				{
 					symbolSize = TextEditor::calculate_text_size(
-						Frenchie::Core::String::as_utf8(std::wstring(1, m_TextModel->get_text_line(lineNumber)[positionInLine])).c_str());
+						Frenchie::Core::String::as_utf8(std::wstring(1, text[positionInLine])).c_str());
 					
 					symbolRect = ImRect(rowRect.Min + symbolOffset, rowRect.Min + symbolOffset + symbolSize);
 
@@ -577,7 +579,7 @@ void TextEditor::draw_text_contents()
 				}
 
 				// move cursor at the very end
-				if(m_TextModel->get_cursros_column() >= m_TextModel->get_text_line(lineNumber).size()) 
+				if(m_TextModel->get_cursros_column() >= text.size()) 
 					m_CursorPosition = ImVec2(symbolRect.Max.x, symbolRect.Min.y);
 
 				// move cursor at the very start
