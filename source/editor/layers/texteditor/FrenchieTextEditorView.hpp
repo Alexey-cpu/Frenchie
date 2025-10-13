@@ -35,6 +35,7 @@ namespace Frenchie
             virtual bool awake() override;
             virtual void frame_update() override;
             virtual bool allows_multiple_instances() const override;
+            virtual void finish() override;
 
         protected:
 
@@ -46,7 +47,7 @@ namespace Frenchie
                 COUNT
             };
 
-            std::mutex m_Mutex;
+            //std::mutex m_Mutex;
             ImVec2     m_ScrollPos;
             ImRect     m_TextRect;
             ImRect     m_LineNumbersRect;
