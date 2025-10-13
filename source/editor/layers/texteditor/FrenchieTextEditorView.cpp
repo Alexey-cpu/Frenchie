@@ -95,7 +95,9 @@ namespace Frenchie
 
 // view
 TextEditor::TextEditor() : Frenchie::Application::Layer(STRINGIFY(TextEditor)){}
-TextEditor::~TextEditor(){}
+TextEditor::~TextEditor()
+{
+}
 
 bool TextEditor::awake()
 {
@@ -144,7 +146,7 @@ bool TextEditor::awake()
 	//	setup text buffer
 	std::string textBuffer;
 
-	for (size_t j = 0; j < 1e3; j++)
+	for (size_t j = 0; j < 1e6; j++)
 	{
 		for (size_t i = 0; i < 10; i++)
 			textBuffer.append("for(int i = 0; i < 10; i++)");
@@ -184,6 +186,11 @@ void TextEditor::frame_update()
 bool TextEditor::allows_multiple_instances() const 
 {
     return false;
+}
+
+void TextEditor::finish()
+{
+	std::cout << "TextEditor::finish() \n";
 }
 
 void TextEditor::move_cursor_left_command()
@@ -328,8 +335,6 @@ void TextEditor::paste_command()
 
 void TextEditor::draw_text_line_numbers()
 {
-	std::lock_guard<std::mutex> lock(m_Mutex);
-
 	ImGui::BeginChild("TextBufferLineNumbers", 
 		ImVec2(TextEditor::calculate_text_size(std::to_string(INT_MAX).c_str()).x, ImGui::GetContentRegionAvail().y), 
 		ImGuiChildFlags_::ImGuiChildFlags_Borders, 
@@ -397,8 +402,6 @@ void TextEditor::draw_text_line_numbers()
 
 void TextEditor::draw_text_contents()
 {
-	std::lock_guard<std::mutex> lock(m_Mutex);
-
 	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ScrollbarBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 
 	ImGui::BeginChild("TextBufferContents", 
@@ -476,12 +479,13 @@ void TextEditor::draw_text_contents()
 			for (int lineNumber = clipper.DisplayStart; lineNumber < clipper.DisplayEnd; lineNumber++)
 			{
 				auto text = m_TextModel->get_text_line(lineNumber);
+				auto utf8 = Frenchie::Core::String::as_utf8(text);
 
 				// highlight and draw text
 				ImRect rowRect = ImRect(
 					ImGui::GetCursorScreenPos(), 
 					ImGui::GetCursorScreenPos() + 
-						ImVec2(std::max(TextEditor::calculate_text_size(Frenchie::Core::String::as_utf8(text).c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
+						ImVec2(std::max(TextEditor::calculate_text_size(utf8.c_str()).x, ImGui::GetContentRegionAvail().x), ImGui::GetFontSize()));
 
 				ImGui::ItemSize(rowRect.GetSize(), 0.0f);
 				ImGui::ItemAdd(rowRect, 0);
@@ -491,7 +495,7 @@ void TextEditor::draw_text_contents()
 					ImGui::GetWindowDrawList()->AddText(
 						rowRect.Min,
 						TextEditor::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]), 
-						Frenchie::Core::String::as_utf8(text).c_str());
+						utf8.c_str());
 				}
 				else
 				{
