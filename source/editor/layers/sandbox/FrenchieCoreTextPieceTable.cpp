@@ -6,7 +6,7 @@ using namespace Frenchie::Core;
 
 PieceTable::PieceTable(const std::wstring& _Buffer) :
     m_Immutable(_Buffer),
-    m_AppendOnly(std::wstring()),
+    m_Modifiable(std::wstring()),
     m_TableRows({PieceTableRow(&m_Immutable, 0, (int)m_Immutable.size())})
     {
         command(nullptr);
@@ -43,8 +43,8 @@ void PieceTable::insert(const int& _Position, const std::wstring& _What)
 
             if(cursorRowIterator == m_TableRows.end())
             {
-                m_TableRows.push_back(PieceTableRow(&m_AppendOnly, (int)m_AppendOnly.size(), (int)_What.size()));
-                m_AppendOnly.append(_What);
+                m_TableRows.push_back(PieceTableRow(&m_Modifiable, (int)m_Modifiable.size(), (int)_What.size()));
+                m_Modifiable.append(_What);
                 return;
             }
 
@@ -55,13 +55,13 @@ void PieceTable::insert(const int& _Position, const std::wstring& _What)
                 std::next(
                     m_TableRows.insert(
                         (_Position <= 0 ? cursorRowIterator : std::next(cursorRowIterator)), 
-                        PieceTableRow(&m_AppendOnly, (int)m_AppendOnly.size(), (int)_What.size()))),
+                        PieceTableRow(&m_Modifiable, (int)m_Modifiable.size(), (int)_What.size()))),
                 PieceTableRow(
                     cursorRowIterator->Buffer, 
                     cursorRowIterator->Start + cursorRowIterator->Length,
                     cursorRowPosition - _Position));
 
-            m_AppendOnly.append(_What);
+            m_Modifiable.append(_What);
         }
     );
 }
