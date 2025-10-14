@@ -11,6 +11,32 @@ namespace Frenchie
     {
         struct PieceTableRow
         {
+            struct PieceTableBuffer
+            {
+                PieceTableBuffer(const std::wstring& _Buffer) : Buffer(_Buffer)
+                {
+                    for (int i = 0; i < (int)Buffer.size(); i++)
+                    {
+                        if(Buffer[i] == '\n')
+                            Lines.push_back(i);
+                    }   
+                }
+
+                void push(const std::wstring& _What)
+                {
+                    Buffer.append(_What);
+
+                    for (int i = (int)(Buffer.size() - _What.size()); i < (int)Buffer.size(); i++)
+                    {
+                        if(Buffer[i] == '\n')
+                            Lines.push_back(i);
+                    }
+                }
+
+                std::wstring     Buffer;
+                std::vector<int> Lines;
+            };
+
             PieceTableRow(const std::wstring* _Buffer, int _Start, int _Length) : 
                 Buffer(_Buffer),
                 Start(_Start),
@@ -49,11 +75,10 @@ namespace Frenchie
                 return m_TableRows.end();
             }
 
-
         protected:
 
             const   std::wstring                          m_Immutable;
-            mutable std::wstring                          m_AppendOnly;
+            mutable std::wstring                          m_Modifiable;
             mutable std::list<PieceTableRow>              m_TableRows;
             mutable std::vector<std::list<PieceTableRow>> m_TableStates;
             mutable size_t                                m_CurrentState = 0;
