@@ -35,17 +35,20 @@ public:
 
     int size() const
     {
-        return m_Text.size();
+        return (int)m_Text.size();
     }
 
     int line_start_index(const int& _LineNumber) const
     {        
-        return _LineNumber > 0 ? m_Lines[std::min<int>(_LineNumber - 1, m_Lines.size() - 1)] + 1 : 0;
+        return m_Lines[std::min<int>(_LineNumber, (int)m_Lines.size() - 1)];
     }
 
     int line_end_index(const int& _LineNumber) const
     {
-        return m_Lines[std::min<int>(_LineNumber, m_Lines.size() - 1)];
+        if(_LineNumber + 1 >= (int)m_Lines.size())
+            return (int)m_Text.size();
+
+        return m_Lines[_LineNumber + 1];
     }
 
     int line_closest_to_buffer_offset(int _Offset) const
@@ -54,10 +57,10 @@ public:
             return 0;
 
         if(_Offset > m_Lines[m_Lines.size() - 1])
-            return m_Lines.size() - 1;
+            return (int)m_Lines.size() - 1;
 
         int low = 0;
-        int high = m_Lines.size() - 1;
+        int high = (int)m_Lines.size() - 1;
 
         while(low <= high) 
         {
@@ -72,7 +75,7 @@ public:
                 high = mid - 1;
         }
 
-        return std::min<int>(low, m_Lines.size() - 1);
+        return std::min<int>(low, (int)m_Lines.size() - 1);
     }
 
     int lines_count() const
@@ -80,7 +83,7 @@ public:
         return (int)m_Lines.size();
     }
 
-protected:
+//protected:
     std::wstring     m_Text;
     std::vector<int> m_Lines;
 };
@@ -150,25 +153,28 @@ public:
             int firstLine = it->buffer()->line_closest_to_buffer_offset(it->start()) + currentLine;
             int lastLine  = it->buffer()->line_closest_to_buffer_offset(it->end()) + currentLine;
 
+            std::cout << "iteration: \n";
             std::cout << "buffer start " << it->start() << "\n";
             std::cout << "buffer end   " << it->end() << "\n";
-
             std::cout << "firstLine " << firstLine << "\n";
             std::cout << "lastLine " << lastLine << "\n";
 
             if(_Line >= firstLine && _Line <= lastLine)
             {
-                std::cout << "found " << _Line << " offset " << it->buffer()->line_start_index(_Line) << "\n";
+                int lineStartIndex = it->buffer()->line_start_index(_Line);
+                int lineEndIndex   = it->buffer()->line_end_index(_Line);
 
-                // int availableSpace    = it->buffer()->size() - it->buffer()->line_start_index(_Line);
-                // int insertionPosition = _Position;
+                std::cout << "found " << _Line << "\n";
+                std::cout << "start " << lineStartIndex << "\n";
+                std::cout << "end   " << lineEndIndex << "\n";
 
-                // if(_Position > availableSpace)
-                // {
+                if(lineStartIndex + _Position < lineEndIndex) 
+                {
+                    std::cout << "We are going to insert here... \n";
 
-                // }
-
-                break;
+                    insert(it, lineStartIndex + _Position);
+                    return;
+                }
             }
 
             currentLine += (lastLine - firstLine) + 1;
@@ -190,24 +196,30 @@ public:
     }
 
 protected:
+
+    // info
     const   Buffer           m_Immutable;
     mutable Buffer           m_Appendable;
     mutable std::list<Piece> m_Pieces;
+
+    // service methods
+    void insert(const_iterator _Iterator, const int& _Position){}
 };
 
 int main()
 {
-    PieceTable table(L"Hello\nWorld");
-
-    table.insert(1, 7, L"123");
-
     // std::wstring text = L"Hello\nWorld";
 
     // Buffer buffer(text);
 
+    // for (size_t i = 0; i < buffer.m_Lines.size(); i++)
+    // {
+    //     std::cout << buffer.m_Lines[i] << "\t" << buffer.line_start_index(i) << "\t" << buffer.line_end_index(i) << "\n";
+    // }
+
     // std::cout << "\n";
 
-    // int lineNumber = buffer.line_closest_to_buffer_offset(6);
+    // int lineNumber = buffer.line_closest_to_buffer_offset(0);
 
     // for(int i = buffer.line_start_index(lineNumber); i < buffer.line_end_index(lineNumber); i++)
     // {
@@ -220,6 +232,9 @@ int main()
     // std::cout << "first " << first << "\n";
     // std::cout << "last  " << last << "\n";
     // std::cout << "line count " << (last - first + 1) << "\t" << buffer.lines_count() << "\n";
+
+    PieceTable table(L"Hello\nWorld");
+    table.insert(1, 4, L"123");
 
     return 0;
 }
