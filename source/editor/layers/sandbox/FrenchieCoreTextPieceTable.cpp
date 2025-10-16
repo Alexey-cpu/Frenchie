@@ -90,28 +90,23 @@ void PieceTable::erase(const int& _Position, const int& _Count)
                 cursorIterator = iterator;
 
             // remove symbols
-            if(cursorIterator->Length > _Count)
+            for (int i = 0; i < _Count; i++)
             {
-                cursorIterator->Start  += _Count;
-                cursorIterator->Length -= _Count;
-                return;
-            }
+                cursorIterator->Length -= i;
 
-            int count = _Count;
-
-            while(count > 0 && !m_Pieces.empty())
-            {
-                count -= cursorIterator->Length;
-
-                if(cursorIterator != m_Pieces.begin())
+                if(cursorIterator->Length <= 0)
                 {
-                    auto newIt = std::prev(cursorIterator);
-                    m_Pieces.erase(cursorIterator);
-                    cursorIterator = newIt;
-                }
-                else
-                {
-                    m_Pieces.erase(cursorIterator);
+                    if(cursorIterator != m_Pieces.begin())
+                    {
+                        auto newIt = std::prev(cursorIterator);
+                        m_Pieces.erase(cursorIterator);
+                        cursorIterator = newIt;
+                    }
+                    else
+                    {
+                        m_Pieces.erase(cursorIterator);
+                        break;
+                    }
                 }
             }
         }
