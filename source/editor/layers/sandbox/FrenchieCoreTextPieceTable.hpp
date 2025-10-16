@@ -41,20 +41,20 @@ namespace Frenchie
 
             std::list<PieceTableRow>::const_iterator begin() const
             {
-                return m_TableRows.begin();
+                return m_Pieces.begin();
             }
 
             std::list<PieceTableRow>::const_iterator end() const
             {
-                return m_TableRows.end();
+                return m_Pieces.end();
             }
 
         protected:
 
             const   std::wstring                          m_Immutable;
-            mutable std::wstring                          m_Modifiable;
-            mutable std::list<PieceTableRow>              m_TableRows;
-            mutable std::vector<std::list<PieceTableRow>> m_TableStates;
+            mutable std::wstring                          m_Appendable;
+            mutable std::list<PieceTableRow>              m_Pieces;
+            mutable std::vector<std::list<PieceTableRow>> m_States;
             mutable size_t                                m_CurrentState = 0;
 
             // service methods

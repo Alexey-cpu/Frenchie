@@ -6,8 +6,8 @@ using namespace Frenchie::Core;
 
 PieceTable::PieceTable(const std::wstring& _Buffer) :
     m_Immutable(_Buffer),
-    m_Modifiable(std::wstring()),
-    m_TableRows({PieceTableRow(&m_Immutable, 0, (int)m_Immutable.size())})
+    m_Appendable(std::wstring()),
+    m_Pieces({PieceTableRow(&m_Immutable, 0, (int)m_Immutable.size())})
     {
         command(nullptr);
     }
@@ -18,7 +18,7 @@ std::wstring PieceTable::get_text() const
 {
     std::wstring text;
 
-    for(auto&& row : m_TableRows)
+    for(auto&& row : m_Pieces)
     {
         text.append(std::wstring(
             &row.Buffer->c_str()[row.Start],
@@ -33,35 +33,42 @@ void PieceTable::insert(const int& _Position, const std::wstring& _What)
     command([this, &_Position, &_What]()
         {
             // look for the row where to append
-            int  cursorRowPosition = 0;
-            auto cursorRowIterator = m_TableRows.begin();
+            int  cursorPosition = 0;
+            auto cursorIterator = m_Pieces.begin();
 
-            for(auto iterator = m_TableRows.begin();
-                iterator != m_TableRows.end() && cursorRowPosition < _Position;
-                cursorRowPosition += iterator->Length, iterator++) 
-                cursorRowIterator = iterator;
+            for(auto iterator = m_Pieces.begin();
+                iterator != m_Pieces.end() && cursorPosition < _Position;
+                cursorPosition += iterator->Length, iterator++) 
+                cursorIterator = iterator;
 
-            if(cursorRowIterator == m_TableRows.end())
+            if(cursorIterator == m_Pieces.end())
             {
-                m_TableRows.push_back(PieceTableRow(&m_Modifiable, (int)m_Modifiable.size(), (int)_What.size()));
-                m_Modifiable.append(_What);
+                m_Pieces.push_back(PieceTableRow(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Appendable.append(_What);
                 return;
             }
 
             // append new data
-            cursorRowIterator->Length -= (cursorRowPosition - _Position);
+            int newLength = cursorPosition - _Position;
 
-            m_TableRows.insert(
-                std::next(
-                    m_TableRows.insert(
-                        (_Position <= 0 ? cursorRowIterator : std::next(cursorRowIterator)), 
-                        PieceTableRow(&m_Modifiable, (int)m_Modifiable.size(), (int)_What.size()))),
-                PieceTableRow(
-                    cursorRowIterator->Buffer, 
-                    cursorRowIterator->Start + cursorRowIterator->Length,
-                    cursorRowPosition - _Position));
+            auto newPiece = 
+                m_Pieces.insert(
+                    (_Position <= 0 ? cursorIterator : std::next(cursorIterator)),
+                    PieceTableRow(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
 
-            m_Modifiable.append(_What);
+            m_Appendable.append(_What);
+
+            if(newLength > 0)
+            {
+                cursorIterator->Length -= newLength;
+
+                m_Pieces.insert(
+                    std::next(newPiece),
+                    PieceTableRow(
+                        cursorIterator->Buffer, 
+                        cursorIterator->Start + cursorIterator->Length,
+                        newLength));
+            }
         }
     );
 }
@@ -74,37 +81,37 @@ void PieceTable::erase(const int& _Position, const int& _Count)
                 return;
 
             // look for the point where to append
-            int  cursorRowPosition = 0;
-            auto cursorRowIterator = m_TableRows.begin();
+            int  cursorPosition = 0;
+            auto cursorIterator = m_Pieces.begin();
 
-            for(auto iterator = m_TableRows.begin();
-                iterator != m_TableRows.end() && cursorRowPosition < _Position;
-                cursorRowPosition += iterator->Length, iterator++) 
-                cursorRowIterator = iterator;
+            for(auto iterator = m_Pieces.begin();
+                iterator != m_Pieces.end() && cursorPosition < _Position;
+                cursorPosition += iterator->Length, iterator++) 
+                cursorIterator = iterator;
 
             // remove symbols
-            if(cursorRowIterator->Length > _Count)
+            if(cursorIterator->Length > _Count)
             {
-                cursorRowIterator->Start  += _Count;
-                cursorRowIterator->Length -= _Count;
+                cursorIterator->Start  += _Count;
+                cursorIterator->Length -= _Count;
                 return;
             }
 
             int count = _Count;
 
-            while(count > 0 && !m_TableRows.empty())
+            while(count > 0 && !m_Pieces.empty())
             {
-                count -= cursorRowIterator->Length;
+                count -= cursorIterator->Length;
 
-                if(cursorRowIterator != m_TableRows.begin())
+                if(cursorIterator != m_Pieces.begin())
                 {
-                    auto newIt = std::prev(cursorRowIterator);
-                    m_TableRows.erase(cursorRowIterator);
-                    cursorRowIterator = newIt;
+                    auto newIt = std::prev(cursorIterator);
+                    m_Pieces.erase(cursorIterator);
+                    cursorIterator = newIt;
                 }
                 else
                 {
-                    m_TableRows.erase(cursorRowIterator);
+                    m_Pieces.erase(cursorIterator);
                 }
             }
         }
@@ -116,20 +123,20 @@ void PieceTable::undo()
     if(m_CurrentState > 0) 
         --m_CurrentState;
         
-    m_TableRows = m_TableStates[m_CurrentState];
+    m_Pieces = m_States[m_CurrentState];
 }
 
 void PieceTable::redo()
 {
-    m_CurrentState = std::min(m_TableStates.size() - 1, m_CurrentState + 1);
-    m_TableRows    = m_TableStates[m_CurrentState];
+    m_CurrentState = std::min(m_States.size() - 1, m_CurrentState + 1);
+    m_Pieces    = m_States[m_CurrentState];
 }
 
 int PieceTable::size() const
 {
     int size = 0;
 
-    for(auto iterator = m_TableRows.begin(); iterator != m_TableRows.end(); iterator++) 
+    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++) 
         size += iterator->Length;
 
     return size;
@@ -140,6 +147,6 @@ void PieceTable::command(std::function<void()> _Execute)
     if(_Execute != nullptr)
         _Execute();
 
-    m_TableStates.push_back(m_TableRows);
-    m_CurrentState = m_TableStates.size() - 1;
+    m_States.push_back(m_Pieces);
+    m_CurrentState = m_States.size() - 1;
 }
