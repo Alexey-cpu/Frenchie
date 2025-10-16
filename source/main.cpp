@@ -48,7 +48,7 @@ public:
             }
         }
 
-        m_Lines.push_back({start, end});
+        //m_Lines.push_back({start, end});
     }
 
     int line_start_index(const int& _LineNumber) const
@@ -63,13 +63,13 @@ public:
 
     int line_closest_to_buffer_offset(int _Offset) const
     {
-        // for (int i = 0; i < (int)m_Lines.size(); i++)
-        // {
-        //     if(_Offset >= m_Lines[i].first && _Offset <= m_Lines[i].second)
-        //         return i;
-        // }
+        for (int i = 0; i < (int)m_Lines.size(); i++)
+        {
+            if(_Offset >= m_Lines[i].first && _Offset <= m_Lines[i].second)
+                return i;
+        }
         
-        // return (int)m_Lines.size() - 1;
+        return -1;
 
         // if(m_Lines.empty() || _Offset < 0)
         //     return 0;
@@ -77,23 +77,23 @@ public:
         // if(_Offset > m_Lines[m_Lines.size() - 1].second)
         //     return (int)m_Lines.size() - 1;
 
-        int low = 0;
-        int high = (int)m_Lines.size() - 1;
+        // int low = 0;
+        // int high = (int)m_Lines.size() - 1;
 
-        while(low <= high) 
-        {
-            int mid = low + (high - low) / 2;
+        // while(low <= high) 
+        // {
+        //     int mid = low + (high - low) / 2;
 
-            if (m_Lines[mid].second == _Offset)
-                return mid;
+        //     if (m_Lines[mid].second == _Offset)
+        //         return mid;
 
-            if (m_Lines[mid].second < _Offset)
-                low = mid + 1;
-            else
-                high = mid - 1;
-        }
+        //     if (m_Lines[mid].second < _Offset)
+        //         low = mid + 1;
+        //     else
+        //         high = mid - 1;
+        // }
 
-        return std::min<int>(low, (int)m_Lines.size() - 1);
+        // return std::min<int>(low, (int)m_Lines.size() - 1);
     }
 
     int lines_count() const
@@ -193,12 +193,15 @@ public:
         for(auto lineIterator = begin(); lineIterator != end(); lineIterator++)
         {
             int firstLine = lineIterator->get_buffer()->line_closest_to_buffer_offset(lineIterator->get_start());
-            int lastLine  = lineIterator->get_buffer()->line_closest_to_buffer_offset(lineIterator->get_end());
+            //int lastLine  = lineIterator->get_buffer()->line_closest_to_buffer_offset(lineIterator->get_end());
 
-            for(;firstLine <= lastLine; firstLine++, currentLine++)
+            if(firstLine < 0) continue;
+
+            //for(;firstLine <= lastLine; firstLine++, currentLine++)
+            if(currentLine == _Line)
             {
-                if(currentLine < _Line)
-                    continue;
+                // if(currentLine < _Line)
+                //     continue;
 
                 std::cout << "found currentLine " << currentLine << "\n";
 
@@ -220,6 +223,8 @@ public:
                     }
                 }
             }
+
+            currentLine++;
         }
 
         return end();
