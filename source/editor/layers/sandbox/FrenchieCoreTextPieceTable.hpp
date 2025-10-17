@@ -9,9 +9,9 @@ namespace Frenchie
 {
     namespace Core
     {
-        struct PieceTableRow
+        struct Piece
         {
-            PieceTableRow(const std::wstring* _Buffer, int _Start, int _Length) : 
+            Piece(const std::wstring* _Buffer, int _Start, int _Length) : 
                 Buffer(_Buffer),
                 Start(_Start),
                 Length(_Length){}
@@ -25,6 +25,9 @@ namespace Frenchie
         {
         public:
 
+            typedef std::list<Piece>::const_iterator const_iterator;
+            typedef std::list<Piece>::iterator iterator;
+
             PieceTable(const std::wstring& _Buffer = std::wstring());
             ~PieceTable();
 
@@ -37,36 +40,20 @@ namespace Frenchie
             void undo();
             void redo();
 
+            const_iterator begin() const;
+            const_iterator end() const;
             int size() const;
-
-            std::list<PieceTableRow>::const_iterator begin() const
-            {
-                return m_Pieces.begin();
-            }
-
-            std::list<PieceTableRow>::const_iterator end() const
-            {
-                return m_Pieces.end();
-            }
 
         protected:
 
             const   std::wstring                          m_Immutable;
             mutable std::wstring                          m_Appendable;
-            mutable std::list<PieceTableRow>              m_Pieces;
-            mutable std::vector<std::list<PieceTableRow>> m_States;
+            mutable std::list<Piece>              m_Pieces;
+            mutable std::vector<std::list<Piece>> m_States;
             mutable size_t                                m_CurrentState = 0;
 
             // service methods
             void command(std::function<void()> _Execute);
         };
-
-        class PieceTablePiece
-        {
-        public:
-        protected:
-            mutable std::list<PieceTableRow> m_TableRows;
-        };
-
     }
 }
