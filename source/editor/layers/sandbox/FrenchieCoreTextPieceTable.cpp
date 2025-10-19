@@ -23,8 +23,8 @@ std::wstring PieceTable::get_text() const
     for(auto&& row : m_Pieces)
     {
         text.append(std::wstring(
-            &row.Buffer->c_str()[row.Start],
-            &row.Buffer->c_str()[row.Start + row.Length]));
+            &row.Buffer->at(row.Start),
+            &row.Buffer->at(row.Start + row.Length)));
     }
 
     return text;
@@ -51,14 +51,15 @@ void PieceTable::insert(const int& _Position, const std::wstring& _What)
             }
 
             // append new data
-            int newLength = cursorPosition - _Position;
-
             auto newPiece = 
                 m_Pieces.insert(
                     (_Position <= 0 ? cursorIterator : std::next(cursorIterator)),
                     Piece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
 
             m_Appendable.append(_What);
+
+            // slice existing data
+            int newLength = cursorPosition - _Position;
 
             if(newLength > 0)
             {
@@ -79,7 +80,8 @@ void PieceTable::erase(const int& _Position, const int& _Count)
 {
     auto remove = [this](const int& _Position)
     {
-        if(_Position < 0) return;
+        if(_Position < 0)
+            return;
 
         // look for the point where to append
         int  cursorPosition = 0;
@@ -93,9 +95,12 @@ void PieceTable::erase(const int& _Position, const int& _Count)
         if(cursorIterator == m_Pieces.end())
             return;
 
-        // append new data
+        // remove data
+        // cursor piece relative position is always going to be at the end
+        // of some piece as it's incremental step within the cycle above is piece length
         int newLength = cursorPosition - _Position;
 
+        // remove the last symbol in line
         if(newLength <= 0)
         {
             cursorIterator->Start++;
@@ -107,6 +112,7 @@ void PieceTable::erase(const int& _Position, const int& _Count)
             return;
         }
 
+        // remove symbols in between
         cursorIterator->Length -= newLength;
 
         if(cursorIterator->Length <= 0) 

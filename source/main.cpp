@@ -43,21 +43,25 @@ int main()
     show(table);
 
     std::cout << "insert:\n";
-    table.insert(2, L"123");
+    table.insert(5, L"\nMy Friend\nIm glad to see you");
     table.insert(12, L"\n456");
-    table.insert(10, L"\n789");
     show(table);
 
-    // table.insert(table.size(), L"789");
-    // show(table);
+    std::cout << "insert:\n";
+    table.insert(10, L"\n789\nASD");
+    show(table);
+
+    std::cout << "erase:\n";
+    table.erase(10, 3);
+    show(table);
 
     // std::cout << "\nerase: \n";
     // table.erase(8, 9);
     // show(table);
 
-    std::cout << "\nerase:\n";
-    table.erase(13, 1);
-    show(table);
+    // std::cout << "\nerase:\n";
+    // table.erase(13, 1);
+    // show(table);
 
     return 0;
 }
