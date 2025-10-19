@@ -3,10 +3,10 @@
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplicationEditorLauncher.hpp>
 
-// int main(int argc, char *argv[])
-// {
-//     return Frenchie::Editor::Launcher::execute();
-// }
+int main(int argc, char *argv[])
+{
+    return Frenchie::Editor::Launcher::execute();
+}
 
 #include <FrenchieCoreTextPieceTable.hpp>
 
@@ -35,33 +35,35 @@ void show(const Frenchie::Core::PieceTable& _Table)
     std::cout << "\n";
 }
 
-int main()
-{
-    std::wstring textBuffer = L"Hello\nWorld";
-    Frenchie::Core::PieceTable table(textBuffer);
+// int main()
+// {
+//     std::wstring textBuffer = L"Hello\nWorld";
+//     Frenchie::Core::PieceTable table(textBuffer);
 
-    show(table);
+//     show(table);
 
-    std::cout << "insert:\n";
-    table.insert(5, L"\nMy Friend\nIm glad to see you");
-    table.insert(12, L"\n456");
-    show(table);
+//     std::cout << "insert:\n";
+//     table.insert(5, L"\nMy Friend\nIm glad to see you");
+//     table.insert(12, L"\n456\nasdasdasdasda\nASDSDQWDQD");
+//     std::cout << "lines count " << table.get_lines_count() << "\n";
+//     show(table);
 
-    std::cout << "insert:\n";
-    table.insert(10, L"\n789\nASD");
-    show(table);
+//     std::cout << "insert:\n";
+//     table.insert(10, L"\n789\nASD");
+//     std::cout << "lines count " << table.get_lines_count() << "\n";
 
-    std::cout << "erase:\n";
-    table.erase(10, 3);
-    show(table);
+//     for (int i = 0; i < table.get_lines_count(); i++)
+//     {
+//         std::cout << "line " << i << " start at " << table.get_line_start_index(i) << "\n";
+//     }
+    
 
-    // std::cout << "\nerase: \n";
-    // table.erase(8, 9);
-    // show(table);
+//     //show(table);
 
-    // std::cout << "\nerase:\n";
-    // table.erase(13, 1);
-    // show(table);
+//     // std::cout << "erase:\n";
+//     // table.erase(10, 7);
+//     // std::cout << "lines count " << table.get_lines_count() << "\n";
+//     // show(table);
 
-    return 0;
-}
+//     return 0;
+// }

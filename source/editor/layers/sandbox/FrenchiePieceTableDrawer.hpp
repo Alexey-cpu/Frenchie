@@ -145,7 +145,7 @@ namespace Frenchie
 
             void request(int _Start, int _End)
             {
-                //if(m_Start == _Start && m_End == _End) return;
+                if(m_Start == _Start && m_End == _End) return;
 
                 enqueue([this, _Start, _End]()
                 {
@@ -163,16 +163,17 @@ namespace Frenchie
                 {
                     for (int i = 0; i < it->Length; i++)
                     {
-                        if(it->Buffer->at(i) == '\n') 
-                            m_Rows = std::max<int>(m_Rows, ++rows);
+                        if(it->Buffer->at(i) == '\n') ++rows;
 
-                        if(rows >= m_Start)
+                        if(rows >= m_Start && rows <= m_End)
                             text += it->Buffer->at(i);
 
-                        if(rows >= m_End)
-                            return {text, m_Rows};
+                        // if(rows >= m_End)
+                        //     return {text, m_Rows};
                     }
                 }
+
+                m_Rows = m_PieceTable->get_lines_count();
 
                 return {text, m_Rows};
             }
@@ -197,12 +198,6 @@ namespace Frenchie
             int   m_End    = 0;
             std::wstring m_Text;
             //std::unique_ptr<TextModel> model;
-
-            int m_Counter = 0;
-
-            int m_Current;
-            int m_Previous;
-            int m_Delta;
 
             std::unique_ptr<TextModel> table;
         };

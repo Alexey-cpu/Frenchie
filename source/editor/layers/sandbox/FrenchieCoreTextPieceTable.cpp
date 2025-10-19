@@ -2,7 +2,10 @@
 
 #include <FrenchieCoreHelpers.hpp>
 
+#include <vector>
 #include <iostream>
+#include <map>
+#include <set>
 
 using namespace Frenchie::Core;
 
@@ -28,6 +31,89 @@ std::wstring PieceTable::get_text() const
     }
 
     return text;
+}
+
+int binarySearch(std::vector<int> &arr, int x) {
+    int low = 0;
+    int high = arr.size() - 1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+
+        // Check if x is present at mid
+        if (arr[mid] == x)
+            return mid;
+
+        // If x greater, ignore left half
+        if (arr[mid] < x)
+            low = mid + 1;
+
+        // If x is smaller, ignore right half
+        else
+            high = mid - 1;
+    }
+
+    // If we reach here, then element was not present
+    return low;
+}
+
+int PieceTable::get_line_start_index(const int& _Line) const
+{
+    // look for the row where to append
+    int  cursorLine     = 0;
+    int  cursorPosition = 0;
+    auto cursorIterator = m_Pieces.begin();
+
+    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    {
+        int firstLine = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
+        int lastLine  = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
+        
+        // firstLine = std::min<int>(iterator->Buffer->m_LineBreaksPositions.size()-1, firstLine);
+        // lastLine = std::min<int>(iterator->Buffer->m_LineBreaksPositions.size()-1, lastLine);
+
+        // std::cout << Frenchie::Core::String::as_utf8(
+        //     std::wstring(
+        //                 &iterator->Buffer->at(iterator->Buffer->m_LineBreaksPositions[firstLine]),
+        //                 &iterator->Buffer->at(iterator->Buffer->m_LineBreaksPositions[lastLine]))
+        // ) << "\n";
+        
+
+        for (int i = firstLine; i < lastLine; i++, cursorLine++)
+        {
+            auto pos = iterator->Buffer->m_LineBreaksPositions[i];
+            
+            if(pos >= iterator->Start && pos <= iterator->Start + iterator->Length)
+            {
+                cursorPosition += pos - iterator->Start;
+            }
+            else
+            {
+                cursorPosition += iterator->Length;
+            }
+
+            if(cursorLine == _Line)
+            {
+                return cursorPosition;
+            }
+        }
+    }
+    
+    return cursorPosition;
+}
+
+int PieceTable::get_lines_count() const
+{
+    // look for the row where to append
+    int cursorLine = 0;
+
+    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    {
+        int firstLine = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
+        int lastLine  = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
+        cursorLine += lastLine - firstLine;
+    }
+    
+    return ++cursorLine;
 }
 
 void PieceTable::insert(const int& _Position, const std::wstring& _What)
@@ -96,14 +182,11 @@ void PieceTable::erase(const int& _Position, const int& _Count)
             return;
 
         // remove data
-        // cursor piece relative position is always going to be at the end
-        // of some piece as it's incremental step within the cycle above is piece length
         int newLength = cursorPosition - _Position;
 
         // remove the last symbol in line
         if(newLength <= 0)
         {
-            cursorIterator->Start++;
             cursorIterator->Length--;
 
             if(cursorIterator->Length <= 0)

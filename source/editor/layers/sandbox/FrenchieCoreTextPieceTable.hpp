@@ -38,7 +38,7 @@ namespace Frenchie
                 }
             }
 
-        protected:
+        //protected:
             mutable std::wstring     m_Text;
             mutable std::vector<int> m_LineBreaksPositions;
         };
@@ -67,6 +67,9 @@ namespace Frenchie
 
             // getters
             std::wstring get_text() const;
+
+            int get_line_start_index(const int& _Line) const;
+            int get_lines_count() const;
 
             // API
             void insert(const int& _Position, const std::wstring& _What);
