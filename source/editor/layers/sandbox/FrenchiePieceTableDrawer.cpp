@@ -44,7 +44,7 @@ bool PieceTableDrawer::awake()
 {
     std::wstring textBuffer = L"HelloWorld";
 
-	for (size_t j = 0; j < 1e6; j++)
+	for (size_t j = 0; j < 1e5; j++)
 	{
 		for (size_t i = 0; i < 1; i++)
 			textBuffer.append(std::to_wstring(j)).append(L"\t").append(L"for(int i = 0; i < 10; i++)");
@@ -61,7 +61,10 @@ void PieceTableDrawer::frame_update()
 {
     ImGui::Begin(get_name().c_str());
 
-    ImGui::SetNextWindowContentSize(ImVec2(20000, m_Height));
+    ImGui::SetNextWindowContentSize(ImVec2(32000, m_Height));
+
+    int start = 0;
+    int end   = 0;
 
     if(ImGui::BeginChild(
         "Content",
@@ -74,47 +77,16 @@ void PieceTableDrawer::frame_update()
 		ImRect viewport = ImRect(ImGui::GetCursorScreenPos()  + scroll, 
                                   ImGui::GetCursorScreenPos() + scroll + ImGui::GetWindowSize());
 
-        int start = (int)(scroll.y / ImGui::GetFontSize());
-        int end   = start + (int)(viewport.GetSize().y / ImGui::GetFontSize());
-
-        if(m_Counter >= 3)
-        {
-            m_Previous = m_Current;
-            m_Current  = start;
-            m_Delta    = m_Current - m_Previous;
-        }
+        start = (int)(scroll.y / ImGui::GetFontSize());
+        end   = start + (int)(viewport.GetSize().y / ImGui::GetFontSize());
 
         table->request(start, end);
-
-        // if(start != m_Start || end != m_End)
-        // {
-        //     m_Count = 0;
-        //     m_Text.clear();
-
-        //     for(auto it = table->begin(); it != table->end(); it++)
-        //     {
-        //         for (int i = 0; i < it->Length; i++)
-        //         {
-        //             if(it->Buffer->at(i) == '\n') ++m_Count;
-
-        //             if(m_Count >= start && m_Count <= end)
-        //             {
-        //                 m_Text += it->Buffer->at(i);
-        //             }
-        //         }
-        //     }
-
-        //     m_Start = start;
-        //     m_End   = end;
-        // }
 
         m_Height = (table->get_data().Rows + 2) * ImGui::GetFontSize();
 
         ImGui::SetCursorPos(ImVec2(0.f, ImGui::GetScrollY()));
 
         ImGui::TextUnformatted(Frenchie::Core::String::as_utf8(table->get_data().Text).c_str());
-
-        //for(int i = 0; i < (int)(viewport.GetSize().y / ImGui::GetFontSize()); i++) ImGui::TextUnformatted("ASDASDASDADS");
 
         ImGui::EndChild();
     }
@@ -127,7 +99,7 @@ void PieceTableDrawer::frame_update()
     ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysHorizontalScrollbar))
     {
         ImGui::TextUnformatted(
-            fmt::format("Delta: {}", m_Delta).c_str()
+            fmt::format("Start: {} End: {} Length: {}", start, end, (end - start) * 4096).c_str()
         );
 
         ImGui::EndChild();
@@ -138,10 +110,6 @@ void PieceTableDrawer::frame_update()
 
 void PieceTableDrawer::frame_finish() 
 {
-    if(m_Counter >= 3)
-        m_Counter = 0;
-
-    m_Counter++;
 }
 
 bool PieceTableDrawer::allows_multiple_instances() const
