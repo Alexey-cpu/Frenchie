@@ -6,6 +6,7 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplicationSynchronousTimer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -185,6 +186,7 @@ namespace Frenchie
 
             virtual bool awake() override;
             virtual void frame_update() override;
+            virtual void frame_finish() override;
             virtual bool allows_multiple_instances() const override;
 
             ImRect     m_TextRect;
@@ -195,6 +197,13 @@ namespace Frenchie
             int   m_End    = 0;
             std::wstring m_Text;
             //std::unique_ptr<TextModel> model;
+
+            int m_Counter = 0;
+
+            int m_Current;
+            int m_Previous;
+            int m_Delta;
+
             std::unique_ptr<TextModel> table;
         };
     }

@@ -65,7 +65,7 @@ void PieceTableDrawer::frame_update()
 
     if(ImGui::BeginChild(
         "Content",
-        ImGui::GetContentRegionAvail(),
+        ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f),
         ImGuiChildFlags_::ImGuiChildFlags_None,
         ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysVerticalScrollbar |
         ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysHorizontalScrollbar))
@@ -76,6 +76,13 @@ void PieceTableDrawer::frame_update()
 
         int start = (int)(scroll.y / ImGui::GetFontSize());
         int end   = start + (int)(viewport.GetSize().y / ImGui::GetFontSize());
+
+        if(m_Counter >= 3)
+        {
+            m_Previous = m_Current;
+            m_Current  = start;
+            m_Delta    = m_Current - m_Previous;
+        }
 
         table->request(start, end);
 
@@ -112,7 +119,29 @@ void PieceTableDrawer::frame_update()
         ImGui::EndChild();
     }
 
+    if(ImGui::BeginChild(
+    "Status",
+    ImVec2(ImGui::GetContentRegionAvail().x, 100.f),
+    ImGuiChildFlags_::ImGuiChildFlags_None,
+    ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysVerticalScrollbar |
+    ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysHorizontalScrollbar))
+    {
+        ImGui::TextUnformatted(
+            fmt::format("Delta: {}", m_Delta).c_str()
+        );
+
+        ImGui::EndChild();
+    }
+
     ImGui::End();
+}
+
+void PieceTableDrawer::frame_finish() 
+{
+    if(m_Counter >= 3)
+        m_Counter = 0;
+
+    m_Counter++;
 }
 
 bool PieceTableDrawer::allows_multiple_instances() const
