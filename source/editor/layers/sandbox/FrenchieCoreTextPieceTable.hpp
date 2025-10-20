@@ -9,9 +9,9 @@ namespace Frenchie
 {
     namespace Core
     {
-        struct Buffer
+        struct TextBuffer
         {
-            Buffer(const std::wstring& _Buffer = std::wstring())
+            TextBuffer(const std::wstring& _Buffer = std::wstring())
             {
                 append(_Buffer);
             }
@@ -71,17 +71,17 @@ namespace Frenchie
 
         struct Piece
         {
-            Piece(const Buffer* _Buffer, int _Start, int _Length) : 
+            Piece(const TextBuffer* _Buffer, int _Start, int _Length) : 
                 Buffer(_Buffer),
                 Start(_Start),
                 Length(_Length){}
 
-            const Buffer* Buffer;
-            int           Start      = 0;
-            int           Length     = 0;
-            int           LineBreaksStart = 0;
-            int           LineBreaksEnd   = 0;
-            int           LineBreaksCount = 0;
+            const TextBuffer* Buffer          = nullptr;
+            int               Start           = 0;
+            int               Length          = 0;
+            int               LineBreaksStart = 0;
+            int               LineBreaksEnd   = 0;
+            int               LineBreaksCount = 0;
         };
 
         class PieceTable
@@ -100,6 +100,9 @@ namespace Frenchie
             int get_line_start_index(const int& _Line) const;
             int get_lines_count() const;
 
+            std::pair<const_iterator, int>
+            get_iterator_by_global_index(const int _GlobalIndex) const;
+
             // API
             void insert(const int& _Position, const std::wstring& _What);
             void erase(const int& _Position, const int& _Count = 1);
@@ -112,14 +115,103 @@ namespace Frenchie
 
         protected:
 
-            const   Buffer                        m_Immutable;
-            mutable Buffer                        m_Appendable;
+            friend class PieceTableSymbolIterator;
+
+            const   TextBuffer                    m_Immutable;
+            mutable TextBuffer                    m_Appendable;
             mutable std::list<Piece>              m_Pieces;
             mutable std::vector<std::list<Piece>> m_States;
             mutable size_t                        m_CurrentState = 0;
 
             // service methods
             void command(std::function<void()> _Execute);
+        };
+
+        class PieceTableSymbolIterator final
+        {
+        public:
+            PieceTableSymbolIterator(const PieceTable* _Table, const int& _Position)
+            {
+                auto it = _Table->get_iterator_by_global_index(_Position);
+
+                m_Iterator = it.first;
+                m_Offset   = it.second;
+            }
+
+            ~PieceTableSymbolIterator()
+            {
+            }
+
+            wchar_t operator*() const
+            {
+                return m_Iterator->Buffer->at(m_Iterator->Start + m_Offset);
+            }
+
+            const wchar_t* operator->() const
+            {
+                return &m_Iterator->Buffer->at(m_Iterator->Start + m_Offset);
+            }
+            
+            PieceTableSymbolIterator& operator++()
+            {
+                if(m_Offset < m_Iterator->Start + m_Iterator->Length)
+                {
+                    ++m_Offset;
+                }
+                else
+                {
+                    m_Iterator++;
+                    m_Offset = m_Iterator->Start;
+                }
+                
+                return *this; 
+            }
+
+            PieceTableSymbolIterator& operator--()
+            {
+                if(m_Offset > m_Iterator->Start)
+                {
+                    --m_Offset;
+                }
+                else
+                {
+                    m_Iterator--;
+                    m_Offset = m_Iterator->Start + m_Iterator->Length - 1;
+                }
+
+                return *this;
+            }
+
+            PieceTableSymbolIterator  operator++(int)
+            {
+                auto tmp = *this; 
+                ++(*this); 
+                return tmp;
+            }
+
+            PieceTableSymbolIterator  operator--(int)
+            {
+                auto tmp = *this; 
+                --(*this); 
+                return tmp;
+            }
+
+            friend bool operator==(const PieceTableSymbolIterator& _First, const PieceTableSymbolIterator& _Second)
+            { 
+                return _First.m_Iterator == _Second.m_Iterator && 
+                       _First.m_Offset == _Second.m_Offset; 
+            }
+
+            friend bool operator!=(const PieceTableSymbolIterator& _First, const PieceTableSymbolIterator& _Second)
+            { 
+                return _First.m_Iterator != _Second.m_Iterator || 
+                       _First.m_Offset != _Second.m_Offset; 
+            }
+
+        protected:
+
+            PieceTable::const_iterator m_Iterator;
+            int                        m_Offset;
         };
     }
 }
