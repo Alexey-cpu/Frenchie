@@ -104,6 +104,10 @@ bool PieceTableDrawer::awake()
 
     m_Table = std::make_unique<Frenchie::Core::PieceTable>(text);
 
+    m_Table->insert(6, L"123");
+    m_Table->insert(12, L"\n456\n789");
+    m_Table->insert(12, L"\n121314");
+
     return true;
 }
 
@@ -263,6 +267,11 @@ void PieceTableDrawer::frame_update()
 
             ImGui::BeginChild("Buffers");
             {
+                for (int i = 0; i < m_Table->get_lines_count(); i++)
+                {
+                    ImGui::TextUnformatted(fmt::format("line {} starts {}", std::to_string(i), std::to_string(m_Table->get_line_start_index(i))).c_str());
+                }                
+
                 for (auto it = m_Table->begin(); it != m_Table->end(); it++)
                 {
                     std::string pieceText = Frenchie::Core::String::as_utf8(
@@ -271,7 +280,7 @@ void PieceTableDrawer::frame_update()
                             &it->Buffer->at(it->Start + it->Length))
                     );
                     
-                    ImGui::TextUnformatted(pieceText.c_str());
+                    ImGui::TextUnformatted(fmt::format("{} {}", pieceText, it->LineBreaksCount).c_str());
                 }
 
                 ImGui::EndChild();

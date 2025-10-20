@@ -33,33 +33,6 @@ std::wstring PieceTable::get_text() const
     return text;
 }
 
-int binarySearch(std::vector<int> &arr, int x) 
-{
-    
-    int low = 0;
-    int high = (int)arr.size() - 1;
-    
-    while (low <= high) 
-    {
-        int mid = low + (high - low) / 2;
-
-        // Check if x is present at mid
-        if (arr[mid] == x)
-            return mid;
-
-        // If x greater, ignore left half
-        if (arr[mid] < x)
-            low = mid + 1;
-
-        // If x is smaller, ignore right half
-        else
-            high = mid - 1;
-    }
-
-    // If we reach here, then element was not present
-    return low;
-}
-
 int PieceTable::get_line_start_index(const int& _Line) const
 {
     // look for the row where to append
@@ -69,26 +42,25 @@ int PieceTable::get_line_start_index(const int& _Line) const
 
     for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
     {
-        int firstLine = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
-        int lastLine  = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
-
-        for (int i = firstLine; i < lastLine; i++, cursorLine++)
+        if(iterator->LineBreaksCount <= 0)
         {
-            auto pos = iterator->Buffer->m_LineBreaksPositions[i];
-            
-            if(pos >= iterator->Start && pos <= iterator->Start + iterator->Length)
+            cursorPosition += iterator->Length;
+        }
+        else
+        {
+            for (int lineBreakIndex = iterator->LineBreaksStart; lineBreakIndex <= iterator->LineBreaksEnd; lineBreakIndex++)
             {
-                cursorPosition += pos - iterator->Start;
-            }
-            else
-            {
-                cursorPosition += iterator->Length;
+                if(cursorLine == _Line)
+                {
+                    cursorPosition += iterator->Buffer->m_LineBreaksPositions[lineBreakIndex] - iterator->Start;
+
+                    return cursorPosition;
+                }
+
+                cursorLine++;
             }
 
-            if(cursorLine == _Line)
-            {
-                return cursorPosition;
-            }
+            cursorPosition += iterator->Length;
         }
     }
     
@@ -102,12 +74,12 @@ int PieceTable::get_lines_count() const
 
     for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
     {
-        int firstLine = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
-        int lastLine  = binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
+        int firstLine = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
+        int lastLine  = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
         cursorLine += lastLine - firstLine;
     }
     
-    return ++cursorLine;
+    return cursorLine;
 }
 
 void PieceTable::insert(const int& _Position, const std::wstring& _What)
@@ -123,7 +95,7 @@ void PieceTable::insert(const int& _Position, const std::wstring& _What)
                 cursorPosition += iterator->Length, iterator++) 
                 cursorIterator = iterator;
 
-            // insert in the very begining
+            // insert into empty table
             if(cursorIterator == m_Pieces.end())
             {
                 m_Pieces.push_back(Piece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
@@ -131,32 +103,32 @@ void PieceTable::insert(const int& _Position, const std::wstring& _What)
                 return;
             }
 
-            // insert in the very end
-            if(cursorIterator->Buffer == &m_Appendable && _Position > 0 && (cursorPosition - _Position) == 0)
+            // insert into beginning
+            if(_Position <= 0 && (cursorPosition - _Position) == 0)
             {
-                cursorIterator->Length++;
+                m_Pieces.insert(cursorIterator, Piece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
 
-            // append new data
-            auto newPiece = m_Pieces.insert(
-                (_Position <= 0 ? cursorIterator : std::next(cursorIterator)),
-                Piece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+            // insert into end
+            if(_Position > 0 && (cursorPosition - _Position) == 0)
+            {
+                m_Pieces.insert(std::next(cursorIterator), Piece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Appendable.append(_What);
+                return;
+            }
 
+            // insert into a middle
+            int a = cursorPosition - _Position;
+            int b = cursorIterator->Length - a;
+
+            auto newPiece = m_Pieces.insert(std::next(cursorIterator), Piece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
             m_Appendable.append(_What);
 
-            // slice existing data
-            int newLength = cursorPosition - _Position;
+            cursorIterator->Length = b;
 
-            if(newLength > 0)
-            {
-                cursorIterator->Length -= newLength;
-
-                m_Pieces.insert(
-                    std::next(newPiece),
-                    Piece(cursorIterator->Buffer, cursorIterator->Start + cursorIterator->Length, newLength));
-            }
+            m_Pieces.insert(std::next(newPiece), Piece(cursorIterator->Buffer, cursorIterator->Start + b, a));
         }
     );
 }
@@ -177,43 +149,44 @@ void PieceTable::erase(const int& _Position, const int& _Count)
             cursorPosition += iterator->Length, iterator++) 
             cursorIterator = iterator;
 
+        // remove from empty table
         if(cursorIterator == m_Pieces.end())
             return;
 
-        //---------------------------------------------------------------------------------------------------------
-        // append new data
-        //---------------------------------------------------------------------------------------------------------
-        //---------------------------------------------------------------------------------------------------------
+        // remove from beginning
+        if(_Position <= 0 && (cursorPosition - _Position) == 0)
+        {
+            if(cursorIterator != m_Pieces.begin())
+            {
+                cursorIterator--;
+                cursorIterator->Length--;
+            }
 
-        int newLength = cursorPosition - _Position;
+            return;
+        }
 
-        // remove the last symbol in line
-        if(newLength <= 0)
+        // remove from beginning plus one
+        if(_Position > 0 && (cursorIterator->Length - (cursorPosition - _Position)) == 1)
+        {
+            cursorIterator->Start++;
+            cursorIterator->Length--;
+            return;
+        }
+
+        // remove from end
+        if(_Position > 0 && (cursorPosition - _Position) == 0)
         {
             cursorIterator->Length--;
-
-            if(cursorIterator->Length <= 0)
-                m_Pieces.erase(cursorIterator);
-
             return;
         }
 
-        // remove symbols in between
-        cursorIterator->Length -= newLength;
+        // remove from middle
+        int a = cursorPosition - _Position;
+        int b = cursorIterator->Length - a;
 
-        if(cursorIterator->Length <= 0) 
-        {
-            m_Pieces.erase(cursorIterator);
-            return;
-        }
+        cursorIterator->Length = b - 1;
 
-        // slice existing data
-        if(newLength - 1 > 0)
-        {
-            m_Pieces.insert(
-                std::next(cursorIterator),
-                Piece(cursorIterator->Buffer, cursorIterator->Start + cursorIterator->Length + 1, newLength - 1));
-        }
+        m_Pieces.insert(std::next(cursorIterator), Piece(cursorIterator->Buffer, cursorIterator->Start + b, a));
     };
 
     command([this, &remove, &_Position, &_Count]()
@@ -258,6 +231,30 @@ void PieceTable::command(std::function<void()> _Execute)
     if(_Execute != nullptr)
         _Execute();
 
+    // update state
     m_States.push_back(m_Pieces);
     m_CurrentState = m_States.size() - 1;
+
+    // recompute metadata of pieces
+    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    {
+        iterator->LineBreaksStart = INT_MAX;
+        iterator->LineBreaksEnd   = INT_MIN;
+        iterator->LineBreaksCount = 0;
+
+        int firstLine = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
+        int lastLine  = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
+
+        for(int i = firstLine; i < lastLine; i++)
+        {
+            int pos = iterator->Buffer->m_LineBreaksPositions[i];
+
+            if(pos >= iterator->Start && pos <= iterator->Start + iterator->Length)
+            {
+                iterator->LineBreaksStart = std::min<int>(iterator->LineBreaksStart, i);
+                iterator->LineBreaksEnd   = std::max<int>(iterator->LineBreaksEnd, i);
+                iterator->LineBreaksCount++;
+            }
+        }
+    }
 }
