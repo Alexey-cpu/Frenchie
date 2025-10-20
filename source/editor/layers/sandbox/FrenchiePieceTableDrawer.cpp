@@ -90,7 +90,19 @@ PieceTableDrawer::~PieceTableDrawer(){}
 
 bool PieceTableDrawer::awake()
 {
-    m_Table = std::make_unique<Frenchie::Core::PieceTable>(L"HelloWorld");
+    std::wstring text;
+
+    for (int i = 0; i < 1; i++)
+    {
+        for (int j = 0; j < 1; j++)
+        {
+            text.append(L"HelloWorld");
+        }
+
+        text.append(L"\n");
+    }
+
+    m_Table = std::make_unique<Frenchie::Core::PieceTable>(text);
 
     return true;
 }
@@ -125,13 +137,13 @@ void PieceTableDrawer::frame_update()
                 {
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
                     {
-                        --m_CursorPosition;
+                        --m_CursorGlobalPosition;
                         adjust_cursor_position();
                     }
                     
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
                     {
-                        ++m_CursorPosition;
+                        ++m_CursorGlobalPosition;
                         adjust_cursor_position();
                     }
                     
@@ -143,15 +155,15 @@ void PieceTableDrawer::frame_update()
 
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter))
                     {
-                        m_Table->insert(m_CursorPosition, L"\n");
-                        ++m_CursorPosition;
+                        m_Table->insert(m_CursorGlobalPosition, L"\n");
+                        ++m_CursorGlobalPosition;
                         adjust_cursor_position();
                     }
 
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
                     {
-                        m_Table->erase(m_CursorPosition);
-                        --m_CursorPosition;
+                        m_Table->erase(m_CursorGlobalPosition);
+                        --m_CursorGlobalPosition;
                         adjust_cursor_position();
                     }
 
@@ -159,9 +171,9 @@ void PieceTableDrawer::frame_update()
                 }
 
                 int globalIndex = 0;
-
-                ImVec2 symbolPosition = ImGui::GetCursorScreenPos();
-                ImVec2 symbolOrigin   = ImGui::GetCursorScreenPos();
+                ImRect symbolRectangle = ImRect(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos());
+                ImVec2 symbolPosition  = ImGui::GetCursorScreenPos();
+                ImVec2 symbolOrigin    = ImGui::GetCursorScreenPos();
 
                 for (auto it = m_Table->begin(); it != m_Table->end(); it++)
                 {
@@ -190,7 +202,7 @@ void PieceTableDrawer::frame_update()
                             );
 
                         // highlight symbol
-                        ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+                        symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
 
                         if(symbolRectangle.Contains(ImGui::GetMousePos()))
                         {
@@ -199,34 +211,48 @@ void PieceTableDrawer::frame_update()
                                 symbolRectangle.Max,
                                 IM_COL32(255, 0, 0, 128));
 
+                            // update cursor position
                             if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
                                 ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
                                 ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
                             {
-                                // update cursor position
-                                m_CursorPosition = globalIndex;
+                                m_CursorGlobalPosition = globalIndex;
                             }
                         }
 
-                        // draw cursor rectangle
-                        if(globalIndex == m_CursorPosition)
+                        if(m_CursorGlobalPosition == globalIndex)
                         {
-                            ImGui::GetWindowDrawList()->AddRectFilled(
-                                symbolRectangle.Min,
-                                symbolRectangle.Max,
-                                IM_COL32(0, 0, 255, 128));
+                            m_CursorGeometricalPosition = symbolRectangle.Min;
+                            m_CursorLocalPosition       = index;
                         }
 
                         // update symbol position
-                        if (symbol[0] == '\n')
-                        {
-                            symbolPosition = ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize());
-                        }
-                        else
-                        {
-                            symbolPosition += ImVec2(symbolSize.x, 0.f);
-                        }
+                        symbolPosition =
+                            symbol[0] == '\n' ?
+                                ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
+                                    symbolPosition + ImVec2(symbolSize.x, 0.f);
                     }
+
+                    if(m_CursorGlobalPosition == globalIndex)
+                    {
+                        m_CursorGeometricalPosition =
+                            ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
+                    }
+
+                    // draw cursor rectangle
+                    ImGui::GetWindowDrawList()->AddText(
+                            m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
+                                ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                                ImGui::GetFontSize(),
+                                FLT_MAX,
+                                0.f,
+                                "|",
+                                NULL,
+                                NULL
+                            ).x, 0.f) * 0.5f,
+                            IM_COL32(0, 255, 0, 255),
+                           "|"
+                        );
                 }
 
                 ImGui::EndChild();
@@ -262,7 +288,7 @@ void PieceTableDrawer::frame_update()
         ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
     {
         ImGui::TextUnformatted(
-            fmt::format("Cursor: {}", m_CursorPosition).c_str());
+            fmt::format("GlobalIndex: {} LocalIndex: {} LinesCount: {}", m_CursorGlobalPosition, m_CursorLocalPosition, m_Table->get_lines_count()).c_str());
         ImGui::EndChild();
     }
 
@@ -296,11 +322,11 @@ void PieceTableDrawer::insert_symbol_command()
 				int  count = Helpers::ImTextCharToUtf8(utf8, c);
 
                 // insert symbol
-				m_Table->insert(m_CursorPosition,
+				m_Table->insert(m_CursorGlobalPosition,
                     Frenchie::Core::String::as_wide(std::string(utf8, count)));
 
                 // move cursor right
-                m_CursorPosition++;
+                m_CursorGlobalPosition++;
 			}
 		);
 	};
@@ -336,9 +362,9 @@ void PieceTableDrawer::adjust_cursor_position()
     for (auto it = m_Table->begin(); it != m_Table->end(); it++)
         size += it->Length;
 
-    if(m_CursorPosition < 0)
-        m_CursorPosition = 0;
+    if(m_CursorGlobalPosition < 0)
+        m_CursorGlobalPosition = 0;
     
-    if(m_CursorPosition >= size)
-        m_CursorPosition = size;
+    if(m_CursorGlobalPosition >= size)
+        m_CursorGlobalPosition = size;
 }
