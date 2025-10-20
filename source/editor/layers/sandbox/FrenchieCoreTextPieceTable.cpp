@@ -78,8 +78,29 @@ int PieceTable::get_lines_count() const
         int lastLine  = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
         cursorLine += lastLine - firstLine;
     }
-    
+
+    if(!m_Pieces.empty() && std::prev(m_Pieces.end())->LineBreaksCount <= 0)
+        ++cursorLine;
+
     return cursorLine;
+}
+
+std::pair<PieceTable::const_iterator, int>
+PieceTable::get_iterator_by_global_index(const int _Position) const
+{
+    // look for the row where to append
+    int  cursorPosition = 0;
+    auto cursorIterator = m_Pieces.begin();
+
+    for(auto iterator = m_Pieces.begin();
+        iterator != m_Pieces.end() && cursorPosition < _Position;
+        cursorPosition += iterator->Length, iterator++) 
+        cursorIterator = iterator;
+    
+    if(cursorIterator == m_Pieces.end())
+        return {cursorIterator, -1};
+
+    return {cursorIterator, cursorIterator->Length - (cursorPosition - _Position)};
 }
 
 void PieceTable::insert(const int& _Position, const std::wstring& _What)
