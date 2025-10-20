@@ -38,6 +38,32 @@ namespace Frenchie
                 }
             }
 
+            int binarySearch(std::vector<int> &arr, int x) const
+            {
+                int low = 0;
+                int high = (int)arr.size() - 1;
+                
+                while (low <= high) 
+                {
+                    int mid = low + (high - low) / 2;
+
+                    // Check if x is present at mid
+                    if (arr[mid] == x)
+                        return mid;
+
+                    // If x greater, ignore left half
+                    if (arr[mid] < x)
+                        low = mid + 1;
+
+                    // If x is smaller, ignore right half
+                    else
+                        high = mid - 1;
+                }
+
+                // If we reach here, then element was not present
+                return low;
+            }
+
         //protected:
             mutable std::wstring     m_Text;
             mutable std::vector<int> m_LineBreaksPositions;
@@ -51,8 +77,11 @@ namespace Frenchie
                 Length(_Length){}
 
             const Buffer* Buffer;
-            int           Start  = 0;
-            int           Length = 0;
+            int           Start      = 0;
+            int           Length     = 0;
+            int           LineBreaksStart = 0;
+            int           LineBreaksEnd   = 0;
+            int           LineBreaksCount = 0;
         };
 
         class PieceTable
