@@ -24,7 +24,7 @@ namespace Frenchie
 
             int size() const
             {
-                return m_Text.size();
+                return (int)m_Text.size();
             }
 
             void append(const std::wstring& _Text)

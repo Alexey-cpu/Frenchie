@@ -195,7 +195,11 @@ namespace Frenchie
         protected:
             std::unique_ptr<Frenchie::Core::PieceTable> m_Table;
 
-            int m_CursorPosition = 0;
+            int    m_CursorGlobalPosition = 0;
+            int    m_CursorLocalPosition = 0;
+            ImVec2 m_CursorGeometricalPosition;
+
+            int m_Counter = 0;
 
             void insert_symbol_command();
             void adjust_cursor_position();
