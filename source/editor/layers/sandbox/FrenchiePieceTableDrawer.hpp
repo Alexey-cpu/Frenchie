@@ -21,6 +21,7 @@ namespace Frenchie
 {
     namespace Editor
     {
+        /*
         template<typename Type>
         class AsyncDataUpdater
         {
@@ -178,6 +179,7 @@ namespace Frenchie
                 return {text, m_Rows};
             }
         };
+        */
 
         class PieceTableDrawer : public Frenchie::Application::Layer
         {
@@ -190,16 +192,13 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual bool allows_multiple_instances() const override;
 
-            ImRect     m_TextRect;
-            
-            float m_Height = 1024.f;
-            int   m_Count  = 0;
-            int   m_Start  = 0;
-            int   m_End    = 0;
-            std::wstring m_Text;
-            //std::unique_ptr<TextModel> model;
+        protected:
+            std::unique_ptr<Frenchie::Core::PieceTable> m_Table;
 
-            std::unique_ptr<TextModel> table;
+            int m_CursorPosition = 0;
+
+            void insert_symbol_command();
+            void adjust_cursor_position();
         };
     }
 }
