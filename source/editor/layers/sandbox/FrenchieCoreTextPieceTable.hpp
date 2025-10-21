@@ -98,6 +98,7 @@ namespace Frenchie
             std::wstring get_text() const;
 
             int get_line_start_index(const int& _Line) const;
+            int get_line_end_index(const int& _Line) const;
             int get_lines_count() const;
 
             std::pair<const_iterator, int>
@@ -154,14 +155,14 @@ namespace Frenchie
             
             PieceTableSymbolIterator& operator++()
             {
-                if(m_Offset < m_Iterator->Start + m_Iterator->Length)
+                if(m_Offset < m_Iterator->Length)
                 {
                     ++m_Offset;
                 }
                 else
                 {
                     m_Iterator++;
-                    m_Offset = m_Iterator->Start;
+                    m_Offset = 0;
                 }
                 
                 return *this; 
@@ -176,7 +177,7 @@ namespace Frenchie
                 else
                 {
                     m_Iterator--;
-                    m_Offset = m_Iterator->Start + m_Iterator->Length - 1;
+                    m_Offset = m_Iterator->Length - 1;
                 }
 
                 return *this;
@@ -203,12 +204,12 @@ namespace Frenchie
             }
 
             friend bool operator!=(const PieceTableSymbolIterator& _First, const PieceTableSymbolIterator& _Second)
-            { 
+            {
                 return _First.m_Iterator != _Second.m_Iterator || 
                        _First.m_Offset != _Second.m_Offset; 
             }
 
-        protected:
+        //protected:
 
             PieceTable::const_iterator m_Iterator;
             int                        m_Offset;

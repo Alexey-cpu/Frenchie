@@ -35,6 +35,11 @@ std::wstring PieceTable::get_text() const
 
 int PieceTable::get_line_start_index(const int& _Line) const
 {
+    return _Line - 1 < 0 ? 0 : get_line_end_index(_Line - 1);
+}
+
+int PieceTable::get_line_end_index(const int& _Line) const
+{
     // look for the row where to append
     int  cursorLine     = 0;
     int  cursorPosition = 0;
@@ -100,6 +105,15 @@ PieceTable::get_iterator_by_global_index(const int _Position) const
     if(cursorIterator == m_Pieces.end())
         return {cursorIterator, -1};
 
+    // beggining
+    if(_Position <= 0 && (cursorPosition - _Position) == 0)
+        return {cursorIterator, 0};
+
+    // end
+    if(_Position > 0 && (cursorPosition - _Position) == 0)
+        return {cursorIterator, cursorIterator->Length};
+
+    // middle
     return {cursorIterator, cursorIterator->Length - (cursorPosition - _Position)};
 }
 
