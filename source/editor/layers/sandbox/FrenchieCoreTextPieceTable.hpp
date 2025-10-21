@@ -53,7 +53,7 @@ namespace Frenchie
             ~TextDocumentIterator();
 
             wchar_t operator*() const;
-            const wchar_t* operator->() const;
+            std::list<TextDocumentTextPointer>::const_iterator operator->() const;
             
             TextDocumentIterator& operator++();
             TextDocumentIterator& operator--();
@@ -73,8 +73,10 @@ namespace Frenchie
             }
 
         //protected:
-            std::list<TextDocumentTextPointer>::const_iterator m_Iterator;
-            int                                                m_Offset;
+            mutable std::list<TextDocumentTextPointer>::const_iterator m_Iterator;
+            mutable int                                                m_Offset = 0;
+            const TextDocument* m_Table = nullptr;
+            mutable int m_Position = 0;
         };
 
         class TextDocument final
@@ -111,9 +113,7 @@ namespace Frenchie
                 int size = 0;
 
                 for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
-                {
                     size += iterator->Length;
-                }
 
                 return TextDocumentIterator(this, size);
             }
