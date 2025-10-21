@@ -11,8 +11,8 @@ namespace Frenchie
     {
         struct TextDocumentBuffer;
         struct TextDocumentTextPointer;
-        struct TextDocumentIterator;
-        class TextDocument;
+        class  TextDocumentIterator;
+        class  TextDocument;
 
 
         struct TextDocumentBuffer final
@@ -72,7 +72,7 @@ namespace Frenchie
                        _First.m_Offset != _Second.m_Offset; 
             }
 
-        protected:
+        //protected:
             std::list<TextDocumentTextPointer>::const_iterator m_Iterator;
             int                                                m_Offset;
         };
@@ -100,6 +100,23 @@ namespace Frenchie
             void erase(const int& _Position, const int& _Count = 1);
             void undo();
             void redo();
+
+            TextDocumentIterator b() const
+            {
+                return TextDocumentIterator(this, 0);
+            }
+
+            TextDocumentIterator e() const
+            {
+                int size = 0;
+
+                for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+                {
+                    size += iterator->Length;
+                }
+
+                return TextDocumentIterator(this, size);
+            }
 
             const_iterator begin() const;
             const_iterator end() const;

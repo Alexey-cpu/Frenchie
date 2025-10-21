@@ -92,14 +92,14 @@ const wchar_t* TextDocumentIterator::operator->() const
 
 TextDocumentIterator& TextDocumentIterator::operator++()
 {
-    if(m_Offset < m_Iterator->Length)
-    {
-        ++m_Offset;
-    }
-    else
+    if(m_Offset >= m_Iterator->Length)
     {
         m_Iterator++;
         m_Offset = 0;
+    }
+    else
+    {
+        ++m_Offset;
     }
     
     return *this; 
