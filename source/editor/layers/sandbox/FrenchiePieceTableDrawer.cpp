@@ -286,85 +286,168 @@ void PieceTableDrawer::frame_update()
                 ImVec2 symbolPosition  = ImGui::GetCursorScreenPos();
                 ImVec2 symbolOrigin    = ImGui::GetCursorScreenPos();
 
-                for (auto it = m_Table->begin(); it != m_Table->end(); it++)
+                std::cout << "m_Table->b().m_Offset " << m_Table->b().m_Offset << "\n";
+                std::cout << "m_Table->e().m_Offset " << m_Table->e().m_Offset << "\n";
+
+                auto b = m_Table->b();
+                auto e = m_Table->e();
+
+                for (auto it = b; it != e; it++, globalIndex++)
                 {
-                    for (int index = it->Start; index < it->Start + it->Length; index++, globalIndex++)
+                    // retrieve symbol
+                    std::string symbol =
+                        Frenchie::Core::String::as_utf8(
+                            std::wstring(1, *it));
+
+                    // draw symbol
+                    ImGui::GetWindowDrawList()->AddText(
+                            symbolPosition,
+                            IM_COL32(0, 255, 0, 255),
+                            symbol.c_str()
+                        );
+
+                    ImVec2 symbolSize =
+                        ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                            ImGui::GetFontSize(),
+                            FLT_MAX,
+                            0.f,
+                            symbol.c_str(),
+                            NULL,
+                            NULL
+                        );
+
+                    // highlight symbol
+                    symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+
+                    if(symbolRectangle.Contains(ImGui::GetMousePos()))
                     {
-                        // retrieve symbol
-                        std::string symbol =
-                            Frenchie::Core::String::as_utf8(
-                                std::wstring(1, it->Buffer->at(index)));
+                        ImGui::GetWindowDrawList()->AddRectFilled(
+                            symbolRectangle.Min,
+                            symbolRectangle.Max,
+                            IM_COL32(255, 0, 0, 128));
 
-                        // draw symbol
-                        ImGui::GetWindowDrawList()->AddText(
-                                symbolPosition,
-                                IM_COL32(0, 255, 0, 255),
-                                symbol.c_str()
-                            );
-
-                        ImVec2 symbolSize =
-                            ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                                ImGui::GetFontSize(),
-                                FLT_MAX,
-                                0.f,
-                                symbol.c_str(),
-                                NULL,
-                                NULL
-                            );
-
-                        // highlight symbol
-                        symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
-
-                        if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                        // update cursor position
+                        if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
                         {
-                            ImGui::GetWindowDrawList()->AddRectFilled(
-                                symbolRectangle.Min,
-                                symbolRectangle.Max,
-                                IM_COL32(255, 0, 0, 128));
-
-                            // update cursor position
-                            if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
-                                ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-                                ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-                            {
-                                m_CursorGlobalPosition = globalIndex;
-                            }
+                            m_CursorGlobalPosition = globalIndex;
                         }
-
-                        if(m_CursorGlobalPosition == globalIndex)
-                        {
-                            m_CursorGeometricalPosition = symbolRectangle.Min;
-                            m_CursorLocalPosition       = index;
-                        }
-
-                        // update symbol position
-                        symbolPosition =
-                            symbol[0] == '\n' ?
-                                ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
-                                    symbolPosition + ImVec2(symbolSize.x, 0.f);
                     }
 
                     if(m_CursorGlobalPosition == globalIndex)
                     {
-                        m_CursorGeometricalPosition =
-                            ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
+                        m_CursorGeometricalPosition = symbolRectangle.Min;
+                        //m_CursorLocalPosition       = index;
                     }
 
-                    // draw cursor rectangle
-                    ImGui::GetWindowDrawList()->AddText(
-                            m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
-                                ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                                ImGui::GetFontSize(),
-                                FLT_MAX,
-                                0.f,
-                                "|",
-                                NULL,
-                                NULL
-                            ).x, 0.f) * 0.5f,
-                            IM_COL32(0, 255, 0, 255),
-                           "|"
-                        );
+                    // update symbol position
+                    symbolPosition =
+                        symbol[0] == '\n' ?
+                            ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
+                                symbolPosition + ImVec2(symbolSize.x, 0.f);
                 }
+
+                if(m_CursorGlobalPosition == globalIndex)
+                {
+                    m_CursorGeometricalPosition =
+                        ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
+                }
+
+                // draw cursor rectangle
+                ImGui::GetWindowDrawList()->AddText(
+                        m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
+                            ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                            ImGui::GetFontSize(),
+                            FLT_MAX,
+                            0.f,
+                            "|",
+                            NULL,
+                            NULL
+                        ).x, 0.f) * 0.5f,
+                        IM_COL32(0, 255, 0, 255),
+                        "|"
+                    );
+
+                // for (auto it = m_Table->begin(); it != m_Table->end(); it++)
+                // {
+                //     for (int index = it->Start; index < it->Start + it->Length; index++, globalIndex++)
+                //     {
+                //         // retrieve symbol
+                //         std::string symbol =
+                //             Frenchie::Core::String::as_utf8(
+                //                 std::wstring(1, it->Buffer->at(index)));
+
+                //         // draw symbol
+                //         ImGui::GetWindowDrawList()->AddText(
+                //                 symbolPosition,
+                //                 IM_COL32(0, 255, 0, 255),
+                //                 symbol.c_str()
+                //             );
+
+                //         ImVec2 symbolSize =
+                //             ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                //                 ImGui::GetFontSize(),
+                //                 FLT_MAX,
+                //                 0.f,
+                //                 symbol.c_str(),
+                //                 NULL,
+                //                 NULL
+                //             );
+
+                //         // highlight symbol
+                //         symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+
+                //         if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                //         {
+                //             ImGui::GetWindowDrawList()->AddRectFilled(
+                //                 symbolRectangle.Min,
+                //                 symbolRectangle.Max,
+                //                 IM_COL32(255, 0, 0, 128));
+
+                //             // update cursor position
+                //             if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+                //                 ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+                //                 ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+                //             {
+                //                 m_CursorGlobalPosition = globalIndex;
+                //             }
+                //         }
+
+                //         if(m_CursorGlobalPosition == globalIndex)
+                //         {
+                //             m_CursorGeometricalPosition = symbolRectangle.Min;
+                //             m_CursorLocalPosition       = index;
+                //         }
+
+                //         // update symbol position
+                //         symbolPosition =
+                //             symbol[0] == '\n' ?
+                //                 ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
+                //                     symbolPosition + ImVec2(symbolSize.x, 0.f);
+                //     }
+
+                //     if(m_CursorGlobalPosition == globalIndex)
+                //     {
+                //         m_CursorGeometricalPosition =
+                //             ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
+                //     }
+
+                //     // draw cursor rectangle
+                //     ImGui::GetWindowDrawList()->AddText(
+                //             m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
+                //                 ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                //                 ImGui::GetFontSize(),
+                //                 FLT_MAX,
+                //                 0.f,
+                //                 "|",
+                //                 NULL,
+                //                 NULL
+                //             ).x, 0.f) * 0.5f,
+                //             IM_COL32(0, 255, 0, 255),
+                //            "|"
+                //         );
+                // }
 
                 ImGui::EndChild();
             }
