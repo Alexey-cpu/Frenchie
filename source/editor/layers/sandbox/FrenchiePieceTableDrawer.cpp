@@ -220,7 +220,7 @@ void PieceTableDrawer::frame_update()
 
 void PieceTableDrawer::frame_update()
 {
-    ImGui::Begin(get_name().c_str());
+    ImGui::Begin(get_name().c_str(), &m_Opened);
 
     ImGui::BeginChild(
         "Contents",
@@ -278,6 +278,12 @@ void PieceTableDrawer::frame_update()
                         adjust_cursor_position();
                     }
 
+                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) &&
+                        ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Z))
+                    {
+                        m_Table->undo();
+                    }
+
                     insert_symbol_command();
                 }
 
@@ -286,13 +292,10 @@ void PieceTableDrawer::frame_update()
                 ImVec2 symbolPosition  = ImGui::GetCursorScreenPos();
                 ImVec2 symbolOrigin    = ImGui::GetCursorScreenPos();
 
-                std::cout << "m_Table->b().m_Offset " << m_Table->b().m_Offset << "\n";
-                std::cout << "m_Table->e().m_Offset " << m_Table->e().m_Offset << "\n";
-
                 auto b = m_Table->b();
                 auto e = m_Table->e();
 
-                for (auto it = b; it != e; it++, globalIndex++)
+                for (auto it = b; it != e; it++, globalIndex++)                
                 {
                     // retrieve symbol
                     std::string symbol =
@@ -369,85 +372,87 @@ void PieceTableDrawer::frame_update()
                         "|"
                     );
 
-                // for (auto it = m_Table->begin(); it != m_Table->end(); it++)
-                // {
-                //     for (int index = it->Start; index < it->Start + it->Length; index++, globalIndex++)
-                //     {
-                //         // retrieve symbol
-                //         std::string symbol =
-                //             Frenchie::Core::String::as_utf8(
-                //                 std::wstring(1, it->Buffer->at(index)));
+                /*
+                for (auto it = m_Table->begin(); it != m_Table->end(); it++)
+                {
+                    for (int index = it->Start; index < it->Start + it->Length; index++, globalIndex++)
+                    {
+                        // retrieve symbol
+                        std::string symbol =
+                            Frenchie::Core::String::as_utf8(
+                                std::wstring(1, it->Buffer->at(index)));
 
-                //         // draw symbol
-                //         ImGui::GetWindowDrawList()->AddText(
-                //                 symbolPosition,
-                //                 IM_COL32(0, 255, 0, 255),
-                //                 symbol.c_str()
-                //             );
+                        // draw symbol
+                        ImGui::GetWindowDrawList()->AddText(
+                                symbolPosition,
+                                IM_COL32(0, 255, 0, 255),
+                                symbol.c_str()
+                            );
 
-                //         ImVec2 symbolSize =
-                //             ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                //                 ImGui::GetFontSize(),
-                //                 FLT_MAX,
-                //                 0.f,
-                //                 symbol.c_str(),
-                //                 NULL,
-                //                 NULL
-                //             );
+                        ImVec2 symbolSize =
+                            ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                                ImGui::GetFontSize(),
+                                FLT_MAX,
+                                0.f,
+                                symbol.c_str(),
+                                NULL,
+                                NULL
+                            );
 
-                //         // highlight symbol
-                //         symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+                        // highlight symbol
+                        symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
 
-                //         if(symbolRectangle.Contains(ImGui::GetMousePos()))
-                //         {
-                //             ImGui::GetWindowDrawList()->AddRectFilled(
-                //                 symbolRectangle.Min,
-                //                 symbolRectangle.Max,
-                //                 IM_COL32(255, 0, 0, 128));
+                        if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                        {
+                            ImGui::GetWindowDrawList()->AddRectFilled(
+                                symbolRectangle.Min,
+                                symbolRectangle.Max,
+                                IM_COL32(255, 0, 0, 128));
 
-                //             // update cursor position
-                //             if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
-                //                 ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-                //                 ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-                //             {
-                //                 m_CursorGlobalPosition = globalIndex;
-                //             }
-                //         }
+                            // update cursor position
+                            if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+                                ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+                                ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+                            {
+                                m_CursorGlobalPosition = globalIndex;
+                            }
+                        }
 
-                //         if(m_CursorGlobalPosition == globalIndex)
-                //         {
-                //             m_CursorGeometricalPosition = symbolRectangle.Min;
-                //             m_CursorLocalPosition       = index;
-                //         }
+                        if(m_CursorGlobalPosition == globalIndex)
+                        {
+                            m_CursorGeometricalPosition = symbolRectangle.Min;
+                            m_CursorLocalPosition       = index - it->Start;
+                        }
 
-                //         // update symbol position
-                //         symbolPosition =
-                //             symbol[0] == '\n' ?
-                //                 ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
-                //                     symbolPosition + ImVec2(symbolSize.x, 0.f);
-                //     }
+                        // update symbol position
+                        symbolPosition =
+                            symbol[0] == '\n' ?
+                                ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
+                                    symbolPosition + ImVec2(symbolSize.x, 0.f);
+                    }
 
-                //     if(m_CursorGlobalPosition == globalIndex)
-                //     {
-                //         m_CursorGeometricalPosition =
-                //             ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
-                //     }
+                    if(m_CursorGlobalPosition == globalIndex)
+                    {
+                        m_CursorGeometricalPosition =
+                            ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
+                    }
 
-                //     // draw cursor rectangle
-                //     ImGui::GetWindowDrawList()->AddText(
-                //             m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
-                //                 ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                //                 ImGui::GetFontSize(),
-                //                 FLT_MAX,
-                //                 0.f,
-                //                 "|",
-                //                 NULL,
-                //                 NULL
-                //             ).x, 0.f) * 0.5f,
-                //             IM_COL32(0, 255, 0, 255),
-                //            "|"
-                //         );
-                // }
+                    // draw cursor rectangle
+                    ImGui::GetWindowDrawList()->AddText(
+                            m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
+                                ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                                ImGui::GetFontSize(),
+                                FLT_MAX,
+                                0.f,
+                                "|",
+                                NULL,
+                                NULL
+                            ).x, 0.f) * 0.5f,
+                            IM_COL32(0, 255, 0, 255),
+                           "|"
+                        );
+                }
+                */
 
                 ImGui::EndChild();
             }
@@ -457,6 +462,7 @@ void PieceTableDrawer::frame_update()
 
             ImGui::BeginChild("Buffers");
             {
+                /*
                 for (int i = 0; i < m_Table->get_lines_count(); i++)
                 {
                     ImGui::TextUnformatted(fmt::format("line {} starts {} ends {}",
@@ -465,7 +471,7 @@ void PieceTableDrawer::frame_update()
                         std::to_string(m_Table->get_line_end_index(i))).c_str());
                 }                
 
-                for (auto it = m_Table->begin(); it != m_Table->end(); it++)
+                for(auto it = m_Table->begin(); it != m_Table->end(); it++)
                 {
                     std::string pieceText = Frenchie::Core::String::as_utf8(
                         std::wstring(
@@ -474,6 +480,24 @@ void PieceTableDrawer::frame_update()
                     );
                     
                     ImGui::TextUnformatted(fmt::format("{} {}", pieceText, it->LineBreaksCount).c_str());
+                }
+                */
+
+                int symbolsCount = 0;
+
+                for(auto it = m_Table->begin(); it != m_Table->end(); it++) symbolsCount += it->Length;
+
+                for (int index = 0; index < symbolsCount; index++)
+                {
+                    auto itr = m_Table->get_iterator_by_global_index(index);
+
+                    std::string pieceText = Frenchie::Core::String::as_utf8(
+                        std::wstring(
+                            &itr.first->Buffer->at(itr.first->Start), 
+                            &itr.first->Buffer->at(itr.first->Start + itr.first->Length))
+                    );
+                    
+                    ImGui::TextUnformatted(fmt::format("index {} iterator {} offset {}", index, pieceText, itr.second).c_str());
                 }
 
                 ImGui::EndChild();
