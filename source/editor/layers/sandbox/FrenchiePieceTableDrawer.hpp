@@ -193,7 +193,7 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         protected:
-            std::unique_ptr<Frenchie::Core::PieceTable> m_Table;
+            std::unique_ptr<Frenchie::Core::TextDocument> m_Table;
 
             int    m_CursorGlobalPosition = 0;
             int    m_CursorLocalPosition = 0;

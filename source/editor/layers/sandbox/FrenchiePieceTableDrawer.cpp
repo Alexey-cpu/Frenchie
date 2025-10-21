@@ -110,7 +110,7 @@ bool PieceTableDrawer::awake()
         text.append(L"\n");
     }
 
-    m_Table = std::make_unique<Frenchie::Core::PieceTable>(text);
+    m_Table = std::make_unique<Frenchie::Core::TextDocument>(text);
 
     m_Table->insert(6, L"123");
     m_Table->insert(12, L"\n456\n789");
@@ -126,13 +126,15 @@ void PieceTableDrawer::frame_update()
     int start = 0;
     int end   = 0;
 
-    ImGui::Begin(get_name().c_str());
+    ImGui::Begin(get_name().c_str(), &m_Opened);
     {
-        ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->get_lines_count()) * ImGui::GetFontSize()));
+        ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->get_lines_count() + 2) * ImGui::GetFontSize()));
 
         ImGui::BeginChild("Text",
             ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
         {
+            if(ImGui::IsWindowHovered()) insert_symbol_command();
+
             ImVec2 scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 
             ImRect viewport = ImRect(ImGui::GetCursorScreenPos() + scroll, 
@@ -150,8 +152,8 @@ void PieceTableDrawer::frame_update()
                 // int source = m_Table->get_line_start_index(lineIndex);
                 // int target = m_Table->get_line_end_index(lineIndex);
 
-                Frenchie::Core::PieceTableSymbolIterator b(m_Table.get(), m_Table->get_line_start_index(lineIndex));
-                Frenchie::Core::PieceTableSymbolIterator e(m_Table.get(), m_Table->get_line_end_index(lineIndex));
+                Frenchie::Core::TextDocumentIterator b(m_Table.get(), m_Table->get_line_start_index(lineIndex));
+                Frenchie::Core::TextDocumentIterator e(m_Table.get(), m_Table->get_line_end_index(lineIndex));
 
                 // ImGui::TextUnformatted(fmt::format("line {} of {} starts {} ends {}",
                 //     lineIndex,
