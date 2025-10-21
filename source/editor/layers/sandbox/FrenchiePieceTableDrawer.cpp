@@ -88,11 +88,17 @@ public:
 PieceTableDrawer::PieceTableDrawer() : Frenchie::Application::Layer(STRINGIFY(PieceTableDrawer)){}
 PieceTableDrawer::~PieceTableDrawer(){}
 
+#define PIECE_TABLE_DRAWER_DEBUG
+
 bool PieceTableDrawer::awake()
 {
     std::wstring text;
 
-    for (int i = 0; i < 1e1; i++)
+    #ifndef PIECE_TABLE_DRAWER_DEBUG
+    for (int i = 0; i < 1e6; i++)
+    #else
+    for (int i = 0; i < 1; i++)
+    #endif
     {
         //text.append(std::to_wstring(i)).append(L"\t");
         
@@ -106,105 +112,109 @@ bool PieceTableDrawer::awake()
 
     m_Table = std::make_unique<Frenchie::Core::PieceTable>(text);
 
-    // m_Table->insert(6, L"123");
-    // m_Table->insert(12, L"\n456\n789");
-    // m_Table->insert(12, L"\n121314");
+    m_Table->insert(6, L"123");
+    m_Table->insert(12, L"\n456\n789");
+    m_Table->insert(12, L"\n121314");
 
     return true;
 }
 
-// void PieceTableDrawer::frame_update()
-// {
-//     int start = 0;
-//     int end   = 0;
+#ifndef PIECE_TABLE_DRAWER_DEBUG
 
-//     ImGui::Begin(get_name().c_str());
-//     {
-//         ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->get_lines_count()) * ImGui::GetFontSize()));
+void PieceTableDrawer::frame_update()
+{
+    int start = 0;
+    int end   = 0;
 
-//         ImGui::BeginChild("Text",
-//             ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
-//         {
-//             ImVec2 scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
+    ImGui::Begin(get_name().c_str());
+    {
+        ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->get_lines_count()) * ImGui::GetFontSize()));
 
-//             ImRect viewport = ImRect(ImGui::GetCursorScreenPos() + scroll, 
-//                                     ImGui::GetCursorScreenPos()  + scroll + ImGui::GetWindowSize());
+        ImGui::BeginChild("Text",
+            ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
+        {
+            ImVec2 scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 
-//             start = (int)(scroll.y / ImGui::GetFontSize());
-//             end   = start + std::min<int>((int)(viewport.GetSize().y / ImGui::GetFontSize()), m_Table->get_lines_count());
+            ImRect viewport = ImRect(ImGui::GetCursorScreenPos() + scroll, 
+                                    ImGui::GetCursorScreenPos()  + scroll + ImGui::GetWindowSize());
 
-// 			ImRect symbolRectangle = ImRect(viewport.Min, viewport.Min);
-// 			ImVec2 symbolPosition  = viewport.Min;
-// 			ImVec2 symbolOrigin    = viewport.Min;
+            start = (int)(scroll.y / ImGui::GetFontSize());
+            end   = start + std::min<int>((int)(viewport.GetSize().y / ImGui::GetFontSize()), m_Table->get_lines_count());
 
-//             for (int lineIndex = start; lineIndex < end; lineIndex++)
-//             {
-//                 // int source = m_Table->get_line_start_index(lineIndex);
-//                 // int target = m_Table->get_line_end_index(lineIndex);
+			ImRect symbolRectangle = ImRect(viewport.Min, viewport.Min);
+			ImVec2 symbolPosition  = viewport.Min;
+			ImVec2 symbolOrigin    = viewport.Min;
 
-//                 Frenchie::Core::PieceTableSymbolIterator b(m_Table.get(), m_Table->get_line_start_index(lineIndex));
-//                 Frenchie::Core::PieceTableSymbolIterator e(m_Table.get(), m_Table->get_line_end_index(lineIndex));
+            for (int lineIndex = start; lineIndex < end; lineIndex++)
+            {
+                // int source = m_Table->get_line_start_index(lineIndex);
+                // int target = m_Table->get_line_end_index(lineIndex);
 
-//                 // ImGui::TextUnformatted(fmt::format("line {} of {} starts {} ends {}",
-//                 //     lineIndex,
-//                 //     m_Table->get_lines_count(),
-//                 //     m_Table->get_line_start_index(lineIndex),
-//                 //     m_Table->get_line_end_index(lineIndex)).c_str());
+                Frenchie::Core::PieceTableSymbolIterator b(m_Table.get(), m_Table->get_line_start_index(lineIndex));
+                Frenchie::Core::PieceTableSymbolIterator e(m_Table.get(), m_Table->get_line_end_index(lineIndex));
 
-//                 // for (auto it = b; it != e; it++)
-//                 // {
-//                 //     ImGui::TextUnformatted(fmt::format("iterator offset {}",
-//                 //         it.m_Offset).c_str());
-//                 // }
+                // ImGui::TextUnformatted(fmt::format("line {} of {} starts {} ends {}",
+                //     lineIndex,
+                //     m_Table->get_lines_count(),
+                //     m_Table->get_line_start_index(lineIndex),
+                //     m_Table->get_line_end_index(lineIndex)).c_str());
 
-//                 for (auto it = b; it != e; it++)
-//                 {
-//                     // retrieve symbol
-//                     std::string symbol =
-//                         Frenchie::Core::String::as_utf8(
-//                             std::wstring(1, *it));
+                // for (auto it = b; it != e; it++)
+                // {
+                //     ImGui::TextUnformatted(fmt::format("iterator offset {}",
+                //         it.m_Offset).c_str());
+                // }
 
-//                     // draw symbol
-//                     ImGui::GetWindowDrawList()->AddText(
-//                             symbolPosition,
-//                             IM_COL32(0, 255, 0, 255),
-//                             symbol.c_str()
-//                         );
+                for (auto it = b; it != e; it++)
+                {
+                    // retrieve symbol
+                    std::string symbol =
+                        Frenchie::Core::String::as_utf8(
+                            std::wstring(1, *it));
 
-//                     ImVec2 symbolSize =
-//                         ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-//                             ImGui::GetFontSize(),
-//                             FLT_MAX,
-//                             0.f,
-//                             symbol.c_str(),
-//                             NULL,
-//                             NULL
-//                         );
+                    // draw symbol
+                    ImGui::GetWindowDrawList()->AddText(
+                            symbolPosition,
+                            IM_COL32(0, 255, 0, 255),
+                            symbol.c_str()
+                        );
 
-//                     // highlight symbol
-//                     symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+                    ImVec2 symbolSize =
+                        ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+                            ImGui::GetFontSize(),
+                            FLT_MAX,
+                            0.f,
+                            symbol.c_str(),
+                            NULL,
+                            NULL
+                        );
 
-//                     // update symbol position
-//                     symbolPosition =
-//                         symbol[0] == '\n' ?
-//                             ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
-//                                 symbolPosition + ImVec2(symbolSize.x, 0.f);
-//                 }
-//             }
+                    // highlight symbol
+                    symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
 
-//             ImGui::EndChild();
-//         }
+                    // update symbol position
+                    symbolPosition =
+                        symbol[0] == '\n' ?
+                            ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
+                                symbolPosition + ImVec2(symbolSize.x, 0.f);
+                }
+            }
 
-//         ImGui::BeginChild("Status", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
-//         {
-//             ImGui::TextUnformatted(fmt::format("start {} end {}", start, end).c_str());
+            ImGui::EndChild();
+        }
 
-//             ImGui::EndChild();
-//         }
+        ImGui::BeginChild("Status", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
+        {
+            ImGui::TextUnformatted(fmt::format("start {} end {}", start, end).c_str());
 
-//         ImGui::End();
-//     }
-// }
+            ImGui::EndChild();
+        }
+
+        ImGui::End();
+    }
+}
+
+#else
 
 void PieceTableDrawer::frame_update()
 {
@@ -401,6 +411,8 @@ void PieceTableDrawer::frame_update()
 
     ImGui::End();
 }
+
+#endif
 
 void PieceTableDrawer::frame_finish() 
 {

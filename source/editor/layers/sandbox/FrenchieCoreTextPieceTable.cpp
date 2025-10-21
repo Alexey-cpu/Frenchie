@@ -53,19 +53,31 @@ int PieceTable::get_line_end_index(const int& _Line) const
         }
         else
         {
-            for (int lineBreakIndex = iterator->LineBreaksStart; lineBreakIndex <= iterator->LineBreaksEnd; lineBreakIndex++)
+            if(_Line - cursorLine >= iterator->LineBreaksCount)
             {
-                if(cursorLine == _Line)
-                {
-                    cursorPosition += iterator->Buffer->m_LineBreaksPositions[lineBreakIndex] - iterator->Start;
-
-                    return cursorPosition;
-                }
-
-                cursorLine++;
+                cursorPosition += iterator->Length;
+                cursorLine     += iterator->LineBreaksCount;
+                continue;
             }
 
-            cursorPosition += iterator->Length;
+            int lineBreakIndex = iterator->LineBreaksStart + (_Line - cursorLine);
+            cursorPosition += iterator->Buffer->m_LineBreaksPositions[lineBreakIndex] - iterator->Start;
+            return cursorPosition;
+
+            // TODO: uncomment this code if the above code does not work =)
+            // for (int lineBreakIndex = iterator->LineBreaksStart; lineBreakIndex <= iterator->LineBreaksEnd; lineBreakIndex++)
+            // {
+            //     if(cursorLine == _Line)
+            //     {
+            //         cursorPosition += iterator->Buffer->m_LineBreaksPositions[lineBreakIndex] - iterator->Start;
+
+            //         return cursorPosition;
+            //     }
+
+            //     cursorLine++;
+            // }
+
+            //cursorPosition += iterator->Length;
         }
     }
     
