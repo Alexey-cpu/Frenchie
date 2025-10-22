@@ -128,7 +128,7 @@ void PieceTableDrawer::frame_update()
 
     ImGui::Begin(get_name().c_str(), &m_Opened);
     {
-        ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->get_lines_count() + 2) * ImGui::GetFontSize()));
+        ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->lines_count() + 2) * ImGui::GetFontSize()));
 
         ImGui::BeginChild("Text",
             ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
@@ -141,7 +141,7 @@ void PieceTableDrawer::frame_update()
                                     ImGui::GetCursorScreenPos()  + scroll + ImGui::GetWindowSize());
 
             start = (int)(scroll.y / ImGui::GetFontSize());
-            end   = start + std::min<int>((int)(viewport.GetSize().y / ImGui::GetFontSize()), m_Table->get_lines_count());
+            end   = start + std::min<int>((int)(viewport.GetSize().y / ImGui::GetFontSize()), m_Table->lines_count());
 
 			ImRect symbolRectangle = ImRect(viewport.Min, viewport.Min);
 			ImVec2 symbolPosition  = viewport.Min;
@@ -149,25 +149,7 @@ void PieceTableDrawer::frame_update()
 
             for (int lineIndex = start; lineIndex < end; lineIndex++)
             {
-                // int source = m_Table->get_line_start_index(lineIndex);
-                // int target = m_Table->get_line_end_index(lineIndex);
-
-                Frenchie::Core::TextDocumentIterator b(m_Table.get(), m_Table->get_line_start_index(lineIndex));
-                Frenchie::Core::TextDocumentIterator e(m_Table.get(), m_Table->get_line_end_index(lineIndex));
-
-                // ImGui::TextUnformatted(fmt::format("line {} of {} starts {} ends {}",
-                //     lineIndex,
-                //     m_Table->get_lines_count(),
-                //     m_Table->get_line_start_index(lineIndex),
-                //     m_Table->get_line_end_index(lineIndex)).c_str());
-
-                // for (auto it = b; it != e; it++)
-                // {
-                //     ImGui::TextUnformatted(fmt::format("iterator offset {}",
-                //         it.m_Offset).c_str());
-                // }
-
-                for (auto it = b; it != e; it++)
+                for (auto it = m_Table->line_begin(lineIndex); it != m_Table->line_end(lineIndex); it++)
                 {
                     // retrieve symbol
                     std::string symbol =
@@ -292,10 +274,7 @@ void PieceTableDrawer::frame_update()
                 ImVec2 symbolPosition  = ImGui::GetCursorScreenPos();
                 ImVec2 symbolOrigin    = ImGui::GetCursorScreenPos();
 
-                auto b = m_Table->b();
-                auto e = m_Table->e();
-
-                for (auto it = b; it != e; it++, globalIndex++)                
+                for (auto it = m_Table->symbols_begin(); it != m_Table->symbols_end(); it++, globalIndex++)                
                 {
                     // retrieve symbol
                     std::string symbol =
@@ -483,21 +462,19 @@ void PieceTableDrawer::frame_update()
                 }
                 */
 
-                int symbolsCount = 0;
-
-                for(auto it = m_Table->begin(); it != m_Table->end(); it++) symbolsCount += it->Length;
+                int symbolsCount = m_Table->symbols_count();
 
                 for (int index = 0; index < symbolsCount; index++)
                 {
-                    auto itr = m_Table->get_iterator_by_global_index(index);
+                    auto itr = m_Table->get_piece_iterator_by_global_index(index);
 
                     std::string pieceText = Frenchie::Core::String::as_utf8(
                         std::wstring(
-                            &itr.first->Buffer->at(itr.first->Start), 
-                            &itr.first->Buffer->at(itr.first->Start + itr.first->Length))
+                            &itr.Iterator->Buffer->at(itr.Iterator->Start), 
+                            &itr.Iterator->Buffer->at(itr.Iterator->Start + itr.Iterator->Length))
                     );
                     
-                    ImGui::TextUnformatted(fmt::format("index {} iterator {} offset {}", index, pieceText, itr.second).c_str());
+                    ImGui::TextUnformatted(fmt::format("index {} iterator {} offset {}", index, pieceText, itr.Offset).c_str());
                 }
 
                 ImGui::EndChild();
@@ -514,7 +491,7 @@ void PieceTableDrawer::frame_update()
         ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
     {
         ImGui::TextUnformatted(
-            fmt::format("GlobalIndex: {} LocalIndex: {} LinesCount: {}", m_CursorGlobalPosition, m_CursorLocalPosition, m_Table->get_lines_count()).c_str());
+            fmt::format("GlobalIndex: {} LocalIndex: {} LinesCount: {}", m_CursorGlobalPosition, m_CursorLocalPosition, m_Table->lines_count()).c_str());
         ImGui::EndChild();
     }
 
@@ -587,7 +564,7 @@ void PieceTableDrawer::insert_symbol_command()
 void PieceTableDrawer::adjust_cursor_position()
 {
     int size = 0;
-    for (auto it = m_Table->begin(); it != m_Table->end(); it++)
+    for (auto it = m_Table->symbols_begin(); it != m_Table->symbols_end(); it++)
         size += it->Length;
 
     if(m_CursorGlobalPosition < 0)

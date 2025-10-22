@@ -9,14 +9,13 @@ namespace Frenchie
 {
     namespace Core
     {
-        struct TextDocumentBuffer;
-        struct TextDocumentTextPointer;
-        class  TextDocumentIterator;
-        class  TextDocument;
+        class TextDocumentBuffer;
+        class TextDocumentPiece;
+        class TextDocument;
 
-
-        struct TextDocumentBuffer final
+        class TextDocumentBuffer final
         {
+        public:
             TextDocumentBuffer(const std::wstring& _Buffer = std::wstring());
             ~TextDocumentBuffer();
 
@@ -31,12 +30,16 @@ namespace Frenchie
             mutable std::vector<int> m_LineBreaksPositions;
         };
 
-        struct TextDocumentTextPointer final
+        class TextDocumentPiece final
         {
-            TextDocumentTextPointer(const TextDocumentBuffer* _Buffer, int _Start, int _Length) : 
+        public:
+
+            TextDocumentPiece(const TextDocumentBuffer* _Buffer, int _Start, int _Length) : 
                 Buffer(_Buffer),
                 Start(_Start),
                 Length(_Length){}
+
+            ~TextDocumentPiece(){}
 
             const TextDocumentBuffer* Buffer          = nullptr;
             int                       Start           = 0;
@@ -46,56 +49,59 @@ namespace Frenchie
             int                       LineBreaksCount = 0;
         };
 
-        class TextDocumentIterator final
+        class TextDocumentSymbolIterator final
         {
         public:
-            TextDocumentIterator(const TextDocument* _Table, const int& _Position);
-            ~TextDocumentIterator();
+            TextDocumentSymbolIterator(const TextDocument* _Table, const int& _Position);
+            ~TextDocumentSymbolIterator();
 
             wchar_t operator*() const;
-            std::list<TextDocumentTextPointer>::const_iterator operator->() const;
+            std::list<TextDocumentPiece>::const_iterator operator->() const;
             
-            TextDocumentIterator& operator++();
-            TextDocumentIterator& operator--();
-            TextDocumentIterator  operator++(int);
-            TextDocumentIterator  operator--(int);
+            TextDocumentSymbolIterator& operator++();
+            TextDocumentSymbolIterator& operator--();
+            TextDocumentSymbolIterator  operator++(int);
+            TextDocumentSymbolIterator  operator--(int);
 
-            friend bool operator==(const TextDocumentIterator& _First, const TextDocumentIterator& _Second)
+            friend bool operator==(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
             { 
                 return _First.m_Iterator == _Second.m_Iterator && 
                        _First.m_Offset == _Second.m_Offset; 
             }
 
-            friend bool operator!=(const TextDocumentIterator& _First, const TextDocumentIterator& _Second)
+            friend bool operator!=(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
             {
                 return _First.m_Iterator != _Second.m_Iterator || 
                        _First.m_Offset != _Second.m_Offset; 
             }
 
-        //protected:
-            mutable std::list<TextDocumentTextPointer>::const_iterator m_Iterator;
-            mutable int                                                m_Offset = 0;
-            const TextDocument* m_Table = nullptr;
-            mutable int m_Position = 0;
+        protected:
+            const TextDocument*                                  m_Table    = nullptr;
+            mutable int                                          m_Position = 0;
+            mutable int                                          m_Offset   = 0;
+            mutable std::list<TextDocumentPiece>::const_iterator m_Iterator;
         };
 
         class TextDocument final
         {
         public:
 
-            typedef std::list<TextDocumentTextPointer>::const_iterator const_iterator;
-            typedef std::list<TextDocumentTextPointer>::iterator iterator;
+            typedef std::list<TextDocumentPiece>::const_iterator ConstPieceIterator;
+
+            struct PieceIteratorInfo
+            {
+                ConstPieceIterator Iterator;
+                int                Offset;
+            };
 
             TextDocument(const std::wstring& _Buffer = std::wstring());
             ~TextDocument();
 
             // getters
-            int get_line_start_index(const int& _Line) const;
-            int get_line_end_index(const int& _Line) const;
-            int get_lines_count() const;
+            int get_line_start_index(const int&) const;
+            int get_line_end_index(const int&) const;
 
-            std::pair<const_iterator, int>
-            get_iterator_by_global_index(const int& _Position) const;
+            PieceIteratorInfo get_piece_iterator_by_global_index(const int&) const;
 
             // API
             void insert(const int& _Position, const std::wstring& _What);
@@ -103,39 +109,32 @@ namespace Frenchie
             void undo();
             void redo();
 
-            TextDocumentIterator b() const
-            {
-                return TextDocumentIterator(this, 0);
-            }
+            ConstPieceIterator pieces_begin() const;
+            ConstPieceIterator pieces_end() const;
+            int pieces_count() const;
 
-            TextDocumentIterator e() const
-            {
-                int size = 0;
+            TextDocumentSymbolIterator symbols_begin() const;
+            TextDocumentSymbolIterator symbols_end() const;
+            int symbols_count() const;
 
-                for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
-                    size += iterator->Length;
-
-                return TextDocumentIterator(this, size);
-            }
-
-            const_iterator begin() const;
-            const_iterator end() const;
-            int size() const;
+            TextDocumentSymbolIterator line_begin(const int&) const;
+            TextDocumentSymbolIterator line_end(const int&) const;
+            int lines_count() const;
 
         protected:
 
             // friends
-            friend class TextDocumentIterator;
+            friend class TextDocumentSymbolIterator;
 
             // info
-            const   TextDocumentBuffer                              m_Immutable;
-            mutable TextDocumentBuffer                              m_Appendable;
-            mutable std::list<TextDocumentTextPointer>              m_Pieces;
-            mutable std::vector<std::list<TextDocumentTextPointer>> m_States;
-            mutable size_t                                          m_CurrentState = 0;
+            const   TextDocumentBuffer                        m_Immutable;
+            mutable TextDocumentBuffer                        m_Appendable;
+            mutable std::list<TextDocumentPiece>              m_Pieces;
+            mutable std::vector<std::list<TextDocumentPiece>> m_States;
+            mutable size_t                                    m_CurrentState = 0;
 
             // service methods
-            void command(std::function<void()> _Execute);
+            void command(std::function<void()>);
         };
     }
 }
