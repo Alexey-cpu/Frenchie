@@ -1,39 +1,11 @@
 #include <FrenchieCoreTextPieceTable.hpp>
 
-#include <FrenchieCoreHelpers.hpp>
-
+// STL
 #include <vector>
-#include <iostream>
 #include <map>
 #include <set>
 
 using namespace Frenchie::Core;
-
-int binarySearch(const std::vector<int>& arr, int x)
-{
-    int low = 0;
-    int high = (int)arr.size() - 1;
-    
-    while (low <= high) 
-    {
-        int mid = low + (high - low) / 2;
-
-        // Check if x is present at mid
-        if (arr[mid] == x)
-            return mid;
-
-        // If x greater, ignore left half
-        if (arr[mid] < x)
-            low = mid + 1;
-
-        // If x is smaller, ignore right half
-        else
-            high = mid - 1;
-    }
-
-    // If we reach here, then element was not present
-    return low;
-}
 
 // TextDocumentBuffer
 TextDocumentBuffer::TextDocumentBuffer(const std::wstring& _Buffer)
@@ -70,60 +42,52 @@ const std::vector<int>& TextDocumentBuffer::get_line_breaks_positions() const
 }
 
 // TextDocumentIterator
-TextDocumentIterator::TextDocumentIterator(const TextDocument* _Table, const int& _Position)
+TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Table, const int& _Position)
 {
     m_Table    = _Table;
     m_Position = _Position;
 
-    auto it = m_Table->get_iterator_by_global_index(m_Position);
-    m_Iterator = it.first;
-    m_Offset   = it.second;
+    auto it = m_Table->get_piece_iterator_by_global_index(m_Position);
+    m_Iterator = it.Iterator;
+    m_Offset   = it.Offset;
 }
 
-TextDocumentIterator::~TextDocumentIterator(){}
+TextDocumentSymbolIterator::~TextDocumentSymbolIterator(){}
 
-wchar_t TextDocumentIterator::operator*() const
+wchar_t TextDocumentSymbolIterator::operator*() const
 {
     return m_Iterator->Buffer->at(m_Iterator->Start + m_Offset);
 }
 
-std::list<TextDocumentTextPointer>::const_iterator TextDocumentIterator::operator->() const
+std::list<TextDocumentPiece>::const_iterator TextDocumentSymbolIterator::operator->() const
 {
     return m_Iterator;
 }
 
-TextDocumentIterator& TextDocumentIterator::operator++()
+TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator++()
 {
-    auto it = m_Table->get_iterator_by_global_index(++m_Position);
-    m_Iterator = it.first;
-    m_Offset   = it.second;
-    
-    return *this; 
-}
-
-TextDocumentIterator& TextDocumentIterator::operator--()
-{
-    if(m_Offset > m_Iterator->Start)
-    {
-        --m_Offset;
-    }
-    else
-    {
-        m_Iterator--;
-        m_Offset = m_Iterator->Length - 1;
-    }
-
+    auto it = m_Table->get_piece_iterator_by_global_index(++m_Position);
+    m_Iterator = it.Iterator;
+    m_Offset   = it.Offset;
     return *this;
 }
 
-TextDocumentIterator TextDocumentIterator::operator++(int)
+TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator--()
+{
+    auto it = m_Table->get_piece_iterator_by_global_index(--m_Position);
+    m_Iterator = it.Iterator;
+    m_Offset   = it.Offset;
+    return *this;
+}
+
+TextDocumentSymbolIterator TextDocumentSymbolIterator::operator++(int)
 {
     auto tmp = *this; 
     ++(*this); 
     return tmp;
 }
 
-TextDocumentIterator TextDocumentIterator::operator--(int)
+TextDocumentSymbolIterator TextDocumentSymbolIterator::operator--(int)
 {
     auto tmp = *this; 
     --(*this); 
@@ -134,7 +98,7 @@ TextDocumentIterator TextDocumentIterator::operator--(int)
 TextDocument::TextDocument(const std::wstring& _Buffer) :
     m_Immutable(_Buffer),
     m_Appendable(std::wstring()),
-    m_Pieces({TextDocumentTextPointer(&m_Immutable, 0, (int)m_Immutable.size())})
+    m_Pieces({TextDocumentPiece(&m_Immutable, 0, (int)m_Immutable.size())})
     {
         command(nullptr);
     }
@@ -192,22 +156,7 @@ int TextDocument::get_line_end_index(const int& _Line) const
     return cursorPosition;
 }
 
-int TextDocument::get_lines_count() const
-{
-    // look for the row where to append
-    int cursorLine = 0;
-
-    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
-        cursorLine += iterator->LineBreaksCount;
-
-    if(!m_Pieces.empty() && std::prev(m_Pieces.end())->LineBreaksCount <= 0)
-        ++cursorLine;
-
-    return cursorLine;
-}
-
-std::pair<TextDocument::const_iterator, int>
-TextDocument::get_iterator_by_global_index(const int& _Position) const
+TextDocument::PieceIteratorInfo TextDocument::get_piece_iterator_by_global_index(const int& _Position) const
 {
     // look for the row where to append
     int  cursorPosition = 0;
@@ -260,7 +209,7 @@ void TextDocument::insert(const int& _Position, const std::wstring& _What)
             // insert into empty table
             if(cursorIterator == m_Pieces.end())
             {
-                m_Pieces.push_back(TextDocumentTextPointer(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Pieces.push_back(TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
@@ -268,7 +217,7 @@ void TextDocument::insert(const int& _Position, const std::wstring& _What)
             // insert into beginning
             if(_Position <= 0 && (cursorPosition - _Position) == 0)
             {
-                m_Pieces.insert(cursorIterator, TextDocumentTextPointer(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Pieces.insert(cursorIterator, TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
@@ -276,7 +225,7 @@ void TextDocument::insert(const int& _Position, const std::wstring& _What)
             // insert into end
             if(_Position > 0 && (cursorPosition - _Position) == 0)
             {
-                m_Pieces.insert(std::next(cursorIterator), TextDocumentTextPointer(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Pieces.insert(std::next(cursorIterator), TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
@@ -285,12 +234,12 @@ void TextDocument::insert(const int& _Position, const std::wstring& _What)
             int a = cursorPosition - _Position;
             int b = cursorIterator->Length - a;
 
-            auto newPiece = m_Pieces.insert(std::next(cursorIterator), TextDocumentTextPointer(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+            auto newPiece = m_Pieces.insert(std::next(cursorIterator), TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
             m_Appendable.append(_What);
 
             cursorIterator->Length = b;
 
-            m_Pieces.insert(std::next(newPiece), TextDocumentTextPointer(cursorIterator->Buffer, cursorIterator->Start + b, a));
+            m_Pieces.insert(std::next(newPiece), TextDocumentPiece(cursorIterator->Buffer, cursorIterator->Start + b, a));
         }
     );
 }
@@ -358,7 +307,7 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
         cursorIterator->Length = b - 1;
 
-        m_Pieces.insert(std::next(cursorIterator), TextDocumentTextPointer(cursorIterator->Buffer, cursorIterator->Start + b, a));
+        m_Pieces.insert(std::next(cursorIterator), TextDocumentPiece(cursorIterator->Buffer, cursorIterator->Start + b, a));
     };
 
     command([this, &remove, &_Position, &_Count]()
@@ -383,25 +332,90 @@ void TextDocument::redo()
     m_Pieces    = m_States[m_CurrentState];
 }
 
-TextDocument::const_iterator TextDocument::begin() const
+TextDocument::ConstPieceIterator TextDocument::pieces_begin() const
 {
     return m_Pieces.begin();
 }
 
-TextDocument::const_iterator TextDocument::end() const
+TextDocument::ConstPieceIterator TextDocument::pieces_end() const
 {
     return m_Pieces.end();
 }
 
-int TextDocument::size() const
+int TextDocument::pieces_count() const
 {
     return (int)m_Pieces.size();
 }
 
-void TextDocument::command(std::function<void()> _Execute)
+TextDocumentSymbolIterator TextDocument::symbols_begin() const
 {
-    if(_Execute != nullptr)
-        _Execute();
+    return TextDocumentSymbolIterator(this, 0);
+}
+
+TextDocumentSymbolIterator TextDocument::symbols_end() const
+{
+    return TextDocumentSymbolIterator(this, symbols_count());
+}
+
+int TextDocument::symbols_count() const
+{
+    int size = 0;
+
+    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+        size += iterator->Length;
+
+    return size;
+}
+
+TextDocumentSymbolIterator TextDocument::line_begin(const int& _Line) const
+{
+    return TextDocumentSymbolIterator(this, get_line_start_index(_Line));
+}
+
+TextDocumentSymbolIterator TextDocument::line_end(const int& _Line) const
+{
+    return TextDocumentSymbolIterator(this, get_line_end_index(_Line));
+}
+
+int TextDocument::lines_count() const
+{
+    int cursorLine = 0;
+
+    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+        cursorLine += iterator->LineBreaksCount;
+
+    if(!m_Pieces.empty() && std::prev(m_Pieces.end())->LineBreaksCount <= 0)
+        ++cursorLine;
+
+    return cursorLine;
+}
+
+void TextDocument::command(std::function<void()> _Command)
+{
+    if(_Command != nullptr)
+        _Command();
+
+    // auxiliary lambdas
+    auto binary_search = [](const std::vector<int>& _Array, int _Value)->int
+    {
+        int low = 0;
+        int high = (int)_Array.size() - 1;
+        
+        while (low <= high) 
+        {
+            int mid = low + (high - low) / 2;
+
+            if (_Array[mid] == _Value)
+                return mid;
+
+            if (_Array[mid] < _Value)
+                low = mid + 1;
+            else
+                high = mid - 1;
+        }
+
+        return low;
+    };
 
     // update state
     m_States.push_back(m_Pieces);
@@ -420,8 +434,8 @@ void TextDocument::command(std::function<void()> _Execute)
         }
 
         // recompute metadata of pieces
-        iterator->LineBreaksStart = binarySearch(iterator->Buffer->get_line_breaks_positions(), iterator->Start);
-        iterator->LineBreaksEnd   = binarySearch(iterator->Buffer->get_line_breaks_positions(), iterator->Start + iterator->Length);
+        iterator->LineBreaksStart = binary_search(iterator->Buffer->get_line_breaks_positions(), iterator->Start);
+        iterator->LineBreaksEnd   = binary_search(iterator->Buffer->get_line_breaks_positions(), iterator->Start + iterator->Length);
         iterator->LineBreaksCount = iterator->LineBreaksEnd - iterator->LineBreaksStart;
 
         // TODO: uncomment this code if the above code does not work =)
