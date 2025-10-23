@@ -196,9 +196,12 @@ namespace Frenchie
             std::unique_ptr<Frenchie::Core::TextDocument> m_Table;
             ImVec2 m_CursorGeometricalPosition;
 
-            int m_Counter = 0;
-
-            void insert_symbol_command();
+            // commands
+            void document_insert_symbol_command();
+            void document_move_cursor_left_command();
+            void document_move_cursor_right_command();
+            void document_move_cursor_down_command();
+            void document_move_cursor_up_command();
         };
     }
 }

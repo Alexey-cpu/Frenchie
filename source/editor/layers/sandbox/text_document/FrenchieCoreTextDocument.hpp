@@ -60,7 +60,7 @@ namespace Frenchie
             typedef std::list<TextDocumentPiece>::const_iterator ConstPieceIterator;
             typedef std::list<TextDocumentPiece>::iterator PieceIterator;
 
-            TextDocumentPieceTable(const std::list<TextDocumentPiece>& _Pieces, const int& _Position) :
+            TextDocumentPieceTable(const std::list<TextDocumentPiece>& _Pieces = std::list<TextDocumentPiece>(), const int& _Position = 0) :
                 Pieces(_Pieces),
                 Cursor(_Position){}
 
@@ -166,11 +166,11 @@ namespace Frenchie
             const   TextDocumentBuffer                  m_Immutable;
             mutable TextDocumentBuffer                  m_Appendable;
             mutable TextDocumentPieceTable              m_Pieces;
-            mutable std::vector<TextDocumentPieceTable> m_States;
-            mutable size_t                              m_CurrentState = 0;
+            // mutable std::vector<TextDocumentPieceTable> m_States;
+            // mutable size_t                              m_CurrentState = 0;
             mutable std::map<int, LineInfo>             m_LinesEndsIteratorsCache;
 
-            //mutable Frenchie::Core::Containers::RingBuffer<TextDocumentPieceTable> m_States;
+            mutable Frenchie::Core::Containers::RingBuffer<TextDocumentPieceTable, 2048> m_States;
 
             // service methods
             void command(std::function<void()>);

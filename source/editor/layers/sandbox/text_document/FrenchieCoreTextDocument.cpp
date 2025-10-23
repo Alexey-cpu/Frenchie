@@ -362,16 +362,14 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
 void TextDocument::undo()
 {
-    if(m_CurrentState > 0) 
-        --m_CurrentState;
-        
-    m_Pieces = m_States[m_CurrentState];
+    m_States.set_position(m_States.get_position() - 1);
+    m_Pieces = m_States.at(1);
 }
 
 void TextDocument::redo()
 {
-    m_CurrentState = std::min(m_States.size() - 1, m_CurrentState + 1);
-    m_Pieces    = m_States[m_CurrentState];
+    m_States.set_position(m_States.get_position() + 1); 
+    m_Pieces = m_States.at(1);
 }
 
 void TextDocument::move_cursor_right()
@@ -509,8 +507,7 @@ void TextDocument::command(std::function<void()> _Command)
     };
 
     // update state
-    m_States.push_back(m_Pieces);
-    m_CurrentState = m_States.size() - 1;
+    m_States.push(m_Pieces);
 
     // process pieces
     for(auto iterator = m_Pieces.Pieces.begin(); iterator != m_Pieces.Pieces.end(); iterator++)
