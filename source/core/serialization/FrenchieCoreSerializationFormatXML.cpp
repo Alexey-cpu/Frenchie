@@ -315,6 +315,8 @@ namespace Frenchie
 
                     case pugi::xml_parse_status::status_no_document_element:
                         return STRINGIFY(pugi::xml_parse_status::status_file_not_found);
+                    default:
+                        return STRINGIFY(pugi::xml_parse_status::status_ok);
                     }
 
                     return STRINGIFY(pugi::xml_parse_status::status_ok);

@@ -168,7 +168,7 @@ void PieceTableDrawer::frame_update()
                 {
                     // retrieve symbol
                     std::string symbol =
-                        Frenchie::Core::UTF::utf32_to_utf8(
+                        Frenchie::Core::String::convert_utf32_to_utf8(
                             std::u32string(1, *it));
 
                     // draw symbol
@@ -556,7 +556,7 @@ void PieceTableDrawer::document_insert_symbol_command()
 				int  count = Helpers::ImTextCharToUtf8(utf8, c);
 
                 // insert symbol
-				m_Table->insert(Frenchie::Core::UTF::utf8_to_utf32(std::string(utf8, count)));
+				m_Table->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
 			}
 		);
 	};

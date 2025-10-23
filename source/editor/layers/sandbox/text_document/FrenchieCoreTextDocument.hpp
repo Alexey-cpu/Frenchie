@@ -6,7 +6,7 @@
 #include <string>
 #include <functional>
 
-#include <FrenchieCoreUTF.hpp>
+#include <FrenchieCoreStringUnicode.hpp>
 #include <FrenchieCoreContainersRingBuffer.hpp>
 
 namespace Frenchie
