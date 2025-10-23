@@ -1,12 +1,19 @@
 #include <FrenchieCoreSerializationNode.hpp>
 
-#include <stack>
-#include <vector>
-#include <set>
+#include <FrenchieCoreContainersStack.hpp>
+#include <FrenchieCoreContainersQueue.hpp>
+
+// STL
 #include <type_traits>
+#include <vector>
+#include <stack>
+#include <set>
 
 using namespace Frenchie::Core;
+using namespace Frenchie::Core::Containers;
+using namespace Frenchie::Core::FileSystem;
 using namespace Frenchie::Core::Serialization;
+
 
 namespace Frenchie
 {
@@ -364,7 +371,7 @@ void Node::remove_node(std::function<bool(const Node& _Node)> _Predicate) const
 
     // collect deallocated nodes
     auto document = m_Info->Document;
-    Core::Stack<Node> stack;
+    Stack<Node> stack;
     stack.push(toBeRemoved);
 
     std::vector<Node> nodesToBeRemoved;

@@ -42,10 +42,11 @@ const std::vector<int>& TextDocumentBuffer::get_line_breaks_positions() const
 }
 
 // TextDocumentIterator
-TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Table, const int& _Position)
+TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Table, const int& _Position) :
+    m_Table(_Table),
+    m_Position(_Position)
 {
-    m_Table    = _Table;
-    m_Position = _Position;
+    if(m_Table == nullptr) return;
 
     auto it = m_Table->get_piece_iterator_by_global_index(m_Position);
     m_Iterator = it.Iterator;
@@ -447,12 +448,24 @@ int TextDocument::symbols_count() const
 
 TextDocumentSymbolIterator TextDocument::line_begin(const int& _Line) const
 {
-    return TextDocumentSymbolIterator(this, get_line_start_index(_Line));
+    if(m_LinesEndsIteratorsCache.find(_Line) == m_LinesEndsIteratorsCache.end())
+    {
+        m_LinesEndsIteratorsCache[_Line].Begin = TextDocumentSymbolIterator(this, get_line_start_index(_Line));
+        m_LinesEndsIteratorsCache[_Line].End   = TextDocumentSymbolIterator(this, get_line_end_index(_Line));
+    }
+
+    return m_LinesEndsIteratorsCache[_Line].Begin;
 }
 
 TextDocumentSymbolIterator TextDocument::line_end(const int& _Line) const
 {
-    return TextDocumentSymbolIterator(this, get_line_end_index(_Line));
+    if(m_LinesEndsIteratorsCache.find(_Line) == m_LinesEndsIteratorsCache.end())
+    {
+        m_LinesEndsIteratorsCache[_Line].Begin = TextDocumentSymbolIterator(this, get_line_start_index(_Line));
+        m_LinesEndsIteratorsCache[_Line].End   = TextDocumentSymbolIterator(this, get_line_end_index(_Line));
+    }
+
+    return m_LinesEndsIteratorsCache[_Line].End;
 }
 
 int TextDocument::lines_count() const
@@ -516,4 +529,7 @@ void TextDocument::command(std::function<void()> _Command)
         iterator->LineBreaksEnd   = binary_search(iterator->Buffer->get_line_breaks_positions(), iterator->Start + iterator->Length);
         iterator->LineBreaksCount = iterator->LineBreaksEnd - iterator->LineBreaksStart;
     }
+
+    // clear cache
+    m_LinesEndsIteratorsCache.clear();
 }
