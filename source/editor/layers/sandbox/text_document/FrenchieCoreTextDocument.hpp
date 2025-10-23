@@ -69,11 +69,11 @@ namespace Frenchie
         class TextDocumentSymbolIterator final
         {
         public:
-            TextDocumentSymbolIterator(const TextDocument* _Table, const int& _Position);
+            TextDocumentSymbolIterator(const TextDocument* _Table = nullptr, const int& _Position = 0);
             ~TextDocumentSymbolIterator();
 
             char32_t operator*() const;
-            std::list<TextDocumentPiece>::const_iterator operator->() const;
+            TextDocumentPieceTable::ConstPieceIterator operator->() const;
             
             TextDocumentSymbolIterator& operator++();
             TextDocumentSymbolIterator& operator--();
@@ -93,10 +93,10 @@ namespace Frenchie
             }
 
         protected:
-            const TextDocument*                                  m_Table    = nullptr;
-            mutable int                                          m_Position = 0;
-            mutable int                                          m_Offset   = 0;
-            mutable std::list<TextDocumentPiece>::const_iterator m_Iterator;
+            const TextDocument*                                m_Table    = nullptr;
+            mutable int                                        m_Position = 0;
+            mutable int                                        m_Offset   = 0;
+            mutable TextDocumentPieceTable::ConstPieceIterator m_Iterator = TextDocumentPieceTable::ConstPieceIterator();
         };
 
         class TextDocument final
