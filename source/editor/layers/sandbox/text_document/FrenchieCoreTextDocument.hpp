@@ -163,12 +163,10 @@ namespace Frenchie
             friend class TextDocumentSymbolIterator;
 
             // info
-            const   TextDocumentBuffer                  m_Immutable;
-            mutable TextDocumentBuffer                  m_Appendable;
-            mutable TextDocumentPieceTable              m_Pieces;
-            // mutable std::vector<TextDocumentPieceTable> m_States;
-            // mutable size_t                              m_CurrentState = 0;
-            mutable std::map<int, LineInfo>             m_LinesEndsIteratorsCache;
+            const   TextDocumentBuffer      m_Immutable;
+            mutable TextDocumentBuffer      m_Appendable;
+            mutable TextDocumentPieceTable  m_Pieces;
+            mutable std::map<int, LineInfo> m_Cache;
 
             mutable Frenchie::Core::Containers::RingBuffer<TextDocumentPieceTable, 2048> m_States;
 
