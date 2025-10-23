@@ -88,7 +88,7 @@ public:
 PieceTableDrawer::PieceTableDrawer() : Frenchie::Application::Layer(STRINGIFY(PieceTableDrawer)){}
 PieceTableDrawer::~PieceTableDrawer(){}
 
-#define PIECE_TABLE_DRAWER_DEBUG
+//#define PIECE_TABLE_DRAWER_DEBUG
 
 bool PieceTableDrawer::awake()
 {
@@ -153,8 +153,8 @@ void PieceTableDrawer::frame_update()
                 {
                     // retrieve symbol
                     std::string symbol =
-                        Frenchie::Core::String::as_utf8(
-                            std::wstring(1, *it));
+                        Frenchie::Core::UTF::utf32_to_utf8(
+                            std::u32string(1, *it));
 
                     // draw symbol
                     ImGui::GetWindowDrawList()->AddText(

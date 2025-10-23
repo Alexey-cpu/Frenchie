@@ -1,4 +1,4 @@
-#include <FrenchieCoreTextPieceTable.hpp>
+#include <FrenchieCoreTextDocument.hpp>
 
 // STL
 #include <vector>
@@ -140,21 +140,6 @@ int TextDocument::get_line_end_index(const int& _Line) const
             int lineBreakIndex = iterator->LineBreaksStart + (_Line - cursorLine);
             cursorPosition += iterator->Buffer->get_line_breaks_positions()[lineBreakIndex] - iterator->Start;
             return cursorPosition;
-
-            // TODO: uncomment this code if the above code does not work =)
-            // for (int lineBreakIndex = iterator->LineBreaksStart; lineBreakIndex <= iterator->LineBreaksEnd; lineBreakIndex++)
-            // {
-            //     if(cursorLine == _Line)
-            //     {
-            //         cursorPosition += iterator->Buffer->m_LineBreaksPositions[lineBreakIndex] - iterator->Start;
-
-            //         return cursorPosition;
-            //     }
-
-            //     cursorLine++;
-            // }
-
-            //cursorPosition += iterator->Length;
         }
     }
     
@@ -514,25 +499,5 @@ void TextDocument::command(std::function<void()> _Command)
         iterator->LineBreaksStart = binary_search(iterator->Buffer->get_line_breaks_positions(), iterator->Start);
         iterator->LineBreaksEnd   = binary_search(iterator->Buffer->get_line_breaks_positions(), iterator->Start + iterator->Length);
         iterator->LineBreaksCount = iterator->LineBreaksEnd - iterator->LineBreaksStart;
-
-        // TODO: uncomment this code if the above code does not work =)
-        // iterator->LineBreaksStart = INT_MAX;
-        // iterator->LineBreaksEnd   = INT_MIN;
-        // iterator->LineBreaksCount = 0;
-
-        // int firstLine = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start);
-        // int lastLine  = iterator->Buffer->binarySearch(iterator->Buffer->m_LineBreaksPositions, iterator->Start + iterator->Length);
-
-        // for(int i = firstLine; i < lastLine; i++)
-        // {
-        //     int pos = iterator->Buffer->m_LineBreaksPositions[i];
-
-        //     if(pos >= iterator->Start && pos <= iterator->Start + iterator->Length)
-        //     {
-        //         iterator->LineBreaksStart = std::min<int>(iterator->LineBreaksStart, i);
-        //         iterator->LineBreaksEnd   = std::max<int>(iterator->LineBreaksEnd, i);
-        //         iterator->LineBreaksCount++;
-        //     }
-        // }
     }
 }

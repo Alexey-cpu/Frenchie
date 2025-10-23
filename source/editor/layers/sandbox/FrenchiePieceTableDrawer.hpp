@@ -13,7 +13,7 @@
 #include <imgui_stdlib.h>
 #include <imgui_internal.h>
 
-#include <FrenchieCoreTextPieceTable.hpp>
+#include <FrenchieCoreTextDocument.hpp>
 
 #include <mutex>
 
