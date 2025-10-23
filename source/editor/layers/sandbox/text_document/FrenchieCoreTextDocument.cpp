@@ -368,14 +368,22 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
 void TextDocument::undo()
 {
+    // undo state
     m_States.set_position(m_States.get_position() - 1);
     m_Pieces = m_States.at(1);
+
+    // clear cache
+    m_Cache.clear();
 }
 
 void TextDocument::redo()
 {
+    // redo state
     m_States.set_position(m_States.get_position() + 1); 
     m_Pieces = m_States.at(1);
+
+    // clear cache
+    m_Cache.clear();
 }
 
 void TextDocument::move_cursor_right()
@@ -452,24 +460,24 @@ int TextDocument::symbols_count() const
 
 TextDocumentSymbolIterator TextDocument::line_begin(const int& _Line) const
 {
-    if(m_LinesEndsIteratorsCache.find(_Line) == m_LinesEndsIteratorsCache.end())
+    if(m_Cache.find(_Line) == m_Cache.end())
     {
-        m_LinesEndsIteratorsCache[_Line].Begin = TextDocumentSymbolIterator(this, get_line_start_index(_Line));
-        m_LinesEndsIteratorsCache[_Line].End   = TextDocumentSymbolIterator(this, get_line_end_index(_Line));
+        m_Cache[_Line].Begin = TextDocumentSymbolIterator(this, get_line_start_index(_Line));
+        m_Cache[_Line].End   = TextDocumentSymbolIterator(this, get_line_end_index(_Line));
     }
 
-    return m_LinesEndsIteratorsCache[_Line].Begin;
+    return m_Cache[_Line].Begin;
 }
 
 TextDocumentSymbolIterator TextDocument::line_end(const int& _Line) const
 {
-    if(m_LinesEndsIteratorsCache.find(_Line) == m_LinesEndsIteratorsCache.end())
+    if(m_Cache.find(_Line) == m_Cache.end())
     {
-        m_LinesEndsIteratorsCache[_Line].Begin = TextDocumentSymbolIterator(this, get_line_start_index(_Line));
-        m_LinesEndsIteratorsCache[_Line].End   = TextDocumentSymbolIterator(this, get_line_end_index(_Line));
+        m_Cache[_Line].Begin = TextDocumentSymbolIterator(this, get_line_start_index(_Line));
+        m_Cache[_Line].End   = TextDocumentSymbolIterator(this, get_line_end_index(_Line));
     }
 
-    return m_LinesEndsIteratorsCache[_Line].End;
+    return m_Cache[_Line].End;
 }
 
 int TextDocument::lines_count() const
@@ -515,6 +523,9 @@ void TextDocument::command(std::function<void()> _Command)
     // update state
     m_States.push(m_Pieces);
 
+    // clear cache
+    m_Cache.clear();
+
     // process pieces
     for(auto iterator = m_Pieces.Pieces.begin(); iterator != m_Pieces.Pieces.end(); iterator++)
     {
@@ -532,7 +543,4 @@ void TextDocument::command(std::function<void()> _Command)
         iterator->LineBreaksEnd   = binary_search(iterator->Buffer->get_line_breaks_positions(), iterator->Start + iterator->Length);
         iterator->LineBreaksCount = iterator->LineBreaksEnd - iterator->LineBreaksStart;
     }
-
-    // clear cache
-    m_LinesEndsIteratorsCache.clear();
 }
