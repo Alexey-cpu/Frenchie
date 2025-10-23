@@ -26,6 +26,3 @@
 [submodule "tools/pcre2"]
 	path = tools/pcre2
 	url = https://github.com/PCRE2Project/pcre2.git
-[submodule "tools/utfcpp"]
-	path = tools/utfcpp
-	url = https://github.com/nemtrif/utfcpp.git
