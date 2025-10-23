@@ -46,9 +46,11 @@ TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Tabl
     m_Table(_Table),
     m_Position(_Position)
 {
-    if(m_Table == nullptr) return;
+    if(m_Table == nullptr)
+        return;
 
-    auto it = m_Table->get_piece_iterator_by_global_index(m_Position);
+    // retrieve iterator and it's offset
+    TextDocument::PieceIteratorInfo it = m_Table->get_piece_iterator_by_global_index(m_Position);
     m_Iterator = it.Iterator;
     m_Offset   = it.Offset;
 }
@@ -67,6 +69,8 @@ std::list<TextDocumentPiece>::const_iterator TextDocumentSymbolIterator::operato
 
 TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator++()
 {
+    ++m_Position;
+
     if(++m_Offset >= m_Iterator->Length)
     {
         ++m_Iterator;
@@ -83,6 +87,8 @@ TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator++()
 
 TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator--()
 {
+    --m_Position;
+
     if(--m_Offset < 0)
     {
         --m_Iterator;
