@@ -8,14 +8,14 @@
 using namespace Frenchie::Core;
 
 // TextDocumentBuffer
-TextDocumentBuffer::TextDocumentBuffer(const std::wstring& _Buffer)
+TextDocumentBuffer::TextDocumentBuffer(const std::u32string& _Buffer)
 {
     append(_Buffer);
 }
 
 TextDocumentBuffer::~TextDocumentBuffer(){}
 
-wchar_t& TextDocumentBuffer::at(const int& _Position) const
+char32_t& TextDocumentBuffer::at(const int& _Position) const
 {
     return m_Text[_Position];
 }
@@ -25,7 +25,7 @@ int TextDocumentBuffer::size() const
     return (int)m_Text.size();
 }
 
-void TextDocumentBuffer::append(const std::wstring& _Text)
+void TextDocumentBuffer::append(const std::u32string& _Text)
 {
     m_Text.append(_Text);
 
@@ -54,7 +54,7 @@ TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Tabl
 
 TextDocumentSymbolIterator::~TextDocumentSymbolIterator(){}
 
-wchar_t TextDocumentSymbolIterator::operator*() const
+char32_t TextDocumentSymbolIterator::operator*() const
 {
     return m_Iterator->Buffer->at(m_Iterator->Start + m_Offset);
 }
@@ -95,9 +95,9 @@ TextDocumentSymbolIterator TextDocumentSymbolIterator::operator--(int)
 }
 
 // TextDocument
-TextDocument::TextDocument(const std::wstring& _Buffer) :
+TextDocument::TextDocument(const std::u32string& _Buffer) :
     m_Immutable(_Buffer),
-    m_Appendable(std::wstring()),
+    m_Appendable(std::u32string()),
     m_Pieces({TextDocumentPiece(&m_Immutable, 0, (int)m_Immutable.size())})
     {
         command(nullptr);
@@ -193,7 +193,7 @@ TextDocument::PieceIteratorInfo TextDocument::get_piece_iterator_by_global_index
     return {cursorIterator, offset};
 }
 
-void TextDocument::insert(const int& _Position, const std::wstring& _What)
+void TextDocument::insert(const int& _Position, const std::u32string& _What)
 {
     command([this, &_Position, &_What]()
         {
