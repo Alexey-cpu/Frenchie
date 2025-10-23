@@ -28,7 +28,7 @@ namespace Frenchie
             const std::vector<int>& get_line_breaks_positions() const;
 
         protected:
-            mutable std::u32string     m_Text;
+            mutable std::u32string   m_Text;
             mutable std::vector<int> m_LineBreaksPositions;
         };
 
@@ -49,6 +49,21 @@ namespace Frenchie
             int                       LineBreaksStart = 0;
             int                       LineBreaksEnd   = 0;
             int                       LineBreaksCount = 0;
+        };
+
+        class TextDocumentPieceTable
+        {
+        public:
+
+            typedef std::list<TextDocumentPiece>::const_iterator ConstPieceIterator;
+            typedef std::list<TextDocumentPiece>::iterator PieceIterator;
+
+            TextDocumentPieceTable(const std::list<TextDocumentPiece>& _Pieces, const int& _Position) :
+                Pieces(_Pieces),
+                Cursor(_Position){}
+
+            std::list<TextDocumentPiece> Pieces;
+            int                          Cursor = 0;
         };
 
         class TextDocumentSymbolIterator final
@@ -88,12 +103,10 @@ namespace Frenchie
         {
         public:
 
-            typedef std::list<TextDocumentPiece>::const_iterator ConstPieceIterator;
-
             struct PieceIteratorInfo
             {
-                ConstPieceIterator Iterator;
-                int                Offset;
+                TextDocumentPieceTable::ConstPieceIterator Iterator;
+                int                                        Offset;
             };
 
             TextDocument(const std::u32string& _Buffer = std::u32string());
@@ -102,17 +115,30 @@ namespace Frenchie
             // getters
             int get_line_start_index(const int&) const;
             int get_line_end_index(const int&) const;
+            int get_cursor_position() const;
 
             PieceIteratorInfo get_piece_iterator_by_global_index(const int&) const;
 
+            // setters
+            void set_cursor_position(const int&) const;
+
             // API
             void insert(const int& _Position, const std::u32string& _What);
-            void erase(const int& _Position, const int& _Count = 1);
+            void insert(const std::u32string& _What);
+
+            void erase(const int& _Position, const int& _Count);
+            void erase(const int& _Count = 1);
+
             void undo();
             void redo();
 
-            ConstPieceIterator pieces_begin() const;
-            ConstPieceIterator pieces_end() const;
+            void move_cursor_right();
+            void move_cursor_left();
+            void move_cursor_down();
+            void move_cursor_up();
+
+            TextDocumentPieceTable::ConstPieceIterator pieces_begin() const;
+            TextDocumentPieceTable::ConstPieceIterator pieces_end() const;
             int pieces_count() const;
 
             TextDocumentSymbolIterator symbols_begin() const;
@@ -129,11 +155,11 @@ namespace Frenchie
             friend class TextDocumentSymbolIterator;
 
             // info
-            const   TextDocumentBuffer                        m_Immutable;
-            mutable TextDocumentBuffer                        m_Appendable;
-            mutable std::list<TextDocumentPiece>              m_Pieces;
-            mutable std::vector<std::list<TextDocumentPiece>> m_States;
-            mutable size_t                                    m_CurrentState = 0;
+            const   TextDocumentBuffer                  m_Immutable;
+            mutable TextDocumentBuffer                  m_Appendable;
+            mutable TextDocumentPieceTable              m_Pieces;
+            mutable std::vector<TextDocumentPieceTable> m_States;
+            mutable size_t                              m_CurrentState = 0;
 
             // service methods
             void command(std::function<void()>);

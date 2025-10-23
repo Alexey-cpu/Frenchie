@@ -98,7 +98,7 @@ TextDocumentSymbolIterator TextDocumentSymbolIterator::operator--(int)
 TextDocument::TextDocument(const std::u32string& _Buffer) :
     m_Immutable(_Buffer),
     m_Appendable(std::u32string()),
-    m_Pieces({TextDocumentPiece(&m_Immutable, 0, (int)m_Immutable.size())})
+    m_Pieces(TextDocumentPieceTable({TextDocumentPiece(&m_Immutable, 0, (int)m_Immutable.size())}, 0))
     {
         command(nullptr);
     }
@@ -110,14 +110,19 @@ int TextDocument::get_line_start_index(const int& _Line) const
     return _Line - 1 < 0 ? 0 : get_line_end_index(_Line - 1);
 }
 
+int TextDocument::get_cursor_position() const
+{
+    return m_Pieces.Cursor;
+}
+
 int TextDocument::get_line_end_index(const int& _Line) const
 {
     // look for the row where to append
     int  cursorLine     = 0;
     int  cursorPosition = 0;
-    auto cursorIterator = m_Pieces.begin();
+    auto cursorIterator = m_Pieces.Pieces.begin();
 
-    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    for(auto iterator = m_Pieces.Pieces.begin(); iterator != m_Pieces.Pieces.end(); iterator++)
     {
         if(iterator->LineBreaksCount <= 0)
         {
@@ -160,21 +165,21 @@ TextDocument::PieceIteratorInfo TextDocument::get_piece_iterator_by_global_index
 {
     // look for the row where to append
     int  cursorPosition = 0;
-    auto cursorIterator = m_Pieces.begin();
+    auto cursorIterator = m_Pieces.Pieces.begin();
 
-    for(auto iterator = m_Pieces.begin();
-        iterator != m_Pieces.end() && cursorPosition < _Position;
+    for(auto iterator = m_Pieces.Pieces.begin();
+        iterator != m_Pieces.Pieces.end() && cursorPosition < _Position;
         cursorPosition += iterator->Length, iterator++) 
         cursorIterator = iterator;
     
     // empty table
-    if(cursorIterator == m_Pieces.end())
-        return {m_Pieces.end(), 0};
+    if(cursorIterator == m_Pieces.Pieces.end())
+        return {m_Pieces.Pieces.end(), 0};
 
     // beggining
     if(_Position <= 0 && (cursorPosition - _Position) == 0)
     {
-        if(cursorIterator != m_Pieces.begin()) 
+        if(cursorIterator != m_Pieces.Pieces.begin()) 
         {
             --cursorIterator;
             return {cursorIterator, cursorIterator->Length - 1};
@@ -193,23 +198,58 @@ TextDocument::PieceIteratorInfo TextDocument::get_piece_iterator_by_global_index
     return {cursorIterator, offset};
 }
 
+void TextDocument::set_cursor_position(const int& _Position) const
+{
+    m_Pieces.Cursor = _Position;
+
+    // adjust cursor position
+    if(m_Pieces.Cursor >= symbols_count())
+    {
+        m_Pieces.Cursor = symbols_count() - 1;
+    }
+    else if(m_Pieces.Cursor < 0)
+    {
+        m_Pieces.Cursor = 0;
+    }
+}
+
+void TextDocument::insert(const std::u32string& _What)
+{
+    // insert at cursor position
+    insert(get_cursor_position(), _What);
+
+    // move cursor on the right
+    for(int i = 0; i < (int)_What.size(); i++)
+        move_cursor_right();   
+}
+
+void TextDocument::erase(const int& _Count)
+{
+    // erase at cursor position
+    erase(get_cursor_position(), _Count);
+
+    // move cursor on the left
+    for(int i = 0; i < _Count; i++)
+        move_cursor_left();  
+}
+
 void TextDocument::insert(const int& _Position, const std::u32string& _What)
 {
     command([this, &_Position, &_What]()
         {
             // look for the row where to append
             int  cursorPosition = 0;
-            auto cursorIterator = m_Pieces.begin();
+            auto cursorIterator = m_Pieces.Pieces.begin();
 
-            for(auto iterator = m_Pieces.begin();
-                iterator != m_Pieces.end() && cursorPosition < _Position;
+            for(auto iterator = m_Pieces.Pieces.begin();
+                iterator != m_Pieces.Pieces.end() && cursorPosition < _Position;
                 cursorPosition += iterator->Length, iterator++) 
                 cursorIterator = iterator;
 
             // insert into empty table
-            if(cursorIterator == m_Pieces.end())
+            if(cursorIterator == m_Pieces.Pieces.end())
             {
-                m_Pieces.push_back(TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Pieces.Pieces.push_back(TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
@@ -217,7 +257,7 @@ void TextDocument::insert(const int& _Position, const std::u32string& _What)
             // insert into beginning
             if(_Position <= 0 && (cursorPosition - _Position) == 0)
             {
-                m_Pieces.insert(cursorIterator, TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Pieces.Pieces.insert(cursorIterator, TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
@@ -225,7 +265,7 @@ void TextDocument::insert(const int& _Position, const std::u32string& _What)
             // insert into end
             if(_Position > 0 && (cursorPosition - _Position) == 0)
             {
-                m_Pieces.insert(std::next(cursorIterator), TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+                m_Pieces.Pieces.insert(std::next(cursorIterator), TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
                 m_Appendable.append(_What);
                 return;
             }
@@ -234,12 +274,12 @@ void TextDocument::insert(const int& _Position, const std::u32string& _What)
             int a = cursorPosition - _Position;
             int b = cursorIterator->Length - a;
 
-            auto newPiece = m_Pieces.insert(std::next(cursorIterator), TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
+            auto newPiece = m_Pieces.Pieces.insert(std::next(cursorIterator), TextDocumentPiece(&m_Appendable, (int)m_Appendable.size(), (int)_What.size()));
             m_Appendable.append(_What);
 
             cursorIterator->Length = b;
 
-            m_Pieces.insert(std::next(newPiece), TextDocumentPiece(cursorIterator->Buffer, cursorIterator->Start + b, a));
+            m_Pieces.Pieces.insert(std::next(newPiece), TextDocumentPiece(cursorIterator->Buffer, cursorIterator->Start + b, a));
         }
     );
 }
@@ -253,21 +293,21 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
         // look for the point where to append
         int  cursorPosition = 0;
-        auto cursorIterator = m_Pieces.begin();
+        auto cursorIterator = m_Pieces.Pieces.begin();
 
-        for(auto iterator = m_Pieces.begin();
-            iterator != m_Pieces.end() && cursorPosition < _Position;
+        for(auto iterator = m_Pieces.Pieces.begin();
+            iterator != m_Pieces.Pieces.end() && cursorPosition < _Position;
             cursorPosition += iterator->Length, iterator++) 
             cursorIterator = iterator;
 
         // remove from empty table
-        if(cursorIterator == m_Pieces.end())
+        if(cursorIterator == m_Pieces.Pieces.end())
             return;
 
         // remove from beginning
         if(_Position <= 0 && (cursorPosition - _Position) == 0)
         {
-            if(cursorIterator != m_Pieces.begin())
+            if(cursorIterator != m_Pieces.Pieces.begin())
             {
                 cursorIterator--;
                 cursorIterator->Length--;
@@ -284,7 +324,7 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
             // remove an empty piece
             if(cursorIterator->Length <= 0)
-                m_Pieces.erase(cursorIterator);
+                m_Pieces.Pieces.erase(cursorIterator);
 
             return;
         }
@@ -296,7 +336,7 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
             // remove an empty piece
             if(cursorIterator->Length <= 0)
-                m_Pieces.erase(cursorIterator);
+                m_Pieces.Pieces.erase(cursorIterator);
 
             return;
         }
@@ -307,7 +347,7 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
         cursorIterator->Length = b - 1;
 
-        m_Pieces.insert(std::next(cursorIterator), TextDocumentPiece(cursorIterator->Buffer, cursorIterator->Start + b, a));
+        m_Pieces.Pieces.insert(std::next(cursorIterator), TextDocumentPiece(cursorIterator->Buffer, cursorIterator->Start + b, a));
     };
 
     command([this, &remove, &_Position, &_Count]()
@@ -332,19 +372,56 @@ void TextDocument::redo()
     m_Pieces    = m_States[m_CurrentState];
 }
 
-TextDocument::ConstPieceIterator TextDocument::pieces_begin() const
+void TextDocument::move_cursor_right()
 {
-    return m_Pieces.begin();
+    set_cursor_position(get_cursor_position() + 1);
 }
 
-TextDocument::ConstPieceIterator TextDocument::pieces_end() const
+void TextDocument::move_cursor_left()
 {
-    return m_Pieces.end();
+    set_cursor_position(get_cursor_position() - 1);
+}
+
+void TextDocument::move_cursor_down()
+{
+    int position = get_cursor_position();
+
+    for(auto it = TextDocumentSymbolIterator(this, position); it != symbols_end(); it++, position++)
+    {
+        if(*it == '\n')
+            break;
+    }
+
+    set_cursor_position(++position);
+}
+
+void TextDocument::move_cursor_up()
+{
+    auto cursorPosition    = get_cursor_position();
+    auto cursorIterator    = TextDocumentSymbolIterator(this, cursorPosition);
+
+    for(auto it = cursorIterator; it != symbols_begin(); it--, cursorPosition--)
+    {
+        if(it != symbols_end() && it != cursorIterator && *it == '\n')
+            break;
+    }
+
+    set_cursor_position(cursorPosition);
+}
+
+TextDocumentPieceTable::ConstPieceIterator TextDocument::pieces_begin() const
+{
+    return m_Pieces.Pieces.begin();
+}
+
+TextDocumentPieceTable::ConstPieceIterator TextDocument::pieces_end() const
+{
+    return m_Pieces.Pieces.end();
 }
 
 int TextDocument::pieces_count() const
 {
-    return (int)m_Pieces.size();
+    return (int)m_Pieces.Pieces.size();
 }
 
 TextDocumentSymbolIterator TextDocument::symbols_begin() const
@@ -361,7 +438,7 @@ int TextDocument::symbols_count() const
 {
     int size = 0;
 
-    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    for(auto iterator = m_Pieces.Pieces.begin(); iterator != m_Pieces.Pieces.end(); iterator++)
         size += iterator->Length;
 
     return size;
@@ -381,10 +458,10 @@ int TextDocument::lines_count() const
 {
     int cursorLine = 0;
 
-    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    for(auto iterator = m_Pieces.Pieces.begin(); iterator != m_Pieces.Pieces.end(); iterator++)
         cursorLine += iterator->LineBreaksCount;
 
-    if(!m_Pieces.empty() && std::prev(m_Pieces.end())->LineBreaksCount <= 0)
+    if(!m_Pieces.Pieces.empty() && std::prev(m_Pieces.Pieces.end())->LineBreaksCount <= 0)
         ++cursorLine;
 
     return cursorLine;
@@ -422,14 +499,14 @@ void TextDocument::command(std::function<void()> _Command)
     m_CurrentState = m_States.size() - 1;
 
     // process pieces
-    for(auto iterator = m_Pieces.begin(); iterator != m_Pieces.end(); iterator++)
+    for(auto iterator = m_Pieces.Pieces.begin(); iterator != m_Pieces.Pieces.end(); iterator++)
     {
         // remove empty pieces
         if(iterator->Length <= 0)
         {
             auto newIterator = iterator;
             iterator++;
-            m_Pieces.erase(newIterator);
+            m_Pieces.Pieces.erase(newIterator);
             continue;
         }
 
