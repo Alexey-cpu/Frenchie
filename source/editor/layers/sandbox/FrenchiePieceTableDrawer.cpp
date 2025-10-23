@@ -92,7 +92,7 @@ PieceTableDrawer::~PieceTableDrawer(){}
 
 bool PieceTableDrawer::awake()
 {
-    std::wstring text;
+    std::u32string text;
 
     #ifndef PIECE_TABLE_DRAWER_DEBUG
     for (int i = 0; i < 1e6; i++)
@@ -104,17 +104,17 @@ bool PieceTableDrawer::awake()
         
         for (int j = 0; j < 1; j++)
         {
-            text.append(L"HelloWorld");
+            text.append(U"Всем привет !!!!");
         }
 
-        text.append(L"\n");
+        text.append(U"\n");
     }
 
     m_Table = std::make_unique<Frenchie::Core::TextDocument>(text);
 
-    m_Table->insert(6, L"123");
-    m_Table->insert(12, L"\n456\n789");
-    m_Table->insert(12, L"\n121314");
+    m_Table->insert(6, U"123");
+    m_Table->insert(12, U"\n456\n789");
+    m_Table->insert(12, U"\n121314");
 
     return true;
 }
@@ -248,7 +248,7 @@ void PieceTableDrawer::frame_update()
 
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter))
                     {
-                        m_Table->insert(m_CursorGlobalPosition, L"\n");
+                        m_Table->insert(m_CursorGlobalPosition, U"\n");
                         ++m_CursorGlobalPosition;
                         adjust_cursor_position();
                     }
@@ -278,8 +278,8 @@ void PieceTableDrawer::frame_update()
                 {
                     // retrieve symbol
                     std::string symbol =
-                        Frenchie::Core::String::as_utf8(
-                            std::wstring(1, *it));
+                        Frenchie::Core::UTF::utf32_to_utf8(
+                            std::u32string(1, *it));
 
                     // draw symbol
                     ImGui::GetWindowDrawList()->AddText(
@@ -468,8 +468,8 @@ void PieceTableDrawer::frame_update()
                 {
                     auto itr = m_Table->get_piece_iterator_by_global_index(index);
 
-                    std::string pieceText = Frenchie::Core::String::as_utf8(
-                        std::wstring(
+                    std::string pieceText = Frenchie::Core::UTF::utf32_to_utf8(
+                        std::u32string(
                             &itr.Iterator->Buffer->at(itr.Iterator->Start), 
                             &itr.Iterator->Buffer->at(itr.Iterator->Start + itr.Iterator->Length))
                     );
@@ -527,8 +527,7 @@ void PieceTableDrawer::insert_symbol_command()
 				int  count = Helpers::ImTextCharToUtf8(utf8, c);
 
                 // insert symbol
-				m_Table->insert(m_CursorGlobalPosition,
-                    Frenchie::Core::String::as_wide(std::string(utf8, count)));
+				m_Table->insert(m_CursorGlobalPosition, Frenchie::Core::UTF::utf8_to_utf32(std::string(utf8, count)));
 
                 // move cursor right
                 m_CursorGlobalPosition++;
