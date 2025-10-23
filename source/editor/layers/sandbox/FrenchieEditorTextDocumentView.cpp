@@ -1,4 +1,4 @@
-#include <FrenchiePieceTableDrawer.hpp>
+#include <FrenchieEditorTextDocumentView.hpp>
 
 using namespace Frenchie::Editor;
 
@@ -21,7 +21,7 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Application::application()->push_layer<PieceTableDrawer>()->show();
+                    Frenchie::Application::application()->push_layer<TextDocumentView>()->show();
                 }
 
                 // Command::TRegistryType
@@ -85,12 +85,16 @@ public:
 };
 
 // PieceTableDrawer
-PieceTableDrawer::PieceTableDrawer() : Frenchie::Application::Layer(STRINGIFY(PieceTableDrawer)){}
-PieceTableDrawer::~PieceTableDrawer(){}
+TextDocumentView::TextDocumentView() :
+    Frenchie::Application::Layer(STRINGIFY(TextDocumentView))
+{
+}
+
+TextDocumentView::~TextDocumentView(){}
 
 //#define PIECE_TABLE_DRAWER_DEBUG
 
-bool PieceTableDrawer::awake()
+bool TextDocumentView::awake()
 {
     std::u32string text;
 
@@ -121,14 +125,16 @@ bool PieceTableDrawer::awake()
 
 #ifndef PIECE_TABLE_DRAWER_DEBUG
 
-void PieceTableDrawer::frame_update()
+void TextDocumentView::frame_update()
 {
     int start = 0;
     int end   = 0;
 
     ImGui::Begin(get_name().c_str(), &m_Opened);
     {
-        ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->lines_count() + 2) * ImGui::GetFontSize()));
+        ImGui::SetNextWindowContentSize(ImVec2(
+            2048.f,
+            (m_Table->lines_count() + 2) * ImGui::GetFontSize()));
 
         ImGui::BeginChild(
             "TextEditor",
@@ -144,9 +150,22 @@ void PieceTableDrawer::frame_update()
             // execute commands here
             if(ImGui::IsWindowHovered())
             {
+                // edit
                 document_insert_symbol_command();
+                document_erase_symbol_command();
+
+                // cursor
+                document_move_cursor_left_command();
+                document_move_cursor_right_command();
+                document_move_cursor_down_command();
+                document_move_cursor_up_command();
+
+                // undo/redo
+                document_undo_command();
+                document_redo_command();
             }
 
+            // draw text
             ImVec2 scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 
             ImRect viewport = ImRect(ImGui::GetCursorScreenPos() + scroll, 
@@ -166,30 +185,35 @@ void PieceTableDrawer::frame_update()
 
                 for (auto it = m_Table->line_begin(lineIndex); it != m_Table->line_end(lineIndex); it++)
                 {
-                    // retrieve symbol
-                    std::string symbol =
-                        Frenchie::Core::String::convert_utf32_to_utf8(
-                            std::u32string(1, *it));
-
                     // draw symbol
-                    ImGui::GetWindowDrawList()->AddText(
-                            symbolPosition,
-                            IM_COL32(0, 255, 0, 255),
-                            symbol.c_str()
-                        );
+                    std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *it));
 
-                    ImVec2 symbolSize =
-                        ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                            ImGui::GetFontSize(),
-                            FLT_MAX,
-                            0.f,
-                            symbol.c_str(),
-                            NULL,
-                            NULL
-                        );
+                    ImGui::GetWindowDrawList()->AddText(
+                        symbolPosition,
+                        IM_COL32(0, 255, 0, 255),
+                        symbol.c_str()
+                    );
+
+                    ImVec2 symbolSize = calculate_text_size(symbol);
 
                     // highlight symbol
                     symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+
+                    if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                    {
+                        ImGui::GetWindowDrawList()->AddRectFilled(
+                            symbolRectangle.Min,
+                            symbolRectangle.Max,
+                            IM_COL32(255, 0, 0, 128));
+
+                        // update cursor position
+                        if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+                        {
+                            // update cursor position here ...
+                        }
+                    }
 
                     // update symbol position
                     symbolPosition =
@@ -204,7 +228,7 @@ void PieceTableDrawer::frame_update()
 
         ImGui::BeginChild("Status", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
         {
-            ImGui::TextUnformatted(fmt::format("start {} end {} pieces count {}", start, end, m_Table->pieces_count()).c_str());
+            ImGui::TextUnformatted(fmt::format("diplayed lines : {} {} | pieces count {}", start, end, m_Table->pieces_count()).c_str());
 
             ImGui::EndChild();
         }
@@ -529,44 +553,38 @@ void PieceTableDrawer::frame_update()
 
 #endif
 
-void PieceTableDrawer::frame_finish() 
+void TextDocumentView::frame_finish() 
 {
 }
 
-bool PieceTableDrawer::allows_multiple_instances() const
+bool TextDocumentView::allows_multiple_instances() const
 {
     return false;
 }
 
-void PieceTableDrawer::document_insert_symbol_command()
+ImVec2 TextDocumentView::calculate_text_size(const std::string& _Text) const
+{
+    return ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+        ImGui::GetFontSize(), FLT_MAX, 0.f, _Text.c_str(), nullptr, nullptr);
+}
+
+void TextDocumentView::document_insert_symbol_command()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	
-	auto onCharPressed = [this](unsigned int c)
+
+	if (ImGui::Shortcut(ImGuiKey::ImGuiKey_Tab, ImGuiInputFlags_::ImGuiInputFlags_Repeat))
 	{
-		if(m_Table == nullptr) 
-			return;
-
-		// insert user input into a given line as wide character string
-		Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
-			[this, c]()
-			{
-				// retrieve user input in UTF-8 codec
-				char utf8[5];
-				int  count = Helpers::ImTextCharToUtf8(utf8, c);
-
-                // insert symbol
-				m_Table->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
-			}
-		);
-	};
-
-	if (ImGui::Shortcut(ImGuiKey_Tab, ImGuiInputFlags_Repeat))
-	{
-		unsigned int c = '\t'; // Insert TAB
-		onCharPressed(c);
+		on_character_ressed((unsigned int)'\t');
+        return;
 	}
-	else if (io.InputQueueCharacters.Size > 0)
+
+    if (ImGui::Shortcut(ImGuiKey::ImGuiKey_Enter, ImGuiInputFlags_::ImGuiInputFlags_Repeat))
+	{
+		on_character_ressed((unsigned int)'\n');
+        return;
+	}
+
+	if (io.InputQueueCharacters.Size > 0)
 	{
 		if (!((io.KeyCtrl && !io.KeyAlt) || (io.ConfigMacOSXBehaviors && io.KeyCtrl)))
 		{
@@ -574,14 +592,129 @@ void PieceTableDrawer::document_insert_symbol_command()
 			{
 				// Insert character if they pass filtering
 				unsigned int c = (unsigned int)io.InputQueueCharacters[n];
-				if (c == '\t') // Skip Tab, see above.
+
+				if (c == '\t' || c == '\n') // Skip Tab and Enter (see above)
 					continue;
 
-				onCharPressed(c);
+				on_character_ressed(c);
 			}
 		}
 
 		// consume user input
 		io.InputQueueCharacters.resize(0);
 	}
+}
+
+void TextDocumentView::document_erase_symbol_command()
+{
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->erase();
+            }
+        );
+    }
+}
+
+void TextDocumentView::document_move_cursor_left_command()
+{
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->move_cursor_left();
+            }
+        );
+    }
+}
+
+void TextDocumentView::document_move_cursor_right_command()
+{
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->move_cursor_right();
+            }
+        );
+    }
+}
+
+void TextDocumentView::document_move_cursor_down_command()
+{
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->move_cursor_down();
+            }
+        );
+    }
+}
+
+void TextDocumentView::document_move_cursor_up_command()
+{
+    if(!ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->move_cursor_up();
+            }
+        );
+    }
+}
+
+void TextDocumentView::document_undo_command()
+{
+    if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_Z))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->undo();
+            }
+        );
+    }
+}
+
+void TextDocumentView::document_redo_command()
+{
+    if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_Y))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Table != nullptr)
+                    m_Table->redo();
+            }
+        );
+    }
+}
+
+void TextDocumentView::on_character_ressed(const unsigned int& _Char)
+{
+    Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        [this, _Char]()
+        {
+            // retrieve user input in UTF-8 codec
+            char utf8[5];
+            int  count = Helpers::ImTextCharToUtf8(utf8, _Char);
+
+            // insert symbol
+            if(m_Table != nullptr)
+                m_Table->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
+        }
+    );
 }
