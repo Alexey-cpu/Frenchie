@@ -130,10 +130,22 @@ void PieceTableDrawer::frame_update()
     {
         ImGui::SetNextWindowContentSize(ImVec2(10000, (m_Table->lines_count() + 2) * ImGui::GetFontSize()));
 
-        ImGui::BeginChild("Text",
-            ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
+        ImGui::BeginChild(
+            "TextEditor",
+            ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f),
+            ImGuiChildFlags_::ImGuiChildFlags_Borders,
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking  |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoResize   |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoMove     |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
+        );
         {
-            if(ImGui::IsWindowHovered()) insert_symbol_command();
+            // execute commands here
+            if(ImGui::IsWindowHovered())
+            {
+                document_insert_symbol_command();
+            }
 
             ImVec2 scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 
@@ -149,6 +161,9 @@ void PieceTableDrawer::frame_update()
 
             for (int lineIndex = start; lineIndex < end; lineIndex++)
             {
+                m_Table->line_begin(lineIndex);
+                m_Table->line_end(lineIndex);
+
                 for (auto it = m_Table->line_begin(lineIndex); it != m_Table->line_end(lineIndex); it++)
                 {
                     // retrieve symbol
@@ -189,7 +204,7 @@ void PieceTableDrawer::frame_update()
 
         ImGui::BeginChild("Status", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
         {
-            ImGui::TextUnformatted(fmt::format("start {} end {}", start, end).c_str());
+            ImGui::TextUnformatted(fmt::format("start {} end {} pieces count {}", start, end, m_Table->pieces_count()).c_str());
 
             ImGui::EndChild();
         }
@@ -224,8 +239,29 @@ void PieceTableDrawer::frame_update()
             // draw tree
             ImGui::TableSetColumnIndex(0);
 
-            ImGui::BeginChild("Text");
+            float heigth = 64.f;
+
+            ImGui::BeginChild(
+                "TOOLBAR",
+                ImVec2(ImGui::GetContentRegionAvail().x, heigth));
             {
+                if(ImGui::Button("Undo", ImVec2(0.f, heigth))) m_Table->undo();
+                ImGui::SameLine();
+                if(ImGui::Button("Redo", ImVec2(0.f, heigth))) m_Table->redo();
+
+                ImGui::EndChild();
+            }
+
+            ImGui::BeginChild("Text", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - heigth));
+            {
+                // ImGui::BeginChild("Buttons", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
+                // {
+                //     if(ImGui::Button("Undo")) m_Table->undo();
+                //     if(ImGui::Button("Redo")) m_Table->redo();
+
+                //     ImGui::EndChild();
+                // }
+
                 if(ImGui::IsWindowHovered())
                 {
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
@@ -502,7 +538,7 @@ bool PieceTableDrawer::allows_multiple_instances() const
     return false;
 }
 
-void PieceTableDrawer::insert_symbol_command()
+void PieceTableDrawer::document_insert_symbol_command()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	

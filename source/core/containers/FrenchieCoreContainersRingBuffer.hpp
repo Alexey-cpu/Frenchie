@@ -41,7 +41,7 @@ namespace Frenchie
 
                 Type& at(const int& _Index)
                 {
-                    int index = m_Position - _Index;
+                    int index = m_Position - std::max<int>(_Index, 0);
 
                     if(index < 0)
                         index += Size;
