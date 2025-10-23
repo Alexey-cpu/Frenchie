@@ -32,6 +32,7 @@ include("tools/rapidjson.cmake")
 include("tools/ryml.cmake")
 include("tools/pugixml.cmake")
 include("tools/pcre2.cmake")
+include(tools/utfcpp.cmake)
 
 #--------------------------------------------------------------
 # add executable
@@ -99,6 +100,9 @@ target_link_libraries(
     pcre2-8
     pcre2-16
     pcre2-32
+
+    # UTFCPP
+    utf8cpp
     )
 
 target_include_directories(
