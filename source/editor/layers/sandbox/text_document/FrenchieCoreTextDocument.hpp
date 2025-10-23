@@ -1,11 +1,13 @@
 #pragma once
 
+#include <map>
 #include <list>
 #include <vector>
 #include <string>
 #include <functional>
 
 #include <FrenchieCoreUTF.hpp>
+#include <FrenchieCoreContainersRingBuffer.hpp>
 
 namespace Frenchie
 {
@@ -109,6 +111,12 @@ namespace Frenchie
                 int                                        Offset;
             };
 
+            struct LineInfo
+            {
+                TextDocumentSymbolIterator Begin;
+                TextDocumentSymbolIterator End;
+            };
+
             TextDocument(const std::u32string& _Buffer = std::u32string());
             ~TextDocument();
 
@@ -160,6 +168,9 @@ namespace Frenchie
             mutable TextDocumentPieceTable              m_Pieces;
             mutable std::vector<TextDocumentPieceTable> m_States;
             mutable size_t                              m_CurrentState = 0;
+            mutable std::map<int, LineInfo>             m_LinesEndsIteratorsCache;
+
+            //mutable Frenchie::Core::Containers::RingBuffer<TextDocumentPieceTable> m_States;
 
             // service methods
             void command(std::function<void()>);

@@ -1,6 +1,8 @@
 #include <FrenchieCoreSerializationFormatXML.hpp>
 
 #include <FrenchieCoreLogger.hpp>
+#include <FrenchieCoreContainersStack.hpp>
+#include <FrenchieCoreContainersQueue.hpp>
 
 // int main(int, char**)
 // {
@@ -99,6 +101,7 @@
 // }
 
 using namespace Frenchie::Core;
+using namespace Frenchie::Core::Containers;
 using namespace Frenchie::Core::FileSystem;
 using namespace Frenchie::Core::Serialization;
 

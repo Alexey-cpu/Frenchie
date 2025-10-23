@@ -1,5 +1,8 @@
 #include <FrenchieCoreSerializationFormatYAML.hpp>
 
+#include <FrenchieCoreContainersStack.hpp>
+#include <FrenchieCoreContainersQueue.hpp>
+
 // ryml can be used as a single header, or as a simple library:
 #if defined(RYML_SINGLE_HEADER) // using the single header directly in the executable
     #define RYML_SINGLE_HDR_DEFINE_NOW
@@ -18,6 +21,7 @@
 #include <fstream>
 
 using namespace Frenchie::Core;
+using namespace Frenchie::Core::Containers;
 using namespace Frenchie::Core::FileSystem;
 using namespace Frenchie::Core::Serialization;
 
