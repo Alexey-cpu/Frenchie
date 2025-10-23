@@ -230,34 +230,28 @@ void PieceTableDrawer::frame_update()
                 {
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
                     {
-                        --m_CursorGlobalPosition;
-                        adjust_cursor_position();
+                        m_Table->move_cursor_left();
                     }
                     
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
                     {
-                        ++m_CursorGlobalPosition;
-                        adjust_cursor_position();
+                        m_Table->move_cursor_right();
                     }
                     
-                    // if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow)) 
-                    //     move_cursor_up_command();
+                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow)) 
+                        m_Table->move_cursor_up();
                     
-                    // if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow)) 
-                    //     move_cursor_down_command();
+                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow)) 
+                        m_Table->move_cursor_down();
 
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter))
                     {
-                        m_Table->insert(m_CursorGlobalPosition, U"\n");
-                        ++m_CursorGlobalPosition;
-                        adjust_cursor_position();
+                        m_Table->insert(U"\n");
                     }
 
                     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
                     {
-                        m_Table->erase(m_CursorGlobalPosition);
-                        --m_CursorGlobalPosition;
-                        adjust_cursor_position();
+                        m_Table->erase();
                     }
 
                     if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) &&
@@ -313,14 +307,13 @@ void PieceTableDrawer::frame_update()
                             ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
                             ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
                         {
-                            m_CursorGlobalPosition = globalIndex;
+                            m_Table->set_cursor_position(globalIndex);
                         }
                     }
 
-                    if(m_CursorGlobalPosition == globalIndex)
+                    if(m_Table->get_cursor_position() == globalIndex)
                     {
                         m_CursorGeometricalPosition = symbolRectangle.Min;
-                        //m_CursorLocalPosition       = index;
                     }
 
                     // update symbol position
@@ -330,7 +323,7 @@ void PieceTableDrawer::frame_update()
                                 symbolPosition + ImVec2(symbolSize.x, 0.f);
                 }
 
-                if(m_CursorGlobalPosition == globalIndex)
+                if(m_Table->get_cursor_position() == globalIndex)
                 {
                     m_CursorGeometricalPosition =
                         ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
@@ -491,7 +484,7 @@ void PieceTableDrawer::frame_update()
         ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
     {
         ImGui::TextUnformatted(
-            fmt::format("GlobalIndex: {} LocalIndex: {} LinesCount: {}", m_CursorGlobalPosition, m_CursorLocalPosition, m_Table->lines_count()).c_str());
+            fmt::format("GlobalIndex: {} LinesCount: {}", m_Table->get_cursor_position(), m_Table->lines_count()).c_str());
         ImGui::EndChild();
     }
 
@@ -527,10 +520,7 @@ void PieceTableDrawer::insert_symbol_command()
 				int  count = Helpers::ImTextCharToUtf8(utf8, c);
 
                 // insert symbol
-				m_Table->insert(m_CursorGlobalPosition, Frenchie::Core::UTF::utf8_to_utf32(std::string(utf8, count)));
-
-                // move cursor right
-                m_CursorGlobalPosition++;
+				m_Table->insert(Frenchie::Core::UTF::utf8_to_utf32(std::string(utf8, count)));
 			}
 		);
 	};
@@ -558,17 +548,4 @@ void PieceTableDrawer::insert_symbol_command()
 		// consume user input
 		io.InputQueueCharacters.resize(0);
 	}
-}
-
-void PieceTableDrawer::adjust_cursor_position()
-{
-    int size = 0;
-    for (auto it = m_Table->symbols_begin(); it != m_Table->symbols_end(); it++)
-        size += it->Length;
-
-    if(m_CursorGlobalPosition < 0)
-        m_CursorGlobalPosition = 0;
-    
-    if(m_CursorGlobalPosition >= size)
-        m_CursorGlobalPosition = size;
 }
