@@ -66,17 +66,33 @@ std::list<TextDocumentPiece>::const_iterator TextDocumentSymbolIterator::operato
 
 TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator++()
 {
-    auto it = m_Table->get_piece_iterator_by_global_index(++m_Position);
-    m_Iterator = it.Iterator;
-    m_Offset   = it.Offset;
+    if(++m_Offset >= m_Iterator->Length)
+    {
+        ++m_Iterator;
+        m_Offset = 0;
+    }
+
+    // TODO: this is naive implementation...
+    // auto it = m_Table->get_piece_iterator_by_global_index(++m_Position);
+    // m_Iterator = it.Iterator;
+    // m_Offset   = it.Offset;
+
     return *this;
 }
 
 TextDocumentSymbolIterator& TextDocumentSymbolIterator::operator--()
 {
-    auto it = m_Table->get_piece_iterator_by_global_index(--m_Position);
-    m_Iterator = it.Iterator;
-    m_Offset   = it.Offset;
+    if(--m_Offset < 0)
+    {
+        --m_Iterator;
+        m_Offset = m_Iterator->Length - 1;
+    }
+
+    // TODO: this is naive implementation...
+    // auto it = m_Table->get_piece_iterator_by_global_index(--m_Position);
+    // m_Iterator = it.Iterator;
+    // m_Offset   = it.Offset;
+
     return *this;
 }
 
