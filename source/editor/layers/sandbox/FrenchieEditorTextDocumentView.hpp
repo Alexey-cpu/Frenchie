@@ -7,7 +7,6 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationSynchronousTimer.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -33,7 +32,11 @@ namespace Frenchie
 
             // info
             std::unique_ptr<Frenchie::Core::TextDocument> m_Table;
-            ImVec2 m_CursorGeometricalPosition;
+
+            ImVec2 m_Scroll;
+            ImRect m_ViewPort;
+            int    m_Start;
+            int    m_End;
 
             // service methods
             ImVec2 calculate_text_size(const std::string&) const;

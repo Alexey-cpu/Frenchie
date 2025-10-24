@@ -103,8 +103,8 @@ bool TextEditor::awake()
 {
 	// launch timers
 	m_CursorTimer = Frenchie::Application::application()
-		->push_layer<Frenchie::Application::SynchronousTimer<std::chrono::milliseconds>>(
-			1000.0, true, "TextEditorCursorTimer");
+		->push_layer<Frenchie::Application::FrameCounter>(
+			1000, "TextEditorCursorTimer");
 
 	// Frenchie::Core::Serialization::Document document;
 	// auto items = document.append_node("patterns", "", Frenchie::Core::Serialization::NodeType::ARRAY);
@@ -609,7 +609,7 @@ void TextEditor::draw_text_contents()
 					ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
 					// animated
-					if(m_CursorTimer->get_elapsed_time() > 500)
+					if(m_CursorTimer->get_frames_count() > 20)
 					{
 						ImGui::GetWindowDrawList()->AddText(
 							m_CursorPosition - ImVec2(TextEditor::calculate_text_size("|").x, 0.f) * 0.5f, 
