@@ -47,7 +47,9 @@ TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Tabl
     m_Position(_Position)
 {
     if(m_Table == nullptr)
+    {
         return;
+    }
 
     // retrieve iterator and it's offset
     TextDocument::PieceIteratorInfo it = m_Table->get_piece_iterator_by_global_index(m_Position);
@@ -535,6 +537,10 @@ void TextDocument::command(std::function<void()> _Command)
             auto newIterator = iterator;
             iterator++;
             m_Pieces.Pieces.erase(newIterator);
+
+            if(iterator == m_Pieces.Pieces.end())
+                break;
+
             continue;
         }
 
