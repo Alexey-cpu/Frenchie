@@ -99,7 +99,7 @@ bool TextDocumentView::awake()
     std::u32string text;
 
     #ifndef PIECE_TABLE_DRAWER_DEBUG
-    for (int i = 0; i < 1e1; i++)
+    for (int i = 0; i < 1e6; i++)
     #else
     for (int i = 0; i < 1; i++)
     #endif
@@ -130,6 +130,8 @@ void TextDocumentView::frame_update()
     // auxiliary lambdas
     auto drawCursor = [this](const ImVec2& _Position)
     {
+        ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
+
         ImGui::GetWindowDrawList()->AddText(
                 _Position + ImVec2(2.f, 0.f) - ImVec2(calculate_text_size("|").x, 0.f) * 0.5f,
                 IM_COL32(0, 255, 0, 255),
@@ -171,6 +173,14 @@ void TextDocumentView::frame_update()
             ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
         );
         {
+            ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
+            ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
+            ImGui::GetWindowDrawList()->AddRectFilled(
+                ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()), 
+                ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
+                calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+
             ImVec2 contentSize = ImVec2(2048.f, (m_Table->lines_count() + 2) * ImGui::GetFontSize());
 
             // draw line numbers
@@ -190,6 +200,8 @@ void TextDocumentView::frame_update()
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoInputs
             );
             {
+                ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
+
                 // setup scroll position
                 ImGui::SetScrollY(m_Scroll.y);
 
@@ -202,9 +214,23 @@ void TextDocumentView::frame_update()
                 // draw line numbers
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
+                    auto position = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
+                    auto size     = ImVec2(calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetFontSize());
+
+                    ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
+                    ImGui::GetWindowDrawList()->AddRectFilled(
+                        position,
+                        position + size,
+                        lineIndex % 2 == 0 ?
+                            calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]) :
+                            calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt]));
+
+                    ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::DOCUMENT);
+
                     ImGui::GetWindowDrawList()->AddText(
-                        ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize()),
-                        IM_COL32(0, 255, 0, 255),
+                        position,
+                        calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                         std::to_string(lineIndex).c_str()
                     );
                 }
@@ -231,6 +257,15 @@ void TextDocumentView::frame_update()
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
             );
             {
+                ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ScrollbarBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
+                ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
+                ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+
+                ImGui::GetWindowDrawList()->AddRectFilled(
+                    ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
+                    ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX),
+                    calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+
                 // draw text
                 m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
                 m_ViewPort = ImRect(ImGui::GetCursorScreenPos() + m_Scroll, ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetWindowSize());
@@ -240,26 +275,47 @@ void TextDocumentView::frame_update()
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
                     ImVec2 symbolPosition  = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
-                    ImRect symbolRectangle = ImRect(m_ViewPort.Min, m_ViewPort.Min);
 
                     auto lineBeginIterator = m_Table->line_begin(lineIndex);
                     auto lineEndIterator   = m_Table->line_end(lineIndex);
 
+                    // draw highlighted text
+                    std::u32string text;
+                    for(auto cursorIterator = lineBeginIterator; cursorIterator != lineEndIterator; cursorIterator++)
+                        text += *cursorIterator;
+
+                    SyntaxHighlighter::regexEstimationResults matches =
+                        m_Highlighter.highlight(
+                            text,
+                            m_Patterns,
+                            calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
+                            lineIndex);
+
+                    auto pos = symbolPosition;
+
+					for(auto&& match : matches)
+					{
+                        for (int index = match.second.Match.Start; index < match.second.Match.Finish; index++)
+                        {
+                            std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, text[index]));
+
+                            ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::DOCUMENT);
+                            ImGui::GetWindowDrawList()->AddText(pos, match.second.Color, symbol.c_str());
+
+                            pos += ImVec2(calculate_text_size(symbol).x, 0.f);
+                        }
+					}
+
+                    // highlight symbols
                     for (auto cursorIterator = lineBeginIterator; cursorIterator != lineEndIterator; cursorIterator++)
                     {                    
                         // draw symbol
                         std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *cursorIterator));
 
-                        ImGui::GetWindowDrawList()->AddText(
-                            symbolPosition,
-                            IM_COL32(0, 255, 0, 255),
-                            symbol.c_str()
-                        );
-
                         ImVec2 symbolSize = calculate_text_size(symbol);
 
                         // highlight symbol
-                        symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+                        ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
 
                         if(symbolRectangle.Contains(ImGui::GetMousePos()))
                         {
@@ -292,6 +348,7 @@ void TextDocumentView::frame_update()
                         drawCursor(symbolPosition);
                 }
 
+                ImGui::PopStyleColor(1);
                 ImGui::EndChild();
             }
 
