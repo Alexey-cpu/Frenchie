@@ -101,9 +101,6 @@ namespace Frenchie
             int    m_Start;
             int    m_End;
 
-            // service methods
-            ImVec2 calculate_text_size(const std::string&) const;
-
             // commands
             void document_insert_symbol_command();
             void document_erase_symbol_command();
@@ -116,10 +113,6 @@ namespace Frenchie
 
             // callbacks
             void on_character_ressed(const unsigned int&);
-            ImU32 calculate_color(const ImVec4& _Vector)
-            {
-                return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
-            }
         };
     }
 }

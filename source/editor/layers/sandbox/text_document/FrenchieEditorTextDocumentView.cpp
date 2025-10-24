@@ -82,6 +82,17 @@ public:
 		out_buf[count] = 0;
 		return count;
 	}
+
+    static ImU32 Helpers::calculate_color(const ImVec4& _Vector)
+    {
+        return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
+    }
+
+    static ImVec2 calculate_text_size(const std::string& _Text)
+    {
+        return ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+            ImGui::GetFontSize(), FLT_MAX, 0.f, _Text.c_str(), nullptr, nullptr);
+    }
 };
 
 // TextDocumentView
@@ -92,38 +103,30 @@ TextDocumentView::TextDocumentView() :
 
 TextDocumentView::~TextDocumentView(){}
 
-//#define PIECE_TABLE_DRAWER_DEBUG
-
 bool TextDocumentView::awake()
 {
     std::u32string text;
 
-    #ifndef PIECE_TABLE_DRAWER_DEBUG
-    for (int i = 0; i < 1e6; i++)
-    #else
-    for (int i = 0; i < 1; i++)
-    #endif
-    {
-        //text.append(std::to_wstring(i)).append(L"\t");
+    // #ifndef PIECE_TABLE_DRAWER_DEBUG
+    // for (int i = 0; i < 1e6; i++)
+    // #else
+    // for (int i = 0; i < 1; i++)
+    // #endif
+    // {
+    //     //text.append(std::to_wstring(i)).append(L"\t");
         
-        for (int j = 0; j < 1; j++)
-        {
-            text.append(U"Всем привет !!!!");
-        }
+    //     for (int j = 0; j < 1; j++)
+    //     {
+    //         text.append(U"Всем привет !!!!");
+    //     }
 
-        text.append(U"\n");
-    }
+    //     text.append(U"\n");
+    // }
 
     m_Table = std::make_unique<Frenchie::Core::TextDocument>(text);
 
-    // m_Table->insert(6, U"123");
-    // m_Table->insert(12, U"\n456\n789");
-    // m_Table->insert(12, U"\n121314");
-
     return true;
 }
-
-#ifndef PIECE_TABLE_DRAWER_DEBUG
 
 void TextDocumentView::frame_update()
 {
@@ -133,7 +136,7 @@ void TextDocumentView::frame_update()
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
         ImGui::GetWindowDrawList()->AddText(
-                _Position + ImVec2(2.f, 0.f) - ImVec2(calculate_text_size("|").x, 0.f) * 0.5f,
+                _Position + ImVec2(2.f, 0.f) - ImVec2(Helpers::calculate_text_size("|").x, 0.f) * 0.5f,
                 IM_COL32(0, 255, 0, 255),
                 "|");
     };
@@ -179,7 +182,7 @@ void TextDocumentView::frame_update()
             ImGui::GetWindowDrawList()->AddRectFilled(
                 ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()), 
                 ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
-                calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+                Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
 
             ImVec2 contentSize = ImVec2(2048.f, (m_Table->lines_count() + 2) * ImGui::GetFontSize());
 
@@ -188,7 +191,7 @@ void TextDocumentView::frame_update()
 
             ImGui::BeginChild(
                 "LineNumbers",
-                ImVec2(calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetContentRegionAvail().y),
+                ImVec2(Helpers::calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetContentRegionAvail().y),
                 ImGuiChildFlags_::ImGuiChildFlags_Borders,
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking         |
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar        |
@@ -215,7 +218,7 @@ void TextDocumentView::frame_update()
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
                     auto position = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
-                    auto size     = ImVec2(calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetFontSize());
+                    auto size     = ImVec2(Helpers::calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetFontSize());
 
                     ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
 
@@ -223,14 +226,14 @@ void TextDocumentView::frame_update()
                         position,
                         position + size,
                         lineIndex % 2 == 0 ?
-                            calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]) :
-                            calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt]));
+                            Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]) :
+                            Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt]));
 
                     ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::DOCUMENT);
 
                     ImGui::GetWindowDrawList()->AddText(
                         position,
-                        calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
+                        Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                         std::to_string(lineIndex).c_str()
                     );
                 }
@@ -264,7 +267,7 @@ void TextDocumentView::frame_update()
                 ImGui::GetWindowDrawList()->AddRectFilled(
                     ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
                     ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX),
-                    calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+                    Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
 
                 // draw text
                 m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
@@ -274,7 +277,8 @@ void TextDocumentView::frame_update()
 
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
-                    ImVec2 symbolPosition  = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
+                    ImVec2 symbolOrigin   = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
+                    ImVec2 symbolPosition = symbolOrigin;
 
                     auto lineBeginIterator = m_Table->line_begin(lineIndex);
                     auto lineEndIterator   = m_Table->line_end(lineIndex);
@@ -288,7 +292,7 @@ void TextDocumentView::frame_update()
                         m_Highlighter.highlight(
                             text,
                             m_Patterns,
-                            calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
+                            Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                             lineIndex);
 
                     auto pos = symbolPosition;
@@ -302,7 +306,7 @@ void TextDocumentView::frame_update()
                             ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::DOCUMENT);
                             ImGui::GetWindowDrawList()->AddText(pos, match.second.Color, symbol.c_str());
 
-                            pos += ImVec2(calculate_text_size(symbol).x, 0.f);
+                            pos += ImVec2(Helpers::calculate_text_size(symbol).x, 0.f);
                         }
 					}
 
@@ -312,7 +316,7 @@ void TextDocumentView::frame_update()
                         // draw symbol
                         std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *cursorIterator));
 
-                        ImVec2 symbolSize = calculate_text_size(symbol);
+                        ImVec2 symbolSize = Helpers::calculate_text_size(symbol);
 
                         // highlight symbol
                         ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
@@ -375,335 +379,11 @@ void TextDocumentView::frame_update()
     }
 }
 
-#else
-
-void TextDocumentView::frame_update()
-{
-    ImGui::Begin(get_name().c_str(), &m_Opened);
-
-    ImGui::BeginChild(
-        "Contents",
-        ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
-    {
-        if(ImGui::BeginTable("FileSystemContentTable",
-            2,
-            ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
-            ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
-            ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
-            ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
-            ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
-            ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
-            ImGuiTableFlags_::ImGuiTableFlags_Hideable,
-            ImGui::GetContentRegionAvail()))
-        {
-            ImGui::TableNextRow();
-
-            // draw tree
-            ImGui::TableSetColumnIndex(0);
-
-            float heigth = 64.f;
-
-            ImGui::BeginChild(
-                "TOOLBAR",
-                ImVec2(ImGui::GetContentRegionAvail().x, heigth));
-            {
-                if(ImGui::Button("Undo", ImVec2(0.f, heigth))) m_Table->undo();
-                ImGui::SameLine();
-                if(ImGui::Button("Redo", ImVec2(0.f, heigth))) m_Table->redo();
-
-                ImGui::EndChild();
-            }
-
-            ImGui::BeginChild("Text", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - heigth));
-            {
-                // ImGui::BeginChild("Buttons", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
-                // {
-                //     if(ImGui::Button("Undo")) m_Table->undo();
-                //     if(ImGui::Button("Redo")) m_Table->redo();
-
-                //     ImGui::EndChild();
-                // }
-
-                if(ImGui::IsWindowHovered())
-                {
-                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
-                    {
-                        m_Table->move_cursor_left();
-                    }
-                    
-                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
-                    {
-                        m_Table->move_cursor_right();
-                    }
-                    
-                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow)) 
-                        m_Table->move_cursor_up();
-                    
-                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow)) 
-                        m_Table->move_cursor_down();
-
-                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Enter))
-                    {
-                        m_Table->insert(U"\n");
-                    }
-
-                    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
-                    {
-                        m_Table->erase();
-                    }
-
-                    if(ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) &&
-                        ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Z))
-                    {
-                        m_Table->undo();
-                    }
-
-                    document_insert_symbol_command();
-                }
-
-                int globalIndex = 0;
-                ImRect symbolRectangle = ImRect(ImGui::GetCursorScreenPos(), ImGui::GetCursorScreenPos());
-                ImVec2 symbolPosition  = ImGui::GetCursorScreenPos();
-                ImVec2 symbolOrigin    = ImGui::GetCursorScreenPos();
-
-                for (auto it = m_Table->symbols_begin(); it != m_Table->symbols_end(); it++, globalIndex++)                
-                {
-                    // retrieve symbol
-                    std::string symbol =
-                        Frenchie::Core::String::convert_utf32_to_utf8(
-                            std::u32string(1, *it));
-
-                    // draw symbol
-                    ImGui::GetWindowDrawList()->AddText(
-                            symbolPosition,
-                            IM_COL32(0, 255, 0, 255),
-                            symbol.c_str()
-                        );
-
-                    ImVec2 symbolSize =
-                        ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                            ImGui::GetFontSize(),
-                            FLT_MAX,
-                            0.f,
-                            symbol.c_str(),
-                            NULL,
-                            NULL
-                        );
-
-                    // highlight symbol
-                    symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
-
-                    if(symbolRectangle.Contains(ImGui::GetMousePos()))
-                    {
-                        ImGui::GetWindowDrawList()->AddRectFilled(
-                            symbolRectangle.Min,
-                            symbolRectangle.Max,
-                            IM_COL32(255, 0, 0, 128));
-
-                        // update cursor position
-                        if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
-                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-                        {
-                            m_Table->set_cursor_position(globalIndex);
-                        }
-                    }
-
-                    if(m_Table->get_cursor_position() == globalIndex)
-                    {
-                        m_CursorGeometricalPosition = symbolRectangle.Min;
-                    }
-
-                    // update symbol position
-                    symbolPosition =
-                        symbol[0] == '\n' ?
-                            ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
-                                symbolPosition + ImVec2(symbolSize.x, 0.f);
-                }
-
-                if(m_Table->get_cursor_position() == globalIndex)
-                {
-                    m_CursorGeometricalPosition =
-                        ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
-                }
-
-                // draw cursor rectangle
-                ImGui::GetWindowDrawList()->AddText(
-                        m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
-                            ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                            ImGui::GetFontSize(),
-                            FLT_MAX,
-                            0.f,
-                            "|",
-                            NULL,
-                            NULL
-                        ).x, 0.f) * 0.5f,
-                        IM_COL32(0, 255, 0, 255),
-                        "|"
-                    );
-
-                /*
-                for (auto it = m_Table->begin(); it != m_Table->end(); it++)
-                {
-                    for (int index = it->Start; index < it->Start + it->Length; index++, globalIndex++)
-                    {
-                        // retrieve symbol
-                        std::string symbol =
-                            Frenchie::Core::String::as_utf8(
-                                std::wstring(1, it->Buffer->at(index)));
-
-                        // draw symbol
-                        ImGui::GetWindowDrawList()->AddText(
-                                symbolPosition,
-                                IM_COL32(0, 255, 0, 255),
-                                symbol.c_str()
-                            );
-
-                        ImVec2 symbolSize =
-                            ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                                ImGui::GetFontSize(),
-                                FLT_MAX,
-                                0.f,
-                                symbol.c_str(),
-                                NULL,
-                                NULL
-                            );
-
-                        // highlight symbol
-                        symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
-
-                        if(symbolRectangle.Contains(ImGui::GetMousePos()))
-                        {
-                            ImGui::GetWindowDrawList()->AddRectFilled(
-                                symbolRectangle.Min,
-                                symbolRectangle.Max,
-                                IM_COL32(255, 0, 0, 128));
-
-                            // update cursor position
-                            if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
-                                ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-                                ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-                            {
-                                m_CursorGlobalPosition = globalIndex;
-                            }
-                        }
-
-                        if(m_CursorGlobalPosition == globalIndex)
-                        {
-                            m_CursorGeometricalPosition = symbolRectangle.Min;
-                            m_CursorLocalPosition       = index - it->Start;
-                        }
-
-                        // update symbol position
-                        symbolPosition =
-                            symbol[0] == '\n' ?
-                                ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
-                                    symbolPosition + ImVec2(symbolSize.x, 0.f);
-                    }
-
-                    if(m_CursorGlobalPosition == globalIndex)
-                    {
-                        m_CursorGeometricalPosition =
-                            ImVec2(symbolRectangle.Max.x, symbolRectangle.Min.y);
-                    }
-
-                    // draw cursor rectangle
-                    ImGui::GetWindowDrawList()->AddText(
-                            m_CursorGeometricalPosition + ImVec2(2.f, 0.f) -
-                                ImVec2(ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-                                ImGui::GetFontSize(),
-                                FLT_MAX,
-                                0.f,
-                                "|",
-                                NULL,
-                                NULL
-                            ).x, 0.f) * 0.5f,
-                            IM_COL32(0, 255, 0, 255),
-                           "|"
-                        );
-                }
-                */
-
-                ImGui::EndChild();
-            }
-
-            // draw table
-            ImGui::TableSetColumnIndex(1);
-
-            ImGui::BeginChild("Buffers");
-            {
-                /*
-                for (int i = 0; i < m_Table->get_lines_count(); i++)
-                {
-                    ImGui::TextUnformatted(fmt::format("line {} starts {} ends {}",
-                        std::to_string(i),
-                        std::to_string(m_Table->get_line_start_index(i)),
-                        std::to_string(m_Table->get_line_end_index(i))).c_str());
-                }                
-
-                for(auto it = m_Table->begin(); it != m_Table->end(); it++)
-                {
-                    std::string pieceText = Frenchie::Core::String::as_utf8(
-                        std::wstring(
-                            &it->Buffer->at(it->Start), 
-                            &it->Buffer->at(it->Start + it->Length))
-                    );
-                    
-                    ImGui::TextUnformatted(fmt::format("{} {}", pieceText, it->LineBreaksCount).c_str());
-                }
-                */
-
-                int symbolsCount = m_Table->symbols_count();
-
-                for (int index = 0; index < symbolsCount; index++)
-                {
-                    auto itr = m_Table->get_piece_iterator_by_global_index(index);
-
-                    std::string pieceText = Frenchie::Core::String::convert_utf32_to_utf8(
-                        std::u32string(
-                            &itr.Iterator->Buffer->at(itr.Iterator->Start), 
-                            &itr.Iterator->Buffer->at(itr.Iterator->Start + itr.Iterator->Length))
-                    );
-                    
-                    ImGui::TextUnformatted(fmt::format("index {} iterator {} offset {}", index, pieceText, itr.Offset).c_str());
-                }
-
-                ImGui::EndChild();
-            }
-
-            ImGui::EndTable();
-        }
-
-        ImGui::EndChild();
-    }
-
-    ImGui::BeginChild(
-        "Cursor",
-        ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f));
-    {
-        ImGui::TextUnformatted(
-            fmt::format("GlobalIndex: {} LinesCount: {}", m_Table->get_cursor_position(), m_Table->lines_count()).c_str());
-        ImGui::EndChild();
-    }
-
-    ImGui::End();
-}
-
-#endif
-
-void TextDocumentView::frame_finish() 
-{
-}
+void TextDocumentView::frame_finish(){}
 
 bool TextDocumentView::allows_multiple_instances() const
 {
     return false;
-}
-
-ImVec2 TextDocumentView::calculate_text_size(const std::string& _Text) const
-{
-    return ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-        ImGui::GetFontSize(), FLT_MAX, 0.f, _Text.c_str(), nullptr, nullptr);
 }
 
 void TextDocumentView::document_insert_symbol_command()
