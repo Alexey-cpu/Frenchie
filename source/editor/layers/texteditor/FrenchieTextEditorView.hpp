@@ -6,11 +6,11 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationSynchronousTimer.hpp>
 
 // TextEditor
 #include <FrenchieTextEditorTextModel.hpp>
 #include <FrenchieTextEditorSyntaxHighlighter.hpp>
+#include <FrenchieApplicationFrameCounter.hpp>
 
 using namespace Frenchie::TextEditor;
 
@@ -56,7 +56,7 @@ namespace Frenchie
             SyntaxHighlighter m_SyntaxHighlighter;
 
             Frenchie::Core::Reference<
-                Frenchie::Application::SynchronousTimer<std::chrono::milliseconds>> m_CursorTimer;
+                Frenchie::Application::FrameCounter> m_CursorTimer;
 
             std::shared_ptr<TextEditorModel> m_TextModel{std::make_shared<TextEditorModel>()};
 

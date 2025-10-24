@@ -74,6 +74,11 @@ namespace Frenchie
             TextDocumentSymbolIterator(const TextDocument* _Table = nullptr, const int& _Position = 0);
             ~TextDocumentSymbolIterator();
 
+            int get_position() const
+            {
+                return m_Position;
+            }
+
             char32_t operator*() const;
             TextDocumentPieceTable::ConstPieceIterator operator->() const;
             

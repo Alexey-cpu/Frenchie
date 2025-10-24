@@ -9,14 +9,14 @@ namespace Frenchie
     {
         namespace MainMenu
         {
-            class OpenPieceTableDrawerDebug : 
-                public Frenchie::Application::Command::Registry<OpenPieceTableDrawerDebug, void*>
+            class OpenTextDocumentViewDebug : 
+                public Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, void*>
             {
             public:
 
-                OpenPieceTableDrawerDebug(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenPieceTableDrawerDebug, void*>(_Sender){}
-                virtual ~OpenPieceTableDrawerDebug(){}
+                OpenTextDocumentViewDebug(void* _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, void*>(_Sender){}
+                virtual ~OpenTextDocumentViewDebug(){}
 
                 // Frenchie::Application::Command
                 virtual void execute() override
@@ -27,11 +27,11 @@ namespace Frenchie
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Debug::PieceTableDrawer");
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Debug::TextDocumentView");
                 }
             };
 
-            const bool openPieceTableDrawerDebugActionRegistry = OpenPieceTableDrawerDebug::registerFactory();
+            const bool openTextDocumentViewDebugActionRegistry = OpenTextDocumentViewDebug::registerFactory();
         }
     }
 }
@@ -84,7 +84,7 @@ public:
 	}
 };
 
-// PieceTableDrawer
+// TextDocumentView
 TextDocumentView::TextDocumentView() :
     Frenchie::Application::Layer(STRINGIFY(TextDocumentView))
 {
@@ -106,7 +106,7 @@ bool TextDocumentView::awake()
     {
         //text.append(std::to_wstring(i)).append(L"\t");
         
-        for (int j = 0; j < 1; j++)
+        for (int j = 0; j < 3; j++)
         {
             text.append(U"Всем привет !!!!");
         }
@@ -116,9 +116,9 @@ bool TextDocumentView::awake()
 
     m_Table = std::make_unique<Frenchie::Core::TextDocument>(text);
 
-    m_Table->insert(6, U"123");
-    m_Table->insert(12, U"\n456\n789");
-    m_Table->insert(12, U"\n121314");
+    // m_Table->insert(6, U"123");
+    // m_Table->insert(12, U"\n456\n789");
+    // m_Table->insert(12, U"\n121314");
 
     return true;
 }
@@ -127,18 +127,166 @@ bool TextDocumentView::awake()
 
 void TextDocumentView::frame_update()
 {
-    int start = 0;
-    int end   = 0;
-
     ImGui::Begin(get_name().c_str(), &m_Opened);
     {
-        ImGui::SetNextWindowContentSize(ImVec2(
-            2048.f,
-            (m_Table->lines_count() + 2) * ImGui::GetFontSize()));
+        if(ImGui::IsWindowHovered(ImGuiHoveredFlags_::ImGuiHoveredFlags_RootAndChildWindows))
+        {
+            // edit
+            document_insert_symbol_command();
+            document_erase_symbol_command();
+
+            // cursor
+            document_move_cursor_left_command();
+            document_move_cursor_right_command();
+            document_move_cursor_down_command();
+            document_move_cursor_up_command();
+
+            // undo/redo
+            document_undo_command();
+            document_redo_command();
+        }
+
+        ImVec2 statusPanelSize = ImVec2(ImGui::GetContentRegionAvail().x, 100.f);
 
         ImGui::BeginChild(
             "TextEditor",
-            ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y - 100.f),
+            ImVec2(ImGui::GetContentRegionAvail().x,  ImGui::GetContentRegionAvail().y - statusPanelSize.y),
+            ImGuiChildFlags_::ImGuiChildFlags_Borders,
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking         |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar        |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoResize          |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoMove            |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar       |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollWithMouse |
+            ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
+        );
+        {
+            ImVec2 contentSize = ImVec2(2048.f, (m_Table->lines_count() + 2) * ImGui::GetFontSize());
+
+            // draw line numbers
+            ImGui::SetNextWindowContentSize(contentSize);
+
+            ImGui::BeginChild(
+                "LineNumbers",
+                ImVec2(calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetContentRegionAvail().y),
+                ImGuiChildFlags_::ImGuiChildFlags_Borders,
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking         |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar        |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoResize          |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoMove            |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollbar       |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoScrollWithMouse |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings   |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoInputs
+            );
+            {
+                // setup scroll position
+                ImGui::SetScrollY(m_Scroll.y);
+
+                // update meta info
+                m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
+                m_ViewPort = ImRect(ImGui::GetCursorScreenPos() + m_Scroll, ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetWindowSize());
+                m_Start    = (int)(m_Scroll.y / ImGui::GetFontSize());
+                m_End      = m_Start + std::min<int>((int)(m_ViewPort.GetSize().y / ImGui::GetFontSize()), m_Table->lines_count());
+
+                // draw line numbers
+                for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
+                {
+                    ImGui::GetWindowDrawList()->AddText(
+                        ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize()),
+                        IM_COL32(0, 255, 0, 255),
+                        std::to_string(lineIndex).c_str()
+                    );
+                }
+                
+                ImGui::EndChild();
+            }
+
+            ImGui::SameLine();
+
+            // draw text
+            ImGui::SetNextWindowContentSize(contentSize);
+
+            ImGui::BeginChild(
+                "Text",
+                ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y),
+                ImGuiChildFlags_::ImGuiChildFlags_Borders,
+
+                ImGuiWindowFlags_HorizontalScrollbar |
+                ImGuiWindowFlags_NoNavInputs         |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking  |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoResize   |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoMove     |
+                ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
+            );
+            {
+                // draw text
+                m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
+                m_ViewPort = ImRect(ImGui::GetCursorScreenPos() + m_Scroll, ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetWindowSize());
+                m_Start    = (int)(m_Scroll.y / ImGui::GetFontSize());
+                m_End      = m_Start + std::min<int>((int)(m_ViewPort.GetSize().y / ImGui::GetFontSize()), m_Table->lines_count());
+
+                for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
+                {
+                    ImVec2 symbolPosition  = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
+                    ImRect symbolRectangle = ImRect(m_ViewPort.Min, m_ViewPort.Min);
+
+                    for (auto it = m_Table->line_begin(lineIndex); it != m_Table->line_end(lineIndex); it++)
+                    {                    
+                        // draw symbol
+                        std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *it));
+
+                        ImGui::GetWindowDrawList()->AddText(
+                            symbolPosition,
+                            IM_COL32(0, 255, 0, 255),
+                            symbol.c_str()
+                        );
+
+                        ImVec2 symbolSize = calculate_text_size(symbol);
+
+                        // highlight symbol
+                        symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+
+                        if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                        {
+                            ImGui::GetWindowDrawList()->AddRectFilled(
+                                symbolRectangle.Min,
+                                symbolRectangle.Max,
+                                IM_COL32(255, 0, 0, 128));
+
+                            // update cursor position
+                            if((ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+                                ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+                                ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+                            {
+                                m_Table->set_cursor_position(it.get_position());
+                            }
+                        }
+
+                        // draw cursor
+                        if(it.get_position() == m_Table->get_cursor_position())
+                        {
+                            ImGui::GetWindowDrawList()->AddText(
+                                    symbolPosition + ImVec2(2.f, 0.f) - ImVec2(calculate_text_size("|").x, 0.f) * 0.5f,
+                                    IM_COL32(0, 255, 0, 255),
+                                    "|");
+                        }
+
+                        // update symbol position
+                        symbolPosition = symbolPosition + ImVec2(symbolSize.x, 0.f);
+                    }
+                }
+
+                ImGui::EndChild();
+            }
+
+            ImGui::EndChild();
+        }
+
+        ImGui::BeginChild(
+            "StatusPanel",
+            ImVec2(ImGui::GetContentRegionAvail().x,  ImGui::GetContentRegionAvail().y - statusPanelSize.y),
             ImGuiChildFlags_::ImGuiChildFlags_Borders,
             ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking  |
             ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar |
@@ -147,88 +295,7 @@ void TextDocumentView::frame_update()
             ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
         );
         {
-            // execute commands here
-            if(ImGui::IsWindowHovered())
-            {
-                // edit
-                document_insert_symbol_command();
-                document_erase_symbol_command();
-
-                // cursor
-                document_move_cursor_left_command();
-                document_move_cursor_right_command();
-                document_move_cursor_down_command();
-                document_move_cursor_up_command();
-
-                // undo/redo
-                document_undo_command();
-                document_redo_command();
-            }
-
-            // draw text
-            ImVec2 scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
-
-            ImRect viewport = ImRect(ImGui::GetCursorScreenPos() + scroll, 
-                                    ImGui::GetCursorScreenPos()  + scroll + ImGui::GetWindowSize());
-
-            start = (int)(scroll.y / ImGui::GetFontSize());
-            end   = start + std::min<int>((int)(viewport.GetSize().y / ImGui::GetFontSize()), m_Table->lines_count());
-
-			ImRect symbolRectangle = ImRect(viewport.Min, viewport.Min);
-			ImVec2 symbolPosition  = viewport.Min;
-			ImVec2 symbolOrigin    = viewport.Min;
-
-            for (int lineIndex = start; lineIndex < end; lineIndex++)
-            {
-                m_Table->line_begin(lineIndex);
-                m_Table->line_end(lineIndex);
-
-                for (auto it = m_Table->line_begin(lineIndex); it != m_Table->line_end(lineIndex); it++)
-                {
-                    // draw symbol
-                    std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *it));
-
-                    ImGui::GetWindowDrawList()->AddText(
-                        symbolPosition,
-                        IM_COL32(0, 255, 0, 255),
-                        symbol.c_str()
-                    );
-
-                    ImVec2 symbolSize = calculate_text_size(symbol);
-
-                    // highlight symbol
-                    symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
-
-                    if(symbolRectangle.Contains(ImGui::GetMousePos()))
-                    {
-                        ImGui::GetWindowDrawList()->AddRectFilled(
-                            symbolRectangle.Min,
-                            symbolRectangle.Max,
-                            IM_COL32(255, 0, 0, 128));
-
-                        // update cursor position
-                        if((ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
-                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-                            ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-                        {
-                            // update cursor position here ...
-                        }
-                    }
-
-                    // update symbol position
-                    symbolPosition =
-                        symbol[0] == '\n' ?
-                            ImVec2(symbolOrigin.x, symbolPosition.y + ImGui::GetFontSize()) :
-                                symbolPosition + ImVec2(symbolSize.x, 0.f);
-                }
-            }
-
-            ImGui::EndChild();
-        }
-
-        ImGui::BeginChild("Status", ImVec2(ImGui::GetContentRegionAvail().x, 100.f));
-        {
-            ImGui::TextUnformatted(fmt::format("diplayed lines : {} {} | pieces count {}", start, end, m_Table->pieces_count()).c_str());
+            ImGui::TextUnformatted(fmt::format("Cursor {}", m_Table->get_cursor_position()).c_str());
 
             ImGui::EndChild();
         }
@@ -239,7 +306,7 @@ void TextDocumentView::frame_update()
 
 #else
 
-void PieceTableDrawer::frame_update()
+void TextDocumentView::frame_update()
 {
     ImGui::Begin(get_name().c_str(), &m_Opened);
 
@@ -320,7 +387,7 @@ void PieceTableDrawer::frame_update()
                         m_Table->undo();
                     }
 
-                    insert_symbol_command();
+                    document_insert_symbol_command();
                 }
 
                 int globalIndex = 0;
@@ -332,7 +399,7 @@ void PieceTableDrawer::frame_update()
                 {
                     // retrieve symbol
                     std::string symbol =
-                        Frenchie::Core::UTF::utf32_to_utf8(
+                        Frenchie::Core::String::convert_utf32_to_utf8(
                             std::u32string(1, *it));
 
                     // draw symbol
@@ -521,7 +588,7 @@ void PieceTableDrawer::frame_update()
                 {
                     auto itr = m_Table->get_piece_iterator_by_global_index(index);
 
-                    std::string pieceText = Frenchie::Core::UTF::utf32_to_utf8(
+                    std::string pieceText = Frenchie::Core::String::convert_utf32_to_utf8(
                         std::u32string(
                             &itr.Iterator->Buffer->at(itr.Iterator->Start), 
                             &itr.Iterator->Buffer->at(itr.Iterator->Start + itr.Iterator->Length))
@@ -663,7 +730,7 @@ void TextDocumentView::document_move_cursor_down_command()
 
 void TextDocumentView::document_move_cursor_up_command()
 {
-    if(!ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
+    if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
     {
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
