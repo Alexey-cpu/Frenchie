@@ -8,6 +8,9 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
 
+// Editor
+#include <FrenchieEditorTextDocumentHighlighter.hpp>
+
 // IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -32,6 +35,8 @@ namespace Frenchie
 
             // info
             std::unique_ptr<Frenchie::Core::TextDocument> m_Table;
+
+            SyntaxHighlighter m_Highlighter;
 
             ImVec2 m_Scroll;
             ImRect m_ViewPort;

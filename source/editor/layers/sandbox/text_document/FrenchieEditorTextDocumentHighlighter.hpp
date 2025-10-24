@@ -1,7 +1,7 @@
 #pragma once
 
 // Core
-#include <FrenchieCoreRegex.hpp>
+#include <FrenchieCoreStringRegex.hpp>
 
 // STL
 #include <map>
@@ -10,7 +10,7 @@
 
 namespace Frenchie
 {
-    namespace TextEditor
+    namespace Editor
     {
         struct RegexRule
         {
@@ -22,12 +22,12 @@ namespace Frenchie
             };
 
             RegexRule(
-                const std::wstring& _Pattern = std::wstring(), 
+                const std::u32string& _Pattern = std::u32string(), 
                 const unsigned int& _Color   = 0, 
                 Type                _Type    = Type::DEFAULT) : 
                 Pattern(_Pattern), Color(_Color), Type(_Type){}
 
-            std::wstring Pattern = std::wstring();
+            std::u32string Pattern = std::u32string();
             unsigned int Color   = 0;
             Type         Type    = Type::DEFAULT;
         };
@@ -50,7 +50,7 @@ namespace Frenchie
 			typedef std::map<int, RegexEstimationResult> regexEstimationResults;
 
 			regexEstimationResults highlight(
-				const std::wstring&           _Contents, 
+				const std::u32string&           _Contents, 
 				const std::vector<RegexRule>& _Rules,
 				const unsigned int&           _DefaultColor, 
                 const int&                    _LineNumber);

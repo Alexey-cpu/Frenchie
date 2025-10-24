@@ -21,10 +21,12 @@ namespace Frenchie
             typedef std::vector<Match> Matches;
             
             Matches match(const std::string& _Contents, const std::string _Pattern);
-            Matches match(const std::wstring& _Contents, const std::wstring _Pattern);
+            Matches match(const std::u16string& _Contents, const std::u16string _Pattern);
+            Matches match(const std::u32string& _Contents, const std::u32string _Pattern);
 
             std::string substring(const std::string& _Origin, const Match& _Match);
-            std::wstring substring(const std::wstring& _Origin, const Match& _Match);
+            std::u16string substring(const std::u16string& _Origin, const Match& _Match);
+            std::u32string substring(const std::u32string& _Origin, const Match& _Match);
         }
     }
 }
