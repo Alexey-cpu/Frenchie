@@ -35,11 +35,11 @@ namespace Frenchie
         struct RegexEstimationResult
         {
             RegexEstimationResult(
-                const Frenchie::Core::Regex::Match& _Match = Frenchie::Core::Regex::Match(), 
+                const Frenchie::Core::String::Match& _Match = Frenchie::Core::String::Match(), 
                 const unsigned int&                 _Color = 0) : 
                 Match(_Match), Color(_Color){}
 
-            Frenchie::Core::Regex::Match Match;
+            Frenchie::Core::String::Match Match;
             unsigned int                 Color  = 0;
         };
 
