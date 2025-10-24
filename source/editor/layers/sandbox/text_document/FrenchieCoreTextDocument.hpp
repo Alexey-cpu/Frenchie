@@ -83,18 +83,19 @@ namespace Frenchie
             TextDocumentSymbolIterator  operator--(int);
 
             friend bool operator==(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
-            { 
-                return _First.m_Iterator == _Second.m_Iterator && 
-                       _First.m_Offset == _Second.m_Offset; 
+            {
+                return TextDocumentSymbolIterator::equal(_First, _Second);
             }
 
             friend bool operator!=(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
             {
-                return _First.m_Iterator != _Second.m_Iterator || 
-                       _First.m_Offset != _Second.m_Offset; 
+                return !TextDocumentSymbolIterator::equal(_First, _Second);
             }
 
         protected:
+
+            static bool equal(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second);
+
             const TextDocument*                                m_Table    = nullptr;
             mutable int                                        m_Position = 0;
             mutable int                                        m_Offset   = 0;
@@ -105,7 +106,8 @@ namespace Frenchie
         {
         public:
 
-            struct PieceIteratorInfo
+            // nested types
+            struct PieceInfo
             {
                 TextDocumentPieceTable::ConstPieceIterator Iterator;
                 int                                        Offset;
@@ -117,6 +119,7 @@ namespace Frenchie
                 TextDocumentSymbolIterator End;
             };
 
+            // construction
             TextDocument(const std::u32string& _Buffer = std::u32string());
             ~TextDocument();
 
@@ -125,7 +128,7 @@ namespace Frenchie
             int get_line_end_index(const int&) const;
             int get_cursor_position() const;
 
-            PieceIteratorInfo get_piece_iterator_by_global_index(const int&) const;
+            PieceInfo get_piece_iterator_by_global_index(const int&) const;
 
             // setters
             void set_cursor_position(const int&) const;
@@ -157,10 +160,16 @@ namespace Frenchie
             TextDocumentSymbolIterator line_end(const int&) const;
             int lines_count() const;
 
+            bool empty() const;
+            static const TextDocument* empty_document();
+
         protected:
 
             // friends
             friend class TextDocumentSymbolIterator;
+
+            // static vars
+            inline static const TextDocument* m_EmptyDocument = nullptr;
 
             // info
             const   TextDocumentBuffer      m_Immutable;
@@ -171,7 +180,7 @@ namespace Frenchie
             mutable Frenchie::Core::Containers::RingBuffer<TextDocumentPieceTable, 2048> m_States;
 
             // service methods
-            void command(std::function<void()>);
+            void command(std::function<void()> _Command, const bool& _SaveState = true);
         };
     }
 }

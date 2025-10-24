@@ -1,6 +1,7 @@
 #include <FrenchieCoreTextDocument.hpp>
 
 // STL
+#include <iostream>
 #include <vector>
 #include <map>
 #include <set>
@@ -43,16 +44,11 @@ const std::vector<int>& TextDocumentBuffer::get_line_breaks_positions() const
 
 // TextDocumentIterator
 TextDocumentSymbolIterator::TextDocumentSymbolIterator(const TextDocument* _Table, const int& _Position) :
-    m_Table(_Table),
+    m_Table(_Table == nullptr ? TextDocument::empty_document() : _Table), // we guarantee this is never nullptr
     m_Position(_Position)
 {
-    if(m_Table == nullptr)
-    {
-        return;
-    }
-
     // retrieve iterator and it's offset
-    TextDocument::PieceIteratorInfo it = m_Table->get_piece_iterator_by_global_index(m_Position);
+    TextDocument::PieceInfo it = m_Table->get_piece_iterator_by_global_index(m_Position);
     m_Iterator = it.Iterator;
     m_Offset   = it.Offset;
 }
@@ -119,6 +115,16 @@ TextDocumentSymbolIterator TextDocumentSymbolIterator::operator--(int)
     return tmp;
 }
 
+bool TextDocumentSymbolIterator::equal(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
+{
+    if(_First.m_Table->empty() && _Second.m_Table->empty()) return true;
+
+    return _First.m_Position == _Second.m_Position;
+
+    // return _First.m_Iterator == _Second.m_Iterator && 
+    //         _First.m_Offset == _Second.m_Offset; 
+}
+
 // TextDocument
 TextDocument::TextDocument(const std::u32string& _Buffer) :
     m_Immutable(_Buffer),
@@ -171,7 +177,7 @@ int TextDocument::get_line_end_index(const int& _Line) const
     return cursorPosition;
 }
 
-TextDocument::PieceIteratorInfo TextDocument::get_piece_iterator_by_global_index(const int& _Position) const
+TextDocument::PieceInfo TextDocument::get_piece_iterator_by_global_index(const int& _Position) const
 {
     // look for the row where to append
     int  cursorPosition = 0;
@@ -370,22 +376,24 @@ void TextDocument::erase(const int& _Position, const int& _Count)
 
 void TextDocument::undo()
 {
-    // undo state
-    m_States.set_position(m_States.get_position() - 1);
-    m_Pieces = m_States.at(1);
-
-    // clear cache
-    m_Cache.clear();
+    command([this]()
+        {
+            m_States.set_position(m_States.get_position() - 1);
+            m_Pieces = m_States.at(1);
+        },
+        false // do not save state as we are rolling back
+    );
 }
 
 void TextDocument::redo()
 {
-    // redo state
-    m_States.set_position(m_States.get_position() + 1); 
-    m_Pieces = m_States.at(1);
-
-    // clear cache
-    m_Cache.clear();
+    command([this]()
+        {
+            m_States.set_position(m_States.get_position() + 1); 
+            m_Pieces = m_States.at(1);
+        },
+        false // do not save state
+    );
 }
 
 void TextDocument::move_cursor_right()
@@ -495,7 +503,20 @@ int TextDocument::lines_count() const
     return cursorLine;
 }
 
-void TextDocument::command(std::function<void()> _Command)
+bool TextDocument::empty() const
+{
+    return m_Pieces.Pieces.empty();
+}
+
+const TextDocument* TextDocument::empty_document()
+{
+    if(m_EmptyDocument == nullptr)
+        m_EmptyDocument = new TextDocument(std::u32string());
+
+    return m_EmptyDocument;
+}
+
+void TextDocument::command(std::function<void()> _Command, const bool& _SaveState)
 {
     if(_Command != nullptr)
         _Command();
@@ -522,8 +543,9 @@ void TextDocument::command(std::function<void()> _Command)
         return low;
     };
 
-    // update state
-    m_States.push(m_Pieces);
+    // save state
+    if(_SaveState)
+        m_States.push(m_Pieces);
 
     // clear cache
     m_Cache.clear();
