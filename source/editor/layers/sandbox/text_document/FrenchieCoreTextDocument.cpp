@@ -221,7 +221,7 @@ void TextDocument::set_cursor_position(const int& _Position) const
     // adjust cursor position
     if(m_Pieces.Cursor >= symbols_count())
     {
-        m_Pieces.Cursor = symbols_count() - 1;
+        m_Pieces.Cursor = symbols_count();
     }
     else if(m_Pieces.Cursor < 0)
     {
