@@ -99,14 +99,14 @@ bool TextDocumentView::awake()
     std::u32string text;
 
     #ifndef PIECE_TABLE_DRAWER_DEBUG
-    for (int i = 0; i < 1e6; i++)
+    for (int i = 0; i < 1e1; i++)
     #else
     for (int i = 0; i < 1; i++)
     #endif
     {
         //text.append(std::to_wstring(i)).append(L"\t");
         
-        for (int j = 0; j < 3; j++)
+        for (int j = 0; j < 1; j++)
         {
             text.append(U"Всем привет !!!!");
         }
@@ -127,6 +127,16 @@ bool TextDocumentView::awake()
 
 void TextDocumentView::frame_update()
 {
+    // auxiliary lambdas
+    auto drawCursor = [this](const ImVec2& _Position)
+    {
+        ImGui::GetWindowDrawList()->AddText(
+                _Position + ImVec2(2.f, 0.f) - ImVec2(calculate_text_size("|").x, 0.f) * 0.5f,
+                IM_COL32(0, 255, 0, 255),
+                "|");
+    };
+
+    // draw window
     ImGui::Begin(get_name().c_str(), &m_Opened);
     {
         if(ImGui::IsWindowHovered(ImGuiHoveredFlags_::ImGuiHoveredFlags_RootAndChildWindows))
@@ -212,8 +222,8 @@ void TextDocumentView::frame_update()
                 ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y),
                 ImGuiChildFlags_::ImGuiChildFlags_Borders,
 
-                ImGuiWindowFlags_HorizontalScrollbar |
-                ImGuiWindowFlags_NoNavInputs         |
+                ImGuiWindowFlags_HorizontalScrollbar           |
+                ImGuiWindowFlags_NoNavInputs                   |
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking  |
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoResize   |
@@ -232,10 +242,13 @@ void TextDocumentView::frame_update()
                     ImVec2 symbolPosition  = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
                     ImRect symbolRectangle = ImRect(m_ViewPort.Min, m_ViewPort.Min);
 
-                    for (auto it = m_Table->line_begin(lineIndex); it != m_Table->line_end(lineIndex); it++)
+                    auto lineBeginIterator = m_Table->line_begin(lineIndex);
+                    auto lineEndIterator   = m_Table->line_end(lineIndex);
+
+                    for (auto cursorIterator = lineBeginIterator; cursorIterator != lineEndIterator; cursorIterator++)
                     {                    
                         // draw symbol
-                        std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *it));
+                        std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *cursorIterator));
 
                         ImGui::GetWindowDrawList()->AddText(
                             symbolPosition,
@@ -260,22 +273,23 @@ void TextDocumentView::frame_update()
                                 ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
                                 ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
                             {
-                                m_Table->set_cursor_position(it.get_position());
+                                m_Table->set_cursor_position(cursorIterator.get_position());
                             }
                         }
 
                         // draw cursor
-                        if(it.get_position() == m_Table->get_cursor_position())
+                        if(symbol[0] != '\n' &&
+                            cursorIterator.get_position() == m_Table->get_cursor_position())
                         {
-                            ImGui::GetWindowDrawList()->AddText(
-                                    symbolPosition + ImVec2(2.f, 0.f) - ImVec2(calculate_text_size("|").x, 0.f) * 0.5f,
-                                    IM_COL32(0, 255, 0, 255),
-                                    "|");
+                            drawCursor(symbolPosition);
                         }
 
                         // update symbol position
                         symbolPosition = symbolPosition + ImVec2(symbolSize.x, 0.f);
                     }
+
+                    if(lineEndIterator.get_position() == m_Table->get_cursor_position())
+                        drawCursor(symbolPosition);
                 }
 
                 ImGui::EndChild();

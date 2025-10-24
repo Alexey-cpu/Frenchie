@@ -1,11 +1,11 @@
-#include <FrenchieTextEditorSyntaxHighlighter.hpp>
+#include <FrenchieEditorTextDocumentHighlighter.hpp>
 
 using namespace Frenchie::Core;
 
-using namespace Frenchie::TextEditor;
+using namespace Frenchie::Editor;
 
 SyntaxHighlighter::regexEstimationResults SyntaxHighlighter::highlight(
-    const std::wstring&           _Contents, 
+    const std::u32string&          _Contents, 
     const std::vector<RegexRule>& _Rules,
     const unsigned int&           _DefaultColor, 
     const int&                    _LineNumber)
