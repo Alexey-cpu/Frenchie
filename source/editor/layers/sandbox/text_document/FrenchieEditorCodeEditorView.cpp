@@ -275,11 +275,16 @@ void TextDocumentView::frame_update()
                 {
                     Frenchie::Core::TextDocumentSymbolIterator lineBeginIterator = m_Table->line_begin(lineIndex);
                     Frenchie::Core::TextDocumentSymbolIterator lineEndIterator   = m_Table->line_end(lineIndex);
-
+                
                     m_MaxWidth = std::max<int>(m_MaxWidth, lineEndIterator.get_position() - lineBeginIterator.get_position());
 
+                    int distance = (int)(m_Scroll.x / ImGui::GetFontSize());
+                    lineBeginIterator.increment_by(distance);    
+
+                    if(lineBeginIterator.get_position() >= lineEndIterator.get_position()) continue;
+
                     // highlight text
-                    std::u32string text = m_Table->get_text(lineBeginIterator, lineEndIterator);
+                    std::u32string text = m_Table->get_text(lineBeginIterator, lineEndIterator, 1024);
 
                     SyntaxHighlighter::regexEstimationResults matches =
                         m_Highlighter.highlight(
@@ -288,7 +293,7 @@ void TextDocumentView::frame_update()
                             Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                             lineIndex);
 
-                    ImVec2 symbolPosition = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
+                    ImVec2 symbolPosition = ImVec2(ImGui::GetCursorScreenPos().x + m_Scroll.x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
                     int    globalIndex    = lineBeginIterator.get_position();
 
 					for(auto&& match : matches)
