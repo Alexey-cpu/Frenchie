@@ -1,4 +1,4 @@
-#include <FrenchieEditorTextDocumentView.hpp>
+#include <FrenchieEditorCodeEditorView.hpp>
 
 using namespace Frenchie::Editor;
 
@@ -97,9 +97,7 @@ public:
 
 // TextDocumentView
 TextDocumentView::TextDocumentView() :
-    Frenchie::Application::Layer(STRINGIFY(TextDocumentView))
-{
-}
+    Frenchie::Application::Layer(STRINGIFY(TextDocumentView)){}
 
 TextDocumentView::~TextDocumentView(){}
 
@@ -107,21 +105,17 @@ bool TextDocumentView::awake()
 {
     std::u32string text;
 
-    // #ifndef PIECE_TABLE_DRAWER_DEBUG
-    // for (int i = 0; i < 1e6; i++)
-    // #else
-    // for (int i = 0; i < 1; i++)
-    // #endif
-    // {
-    //     //text.append(std::to_wstring(i)).append(L"\t");
+    for (int i = 0; i < 3; i++)
+    {
+        //text.append(std::to_wstring(i)).append(L"\t");
         
-    //     for (int j = 0; j < 1; j++)
-    //     {
-    //         text.append(U"Всем привет !!!!");
-    //     }
+        for (int j = 0; j < 100; j++)
+        {
+            text.append(U"Всем привет !!!!");
+        }
 
-    //     text.append(U"\n");
-    // }
+        text.append(U"\n");
+    }
 
     m_Table = std::make_unique<Frenchie::Core::TextDocument>(text);
 
@@ -184,7 +178,9 @@ void TextDocumentView::frame_update()
                 ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
                 Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
 
-            ImVec2 contentSize = ImVec2(2048.f, (m_Table->lines_count() + 2) * ImGui::GetFontSize());
+            ImVec2 contentSize = ImVec2(
+                m_MaxWidth * ImGui::GetFontSize(), // this is the room for text width, i.e this width if far greater than text itself
+                (m_Table->lines_count() + 2) * ImGui::GetFontSize());
 
             // draw line numbers
             ImGui::SetNextWindowContentSize(contentSize);
@@ -260,10 +256,10 @@ void TextDocumentView::frame_update()
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
             );
             {
+                // draw text background
                 ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ScrollbarBg, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
                 ImGui::GetWindowDrawList()->ChannelsSplit(Layers::COUNT);
                 ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
-
                 ImGui::GetWindowDrawList()->AddRectFilled(
                     ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
                     ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX),
@@ -277,16 +273,13 @@ void TextDocumentView::frame_update()
 
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
-                    ImVec2 symbolOrigin   = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
-                    ImVec2 symbolPosition = symbolOrigin;
+                    Frenchie::Core::TextDocumentSymbolIterator lineBeginIterator = m_Table->line_begin(lineIndex);
+                    Frenchie::Core::TextDocumentSymbolIterator lineEndIterator   = m_Table->line_end(lineIndex);
 
-                    auto lineBeginIterator = m_Table->line_begin(lineIndex);
-                    auto lineEndIterator   = m_Table->line_end(lineIndex);
+                    m_MaxWidth = std::max<int>(m_MaxWidth, lineEndIterator.get_position() - lineBeginIterator.get_position());
 
-                    // draw highlighted text
-                    std::u32string text;
-                    for(auto cursorIterator = lineBeginIterator; cursorIterator != lineEndIterator; cursorIterator++)
-                        text += *cursorIterator;
+                    // highlight text
+                    std::u32string text = m_Table->get_text(lineBeginIterator, lineEndIterator);
 
                     SyntaxHighlighter::regexEstimationResults matches =
                         m_Highlighter.highlight(
@@ -295,59 +288,49 @@ void TextDocumentView::frame_update()
                             Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                             lineIndex);
 
-                    auto pos = symbolPosition;
+                    ImVec2 symbolPosition = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
+                    int    globalIndex    = lineBeginIterator.get_position();
 
 					for(auto&& match : matches)
 					{
-                        for (int index = match.second.Match.Start; index < match.second.Match.Finish; index++)
+                        for(int index = match.second.Match.Start; index < match.second.Match.Finish; index++, globalIndex++)
                         {
-                            std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, text[index]));
+                            std::string symbol =
+                                Frenchie::Core::String::convert_utf32_to_utf8(
+                                    std::u32string(1, text[index]));
 
+                            // draw symbol
                             ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::DOCUMENT);
-                            ImGui::GetWindowDrawList()->AddText(pos, match.second.Color, symbol.c_str());
+                            ImGui::GetWindowDrawList()->AddText(symbolPosition, match.second.Color, symbol.c_str());
 
-                            pos += ImVec2(Helpers::calculate_text_size(symbol).x, 0.f);
+                            // highlight symbol
+                            ImVec2 symbolSize      = Helpers::calculate_text_size(symbol);
+                            ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
+
+                            if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                            {
+                                ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
+                                ImGui::GetWindowDrawList()->AddRectFilled(symbolRectangle.Min, symbolRectangle.Max, IM_COL32(255, 0, 0, 128));
+
+                                // update cursor position
+                                if((ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
+                                    ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
+                                    ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
+                                {
+                                    m_Table->set_cursor_position(globalIndex);
+                                }
+                            }
+
+                            // draw cursor
+                            if(symbol[0] != '\n' && globalIndex == m_Table->get_cursor_position())
+                                drawCursor(symbolPosition);
+
+                            // update position
+                            symbolPosition += ImVec2(symbolSize.x, 0.f);
                         }
 					}
 
-                    // highlight symbols
-                    for (auto cursorIterator = lineBeginIterator; cursorIterator != lineEndIterator; cursorIterator++)
-                    {                    
-                        // draw symbol
-                        std::string symbol = Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *cursorIterator));
-
-                        ImVec2 symbolSize = Helpers::calculate_text_size(symbol);
-
-                        // highlight symbol
-                        ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
-
-                        if(symbolRectangle.Contains(ImGui::GetMousePos()))
-                        {
-                            ImGui::GetWindowDrawList()->AddRectFilled(
-                                symbolRectangle.Min,
-                                symbolRectangle.Max,
-                                IM_COL32(255, 0, 0, 128));
-
-                            // update cursor position
-                            if((ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  || 
-                                ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
-                                ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
-                            {
-                                m_Table->set_cursor_position(cursorIterator.get_position());
-                            }
-                        }
-
-                        // draw cursor
-                        if(symbol[0] != '\n' &&
-                            cursorIterator.get_position() == m_Table->get_cursor_position())
-                        {
-                            drawCursor(symbolPosition);
-                        }
-
-                        // update symbol position
-                        symbolPosition = symbolPosition + ImVec2(symbolSize.x, 0.f);
-                    }
-
+                    // draw cursor if it's at the end of the line
                     if(lineEndIterator.get_position() == m_Table->get_cursor_position())
                         drawCursor(symbolPosition);
                 }

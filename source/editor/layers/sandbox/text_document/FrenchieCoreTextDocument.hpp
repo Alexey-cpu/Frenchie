@@ -129,6 +129,7 @@ namespace Frenchie
             ~TextDocument();
 
             // getters
+            std::u32string get_text(const TextDocumentSymbolIterator& _Begin, const TextDocumentSymbolIterator& _End) const;
             int get_line_start_index(const int&) const;
             int get_line_end_index(const int&) const;
             int get_cursor_position() const;

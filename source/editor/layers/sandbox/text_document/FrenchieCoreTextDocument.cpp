@@ -136,6 +136,14 @@ TextDocument::TextDocument(const std::u32string& _Buffer) :
 
 TextDocument::~TextDocument(){}
 
+std::u32string TextDocument::get_text(const TextDocumentSymbolIterator& _Begin, const TextDocumentSymbolIterator& _End) const
+{
+    std::u32string text;
+    for(auto cursorIterator = _Begin; cursorIterator != _End; cursorIterator++)
+        text += *cursorIterator;
+    return text;
+}
+
 int TextDocument::get_line_start_index(const int& _Line) const
 {
     return _Line - 1 < 0 ? 0 : get_line_end_index(_Line - 1);

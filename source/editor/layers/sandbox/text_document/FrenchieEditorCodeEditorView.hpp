@@ -9,7 +9,7 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
-#include <FrenchieEditorTextDocumentHighlighter.hpp>
+#include <FrenchieEditorSyntaxHighlighter.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -96,10 +96,11 @@ namespace Frenchie
                     RegexRule::MULTILINE_FINISH)
             };
 
-            ImVec2 m_Scroll;
-            ImRect m_ViewPort;
-            int    m_Start;
-            int    m_End;
+            ImVec2 m_Scroll{ImVec2()};
+            ImRect m_ViewPort{ImRect()};
+            int    m_MaxWidth{0};
+            int    m_Start{0};
+            int    m_End{0};
 
             // commands
             void document_insert_symbol_command();
