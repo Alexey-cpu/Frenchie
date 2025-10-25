@@ -117,12 +117,10 @@ TextDocumentSymbolIterator TextDocumentSymbolIterator::operator--(int)
 
 bool TextDocumentSymbolIterator::equal(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
 {
-    if(_First.m_Table->empty() && _Second.m_Table->empty()) return true;
+    if(_First.m_Table->empty() && _Second.m_Table->empty())
+        return true;
 
     return _First.m_Position == _Second.m_Position;
-
-    // return _First.m_Iterator == _Second.m_Iterator && 
-    //         _First.m_Offset == _Second.m_Offset; 
 }
 
 // TextDocument
