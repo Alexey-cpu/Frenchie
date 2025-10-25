@@ -115,6 +115,14 @@ TextDocumentSymbolIterator TextDocumentSymbolIterator::operator--(int)
     return tmp;
 }
 
+void TextDocumentSymbolIterator::increment_by(const int& _Distance)
+{
+    TextDocument::PieceInfo it = m_Table->get_piece_iterator_by_global_index(m_Position + _Distance, m_Iterator);
+    m_Position = m_Position + _Distance;
+    m_Iterator = it.Iterator;
+    m_Offset   = it.Offset;
+}
+
 bool TextDocumentSymbolIterator::equal(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second)
 {
     if(_First.m_Table->empty() && _Second.m_Table->empty())
@@ -134,10 +142,15 @@ TextDocument::TextDocument(const std::u32string& _Buffer) :
 
 TextDocument::~TextDocument(){}
 
-std::u32string TextDocument::get_text(const TextDocumentSymbolIterator& _Begin, const TextDocumentSymbolIterator& _End) const
+std::u32string TextDocument::get_text(
+    const TextDocumentSymbolIterator& _Begin,
+    const TextDocumentSymbolIterator& _End,
+    const int&                        _MaximumSymbolsToExtract) const
 {
     std::u32string text;
-    for(auto cursorIterator = _Begin; cursorIterator != _End; cursorIterator++)
+    int            symbolsCount = 0;
+
+    for(auto cursorIterator = _Begin; cursorIterator != _End && symbolsCount < _MaximumSymbolsToExtract; cursorIterator++, symbolsCount++)
         text += *cursorIterator;
     return text;
 }
@@ -188,6 +201,45 @@ TextDocument::PieceInfo TextDocument::get_piece_iterator_by_global_index(const i
     // look for the row where to append
     int  cursorPosition = 0;
     auto cursorIterator = m_Pieces.Pieces.begin();
+
+    for(auto iterator = m_Pieces.Pieces.begin();
+        iterator != m_Pieces.Pieces.end() && cursorPosition < _Position;
+        cursorPosition += iterator->Length, iterator++) 
+        cursorIterator = iterator;
+    
+    // empty table
+    if(cursorIterator == m_Pieces.Pieces.end())
+        return {m_Pieces.Pieces.end(), 0};
+
+    // beggining
+    if(_Position <= 0 && (cursorPosition - _Position) == 0)
+    {
+        if(cursorIterator != m_Pieces.Pieces.begin()) 
+        {
+            --cursorIterator;
+            return {cursorIterator, cursorIterator->Length - 1};
+        }
+
+        return {cursorIterator, 0};
+    }
+
+    // end
+    if(_Position > 0 && (cursorPosition - _Position) == 0)
+        return {++cursorIterator, 0};
+
+    // middle
+    int offset = cursorIterator->Length - (cursorPosition - _Position);
+
+    return {cursorIterator, offset};
+}
+
+TextDocument::PieceInfo TextDocument::get_piece_iterator_by_global_index(
+    const int&                                  _Position,
+    TextDocumentPieceTable::ConstPieceIterator& _Iterator) const
+{
+    // look for the row where to append
+    int  cursorPosition = 0;
+    auto cursorIterator = _Iterator;
 
     for(auto iterator = m_Pieces.Pieces.begin();
         iterator != m_Pieces.Pieces.end() && cursorPosition < _Position;

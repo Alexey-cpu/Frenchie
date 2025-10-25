@@ -97,6 +97,8 @@ namespace Frenchie
                 return !TextDocumentSymbolIterator::equal(_First, _Second);
             }
 
+            void increment_by(const int& _Distance);
+
         protected:
 
             static bool equal(const TextDocumentSymbolIterator& _First, const TextDocumentSymbolIterator& _Second);
@@ -129,12 +131,14 @@ namespace Frenchie
             ~TextDocument();
 
             // getters
-            std::u32string get_text(const TextDocumentSymbolIterator& _Begin, const TextDocumentSymbolIterator& _End) const;
+            std::u32string get_text(
+                const TextDocumentSymbolIterator& _Begin,
+                const TextDocumentSymbolIterator& _End,
+                const int&                        _MaximumSymbolsToExtract = INT_MAX) const;
+
             int get_line_start_index(const int&) const;
             int get_line_end_index(const int&) const;
             int get_cursor_position() const;
-
-            PieceInfo get_piece_iterator_by_global_index(const int&) const;
 
             // setters
             void set_cursor_position(const int&) const;
@@ -187,6 +191,9 @@ namespace Frenchie
 
             // service methods
             void command(std::function<void()> _Command, const bool& _SaveState = true);
+
+            PieceInfo get_piece_iterator_by_global_index(const int&) const;
+            PieceInfo get_piece_iterator_by_global_index(const int&, TextDocumentPieceTable::ConstPieceIterator&) const;
         };
     }
 }
