@@ -1,4 +1,4 @@
-#include <FrenchieEditorTextDocumentHighlighter.hpp>
+#include <FrenchieEditorSyntaxHighlighter.hpp>
 
 using namespace Frenchie::Core;
 
