@@ -3,106 +3,10 @@
 #include <FrenchieCoreLogger.hpp>
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
-
-// int main(int, char**)
-// {
-//     auto start = tic();
-
-//     //--------------------------------------------------------------------------------
-//     // load a file into a buffer
-//     //--------------------------------------------------------------------------------
-//     char* path = "C:/SDK/Qt_Projects/OpenGL/logs/TestFile.xml";
-//     //char* path = "C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml";
-
-//     std::ifstream t(path);
-//     //std::ifstream t("C:/SDK/Qt_Projects/OpenGL/logs/VeryLargeXML.xml");
-//     t.seekg(0, std::ios::end);
-//     size_t size = t.tellg();
-//     std::string buffer(size, ' ');
-//     t.seekg(0);
-//     t.read(&buffer[0], size); 
-
-//     //--------------------------------------------------------------------------------
-//     // parse buffer
-//     //--------------------------------------------------------------------------------    
-//     // XML tree
-//     char* buff = buffer.data();
-
-//     // stack
-//     Stack<char*> tails;
-
-//     // Allocator
-//     MemoryChunkAllocator<char> allocator(4096);
-
-//     // constants
-//     const char END_OF_FILE               = '\0';
-//     const char XML_TAG_START             =  '<';
-//     const char XML_TAG_FINISH            =  '>';
-//     const char XML_TAG_POP               =  '/';
-//     const char XML_ATTRIBUTE_SEPARATOR   =  ' ';
-//     const char XML_ATTRIBUTE_VALUE_FRAME =  '"';
-
-//     // walk a tree
-//     while(*buff != END_OF_FILE)
-//     {
-//         if(*buff == XML_TAG_START)
-//         {
-//             buff++; // next
-
-//             if(*buff == XML_TAG_POP)
-//             {
-//                 tails.pop();
-//             }
-//             else
-//             {
-//                 // push node
-//                 tails.push(buff);
-
-//                 // read tag
-//                 while(*buff != XML_TAG_FINISH && *buff != XML_TAG_POP) buff++;
-
-//                 // parse tag
-//                 // char* tail = tails.top();
-//                 // allocator.allocate(buff - tail);
-
-//                 //---------------------------------------------------------------------------------------
-//                 // print tag
-//                 //---------------------------------------------------------------------------------------
-//                 if(buffer.size() < 4096)
-//                 {
-//                     char* tail = tails.top();
-
-//                     while(tail != buff)
-//                     {
-//                         std::cout << *tail;
-//                         tail++;
-//                     }
-
-//                     std::cout << "\n";
-//                 }
-//                 //---------------------------------------------------------------------------------------
-//             }
-//         }
-
-//         buff++; // next
-//     }
-    
-//     std::cout << "elapsed " << elapsed<std::chrono::milliseconds>(start, tic()) << " ms \n";
-
-//     // pugi benchmark
-//     start = tic();
-
-//     pugi::xml_document doc;
-//     doc.load_file(path);
-
-//     std::cout << "pugi elapsed " << elapsed<std::chrono::milliseconds>(start, tic()) << " ms \n";
-
-//     return 0;
-// }
+#include <FrenchieCoreStringConvert.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Containers;
-using namespace Frenchie::Core::FileSystem;
 using namespace Frenchie::Core::Serialization;
 
 namespace Frenchie
@@ -154,11 +58,11 @@ namespace Frenchie
 
                         if(status != pugi::xml_parse_status::status_ok) 
                         {
-                            Frenchie::Core::Logger::instance()->error(
-                                fmt::format("{}\n XML parse error '{}'", 
-                                    Frenchie::Core::String::as_utf8(_Path.wstring()), 
-                                    descript_status(status))
-                            );
+                            // Frenchie::Core::Logger::instance()->error(
+                            //     fmt::format("{}\n XML parse error '{}'", 
+                            //         Frenchie::Core::String::as_utf8(_Path.wstring()), 
+                            //         descript_status(status))
+                            // );
 
                             return false;
                         }
@@ -166,10 +70,10 @@ namespace Frenchie
 
                     if(document.empty()) 
                     {
-                        Frenchie::Core::Logger::instance()->error(
-                            fmt::format("{}\n empty document", 
-                                Frenchie::Core::String::as_utf8(_Path.wstring()))
-                            );
+                        // Frenchie::Core::Logger::instance()->error(
+                        //     fmt::format("{}\n empty document", 
+                        //         Frenchie::Core::String::as_utf8(_Path.wstring()))
+                        //     );
                         return false;
                     }
 

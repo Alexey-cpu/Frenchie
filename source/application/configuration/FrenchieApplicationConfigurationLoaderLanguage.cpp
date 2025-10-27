@@ -1,8 +1,9 @@
 #include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 
 // Core
-#include <FrenchieCoreHelpers.hpp>
 #include <FrenchieCoreThreadPool.hpp>
+#include <FrenchieCoreFileSystem.hpp>
+#include <FrenchieCoreStringUnicode.hpp>
 #include <FrenchieCoreSerializationFormatXML.hpp>
 #include <FrenchieCoreSerializationFormatJSON.hpp>
 #include <FrenchieCoreSerializationFormatYAML.hpp>
@@ -71,7 +72,7 @@ std::string Language::get_name() const
 
 std::filesystem::path Language::get_path() const
 {
-    return Frenchie::Core::String::as_utf8(m_Path.wstring());
+    return Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string());
 }
 
 TranslationFile& Language::get_translation_file() const
@@ -214,7 +215,7 @@ void Language::save()
                 status->push_message(
                     fmt::format(
                         "start saving .xlf file to {}\n",
-                        Frenchie::Core::String::as_utf8(m_Path.wstring())
+                        Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string())
                     )
                 );
             }
@@ -273,7 +274,7 @@ std::filesystem::path Translator::get_app_translation_files_path() const
     if(configurationLoader == nullptr) 
         return m_AppTranslationFilesPath;
         
-    m_AppTranslationFilesPath = configurationLoader->get_app_data_path().wstring().append(L"/fonts");
+    m_AppTranslationFilesPath = configurationLoader->get_app_data_path().u32string().append(U"/translations");
 
     if(!std::filesystem::exists(m_AppTranslationFilesPath)) 
     {
@@ -448,7 +449,7 @@ std::string Translator::translate(const std::string& _Key)
 
 Frenchie::Core::Reference<Language> Translator::create_new_translation_file(const std::filesystem::path& _Path)
 {
-    auto path  = std::filesystem::path(_Path.parent_path().wstring().append(L"/").append(_Path.filename().stem().wstring()).append(L".xlf")).make_preferred();
+    auto path  = std::filesystem::path(_Path.parent_path().u32string().append(U"/").append(_Path.filename().stem().u32string()).append(U".xlf")).make_preferred();
     auto theme = std::make_shared<Language>(path, this);
     m_SupportedLanguages.push_back(theme);
 

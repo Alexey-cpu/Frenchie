@@ -8,43 +8,25 @@
 #include <filesystem>
 #include <functional>
 
-#define STRINGIFY(_VALUE) #_VALUE
-
-#if defined(unix) || defined(__unix) || defined(__unix__)
-#define IS_LINUX
-#endif
-
-#if defined(__APPLE__) || defined(__MACH__)
-#define IS_MACOS
-#endif
-
-#if defined(_WIN32) || defined(_WIN64)
-#define IS_WINDOWS
-#endif
-
-#if defined(IS_LINUX) || defined(IS_MACOS)
-#define IS_UNIX
-#endif
-
 namespace Frenchie
 {
     namespace Core
     {
-        namespace FileSystem
-        {
-            std::filesystem::path get_exe_absolute_path();
+        // namespace FileSystem
+        // {
+        //     std::filesystem::path get_exe_absolute_path();
 
-            std::filesystem::path get_exe_absolute_directory();
+        //     std::filesystem::path get_exe_absolute_directory();
 
-            std::string get_file_extention(const std::filesystem::path& _Path);
+        //     std::string get_file_extention(const std::filesystem::path& _Path);
 
-            FILE* open_file(const std::string& _Path, std::string _Mode);
+        //     FILE* open_file(const std::string& _Path, std::string _Mode);
 
-            void create_directory(
-                const std::filesystem::path& _Path, 
-                const std::function<void()>& _OnSuccess, 
-                const std::function<void(const std::exception&)>& _OnFail);
-        }
+        //     void create_directory(
+        //         const std::filesystem::path& _Path, 
+        //         const std::function<void()>& _OnSuccess, 
+        //         const std::function<void(const std::exception&)>& _OnFail);
+        // }
 
 #if defined(_STDINT_H) || defined(_STDINT_H_) || defined(_STDINT)
 
@@ -317,9 +299,6 @@ namespace Frenchie
             // to string conversion
             template <typename __type>
             std::string to_string(const __type& _Input);
-
-            std::string as_utf8(const std::wstring&);
-            std::wstring as_wide(const std::string&);
         }
 
         namespace Time

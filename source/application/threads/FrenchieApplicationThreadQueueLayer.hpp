@@ -1,5 +1,9 @@
 #pragma once
 
+// Core
+#include <FrenchieCoreStringConvert.hpp>
+
+// Application
 #include <FrenchieApplication.hpp>
 
 // STL

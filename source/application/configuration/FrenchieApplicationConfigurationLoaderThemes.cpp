@@ -1,6 +1,8 @@
 #include <FrenchieApplicationConfigurationLoaderThemes.hpp>
 
 // Core
+#include <FrenchieCoreFileSystem.hpp>
+#include <FrenchieCoreStringUnicode.hpp>
 #include <FrenchieCoreSerializationNode.hpp>
 #include <FrenchieCoreSerializationFormatXML.hpp>
 
@@ -58,7 +60,7 @@ Theme::~Theme(){}
 
 std::string Theme::get_name() const
 {
-    return Frenchie::Core::String::as_utf8(m_Path.filename().stem().wstring());
+    return Frenchie::Core::String::convert_utf32_to_utf8(m_Path.filename().stem().u32string());
 }
 
 std::filesystem::path Theme::get_path() const

@@ -2,6 +2,7 @@
 
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
+#include <FrenchieCoreStringConvert.hpp>
 
 // STL
 #include <type_traits>
@@ -10,8 +11,8 @@
 #include <set>
 
 using namespace Frenchie::Core;
+using namespace Frenchie::Core::String;
 using namespace Frenchie::Core::Containers;
-using namespace Frenchie::Core::FileSystem;
 using namespace Frenchie::Core::Serialization;
 
 
@@ -271,19 +272,19 @@ template<> Node Node::append_node(const char* _Name, const __type& _Value) const
 {\
     if(is_number<__type>())\
     {\
-        return Node(append_node(_Name, Core::String::to_string<__type>(_Value).c_str(), NodeType::NUMBER));\
+        return Node(append_node(_Name, to_string<__type>(_Value).c_str(), NodeType::NUMBER));\
     }\
     \
     else if(is_bool<__type>())\
     {\
-        return Node(append_node(_Name, Core::String::to_string<__type>(_Value).c_str(), NodeType::BOOL));\
+        return Node(append_node(_Name, to_string<__type>(_Value).c_str(), NodeType::BOOL));\
     }\
     \
     else if(is_null<__type>())\
     {\
-        return Node(append_node(_Name, Core::String::to_string<__type>(_Value).c_str(), NodeType::NULLPTR));\
+        return Node(append_node(_Name, to_string<__type>(_Value).c_str(), NodeType::NULLPTR));\
     }\
-    return Node(append_node(_Name, Core::String::to_string<__type>(_Value).c_str(), NodeType::OBJECT));\
+    return Node(append_node(_Name, to_string<__type>(_Value).c_str(), NodeType::OBJECT));\
 }\
 
 #define __support_vector__(__type)\

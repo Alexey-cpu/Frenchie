@@ -3,8 +3,6 @@
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreNonCopyable.hpp>
-#include <FrenchieCoreHelpers.hpp>
-
 #include <FrenchieCoreChunkAllocator.hpp>
 
 // PUGIXML
