@@ -105,29 +105,29 @@ bool TextDocumentView::awake()
 {
     std::u32string text;
 
-    for (int i = 0; i < 1e6; i++)
-    {
-        //text.append(std::to_wstring(i)).append(L"\t");
+    // for (int i = 0; i < 1e6; i++)
+    // {
+    //     //text.append(std::to_wstring(i)).append(L"\t");
         
-        if(i % 2 > 0)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                text.append(U"Всем привет !!!!");
-            }
-        }
-        else
-        {
-            for (int j = 0; j < 1; j++)
-            {
-                text.append(U"Всем привет !!!!");
-            }
-        }
+    //     if(i % 2 > 0)
+    //     {
+    //         for (int j = 0; j < 3; j++)
+    //         {
+    //             text.append(U"Всем привет !!!!");
+    //         }
+    //     }
+    //     else
+    //     {
+    //         for (int j = 0; j < 1; j++)
+    //         {
+    //             text.append(U"Всем привет !!!!");
+    //         }
+    //     }
 
-        text.append(U"\n");
-    }
+    //     text.append(U"\n");
+    // }
 
-    m_Table = std::make_unique<Frenchie::Core::TextDocument>(text);
+    m_TextDocument = std::make_unique<Frenchie::Core::TextDocument>(text);
 
     return true;
 }
@@ -190,7 +190,7 @@ void TextDocumentView::frame_update()
 
             ImVec2 contentSize = ImVec2(
                 m_MaxWidth * ImGui::GetFontSize(), // this is the room for text width, i.e this width if far greater than text itself
-                (m_Table->lines_count() + 2) * ImGui::GetFontSize());
+                (m_TextDocument->lines_count() + 2) * ImGui::GetFontSize());
 
             // draw line numbers
             ImGui::SetNextWindowContentSize(contentSize);
@@ -218,7 +218,7 @@ void TextDocumentView::frame_update()
                 m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
                 m_ViewPort = ImRect(ImGui::GetCursorScreenPos() + m_Scroll, ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetWindowSize());
                 m_Start    = (int)(m_Scroll.y / ImGui::GetFontSize());
-                m_End      = m_Start + std::min<int>((int)(m_ViewPort.GetSize().y / ImGui::GetFontSize()), m_Table->lines_count());
+                m_End      = m_Start + std::min<int>((int)(m_ViewPort.GetSize().y / ImGui::GetFontSize()), m_TextDocument->lines_count());
 
                 // draw line numbers
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
@@ -279,12 +279,12 @@ void TextDocumentView::frame_update()
                 m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
                 m_ViewPort = ImRect(ImGui::GetCursorScreenPos() + m_Scroll, ImGui::GetCursorScreenPos() + m_Scroll + ImGui::GetWindowSize());
                 m_Start    = (int)(m_Scroll.y / ImGui::GetFontSize());
-                m_End      = m_Start + std::min<int>((int)(m_ViewPort.GetSize().y / ImGui::GetFontSize()), m_Table->lines_count());
+                m_End      = m_Start + std::min<int>((int)(m_ViewPort.GetSize().y / ImGui::GetFontSize()), m_TextDocument->lines_count());
 
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
-                    Frenchie::Core::TextDocumentSymbolIterator lineBeginIterator = m_Table->line_begin(lineIndex);
-                    Frenchie::Core::TextDocumentSymbolIterator lineEndIterator   = m_Table->line_end(lineIndex);
+                    Frenchie::Core::TextDocumentSymbolIterator lineBeginIterator = m_TextDocument->line_begin(lineIndex);
+                    Frenchie::Core::TextDocumentSymbolIterator lineEndIterator   = m_TextDocument->line_end(lineIndex);
                 
                     m_MaxWidth = std::max<int>(m_MaxWidth, lineEndIterator.get_position() - lineBeginIterator.get_position());
 
@@ -295,9 +295,9 @@ void TextDocumentView::frame_update()
                         continue;
 
                     // highlight text
-                    std::u32string text = m_Table->get_text(lineBeginIterator, lineEndIterator, 1024);
+                    std::u32string text = m_TextDocument->get_text(lineBeginIterator, lineEndIterator, 1024);
 
-                    SyntaxHighlighter::regexEstimationResults matches =
+                    SyntaxHighlighter::regexRulesEstimationResults matches =
                         m_Highlighter.highlight(
                             text,
                             m_Patterns,
@@ -333,12 +333,12 @@ void TextDocumentView::frame_update()
                                     ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
                                     ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
                                 {
-                                    m_Table->set_cursor_position(globalIndex);
+                                    m_TextDocument->set_cursor_position(globalIndex);
                                 }
                             }
 
                             // draw cursor
-                            if(symbol[0] != '\n' && globalIndex == m_Table->get_cursor_position())
+                            if(symbol[0] != '\n' && globalIndex == m_TextDocument->get_cursor_position())
                                 drawCursor(symbolPosition);
 
                             // update position
@@ -347,9 +347,13 @@ void TextDocumentView::frame_update()
 					}
 
                     // draw cursor if it's at the end of the line
-                    if(lineEndIterator.get_position() == m_Table->get_cursor_position())
+                    if(lineEndIterator.get_position() == m_TextDocument->get_cursor_position())
                         drawCursor(symbolPosition);
                 }
+
+                // draw cursor if it's at the end of the line
+                if(m_TextDocument->get_cursor_position() <= 0)
+                    drawCursor(ImVec2(ImGui::GetCursorScreenPos().x + m_Scroll.x, ImGui::GetCursorScreenPos().y));
 
                 ImGui::PopStyleColor(1);
                 ImGui::EndChild();
@@ -369,7 +373,7 @@ void TextDocumentView::frame_update()
             ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
         );
         {
-            ImGui::TextUnformatted(fmt::format("Cursor {}", m_Table->get_cursor_position()).c_str());
+            ImGui::TextUnformatted(fmt::format("Cursor {}", m_TextDocument->get_cursor_position()).c_str());
 
             ImGui::EndChild();
         }
@@ -391,13 +395,14 @@ void TextDocumentView::document_insert_symbol_command()
 
 	if (ImGui::Shortcut(ImGuiKey::ImGuiKey_Tab, ImGuiInputFlags_::ImGuiInputFlags_Repeat))
 	{
-		on_character_ressed((unsigned int)'\t');
+		on_character_pressed((unsigned int)'\t');
         return;
 	}
 
     if (ImGui::Shortcut(ImGuiKey::ImGuiKey_Enter, ImGuiInputFlags_::ImGuiInputFlags_Repeat))
 	{
-		on_character_ressed((unsigned int)'\n');
+		on_character_pressed((unsigned int)'\n');
+        on_character_pressed((unsigned int)'\0');
         return;
 	}
 
@@ -413,7 +418,7 @@ void TextDocumentView::document_insert_symbol_command()
 				if (c == '\t' || c == '\n') // Skip Tab and Enter (see above)
 					continue;
 
-				on_character_ressed(c);
+				on_character_pressed(c);
 			}
 		}
 
@@ -429,8 +434,8 @@ void TextDocumentView::document_erase_symbol_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->erase();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->erase();
             }
         );
     }
@@ -443,8 +448,8 @@ void TextDocumentView::document_move_cursor_left_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->move_cursor_left();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->move_cursor_left();
             }
         );
     }
@@ -457,8 +462,8 @@ void TextDocumentView::document_move_cursor_right_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->move_cursor_right();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->move_cursor_right();
             }
         );
     }
@@ -471,8 +476,8 @@ void TextDocumentView::document_move_cursor_down_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->move_cursor_down();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->move_cursor_down();
             }
         );
     }
@@ -485,8 +490,8 @@ void TextDocumentView::document_move_cursor_up_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->move_cursor_up();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->move_cursor_up();
             }
         );
     }
@@ -499,8 +504,8 @@ void TextDocumentView::document_undo_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->undo();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->undo();
             }
         );
     }
@@ -513,14 +518,14 @@ void TextDocumentView::document_redo_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_Table != nullptr)
-                    m_Table->redo();
+                if(m_TextDocument != nullptr)
+                    m_TextDocument->redo();
             }
         );
     }
 }
 
-void TextDocumentView::on_character_ressed(const unsigned int& _Char)
+void TextDocumentView::on_character_pressed(const unsigned int& _Char)
 {
     Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
         [this, _Char]()
@@ -530,8 +535,8 @@ void TextDocumentView::on_character_ressed(const unsigned int& _Char)
             int  count = Helpers::ImTextCharToUtf8(utf8, _Char);
 
             // insert symbol
-            if(m_Table != nullptr)
-                m_Table->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
+            if(m_TextDocument != nullptr)
+                m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
         }
     );
 }

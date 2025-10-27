@@ -42,7 +42,7 @@ namespace Frenchie
             };
 
             // info
-            std::unique_ptr<Frenchie::Core::TextDocument> m_Table;
+            std::shared_ptr<Frenchie::Core::TextDocument> m_TextDocument;
 
             SyntaxHighlighter m_Highlighter;
 
@@ -135,7 +135,7 @@ namespace Frenchie
             void document_redo_command();
 
             // callbacks
-            void on_character_ressed(const unsigned int&);
+            void on_character_pressed(const unsigned int&);
         };
     }
 }
