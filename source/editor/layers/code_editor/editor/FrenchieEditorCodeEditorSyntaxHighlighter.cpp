@@ -1,8 +1,9 @@
-#include <FrenchieEditorSyntaxHighlighter.hpp>
+#include <FrenchieEditorCodeEditorSyntaxHighlighter.hpp>
 
 using namespace Frenchie::Core;
-
 using namespace Frenchie::Editor;
+
+#include <set>
 
 SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
     const std::u32string&         _Contents, 
@@ -11,6 +12,8 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
     const int&                    _LineNumber)
 {
     regexRulesEstimationResults uniqueRanges;
+
+    std::set<int> multilineOccurences;
 
     for(auto&& rule : _Rules)
     {
@@ -33,20 +36,38 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
             max = std::max<int>(max, match.Start);
         }
 
+        if(rule.Type == RegexRule::Type::MULTILINE_START && !matches.empty())
+            multilineOccurences.insert(_LineNumber);
+
         if(rule.Type == RegexRule::Type::MULTILINE_START)
         {
             if(matches.empty())
-                m_MultilineStart.erase(_LineNumber);
-            else 
-                m_MultilineStart[_LineNumber] = RegexRuleEstimationResult(Frenchie::Core::String::Match(min), rule.Color);
+            {
+                if(multilineOccurences.find(_LineNumber) == multilineOccurences.end())
+                    m_MultilineStart.erase(_LineNumber);
+            }
+            else
+            {
+                m_MultilineStart[_LineNumber] =
+                    RegexRuleEstimationResult(Frenchie::Core::String::Match(min), rule.Color);
+            }
         }
+
+        if(rule.Type == RegexRule::Type::MULTILINE_FINISH && !matches.empty())
+            multilineOccurences.insert(_LineNumber);
 
         if(rule.Type == RegexRule::Type::MULTILINE_FINISH)
         {
-            if(matches.empty()) 
-                m_MultilineFinish.erase(_LineNumber);
-            else 
-                m_MultilineFinish[_LineNumber] = RegexRuleEstimationResult(Frenchie::Core::String::Match(max), rule.Color);
+            if(matches.empty())
+            {
+                if(multilineOccurences.find(_LineNumber) == multilineOccurences.end())
+                    m_MultilineFinish.erase(_LineNumber);
+            }
+            else
+            {
+                m_MultilineFinish[_LineNumber] =
+                    RegexRuleEstimationResult(Frenchie::Core::String::Match(max), rule.Color);
+            }
         }
     }
 

@@ -10,7 +10,7 @@
 #include <FrenchieApplicationFrameCounter.hpp>
 
 // Editor
-#include <FrenchieEditorSyntaxHighlighter.hpp>
+#include <FrenchieEditorCodeEditorSyntaxHighlighter.hpp>
 
 // IMGUI
 #include <imgui.h>
@@ -119,6 +119,17 @@ namespace Frenchie
 
                 // multiline patterns
 
+                // strings
+                RegexRule(
+                    UR"(\"[^"])",
+                    IM_COL32(61, 45, 1, 255),
+                    RegexRule::MULTILINE_START),
+
+                RegexRule(
+                   UR"([^"]\")",
+                    IM_COL32(61, 45, 1, 255),
+                    RegexRule::MULTILINE_FINISH),
+
                 // comments
                 RegexRule(
                     UR"(/\*)",
@@ -129,17 +140,6 @@ namespace Frenchie
                     UR"(\*/)",
                     IM_COL32(0, 255, 0, 255),
                     RegexRule::MULTILINE_FINISH),
-
-                // strings
-                RegexRule(
-                    UR"(\"[^"])",
-                    IM_COL32(61, 45, 1, 255),
-                    RegexRule::MULTILINE_START),
-
-                RegexRule(
-                   UR"([^"]\")",
-                    IM_COL32(61, 45, 1, 255),
-                    RegexRule::MULTILINE_FINISH)
             };
 
             ImVec2 m_Scroll{ImVec2()};
