@@ -105,13 +105,23 @@ bool TextDocumentView::awake()
 {
     std::u32string text;
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 1e6; i++)
     {
         //text.append(std::to_wstring(i)).append(L"\t");
         
-        for (int j = 0; j < 100; j++)
+        if(i % 2 > 0)
         {
-            text.append(U"Всем привет !!!!");
+            for (int j = 0; j < 3; j++)
+            {
+                text.append(U"Всем привет !!!!");
+            }
+        }
+        else
+        {
+            for (int j = 0; j < 1; j++)
+            {
+                text.append(U"Всем привет !!!!");
+            }
         }
 
         text.append(U"\n");
@@ -281,7 +291,8 @@ void TextDocumentView::frame_update()
                     int distance = (int)(m_Scroll.x / ImGui::GetFontSize());
                     lineBeginIterator.increment_by(distance);    
 
-                    if(lineBeginIterator.get_position() >= lineEndIterator.get_position()) continue;
+                    if(lineBeginIterator.get_position() >= lineEndIterator.get_position())
+                        continue;
 
                     // highlight text
                     std::u32string text = m_Table->get_text(lineBeginIterator, lineEndIterator, 1024);

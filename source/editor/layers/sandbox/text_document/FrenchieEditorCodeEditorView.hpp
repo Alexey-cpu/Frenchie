@@ -48,6 +48,16 @@ namespace Frenchie
 
             std::vector<RegexRule> m_Patterns =
             {
+                // variables
+                RegexRule(
+                    UR"(\b[A-Za-z_]\w*\b)",
+                    IM_COL32(66, 122, 168, 255)),
+
+                // numbers
+                RegexRule(
+                    U"[+-]?(\\d+(\\.\\d*)?|\\.\\d+)", 
+                    IM_COL32(156, 156, 82, 255)),
+
                 // keywords
                 RegexRule(
                     UR"(alignof|alignas|asm|auto|class|consteval|constinit|constexpr|const_cast|decltype|delete|dynamic_cast|enum|explicit|false|final|friend|inline|namespace|new|noexcept|nullptr|operator|override|private|protected|public|reinterpret_cast|sizeof|static_assert|static_cast|struct|template|this|true|typedef|typeid|typename|union|using|virtual|and|and_eq|bitand|bitor|compl|not|not_eq|or|or_eq|xor|xor_eq|concept|requires|import|module|export)", 
@@ -83,16 +93,28 @@ namespace Frenchie
                     UR"(//.*)", 
                     IM_COL32(0, 255, 0, 255)),
 
-                // multiline comment start
+                // multiline patterns
+
+                // comments
                 RegexRule(
-                    UR"(/\*)", 
-                    IM_COL32(0, 255, 0, 255), 
+                    UR"(/\*)",
+                    IM_COL32(0, 255, 0, 255),
                     RegexRule::MULTILINE_START),
-                
-                // multiline comment end
+
                 RegexRule(
-                    UR"(\*/)", 
-                    IM_COL32(0, 255, 0, 255), 
+                    UR"(\*/)",
+                    IM_COL32(0, 255, 0, 255),
+                    RegexRule::MULTILINE_FINISH),
+
+                // strings
+                RegexRule(
+                    UR"(\"[^"])",
+                    IM_COL32(61, 45, 1, 255),
+                    RegexRule::MULTILINE_START),
+
+                RegexRule(
+                   UR"([^"]\")",
+                    IM_COL32(61, 45, 1, 255),
                     RegexRule::MULTILINE_FINISH)
             };
 
