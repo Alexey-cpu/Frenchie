@@ -19,6 +19,7 @@
 // STL
 #include <map>
 #include <future>
+#include <filesystem>
 
 namespace Frenchie
 {

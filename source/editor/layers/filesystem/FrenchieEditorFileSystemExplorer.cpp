@@ -401,7 +401,7 @@ namespace Frenchie
 Explorer::Explorer(
     const std::string&           _Name,
     const std::filesystem::path& _Path) : 
-    Layer(_Name), 
+    Layer(_Name),
     m_Path((std::filesystem::exists(_Path) ? _Path : std::filesystem::current_path())){}
 
 Explorer::~Explorer(){}
@@ -509,7 +509,7 @@ void Explorer::rename_paths()
 void Explorer::frame_update()
 {
     // draw content
-    ImGui::Begin(fmt::format("{}##{}", get_name(), get_uuid().to_string()).c_str(), &m_Shown);
+    ImGui::Begin(get_name().c_str(), &m_Shown);
     {
         draw_contents();
         ImGui::End();
