@@ -7,7 +7,6 @@
 // Core
 #include <FrenchieCoreFactory.hpp>
 #include <FrenchieCoreStringConvert.hpp>
-#include <FrenchieCoreUUID4Generator.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -27,7 +26,6 @@ namespace Frenchie
 
             // getters
             std::string get_name() const;
-            Frenchie::Core::UUID4 get_uuid() const;
 
             // setters
             void set_name(const std::string&);
@@ -52,7 +50,6 @@ namespace Frenchie
             std::string m_Name   = STRINGIFY(Layer);
             bool        m_Opened = true;
             bool        m_Shown  = true;
-            const Frenchie::Core::UUID4 m_UUID;
         };
     };    
 };
