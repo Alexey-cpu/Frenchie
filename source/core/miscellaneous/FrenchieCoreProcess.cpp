@@ -2,6 +2,7 @@
 
 // Core
 #include <FrenchieCoreThreadPool.hpp>
+#include <FrenchieCorePlatform.hpp>
 
 using namespace Frenchie::Core;
 

@@ -4,14 +4,16 @@
 #include <memory>
 #include <list>
 
+// Core
+#include <FrenchieCoreFactory.hpp>
+#include <FrenchieCoreStringConvert.hpp>
+#include <FrenchieCoreUUID4Generator.hpp>
+
 // GLAD
 #include <glad/glad.h> 
 
 // GLFW
 #include <GLFW/glfw3.h>
-
-#include <FrenchieCoreFactory.hpp>
-#include <FrenchieCoreUUID4Generator.hpp>
 
 namespace Frenchie
 {

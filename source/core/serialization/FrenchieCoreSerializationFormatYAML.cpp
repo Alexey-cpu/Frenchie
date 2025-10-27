@@ -2,6 +2,7 @@
 
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
+#include <FrenchieCoreFileSystem.hpp>
 
 // ryml can be used as a single header, or as a simple library:
 #if defined(RYML_SINGLE_HEADER) // using the single header directly in the executable
@@ -218,7 +219,7 @@ namespace Frenchie
                     YAML::write_object(*_Document, root);
 
                     // open YAML file
-                    FILE* file = open_file(_Path.string(), "wb");
+                    FILE* file = open_file(_Path.u32string(), U"wb");
 
                     // check that file has been opened
                     if(file == nullptr) 

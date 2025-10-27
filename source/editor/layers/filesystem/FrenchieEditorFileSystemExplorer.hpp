@@ -1,6 +1,7 @@
 #pragma once
 
 // Core
+#include <FrenchieCoreStringUnicode.hpp>
 #include <FrenchieCoreISerializer.hpp>
 #include <FrenchieCoreThreadPool.hpp>
 
@@ -69,7 +70,7 @@ namespace Frenchie
                     void select_path(const std::filesystem::path& _Path)
                     {
                         m_SelectedPaths.insert(_Path);
-                        m_CurrentFile = Frenchie::Core::String::as_utf8(_Path.filename().wstring());
+                        m_CurrentFile = Frenchie::Core::String::convert_utf32_to_utf8(_Path.filename().u32string());
                     }
 
                     void clear_selection()

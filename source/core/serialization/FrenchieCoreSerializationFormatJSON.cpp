@@ -10,10 +10,13 @@
 
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
+#include <FrenchieCoreStringConvert.hpp>
+#include <FrenchieCoreFileSystem.hpp>
 
 using namespace Frenchie::Core;
-using namespace Frenchie::Core::Containers;
+using namespace Frenchie::Core::String;
 using namespace Frenchie::Core::FileSystem;
+using namespace Frenchie::Core::Containers;
 using namespace Frenchie::Core::Serialization;
 
 namespace Frenchie
@@ -37,7 +40,7 @@ namespace Frenchie
                         return false;
 
                     // open JSON file
-                    FILE* file = open_file(_Path.string(), "rb");
+                    FILE* file = open_file(_Path.u32string(), U"rb");
 
                     // check that file has been opened
                     if(file == nullptr) 
@@ -137,7 +140,7 @@ namespace Frenchie
                     if(!std::filesystem::exists(_Path.parent_path())) 
                         return false;
 
-                    FILE* file = open_file(_Path.string(), "wb");
+                    FILE* file = open_file(_Path.u32string(), U"wb");
  
                     if(file == nullptr) 
                         return false;
@@ -177,13 +180,13 @@ namespace Frenchie
                         if(data.get_type() == NodeType::BOOL)
                         {
                             array.PushBack(
-                                rapidjson::Value().Set<bool>(String::from_string<bool>(data.get_value())), 
+                                rapidjson::Value().Set<bool>(from_string<bool>(data.get_value())), 
                                 _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::NUMBER)
                         {
                             array.PushBack(
-                                rapidjson::Value().Set<double>(String::from_string<double>(data.get_value())), 
+                                rapidjson::Value().Set<double>(from_string<double>(data.get_value())), 
                                 _JSON.GetAllocator());
                         }
                         else if(data.get_type() == NodeType::STRING || 
@@ -241,7 +244,7 @@ namespace Frenchie
                         {                                
                             _Parent.AddMember(
                                 rapidjson::Value().SetString(node.get_name(), (int)strlen(node.get_name())), 
-                                rapidjson::Value().Set<bool>(String::from_string<bool>(node.get_value())), 
+                                rapidjson::Value().Set<bool>(from_string<bool>(node.get_value())), 
                                 _JSON.GetAllocator());
                             continue;
                         }
@@ -251,7 +254,7 @@ namespace Frenchie
                         {
                             _Parent.AddMember(
                                 rapidjson::Value().SetString(node.get_name(), (int)strlen(node.get_name())), 
-                                rapidjson::Value().Set<double>(String::from_string<double>(node.get_value())), 
+                                rapidjson::Value().Set<double>(from_string<double>(node.get_value())), 
                                 _JSON.GetAllocator());
                             continue;
                         }
@@ -301,14 +304,14 @@ namespace Frenchie
                             {                                
                                 parent.AddMember(
                                     rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
-                                    rapidjson::Value().Set<bool>(String::from_string<bool>(data.get_value())), 
+                                    rapidjson::Value().Set<bool>(from_string<bool>(data.get_value())), 
                                     _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::NUMBER)
                             {
                                 parent.AddMember(
                                     rapidjson::Value().SetString(data.get_name(), (int)strlen(data.get_name())), 
-                                    rapidjson::Value().Set<double>(String::from_string<double>(data.get_value())), 
+                                    rapidjson::Value().Set<double>(from_string<double>(data.get_value())), 
                                     _JSON.GetAllocator());
                             }
                             else if(data.get_type() == NodeType::STRING || 

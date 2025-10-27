@@ -2,7 +2,7 @@
 
 // Custom
 #include <FrenchieCoreLogger.hpp>
-#include <FrenchieCoreHelpers.hpp>
+#include <FrenchieCoreStringConvert.hpp>
 
 // STL
 #include <memory>

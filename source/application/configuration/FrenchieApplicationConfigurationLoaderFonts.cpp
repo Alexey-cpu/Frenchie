@@ -1,7 +1,8 @@
 #include <FrenchieApplicationConfigurationLoaderFonts.hpp>
 
 // Core
-#include <FrenchieCoreHelpers.hpp>
+#include <FrenchieCoreStringUnicode.hpp>
+#include <FrenchieCoreFileSystem.hpp>
 #include <FrenchieCoreThreadPool.hpp>
 
 // Application
@@ -70,7 +71,7 @@ std::filesystem::path Fonts::get_app_fonts_files_directory() const
     if(configurationLoader == nullptr) 
         return m_AppFontsFilesPath;
         
-    m_AppFontsFilesPath = configurationLoader->get_app_data_path().wstring().append(L"/fonts");
+    m_AppFontsFilesPath = configurationLoader->get_app_data_path().u32string().append(U"/fonts");
 
     if(!std::filesystem::exists(m_AppFontsFilesPath)) 
     {
@@ -102,8 +103,8 @@ bool Fonts::serialize(const Frenchie::Core::Serialization::Node& _Parent)
     for(auto&& font : m_Paths)
     {
         entries.append_node(
-            Frenchie::Core::String::as_utf8(font.filename().stem().wstring()).c_str(), 
-            Frenchie::Core::String::as_utf8(font.wstring()).c_str());
+            Frenchie::Core::String::convert_utf32_to_utf8(font.filename().stem().u32string()).c_str(), 
+            Frenchie::Core::String::convert_utf32_to_utf8(font.u32string()).c_str());
     }
 
     return true;
@@ -177,7 +178,7 @@ void Fonts::load_fonts(
             {
                 status->push_message(
                     fmt::format("Trying to load font {}\n", 
-                    Frenchie::Core::String::as_utf8(path.wstring())
+                    Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
                 ));
             }
 
@@ -188,7 +189,7 @@ void Fonts::load_fonts(
 
                 status->push_message(
                     fmt::format("already loaded font {}\n", 
-                    Frenchie::Core::String::as_utf8(path.wstring())
+                    Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
                 ));
                 
                 continue;
@@ -201,7 +202,7 @@ void Fonts::load_fonts(
 
                 status->push_message(
                     fmt::format("font at following path does not exist: {}\n", 
-                    Frenchie::Core::String::as_utf8(path.wstring())
+                    Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
                 ));
                 
                 continue; 
@@ -214,7 +215,7 @@ void Fonts::load_fonts(
             try
             {
                 io.Fonts->AddFontFromFileTTF(
-                    Frenchie::Core::String::as_utf8(path.wstring()).c_str(),
+                    Frenchie::Core::String::convert_utf32_to_utf8(path.u32string()).c_str(),
                     ImGui::GetStyle().FontSizeBase,
                     nullptr,
                     io.Fonts->GetGlyphRangesCyrillic());

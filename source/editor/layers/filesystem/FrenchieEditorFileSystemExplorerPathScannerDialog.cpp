@@ -70,7 +70,7 @@ void PathScannerDialog::frame_update()
 
                     ImGui::PushID(id++);
                     ImGui::Selectable(
-                        Frenchie::Core::String::as_utf8(entry.first.wstring()).c_str(), 
+                        Frenchie::Core::String::convert_utf32_to_utf8(entry.first.u32string()).c_str(), 
                         &entry.second,
                         ImGuiSelectableFlags_::ImGuiSelectableFlags_SpanAllColumns    | 
                         ImGuiSelectableFlags_::ImGuiSelectableFlags_AllowOverlap      | 

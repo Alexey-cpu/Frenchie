@@ -2,7 +2,7 @@
 
 // Core
 #include <FrenchieCoreFactory.hpp>
-#include <FrenchieCoreHelpers.hpp>
+#include <FrenchieCoreStringUnicode.hpp>
 
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
@@ -47,7 +47,7 @@ bool ConfigurationLoader::awake()
             if(!document.read<Frenchie::Core::Serialization::XMLReader>(m_Path)) 
             {
                 Frenchie::Core::Logger::instance()->error(
-                    fmt::format("{} could not load state", Frenchie::Core::String::as_utf8(m_Path.wstring())));
+                    fmt::format("{} could not load state", Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string())));
                 return;
             }
 

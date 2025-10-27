@@ -27,7 +27,7 @@ namespace Frenchie
             {
             public:
 
-                Logger(const std::string& = STRINGIFY(Frenchie::Core::Debug::Logger));
+                Logger(const std::string& = "Frenchie::Core::Debug::Logger");
                 virtual ~Logger();
 
                 template<typename __sink, typename ... __sink_arguments>
@@ -85,7 +85,7 @@ namespace Frenchie
 
             private:
 
-                const std::string                       m_Name   = STRINGIFY(Frenchie::Core::Debug::Logger);
+                const std::string                       m_Name   = "Frenchie::Core::Debug::Logger";
                 mutable std::shared_ptr<spdlog::logger> m_Logger = nullptr;
 
                 std::shared_ptr<spdlog::logger>& get_logger() const;
@@ -95,7 +95,7 @@ namespace Frenchie
         class Logger : public Debug::Logger
         {
         public:
-            Logger() : Debug::Logger(STRINGIFY(Frenchie::Core::Logger)){}
+            Logger() : Debug::Logger("Frenchie::Core::Logger"){}
             virtual ~Logger(){}
 
             static Logger* instance()

@@ -1,5 +1,8 @@
 #include <FrenchieEditorPreferencesExplorerLanguage.hpp>
 
+// Core
+#include <FrenchieCoreFileSystem.hpp>
+
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
 
@@ -205,7 +208,7 @@ void Languages::frame_update()
                     ImGui::CloseCurrentPopup();
                 }
 
-                ImGui::SetItemTooltip(Frenchie::Core::String::as_utf8(supportedLanguage->get_path().wstring()).c_str());
+                ImGui::SetItemTooltip(Frenchie::Core::String::convert_utf32_to_utf8(supportedLanguage->get_path().u32string()).c_str());
 
                 ImGui::PopID();
             }

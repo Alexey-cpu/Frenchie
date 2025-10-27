@@ -4,7 +4,7 @@
 #include <FrenchieApplication.hpp>
 
 // Core
-#include <FrenchieCoreHelpers.hpp>
+#include <FrenchieCoreStringConvert.hpp>
 
 // STL
 #include <queue>

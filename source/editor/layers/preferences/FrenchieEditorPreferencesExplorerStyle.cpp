@@ -1,5 +1,8 @@
 #include <FrenchieEditorPreferencesExplorerStyle.hpp>
 
+// Core
+#include <FrenchieCoreFileSystem.hpp>
+
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
@@ -331,7 +334,7 @@ void Style::draw_color_settings()
             if(ImGui::Checkbox(theme->get_name().c_str(), &current)) 
                 theme->setup();
 
-            ImGui::SetItemTooltip(Frenchie::Core::String::as_utf8(theme->get_path().wstring()).c_str());
+            ImGui::SetItemTooltip(Frenchie::Core::String::convert_utf32_to_utf8(theme->get_path().u32string()).c_str());
         }
 
         ImGui::EndCombo();
@@ -390,12 +393,12 @@ void Style::draw_color_settings()
                 auto currentFile = dialog->get_current_file();
 
                 if(!std::filesystem::exists(currentPath) || 
-                    currentFile.wstring().empty()) 
+                    currentFile.u32string().empty()) 
                     return;
 
                 Frenchie::Application::Configuration::Themes::instance()->create_theme(
                     std::filesystem::path(
-                        currentPath.wstring().append(L"/").append(currentFile.filename().wstring())
+                        currentPath.u32string().append(U"/").append(currentFile.filename().u32string())
                     ).make_preferred()
                 )->save();
             }
