@@ -95,39 +95,73 @@ public:
     }
 };
 
+TextDocumentSeclection::TextDocumentSeclection(){}
+TextDocumentSeclection::~TextDocumentSeclection(){}
+
+void TextDocumentSeclection::select(const int& _Index)
+{
+    m_First = std::min(m_First, _Index);
+    m_Last = std::max(m_Last, _Index);
+
+    if(_Index < m_First)
+        m_First = _Index;
+    else if(_Index > m_First)
+        m_Last = _Index;
+}
+
+void TextDocumentSeclection::clear()
+{
+    m_First = INT_MAX;
+    m_Last = INT_MIN;
+}
+
+bool TextDocumentSeclection::is_selected(const int& _Index) const
+{
+    return _Index >= m_First && 
+            _Index <= m_Last;
+}
+
+int TextDocumentSeclection::first() const
+{
+    return m_First;
+}
+
+int TextDocumentSeclection::last() const
+{
+    return m_Last;
+}
+
+bool TextDocumentSeclection::empty() const
+{
+    return m_First == INT_MAX && m_Last == INT_MIN;
+}
+
+int TextDocumentSeclection::size() const
+{
+    return empty() ? 0 : m_Last - m_First + 1;
+}
+
 // TextDocumentView
-TextDocumentView::TextDocumentView() :
-    Frenchie::Application::Layer(STRINGIFY(TextDocumentView)){}
+TextDocumentView::TextDocumentView(const std::shared_ptr<Frenchie::Core::TextDocument>& _Document) :
+    Frenchie::Application::Layer(STRINGIFY(TextDocumentView)),
+    // we guarantee that text document is not nullptr
+    m_TextDocument(_Document == nullptr ? std::make_shared<Frenchie::Core::TextDocument>(std::u32string()) : _Document)
+{}
 
 TextDocumentView::~TextDocumentView(){}
 
 bool TextDocumentView::awake()
 {
+    m_CursorFrameCounter = 
+        Frenchie::Application::application()
+            ->push_layer<Frenchie::Application::FrameCounter>(80);
+
+    // fill buffer
     std::u32string text;
 
-    // for (int i = 0; i < 1e6; i++)
-    // {
-    //     //text.append(std::to_wstring(i)).append(L"\t");
-        
-    //     if(i % 2 > 0)
-    //     {
-    //         for (int j = 0; j < 3; j++)
-    //         {
-    //             text.append(U"Всем привет !!!!");
-    //         }
-    //     }
-    //     else
-    //     {
-    //         for (int j = 0; j < 1; j++)
-    //         {
-    //             text.append(U"Всем привет !!!!");
-    //         }
-    //     }
-
-    //     text.append(U"\n");
-    // }
-
-    m_TextDocument = std::make_unique<Frenchie::Core::TextDocument>(text);
+    for(int i = 0; i < 10; i++) text.append(U"Всем привет\n");
+    
+    m_TextDocument->insert(text);
 
     return true;
 }
@@ -137,6 +171,9 @@ void TextDocumentView::frame_update()
     // auxiliary lambdas
     auto drawCursor = [this](const ImVec2& _Position)
     {
+        if(m_CursorFrameCounter->get_frames_count() < 20)
+            return;
+
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
         ImGui::GetWindowDrawList()->AddText(
@@ -153,6 +190,13 @@ void TextDocumentView::frame_update()
             // edit
             document_insert_symbol_command();
             document_erase_symbol_command();
+
+            // selection
+            editor_clear_selection_command();
+
+            // copy / paste
+            editor_copy_command();
+            editor_paste_command();
 
             // cursor
             document_move_cursor_left_command();
@@ -300,7 +344,7 @@ void TextDocumentView::frame_update()
                     SyntaxHighlighter::regexRulesEstimationResults matches =
                         m_Highlighter.highlight(
                             text,
-                            m_Patterns,
+                            m_HighlighterRules,
                             Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                             lineIndex);
 
@@ -324,6 +368,10 @@ void TextDocumentView::frame_update()
                             ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
 
                             if(symbolRectangle.Contains(ImGui::GetMousePos()))
+                                editor_select_command(globalIndex);
+                            
+                            if(symbolRectangle.Contains(ImGui::GetMousePos()) || 
+                                m_Selection.is_selected(globalIndex))
                             {
                                 ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
                                 ImGui::GetWindowDrawList()->AddRectFilled(symbolRectangle.Min, symbolRectangle.Max, IM_COL32(255, 0, 0, 128));
@@ -333,6 +381,7 @@ void TextDocumentView::frame_update()
                                     ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Right) || 
                                     ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle)))
                                 {
+                                    m_Selection.clear();
                                     m_TextDocument->set_cursor_position(globalIndex);
                                 }
                             }
@@ -373,7 +422,10 @@ void TextDocumentView::frame_update()
             ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
         );
         {
-            ImGui::TextUnformatted(fmt::format("Cursor {}", m_TextDocument->get_cursor_position()).c_str());
+            ImGui::TextUnformatted(fmt::format("Cursor {} Selection {} {}",
+                m_TextDocument->get_cursor_position(),
+                m_Selection.first(),
+                m_Selection.last()).c_str());
 
             ImGui::EndChild();
         }
@@ -405,7 +457,6 @@ void TextDocumentView::document_insert_symbol_command()
         on_character_pressed((unsigned int)'\0');
         return;
 	}
-
 	if (io.InputQueueCharacters.Size > 0)
 	{
 		if (!((io.KeyCtrl && !io.KeyAlt) || (io.ConfigMacOSXBehaviors && io.KeyCtrl)))
@@ -434,8 +485,8 @@ void TextDocumentView::document_erase_symbol_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->erase();
+                m_TextDocument->erase(std::max<int>(m_Selection.size(), 1));
+                m_Selection.clear();
             }
         );
     }
@@ -448,8 +499,8 @@ void TextDocumentView::document_move_cursor_left_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->move_cursor_left();
+                m_Selection.clear();
+                m_TextDocument->move_cursor_left();
             }
         );
     }
@@ -462,8 +513,8 @@ void TextDocumentView::document_move_cursor_right_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->move_cursor_right();
+                m_Selection.clear();
+                m_TextDocument->move_cursor_right();
             }
         );
     }
@@ -476,8 +527,8 @@ void TextDocumentView::document_move_cursor_down_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->move_cursor_down();
+                m_Selection.clear();
+                m_TextDocument->move_cursor_down();
             }
         );
     }
@@ -490,8 +541,8 @@ void TextDocumentView::document_move_cursor_up_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->move_cursor_up();
+                m_Selection.clear();
+                m_TextDocument->move_cursor_up();
             }
         );
     }
@@ -504,8 +555,8 @@ void TextDocumentView::document_undo_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->undo();
+                m_Selection.clear();
+                m_TextDocument->undo();
             }
         );
     }
@@ -518,8 +569,75 @@ void TextDocumentView::document_redo_command()
         Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
-                if(m_TextDocument != nullptr)
-                    m_TextDocument->redo();
+                m_Selection.clear();
+                m_TextDocument->redo();
+            }
+        );
+    }
+}
+
+void TextDocumentView::editor_copy_command()
+{
+	if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_C))
+	{
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                if(m_Selection.empty())
+                    return;
+
+                auto selectionText = 
+                    m_TextDocument->get_text(
+                        m_TextDocument->symbol_begin(m_Selection.first()),
+                        m_TextDocument->symbol_begin(m_Selection.last() + 1));
+
+                if(!selectionText.empty())
+                    ImGui::SetClipboardText(Frenchie::Core::String::convert_utf32_to_utf8(selectionText).c_str());
+            }
+        );
+	}
+}
+
+void TextDocumentView::editor_paste_command()
+{
+	if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_V))
+	{
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                std::string clipBoardText =
+                    std::string(ImGui::GetClipboardText());
+
+                if(!clipBoardText.empty())
+                    m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(clipBoardText));
+            }
+        );
+	}
+}
+
+void TextDocumentView::editor_clear_selection_command()
+{
+    if(ImGui::IsKeyPressed(ImGuiKey_Escape))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this]()
+            {
+                m_Selection.clear();
+            }
+        );
+    }
+}
+
+void TextDocumentView::editor_select_command(const int& _Position)
+{
+    if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) &&
+        ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    {
+        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            [this, _Position]()
+            {
+                m_Selection.select(_Position);
+                m_TextDocument->set_cursor_position(_Position + 1);
             }
         );
     }
@@ -530,13 +648,16 @@ void TextDocumentView::on_character_pressed(const unsigned int& _Char)
     Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
         [this, _Char]()
         {
+            // remove selection
+            m_TextDocument->erase(m_Selection.size());
+            m_Selection.clear();
+
             // retrieve user input in UTF-8 codec
             char utf8[5];
             int  count = Helpers::ImTextCharToUtf8(utf8, _Char);
 
             // insert symbol
-            if(m_TextDocument != nullptr)
-                m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
+            m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
         }
     );
 }

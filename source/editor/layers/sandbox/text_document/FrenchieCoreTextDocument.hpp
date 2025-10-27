@@ -162,6 +162,8 @@ namespace Frenchie
             TextDocumentPieceTable::ConstPieceIterator pieces_end() const;
             int pieces_count() const;
 
+            TextDocumentSymbolIterator symbol_begin(const int&) const;
+
             TextDocumentSymbolIterator symbols_begin() const;
             TextDocumentSymbolIterator symbols_end() const;
             int symbols_count() const;

@@ -7,6 +7,7 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplicationFrameCounter.hpp>
 
 // Editor
 #include <FrenchieEditorSyntaxHighlighter.hpp>
@@ -20,10 +21,31 @@ namespace Frenchie
 {
     namespace Editor
     {
+        class TextDocumentSeclection final
+        {
+        public:
+            TextDocumentSeclection();
+            ~TextDocumentSeclection();
+
+            void select(const int& _Index);
+            void clear();
+
+            int first() const;
+            int last() const;
+            int size() const;
+
+            bool is_selected(const int& _Index) const;
+            bool empty() const;
+
+        private:
+            int m_First = INT_MAX;
+            int m_Last  = INT_MIN;
+        };
+
         class TextDocumentView : public Frenchie::Application::Layer
         {
         public:
-            TextDocumentView();
+            TextDocumentView(const std::shared_ptr<Frenchie::Core::TextDocument>& = nullptr);
             virtual ~TextDocumentView();
 
             virtual bool awake() override;
@@ -42,21 +64,23 @@ namespace Frenchie
             };
 
             // info
-            std::shared_ptr<Frenchie::Core::TextDocument> m_TextDocument;
+            std::shared_ptr<Frenchie::Core::TextDocument>        m_TextDocument{nullptr};
+            std::shared_ptr<Frenchie::Application::FrameCounter> m_CursorFrameCounter{nullptr};
 
-            SyntaxHighlighter m_Highlighter;
+            TextDocumentSeclection m_Selection;
+            SyntaxHighlighter      m_Highlighter;
 
-            std::vector<RegexRule> m_Patterns =
+            std::vector<RegexRule> m_HighlighterRules =
             {
-                // variables
-                RegexRule(
-                    UR"(\b[A-Za-z_]\w*\b)",
-                    IM_COL32(66, 122, 168, 255)),
-
                 // numbers
                 RegexRule(
                     U"[+-]?(\\d+(\\.\\d*)?|\\.\\d+)", 
                     IM_COL32(156, 156, 82, 255)),
+
+                // variables
+                RegexRule(
+                    UR"(\b[A-Za-z_]\w*\b)",
+                    IM_COL32(66, 122, 168, 255)),
 
                 // keywords
                 RegexRule(
@@ -133,6 +157,12 @@ namespace Frenchie
             void document_move_cursor_up_command();
             void document_undo_command();
             void document_redo_command();
+
+            void editor_copy_command();
+            void editor_paste_command();
+
+            void editor_clear_selection_command();
+            void editor_select_command(const int& _Index);
 
             // callbacks
             void on_character_pressed(const unsigned int&);

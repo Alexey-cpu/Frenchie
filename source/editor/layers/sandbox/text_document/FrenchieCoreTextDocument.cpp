@@ -506,6 +506,11 @@ int TextDocument::pieces_count() const
     return (int)m_Pieces.Pieces.size();
 }
 
+TextDocumentSymbolIterator TextDocument::symbol_begin(const int& _Index) const
+{
+    return TextDocumentSymbolIterator(this, std::max<int>(0, std::min<int>(_Index, symbols_count())));
+}
+
 TextDocumentSymbolIterator TextDocument::symbols_begin() const
 {
     return TextDocumentSymbolIterator(this, 0);
