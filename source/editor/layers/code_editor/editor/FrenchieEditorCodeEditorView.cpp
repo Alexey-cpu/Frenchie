@@ -156,13 +156,6 @@ bool TextDocumentView::awake()
         Frenchie::Application::application()
             ->push_layer<Frenchie::Application::FrameCounter>(80);
 
-    // fill buffer
-    std::u32string text;
-
-    for(int i = 0; i < 10; i++) text.append(U"Всем привет\n");
-    
-    m_TextDocument->insert(text);
-
     return true;
 }
 
