@@ -34,12 +34,12 @@ namespace Frenchie
             int last() const;
             int size() const;
 
-            bool is_selected(const int& _Index) const;
             bool empty() const;
+            bool is_selected(const int& _Index) const;
 
         private:
-            int m_First = INT_MAX;
-            int m_Last  = INT_MIN;
+            int m_First{INT_MAX};
+            int m_Last {INT_MIN};
         };
 
         class TextDocumentView : public Frenchie::Application::Layer

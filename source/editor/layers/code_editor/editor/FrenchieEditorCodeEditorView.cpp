@@ -101,7 +101,7 @@ TextDocumentSeclection::~TextDocumentSeclection(){}
 void TextDocumentSeclection::select(const int& _Index)
 {
     m_First = std::min(m_First, _Index);
-    m_Last = std::max(m_Last, _Index);
+    m_Last  = std::max(m_Last, _Index);
 
     if(_Index < m_First)
         m_First = _Index;
@@ -112,13 +112,7 @@ void TextDocumentSeclection::select(const int& _Index)
 void TextDocumentSeclection::clear()
 {
     m_First = INT_MAX;
-    m_Last = INT_MIN;
-}
-
-bool TextDocumentSeclection::is_selected(const int& _Index) const
-{
-    return _Index >= m_First && 
-            _Index <= m_Last;
+    m_Last  = INT_MIN;
 }
 
 int TextDocumentSeclection::first() const
@@ -131,14 +125,20 @@ int TextDocumentSeclection::last() const
     return m_Last;
 }
 
+int TextDocumentSeclection::size() const
+{
+    return empty() ? 0 : m_Last - m_First + 1;
+}
+
 bool TextDocumentSeclection::empty() const
 {
     return m_First == INT_MAX && m_Last == INT_MIN;
 }
 
-int TextDocumentSeclection::size() const
+bool TextDocumentSeclection::is_selected(const int& _Index) const
 {
-    return empty() ? 0 : m_Last - m_First + 1;
+    return _Index >= m_First && 
+            _Index <= m_Last;
 }
 
 // TextDocumentView
@@ -338,8 +338,22 @@ void TextDocumentView::frame_update()
                     if(lineBeginIterator.get_position() >= lineEndIterator.get_position())
                         continue;
 
+                    // compute visible text width and maximum symbols count
+                    int   maximumSymbolsCount = 0;
+                    float visibleTextWidth    = 0.f;
+
+                    for (auto it = lineBeginIterator;
+                              it != lineEndIterator && visibleTextWidth < m_ViewPort.GetSize().x;
+                              ++it, ++maximumSymbolsCount)
+                    {
+                        visibleTextWidth += Helpers::calculate_text_size(
+                            Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *it))).x;
+                    }
+                    
+
                     // highlight text
-                    std::u32string text = m_TextDocument->get_text(lineBeginIterator, lineEndIterator, 1024);
+                    std::u32string text =
+                        m_TextDocument->get_text(lineBeginIterator, lineEndIterator, maximumSymbolsCount);
 
                     SyntaxHighlighter::regexRulesEstimationResults matches =
                         m_Highlighter.highlight(
@@ -353,7 +367,7 @@ void TextDocumentView::frame_update()
 
 					for(auto&& match : matches)
 					{
-                        for(int index = match.second.Match.Start; index < match.second.Match.Finish; index++, globalIndex++)
+                        for(int index = match.second.Match.Start; index < match.second.Match.Finish; ++index, ++globalIndex)
                         {
                             std::string symbol =
                                 Frenchie::Core::String::convert_utf32_to_utf8(
