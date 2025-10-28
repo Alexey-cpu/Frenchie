@@ -17,7 +17,8 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
 
     for(auto&& rule : _Rules)
     {
-        auto matches = Frenchie::Core::String::regex_match(_Contents, rule.Pattern);
+        Frenchie::Core::String::Matches matches =
+            Frenchie::Core::String::regex_match(_Contents, rule.Pattern);
 
         int min = INT_MAX;
         int max = INT_MIN;
