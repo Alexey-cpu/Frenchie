@@ -1,23 +1,30 @@
-#include <FrenchieEditorCodeEditorSyntaxHighlighter.hpp>
+#include <FrenchieEditorTextEditorRegexTextHighlighter.hpp>
+
+// STL
+#include <set>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Editor;
 
-#include <set>
+RegexTextHighlighter::RegexTextHighlighter(
+    const std::vector<HighlightRule>& _Rules,
+    const unsigned int&               _DefaultColor) :
+    m_Rules(_Rules),
+    m_DefaultColor(_DefaultColor){}
 
-SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
-    const std::u32string&         _Contents, 
-    const std::vector<RegexRule>& _Rules,
-    const unsigned int&           _DefaultColor, 
-    const int&                    _LineNumber)
+RegexTextHighlighter::~RegexTextHighlighter(){}
+
+HighlightRulesEstimationResults RegexTextHighlighter::highlight(
+    const std::u32string& _Contents,
+    const int&            _LineNumber)
 {
-    regexRulesEstimationResults uniqueRanges;
+    HighlightRulesEstimationResults uniqueRanges;
 
     std::set<int> multilineOccurences;
 
-    for(auto&& rule : _Rules)
+    for(auto&& rule : m_Rules)
     {
-        Frenchie::Core::String::Matches matches =
+        Frenchie::Core::String::IndexRanges matches =
             Frenchie::Core::String::regex_match(_Contents, rule.Pattern);
 
         int min = INT_MAX;
@@ -27,8 +34,8 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
         {
             for(int i = match.Start; i < match.Finish; i++)
             {
-                uniqueRanges[i] = RegexRuleEstimationResult(
-                    Frenchie::Core::String::Match(i, i + 1), 
+                uniqueRanges[i] = HighlightRuleEstimationResult(
+                    Frenchie::Core::String::IndexRange(i, i + 1), 
                     rule.Color
                 );
             }
@@ -37,10 +44,10 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
             max = std::max<int>(max, match.Start);
         }
 
-        if(rule.Type == RegexRule::Type::MULTILINE_START && !matches.empty())
+        if(rule.Type == HighlightRule::Type::MULTILINE_START && !matches.empty())
             multilineOccurences.insert(_LineNumber);
 
-        if(rule.Type == RegexRule::Type::MULTILINE_START)
+        if(rule.Type == HighlightRule::Type::MULTILINE_START)
         {
             if(matches.empty())
             {
@@ -50,14 +57,14 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
             else
             {
                 m_MultilineStart[_LineNumber] =
-                    RegexRuleEstimationResult(Frenchie::Core::String::Match(min), rule.Color);
+                    HighlightRuleEstimationResult(Frenchie::Core::String::IndexRange(min), rule.Color);
             }
         }
 
-        if(rule.Type == RegexRule::Type::MULTILINE_FINISH && !matches.empty())
+        if(rule.Type == HighlightRule::Type::MULTILINE_FINISH && !matches.empty())
             multilineOccurences.insert(_LineNumber);
 
-        if(rule.Type == RegexRule::Type::MULTILINE_FINISH)
+        if(rule.Type == HighlightRule::Type::MULTILINE_FINISH)
         {
             if(matches.empty())
             {
@@ -67,14 +74,14 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
             else
             {
                 m_MultilineFinish[_LineNumber] =
-                    RegexRuleEstimationResult(Frenchie::Core::String::Match(max), rule.Color);
+                    HighlightRuleEstimationResult(Frenchie::Core::String::IndexRange(max), rule.Color);
             }
         }
     }
 
     // add missing ranges
     for (int i = 0; i < (int)_Contents.size(); i++)
-        uniqueRanges.insert({i, RegexRuleEstimationResult(Frenchie::Core::String::Match(i, i + 1), _DefaultColor)});
+        uniqueRanges.insert({i, HighlightRuleEstimationResult(Frenchie::Core::String::IndexRange(i, i + 1), m_DefaultColor)});
 
     // multiline recoloring
     for(auto&& uniqueRange : uniqueRanges)
@@ -121,7 +128,7 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
     }
 
     // color scheme range optimization
-    regexRulesEstimationResults optimized;
+    HighlightRulesEstimationResults optimized;
 
     int source = 0;
     int target = 0;
@@ -138,7 +145,7 @@ SyntaxHighlighter::regexRulesEstimationResults SyntaxHighlighter::highlight(
                 break;
         }
 
-        optimized.insert({source, RegexRuleEstimationResult(Frenchie::Core::String::Match(source, target), sourceColor)});
+        optimized.insert({source, HighlightRuleEstimationResult(Frenchie::Core::String::IndexRange(source, target), sourceColor)});
         source = --target;
     }
 
