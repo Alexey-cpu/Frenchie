@@ -11,6 +11,9 @@ using namespace Frenchie::Editor::FileSystem;
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
 
+// Editor
+#include <FrenchieEditorHelpers.hpp>
+
 // IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -26,12 +29,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenDirectoryTreeViewDebug : 
-                public Frenchie::Application::Command::Registry<OpenDirectoryTreeViewDebug, void*>
+                public Frenchie::Application::Command::Registry<OpenDirectoryTreeViewDebug, const std::shared_ptr<CommandPayload>&>
             {
             public:
 
-                OpenDirectoryTreeViewDebug(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenDirectoryTreeViewDebug, void*>(_Sender){}
+                OpenDirectoryTreeViewDebug(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenDirectoryTreeViewDebug, const std::shared_ptr<CommandPayload>&>(_Sender){}
                 virtual ~OpenDirectoryTreeViewDebug(){}
 
                 // Frenchie::Application::Command
@@ -82,12 +85,41 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
     if(_Path == m_Path.root_path())
         ImGui::SetNextItemOpen(true);
 
-    auto filename = _Path.filename().u32string();
+    std::u32string filename = _Path.filename().u32string();
 
-    if(ImGui::TreeNodeEx(Frenchie::Core::String::convert_utf32_to_utf8(filename.empty() ? U"Root" : filename).c_str(), 
-        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanAvailWidth | 
-        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull  | 
-        ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick))
+    bool opened = ImGui::TreeNodeEx(
+            Frenchie::Core::String::convert_utf32_to_utf8(filename.empty() ? U"Root" : filename).c_str(), 
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow       |
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull     |
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick |
+            (m_Selector.contains(_Path) ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed : 0)|
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap);
+
+    if(ImGui::IsItemHovered() && 
+        ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_MouseLeft))
+    {
+        m_Selector.select(_Path);
+    }
+
+    if (ImGui::BeginPopupContextItem())
+    {
+        if(m_Selector.empty())
+        {
+            Helpers::draw_menu(
+                std::filesystem::is_directory(_Path) ?
+                    STRINGIFY(Frenchie::Editor::FileSystem::Menu::Folder) :
+                    STRINGIFY(Frenchie::Editor::FileSystem::Menu::File),
+                std::make_shared<CommandDataPayload<std::filesystem::path>>(_Path));
+        }
+        else
+        {
+            // TODO: add logic here...
+        }
+
+        ImGui::EndPopup();
+    }
+
+    if(opened)
     {
         if(std::filesystem::is_directory(_Path))
         {

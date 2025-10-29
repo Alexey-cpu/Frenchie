@@ -4,8 +4,8 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 
-CreateFileCommand::CreateFileCommand(void* _Sender) : 
-    Frenchie::Application::Command::Registry<CreateFileCommand, void*>(_Sender){}
+CreateFileCommand::CreateFileCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Sender) : 
+    Frenchie::Application::Command::Registry<CreateFileCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Sender){}
 
 CreateFileCommand::~CreateFileCommand(){}
 

@@ -12,12 +12,44 @@ namespace Frenchie
     {
         namespace FileSystem
         {
-            class RemoveCommand : public Frenchie::Application::Command::Registry<RemoveCommand, void*>
+            namespace Menu
+            {
+                namespace Folder{}
+
+                namespace File{}
+            }
+        }
+    }
+}
+
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace FileSystem
+        {
+            class RemoveFolderCommand :
+                public Frenchie::Application::Command::Registry<RemoveFolderCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
             {
             public:
 
-                RemoveCommand(void*);
-                virtual ~RemoveCommand();
+                RemoveFolderCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
+                virtual ~RemoveFolderCommand();
+
+                // Frenchie::Application::Command
+                virtual void execute() override;
+
+                // Command::TRegistryType
+                static std::string factory_id();
+            };
+
+            class RemoveFileCommand :
+                public Frenchie::Application::Command::Registry<RemoveFileCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
+            {
+            public:
+
+                RemoveFileCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
+                virtual ~RemoveFileCommand();
 
                 // Frenchie::Application::Command
                 virtual void execute() override;

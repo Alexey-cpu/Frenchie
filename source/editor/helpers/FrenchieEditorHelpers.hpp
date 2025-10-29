@@ -1,6 +1,8 @@
 #pragma once
 
+// Application
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplicationCommandsLayer.hpp>
 
 // STL
 #include <string>
@@ -14,7 +16,7 @@ namespace Frenchie
     {
         namespace Helpers
         {
-            void draw_menu(const std::string& _MenuPath, void* _Sender = nullptr);
+            void draw_menu(const std::string& _MenuPath, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload = nullptr);
         }
     }
 }

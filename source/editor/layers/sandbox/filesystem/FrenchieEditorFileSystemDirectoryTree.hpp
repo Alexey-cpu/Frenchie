@@ -4,6 +4,9 @@
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 
+// Editor
+#include <FrenchieEditorFileSystemPathSelector.hpp>
+
 // STL
 #include <filesystem>
 
@@ -18,10 +21,26 @@ namespace Frenchie
     {
         namespace FileSystem
         {
+            namespace Menu
+            {
+                namespace Folder{}
+
+                namespace File{}
+            }
+        }
+    }
+}
+
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace FileSystem
+        {
             class DirectoryTree : public Frenchie::Application::Layer
             {
             public:
-                DirectoryTree(const std::filesystem::path& = std::filesystem::current_path());
+                DirectoryTree(const std::filesystem::path& = "C:/SDK/Qt_Projects/OpenGL/logs/");
                 virtual ~DirectoryTree();
 
                 // Frenchie::Application::Layer
@@ -29,6 +48,7 @@ namespace Frenchie
 
             protected:
                 std::filesystem::path m_Path = std::filesystem::current_path();
+                PathSelector          m_Selector;
 
                 // service methods
                 void draw_paths_tree(const std::filesystem::path&);

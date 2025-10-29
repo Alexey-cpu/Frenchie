@@ -12,11 +12,11 @@ namespace Frenchie
     {
         namespace FileSystem
         {
-            class CopyPaths : public Frenchie::Application::Command::Registry<CopyPaths, void*>
+            class CopyPaths : public Frenchie::Application::Command::Registry<CopyPaths, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
             {
             public:
 
-                CopyPaths(void*);
+                CopyPaths(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
                 virtual ~CopyPaths();
 
                 // Frenchie::Application::Command

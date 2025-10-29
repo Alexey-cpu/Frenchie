@@ -1,6 +1,7 @@
 #include <FrenchieEditorDebugLayer.hpp>
 
 using namespace Frenchie::Editor;
+using namespace Frenchie::Application;
 
 // add sandbox elements into main menu
 namespace Frenchie
@@ -10,12 +11,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenIPCDebug : 
-                public Frenchie::Application::Command::Registry<OpenIPCDebug, void*>
+                public Frenchie::Application::Command::Registry<OpenIPCDebug, const std::shared_ptr<CommandPayload>&>
             {
             public:
 
-                OpenIPCDebug(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenIPCDebug, void*>(_Sender){}
+                OpenIPCDebug(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenIPCDebug, const std::shared_ptr<CommandPayload>&>(_Sender){}
                 virtual ~OpenIPCDebug(){}
 
                 // Frenchie::Application::Command
