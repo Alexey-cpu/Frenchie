@@ -27,6 +27,7 @@
 #include <imgui.h>
 
 using namespace Frenchie::Editor;
+using namespace Frenchie::Application;
 
 namespace Frenchie
 {
@@ -52,12 +53,12 @@ namespace Frenchie
             };
 
             class ExitAction : 
-                public Frenchie::Application::Command::Registry<ExitAction, void*>
+                public Frenchie::Application::Command::Registry<ExitAction, const std::shared_ptr<CommandPayload>&>
             {
             public:
 
-                ExitAction(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<ExitAction, void*>(_Sender){}
+                ExitAction(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<ExitAction, const std::shared_ptr<CommandPayload>&>(_Sender){}
                 virtual ~ExitAction(){}
 
                 // Frenchie::Application::Command

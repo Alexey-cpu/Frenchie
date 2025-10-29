@@ -4,6 +4,7 @@
 #include <FrenchieCoreStringUnicode.hpp>
 
 // Application
+#include <FrenchieApplicationCommandsLayer.hpp>
 
 #include <filesystem>
 #include <set>
@@ -28,6 +29,7 @@ namespace Frenchie
                 // API
                 bool contains(const std::filesystem::path&) const;
                 void select(const std::filesystem::path&);
+                bool empty() const;
                 void clear();
 
             protected:

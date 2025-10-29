@@ -4,8 +4,8 @@ using namespace Frenchie::Core;
 using namespace Frenchie::Editor;
 using namespace Frenchie::Editor::FileSystem;
 
-PastePaths::PastePaths(void* _Sender) : 
-    Frenchie::Application::Command::Registry<PastePaths, void*>(_Sender){}
+PastePaths::PastePaths(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Sender) : 
+    Frenchie::Application::Command::Registry<PastePaths, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Sender){}
 
 PastePaths::~PastePaths(){}
 

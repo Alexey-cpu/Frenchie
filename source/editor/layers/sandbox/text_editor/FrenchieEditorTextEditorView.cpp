@@ -5,6 +5,7 @@
 #include <FrenchieEditorTextEditorTreeSitterTextHighlighter.hpp>
 #include <FrenchieEditorTextEditorRegexTextHighlighter.hpp>
 
+using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
 
 // add sandbox elements into main menu
@@ -15,12 +16,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenTextDocumentViewDebug : 
-                public Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, void*>
+                public Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, const std::shared_ptr<CommandPayload>&>
             {
             public:
 
-                OpenTextDocumentViewDebug(void* _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, void*>(_Sender){}
+                OpenTextDocumentViewDebug(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
+                    Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, const std::shared_ptr<CommandPayload>&>(_Sender){}
                 virtual ~OpenTextDocumentViewDebug(){}
 
                 // Frenchie::Application::Command

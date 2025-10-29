@@ -32,12 +32,12 @@ namespace Frenchie
         namespace Configuration
         {
             class PushTranslatorIntoAppQueue : 
-                public Frenchie::Application::Command::Registry<PushTranslatorIntoAppQueue, void*>
+                public Frenchie::Application::Command::Registry<PushTranslatorIntoAppQueue, const std::shared_ptr<CommandPayload>&>
             {
             public:
 
-                PushTranslatorIntoAppQueue(void* _Sender) : 
-                    Frenchie::Application::Command::Registry<PushTranslatorIntoAppQueue, void*>(_Sender){}
+                PushTranslatorIntoAppQueue(const std::shared_ptr<CommandPayload>& _Sender) : 
+                    Frenchie::Application::Command::Registry<PushTranslatorIntoAppQueue, const std::shared_ptr<CommandPayload>&>(_Sender){}
                 virtual ~PushTranslatorIntoAppQueue(){}
 
                 // Frenchie::Application::Command

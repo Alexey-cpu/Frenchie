@@ -1,8 +1,5 @@
 #include <FrenchieApplication.hpp>
 
-// Application
-#include <FrenchieApplicationCommandsLayer.hpp>
-
 // Editor
 #include <FrenchieEditorHelpers.hpp>
 #include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
@@ -21,19 +18,19 @@ namespace Frenchie
     {
         namespace Helpers
         {
-            void draw_menu_recursive(const std::vector<std::string> _Actions, const std::string& _Path, size_t& _Index, void* _Sender)
+            void draw_menu_recursive(const std::vector<std::string> _Actions, const std::string& _Path, size_t& _Index, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
             {
                 if(_Index == _Actions.size() - 1) 
                 {
                     if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
-                        Frenchie::Application::CommandsQueue::instance()->push(_Path, _Sender);
+                        Frenchie::Application::CommandsQueue::instance()->push(_Path, _Payload);
 
                     return;
                 }
 
                 if(ImGui::BeginMenu(Translator::translate(_Actions[_Index]).c_str()))
                 {
-                    draw_menu_recursive(_Actions, _Path, ++_Index, _Sender);
+                    draw_menu_recursive(_Actions, _Path, ++_Index, _Payload);
 
                     ImGui::EndMenu();
                 }
@@ -42,7 +39,7 @@ namespace Frenchie
     }
 }
 
-void Frenchie::Editor::Helpers::draw_menu(const std::string& _MenuPath, void* _Sender)
+void Frenchie::Editor::Helpers::draw_menu(const std::string& _MenuPath, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
 {
     // parse
     struct Data
@@ -75,6 +72,6 @@ void Frenchie::Editor::Helpers::draw_menu(const std::string& _MenuPath, void* _S
     for(auto&& menu : menus)
     {
         size_t index = 0;
-        draw_menu_recursive(menu.tokens, menu.command, index, _Sender);
+        draw_menu_recursive(menu.tokens, menu.command, index, _Payload);
     }
 }

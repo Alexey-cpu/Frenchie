@@ -16,6 +16,7 @@
 
 using namespace Frenchie::Core;
 
+using namespace Frenchie::Application;
 using namespace Frenchie::Application::Configuration;
 
 namespace Frenchie
@@ -25,12 +26,12 @@ namespace Frenchie
         namespace Application
         {
             class PushThemesIntoAppQueue : 
-                public Frenchie::Application::Command::Registry<PushThemesIntoAppQueue, void*>
+                public Frenchie::Application::Command::Registry<PushThemesIntoAppQueue, const std::shared_ptr<CommandPayload>&>
             {
             public:
 
-                PushThemesIntoAppQueue(void* _Sender) : 
-                    Frenchie::Application::Command::Registry<PushThemesIntoAppQueue, void*>(_Sender){}
+                PushThemesIntoAppQueue(const std::shared_ptr<CommandPayload>& _Sender) : 
+                    Frenchie::Application::Command::Registry<PushThemesIntoAppQueue, const std::shared_ptr<CommandPayload>&>(_Sender){}
 
                 virtual ~PushThemesIntoAppQueue(){}
 

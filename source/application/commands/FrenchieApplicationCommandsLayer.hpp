@@ -8,37 +8,65 @@
 
 // STL
 #include <queue>
+#include <memory>
 
 namespace Frenchie
 {
     namespace Application
     {
+        class CommandPayload
+        {
+        public:
+            CommandPayload(){}
+            virtual ~CommandPayload(){}
+        };
+
+        template<typename Type> class CommandDataPayload : public CommandPayload
+        {
+        public:
+            CommandDataPayload(Type _Value) : m_Value(_Value){}
+            virtual ~CommandDataPayload(){}
+
+            Type get() const
+            {
+                return m_Value;
+            }
+
+            void set(Type _Data)
+            {
+                m_Value = _Data;
+            }
+
+        protected:
+            Type m_Value;
+        };
+        
         class Command : public Frenchie::Core::Factory::Creator<Command>
         {
         public:
-            Command(void* _Sender = nullptr) : m_Sender(_Sender){}
+            Command(const std::shared_ptr<CommandPayload>& _Payload = nullptr) : m_Payload(_Payload){}
             virtual ~Command(){}
 
             // API
             template<typename T> 
-            T* get_sender() const
+            std::shared_ptr<T> get_payload() const
             {
-                return reinterpret_cast<T*>(m_Sender);
+                return std::dynamic_pointer_cast<T>(m_Payload);
             }
 
             // virtual API
             virtual void execute() = 0;
 
         protected:
-            void* m_Sender = nullptr;
+            std::shared_ptr<CommandPayload> m_Payload = nullptr;
         };
 
         class CallbackCommand : 
-            public Command::Registry<CallbackCommand, const std::function<void()>&, void*>
+            public Command::Registry<CallbackCommand, const std::function<void()>&, const std::shared_ptr<CommandPayload>&>
         {
         public:
-            CallbackCommand(const std::function<void()>& _Callback, void* _Sender = nullptr) : 
-                Command::Registry<CallbackCommand, const std::function<void()>&, void*>(_Sender), 
+            CallbackCommand(const std::function<void()>& _Callback, const std::shared_ptr<CommandPayload>& _Payload = nullptr) : 
+                Command::Registry<CallbackCommand, const std::function<void()>&, const std::shared_ptr<CommandPayload>&>(_Payload), 
                 m_Callback(_Callback){}
             
             virtual ~CallbackCommand(){}
@@ -65,10 +93,10 @@ namespace Frenchie
             CommandsQueue();
             virtual ~CommandsQueue();
 
-            void push(const std::string& _Command, void* _Sender = nullptr)
+            void push(const std::string& _Command, const std::shared_ptr<CommandPayload>& _Payload = nullptr)
             {
                 std::unique_ptr<Command> command = 
-                    Frenchie::Core::Factory::create<Command>(_Command, _Sender);
+                    Frenchie::Core::Factory::create<Command, const std::shared_ptr<CommandPayload>&>(_Command, _Payload);
 
                 if(command != nullptr)
                     m_Commands.push(std::move(command));
