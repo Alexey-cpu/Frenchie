@@ -100,7 +100,7 @@ bool Thread::launch()
                 // finish thread
                 m_Finished = true;
             }
-            catch(const std::exception& e)
+            catch(...)
             {
                 // fail if something went wrong...
                 m_Failed = true;

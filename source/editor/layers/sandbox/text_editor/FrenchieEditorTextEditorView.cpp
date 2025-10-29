@@ -1,4 +1,9 @@
-#include <FrenchieEditorCodeEditorView.hpp>
+#include <FrenchieEditorTextEditorView.hpp>
+
+#include <fstream>
+
+#include <FrenchieEditorTextEditorTreeSitterTextHighlighter.hpp>
+#include <FrenchieEditorTextEditorRegexTextHighlighter.hpp>
 
 using namespace Frenchie::Editor;
 
@@ -150,11 +155,112 @@ TextDocumentView::TextDocumentView(const std::shared_ptr<Frenchie::Core::TextDoc
 
 TextDocumentView::~TextDocumentView(){}
 
+#include <FrenchieEditorCodeEditorTreeSitterCpp.hpp>
+
 bool TextDocumentView::awake()
 {
     m_CursorFrameCounter = 
         Frenchie::Application::application()
             ->push_layer<Frenchie::Application::FrameCounter>(80);
+
+    m_Highlighter = std::make_shared<Frenchie::Editor::RegexTextHighlighter>(
+        std::vector<RegexTextHighlighter::HighlightRule>(
+        {
+            // numbers
+            RegexTextHighlighter::HighlightRule(
+                U"[+-]?(\\d+(\\.\\d*)?|\\.\\d+)", 
+                IM_COL32(156, 156, 82, 255)),
+
+            // variables
+            RegexTextHighlighter::HighlightRule(
+                UR"(\b[A-Za-z_]\w*\b)",
+                IM_COL32(255, 255, 255, 255)),
+
+            // keywords
+            RegexTextHighlighter::HighlightRule(
+                UR"(alignof|alignas|asm|auto|class|consteval|constinit|constexpr|const_cast|decltype|delete|dynamic_cast|enum|explicit|false|final|friend|inline|namespace|new|noexcept|nullptr|operator|override|private|protected|public|reinterpret_cast|sizeof|static_assert|static_cast|struct|template|this|true|typedef|typeid|typename|union|using|virtual|and|and_eq|bitand|bitor|compl|not|not_eq|or|or_eq|xor|xor_eq|concept|requires|import|module|export)", 
+                IM_COL32(10, 8, 156, 255)),
+
+            // modifiers
+            RegexTextHighlighter::HighlightRule(
+                UR"(const|extern|mutable|register|static|thread_local|volatile)", 
+                IM_COL32(10, 8, 156, 255)),
+
+            // controlflow
+            RegexTextHighlighter::HighlightRule(
+                UR"(break|case|catch|continue|default|do|else|for|goto|if|return|switch|throw|try|while|co_await|co_return|co_yield)", 
+                IM_COL32(146, 8, 156, 255)),
+
+            // types
+            RegexTextHighlighter::HighlightRule(
+                UR"(bool|char|char8_t|char16_t|char32_t|double|float|int|long|short|signed|unsigned|void|int8_t|int16_t|int32_t|int64_t|uint8_t|uint16_t|uint32_t|uint64_t|int_least8_t|int_least16_t|int_least32_t|int_least64_t|uint_least8_t|uint_least16_t|uint_least32_t|uint_least64_t|int_fast8_t|int_fast16_t|int_fast32_t|int_fast64_t|uint_fast8_t|uint_fast16_t|uint_fast32_t|uint_fast64_t|size_t|size_t|wchar_t|intptr_t|uintptr_t|intmax_t|uintmax_t|ptrdiff_t|sig_atomic_t|wint_t|va_list|FILE|fpos_t|time_t)", 
+                IM_COL32(10, 8, 156, 255)),
+
+            // attributes
+            RegexTextHighlighter::HighlightRule(
+                UR"(\[\[(.*)\]\])", 
+                IM_COL32(57, 247, 5, 255)),
+
+            // preprocessor directives
+            RegexTextHighlighter::HighlightRule(
+                UR"(\#.*)", 
+                IM_COL32(61, 45, 1, 255)),
+
+            // single line comment
+            RegexTextHighlighter::HighlightRule(
+                UR"(//.*)", 
+                IM_COL32(0, 255, 0, 255)),
+
+            // multiline patterns
+
+            // strings
+            RegexTextHighlighter::HighlightRule(
+                UR"(\"[^"])",
+                IM_COL32(61, 45, 1, 255),
+                RegexTextHighlighter::HighlightRule::MULTILINE_START),
+
+            RegexTextHighlighter::HighlightRule(
+                UR"([^"]\")",
+                IM_COL32(61, 45, 1, 255),
+                RegexTextHighlighter::HighlightRule::MULTILINE_FINISH),
+
+            // comments
+            RegexTextHighlighter::HighlightRule(
+                UR"(/\*)",
+                IM_COL32(0, 255, 0, 255),
+                RegexTextHighlighter::HighlightRule::MULTILINE_START),
+
+            RegexTextHighlighter::HighlightRule(
+                UR"(\*/)",
+                IM_COL32(0, 255, 0, 255),
+                RegexTextHighlighter::HighlightRule::MULTILINE_FINISH)
+        }),
+        Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text])
+    );
+
+    // m_Highlighter = std::make_shared<Frenchie::Editor::TreeSitterSyntaxHighlighter>(
+    //     Frenchie::Editor::tree_sitter_cpp(),
+    //     std::string(Frenchie::Editor::tree_sitter_cpp_query),
+    //     TreeSitterSyntaxHighlighter::ThemeColors({
+    //         {"keyword", IM_COL32(0,0,255,255)},
+    //         {"string", IM_COL32(255,255,255,255)},
+    //         {"number", IM_COL32(0,255,0,255)},
+    //         {"comment", IM_COL32(255,255,255,255)},
+    //         {"text", IM_COL32(255,255,255,255)},
+    //         {"function", IM_COL32(255,0,0,255)},
+    //         {"type", IM_COL32(255,255,255,255)},
+    //         {"variable", IM_COL32(255,255,255,255)}
+    //     })
+    // );
+
+    std::ifstream t("C:/SDK/Qt_Projects/PowerCAD/source/kernel/Common/DynamicGraph.cpp");
+    t.seekg(0, std::ios::end);
+    size_t size = t.tellg();
+    std::string buffer(size, ' ');
+    t.seekg(0);
+    t.read(&buffer[0], size);
+
+    m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(buffer));
 
     return true;
 }
@@ -348,12 +454,7 @@ void TextDocumentView::frame_update()
                     std::u32string text =
                         m_TextDocument->get_text(lineBeginIterator, lineEndIterator, maximumSymbolsCount);
 
-                    SyntaxHighlighter::regexRulesEstimationResults matches =
-                        m_Highlighter.highlight(
-                            text,
-                            m_HighlighterRules,
-                            Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
-                            lineIndex);
+                    HighlightRulesEstimationResults matches = m_Highlighter->highlight(text, lineIndex);
 
                     ImVec2 symbolPosition = ImVec2(ImGui::GetCursorScreenPos().x + m_Scroll.x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
                     int    globalIndex    = lineBeginIterator.get_position();
@@ -429,10 +530,11 @@ void TextDocumentView::frame_update()
             ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings
         );
         {
-            ImGui::TextUnformatted(fmt::format("Cursor {} Selection {} {}",
+            ImGui::TextUnformatted(fmt::format("Cursor {} Selection {} {} Symbols count {}",
                 m_TextDocument->get_cursor_position(),
                 m_Selection.first(),
-                m_Selection.last()).c_str());
+                m_Selection.last(),
+                m_TextDocument->symbols_count()).c_str());
 
             ImGui::EndChild();
         }

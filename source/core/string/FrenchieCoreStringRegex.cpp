@@ -7,10 +7,10 @@ using namespace Frenchie::Core::String;
 #define PCRE2_CODE_UNIT_WIDTH 0
 #include <pcre2.h>
 
-Frenchie::Core::String::Matches 
+Frenchie::Core::String::IndexRanges 
 Frenchie::Core::String::regex_match(const std::string& _Contents, const std::string _Pattern)
 {
-    Frenchie::Core::String::Matches result;
+    Frenchie::Core::String::IndexRanges result;
 
     if(_Contents.empty()) 
         return result;
@@ -61,10 +61,10 @@ Frenchie::Core::String::regex_match(const std::string& _Contents, const std::str
     return result;
 }
 
-Frenchie::Core::String::Matches 
+Frenchie::Core::String::IndexRanges 
 Frenchie::Core::String::regex_match(const std::u16string& _Contents, const std::u16string _Pattern)
 {
-    Frenchie::Core::String::Matches result;
+    Frenchie::Core::String::IndexRanges result;
 
     if(_Contents.empty()) 
         return result;
@@ -96,7 +96,7 @@ Frenchie::Core::String::regex_match(const std::u16string& _Contents, const std::
     {
         PCRE2_SIZE *ovector = pcre2_get_ovector_pointer_16(match_data);
 
-        result.push_back(Frenchie::Core::String::Match((int)ovector[0], (int)ovector[1]));
+        result.push_back(Frenchie::Core::String::IndexRange((int)ovector[0], (int)ovector[1]));
 
         // Advance startoffset for the next search
         startoffset = ovector[1];
@@ -115,10 +115,10 @@ Frenchie::Core::String::regex_match(const std::u16string& _Contents, const std::
     return result;
 }
 
-Frenchie::Core::String::Matches 
+Frenchie::Core::String::IndexRanges 
 Frenchie::Core::String::regex_match(const std::u32string& _Contents, const std::u32string _Pattern)
 {
-    Frenchie::Core::String::Matches result;
+    Frenchie::Core::String::IndexRanges result;
 
     if(_Contents.empty()) 
         return result;
@@ -169,17 +169,17 @@ Frenchie::Core::String::regex_match(const std::u32string& _Contents, const std::
     return result;
 }
 
-std::string Frenchie::Core::String::regex_match_substring(const std::string& _Origin, const Frenchie::Core::String::Match& _Match)
+std::string Frenchie::Core::String::regex_match_substring(const std::string& _Origin, const Frenchie::Core::String::IndexRange& _Match)
 {
     return std::string(&_Origin[_Match.Start], &_Origin[_Match.Finish]);
 }
 
-std::u16string Frenchie::Core::String::regex_match_substring(const std::u16string& _Origin, const Frenchie::Core::String::Match& _Match)
+std::u16string Frenchie::Core::String::regex_match_substring(const std::u16string& _Origin, const Frenchie::Core::String::IndexRange& _Match)
 {
     return std::u16string(&_Origin[_Match.Start], &_Origin[_Match.Finish]);
 }
 
-std::u32string Frenchie::Core::String::regex_match_substring(const std::u32string& _Origin, const Frenchie::Core::String::Match& _Match)
+std::u32string Frenchie::Core::String::regex_match_substring(const std::u32string& _Origin, const Frenchie::Core::String::IndexRange& _Match)
 {
     return std::u32string(&_Origin[_Match.Start], &_Origin[_Match.Finish]);
 }
