@@ -14,6 +14,8 @@ namespace Frenchie
         {
             namespace Menu
             {
+                namespace Selection{}
+
                 namespace Folder{}
 
                 namespace File{}
@@ -50,6 +52,21 @@ namespace Frenchie
 
                 RemoveFileCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
                 virtual ~RemoveFileCommand();
+
+                // Frenchie::Application::Command
+                virtual void execute() override;
+
+                // Command::TRegistryType
+                static std::string factory_id();
+            };
+
+            class RemoveSelectionCommand :
+                public Frenchie::Application::Command::Registry<RemoveSelectionCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
+            {
+            public:
+
+                RemoveSelectionCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
+                virtual ~RemoveSelectionCommand();
 
                 // Frenchie::Application::Command
                 virtual void execute() override;
