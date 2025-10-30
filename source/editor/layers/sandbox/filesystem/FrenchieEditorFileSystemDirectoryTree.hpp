@@ -49,7 +49,8 @@ namespace Frenchie
                 virtual void frame_update() override;
 
             protected:
-                std::filesystem::path m_Path = std::filesystem::current_path();
+                std::filesystem::path m_RootPath    = std::filesystem::current_path();
+                std::filesystem::path m_FocusedPath = std::filesystem::current_path();
                 PathSelector          m_Selector;
 
                 // service methods

@@ -30,12 +30,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenFileSystemExplorerAction : 
-                public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, const std::shared_ptr<CommandPayload>&>
+                public Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, const CommandPayloads&>
             {
             public:
 
-                OpenFileSystemExplorerAction(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, const std::shared_ptr<CommandPayload>&>(_Sender){}
+                OpenFileSystemExplorerAction(const CommandPayloads& _Sender = CommandPayloads()) : 
+                    Frenchie::Application::Command::Registry<OpenFileSystemExplorerAction, const CommandPayloads&>(_Sender){}
                 virtual ~OpenFileSystemExplorerAction(){}
 
                 // Frenchie::Application::Command
@@ -82,17 +82,17 @@ namespace Frenchie
                     {
                         Frenchie::Editor::Helpers::draw_menu(
                             STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu),
-                            std::make_shared<ExplorerPayload>(_Explorer));
+                            {std::make_shared<ExplorerPayload>(_Explorer)});
                     }
                 };
 
                 class CreateFolderAction : 
-                    public Command::Registry<CreateFolderAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<CreateFolderAction, const CommandPayloads&>
                 {
                 public:
 
-                    CreateFolderAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<CreateFolderAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    CreateFolderAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<CreateFolderAction, const CommandPayloads&>(_Payload){}
                     virtual ~CreateFolderAction(){}
 
                     // Frenchie::Application::Command
@@ -109,11 +109,11 @@ namespace Frenchie
                 };
 
                 class PasteAction : 
-                    public Command::Registry<PasteAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<PasteAction, const CommandPayloads&>
                 {
                 public:
-                    PasteAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<PasteAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    PasteAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<PasteAction, const CommandPayloads&>(_Payload){}
                     virtual ~PasteAction(){}
 
                     // Frenchie::Application::Command
@@ -143,16 +143,16 @@ namespace Frenchie
                     {
                         Frenchie::Editor::Helpers::draw_menu(
                             STRINGIFY(Frenchie::Editor::FileSystem::FileMenu),
-                            std::make_shared<ExplorerPayload>(_Explorer));
+                            {std::make_shared<ExplorerPayload>(_Explorer)});
                     }
                 };
 
                 class CopyAction : 
-                    public Command::Registry<CopyAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<CopyAction, const CommandPayloads&>
                 {
                 public:
-                    CopyAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<CopyAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    CopyAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<CopyAction, const CommandPayloads&>(_Payload){}
                     virtual ~CopyAction(){}
 
                     // Frenchie::Application::Command
@@ -169,11 +169,11 @@ namespace Frenchie
                 };
 
                 class PasteAction : 
-                    public Command::Registry<PasteAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<PasteAction, const CommandPayloads&>
                 {
                 public:
-                    PasteAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<PasteAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    PasteAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<PasteAction, const CommandPayloads&>(_Payload){}
                     virtual ~PasteAction(){}
 
                     virtual void execute() override
@@ -189,11 +189,11 @@ namespace Frenchie
                 };
 
                 class RemoveAction : 
-                    public Command::Registry<RemoveAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<RemoveAction, const CommandPayloads&>
                 {
                 public:
-                    RemoveAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<RemoveAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    RemoveAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<RemoveAction, const CommandPayloads&>(_Payload){}
                     virtual ~RemoveAction(){}
 
                     // Frenchie::Application::Command
@@ -210,12 +210,12 @@ namespace Frenchie
                 };
 
                 class RenameAction : 
-                    public Command::Registry<RenameAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<RenameAction, const CommandPayloads&>
                 {
                 public:
 
-                    RenameAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<RenameAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    RenameAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<RenameAction, const CommandPayloads&>(_Payload){}
                     virtual ~RenameAction(){}
 
                     // Frenchie::Application::Command
@@ -232,11 +232,11 @@ namespace Frenchie
                 };
 
                 class CreateFolderAction : 
-                    public Command::Registry<CreateFolderAction, const std::shared_ptr<CommandPayload>&>
+                    public Command::Registry<CreateFolderAction, const CommandPayloads&>
                 {
                 public:
-                    CreateFolderAction(const std::shared_ptr<CommandPayload>& _Payload) : 
-                        Command::Registry<CreateFolderAction, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                    CreateFolderAction(const CommandPayloads& _Payload) : 
+                        Command::Registry<CreateFolderAction, const CommandPayloads&>(_Payload){}
                     virtual ~CreateFolderAction(){}
 
                     // Frenchie::Application::Command
@@ -819,20 +819,24 @@ void Explorer::handle_current_directory_hot_keys()
     {            
         Frenchie::Application::CommandsQueue::instance()->push(
             FileMenu::CopyAction::factory_id(),
-            std::make_shared<ExplorerPayload>(this));
+            {std::make_shared<ExplorerPayload>(this)});
     }
 
     // Ctrl + V
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::CommandsQueue::instance()->push(FileMenu::PasteAction::factory_id(), std::make_shared<ExplorerPayload>(this));
+        Frenchie::Application::CommandsQueue::instance()->push(
+            FileMenu::PasteAction::factory_id(),
+            {std::make_shared<ExplorerPayload>(this)});
     }
 
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
-        Frenchie::Application::CommandsQueue::instance()->push(FileMenu::RemoveAction::factory_id(), std::make_shared<ExplorerPayload>(this));
+        Frenchie::Application::CommandsQueue::instance()->push(
+            FileMenu::RemoveAction::factory_id(),
+            {std::make_shared<ExplorerPayload>(this)});
     }
 
     // Escape

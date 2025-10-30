@@ -53,12 +53,12 @@ namespace Frenchie
             };
 
             class ExitAction : 
-                public Frenchie::Application::Command::Registry<ExitAction, const std::shared_ptr<CommandPayload>&>
+                public Frenchie::Application::Command::Registry<ExitAction, const CommandPayloads&>
             {
             public:
 
-                ExitAction(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<ExitAction, const std::shared_ptr<CommandPayload>&>(_Sender){}
+                ExitAction(const CommandPayloads& _Sender = CommandPayloads()) : 
+                    Frenchie::Application::Command::Registry<ExitAction, const CommandPayloads&>(_Sender){}
                 virtual ~ExitAction(){}
 
                 // Frenchie::Application::Command

@@ -11,12 +11,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenIPCDebug : 
-                public Frenchie::Application::Command::Registry<OpenIPCDebug, const std::shared_ptr<CommandPayload>&>
+                public Frenchie::Application::Command::Registry<OpenIPCDebug, const CommandPayloads&>
             {
             public:
 
-                OpenIPCDebug(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenIPCDebug, const std::shared_ptr<CommandPayload>&>(_Sender){}
+                OpenIPCDebug(const CommandPayloads& _Sender = CommandPayloads()) : 
+                    Frenchie::Application::Command::Registry<OpenIPCDebug, const CommandPayloads&>(_Sender){}
                 virtual ~OpenIPCDebug(){}
 
                 // Frenchie::Application::Command

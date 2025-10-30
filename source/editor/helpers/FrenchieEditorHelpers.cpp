@@ -7,9 +7,10 @@
 #include <FrenchieEditorHelpers.hpp>
 #include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
 
-using namespace Frenchie::Editor;
-
+using namespace Frenchie::Application;
 using namespace Frenchie::Application::Configuration;
+
+using namespace Frenchie::Editor;
 
 // IMGUI
 #include <imgui.h>
@@ -21,19 +22,23 @@ namespace Frenchie
     {
         namespace Helpers
         {
-            inline void draw_menu_recursive(const std::vector<std::string> _Actions, const std::string& _Path, size_t& _Index, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
+            inline void draw_menu_recursive(
+                const std::vector<std::string> _Actions,
+                const std::string&             _Path,
+                size_t&                        _Index,
+                const CommandPayloads&         _Payloads)
             {
                 if(_Index == _Actions.size() - 1) 
                 {
                     if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
-                        Frenchie::Application::CommandsQueue::instance()->push(_Path, _Payload);
+                        Frenchie::Application::CommandsQueue::instance()->push(_Path, _Payloads);
 
                     return;
                 }
 
                 if(ImGui::BeginMenu(Translator::translate(_Actions[_Index]).c_str()))
                 {
-                    draw_menu_recursive(_Actions, _Path, ++_Index, _Payload);
+                    draw_menu_recursive(_Actions, _Path, ++_Index, _Payloads);
 
                     ImGui::EndMenu();
                 }
@@ -43,8 +48,8 @@ namespace Frenchie
 }
 
 void Frenchie::Editor::Helpers::draw_menu(
-    const std::string& _MenuPath,
-    const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
+    const std::string&     _MenuPath,
+    const CommandPayloads& _Payloads)
 {
     // parse
     struct Data
@@ -77,6 +82,6 @@ void Frenchie::Editor::Helpers::draw_menu(
     for(auto&& menu : menus)
     {
         size_t index = 0;
-        draw_menu_recursive(menu.tokens, menu.command, index, _Payload);
+        draw_menu_recursive(menu.tokens, menu.command, index, _Payloads);
     }
 }

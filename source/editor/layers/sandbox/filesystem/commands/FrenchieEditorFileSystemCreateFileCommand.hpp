@@ -12,11 +12,29 @@ namespace Frenchie
     {
         namespace FileSystem
         {
-            class CreateFileCommand : public Frenchie::Application::Command::Registry<CreateFileCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
+            namespace Menu
+            {
+                namespace Folder{}
+
+                namespace File{}
+            }
+        }
+    }
+}
+
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace FileSystem
+        {
+            using namespace Frenchie::Application;
+
+            class CreateFileCommand : public Command::Registry<CreateFileCommand, const CommandPayloads&>
             {
             public:
 
-                CreateFileCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
+                CreateFileCommand(const CommandPayloads&);
                 virtual ~CreateFileCommand();
 
                 // Frenchie::Application::Command

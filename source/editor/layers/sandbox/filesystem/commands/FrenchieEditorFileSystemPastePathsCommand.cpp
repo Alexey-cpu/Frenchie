@@ -1,4 +1,4 @@
-#include <FrenchieCoreFileSystemPastePathsCommand.hpp>
+#include <FrenchieEditorFileSystemPastePathsCommand.hpp>
 
 // Core
 #include <FrenchieCoreFileSystem.hpp>
@@ -30,15 +30,13 @@ namespace Frenchie
 
                 for(auto&& utf8Path : utf8Paths)
                 {
+                    if(utf8Path.size() <= 1)
+                        continue;
+
                     std::u32string utf32Path = Frenchie::Core::String::convert_utf8_to_utf32(utf8Path);
 
-                    if(utf32Path.empty())
+                    if(!std::filesystem::exists(utf32Path))
                         continue;
-
-                    if(!std::filesystem::exists(utf32Path)) 
-                    {
-                        continue;
-                    }
 
                     auto source    = std::filesystem::path(utf32Path);
                     auto extention = Frenchie::Core::FileSystem::get_file_extention(source);
@@ -75,12 +73,12 @@ namespace Frenchie
     }
 }
 
-PastePaths::PastePaths(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Sender) : 
-    Frenchie::Application::Command::Registry<PastePaths, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Sender){}
+PastePathsCommand::PastePathsCommand(const CommandPayloads& _Sender) : 
+    Frenchie::Application::Command::Registry<PastePathsCommand, const CommandPayloads&>(_Sender){}
 
-PastePaths::~PastePaths(){}
+PastePathsCommand::~PastePathsCommand(){}
 
-void PastePaths::execute()
+void PastePathsCommand::execute()
 {
     auto pathsPayload = get_payload<CommandDataPayload<std::filesystem::path>>();
 
@@ -88,7 +86,9 @@ void PastePaths::execute()
         paste_paths(pathsPayload->get());
 }
 
-std::string PastePaths::factory_id()
+std::string PastePathsCommand::factory_id()
 {
     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::Menu::Folder), "Paste");
 }
+
+const bool FrenchieEditorFileSystemPastePaths = PastePathsCommand::registerFactory();

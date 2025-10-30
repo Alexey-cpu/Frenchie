@@ -16,12 +16,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenTextDocumentViewDebug : 
-                public Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, const std::shared_ptr<CommandPayload>&>
+                public Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, const CommandPayloads&>
             {
             public:
 
-                OpenTextDocumentViewDebug(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, const std::shared_ptr<CommandPayload>&>(_Sender){}
+                OpenTextDocumentViewDebug(const CommandPayloads& _Sender = CommandPayloads()) : 
+                    Frenchie::Application::Command::Registry<OpenTextDocumentViewDebug, const CommandPayloads&>(_Sender){}
                 virtual ~OpenTextDocumentViewDebug(){}
 
                 // Frenchie::Application::Command

@@ -30,8 +30,8 @@ namespace Frenchie
     }
 }
 
-CreateFolderCommand::CreateFolderCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload) : 
-    Frenchie::Application::Command::Registry<CreateFolderCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Payload){}
+CreateFolderCommand::CreateFolderCommand(const CommandPayloads& _Payload) : 
+    Frenchie::Application::Command::Registry<CreateFolderCommand, const CommandPayloads&>(_Payload){}
 
 CreateFolderCommand::~CreateFolderCommand(){}
 
