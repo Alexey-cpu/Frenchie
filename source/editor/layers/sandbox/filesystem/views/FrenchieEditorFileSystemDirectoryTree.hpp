@@ -51,10 +51,14 @@ namespace Frenchie
             protected:
                 std::filesystem::path m_RootPath    = std::filesystem::current_path();
                 std::filesystem::path m_FocusedPath = std::filesystem::current_path();
-                PathSelector          m_Selector;
+                PathSelector          m_Selector    = PathSelector();
 
                 // service methods
                 void draw_paths_tree(const std::filesystem::path&);
+
+                void drop_paths_to(const std::filesystem::path& _Path);
+
+                void drag_paths();
             };
         }
     }
