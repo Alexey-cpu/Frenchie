@@ -52,7 +52,7 @@ namespace Frenchie
                             wiondowFlags);
                         {
                             for(auto&& path : m_Paths)
-                                ImGui::TextUnformatted(path.string().c_str());
+                                ImGui::TextUnformatted(Frenchie::Core::String::convert_utf32_to_utf8(path.u32string()).c_str());
                         }
                         ImGui::EndChild();
 
