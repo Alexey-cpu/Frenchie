@@ -38,12 +38,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenLanguageSettingsAction : 
-                public Frenchie::Application::Command::Registry<OpenLanguageSettingsAction, const std::shared_ptr<CommandPayload>&>
+                public Frenchie::Application::Command::Registry<OpenLanguageSettingsAction, const CommandPayloads&>
             {
             public:
 
-                OpenLanguageSettingsAction(const std::shared_ptr<CommandPayload>& _Sender = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenLanguageSettingsAction, const std::shared_ptr<CommandPayload>&>(_Sender){}
+                OpenLanguageSettingsAction(const CommandPayloads& _Sender = CommandPayloads()) : 
+                    Frenchie::Application::Command::Registry<OpenLanguageSettingsAction, const CommandPayloads&>(_Sender){}
                 
                 virtual ~OpenLanguageSettingsAction(){}
 

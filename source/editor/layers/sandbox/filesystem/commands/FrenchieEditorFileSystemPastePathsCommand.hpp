@@ -14,8 +14,6 @@ namespace Frenchie
         {
             namespace Menu
             {
-                namespace Selection{}
-
                 namespace Folder{}
 
                 namespace File{}
@@ -30,12 +28,14 @@ namespace Frenchie
     {
         namespace FileSystem
         {
-            class PastePaths : public Frenchie::Application::Command::Registry<PastePaths, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
+            using namespace Frenchie::Application;
+
+            class PastePathsCommand : public Command::Registry<PastePathsCommand, const CommandPayloads&>
             {
             public:
 
-                PastePaths(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
-                virtual ~PastePaths();
+                PastePathsCommand(const CommandPayloads&);
+                virtual ~PastePathsCommand();
 
                 // Frenchie::Application::Command
                 virtual void execute() override;

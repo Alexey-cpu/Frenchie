@@ -1,8 +1,5 @@
 #pragma once
 
-// Core
-#include <FrenchieCoreStringUnicode.hpp>
-
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
 
@@ -28,12 +25,14 @@ namespace Frenchie
     {
         namespace FileSystem
         {
+            using namespace Frenchie::Application;
+
             class CreateFolderCommand :
-                public Frenchie::Application::Command::Registry<CreateFolderCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
+                public Command::Registry<CreateFolderCommand, const CommandPayloads&>
             {
             public:
 
-                CreateFolderCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>&);
+                CreateFolderCommand(const CommandPayloads&);
                 virtual ~CreateFolderCommand();
 
                 // Frenchie::Application::Command

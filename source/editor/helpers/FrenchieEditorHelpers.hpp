@@ -16,9 +16,11 @@ namespace Frenchie
     {
         namespace Helpers
         {
+            using namespace Frenchie::Application;
+
             void draw_menu(
-                const std::string& _MenuPath,
-                const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload = nullptr);
+                const std::string&     _MenuPath,
+                const CommandPayloads& _Payload = CommandPayloads());
         }
     }
 }

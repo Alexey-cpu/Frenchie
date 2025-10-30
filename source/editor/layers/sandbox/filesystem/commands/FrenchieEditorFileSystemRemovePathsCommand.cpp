@@ -1,4 +1,4 @@
-#include <FrenchieCoreFileSystemRemovePathsCommand.hpp>
+#include <FrenchieEditorFileSystemRemovePathsCommand.hpp>
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
@@ -106,22 +106,31 @@ namespace Frenchie
 }
 
 // RemoveFolderCommand
-RemoveFolderCommand::RemoveFolderCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload) : 
-    Frenchie::Application::Command::Registry<RemoveFolderCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Payload){}
+RemoveFolderCommand::RemoveFolderCommand(const CommandPayloads& _Payload) : 
+    Frenchie::Application::Command::Registry<RemoveFolderCommand, const CommandPayloads&>(_Payload){}
 
 RemoveFolderCommand::~RemoveFolderCommand(){}
 
 void RemoveFolderCommand::execute()
 {
-    auto payload = 
-        get_payload<Frenchie::Application::CommandDataPayload<std::filesystem::path>>();
+    std::set<std::filesystem::path> removed;
 
-    if(payload != nullptr)
+    auto pathPayload    = get_payload<Frenchie::Application::CommandDataPayload<std::filesystem::path>>();
+    auto pathSetPayload = get_payload<Frenchie::Application::CommandDataPayload<std::set<std::filesystem::path>>>();
+
+    if(pathPayload != nullptr)
+        removed.insert(pathPayload->get());
+
+    if(pathSetPayload != nullptr)
     {
-        Frenchie::Application::application()->push_layer<RemovePathsDialog>(
-            std::set<std::filesystem::path>({payload->get()})
-        );
+        auto paths = pathSetPayload->get();
+
+        for(auto&& path : paths)
+            removed.insert(path);
     }
+
+    if(!removed.empty())
+        Frenchie::Application::application()->push_layer<RemovePathsDialog>(removed);
 }
 
 std::string RemoveFolderCommand::factory_id()
@@ -130,21 +139,31 @@ std::string RemoveFolderCommand::factory_id()
 }
 
 // RemoveFileCommand
-RemoveFileCommand::RemoveFileCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload) : 
-    Frenchie::Application::Command::Registry<RemoveFileCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Payload){}
+RemoveFileCommand::RemoveFileCommand(const CommandPayloads& _Payload) : 
+    Frenchie::Application::Command::Registry<RemoveFileCommand, const CommandPayloads&>(_Payload){}
 
 RemoveFileCommand::~RemoveFileCommand(){}
 
 void RemoveFileCommand::execute()
 {
-    auto pathPayload = get_payload<Frenchie::Application::CommandDataPayload<std::filesystem::path>>();
+    std::set<std::filesystem::path> removed;
+
+    auto pathPayload    = get_payload<Frenchie::Application::CommandDataPayload<std::filesystem::path>>();
+    auto pathSetPayload = get_payload<Frenchie::Application::CommandDataPayload<std::set<std::filesystem::path>>>();
 
     if(pathPayload != nullptr)
+        removed.insert(pathPayload->get());
+
+    if(pathSetPayload != nullptr)
     {
-        Frenchie::Application::application()->push_layer<RemovePathsDialog>(
-            std::set<std::filesystem::path>({pathPayload->get()})
-        );
+        auto paths = pathSetPayload->get();
+
+        for(auto&& path : paths)
+            removed.insert(path);
     }
+
+    if(!removed.empty())
+        Frenchie::Application::application()->push_layer<RemovePathsDialog>(removed);
 }
 
 std::string RemoveFileCommand::factory_id()
@@ -152,26 +171,6 @@ std::string RemoveFileCommand::factory_id()
     return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::Menu::File), "Remove");
 }
 
-// RemoveSelectionCommand
-RemoveSelectionCommand::RemoveSelectionCommand(const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload) :
-    Frenchie::Application::Command::Registry<RemoveSelectionCommand, const std::shared_ptr<Frenchie::Application::CommandPayload>&>(_Payload){}
-
-RemoveSelectionCommand::~RemoveSelectionCommand(){}
-
-void RemoveSelectionCommand::execute()
-{
-    auto pathSetPayload = get_payload<Frenchie::Application::CommandDataPayload<std::set<std::filesystem::path>>>();
-
-    if(pathSetPayload != nullptr)
-        Frenchie::Application::application()->push_layer<RemovePathsDialog>(pathSetPayload->get());
-}
-
-std::string RemoveSelectionCommand::factory_id()
-{
-    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::FileSystem::Menu::Selection), "Remove");
-}
-
 // register all three commands within factory
-const bool FrenchieEditorFileSystemRemoveFileCommand      = RemoveFileCommand::registerFactory();
-const bool FrenchieEditorFileSystemRemoveFolderCommand    = RemoveFolderCommand::registerFactory();
-const bool FrenchieEditorFileSystemRemoveSelectionCommand = RemoveFileCommand::registerFactory();
+const bool FrenchieEditorFileSystemRemoveFileCommand   = RemoveFileCommand::registerFactory();
+const bool FrenchieEditorFileSystemRemoveFolderCommand = RemoveFolderCommand::registerFactory();

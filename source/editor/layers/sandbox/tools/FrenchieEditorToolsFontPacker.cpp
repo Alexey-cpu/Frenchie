@@ -22,12 +22,12 @@ namespace Frenchie
         namespace MainMenu
         {
             class OpenFontPackerTool : 
-                public Frenchie::Application::Command::Registry<OpenFontPackerTool, const std::shared_ptr<CommandPayload>&>
+                public Frenchie::Application::Command::Registry<OpenFontPackerTool, const CommandPayloads&>
             {
             public:
 
-                OpenFontPackerTool(const std::shared_ptr<CommandPayload>& _Payload = nullptr) : 
-                    Frenchie::Application::Command::Registry<OpenFontPackerTool, const std::shared_ptr<CommandPayload>&>(_Payload){}
+                OpenFontPackerTool(const CommandPayloads& _Payload = CommandPayloads()) : 
+                    Frenchie::Application::Command::Registry<OpenFontPackerTool, const CommandPayloads&>(_Payload){}
                 virtual ~OpenFontPackerTool(){}
 
                 // Frenchie::Application::Command
