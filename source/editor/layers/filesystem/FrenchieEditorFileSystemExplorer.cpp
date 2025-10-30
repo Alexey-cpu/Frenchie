@@ -6,11 +6,12 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplicationEditorDialog.hpp>
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
 #include <FrenchieCoreFileSystem.hpp>
-#include <FrenchieApplicationEditorDialog.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 
 using namespace Frenchie::Core;
 
@@ -931,7 +932,7 @@ void Explorer::drop_path_to(const std::filesystem::path& _Path)
                 return;
             }
             
-            auto movedPaths = Frenchie::Core::String::split(std::string(adress), ";");
+            auto movedPaths = Frenchie::Core::String::split_utf8_string(std::string(adress), ";");
 
             for(auto&& movedPath : movedPaths)
             {

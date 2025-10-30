@@ -23,6 +23,8 @@ namespace Frenchie
         {
             namespace Menu
             {
+                namespace Selection{}
+
                 namespace Folder{}
 
                 namespace File{}
@@ -40,7 +42,7 @@ namespace Frenchie
             class DirectoryTree : public Frenchie::Application::Layer
             {
             public:
-                DirectoryTree(const std::filesystem::path& = "C:/SDK/Qt_Projects/OpenGL/logs/");
+                DirectoryTree(const std::filesystem::path& = "C:/SDK/Qt_Projects/OpenGL/logs");
                 virtual ~DirectoryTree();
 
                 // Frenchie::Application::Layer

@@ -3,6 +3,7 @@
 // Core
 #include <FrenchieCoreFactory.hpp>
 #include <FrenchieCoreStringUnicode.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
@@ -29,7 +30,7 @@ bool ConfigurationLoader::awake()
     // push all needed configuration layers into application queue
     for(auto&& creator : Frenchie::Core::Factory::registry())
     {
-        if(!Frenchie::Core::String::contains_substring(
+        if(!Frenchie::Core::String::utf8_string_contains_substring(
             creator.first, 
             STRINGIFY(Frenchie::Application::Configuration))) 
             continue;

@@ -65,8 +65,8 @@ DirectoryTree::~DirectoryTree(){}
 void DirectoryTree::frame_update()
 {
     ImGui::Begin(fmt::format("{}###{}",
-        get_name(),
-        Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string())).c_str(),
+        Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string()),
+        get_name()).c_str(),
         &m_Opened);
     {
         ImGui::BeginChild("Tree", ImGui::GetContentRegionAvail());
@@ -82,6 +82,7 @@ void DirectoryTree::frame_update()
 
 void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
 {
+    // My code
     if(_Path == m_Path.root_path())
         ImGui::SetNextItemOpen(true);
 
@@ -113,7 +114,9 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
         }
         else
         {
-            // TODO: add logic here...
+            Helpers::draw_menu(
+                STRINGIFY(Frenchie::Editor::FileSystem::Menu::Selection),
+                std::make_shared<CommandDataPayload<std::set<std::filesystem::path>>>(m_Selector.get_selected_paths()));
         }
 
         ImGui::EndPopup();

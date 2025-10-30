@@ -1,5 +1,8 @@
 #include <FrenchieApplication.hpp>
 
+// Core
+#include <FrenchieCoreStringUtilities.hpp>
+
 // Editor
 #include <FrenchieEditorHelpers.hpp>
 #include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
@@ -18,7 +21,7 @@ namespace Frenchie
     {
         namespace Helpers
         {
-            void draw_menu_recursive(const std::vector<std::string> _Actions, const std::string& _Path, size_t& _Index, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
+            inline void draw_menu_recursive(const std::vector<std::string> _Actions, const std::string& _Path, size_t& _Index, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
             {
                 if(_Index == _Actions.size() - 1) 
                 {
@@ -39,7 +42,9 @@ namespace Frenchie
     }
 }
 
-void Frenchie::Editor::Helpers::draw_menu(const std::string& _MenuPath, const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
+void Frenchie::Editor::Helpers::draw_menu(
+    const std::string& _MenuPath,
+    const std::shared_ptr<Frenchie::Application::CommandPayload>& _Payload)
 {
     // parse
     struct Data
@@ -49,18 +54,18 @@ void Frenchie::Editor::Helpers::draw_menu(const std::string& _MenuPath, const st
     };
 
     std::vector<Data> menus;
-    size_t            actionsStartToken = Frenchie::Core::String::split(_MenuPath, "::").size();
+    size_t            actionsStartToken = Frenchie::Core::String::split_utf8_string(_MenuPath, "::").size();
 
     for(auto&& creator : Frenchie::Core::Factory::registry()) 
     {
-        if(!Frenchie::Core::String::contains_substring(creator.first, _MenuPath)) 
+        if(!Frenchie::Core::String::utf8_string_contains_substring(creator.first, _MenuPath)) 
             continue;
 
         Data data;
         data.command = creator.first;
 
         std::vector<std::string> creatorTokens = 
-            Frenchie::Core::String::split(creator.first, "::");
+            Frenchie::Core::String::split_utf8_string(creator.first, "::");
         
         for(size_t i = actionsStartToken; i < creatorTokens.size(); i++)
             data.tokens.push_back(creatorTokens[i]);

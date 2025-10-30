@@ -12,6 +12,24 @@ namespace Frenchie
     {
         namespace FileSystem
         {
+            namespace Menu
+            {
+                namespace Selection{}
+
+                namespace Folder{}
+
+                namespace File{}
+            }
+        }
+    }
+}
+
+namespace Frenchie
+{
+    namespace Editor
+    {
+        namespace FileSystem
+        {
             class PastePaths : public Frenchie::Application::Command::Registry<PastePaths, const std::shared_ptr<Frenchie::Application::CommandPayload>&>
             {
             public:
