@@ -96,10 +96,17 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
             (m_Selector.contains(_Path) ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed : 0)|
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap);
 
-    if(ImGui::IsItemHovered() && 
-        ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_MouseLeft))
+    if(ImGui::IsItemHovered())
     {
-        m_Selector.select(_Path);
+        if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_MouseLeft))
+        {
+            m_Selector.select(_Path);
+        }
+        else if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  ||
+                ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle))
+        {
+            m_Selector.clear();
+        }
     }
 
     if (ImGui::BeginPopupContextItem())
