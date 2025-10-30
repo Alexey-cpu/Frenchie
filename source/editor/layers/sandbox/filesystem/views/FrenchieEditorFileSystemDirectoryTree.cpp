@@ -1,7 +1,9 @@
 #include <FrenchieEditorFileSystemDirectoryTree.hpp>
 
 // Core
+#include <FrenchieCoreFileSystem.hpp>
 #include <FrenchieCoreStringUnicode.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
@@ -146,9 +148,8 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull                               |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_FramePadding                                |
             (!has_children ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf : 0)                  |
-            (_Path == m_FocusedPath ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed : 0)       |
-            (m_Selector.contains(_Path) ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected : 0) |
-
+            //(_Path == m_FocusedPath ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed : 0)       |
+            (m_Selector.contains(_Path) || _Path == m_FocusedPath ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected : 0) |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap);
 
     if(ImGui::IsItemHovered())
@@ -156,19 +157,19 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
         if(ImGui::IsKeyDown(ImGuiKey::ImGuiMod_Ctrl) &&
             ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
         {
+            m_FocusedPath = _Path;
             m_Selector.select(_Path);
         }
-        else if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  ||
+        
+        if(ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Left)  ||
                 ImGui::IsMouseClicked(ImGuiMouseButton_::ImGuiMouseButton_Middle))
         {
             m_FocusedPath = _Path;
-            m_Selector.clear();
         }
     }
 
     if (ImGui::BeginPopupContextItem())
     {
-
         Helpers::draw_menu(
             std::filesystem::is_directory(_Path) ?
                 STRINGIFY(Frenchie::Editor::FileSystem::Menu::Folder) :
@@ -181,6 +182,9 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
 
         ImGui::EndPopup();
     }
+
+    drag_paths();
+    drop_paths_to(_Path);
 
     if(opened)
     {
@@ -195,4 +199,84 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
 
         ImGui::TreePop();
     }
-};
+}
+
+void DirectoryTree::drop_paths_to(const std::filesystem::path& _Path)
+{
+    // drag & drop
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = 
+            ImGui::AcceptDragDropPayload(STRINGIFY(std::filesystem::path)))
+        {
+            auto adress = static_cast<char*>(payload->Data);
+
+            if(!std::filesystem::is_directory(_Path))
+                return;
+
+            auto movedPaths = Frenchie::Core::String::split_utf8_string(std::string(adress), "\n");
+
+            for(auto&& movedPath : movedPaths)
+            {
+                std::filesystem::path oldAdress(Frenchie::Core::String::convert_utf8_to_utf32(movedPath));
+
+                if(!std::filesystem::exists(oldAdress)) 
+                    continue;
+
+                std::filesystem::path newAdress(
+                    _Path.u32string()
+                        .append(U"/")
+                        .append(oldAdress.filename().u32string()));
+
+                if(oldAdress.parent_path() == newAdress.parent_path()) 
+                    return;
+
+                while(std::filesystem::exists(newAdress))
+                {
+                    newAdress = 
+                        _Path.u32string()
+                            .append(U"/")
+                            .append(newAdress.filename().stem().u32string())
+                            .append(U"_Copy")
+                            .append(Frenchie::Core::String::convert_utf8_to_utf32(Frenchie::Core::FileSystem::get_file_extention(oldAdress)));
+                }
+
+                try
+                {
+                    std::filesystem::rename(oldAdress, newAdress);
+                }
+                catch(...)
+                {
+                }
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+}
+
+void DirectoryTree::drag_paths()
+{
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    {
+        std::set<std::filesystem::path> selection;
+        auto selectedPaths = m_Selector.get_selected_paths();
+        selectedPaths.insert(m_FocusedPath);
+
+        std::string selectionBuffer;
+
+        for(auto&& selectedPath : selectedPaths)
+        {
+            if(selection.find(selectedPath) != selection.end()) 
+                continue;
+
+            selection.insert(selectedPath);
+
+            selectionBuffer.append(Frenchie::Core::String::convert_utf32_to_utf8(selectedPath.u32string())).append("\n");
+        }
+
+        ImGui::SetDragDropPayload(STRINGIFY(std::filesystem::path),selectionBuffer.c_str(), selectionBuffer.size() + 1);
+        ImGui::TextUnformatted(selectionBuffer.c_str());
+        ImGui::EndDragDropSource();
+    }
+}
