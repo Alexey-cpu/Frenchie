@@ -23,6 +23,18 @@ namespace Frenchie
             SourceEncoding_U32
         };
 
+        struct CodePointInfo
+        {
+            unsigned int Codepoint;
+            std::string  Meta;
+        };
+
+        struct FontInfo
+        {
+            ImFont*                    Font;
+            std::vector<CodePointInfo> Codepoints;
+        };
+
         class FontHardCoderTool : public Frenchie::Application::Layer
         {
         public:
@@ -39,7 +51,7 @@ namespace Frenchie
             std::string                         m_ClassName {"HardCodedFont"};
             SourceEncoding                      m_Encoding  {SourceEncoding::SourceEncoding_U8};
             bool                                m_Compress  {false};
-            std::map<unsigned int, std::string> m_CodePoints{std::map<unsigned int, std::string>()};
+            FontInfo                            m_FontInfo;
 
             // service methods
             std::string encoding_to_string(const SourceEncoding& _Encoding)
