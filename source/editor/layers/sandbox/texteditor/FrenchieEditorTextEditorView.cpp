@@ -2,8 +2,10 @@
 
 #include <fstream>
 
+// Editor
 #include <FrenchieEditorTextEditorTreeSitterTextHighlighter.hpp>
 #include <FrenchieEditorTextEditorRegexTextHighlighter.hpp>
+#include <FrenchieEditorHelpers.hpp>
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Editor;
@@ -41,65 +43,6 @@ namespace Frenchie
         }
     }
 }
-
-// Helpers
-class Helpers
-{
-public:
-
-	static inline int ImTextCharToUtf8_inline(char* buf, int buf_size, unsigned int c)
-	{
-		if (c < 0x80)
-		{
-			buf[0] = (char)c;
-			return 1;
-		}
-		if (c < 0x800)
-		{
-			if (buf_size < 2) return 0;
-			buf[0] = (char)(0xc0 + (c >> 6));
-			buf[1] = (char)(0x80 + (c & 0x3f));
-			return 2;
-		}
-		if (c < 0x10000)
-		{
-			if (buf_size < 3) return 0;
-			buf[0] = (char)(0xe0 + (c >> 12));
-			buf[1] = (char)(0x80 + ((c >> 6) & 0x3f));
-			buf[2] = (char)(0x80 + ((c ) & 0x3f));
-			return 3;
-		}
-		if (c <= 0x10FFFF)
-		{
-			if (buf_size < 4) return 0;
-			buf[0] = (char)(0xf0 + (c >> 18));
-			buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
-			buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
-			buf[3] = (char)(0x80 + ((c ) & 0x3f));
-			return 4;
-		}
-		// Invalid code point, the max unicode is 0x10FFFF
-		return 0;
-	}
-
-	static int ImTextCharToUtf8(char out_buf[5], unsigned int c)
-	{
-		int count = ImTextCharToUtf8_inline(out_buf, 5, c);
-		out_buf[count] = 0;
-		return count;
-	}
-
-    static ImU32 Helpers::calculate_color(const ImVec4& _Vector)
-    {
-        return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
-    }
-
-    static ImVec2 calculate_text_size(const std::string& _Text)
-    {
-        return ImGui::GetCurrentContext()->Font->CalcTextSizeA(
-            ImGui::GetFontSize(), FLT_MAX, 0.f, _Text.c_str(), nullptr, nullptr);
-    }
-};
 
 TextDocumentSeclection::TextDocumentSeclection(){}
 TextDocumentSeclection::~TextDocumentSeclection(){}
@@ -762,12 +705,10 @@ void TextDocumentView::on_character_pressed(const unsigned int& _Char)
             m_TextDocument->erase(m_Selection.size());
             m_Selection.clear();
 
-            // retrieve user input in UTF-8 codec
-            char utf8[5];
-            int  count = Helpers::ImTextCharToUtf8(utf8, _Char);
-
             // insert symbol
-            m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(std::string(utf8, count)));
+            m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(
+                Helpers::convert_imgui_text_char_to_utf8(_Char)
+            ));
         }
     );
 }

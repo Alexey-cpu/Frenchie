@@ -43,6 +43,41 @@ namespace Frenchie
                     ImGui::EndMenu();
                 }
             }
+
+            int ImTextCharToUtf8_inline(char* buf, int buf_size, unsigned int c)
+            {
+                if (c < 0x80)
+                {
+                    buf[0] = (char)c;
+                    return 1;
+                }
+                if (c < 0x800)
+                {
+                    if (buf_size < 2) return 0;
+                    buf[0] = (char)(0xc0 + (c >> 6));
+                    buf[1] = (char)(0x80 + (c & 0x3f));
+                    return 2;
+                }
+                if (c < 0x10000)
+                {
+                    if (buf_size < 3) return 0;
+                    buf[0] = (char)(0xe0 + (c >> 12));
+                    buf[1] = (char)(0x80 + ((c >> 6) & 0x3f));
+                    buf[2] = (char)(0x80 + ((c ) & 0x3f));
+                    return 3;
+                }
+                if (c <= 0x10FFFF)
+                {
+                    if (buf_size < 4) return 0;
+                    buf[0] = (char)(0xf0 + (c >> 18));
+                    buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
+                    buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
+                    buf[3] = (char)(0x80 + ((c ) & 0x3f));
+                    return 4;
+                }
+                // Invalid code point, the max unicode is 0x10FFFF
+                return 0;
+            }
         }
     }
 }
@@ -84,4 +119,24 @@ void Frenchie::Editor::Helpers::draw_menu(
         size_t index = 0;
         draw_menu_recursive(menu.tokens, menu.command, index, _Payloads);
     }
+}
+
+std::string Frenchie::Editor::Helpers::convert_imgui_text_char_to_utf8(unsigned int c)
+{
+    char utf8[5];
+    int count   = ImTextCharToUtf8_inline(utf8, 5, c);
+    utf8[count] = 0;
+
+    return std::string(utf8, count);
+}
+
+ImU32 Frenchie::Editor::Helpers::calculate_color(const ImVec4& _Vector)
+{
+    return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
+}
+
+ImVec2 Frenchie::Editor::Helpers::calculate_text_size(const std::string& _Text)
+{
+    return ImGui::GetCurrentContext()->Font->CalcTextSizeA(
+        ImGui::GetFontSize(), FLT_MAX, 0.f, _Text.c_str(), nullptr, nullptr);
 }

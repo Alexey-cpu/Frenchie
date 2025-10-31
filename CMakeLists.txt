@@ -78,6 +78,7 @@ add_executable(
     ${SOURCES}
 
     "source/main.cpp"
+    #"source/binary_to_compressed_c.cpp"
     )
 target_link_libraries(
     OpenGL
