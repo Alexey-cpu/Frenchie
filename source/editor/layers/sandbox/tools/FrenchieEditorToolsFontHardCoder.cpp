@@ -12,6 +12,9 @@
 #include <FrenchieEditorFileSystemExplorerDialog.hpp>
 #include <FrenchieEditorHelpers.hpp>
 
+// STB
+#include "stb_truetype.h"
+
 // IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -332,7 +335,7 @@ namespace Frenchie
                 std::filesystem::path               _FontFilePath,
                 std::filesystem::path               _CppFilePath,
                 std::string                         _ClassName,
-                std::map<unsigned int, std::string> _CodePointsMap,
+                std::vector<CodePointInfo>          _CodePointsMap,
                 SourceEncoding                      _Encoding,
                 bool                                _Compress)
             {
@@ -361,8 +364,8 @@ namespace Frenchie
                 
                 for (auto&& codePointMapItem : _CodePointsMap)
                 {
-                    auto codePoint     = codePointMapItem.first;
-                    auto codePointName = Frenchie::Core::String::utf8_to_upper(codePointMapItem.second);
+                    auto codePoint     = codePointMapItem.Codepoint;
+                    auto codePointName = Frenchie::Core::String::utf8_to_upper(codePointMapItem.Meta);
 
                     if(codePointName.empty())
                         continue;
@@ -415,6 +418,58 @@ namespace Frenchie
                 return true;
             }
         
+            static std::vector<CodePointInfo> retrieve_codepoints(const std::filesystem::path& _FontFilePath)
+            {
+                FILE* file = fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FontFilePath.u32string()).c_str(), "rb");
+
+                std::vector<CodePointInfo> codepoints;
+
+                if (file == NULL) 
+                {
+                    perror("Error opening file");
+                    return codepoints;
+                }
+
+                // Determine file size
+                fseek(file, 0, SEEK_END);
+                int file_size = ftell(file);
+                fseek(file, 0, SEEK_SET);
+
+                // Allocate memory for the buffer
+                unsigned char* buffer = (unsigned char*)malloc(file_size);
+
+                if (buffer == NULL) 
+                {
+                    fclose(file);
+                    return codepoints;
+                }
+
+                // Read the file into the buffer
+                size_t bytes_read = fread(buffer, 1, file_size, file);
+
+                if (bytes_read != file_size) 
+                {
+                    free(buffer);
+                    fclose(file);
+                    return codepoints;
+                }
+
+                // close file
+                fclose(file);
+
+                stbtt_fontinfo font;
+
+                stbtt_InitFont(&font, buffer, stbtt_GetFontOffsetForIndex(buffer,0));
+
+                for (unsigned int codepoint = 0; codepoint <= IM_UNICODE_CODEPOINT_MAX; codepoint++)
+                {
+                    if(stbtt_FindGlyphIndex(&font, codepoint))
+                        codepoints.push_back({codepoint, std::string()});
+                }
+
+                return codepoints;
+            }
+
             #undef stb__hc
             #undef stb__hc2
             #undef stb__hc3
@@ -451,27 +506,27 @@ void FontHardCoderTool::frame_update()
                     if(dialog == nullptr) 
                         return;
 
-                    // load font
                     m_TTF = dialog->get_current_file();
 
-                    // clear code points
-                    m_CodePoints.clear();
-
+                    // load font
                     Frenchie::Application::CommandsQueue::instance()->push<CallbackCommand>(
                         [this]()
                         {
+                            // load font
                             ImGuiIO& io          = ImGui::GetIO();
                             ImFont*  defaultFont = ImGui::GetFont();
 
-                            io.Fonts->AddFontFromFileTTF(
+                            m_FontInfo.Font = io.Fonts->AddFontFromFileTTF(
                                 Frenchie::Core::String::convert_utf32_to_utf8(m_TTF.u32string()).c_str(),
                                 ImGui::GetStyle().FontSizeBase,
                                 nullptr,
                                 io.Fonts->GetGlyphRangesCyrillic());
 
-                            // build fonts and reload app
                             ImGui::GetIO().Fonts->Build();
                             Frenchie::Application::application()->reload();
+
+                            // load font glyphs codepoints
+                            m_FontInfo.Codepoints = Tools::retrieve_codepoints(m_TTF);
                         }
                     );
                 }
@@ -548,7 +603,7 @@ void FontHardCoderTool::frame_update()
                         m_TTF,
                         m_CPP,
                         m_ClassName,
-                        m_CodePoints,
+                        m_FontInfo.Codepoints,
                         m_Encoding,
                         m_Compress
                     );
@@ -558,17 +613,6 @@ void FontHardCoderTool::frame_update()
             
             io.FontDefault = loadedFont;
             ImFontBaked* baked = ImGui::GetFontBaked();
-
-            // load all glyphs from font
-            if(m_CodePoints.empty())
-            {
-                for (int base = 0; base <= IM_UNICODE_CODEPOINT_MAX; base++)
-                {
-                    auto glyph = baked->FindGlyph((ImWchar)base);
-
-                    m_CodePoints[base] = "";
-                }
-            }
 
             // restore font
             io.FontDefault = defaultFont;
@@ -589,7 +633,7 @@ void FontHardCoderTool::frame_update()
                 int idx = 0;
 
                 // draw codepoints
-                for(auto&& codePoint : m_CodePoints)
+                for(auto&& codePoint : m_FontInfo.Codepoints)
                 {
                     ImGui::TableNextRow();
 
@@ -601,7 +645,7 @@ void FontHardCoderTool::frame_update()
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::PushID(id++);
-                    ImGui::Text("U+%04X", codePoint.first);
+                    ImGui::Text("U+%04X", codePoint.Codepoint);
                     ImGui::PopID();
 
                     // glyph
@@ -609,7 +653,7 @@ void FontHardCoderTool::frame_update()
                     ImGui::PushFont(loadedFont);
                     ImGui::PushID(id++);
                     //ImGui::TextUnformatted("\uf002");
-                    ImGui::TextUnformatted(Helpers::convert_imgui_text_char_to_utf8(codePoint.first).c_str());
+                    ImGui::TextUnformatted(Helpers::convert_imgui_text_char_to_utf8(codePoint.Codepoint).c_str());
                     ImGui::PopFont();
                     ImGui::PopID();
 
@@ -617,7 +661,7 @@ void FontHardCoderTool::frame_update()
                     ImGui::TableSetColumnIndex(3);
                     ImGui::PushID(id++);
                     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                    ImGui::InputText("##", &codePoint.second);
+                    ImGui::InputText("##", &codePoint.Meta);
                     ImGui::PopID();
                 }
 
