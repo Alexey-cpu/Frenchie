@@ -14,6 +14,7 @@
 #include <FrenchieEditorHelpers.hpp>
 
 using namespace Frenchie::Application;
+using namespace Frenchie::Application::Configuration;
 using namespace Frenchie::Editor;
 
 // add to config loader
@@ -23,39 +24,40 @@ namespace Frenchie
     {
         namespace Configuration
         {
-            class PushDefaultFontsLoaderQueueIntoAppQueue : 
-                public Frenchie::Application::Command::Registry<PushDefaultFontsLoaderQueueIntoAppQueue, const CommandPayloads&>
+            class PushDefaultFontsIntoAppCommandQueue : 
+                public Frenchie::Application::Command::Registry<PushDefaultFontsIntoAppCommandQueue, const CommandPayloads&>
             {
             public:
 
-                PushDefaultFontsLoaderQueueIntoAppQueue(const CommandPayloads& _Sender) : 
-                    Frenchie::Application::Command::Registry<PushDefaultFontsLoaderQueueIntoAppQueue, const CommandPayloads&>(_Sender){}
-                virtual ~PushDefaultFontsLoaderQueueIntoAppQueue(){}
+                PushDefaultFontsIntoAppCommandQueue(const CommandPayloads& _Sender) : 
+                    Frenchie::Application::Command::Registry<PushDefaultFontsIntoAppCommandQueue, const CommandPayloads&>(_Sender){}
+                virtual ~PushDefaultFontsIntoAppCommandQueue(){}
 
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Application::application()->push_layer<DefaultFontsLoader>();
+                    Frenchie::Application::application()->push_layer<DefaultFonts>();
                 }
 
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Configuration), STRINGIFY(Fonts));
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Application::Configuration), STRINGIFY(DefaultFonts));
                 }
             };
 
-            const bool pushDefaultFontsLoaderQueueIntoAppQueue = PushDefaultFontsLoaderQueueIntoAppQueue::registerFactory();
+            const bool pushDefaultFontsIntoAppCommandQueue =
+                PushDefaultFontsIntoAppCommandQueue::registerFactory();
         }
     }
 }
 
-DefaultFontsLoader::DefaultFontsLoader() :
-    Frenchie::Application::Layer(STRINGIFY(DefaultFontsLoader)){}
+DefaultFonts::DefaultFonts() :
+    Frenchie::Application::Layer(STRINGIFY(DefaultFonts)){}
 
-DefaultFontsLoader::~DefaultFontsLoader(){}
+DefaultFonts::~DefaultFonts(){}
 
-bool DefaultFontsLoader::awake()
+bool DefaultFonts::awake()
 {
     ImFontConfig font_cfg = ImFontConfig();
     std::strcpy(font_cfg.Name, "HardCodedFont");
@@ -72,15 +74,4 @@ bool DefaultFontsLoader::awake()
     return true;
 }
 
-void DefaultFontsLoader::frame_update()
-{
-    // ImGui::Begin("DefaultFontsLoader", &m_Opened);
-
-    // for(int i = 0; i < 10; i++)
-    // {    
-    //     ImGui::TextUnformatted(
-    //         Helpers::convert_imgui_text_char_to_utf8(HardCodedFont::EXCLAMATION).c_str());
-    // }
-
-    // ImGui::End();
-}
+void DefaultFonts::frame_update(){}

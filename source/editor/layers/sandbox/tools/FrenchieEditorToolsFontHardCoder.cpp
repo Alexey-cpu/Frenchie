@@ -22,26 +22,10 @@
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Configuration;
+
 using namespace Frenchie::Editor;
+using namespace Frenchie::Editor::Tools;
 
-// Glyph preview example function
-// void DebugNodeFontGlyph(ImFont* font, const ImFontGlyph* glyph)
-// {
-//     ImGui::Text("Codepoint: U+%04X", glyph->Codepoint);
-//     ImGui::Separator();
-//     ImGui::Text("Visible: %d", glyph->Visible);
-//     ImGui::Text("AdvanceX: %.1f", glyph->AdvanceX);
-//     ImGui::Text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph->X0, glyph->Y0, glyph->X1, glyph->Y1);
-//     ImGui::Text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph->U0, glyph->V0, glyph->U1, glyph->V1);
-//     if (glyph->PackId >= 0)
-//     {
-//         ImTextureRect* r = ImFontAtlasPackGetRect(font->ContainerAtlas, glyph->PackId);
-//         ImGui::Text("PackId: %d (%dx%d rect at %d,%d)", glyph->PackId, r->w, r->h, r->x, r->y);
-//     }
-//     ImGui::Text("SourceIdx: %d", glyph->SourceIdx);
-// }
-
-// add sandbox elements into main menu
 namespace Frenchie
 {
     namespace Editor
@@ -66,7 +50,7 @@ namespace Frenchie
                 // Command::TRegistryType
                 static std::string factory_id()
                 {
-                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Font packer");
+                    return fmt::format("{}::{}", STRINGIFY(Frenchie::Editor::MainMenu), "Tools::Font exporter");
                 }
             };
 
@@ -181,7 +165,7 @@ namespace Frenchie
 
             static unsigned int stb__running_adler;
 
-            static int stb_compress_chunk(stb_uchar *history,
+            static int font_hardcoder_stb_compress_chunk(stb_uchar *history,
                 stb_uchar *start,
                 stb_uchar *end,
                 int length,
@@ -286,7 +270,7 @@ namespace Frenchie
                 return (int)(q - start);
             }
 
-            static int stb_compress_inner(stb_uchar *input, stb_uint length)
+            static int font_hardcoder_stb_compress_inner(stb_uchar *input, stb_uint length)
             {
                 int literals = 0;
                 stb_uint len,i;
@@ -307,7 +291,7 @@ namespace Frenchie
 
                 stb__running_adler = 1;
 
-                len = stb_compress_chunk(input, input, input+length, length, &literals, chash, stb__hashsize-1);
+                len = font_hardcoder_stb_compress_chunk(input, input, input+length, length, &literals, chash, stb__hashsize-1);
                 assert(len == length);
 
                 outliterals(input+length - literals, literals);
@@ -321,23 +305,23 @@ namespace Frenchie
                 return 1; // success
             }
 
-            stb_uint stb_compress(stb_uchar *out, stb_uchar *input, stb_uint length)
+            stb_uint font_hardcoder_stb_compress(stb_uchar *out, stb_uchar *input, stb_uint length)
             {
                 stb__out = out;
                 stb__outfile = nullptr;
 
-                stb_compress_inner(input, length);
+                font_hardcoder_stb_compress_inner(input, length);
 
                 return (stb_uint)(stb__out - out);
             }
 
-            static bool binary_to_compressed_c(
-                std::filesystem::path               _FontFilePath,
-                std::filesystem::path               _CppFilePath,
-                std::string                         _ClassName,
-                std::vector<CodePointInfo>          _CodePointsMap,
-                SourceEncoding                      _Encoding,
-                bool                                _Compress)
+            static bool font_hardcoder_binary_to_compressed_cpp(
+                std::filesystem::path                       _FontFilePath,
+                std::filesystem::path                       _CppFilePath,
+                std::string                                 _ClassName,
+                std::vector<FontHardCoderToolCodePointInfo> _CodePointsMap,
+                FontHardCoderToolEncoding                   _Encoding,
+                bool                                        _Compress)
             {
                 // Read file
                 FILE* f = fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FontFilePath.u32string()).c_str(), "rb");
@@ -352,7 +336,7 @@ namespace Frenchie
                 // Compress
                 int maxlen = data_sz + 512 + (data_sz >> 2) + sizeof(int); // total guess
                 char* compressed = _Compress ? new char[maxlen] : data;
-                int compressed_sz = _Compress ? stb_compress((stb_uchar*)compressed, (stb_uchar*)data, data_sz) : data_sz;
+                int compressed_sz = _Compress ? font_hardcoder_stb_compress((stb_uchar*)compressed, (stb_uchar*)data, data_sz) : data_sz;
                 if (_Compress)
                     memset(compressed + compressed_sz, 0, maxlen - compressed_sz);
 
@@ -364,8 +348,8 @@ namespace Frenchie
                 
                 for (auto&& codePointMapItem : _CodePointsMap)
                 {
-                    auto codePoint     = codePointMapItem.Codepoint;
-                    auto codePointName = Frenchie::Core::String::utf8_to_upper(codePointMapItem.Meta);
+                    auto codePoint     = codePointMapItem.Code;
+                    auto codePointName = Frenchie::Core::String::utf8_to_upper(codePointMapItem.Name);
 
                     if(codePointName.empty())
                         continue;
@@ -373,7 +357,9 @@ namespace Frenchie
                     fprintf(out, "\tstatic constexpr unsigned int %s = %#08x;\n\n", codePointName.c_str(), codePoint);
                 }
 
-                if (_Encoding == SourceEncoding_U8)
+                fprintf(out, "\tstatic constexpr char* NAME = \"%s\";\n\n", _ClassName.c_str());
+
+                if (_Encoding == HardCoderToolEncoding_UTF8)
                 {
                     fprintf(out, "\tstatic constexpr unsigned int  COMPRESSED_SIZE = %d;\n\n", (int)compressed_sz);
                     fprintf(out, "\tstatic constexpr unsigned char BUFFER[%d] =\n\t{", (int)compressed_sz);
@@ -389,7 +375,7 @@ namespace Frenchie
                     }
                     fprintf(out, "\n\t};");
                 }
-                else if (_Encoding == SourceEncoding_U32)
+                else if (_Encoding == HardCoderToolEncoding_UTF32)
                 {
                     fprintf(out, "\tstatic constexpr unsigned int COMPRESSED_SIZE = %d;\n\n", (int)compressed_sz);
                     fprintf(out, "\tstatic const unsigned char BUFFER[%d] =\n\t{", (int)((compressed_sz + 3) / 4) * 4);
@@ -418,11 +404,11 @@ namespace Frenchie
                 return true;
             }
         
-            static std::vector<CodePointInfo> retrieve_codepoints(const std::filesystem::path& _FontFilePath)
+            static std::vector<FontHardCoderToolCodePointInfo> font_hardcoder_retrieve_codepoints(const std::filesystem::path& _FontFilePath)
             {
                 FILE* file = fopen(Frenchie::Core::String::convert_utf32_to_utf8(_FontFilePath.u32string()).c_str(), "rb");
 
-                std::vector<CodePointInfo> codepoints;
+                std::vector<FontHardCoderToolCodePointInfo> codepoints;
 
                 if (file == NULL) 
                 {
@@ -470,6 +456,36 @@ namespace Frenchie
                 return codepoints;
             }
 
+            static int font_hardcoder_text_edit_callback(ImGuiInputTextCallbackData* data)
+            {
+                if (data->EventChar == '!'  ||
+                    data->EventChar == '@'  ||
+                    data->EventChar == '#'  ||
+                    data->EventChar == '&'  ||
+                    data->EventChar == '('  ||
+                    data->EventChar == ')'  ||
+                    data->EventChar == '{'  ||
+                    data->EventChar == '}'  ||
+                    data->EventChar == '-'  ||
+                    data->EventChar == '+'  ||
+                    data->EventChar == '='  ||
+                    data->EventChar == '^'  ||
+                    data->EventChar == '%'  ||
+                    data->EventChar == '"'  ||
+                    data->EventChar == '\'' ||
+                    data->EventChar == '<'  ||
+                    data->EventChar == '>'  ||
+                    data->EventChar == '\\' ||
+                    data->EventChar == '/'  ||
+                    data->EventChar == ':'  ||
+                    data->EventChar == ':'  ||
+                    data->EventChar == '$')
+                {
+                    return 1; // Return 1 to signal that the character should be rejected
+                }
+                return 0; // Return 0 to allow the character
+            }
+
             #undef stb__hc
             #undef stb__hc2
             #undef stb__hc3
@@ -480,142 +496,61 @@ namespace Frenchie
 
 // FontPackerTool
 FontHardCoderTool::FontHardCoderTool() :
-    Frenchie::Application::Layer("Font packer tool"){}
+    Frenchie::Application::Layer("Font exporter"){}
 
 FontHardCoderTool::~FontHardCoderTool(){}
 
 void FontHardCoderTool::frame_update()
 {
-    ImGui::Begin(get_name().c_str(), &m_Opened);
+    ImGui::Begin(fmt::format("{}###Font exporter", Translator::translate(get_name())).c_str(), &m_Opened);
     {
         if(ImGui::Button(
             std::filesystem::exists(m_TTF) ?
                 Frenchie::Core::String::convert_utf32_to_utf8(m_TTF.u32string()).c_str() :
-                "No .ttf file selected", ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
+                Translator::translate("No .ttf file selected").c_str(),
+                ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
         {
-            auto dialog = Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                Translator::translate("Select .ttf file ...")
-            );
-
-            dialog->on_accepted(
-                [this]()
-                {
-                    Frenchie::Core::Reference<FileSystem::ExplorerDialog> dialog = 
-                        Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
-
-                    if(dialog == nullptr) 
-                        return;
-
-                    m_TTF = dialog->get_current_file();
-
-                    // load font
-                    Frenchie::Application::CommandsQueue::instance()->push<CallbackCommand>(
-                        [this]()
-                        {
-                            // load font
-                            ImGuiIO& io          = ImGui::GetIO();
-                            ImFont*  defaultFont = ImGui::GetFont();
-
-                            m_FontInfo.Font = io.Fonts->AddFontFromFileTTF(
-                                Frenchie::Core::String::convert_utf32_to_utf8(m_TTF.u32string()).c_str(),
-                                ImGui::GetStyle().FontSizeBase,
-                                nullptr,
-                                io.Fonts->GetGlyphRangesCyrillic());
-
-                            ImGui::GetIO().Fonts->Build();
-                            Frenchie::Application::application()->reload();
-
-                            // load font glyphs codepoints
-                            m_FontInfo.Codepoints = Tools::retrieve_codepoints(m_TTF);
-                        }
-                    );
-                }
-            );
+            on_ttf_file_path_search_button_pressed();
         }
 
         if(ImGui::Button(
             !m_CPP.empty() && std::filesystem::exists(m_CPP.parent_path()) ?
                 Frenchie::Core::String::convert_utf32_to_utf8(m_CPP.u32string()).c_str() :
-                "No .cpp file exprot path set", ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
+                Translator::translate("No .cpp file export path set").c_str(),
+                ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
         {
-            auto dialog = Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-                Translator::translate("Set save file name for .cpp file ...")
-            );
-
-            dialog->on_accepted(
-                [this]()
-                {
-                    Frenchie::Core::Reference<FileSystem::ExplorerDialog> dialog = 
-                        Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
-
-                    if(dialog != nullptr)
-                        m_CPP = dialog->get_current_file();
-                }
-            );
+            on_cpp_file_path_search_button_pressed();
         }
 
-        ImGui::InputText("ClassName", &m_ClassName);
+        ImGui::InputText(
+            Translator::translate("Class (functions prefix) name").c_str(),
+            &m_ClassName,
+            ImGuiInputTextFlags_::ImGuiInputTextFlags_CallbackCharFilter,
+            Tools::font_hardcoder_text_edit_callback);
 
-        if(ImGui::BeginCombo("EncodingSelector", encoding_to_string(m_Encoding).c_str()))
+        if(ImGui::BeginCombo(
+            Translator::translate("Encoding").c_str(),
+            encoding_to_string(m_Encoding).c_str()))
         {
-            if(ImGui::Button(encoding_to_string(SourceEncoding::SourceEncoding_U8).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
-                m_Encoding = SourceEncoding::SourceEncoding_U8;
+            if(ImGui::Button(encoding_to_string(FontHardCoderToolEncoding::HardCoderToolEncoding_UTF8).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
+                m_Encoding = FontHardCoderToolEncoding::HardCoderToolEncoding_UTF8;
 
-            if(ImGui::Button( encoding_to_string(SourceEncoding::SourceEncoding_U32).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
-                m_Encoding = SourceEncoding::SourceEncoding_U32;
+            if(ImGui::Button( encoding_to_string(FontHardCoderToolEncoding::HardCoderToolEncoding_UTF32).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
+                m_Encoding = FontHardCoderToolEncoding::HardCoderToolEncoding_UTF32;
 
             ImGui::EndCombo();
         }
 
-        ImGui::Checkbox("Compress", &m_Compress);
+        ImGui::Checkbox(Translator::translate("Compress").c_str(), &m_Compress);
 
-        // setup loaded font as current
-        ImGuiIO& io          = ImGui::GetIO();
-        ImFont*  defaultFont = ImGui::GetFont();
-        ImFont*  loadedFont  = nullptr;
-
-        for(ImFont* font : io.Fonts->Fonts)
+        if(m_FontInfo.Font != nullptr)
         {
-            if(std::string(font->GetDebugName()) ==
-                Frenchie::Core::String::convert_utf32_to_utf8(m_TTF.filename().u32string()))
+            if(ImGui::Button(
+                Translator::translate("Export").c_str(),
+                ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
             {
-                loadedFont = font;
-                break;
+                on_font_hardcode_button_pressed();
             }
-        }
-
-        if(loadedFont != nullptr)
-        {
-            if(ImGui::Button("HARDCODE !!!", ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
-            {
-                if(!std::filesystem::exists(m_TTF))
-                {
-                    // TODO add log here !!!
-                }
-                else if(!std::filesystem::exists(m_CPP.parent_path()))
-                {
-                    // TODO: add log here !!!
-                }
-                else
-                {
-                    // hardcode font
-                    Frenchie::Editor::Tools::binary_to_compressed_c(
-                        m_TTF,
-                        m_CPP,
-                        m_ClassName,
-                        m_FontInfo.Codepoints,
-                        m_Encoding,
-                        m_Compress
-                    );
-                }
-            }
-
-            
-            io.FontDefault = loadedFont;
-            ImFontBaked* baked = ImGui::GetFontBaked();
-
-            // restore font
-            io.FontDefault = defaultFont;
 
             if(ImGui::BeginTable("FileSystemContentTable",
                 4,
@@ -633,7 +568,7 @@ void FontHardCoderTool::frame_update()
                 int idx = 0;
 
                 // draw codepoints
-                for(auto&& codePoint : m_FontInfo.Codepoints)
+                for(auto&& codePoint : m_FontInfo.Codes)
                 {
                     ImGui::TableNextRow();
 
@@ -645,15 +580,14 @@ void FontHardCoderTool::frame_update()
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::PushID(id++);
-                    ImGui::Text("U+%04X", codePoint.Codepoint);
+                    ImGui::Text("U+%04X", codePoint.Code);
                     ImGui::PopID();
 
                     // glyph
                     ImGui::TableSetColumnIndex(2);
-                    ImGui::PushFont(loadedFont);
+                    ImGui::PushFont(m_FontInfo.Font);
                     ImGui::PushID(id++);
-                    //ImGui::TextUnformatted("\uf002");
-                    ImGui::TextUnformatted(Helpers::convert_imgui_text_char_to_utf8(codePoint.Codepoint).c_str());
+                    ImGui::TextUnformatted(Helpers::convert_imgui_text_char_to_utf8(codePoint.Code).c_str());
                     ImGui::PopFont();
                     ImGui::PopID();
 
@@ -661,7 +595,7 @@ void FontHardCoderTool::frame_update()
                     ImGui::TableSetColumnIndex(3);
                     ImGui::PushID(id++);
                     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-                    ImGui::InputText("##", &codePoint.Meta);
+                    ImGui::InputText("##", &codePoint.Name);
                     ImGui::PopID();
                 }
 
@@ -671,4 +605,120 @@ void FontHardCoderTool::frame_update()
     }
 
     ImGui::End();
+}
+
+void FontHardCoderTool::finish()
+{
+    // remove font
+    if(m_FontInfo.Font == nullptr)
+        return;
+
+    ImGui::GetIO().Fonts->RemoveFont(m_FontInfo.Font);
+    m_FontInfo.Font = nullptr;
+    m_FontInfo.Codes.clear();
+}
+
+void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
+{
+    auto dialog = Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+        Translator::translate("Select .ttf file ...")
+    );
+
+    dialog->on_accepted(
+        [this]()
+        {
+            Frenchie::Core::Reference<FileSystem::ExplorerDialog> dialog = 
+                Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+
+            if(dialog == nullptr) 
+                return;
+
+            m_TTF = dialog->get_current_file();
+
+            // load font
+            Frenchie::Application::CommandsQueue::instance()->push<CallbackCommand>(
+                [this]()
+                {
+                    // remove previous font
+                    if(m_FontInfo.Font != nullptr)
+                    {
+                        ImGui::GetIO().Fonts->RemoveFont(m_FontInfo.Font);
+                        m_FontInfo.Font = nullptr;
+                        m_FontInfo.Codes.clear();
+                    }
+
+                    // load font
+                    m_FontInfo.Font = ImGui::GetIO().Fonts->AddFontFromFileTTF(
+                        Frenchie::Core::String::convert_utf32_to_utf8(m_TTF.u32string()).c_str(),
+                        ImGui::GetStyle().FontSizeBase,
+                        nullptr,
+                        ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
+
+                    ImGui::GetIO().Fonts->Build();
+                    Frenchie::Application::application()->reload();
+
+                    // load font glyphs codepoints
+                    m_FontInfo.Codes = Tools::font_hardcoder_retrieve_codepoints(m_TTF);
+                }
+            );
+        }
+    );
+}
+
+void FontHardCoderTool::on_cpp_file_path_search_button_pressed()
+{
+    auto dialog = Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
+        Translator::translate("Set save file name for .cpp file ...")
+    );
+
+    dialog->on_accepted(
+        [this]()
+        {
+            Frenchie::Core::Reference<FileSystem::ExplorerDialog> dialog = 
+                Frenchie::Application::application()->find_layer<FileSystem::ExplorerDialog>();
+
+            if(dialog == nullptr) return;
+
+            m_CPP = dialog->get_current_file();
+            m_ClassName = Frenchie::Core::String::utf8_remove_symbols(
+                Frenchie::Core::String::convert_utf32_to_utf8(m_CPP.u32string()),
+                {'!','@','#','&','(',')','{','}','-','+','=','^','%','"','\'','<','>','\\','/',':',':','$'}
+            );
+        }
+    );
+}
+
+void FontHardCoderTool::on_font_hardcode_button_pressed()
+{
+    if(!std::filesystem::exists(m_TTF))
+    {
+        // TODO add log here !!!
+    }
+    else if(!std::filesystem::exists(m_CPP.parent_path()))
+    {
+        // TODO: add log here !!!
+    }
+    else
+    {
+        // hardcode font
+        Frenchie::Editor::Tools::font_hardcoder_binary_to_compressed_cpp(
+            m_TTF,
+            m_CPP,
+            m_ClassName,
+            m_FontInfo.Codes,
+            m_Encoding,
+            m_Compress
+        );
+    }
+}
+
+std::string FontHardCoderTool::encoding_to_string(const FontHardCoderToolEncoding& _Encoding)
+{
+    if(_Encoding == FontHardCoderToolEncoding::HardCoderToolEncoding_UTF8)
+        return "UTF-8";
+
+    if(_Encoding == FontHardCoderToolEncoding::HardCoderToolEncoding_UTF32)
+        return "UTF-32";
+
+    return "UNKNOWN";
 }

@@ -5,16 +5,19 @@
 
 namespace Frenchie
 {
-    namespace Editor
+    namespace Application
     {
-        class DefaultFontsLoader : public Frenchie::Application::Layer
+        namespace Configuration
         {
-        public:
-            DefaultFontsLoader();
-            virtual ~DefaultFontsLoader();
+            class DefaultFonts : public Frenchie::Application::Layer
+            {
+            public:
+                DefaultFonts();
+                virtual ~DefaultFonts();
 
-            virtual bool awake() override;
-            virtual void frame_update() override;
-        };
+                virtual bool awake() override;
+                virtual void frame_update() override;
+            };
+        }
     }
 }
