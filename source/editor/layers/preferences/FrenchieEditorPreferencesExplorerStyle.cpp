@@ -158,11 +158,8 @@ bool Style::awake()
 
 void Style::frame_update() 
 {
-    // update name
-    set_name(Translator::translate("Style settings"));
-
     // draw
-    ImGui::Begin(fmt::format("{}###Style settings", get_name()).c_str(), &m_Opened);
+    ImGui::Begin(fmt::format("{}###Style settings", Translator::translate(get_name())).c_str(), &m_Opened);
     {
         if (ImGui::TreeNode(Translator::translate("Application layout settings").c_str()))
         {

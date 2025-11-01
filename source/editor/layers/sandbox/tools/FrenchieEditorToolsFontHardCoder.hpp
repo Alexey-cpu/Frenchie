@@ -17,53 +17,59 @@ namespace Frenchie
 {
     namespace Editor
     {
-        enum SourceEncoding
+        namespace Tools
         {
-            SourceEncoding_U8,
-            SourceEncoding_U32
-        };
-
-        struct CodePointInfo
-        {
-            unsigned int Codepoint;
-            std::string  Meta;
-        };
-
-        struct FontInfo
-        {
-            ImFont*                    Font;
-            std::vector<CodePointInfo> Codepoints;
-        };
-
-        class FontHardCoderTool : public Frenchie::Application::Layer
-        {
-        public:
-            FontHardCoderTool();
-            virtual ~FontHardCoderTool();
-
-            // Frenchie::Application::Layer
-            virtual void frame_update() override;
-
-        protected:
-
-            std::filesystem::path               m_TTF;
-            std::filesystem::path               m_CPP;
-            std::string                         m_ClassName {"HardCodedFont"};
-            SourceEncoding                      m_Encoding  {SourceEncoding::SourceEncoding_U8};
-            bool                                m_Compress  {false};
-            FontInfo                            m_FontInfo;
-
-            // service methods
-            std::string encoding_to_string(const SourceEncoding& _Encoding)
+            enum FontHardCoderToolEncoding
             {
-                if(_Encoding == SourceEncoding::SourceEncoding_U8)
-                    return "UTF-8";
+                HardCoderToolEncoding_UTF8,
+                HardCoderToolEncoding_UTF32
+            };
 
-                if(_Encoding == SourceEncoding::SourceEncoding_U32)
-                    return "UTF-32";
+            enum FontHardCoderToolSourceFileFormat
+            {
+                FontHardCoderToolSourceFileFormat_C,
+                FontHardCoderToolSourceFileFormat_CPP,
+                FontHardCoderToolSourceFileFormat_C_SHARP
+            };
 
-                return "UNKNOWN";
-            }
-        };
+            struct FontHardCoderToolCodePointInfo
+            {
+                unsigned int Code = 0;
+                std::string  Name = std::string();
+            };
+
+            struct FontHardCoderToolFontInfo
+            {
+                ImFont*                                     Font  = nullptr;
+                std::vector<FontHardCoderToolCodePointInfo> Codes = std::vector<FontHardCoderToolCodePointInfo>();
+            };
+
+            class FontHardCoderTool : public Frenchie::Application::Layer
+            {
+            public:
+                FontHardCoderTool();
+                virtual ~FontHardCoderTool();
+
+                // Frenchie::Application::Layer
+                virtual void frame_update() override;
+                virtual void finish() override;
+
+            protected:
+
+                std::filesystem::path      m_TTF;
+                std::filesystem::path      m_CPP;
+                std::string                m_ClassName{"HardCodedFont"};
+                FontHardCoderToolEncoding  m_Encoding {FontHardCoderToolEncoding::HardCoderToolEncoding_UTF8};
+                bool                       m_Compress {true};
+                FontHardCoderToolFontInfo  m_FontInfo;
+
+                // service methods
+                void on_ttf_file_path_search_button_pressed();
+                void on_cpp_file_path_search_button_pressed();
+                void on_font_hardcode_button_pressed();
+
+                std::string encoding_to_string(const FontHardCoderToolEncoding&);
+            };
+        }
     }
 }
