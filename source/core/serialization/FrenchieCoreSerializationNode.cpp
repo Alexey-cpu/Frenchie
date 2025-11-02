@@ -12,6 +12,7 @@
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::String;
+using namespace Frenchie::Core::Memory;
 using namespace Frenchie::Core::Containers;
 using namespace Frenchie::Core::Serialization;
 

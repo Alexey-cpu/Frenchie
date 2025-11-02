@@ -3,7 +3,7 @@
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreNonCopyable.hpp>
-#include <FrenchieCoreChunkAllocator.hpp>
+#include <FrenchieCoreMemoryChunkAllocator.hpp>
 
 // PUGIXML
 #include "pugixml.hpp"
@@ -169,8 +169,8 @@ namespace Frenchie
                 }
 
             private:
-                MemoryChunkAllocator<char>     m_StringAllocator{128};
-                MemoryChunkAllocator<NodeInfo> m_NodeAllocator  {8};
+                Frenchie::Core::Memory::MemoryChunkAllocator<char>     m_StringAllocator{128};
+                Frenchie::Core::Memory::MemoryChunkAllocator<NodeInfo> m_NodeAllocator  {8};
             };
         }
     }

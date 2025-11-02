@@ -1,6 +1,7 @@
-#include <FrenchieCoreChunkAllocator.hpp>
+#include <FrenchieCoreMemoryChunkAllocator.hpp>
 
 using namespace Frenchie::Core;
+using namespace Frenchie::Core::Memory;
 
 MemoryChunk::MemoryChunk(size_t _ChunkElementSize, size_t _ChunkSize)
 {
