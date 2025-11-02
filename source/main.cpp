@@ -8,167 +8,218 @@
 //     return Frenchie::Editor::Launcher::execute();
 // }
 
-#include <FrenchieCoreImage.hpp>
+// IMAGE BACKEND API
+// #include <FrenchieCoreImage.hpp>
 
-int main(int argc, char *argv[])
+// int main(int argc, char *argv[])
+// {
+//     auto image = Frenchie::Core::Image::load_image(
+//         "C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_file.png");
+
+//     std::cout << "image info: \n";
+//     std::cout << image->get_width() << "\n";
+//     std::cout << image->get_height() << "\n";
+//     std::cout << image->get_channels() << "\n";
+
+//     Frenchie::Core::Image::save_image_as_png(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
+//     Frenchie::Core::Image::save_image_as_bmp(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
+//     Frenchie::Core::Image::save_image_as_jpg(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
+//     Frenchie::Core::Image::save_image_as_tga(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
+
+//     return 1;
+// }
+
+// TTF BACKEND API
+// Created By: Justin Meiners (2013)
+#include <cmath>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cstring>
+#include <string>
+
+#include <iostream>
+
+#include "stb_image_write.h" /* http://nothings.org/stb/stb_image_write.h */
+#include "stb_truetype.h" /* http://nothings.org/stb/stb_truetype.h */
+
+void stb_free_font_info(stbtt_fontinfo* _Info)
 {
-    auto image = Frenchie::Core::Image::load_image(
-        "C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_file.png");
+    if(_Info == nullptr)
+        return;
 
-    std::cout << "image info: \n";
-    std::cout << image->get_width() << "\n";
-    std::cout << image->get_height() << "\n";
-    std::cout << image->get_channels() << "\n";
+    if(_Info->data != nullptr)
+        free(_Info->data);
 
-    Frenchie::Core::Image::save_image_as_png(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
-    Frenchie::Core::Image::save_image_as_bmp(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
-    Frenchie::Core::Image::save_image_as_jpg(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
-    Frenchie::Core::Image::save_image_as_tga(image, "C:/SDK/Qt_Projects/OpenGL/logs/images/", U"image");
-
-    return 1;
+    if(_Info->userdata != nullptr)
+        free(_Info->userdata);
 }
 
-// /* Created By: Justin Meiners (2013) */
-// #include <cmath>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <cstring>
-// #include <string>
-
-// #include <iostream>
-
-// #include "stb_image_write.h" /* http://nothings.org/stb/stb_image_write.h */
-// #include "stb_truetype.h" /* http://nothings.org/stb/stb_truetype.h */
-
-// void stb_free_font_info(stbtt_fontinfo* _Info)
-// {
-//     if(_Info == nullptr)
-//         return;
-
-//     if(_Info->data != nullptr)
-//         free(_Info->data);
-
-//     if(_Info->userdata != nullptr)
-//         free(_Info->userdata);
-// }
-
-// stbtt_fontinfo stb_open_ttf_file(const char* _FilePathUTF8)
-// {
-//     // load font file
-//     long size;
-//     unsigned char* fontBuffer;
+stbtt_fontinfo stb_open_ttf_file(const char* _FilePathUTF8)
+{
+    // load font file
+    long size;
+    unsigned char* fontBuffer;
     
-//     FILE* fontFile = fopen(_FilePathUTF8, "rb");
-//     fseek(fontFile, 0, SEEK_END);
-//     size = ftell(fontFile);
-//     fseek(fontFile, 0, SEEK_SET);
+    FILE* fontFile = fopen(_FilePathUTF8, "rb");
+    fseek(fontFile, 0, SEEK_END);
+    size = ftell(fontFile);
+    fseek(fontFile, 0, SEEK_SET);
     
-//     fontBuffer = (unsigned char*)malloc(size);
+    fontBuffer = (unsigned char*)malloc(size);
     
-//     fread(fontBuffer, size, 1, fontFile);
-//     fclose(fontFile);
+    fread(fontBuffer, size, 1, fontFile);
+    fclose(fontFile);
 
-//     // prepare font
-//     stbtt_fontinfo info;
+    // prepare font
+    stbtt_fontinfo info;
 
-//     if (!stbtt_InitFont(&info, fontBuffer, 0))
-//     {
-//         info.userdata = nullptr;
-//         info.data     = nullptr;
-//         free(fontBuffer);
-//         return stbtt_fontinfo();
-//     }
+    if (!stbtt_InitFont(&info, fontBuffer, 0))
+    {
+        info.userdata = nullptr;
+        info.data     = nullptr;
+        free(fontBuffer);
+        return stbtt_fontinfo();
+    }
 
-//     return info;
-// }
+    return info;
+}
 
-// float stb_get_text_line_width(stbtt_fontinfo* _FontInfo, const char* _UTF_8, const int& _Length, float _FontScale) 
-// {
-//     float total_width  = 0.0f;
-//     int prev_codepoint = 0; // For kerning
+int stb_get_text_line_width(stbtt_fontinfo* _FontInfo, const char* _Utf8Text, float _FontScale) 
+{
+    int x = 0;
+    int previousCodepoint = 0;
 
-//     for (int i = 0; i < _Length; ++i) 
-//     {
-//         int codepoint = _UTF_8[i]; // Assuming ASCII or easily convertible codepoints
+    for (int codePointIndex = 0; codePointIndex < strlen(_Utf8Text); ++codePointIndex)
+    {
+        int codepoint = _Utf8Text[codePointIndex];
 
-//         // Get horizontal metrics for the current character
-//         int advance_width, left_side_bearing;
-//         stbtt_GetCodepointHMetrics(_FontInfo, codepoint, &advance_width, &left_side_bearing);
-
-//         // Add kerning if applicable
-//         if (prev_codepoint != 0) 
-//         {
-//             total_width += stbtt_GetCodepointKernAdvance(_FontInfo, prev_codepoint, codepoint);
-//         }
-
-//         // Add the scaled advance width
-//         total_width += advance_width;
-
-//         prev_codepoint = codepoint;
-//     }
-
-//     return total_width *= _FontScale; // Apply the overall scale
-// }
-
-// int main(int argc, const char * argv[])
-// {
-//     auto info = stb_open_ttf_file("C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf");
-
-//     std::string str = "the quick brown fox the quick\nbrown fox the quick brown fox";
-
-//     const char* word = str.c_str();
-    
-//     float pixels = 64.f;
-//     float scale  = stbtt_ScaleForPixelHeight(&info, pixels);
-
-//     int ascent, descent, lineGap;
-//     stbtt_GetFontVMetrics(&info, &ascent, &descent, &lineGap);
-    
-//     ascent  = roundf(ascent * scale);
-//     descent = roundf(descent * scale);
-//     lineGap = roundf(lineGap * scale);
-
-//     int b_w = stb_get_text_line_width(&info, word, strlen(word), scale);
-//     int b_h = (ascent - descent + lineGap) + pixels;
-
-//     // create a bitmap for the phrase
-//     unsigned char* bitmap = (unsigned char*)calloc(b_w * b_h, sizeof(unsigned char));
-    
-//     int x = 0;
-    
-//     int i;
-//     for (i = 0; i < strlen(word); ++i)
-//     {
-//         /* how wide is this character */
-//         int advance_width;
-// 	    int left_side_bearing;
-//         stbtt_GetCodepointHMetrics(&info, word[i], &advance_width, &left_side_bearing);
-//         // (Note that each Codepoint call has an alternative Glyph version which caches the work required to lookup the character word[i].)
-
-//         // get bounding box for character (may be offset to account for chars that dip above or below the line)
-//         int c_x1, c_y1, c_x2, c_y2;
-//         stbtt_GetCodepointBitmapBox(&info, word[i], scale, scale, &c_x1, &c_y1, &c_x2, &c_y2);
+        // compute glyph horizontal metrics
+        int glyphAdvanceWidth    = 0; // The distance to advance the cursor after rendering the glyph.
+	    int glyphLeftSideBearing = 0; // The horizontal offset from the origin to the left edge of the glyph's bounding box
         
-//         // compute y (different characters have different heights)
-//         int y = (ascent - descent + lineGap) + c_y1;
-        
-//         // render character (stride and offset is important here)
-//         int byteOffset = x + roundf(left_side_bearing * scale) + (y * b_w);
-//         stbtt_MakeCodepointBitmap(&info, bitmap + byteOffset, c_x2 - c_x1, c_y2 - c_y1, b_w, scale, scale, word[i]);
+        int glyph_kern = // The adjustment of the horizontal space between individual glyph pairs to ensure they look balanced
+            previousCodepoint != 0 ? stbtt_GetCodepointKernAdvance(_FontInfo, previousCodepoint, codepoint) : 0;
 
-//         // advance x
-//         x += roundf(advance_width * scale);
+        stbtt_GetCodepointHMetrics(
+            _FontInfo,
+            codepoint,
+            &glyphAdvanceWidth,
+            &glyphLeftSideBearing
+        );
         
-//         // add kerning
-//         int kern;
-//         kern = stbtt_GetCodepointKernAdvance(&info, word[i], word[i + 1]);
-//         x += roundf(kern * scale);
-//     }
+        // add kerning
+        x += (int)roundf(glyphAdvanceWidth * _FontScale) + (int)roundf(glyph_kern * _FontScale);
+
+        previousCodepoint = codepoint;
+    }
+
+    return (int)roundf(x);
+}
+
+int main(int argc, const char * argv[])
+{
+    // load .ttf
+    auto fontInfo = stb_open_ttf_file(
+        "C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf");
+
+    // scale font to fit a given font size in pixels
+    float fontSizeInPixels   = 64.f;
+    float fontPixelSizeScale = stbtt_ScaleForPixelHeight(&fontInfo, fontSizeInPixels);
+
+    // retrieve absolute font vertical metrics
+    int fontAscent  = 0; // distance from the glyph baseline to it's highest point 
+    int fontDescent = 0; // distance fron the glyph baseline to it's lowest point
+    int fontLineGap = 0; // recommended gap between text lines
+    stbtt_GetFontVMetrics(&fontInfo, &fontAscent, &fontDescent, &fontLineGap);
     
-//     // save out a 1 channel image
-//     stbi_write_png("out.png", b_w, b_h, 1, bitmap, b_w);
+    // compute scaled font vertical metrics
+    fontAscent  = (int)roundf((float)fontAscent  * fontPixelSizeScale);
+    fontDescent = (int)roundf((float)fontDescent * fontPixelSizeScale);
+    fontLineGap = (int)roundf((float)fontLineGap * fontPixelSizeScale);
+
+    // try to render text info an image
+    std::string text = "the quick brown fox the quick";
+
+    // compute text size
+    int textWidth  = stb_get_text_line_width(&fontInfo, text.c_str(), fontPixelSizeScale);
+    int textHeight = fontAscent - fontDescent;
+
+    // generate bitmap for the text
+    unsigned char* bitmap = (unsigned char*)calloc(textWidth * textHeight, sizeof(unsigned char));
     
-//     free(bitmap);
+    int x = 0;
+    int y = 0;
+
+    std::cout << "fontAscent  " << fontAscent << "\n";
+    std::cout << "fontDescent " << fontDescent << "\n";
+    std::cout << "fontLineGap " << fontLineGap << "\n";
+    std::cout << "textWidth  "  << textWidth << "\n";
+    std::cout << "textHeight "  << textHeight << "\n";
+
+    int previous_codepoint = 0; // For kerning
+
+    for (int i = 0; i < strlen(text.c_str()); ++i)
+    {
+        int codepoint = text.c_str()[i];
+
+        // compute glyph horizontal metrics
+        int glyphAdvanceWidth     = 0; // The distance to advance the cursor after rendering the glyph.
+	    int glyphLeftSideBearing = 0; // The horizontal offset from the origin to the left edge of the glyph's bounding box
+
+        int glyph_kern = // The adjustment of the horizontal space between individual glyph pairs to ensure they look balanced
+            previous_codepoint != 0 ? stbtt_GetCodepointKernAdvance(&fontInfo, previous_codepoint, codepoint) : 0;
+
+        stbtt_GetCodepointHMetrics(
+            &fontInfo,
+            codepoint,
+            &glyphAdvanceWidth,
+            &glyphLeftSideBearing
+        );
+
+        // compute glyph bounding box
+        int glyphXmin = 0;
+        int glyphYmin = 0;
+        int glyphXmax = 0;
+        int glyphYmax = 0;
+
+        stbtt_GetCodepointBitmapBox(
+            &fontInfo,
+            codepoint,
+            fontPixelSizeScale,
+            fontPixelSizeScale,
+            &glyphXmin,
+            &glyphYmin,
+            &glyphXmax,
+            &glyphYmax
+        );
+
+        int glyphWidth  = (glyphXmax - glyphXmin);
+        int glyphHeight = (glyphYmax - glyphYmin);
+
+        // render character (stride and offset is important here)
+        int glyphByteOffset = x + (int)roundf(glyphLeftSideBearing * fontPixelSizeScale) + (fontAscent + glyphYmin) * textWidth;
+
+        stbtt_MakeCodepointBitmap(
+            &fontInfo,
+            bitmap + glyphByteOffset,
+            glyphWidth,
+            glyphHeight,
+            textWidth,
+            fontPixelSizeScale,
+            fontPixelSizeScale,
+            codepoint
+        );
+        
+        // add kerning
+        x += (int)roundf(glyphAdvanceWidth * fontPixelSizeScale) + (int)roundf(glyph_kern * fontPixelSizeScale);
+
+        previous_codepoint = codepoint;
+    }
     
-//     return 0;
-// }
+    // save out a 1 channel image
+    stbi_write_png("out.png", textWidth, textHeight, 1, bitmap, textWidth);
+    
+    free(bitmap);
+    
+    return 0;
+}
