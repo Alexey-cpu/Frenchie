@@ -113,7 +113,7 @@ int stb_get_text_line_width(stbtt_fontinfo* _FontInfo, const char* _Utf8Text, fl
         previousCodepoint = codepoint;
     }
 
-    return (int)roundf(x);
+    return x;
 }
 
 int main(int argc, const char * argv[])
@@ -200,8 +200,6 @@ int main(int argc, const char * argv[])
         // render character (stride and offset is important here)
         int glyphByteOffset = x + (int)roundf(glyphLeftSideBearing * fontPixelSizeScale) + (fontAscent + glyphYmin) * textWidth;
 
-        //std::cout << "glyphByteOffset " << glyphByteOffset << "\n";
-
         stbtt_MakeCodepointBitmap(
             &fontInfo,
             bitmap + glyphByteOffset,
@@ -219,25 +217,31 @@ int main(int argc, const char * argv[])
         previous_codepoint = codepoint;
     }
     
-    unsigned char* image = (unsigned char*)calloc(textWidth * textHeight * textChannels, sizeof(unsigned char));
+    // colorify text
+    int red   = 0;
+    int green = 1;
+    int blue  = 2;
+    int alpha = 3;
+
+    unsigned char* image =
+        (unsigned char*)calloc(textWidth * textHeight * textChannels, sizeof(unsigned char));
 
     for (int y = 0; y < textHeight; y++)
     {
         for (int x = 0; x < textWidth; x++)
         {
-            image[textChannels * (y * textWidth + x) + 0] = 255;
-            image[textChannels * (y * textWidth + x) + 1] = 0;
-            image[textChannels * (y * textWidth + x) + 2] = 0;
-            image[textChannels * (y * textWidth + x) + 3] = bitmap[y * textWidth + x];
+            image[textChannels * (y * textWidth + x) + red  ] = 128;
+            image[textChannels * (y * textWidth + x) + green] = 0;
+            image[textChannels * (y * textWidth + x) + blue ] = 0;
+            image[textChannels * (y * textWidth + x) + alpha] = bitmap[y * textWidth + x];
         }
     }
 
     // save out a 1 channel image
-    //stbi_write_png("out.png", textWidth, textHeight, 1, bitmap, textWidth);
     stbi_write_png("out.png", textWidth, textHeight, textChannels, image, textWidth * textChannels);
     
     free(bitmap);
     free(image);
-    
+
     return 0;
 }
