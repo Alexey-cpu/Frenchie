@@ -141,8 +141,9 @@ int main(int argc, const char * argv[])
     std::string text = "the quick brown fox the quick";
 
     // compute text size
-    int textWidth  = stb_get_text_line_width(&fontInfo, text.c_str(), fontPixelSizeScale);
-    int textHeight = fontAscent - fontDescent;
+    int textWidth    = stb_get_text_line_width(&fontInfo, text.c_str(), fontPixelSizeScale);
+    int textHeight   = fontAscent - fontDescent;
+    int textChannels = 4;
 
     // generate bitmap for the text
     unsigned char* bitmap = (unsigned char*)calloc(textWidth * textHeight, sizeof(unsigned char));
@@ -199,6 +200,8 @@ int main(int argc, const char * argv[])
         // render character (stride and offset is important here)
         int glyphByteOffset = x + (int)roundf(glyphLeftSideBearing * fontPixelSizeScale) + (fontAscent + glyphYmin) * textWidth;
 
+        //std::cout << "glyphByteOffset " << glyphByteOffset << "\n";
+
         stbtt_MakeCodepointBitmap(
             &fontInfo,
             bitmap + glyphByteOffset,
@@ -216,10 +219,25 @@ int main(int argc, const char * argv[])
         previous_codepoint = codepoint;
     }
     
+    unsigned char* image = (unsigned char*)calloc(textWidth * textHeight * textChannels, sizeof(unsigned char));
+
+    for (int y = 0; y < textHeight; y++)
+    {
+        for (int x = 0; x < textWidth; x++)
+        {
+            image[textChannels * (y * textWidth + x) + 0] = 255;
+            image[textChannels * (y * textWidth + x) + 1] = 0;
+            image[textChannels * (y * textWidth + x) + 2] = 0;
+            image[textChannels * (y * textWidth + x) + 3] = bitmap[y * textWidth + x];
+        }
+    }
+
     // save out a 1 channel image
-    stbi_write_png("out.png", textWidth, textHeight, 1, bitmap, textWidth);
+    //stbi_write_png("out.png", textWidth, textHeight, 1, bitmap, textWidth);
+    stbi_write_png("out.png", textWidth, textHeight, textChannels, image, textWidth * textChannels);
     
     free(bitmap);
+    free(image);
     
     return 0;
 }
