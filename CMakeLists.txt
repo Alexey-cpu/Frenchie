@@ -78,7 +78,6 @@ add_executable(
     ${SOURCES}
 
     "source/main.cpp"
-    #"source/binary_to_compressed_c.cpp"
     )
 target_link_libraries(
     OpenGL
@@ -94,6 +93,8 @@ target_link_libraries(
 
     # RYML
     ryml::ryml
+
+    # PUGIXML
     pugixml::pugixml
 
     # SPDLOG
@@ -120,7 +121,7 @@ target_include_directories(
     #IMGUI
     "tools/imgui/"
     "tools/imgui/backends/"
-    tools/imgui/misc/cpp/
+    "tools/imgui/misc/cpp/"
     
     #RAPIDJSON
     "tools/rapidjson/include"
