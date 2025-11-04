@@ -1,4 +1,4 @@
-#include <FrenchieCoreImage.hpp>
+#include <FrenchieCoreRendererImage.hpp>
 
 // Core
 #include <FrenchieCoreStringUtilities.hpp>
