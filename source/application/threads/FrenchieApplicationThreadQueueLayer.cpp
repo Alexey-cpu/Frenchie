@@ -8,8 +8,7 @@ using namespace Frenchie::Application;
 // Thread
 Thread::Thread(std::function<void(const Thread*)> _Worker, const std::string& _Name) : 
     m_Worker(_Worker),
-    m_Name(_Name), 
-    m_UUID(Singleton<UUID4Generator>::instance()->guid()){}
+    m_Name(_Name){}
 
 Thread::~Thread()
 {
@@ -19,11 +18,6 @@ Thread::~Thread()
 std::string Thread::get_name() const
 {
     return m_Name;
-}
-
-Frenchie::Core::UUID4 Thread::get_uuid() const
-{
-    return m_UUID;
 }
 
 void Thread::stop() const

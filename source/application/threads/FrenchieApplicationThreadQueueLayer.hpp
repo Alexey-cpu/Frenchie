@@ -2,7 +2,6 @@
 
 // Core
 #include <FrenchieCoreStringConvert.hpp>
-#include <FrenchieCoreUUID4Generator.hpp>
 
 // Application
 #include <FrenchieApplication.hpp>
@@ -92,7 +91,6 @@ namespace Frenchie
             virtual ~Thread();
 
             std::string get_name() const;
-            Frenchie::Core::UUID4 get_uuid() const;
 
             // API
             void stop() const;
@@ -146,7 +144,6 @@ namespace Frenchie
 
             // info
             std::string                 m_Name     = STRINGIFY(Thread);
-            const Frenchie::Core::UUID4 m_UUID;
             mutable bool                m_Paused   = false;
             mutable bool                m_Finished = false;
             mutable bool                m_Stopped  = false;
