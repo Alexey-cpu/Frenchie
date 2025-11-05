@@ -48,16 +48,6 @@ void Layer::show()
 
 bool Layer::awake()
 {
-    // // read self state
-    // Frenchie::Core::Serialization::ISerializer* serializer = 
-    //     dynamic_cast<Frenchie::Core::Serialization::ISerializer*>(this);
-
-    // if(serializer != nullptr)
-    // {
-    //     auto& appState = application()->get_state();
-    //     serializer->deserialize(appState.find_node(STRINGIFY(Application)));
-    // }
-
     return true;
 }
 
@@ -69,11 +59,19 @@ void Layer::frame_update()
 {
 }
 
+void Layer::frame_render()
+{
+}
+
 void Layer::frame_finish()
 {
 }
 
 void Layer::finish()
+{
+}
+
+void Layer::quit()
 {
 }
 
