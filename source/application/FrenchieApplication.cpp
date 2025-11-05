@@ -1,37 +1,21 @@
 #include <FrenchieApplication.hpp>
-#include <FrenchieCoreLogger.hpp>
 
 using namespace Frenchie::Application;
 
-// callbacks
-void OnWindowResize(GLFWwindow* _Window, int _Width, int _Height)
-{
-    (void)_Window;
-    glViewport(0, 0, _Width, _Height);
-}
-
-void OnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
-{
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(_Window, &width, &height);
-    glViewport(0, 0, width, height);
-}
-
-Application::Application()
+ApplicationInstance::ApplicationInstance()
 {
 }
 
-Application::~Application()
+ApplicationInstance::~ApplicationInstance()
 {
 }
 
-bool Application::awake()
+bool ApplicationInstance::awake()
 {
     return true;
 }
 
-void Application::Application::frame_start()
+void ApplicationInstance::ApplicationInstance::frame_start()
 {
     for(auto layer : m_Layers) 
     {
@@ -40,7 +24,7 @@ void Application::Application::frame_start()
     }
 }
 
-void Application::Application::frame_update()
+void ApplicationInstance::ApplicationInstance::frame_update()
 {
     for(auto layer : m_Layers) 
     {
@@ -49,7 +33,7 @@ void Application::Application::frame_update()
     }
 }
 
-void Application::Application::frame_render()
+void ApplicationInstance::ApplicationInstance::frame_render()
 {
     for(auto layer : m_Layers) 
     {
@@ -58,7 +42,7 @@ void Application::Application::frame_render()
     }
 }
 
-void Application::Application::frame_finish()
+void ApplicationInstance::ApplicationInstance::frame_finish()
 {
     for(auto layer : m_Layers)
     {
@@ -67,13 +51,13 @@ void Application::Application::frame_finish()
     }
 }
 
-void Application::Application::finish()
+void ApplicationInstance::ApplicationInstance::finish()
 {
     for(auto layer : m_Layers)
         layer->finish();
 }
 
-void Application::Application::quit()
+void ApplicationInstance::ApplicationInstance::quit()
 {
     for(auto layer : m_Layers) 
     {
@@ -84,27 +68,27 @@ void Application::Application::quit()
     m_Layers.clear();
 }
 
-std::string Application::get_name() const
+std::string ApplicationInstance::get_name() const
 {
     return m_Name;
 }
 
-void Application::set_name(const std::string& _Name)
+void ApplicationInstance::set_name(const std::string& _Name)
 {
     m_Name = _Name;
 }
 
-bool Application::is_closed()
+bool ApplicationInstance::is_closed()
 {
     return !m_Opened;
 }
 
-void Application::close()
+void ApplicationInstance::close()
 {
     m_Opened = false;
 }
 
-int Application::execute()
+int ApplicationInstance::execute()
 {
     Frenchie::Application::platform();
     Frenchie::Application::renderer();
@@ -142,17 +126,52 @@ int Application::execute()
     return 1;
 }
 
-Application::const_iterator Application::begin() const
+ApplicationInstance::const_iterator ApplicationInstance::begin() const
 {
     return m_Layers.begin();
 }
 
-Application::const_iterator Application::end() const
+ApplicationInstance::const_iterator ApplicationInstance::end() const
 {
     return m_Layers.end();
 }
 
-size_t Application::size() const
+size_t ApplicationInstance::size() const
 {
     return m_Layers.size();
+}
+
+Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
+{
+    return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
+}
+
+Frenchie::Core::Reference<Platform> Frenchie::Application::platform()
+{
+    auto layer = Frenchie::Application::application()->find_layer<Platform>();
+
+    if(layer == nullptr) 
+        layer = Frenchie::Application::application()->push_layer<Platform>();
+
+    return layer;
+}
+
+Frenchie::Core::Reference<Renderer> Frenchie::Application::renderer()
+{
+    auto layer = Frenchie::Application::application()->find_layer<Renderer>();
+
+    if(layer == nullptr) 
+        layer = Frenchie::Application::application()->push_layer<Renderer>();
+
+    return layer;
+}
+
+Frenchie::Core::Reference<Interface> Frenchie::Application::interface()
+{
+    auto layer = Frenchie::Application::application()->find_layer<Interface>();
+
+    if(layer == nullptr) 
+        layer = Frenchie::Application::application()->push_layer<Interface>();
+
+    return layer;
 }

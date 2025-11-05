@@ -77,7 +77,7 @@ namespace Frenchie
                     void clear_selection()
                     {
                         m_SelectedPaths.clear();
-                        m_CurrentFile = Frenchie::Application::Configuration::Translator::translate("Nothing selected...");
+                        m_CurrentFile = Frenchie::Application::Configuration::translator()->translate("Nothing selected...");
                     }
 
                     bool contains(const std::filesystem::path& _Path) const

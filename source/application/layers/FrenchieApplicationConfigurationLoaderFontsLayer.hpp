@@ -39,7 +39,7 @@ namespace Frenchie
                     const std::string&                     _Font = std::string());
 
                 // static API
-                static Frenchie::Core::Reference<Fonts> instance();
+                //static Frenchie::Core::Reference<Fonts> instance();
 
             protected:
 
@@ -47,6 +47,8 @@ namespace Frenchie
                 mutable std::set<std::filesystem::path> m_Paths;
                 mutable LocalThreadQueue                m_ThreadsQueue;
             };
+
+            Frenchie::Core::Reference<Frenchie::Application::Configuration::Fonts> fonts();
         }
     }
 }

@@ -259,7 +259,7 @@ namespace Frenchie
                 {
                 public:
                     RemoveFiles(const std::set<std::filesystem::path>& _Paths) : 
-                        Dialog(Translator::translate("Are you sure you want to remove these files ?")), 
+                        Dialog(translator()->translate("Are you sure you want to remove these files ?")), 
                         m_Paths(_Paths){}
                     virtual ~RemoveFiles(){}
 
@@ -272,7 +272,7 @@ namespace Frenchie
 
                     virtual void draw_buttons() override
                     {
-                        if(ImGui::Button(Translator::translate("Yes").c_str()))
+                        if(ImGui::Button(translator()->translate("Yes").c_str()))
                         {
                             if(m_Paths.empty())
                                 return;
@@ -294,7 +294,7 @@ namespace Frenchie
                         
                         ImGui::SameLine();
                         
-                        if(ImGui::Button(Translator::translate("No").c_str()))
+                        if(ImGui::Button(translator()->translate("No").c_str()))
                             close();
                     }
 
@@ -307,7 +307,7 @@ namespace Frenchie
                 public:
 
                     RenameFiles(const std::set<std::filesystem::path>& _Paths) : 
-                        Dialog(Translator::translate("Rename files"))
+                        Dialog(translator()->translate("Rename files"))
                     {
                         for(auto&& path : _Paths)
                         {
@@ -345,7 +345,7 @@ namespace Frenchie
 
                     virtual void draw_buttons() override
                     {
-                            if(ImGui::Button(Translator::translate("Ok").c_str()))
+                            if(ImGui::Button(translator()->translate("Ok").c_str()))
                             {
                                 // rename files
                                 for(auto& item : m_Paths)
@@ -395,7 +395,7 @@ namespace Frenchie
                             
                             ImGui::SameLine();
                             
-                            if(ImGui::Button(Translator::translate("Cancel").c_str()))
+                            if(ImGui::Button(translator()->translate("Cancel").c_str()))
                                 close();
                     }
 
@@ -684,7 +684,7 @@ void Explorer::draw_current_directory_path_editor()
             m_CurrentDirectory = Frenchie::Core::String::convert_utf32_to_utf8(m_Path.make_preferred().u32string());
 
         if(ImGui::InputText(
-            Translator::translate("Current directory").c_str(), 
+            translator()->translate("Current directory").c_str(), 
                 &m_CurrentDirectory, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
         {            
             change_current_directory(
@@ -704,7 +704,7 @@ void Explorer::draw_current_directory_path_editor()
 void Explorer::draw_current_filename_editor()
 {
     ImGui::InputText(
-        Translator::translate("Current file").c_str(), 
+        translator()->translate("Current file").c_str(), 
             &m_Selection.m_CurrentFile, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue);
 }
 

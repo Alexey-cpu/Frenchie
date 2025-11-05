@@ -6,7 +6,6 @@
 
 // Core
 #include <FrenchieCoreFactory.hpp>
-#include <FrenchieCoreStringConvert.hpp>
 
 // GLAD
 #include <glad/glad.h> 

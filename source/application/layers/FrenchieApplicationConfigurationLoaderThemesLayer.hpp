@@ -4,7 +4,7 @@
 #include <FrenchieCoreISerializer.hpp>
 
 // Application
-#include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 namespace Frenchie
 {
@@ -63,9 +63,6 @@ namespace Frenchie
                 // API
                 Frenchie::Core::Reference<Theme> create_theme(const std::filesystem::path& _Path);
 
-                // static API
-                static Frenchie::Core::Reference<Themes> instance();
-
             protected:
 
                 friend class Theme;
@@ -73,6 +70,8 @@ namespace Frenchie
                 mutable std::filesystem::path                                   m_AppThemeFilesPath;
                 mutable std::map<std::filesystem::path, std::shared_ptr<Theme>> m_Themes;
             };
+
+            Frenchie::Core::Reference<Frenchie::Application::Configuration::Themes> themes();
         }
     }
 }

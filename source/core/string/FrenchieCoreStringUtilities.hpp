@@ -4,6 +4,8 @@
 #include <vector>
 #include <set>
 
+#define STRINGIFY(_VALUE) #_VALUE
+
 namespace Frenchie
 {
     namespace Core
@@ -29,6 +31,13 @@ namespace Frenchie
             bool utf8_string_contains_substring(const std::string&    _String, const std::string&    _Substring);
             bool utf16_string_contains_substring(const std::u16string& _String, const std::u16string& _Substring);
             bool utf32_string_contains_substring(const std::u32string& _String, const std::u32string& _Substring);
+
+            template<typename Type> 
+            Type from_string(const std::string& _Input);
+
+            // to string conversion
+            template <typename Type>
+            std::string to_string(const Type& _Input);
         }
     }
 }

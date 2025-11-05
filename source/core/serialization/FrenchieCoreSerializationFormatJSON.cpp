@@ -10,7 +10,7 @@
 
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
-#include <FrenchieCoreStringConvert.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 #include <FrenchieCoreFileSystem.hpp>
 
 using namespace Frenchie::Core;

@@ -20,9 +20,34 @@ ConfigurationLoader::ConfigurationLoader(const std::filesystem::path& _Path) :
 
 ConfigurationLoader::~ConfigurationLoader(){}
 
-std::filesystem::path ConfigurationLoader::get_app_data_path() const
+std::filesystem::path ConfigurationLoader::get_app_data_directory() const
 {
     return m_Path;
+}
+
+std::filesystem::path ConfigurationLoader::get_app_state_file_directory() const
+{
+    auto stateDirectory = 
+        std::filesystem::path(get_app_data_directory().wstring().append(L"/state")).make_preferred();
+
+    if(std::filesystem::exists(stateDirectory))
+        return stateDirectory;
+
+    try
+    {
+        std::filesystem::create_directory(stateDirectory);
+    }
+    catch(...)
+    {
+        // TODO: put a log here...
+    }
+
+    return stateDirectory;
+}
+
+std::filesystem::path ConfigurationLoader::get_app_state_file_path()
+{
+    return std::filesystem::path(get_app_state_file_directory().u32string().append(U"/State.xml")).make_preferred();
 }
 
 bool ConfigurationLoader::awake()
@@ -45,7 +70,7 @@ bool ConfigurationLoader::awake()
         {
             Frenchie::Core::Serialization::Document document;
 
-            if(!document.read<Frenchie::Core::Serialization::XMLReader>(m_Path)) 
+            if(!document.read<Frenchie::Core::Serialization::XMLReader>(get_app_state_file_path())) 
             {
                 // TODO: add log here...
                 return;
@@ -91,7 +116,7 @@ void ConfigurationLoader::finish()
             serializer->serialize(applicationState);
     }
 
-    document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(m_Path);
+    document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(get_app_state_file_path());
 }
 
 bool ConfigurationLoader::allows_multiple_instances() const

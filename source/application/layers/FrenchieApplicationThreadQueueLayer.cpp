@@ -20,6 +20,26 @@ std::string Thread::get_name() const
     return m_Name;
 }
 
+float Thread::get_progress() const
+{
+    return m_Progress;
+}
+
+std::string Thread::get_status() const
+{
+    return m_Status.m_Buffer;
+}
+
+void Thread::push_message(const std::string& _Message) const
+{
+    m_Status.push(_Message);
+}
+
+void Thread::set_progress(const float& _Value) const
+{
+    m_Progress = _Value;
+}
+
 void Thread::stop() const
 {
     std::unique_lock<std::mutex> lock(m_Mutex);
@@ -103,6 +123,16 @@ bool Thread::launch()
         }
     );
     return true;
+}
+
+bool Thread::requested_stop() const
+{
+    while(paused() && !stopped()); // wait while paused
+
+    if(stopped()) 
+        return true;
+
+    return false;
 }
 
 void Thread::finish()

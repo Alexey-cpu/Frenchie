@@ -23,7 +23,7 @@ namespace Frenchie
             {
             public:
                 RemovePathsDialog(const std::set<std::filesystem::path>& _Paths) : 
-                    Frenchie::Application::Layer(Translator::translate("Are you sure you want to remove these files/folders ?")), 
+                    Frenchie::Application::Layer(translator()->translate("Are you sure you want to remove these files/folders ?")), 
                     m_Paths(_Paths){}
                 virtual ~RemovePathsDialog(){}
 
@@ -62,7 +62,7 @@ namespace Frenchie
                             ImGuiChildFlags_::ImGuiChildFlags_Borders,
                             wiondowFlags);
                         {
-                            if(ImGui::Button(Translator::translate("Yes").c_str()))
+                            if(ImGui::Button(translator()->translate("Yes").c_str()))
                             {
                                 if(m_Paths.empty())
                                     return;
@@ -84,7 +84,7 @@ namespace Frenchie
                             
                             ImGui::SameLine();
                             
-                            if(ImGui::Button(Translator::translate("No").c_str()))
+                            if(ImGui::Button(translator()->translate("No").c_str()))
                                 close();
                         }
                         ImGui::EndChild();

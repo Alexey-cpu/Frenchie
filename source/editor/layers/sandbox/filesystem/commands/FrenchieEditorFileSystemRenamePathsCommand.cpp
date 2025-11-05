@@ -35,7 +35,7 @@ namespace Frenchie
             public:
 
                 RenamePathsDialog(const std::set<std::filesystem::path>& _Paths) : 
-                    Frenchie::Application::Layer(Translator::translate("Rename files"))
+                    Frenchie::Application::Layer(translator()->translate("Rename files"))
                 {
                     for(auto&& path : _Paths)
                     {
@@ -99,7 +99,7 @@ namespace Frenchie
                             ImGuiChildFlags_::ImGuiChildFlags_Borders,
                             wiondowFlags);
                         {
-                            if(ImGui::Button(Translator::translate("Ok").c_str()))
+                            if(ImGui::Button(translator()->translate("Ok").c_str()))
                             {
                                 // rename files
                                 for(auto& item : m_Paths)
@@ -149,7 +149,7 @@ namespace Frenchie
                             
                             ImGui::SameLine();
                             
-                            if(ImGui::Button(Translator::translate("Cancel").c_str()))
+                            if(ImGui::Button(translator()->translate("Cancel").c_str()))
                                 close();
                         }
                         ImGui::EndChild();

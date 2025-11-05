@@ -43,7 +43,7 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Application::Configuration::Translator::instance();
+                    Frenchie::Application::Configuration::translator();
                 }
 
                 // Command::TRegistryType
@@ -103,9 +103,6 @@ void Language::setup()
     auto loadTranslationFile = m_Owner->m_ThreadsQueue.instance()->push(
         [this](const Frenchie::Application::Thread* _Thread)
         {
-            auto progress = _Thread->attach_component<Frenchie::Application::ThreadProgressComponent>();
-            auto status   = _Thread->attach_component<Frenchie::Application::ThreadStatusComponent>();
-
             if(!std::filesystem::exists(m_Path)       || 
                 std::filesystem::is_directory(m_Path) || 
                 Frenchie::Core::FileSystem::get_file_extention(m_Path) != ".xlf") 
@@ -114,14 +111,14 @@ void Language::setup()
             }
 
             // load XLIFF
-            status->push_message(fmt::format("Trying to load: {}\n", m_Path.string()));
+            _Thread->push_message(fmt::format("Trying to load: {}\n", m_Path.string()));
 
             // load translations from .xlf file
             Frenchie::Core::Serialization::Document document;
 
             if(!document.read<Frenchie::Core::Serialization::XMLReader>(m_Path)) 
             {
-                status->push_message("Could not load...\n");
+                _Thread->push_message("Could not load...\n");
                 return;
             }
 
@@ -143,12 +140,12 @@ void Language::setup()
                     }
                 );
 
-                progress->set_progress((float)(++current) / (float)(total));
+                _Thread->set_progress((float)(++current) / (float)(total));
             }
 
             // update progress
-            status->push_message("Success...\n");
-            progress->set_progress((float)(++current) / (float)(total));
+            _Thread->push_message("Success...\n");
+            _Thread->set_progress((float)(++current) / (float)(total));
 
             // setup translation file
             m_TranslationFile = translationFile;
@@ -170,10 +167,6 @@ void Language::save()
     auto saveTranslationFile = m_Owner->m_ThreadsQueue.instance()->push(
         [this](const Frenchie::Application::Thread* _Thread)
         {
-            // retrieve components
-            auto progress = _Thread->find_component<Frenchie::Application::ThreadProgressComponent>();
-            auto status   = _Thread->find_component<Frenchie::Application::ThreadStatusComponent>();
-
             // write file
             Frenchie::Core::Serialization::Document document;
 
@@ -197,15 +190,12 @@ void Language::save()
             size_t current = 0;
             size_t total   = translations.size();
 
-            if(status != nullptr)
-            {
-                status->push_message(
-                    fmt::format(
-                        "start saving .xlf file to {}\n",
-                        Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string())
-                    )
-                );
-            }
+            _Thread->push_message(
+                fmt::format(
+                    "start saving .xlf file to {}\n",
+                    Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string())
+                )
+            );
 
             for(auto&& translation : translations)
             {
@@ -213,34 +203,24 @@ void Language::save()
                 unit.append_node("source", translation.Key.c_str());
                 unit.append_node("target", translation.Value.c_str());
 
-                if(status != nullptr)
-                {
-                    status->push_message(
-                        fmt::format(
-                            "saving {} --> {}\n",
-                            translation.Key,
-                            translation.Value
-                        )
-                    );
-                }
+                _Thread->push_message(
+                    fmt::format(
+                        "saving {} --> {}\n",
+                        translation.Key,
+                        translation.Value
+                    )
+                );
 
-                if(progress != nullptr) 
-                    progress->set_progress((float)(++current)/(float)(total));
+                _Thread->set_progress((float)(++current)/(float)(total));
             }
     
-            if(status != nullptr)
-                status->push_message("Finished...\n");
-
-            if(progress != nullptr) 
-                progress->set_progress((float)(++current)/(float)(total));
+            _Thread->push_message("Finished...\n");
+            _Thread->set_progress((float)(++current)/(float)(total));
 
             // save file
             document.write<Frenchie::Core::Serialization::XMLBeautifulWriter>(m_Path);
         }
     );
-
-    saveTranslationFile->attach_component<Frenchie::Application::ThreadProgressComponent>();
-    saveTranslationFile->attach_component<Frenchie::Application::ThreadStatusComponent>();
 }
 
 // Translator
@@ -261,7 +241,7 @@ std::filesystem::path Translator::get_app_translation_files_path() const
     if(configurationLoader == nullptr) 
         return m_AppTranslationFilesPath;
         
-    m_AppTranslationFilesPath = configurationLoader->get_app_data_path().u32string().append(U"/translations");
+    m_AppTranslationFilesPath = configurationLoader->get_app_data_directory().u32string().append(U"/translations");
 
     if(!std::filesystem::exists(m_AppTranslationFilesPath)) 
     {
@@ -350,9 +330,6 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     auto main = _Parent.find_node(STRINGIFY(Translator));
 
-    if(!main.is_valid())
-        return false;
-
     // retrieve supported languages
     auto supportedLanguages = main.find_node("Languages");
 
@@ -423,7 +400,7 @@ bool Translator::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 
 std::string Translator::translate(const std::string& _Key)
 {
-    auto currentLanguage = Translator::instance()->get_current_language();
+    auto currentLanguage = get_current_language();
 
     if(currentLanguage == nullptr) 
         return _Key;
@@ -443,12 +420,12 @@ Frenchie::Core::Reference<Language> Translator::create_new_translation_file(cons
     return Frenchie::Core::Reference<Language>(theme);
 }
 
-Frenchie::Core::Reference<Translator> Translator::instance()
+Frenchie::Core::Reference<Frenchie::Application::Configuration::Translator> Frenchie::Application::Configuration::translator()
 {
-    auto layer = Frenchie::Application::application()->find_layer<Translator>();
+    auto layer = Frenchie::Application::application()->find_layer<Frenchie::Application::Configuration::Translator>();
 
     if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<Translator>();
+        layer = Frenchie::Application::application()->push_layer<Frenchie::Application::Configuration::Translator>();
 
     return layer;
 }

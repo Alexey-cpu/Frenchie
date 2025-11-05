@@ -3,7 +3,7 @@
 #include <FrenchieCoreLogger.hpp>
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
-#include <FrenchieCoreStringConvert.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 
 using namespace Frenchie::Core;
 using namespace Frenchie::Core::Containers;

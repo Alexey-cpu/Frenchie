@@ -109,8 +109,7 @@ namespace Frenchie
                 Frenchie::Core::Reference<Language> create_new_translation_file(const std::filesystem::path&);
 
                 // static API
-                static std::string translate(const std::string&);
-                static Frenchie::Core::Reference<Translator> instance();
+                std::string translate(const std::string&);
 
             protected:
 
@@ -122,6 +121,8 @@ namespace Frenchie
                 mutable std::vector<std::shared_ptr<Language>> m_SupportedLanguages;
                 mutable LocalThreadQueue                       m_ThreadsQueue;
             };
+
+            Frenchie::Core::Reference<Frenchie::Application::Configuration::Translator> translator();
         }
     }
 }

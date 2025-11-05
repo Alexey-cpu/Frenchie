@@ -1,8 +1,5 @@
 #pragma once
 
-// Core
-#include <FrenchieCoreStringConvert.hpp>
-
 // Application
 #include <FrenchieApplication.hpp>
 
@@ -14,32 +11,48 @@ namespace Frenchie
 {
     namespace Application
     {
-        class ThreadComponent
+        class Thread
         {
         public:
-            ThreadComponent(){}
-            virtual ~ThreadComponent(){}
-        };
-
-        class ThreadStatusComponent : public ThreadComponent
-        {
-        public:
-            ThreadStatusComponent(){}
-            virtual ~ThreadStatusComponent(){}
+            Thread(std::function<void(const Thread*)> _Worker, const std::string& _Name = std::string());
+            virtual ~Thread();
 
             // getters
-            std::string get_status() const
-            {
-                return m_Status.m_Buffer;
-            }
+            std::string get_name() const;
+            float get_progress() const;
+            std::string get_status() const;
 
             // setters
-            void push_message(const std::string& _Message)
-            {
-                m_Status.push(_Message);
-            }
+            void push_message(const std::string&) const;
+            void set_progress(const float&) const;
+
+            // API
+            void stop() const;
+            void pause() const;
+            void resume() const;
+
+            bool stopped() const;
+            bool paused() const;
+            bool finished() const;
+            bool failed()   const;
+
+            void on_finished(const std::function<void(const Thread*)>& _Callback);
+            void on_stopped(const std::function<void(const Thread*)>& _Callback);
+            void on_failed(const std::function<void(const Thread*)>& _Callback);
+
+            bool launch();
+            bool requested_stop() const;
 
         protected:
+
+            friend class ThreadQueue;
+
+            // info
+            std::string  m_Name     = STRINGIFY(Thread);
+            mutable bool m_Paused   = false;
+            mutable bool m_Finished = false;
+            mutable bool m_Stopped  = false;
+            mutable bool m_Failed   = false;
 
             class Status final
             {
@@ -60,96 +73,8 @@ namespace Frenchie
                 std::string m_Buffer          = std::string();
                 size_t      m_CurrentPosition = 0;
             } mutable m_Status;
-        };
 
-        class ThreadProgressComponent : public ThreadComponent
-        {
-        public:
-            ThreadProgressComponent(){}
-            virtual ~ThreadProgressComponent(){}
-
-            // getters
-            float get_progress()
-            {
-                return m_Progress;
-            }
-
-            // setters
-            void set_progress(const float& _Value)
-            {
-                m_Progress = _Value;
-            }
-
-        protected:
-            float m_Progress = 0.f;
-        };
-
-        class Thread
-        {
-        public:
-            Thread(std::function<void(const Thread*)> _Worker, const std::string& _Name = std::string());
-            virtual ~Thread();
-
-            std::string get_name() const;
-
-            // API
-            void stop() const;
-            void pause() const;
-            void resume() const;
-
-            bool stopped() const;
-            bool paused() const;
-            bool finished() const;
-            bool failed()   const;
-
-            void on_finished(const std::function<void(const Thread*)>& _Callback);
-            void on_stopped(const std::function<void(const Thread*)>& _Callback);
-            void on_failed(const std::function<void(const Thread*)>& _Callback);
-
-            bool launch();
-
-            bool requested_stop() const
-            {
-                while(paused() && !stopped()); // wait while paused
-
-                if(stopped()) 
-                    return true;
-
-                return false;
-            }
-
-            template<typename Type, typename ... Arguments>
-            Frenchie::Core::Reference<Type> attach_component(Arguments ... _Args) const
-            {
-                auto component = std::make_shared<Type>(_Args...);
-                m_Components.push_back(component);
-                return component;
-            }
-
-            template<typename Type>
-            Frenchie::Core::Reference<Type> find_component() const
-            {
-                for(auto&& component : m_Components)
-                {
-                    if(std::dynamic_pointer_cast<Type>(component) != nullptr)
-                        return component;
-                }
-
-                return nullptr;
-            }
-
-        protected:
-
-            friend class ThreadQueue;
-
-            mutable std::list<std::shared_ptr<ThreadComponent>> m_Components;
-
-            // info
-            std::string  m_Name     = STRINGIFY(Thread);
-            mutable bool m_Paused   = false;
-            mutable bool m_Finished = false;
-            mutable bool m_Stopped  = false;
-            mutable bool m_Failed   = false;
+            mutable float m_Progress = 0.f;
 
             std::function<void(const Thread*)> m_Worker;
             std::function<void(const Thread*)> m_OnFinished;
