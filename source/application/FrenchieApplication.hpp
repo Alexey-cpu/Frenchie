@@ -9,21 +9,12 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
+#include <FrenchieApplicationPlatformLayer.hpp>
+#include <FrenchieApplicationRendererLayer.hpp>
+#include <FrenchieApplicationInterfaceLayer.hpp>
 
 // STL
 #include <iostream>
-
-// GLAD
-#include <glad/glad.h> 
-
-// GLFW
-#include <GLFW/glfw3.h>
-
-// GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
 namespace Frenchie
 {
@@ -36,14 +27,10 @@ namespace Frenchie
             virtual ~Application();
 
             // getters
-            std::string  get_name() const;
-            glm::u32vec2 get_window_size() const;
-            GLFWwindow*  get_window() const;
+            std::string Application::get_name() const;
 
             // setters
-            void set_name(const std::string& _Name);
-            void set_window_size(const glm::u32vec2& _Value);
-            void set_maximized(const bool& _Value);
+            void Application::set_name(const std::string&);
 
             // API
             bool awake();
@@ -56,7 +43,6 @@ namespace Frenchie
             
             bool is_closed();
             void close();
-            void reload();
 
             int execute();
             std::list<std::shared_ptr<Layer>>::const_iterator begin() const;
@@ -71,12 +57,8 @@ namespace Frenchie
                 auto layer = std::make_shared<Type>(_Parameters...);
 
                 // check if layer allows multiple instances
-                if(contains_layer<Type>() && 
-                    !layer->allows_multiple_instances())
-                {
-                    // Frenchie::Core::Logger::instance()->warn(fmt::format("Application queue already contains '{}'", layer->get_name()));
+                if(contains_layer<Type>() && !layer->allows_multiple_instances())
                     return find_layer<Type>();
-                }
 
                 // awake layer
                 if(!layer->awake())
@@ -120,15 +102,45 @@ namespace Frenchie
             typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
 
         protected:
-            std::list<std::shared_ptr<Layer>>               m_Layers =  std::list<std::shared_ptr<Layer>>();
-            std::string                                     m_Name   = "Frenchie::Application";
-            bool                                            m_Opened = true;
-            GLFWwindow*                                     m_Window = nullptr;
+            std::list<std::shared_ptr<Layer>> m_Layers =  std::list<std::shared_ptr<Layer>>();
+            std::string                       m_Name   = "Frenchie::Application";
+            bool                              m_Opened = true;
         };
 
-        inline Frenchie::Application::Application* application()
+        // Static API
+        static Frenchie::Application::Application* application()
         {
             return Frenchie::Core::Singleton<Frenchie::Application::Application>::instance();
+        }
+
+        static Frenchie::Core::Reference<Platform> platform()
+        {
+            auto layer = Frenchie::Application::application()->find_layer<Platform>();
+
+            if(layer == nullptr) 
+                layer = Frenchie::Application::application()->push_layer<Platform>();
+
+            return layer;
+        }
+
+        static Frenchie::Core::Reference<Renderer> renderer()
+        {
+            auto layer = Frenchie::Application::application()->find_layer<Renderer>();
+
+            if(layer == nullptr) 
+                layer = Frenchie::Application::application()->push_layer<Renderer>();
+
+            return layer;
+        }
+
+        static Frenchie::Core::Reference<Interface> interface()
+        {
+            auto layer = Frenchie::Application::application()->find_layer<Interface>();
+
+            if(layer == nullptr) 
+                layer = Frenchie::Application::application()->push_layer<Interface>();
+
+            return layer;
         }
     };
 };

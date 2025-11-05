@@ -176,7 +176,9 @@ bool ThreadQueue::allows_multiple_instances() const
     return true;
 }
 
-Frenchie::Core::Reference<Thread> ThreadQueue::push(std::function<void(const Thread*)> _Worker, const std::string& _Name)
+Frenchie::Core::Reference<Thread> ThreadQueue::push(
+    std::function<void(const Thread*)> _Worker,
+    const std::string&                 _Name)
 {
     m_Queue.push(std::make_shared<Thread>(_Worker, _Name));
     return m_Queue.back();

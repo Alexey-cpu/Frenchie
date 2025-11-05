@@ -7,7 +7,6 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationFrameCounter.hpp>
 
 // Editor
 #include <FrenchieEditorTextEditorITextHighlighter.hpp>
@@ -21,6 +20,40 @@ namespace Frenchie
 {
     namespace Editor
     {
+        class FrameCounter : public Frenchie::Application::Layer
+        {
+        public:
+            
+            FrameCounter(
+                const int&         _Threshold, 
+                const std::string& _Name = STRINGIFY(FrameCounter)) :
+                Frenchie::Application::Layer(_Name),
+                m_Threshold(_Threshold){}
+            
+            virtual ~FrameCounter(){}
+
+            // getters
+            int get_frames_count() const
+            {
+                return m_FramesCount;
+            }
+
+            virtual bool awake() override
+            {
+                m_FramesCount = 0;
+                return true;
+            }
+
+            virtual void frame_update() override
+            {
+                m_FramesCount = ++m_FramesCount % m_Threshold;
+            }
+
+        protected:
+            int  m_Threshold  {0};
+            int  m_FramesCount{0};
+        };
+
         class TextDocumentSeclection final
         {
         public:
@@ -64,10 +97,10 @@ namespace Frenchie
             };
 
             // info
-            std::shared_ptr<Frenchie::Core::TextDocument>        m_TextDocument{nullptr};
-            std::shared_ptr<Frenchie::Application::FrameCounter> m_CursorFrameCounter{nullptr};
-            std::shared_ptr<ITextHighlighter>                    m_Highlighter{nullptr};
-            TextDocumentSeclection                               m_Selection;
+            std::shared_ptr<Frenchie::Core::TextDocument> m_TextDocument      {nullptr};
+            std::shared_ptr<FrameCounter>                 m_CursorFrameCounter{nullptr};
+            std::shared_ptr<ITextHighlighter>             m_Highlighter       {nullptr};
+            TextDocumentSeclection                        m_Selection;
 
             ImVec2 m_Scroll{ImVec2()};
             ImRect m_ViewPort{ImRect()};

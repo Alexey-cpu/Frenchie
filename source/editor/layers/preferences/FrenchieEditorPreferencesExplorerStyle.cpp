@@ -9,9 +9,9 @@
 
 // Editor
 #include <FrenchieApplicationEditorDialog.hpp>
-#include <FrenchieApplicationConfigurationLoaderFonts.hpp>
-#include <FrenchieApplicationConfigurationLoaderThemes.hpp>
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderFontsLayer.hpp>
+#include <FrenchieApplicationConfigurationLoaderThemesLayer.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 #include <FrenchieEditorFileSystemExplorerDialog.hpp>
 #include <FrenchieEditorFileSystemExplorerPathScannerDialog.hpp>
 

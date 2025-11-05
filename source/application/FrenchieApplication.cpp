@@ -1,19 +1,6 @@
 #include <FrenchieApplication.hpp>
 #include <FrenchieCoreLogger.hpp>
 
-// ImGUI
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
-#include <imgui.h>
-#define GL_SILENCE_DEPRECATION
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-#define GLFW_INCLUDE_NONE
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 using namespace Frenchie::Application;
 
 // callbacks
@@ -31,132 +18,16 @@ void OnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
     glViewport(0, 0, width, height);
 }
 
-// Application
 Application::Application()
 {
-    // initialize GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    // setup Window hints
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
-    glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
-
-    if((m_Window = glfwCreateWindow(800, 600, m_Name.c_str(), nullptr, nullptr)) == nullptr)
-    {
-        glfwTerminate();
-        Frenchie::Core::Logger::instance()->error(fmt::format(
-            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_CREATE_WINDOW\n"));
-        return;
-    }
-
-    glfwMakeContextCurrent(m_Window);
-    glfwSwapInterval(1);
-
-    // setup callbacks
-    glfwSetWindowSizeCallback(m_Window, &OnWindowResize);
-    glfwSetFramebufferSizeCallback(m_Window, &OnWindowResize);
-    glfwSetWindowMaximizeCallback(m_Window, OnWindowMaximizedCallback);
-
-    // custom callbackcs
-    //glfwSetCursorPosCallback(get_window(), Application::mouse_callback);
-
-    // load OpenGL interface using GLAD
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        glfwTerminate();
-        m_Window = nullptr;
-        Frenchie::Core::Logger::instance()->error(fmt::format(
-            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_LOAD_GLAD\n"));
-    }
-
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::awake
-    //---------------------------------------------------------------------------------------------------
-    #ifdef __APPLE__
-        // GL 3.2 + GLSL 150
-        const char* glsl_version = "#version 150";
-    #else
-        const char* glsl_version = "#version 130";
-    #endif
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard |
-            ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad  |
-            ImGuiConfigFlags_::ImGuiConfigFlags_DockingEnable     |
-            ImGuiConfigFlags_::ImGuiConfigFlags_ViewportsEnable;
-    ImGui::StyleColorsDark();
-    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
-    io.IniFilename = nullptr; // disable automatic .ini file save
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
-    ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-    //---------------------------------------------------------------------------------------------------
 }
 
 Application::~Application()
 {
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::finish
-    //---------------------------------------------------------------------------------------------------
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    //---------------------------------------------------------------------------------------------------
-
-    glfwDestroyWindow(m_Window);
-    glfwTerminate();
-    m_Layers.clear();
-}
-
-glm::u32vec2 Application::get_window_size() const
-{
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(m_Window, &width, &height);
-    return glm::u32vec2(width, height);
-}
-
-GLFWwindow* Application::get_window() const
-{
-    return m_Window;
-}
-
-void Application::set_window_size(const glm::u32vec2& _Value)
-{
-    glfwSetWindowSize(m_Window, _Value.x, _Value.y);
-}
-
-void Application::set_maximized(const bool& _Value)
-{
-    glfwMaximizeWindow(m_Window);
 }
 
 bool Application::awake()
 {
-    if(m_Window == nullptr) 
-        return false;
-
-    // call window callbacks
-    OnWindowMaximizedCallback(m_Window, glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED));
-
     return true;
 }
 
@@ -167,22 +38,6 @@ void Application::Application::frame_start()
         if(!layer->is_hidden()) 
             layer->frame_start();
     }
-
-    //---------------------------------------------------------------------------------------------------
-    // OpenGL
-    //---------------------------------------------------------------------------------------------------
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glfwPollEvents();
-
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::frame_start
-    //---------------------------------------------------------------------------------------------------
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-    //---------------------------------------------------------------------------------------------------
 }
 
 void Application::Application::frame_update()
@@ -205,33 +60,11 @@ void Application::Application::frame_render()
 
 void Application::Application::frame_finish()
 {
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::frame_finish
-    //---------------------------------------------------------------------------------------------------
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(m_Window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        GLFWwindow* backup_current_context = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup_current_context);
-        gladLoadGL();
-    }
-    //---------------------------------------------------------------------------------------------------
-
     for(auto layer : m_Layers)
     {
         if(!layer->is_hidden())
             layer->frame_finish();
     }
-
-    glfwSwapBuffers(m_Window);
 }
 
 void Application::Application::finish()
@@ -263,7 +96,7 @@ void Application::set_name(const std::string& _Name)
 
 bool Application::is_closed()
 {
-    return !m_Opened || glfwWindowShouldClose(m_Window);
+    return !m_Opened;
 }
 
 void Application::close()
@@ -271,14 +104,12 @@ void Application::close()
     m_Opened = false;
 }
 
-void Application::reload()
-{
-    ImGui_ImplOpenGL3_DestroyDeviceObjects();
-    ImGui_ImplOpenGL3_CreateDeviceObjects();
-}
-
 int Application::execute()
 {
+    Frenchie::Application::platform();
+    Frenchie::Application::renderer();
+    Frenchie::Application::interface();
+
     if(!awake()) 
         return -1;
 

@@ -2,7 +2,7 @@
 
 #include <FrenchieApplicationLayer.hpp>
 
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 // STL
 #include <vector>

@@ -47,8 +47,7 @@ bool ConfigurationLoader::awake()
 
             if(!document.read<Frenchie::Core::Serialization::XMLReader>(m_Path)) 
             {
-                Frenchie::Core::Logger::instance()->error(
-                    fmt::format("{} could not load state", Frenchie::Core::String::convert_utf32_to_utf8(m_Path.u32string())));
+                // TODO: add log here...
                 return;
             }
 
