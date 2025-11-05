@@ -14,7 +14,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-using namespace Frenchie::Application::OpenGL;
+using namespace Frenchie::Application;
 
 // callbacks
 void OnWindowResize(GLFWwindow* _Window, int _Width, int _Height)
@@ -194,6 +194,15 @@ void Application::Application::frame_update()
     }
 }
 
+void Application::Application::frame_render()
+{
+    for(auto layer : m_Layers) 
+    {
+        if(!layer->is_hidden())
+            layer->frame_render();
+    }
+}
+
 void Application::Application::frame_finish()
 {
     //---------------------------------------------------------------------------------------------------
@@ -227,14 +236,18 @@ void Application::Application::frame_finish()
 
 void Application::Application::finish()
 {
-    // finish all layers execution
+    for(auto layer : m_Layers)
+        layer->finish();
+}
+
+void Application::Application::quit()
+{
     for(auto layer : m_Layers) 
     {
         layer->close();
-        layer->finish();
+        layer->quit();
     }
 
-    // remove all layers
     m_Layers.clear();
 }
 
@@ -288,10 +301,12 @@ int Application::execute()
 
         frame_start();
         frame_update();
+        frame_render();
         frame_finish();
     }
 
     finish();
+    quit();
 
     return 1;
 }

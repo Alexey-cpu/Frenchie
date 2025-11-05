@@ -40,8 +40,10 @@ namespace Frenchie
             virtual bool awake();
             virtual void frame_start();
             virtual void frame_update();
+            virtual void frame_render();
             virtual void frame_finish();
             virtual void finish();
+            virtual void quit();
             virtual bool allows_multiple_instances() const;
 
         protected:

@@ -1,12 +1,12 @@
 // //---------------------------------------------------------------------------------------------------
 // // Editor
 // //---------------------------------------------------------------------------------------------------
-// #include <FrenchieApplicationEditorLauncher.hpp>
+#include <FrenchieApplicationEditorLauncher.hpp>
 
-// int main(int argc, char *argv[])
-// {
-//     return Frenchie::Editor::Launcher::execute();
-// }
+int main(int argc, char *argv[])
+{
+    return Frenchie::Editor::Launcher::execute();
+}
 
 // IMAGE BACKEND API
 // #include <FrenchieCoreImage.hpp>
@@ -269,25 +269,25 @@ void render_colored_text_example()
 // STL
 #include <filesystem>
 
-int main(int argc, const char * argv[])
-{
-    // std::filesystem::path path("C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf");
+// int main(int argc, const char * argv[])
+// {
+//     // std::filesystem::path path("C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf");
 
-    // auto font  = Frenchie::Core::Memory::Cache<Fonts::Font>::request(path.u32string(), path, 128);
+//     // auto font  = Frenchie::Core::Memory::Cache<Fonts::Font>::request(path.u32string(), path, 128);
 
-    // auto then = Frenchie::Core::Time::tic();
+//     // auto then = Frenchie::Core::Time::tic();
 
-    // auto atlas = Frenchie::Core::Memory::Cache<Fonts::FontAtlas>::request(
-    //     U"Alice-Regular-Atlas", font.get());
+//     // auto atlas = Frenchie::Core::Memory::Cache<Fonts::FontAtlas>::request(
+//     //     U"Alice-Regular-Atlas", font.get());
 
-    // std::cout << Frenchie::Core::Time::elapsed<std::chrono::milliseconds>(then, Frenchie::Core::Time::tic()) << "ms \n";
+//     // std::cout << Frenchie::Core::Time::elapsed<std::chrono::milliseconds>(then, Frenchie::Core::Time::tic()) << "ms \n";
 
-    // stbi_write_png("atlas.png",
-    //     atlas->m_TextureWidth,
-    //     atlas->m_TextureHeight,
-    //     1,
-    //     atlas->m_Bitmap.get(),
-    //     atlas->m_TextureWidth);
+//     // stbi_write_png("atlas.png",
+//     //     atlas->m_TextureWidth,
+//     //     atlas->m_TextureHeight,
+//     //     1,
+//     //     atlas->m_Bitmap.get(),
+//     //     atlas->m_TextureWidth);
 
-    return 0;
-}
+//     return 0;
+// }
