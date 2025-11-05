@@ -38,7 +38,7 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Application::Configuration::Themes::instance();
+                    Frenchie::Application::Configuration::themes();
                 }
 
                 // Command::TRegistryType
@@ -470,7 +470,7 @@ std::filesystem::path Themes::get_app_theme_files_path() const
     if(configurationLoader == nullptr) 
         return m_AppThemeFilesPath;
         
-    m_AppThemeFilesPath = configurationLoader->get_app_data_path().wstring().append(L"/fonts");
+    m_AppThemeFilesPath = configurationLoader->get_app_data_directory().wstring().append(L"/themes");
 
     if(!std::filesystem::exists(m_AppThemeFilesPath)) 
     {
@@ -561,9 +561,6 @@ bool Themes::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     auto main = _Parent.find_node(STRINGIFY(Themes));
 
-    if(!main.is_valid())
-        return false;
-
     // retrieve supported languages
     auto themes = main.find_node("Themes");
 
@@ -646,12 +643,12 @@ Frenchie::Core::Reference<Theme> Themes::create_theme(const std::filesystem::pat
     return Frenchie::Core::Reference<Theme>(theme);
 }
 
-Frenchie::Core::Reference<Themes> Themes::instance()
+Frenchie::Core::Reference<Frenchie::Application::Configuration::Themes> Frenchie::Application::Configuration::themes()
 {
-    auto layer = Frenchie::Application::application()->find_layer<Themes>();
+    auto layer = Frenchie::Application::application()->find_layer<Frenchie::Application::Configuration::Themes>();
 
     if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<Themes>();
+        layer = Frenchie::Application::application()->push_layer<Frenchie::Application::Configuration::Themes>();
 
     return layer;
 }

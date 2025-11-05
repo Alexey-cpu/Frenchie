@@ -20,17 +20,17 @@ namespace Frenchie
 {
     namespace Application
     {
-        class Application
+        class ApplicationInstance
         {
         public:
-            Application();
-            virtual ~Application();
+            ApplicationInstance();
+            virtual ~ApplicationInstance();
 
             // getters
-            std::string Application::get_name() const;
+            std::string ApplicationInstance::get_name() const;
 
             // setters
-            void Application::set_name(const std::string&);
+            void ApplicationInstance::set_name(const std::string&);
 
             // API
             bool awake();
@@ -107,40 +107,9 @@ namespace Frenchie
             bool                              m_Opened = true;
         };
 
-        // Static API
-        static Frenchie::Application::Application* application()
-        {
-            return Frenchie::Core::Singleton<Frenchie::Application::Application>::instance();
-        }
-
-        static Frenchie::Core::Reference<Platform> platform()
-        {
-            auto layer = Frenchie::Application::application()->find_layer<Platform>();
-
-            if(layer == nullptr) 
-                layer = Frenchie::Application::application()->push_layer<Platform>();
-
-            return layer;
-        }
-
-        static Frenchie::Core::Reference<Renderer> renderer()
-        {
-            auto layer = Frenchie::Application::application()->find_layer<Renderer>();
-
-            if(layer == nullptr) 
-                layer = Frenchie::Application::application()->push_layer<Renderer>();
-
-            return layer;
-        }
-
-        static Frenchie::Core::Reference<Interface> interface()
-        {
-            auto layer = Frenchie::Application::application()->find_layer<Interface>();
-
-            if(layer == nullptr) 
-                layer = Frenchie::Application::application()->push_layer<Interface>();
-
-            return layer;
-        }
+        Frenchie::Application::ApplicationInstance* application();
+        Frenchie::Core::Reference<Platform>         platform();
+        Frenchie::Core::Reference<Renderer>         renderer();
+        Frenchie::Core::Reference<Interface>        interface();
     };
 };

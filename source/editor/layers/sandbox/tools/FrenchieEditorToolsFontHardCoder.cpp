@@ -502,12 +502,12 @@ FontHardCoderTool::~FontHardCoderTool(){}
 
 void FontHardCoderTool::frame_update()
 {
-    ImGui::Begin(fmt::format("{}###Font exporter", Translator::translate(get_name())).c_str(), &m_Opened);
+    ImGui::Begin(fmt::format("{}###Font exporter", translator()->translate(get_name())).c_str(), &m_Opened);
     {
         if(ImGui::Button(
             std::filesystem::exists(m_TTF) ?
                 Frenchie::Core::String::convert_utf32_to_utf8(m_TTF.u32string()).c_str() :
-                Translator::translate("No .ttf file selected").c_str(),
+                translator()->translate("No .ttf file selected").c_str(),
                 ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
         {
             on_ttf_file_path_search_button_pressed();
@@ -516,20 +516,20 @@ void FontHardCoderTool::frame_update()
         if(ImGui::Button(
             !m_CPP.empty() && std::filesystem::exists(m_CPP.parent_path()) ?
                 Frenchie::Core::String::convert_utf32_to_utf8(m_CPP.u32string()).c_str() :
-                Translator::translate("No .cpp file export path set").c_str(),
+                translator()->translate("No .cpp file export path set").c_str(),
                 ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
         {
             on_cpp_file_path_search_button_pressed();
         }
 
         ImGui::InputText(
-            Translator::translate("Class (functions prefix) name").c_str(),
+            translator()->translate("Class (functions prefix) name").c_str(),
             &m_ClassName,
             ImGuiInputTextFlags_::ImGuiInputTextFlags_CallbackCharFilter,
             Tools::font_hardcoder_text_edit_callback);
 
         if(ImGui::BeginCombo(
-            Translator::translate("Encoding").c_str(),
+            translator()->translate("Encoding").c_str(),
             encoding_to_string(m_Encoding).c_str()))
         {
             if(ImGui::Button(encoding_to_string(FontHardCoderToolEncoding::HardCoderToolEncoding_UTF8).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
@@ -541,12 +541,12 @@ void FontHardCoderTool::frame_update()
             ImGui::EndCombo();
         }
 
-        ImGui::Checkbox(Translator::translate("Compress").c_str(), &m_Compress);
+        ImGui::Checkbox(translator()->translate("Compress").c_str(), &m_Compress);
 
         if(m_FontInfo.Font != nullptr)
         {
             if(ImGui::Button(
-                Translator::translate("Export").c_str(),
+                translator()->translate("Export").c_str(),
                 ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
             {
                 on_font_hardcode_button_pressed();
@@ -621,7 +621,7 @@ void FontHardCoderTool::finish()
 void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
 {
     auto dialog = Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-        Translator::translate("Select .ttf file ...")
+        translator()->translate("Select .ttf file ...")
     );
 
     dialog->on_accepted(
@@ -668,7 +668,7 @@ void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
 void FontHardCoderTool::on_cpp_file_path_search_button_pressed()
 {
     auto dialog = Frenchie::Application::application()->push_layer<FileSystem::ExplorerDialog>(
-        Translator::translate("Set save file name for .cpp file ...")
+        translator()->translate("Set save file name for .cpp file ...")
     );
 
     dialog->on_accepted(

@@ -2,7 +2,7 @@
 
 #include <FrenchieCoreContainersStack.hpp>
 #include <FrenchieCoreContainersQueue.hpp>
-#include <FrenchieCoreStringConvert.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 
 // STL
 #include <type_traits>

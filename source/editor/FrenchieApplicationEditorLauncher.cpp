@@ -94,17 +94,17 @@ std::filesystem::path Launcher::get_app_log_directory()
     return std::filesystem::path(Launcher::get_app_data_directory().wstring().append(L"/logs")).make_preferred();
 }
 
-std::filesystem::path Launcher::get_app_state_directory()
-{
-    return std::filesystem::path(Launcher::get_app_data_directory().wstring().append(L"/state")).make_preferred();
-}
+// std::filesystem::path Launcher::get_app_state_directory()
+// {
+//     return std::filesystem::path(Launcher::get_app_data_directory().wstring().append(L"/state")).make_preferred();
+// }
 
 std::set<std::filesystem::path> Launcher::get_app_data_directories()
 {
     return
     {
         get_app_log_directory(),
-        get_app_state_directory()
+        //get_app_state_directory()
     };
 }
 
@@ -207,12 +207,12 @@ int Launcher::execute()
 
     // load configuration
     Frenchie::Application::application()->push_layer<Frenchie::Application::Configuration::ConfigurationLoader>(
-        std::filesystem::path(get_app_state_directory().u32string().append(U"/State.xml")).make_preferred());
+        std::filesystem::path(get_app_data_directory().make_preferred()));
     Frenchie::Application::application()->push_layer<Frenchie::Application::ImguiDemo>(); // FilesOpenDialog
 
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe file directory: {}", Frenchie::Core::String::convert_utf32_to_utf8(get_app_exe_directory().u32string())));
-    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml state directory: {}", Frenchie::Core::String::convert_utf32_to_utf8(get_app_state_directory().u32string())));
+    Frenchie::Core::Logger::instance()->info(fmt::format("App .xml state directory: {}", Frenchie::Core::String::convert_utf32_to_utf8(get_app_data_directory().u32string())));
 
     return Frenchie::Application::application()->execute();
 }

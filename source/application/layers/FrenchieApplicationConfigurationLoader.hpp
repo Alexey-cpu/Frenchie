@@ -15,7 +15,9 @@ namespace Frenchie
                 virtual ~ConfigurationLoader();
 
                 // getters
-                std::filesystem::path get_app_data_path() const;
+                std::filesystem::path get_app_data_directory() const;
+                std::filesystem::path get_app_state_file_directory() const;
+                std::filesystem::path get_app_state_file_path();
 
                 // Frenchie::Application::Layer
                 virtual bool awake() override;

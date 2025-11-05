@@ -46,7 +46,7 @@ void ExplorerDialog::frame_update()
             wiondowFlags);
 
         {
-            if(ImGui::Button(Translator::translate("Ok").c_str()))
+            if(ImGui::Button(translator()->translate("Ok").c_str()))
             {
                 if(m_OnAccepted != nullptr) 
                     m_OnAccepted();
@@ -55,7 +55,7 @@ void ExplorerDialog::frame_update()
 
              ImGui::SameLine();
 
-            if(ImGui::Button(Translator::translate("Cancel").c_str()))
+            if(ImGui::Button(translator()->translate("Cancel").c_str()))
                 close();
 
             ImGui::EndChild();

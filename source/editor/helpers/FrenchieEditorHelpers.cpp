@@ -30,13 +30,13 @@ namespace Frenchie
             {
                 if(_Index == _Actions.size() - 1) 
                 {
-                    if(ImGui::MenuItem(Translator::translate(_Actions.back()).c_str()))
+                    if(ImGui::MenuItem(translator()->translate(_Actions.back()).c_str()))
                         Frenchie::Application::CommandsQueue::instance()->push(_Path, _Payloads);
 
                     return;
                 }
 
-                if(ImGui::BeginMenu(Translator::translate(_Actions[_Index]).c_str()))
+                if(ImGui::BeginMenu(translator()->translate(_Actions[_Index]).c_str()))
                 {
                     draw_menu_recursive(_Actions, _Path, ++_Index, _Payloads);
 

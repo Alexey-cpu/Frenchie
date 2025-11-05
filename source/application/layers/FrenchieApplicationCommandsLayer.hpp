@@ -3,9 +3,6 @@
 // Application
 #include <FrenchieApplication.hpp>
 
-// Core
-#include <FrenchieCoreStringConvert.hpp>
-
 // STL
 #include <queue>
 #include <memory>
@@ -21,27 +18,28 @@ namespace Frenchie
             virtual ~CommandPayload(){}
         };
 
-        typedef std::list<std::shared_ptr<CommandPayload>> CommandPayloads;
-
-        template<typename Type> class CommandDataPayload : public CommandPayload
+        template<typename Type>
+        class CommandDataPayload : public CommandPayload
         {
         public:
-            CommandDataPayload(Type _Value) : m_Value(_Value){}
+            CommandDataPayload(Type _Value) : m_Data(_Value){}
             virtual ~CommandDataPayload(){}
 
             Type get() const
             {
-                return m_Value;
+                return m_Data;
             }
 
             void set(Type _Data)
             {
-                m_Value = _Data;
+                m_Data = _Data;
             }
 
         protected:
-            Type m_Value;
+            Type m_Data;
         };
+
+        typedef std::list<std::shared_ptr<CommandPayload>> CommandPayloads;
 
         class Command : public Frenchie::Core::Factory::Creator<Command>
         {
@@ -134,8 +132,7 @@ namespace Frenchie
             }
 
         protected:
-            std::queue<std::unique_ptr<Command>> m_Commands = 
-                std::queue<std::unique_ptr<Command>>();
+            std::queue<std::unique_ptr<Command>> m_Commands{std::queue<std::unique_ptr<Command>>()};
         };
     }
 }

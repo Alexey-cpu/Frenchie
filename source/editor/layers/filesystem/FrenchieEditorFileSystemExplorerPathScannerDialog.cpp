@@ -94,7 +94,7 @@ void PathScannerDialog::frame_update()
             if(m_Thread == nullptr)
             {
                 // launch thread here
-                if(ImGui::Button(Translator::translate("Ok").c_str()))
+                if(ImGui::Button(translator()->translate("Ok").c_str()))
                 {
                     m_Thread = 
                         m_ThreadQueue->push(
@@ -129,22 +129,22 @@ void PathScannerDialog::frame_update()
 
                 ImGui::SameLine();
 
-                if(ImGui::Button(Translator::translate("Cancel").c_str()))
+                if(ImGui::Button(translator()->translate("Cancel").c_str()))
                     close();
             }
             else
             {
-                if(ImGui::Button(Translator::translate("Pause").c_str())) 
+                if(ImGui::Button(translator()->translate("Pause").c_str())) 
                     m_Thread->pause();
 
                 ImGui::SameLine();
 
-                if(ImGui::Button(Translator::translate("Resume").c_str())) 
+                if(ImGui::Button(translator()->translate("Resume").c_str())) 
                     m_Thread->resume();
 
                 ImGui::SameLine();
 
-                if(ImGui::Button(Translator::translate("Cancel").c_str())) 
+                if(ImGui::Button(translator()->translate("Cancel").c_str())) 
                     m_Thread->stop();
 
                 ImGui::SameLine();
@@ -153,7 +153,7 @@ void PathScannerDialog::frame_update()
                 {
                     ImGui::SameLine();
 
-                    if(ImGui::Button(Translator::translate("Ok").c_str())) 
+                    if(ImGui::Button(translator()->translate("Ok").c_str())) 
                     {
                         // resume thread
                         close();

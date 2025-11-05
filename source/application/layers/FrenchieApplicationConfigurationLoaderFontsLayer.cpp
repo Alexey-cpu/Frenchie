@@ -39,7 +39,7 @@ namespace Frenchie
                 // Frenchie::Application::Command
                 virtual void execute() override
                 {
-                    Frenchie::Application::Configuration::Fonts::instance();
+                    Frenchie::Application::Configuration::fonts();
                 }
 
                 // Command::TRegistryType
@@ -71,7 +71,7 @@ std::filesystem::path Fonts::get_app_fonts_files_directory() const
     if(configurationLoader == nullptr) 
         return m_AppFontsFilesPath;
         
-    m_AppFontsFilesPath = configurationLoader->get_app_data_path().u32string().append(U"/fonts");
+    m_AppFontsFilesPath = configurationLoader->get_app_data_directory().u32string().append(U"/fonts");
 
     if(!std::filesystem::exists(m_AppFontsFilesPath)) 
     {
@@ -154,15 +154,12 @@ void Fonts::load_fonts(
         if(_Fonts.empty())
             return std::set<std::filesystem::path>();
 
-        auto progress = _Thread->attach_component<Frenchie::Application::ThreadProgressComponent>();
-        auto status   = _Thread->attach_component<Frenchie::Application::ThreadStatusComponent>();
-
         // go on...
         std::set<std::filesystem::path> fonts;
         auto total   = _Fonts.size();
         auto current = 0;
 
-        status->push_message("Loading started...\n");
+        _Thread->push_message("Loading started...\n");
 
         for(auto&& path : _Fonts)
         {
@@ -173,16 +170,16 @@ void Fonts::load_fonts(
             if(_Thread->stopped()) 
                 return fonts;
 
-            status->push_message(
+            _Thread->push_message(
                 fmt::format("Trying to load font {}\n", 
                 Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
             ));
 
             if(fonts.find(path) != fonts.end())
             {
-                progress->set_progress((float)(++current) / (float)total);
+                _Thread->set_progress((float)(++current) / (float)total);
 
-                status->push_message(
+                _Thread->push_message(
                     fmt::format("already loaded font {}\n", 
                     Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
                 ));
@@ -192,9 +189,9 @@ void Fonts::load_fonts(
 
             if(!std::filesystem::exists(path))
             {
-                progress->set_progress((float)(++current) / (float)total);
+                _Thread->set_progress((float)(++current) / (float)total);
 
-                status->push_message(
+                _Thread->push_message(
                     fmt::format("font at following path does not exist: {}\n", 
                     Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
                 ));
@@ -218,8 +215,8 @@ void Fonts::load_fonts(
             {
             }
 
-            progress->set_progress((float)(++current) / (float)total);
-            status->push_message("font loading succeded...\n");
+            _Thread->set_progress((float)(++current) / (float)total);
+            _Thread->push_message("font loading succeded...\n");
 
             // add to cache
             fonts.insert(path);
@@ -261,9 +258,8 @@ void Fonts::load_fonts(
                             }
                         }
                     }
-                    catch(const std::exception& e)
+                    catch(...)
                     {
-                        Frenchie::Core::Logger::instance()->critical(e.what());
                     }
 
                     m_Paths = loadFontsLambda(_Thread, paths);
@@ -291,7 +287,7 @@ void Fonts::load_fonts(
         );
 }
 
-Frenchie::Core::Reference<Fonts> Fonts::instance()
+Frenchie::Core::Reference<Frenchie::Application::Configuration::Fonts> Frenchie::Application::Configuration::fonts()
 {
     auto layer = Frenchie::Application::application()->find_layer<Fonts>();
 
