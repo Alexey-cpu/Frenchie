@@ -119,9 +119,11 @@ namespace Frenchie
             }
 
             template<typename Type, typename ... Arguments>
-            Frenchie::Core::Reference<Type> attach_component(Arguments ... _Args)
+            Frenchie::Core::Reference<Type> attach_component(Arguments ... _Args) const
             {
-                return std::make_shared<Type>(_Args...);
+                auto component = std::make_shared<Type>(_Args...);
+                m_Components.push_back(component);
+                return component;
             }
 
             template<typename Type>
@@ -140,14 +142,14 @@ namespace Frenchie
 
             friend class ThreadQueue;
 
-            std::list<std::shared_ptr<ThreadComponent>> m_Components;
+            mutable std::list<std::shared_ptr<ThreadComponent>> m_Components;
 
             // info
-            std::string                 m_Name     = STRINGIFY(Thread);
-            mutable bool                m_Paused   = false;
-            mutable bool                m_Finished = false;
-            mutable bool                m_Stopped  = false;
-            mutable bool                m_Failed   = false;
+            std::string  m_Name     = STRINGIFY(Thread);
+            mutable bool m_Paused   = false;
+            mutable bool m_Finished = false;
+            mutable bool m_Stopped  = false;
+            mutable bool m_Failed   = false;
 
             std::function<void(const Thread*)> m_Worker;
             std::function<void(const Thread*)> m_OnFinished;
@@ -171,7 +173,10 @@ namespace Frenchie
             virtual void finish();
             virtual bool allows_multiple_instances() const;
 
-            Frenchie::Core::Reference<Thread> push(std::function<void(const Thread*)> _Worker, const std::string& _Name = std::string());
+            virtual Frenchie::Core::Reference<Thread> push(
+                std::function<void(const Thread*)> _Worker,
+                const std::string&                 _Name = std::string());
+            
             std::list<std::shared_ptr<Thread>>::const_iterator begin() const;
             std::list<std::shared_ptr<Thread>>::const_iterator end() const;
             bool empty() const;

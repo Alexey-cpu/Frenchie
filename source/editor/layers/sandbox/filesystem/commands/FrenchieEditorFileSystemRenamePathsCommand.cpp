@@ -6,7 +6,7 @@
 #include <FrenchieCoreStringUtilities.hpp>
 
 // Application
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>

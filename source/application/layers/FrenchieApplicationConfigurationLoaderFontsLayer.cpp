@@ -1,4 +1,4 @@
-#include <FrenchieApplicationConfigurationLoaderFonts.hpp>
+#include <FrenchieApplicationConfigurationLoaderFontsLayer.hpp>
 
 // Core
 #include <FrenchieCoreStringUnicode.hpp>
@@ -114,14 +114,6 @@ bool Fonts::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
 {
     auto main = _Parent.find_node("Fonts");
 
-    // size
-    {
-        auto node = main.find_node("Size");
-
-        if(node.is_valid()) 
-            ImGui::GetStyle().FontSizeBase = node.get_value_as<float>();
-    }
-
     // load fonts
     {
         auto fonts = main.find_node("Fonts");
@@ -135,7 +127,15 @@ bool Fonts::deserialize(const Frenchie::Core::Serialization::Node& _Parent)
         }
 
         // try to load from paths
-        load_fonts(m_Paths);
+        load_fonts(m_Paths, std::string(main.find_node("Font").get_value()));
+    }
+
+    // setup font size
+    {
+        auto node = main.find_node("Size");
+
+        if(node.is_valid()) 
+            ImGui::GetStyle().FontSizeBase = node.get_value_as<float>();
     }
 
     return true;
@@ -154,16 +154,15 @@ void Fonts::load_fonts(
         if(_Fonts.empty())
             return std::set<std::filesystem::path>();
 
-        auto progress = _Thread->find_component<Frenchie::Application::ThreadProgressComponent>();
-        auto status   = _Thread->find_component<Frenchie::Application::ThreadStatusComponent>();
+        auto progress = _Thread->attach_component<Frenchie::Application::ThreadProgressComponent>();
+        auto status   = _Thread->attach_component<Frenchie::Application::ThreadStatusComponent>();
 
         // go on...
         std::set<std::filesystem::path> fonts;
         auto total   = _Fonts.size();
         auto current = 0;
 
-        if(status != nullptr) 
-            status->push_message("Loading started...\n");
+        status->push_message("Loading started...\n");
 
         for(auto&& path : _Fonts)
         {
@@ -174,18 +173,14 @@ void Fonts::load_fonts(
             if(_Thread->stopped()) 
                 return fonts;
 
-            if(status != nullptr) 
-            {
-                status->push_message(
-                    fmt::format("Trying to load font {}\n", 
-                    Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
-                ));
-            }
+            status->push_message(
+                fmt::format("Trying to load font {}\n", 
+                Frenchie::Core::String::convert_utf32_to_utf8(path.u32string())
+            ));
 
             if(fonts.find(path) != fonts.end())
             {
-                if(progress != nullptr)
-                    progress->set_progress((float)(++current) / (float)total);
+                progress->set_progress((float)(++current) / (float)total);
 
                 status->push_message(
                     fmt::format("already loaded font {}\n", 
@@ -197,8 +192,7 @@ void Fonts::load_fonts(
 
             if(!std::filesystem::exists(path))
             {
-                if(progress != nullptr)
-                    progress->set_progress((float)(++current) / (float)total);
+                progress->set_progress((float)(++current) / (float)total);
 
                 status->push_message(
                     fmt::format("font at following path does not exist: {}\n", 
@@ -224,11 +218,8 @@ void Fonts::load_fonts(
             {
             }
 
-            if(progress != nullptr)
-                progress->set_progress((float)(++current) / (float)total);
-
-            if(status != nullptr) 
-                status->push_message("font loading succeded...\n");
+            progress->set_progress((float)(++current) / (float)total);
+            status->push_message("font loading succeded...\n");
 
             // add to cache
             fonts.insert(path);
@@ -239,7 +230,6 @@ void Fonts::load_fonts(
 
     if(!m_ThreadsQueue.instance()->empty()) 
     {
-        // TODO: add log here...
         return;
     }
 
@@ -284,16 +274,21 @@ void Fonts::load_fonts(
 
         // what we do on finish
         loadFontsThread->on_finished(
-            [this, _Fonts](const Frenchie::Application::Thread*)
+            [this, _Fonts, _Font](const Frenchie::Application::Thread*)
             {
                 // build fonts and reload app
                 ImGui::GetIO().Fonts->Build();
-                Frenchie::Application::application()->reload();
+                Frenchie::Application::interface()->reload();
+
+                for(ImFont* font : ImGui::GetIO().Fonts->Fonts)
+                {
+                    if(std::string(font->GetDebugName()) == _Font)
+                    {
+                        ImGui::GetIO().FontDefault = font;
+                    }
+                }
             }
         );
-
-        loadFontsThread->attach_component<Frenchie::Application::ThreadProgressComponent>();
-        loadFontsThread->attach_component<Frenchie::Application::ThreadStatusComponent>();
 }
 
 Frenchie::Core::Reference<Fonts> Fonts::instance()

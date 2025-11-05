@@ -6,7 +6,7 @@
 
 // Application
 #include <FrenchieApplicationCommandsLayer.hpp>
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 // Editor
 #include <FrenchieEditorFileSystemExplorerDialog.hpp>
@@ -655,7 +655,7 @@ void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
                         ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 
                     ImGui::GetIO().Fonts->Build();
-                    Frenchie::Application::application()->reload();
+                    Frenchie::Application::interface()->reload();
 
                     // load font glyphs codepoints
                     m_FontInfo.Codes = Tools::font_hardcoder_retrieve_codepoints(m_TTF);

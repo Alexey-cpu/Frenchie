@@ -111,8 +111,7 @@ std::set<std::filesystem::path> Launcher::get_app_data_directories()
 int Launcher::execute()
 {
     // create and configure application
-    Frenchie::Application::application()->set_window_size(glm::vec2(2048, 1024));
-    Frenchie::Application::application()->set_maximized(true);
+    Frenchie::Application::platform()->set_maximized(true);
 
     // create app state directories
     auto appDataDirectories = get_app_data_directories();
@@ -202,7 +201,6 @@ int Launcher::execute()
     {
         Frenchie::Core::Logger::instance()->info(creator.first);
     }
-    
 
     // setup main menu
     Frenchie::Application::application()->push_layer<Frenchie::Editor::MainMenu::Instance>();
@@ -215,8 +213,6 @@ int Launcher::execute()
     // log
     Frenchie::Core::Logger::instance()->info(fmt::format("App .exe file directory: {}", Frenchie::Core::String::convert_utf32_to_utf8(get_app_exe_directory().u32string())));
     Frenchie::Core::Logger::instance()->info(fmt::format("App .xml state directory: {}", Frenchie::Core::String::convert_utf32_to_utf8(get_app_state_directory().u32string())));
-    // execute app and wait until it finishes it's job
-    auto execution = Frenchie::Application::application()->execute();
 
-    return 1;
+    return Frenchie::Application::application()->execute();
 }

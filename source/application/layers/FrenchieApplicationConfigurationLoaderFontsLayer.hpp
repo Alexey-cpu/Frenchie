@@ -23,7 +23,6 @@ namespace Frenchie
                 Fonts();
                 virtual ~Fonts();
 
-
                 // getters
                 std::filesystem::path get_app_fonts_files_directory() const;
 

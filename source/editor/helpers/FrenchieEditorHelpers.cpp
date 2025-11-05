@@ -5,7 +5,7 @@
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 using namespace Frenchie::Application;
 using namespace Frenchie::Application::Configuration;

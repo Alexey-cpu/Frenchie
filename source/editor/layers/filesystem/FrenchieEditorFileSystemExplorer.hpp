@@ -10,7 +10,7 @@
 #include <FrenchieApplication.hpp>
 
 // Editor
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 // IMGUI
 #include <imgui.h>

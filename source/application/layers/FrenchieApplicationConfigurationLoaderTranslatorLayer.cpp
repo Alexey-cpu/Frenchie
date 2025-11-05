@@ -1,4 +1,4 @@
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 // Core
 #include <FrenchieCoreThreadPool.hpp>
@@ -92,7 +92,6 @@ void Language::setup()
 
     if(!m_Owner->m_ThreadsQueue.instance()->empty()) 
     {
-        // TODO: add log here...
         return;
     }
 
@@ -104,8 +103,8 @@ void Language::setup()
     auto loadTranslationFile = m_Owner->m_ThreadsQueue.instance()->push(
         [this](const Frenchie::Application::Thread* _Thread)
         {
-            auto progress = _Thread->find_component<Frenchie::Application::ThreadProgressComponent>();
-            auto status   = _Thread->find_component<Frenchie::Application::ThreadStatusComponent>();
+            auto progress = _Thread->attach_component<Frenchie::Application::ThreadProgressComponent>();
+            auto status   = _Thread->attach_component<Frenchie::Application::ThreadStatusComponent>();
 
             if(!std::filesystem::exists(m_Path)       || 
                 std::filesystem::is_directory(m_Path) || 
@@ -115,17 +114,14 @@ void Language::setup()
             }
 
             // load XLIFF
-            if(status != nullptr)
-                status->push_message(fmt::format("Trying to load: {}\n", m_Path.string()));
+            status->push_message(fmt::format("Trying to load: {}\n", m_Path.string()));
 
             // load translations from .xlf file
             Frenchie::Core::Serialization::Document document;
 
             if(!document.read<Frenchie::Core::Serialization::XMLReader>(m_Path)) 
             {
-                if(status != nullptr)
-                    status->push_message("Could not load...\n");
-
+                status->push_message("Could not load...\n");
                 return;
             }
 
@@ -147,28 +143,19 @@ void Language::setup()
                     }
                 );
 
-                if(progress != nullptr) 
-                    progress->set_progress((float)(++current) / (float)(total));
+                progress->set_progress((float)(++current) / (float)(total));
             }
 
             // update progress
-            if(status != nullptr)
-                status->push_message("Success...\n");
-
-            // update progress
-            if(status != nullptr)
-                status->push_message("Completed...\n");
+            status->push_message("Success...\n");
+            progress->set_progress((float)(++current) / (float)(total));
 
             // setup translation file
             m_TranslationFile = translationFile;
         }
     );
 
-    loadTranslationFile->on_finished(
-        [this](const Frenchie::Application::Thread*){m_Current = true;});
-
-    loadTranslationFile->attach_component<Frenchie::Application::ThreadProgressComponent>();
-    loadTranslationFile->attach_component<Frenchie::Application::ThreadStatusComponent>();
+    loadTranslationFile->on_finished([this](const Frenchie::Application::Thread*){m_Current = true;});
 }
 
 void Language::save()

@@ -104,8 +104,7 @@ TextDocumentView::~TextDocumentView(){}
 bool TextDocumentView::awake()
 {
     m_CursorFrameCounter = 
-        Frenchie::Application::application()
-            ->push_layer<Frenchie::Application::FrameCounter>(80);
+        Frenchie::Application::application()->push_layer<FrameCounter>(80);
 
     m_Highlighter = std::make_shared<Frenchie::Editor::RegexTextHighlighter>(
         std::vector<RegexTextHighlighter::HighlightRule>(

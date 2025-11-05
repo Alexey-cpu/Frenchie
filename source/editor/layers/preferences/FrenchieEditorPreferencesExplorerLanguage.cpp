@@ -7,7 +7,7 @@
 #include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
-#include <FrenchieApplicationConfigurationLoaderLanguage.hpp>
+#include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 #include <FrenchieEditorFileSystemExplorerDialog.hpp>
 #include <FrenchieEditorFileSystemExplorerPathScannerDialog.hpp>
 #include <FrenchieApplicationEditorDialog.hpp>
