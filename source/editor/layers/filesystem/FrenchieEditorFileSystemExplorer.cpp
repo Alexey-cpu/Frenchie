@@ -5,7 +5,6 @@
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationEditorDialog.hpp>
 
 // Editor
@@ -80,7 +79,7 @@ namespace Frenchie
                     // API
                     void draw(Explorer* _Explorer)
                     {
-                        Frenchie::Editor::Helpers::draw_menu(
+                        Frenchie::Editor::Helpers::imgui_draw_menu(
                             STRINGIFY(Frenchie::Editor::FileSystem::FolderMenu),
                             {std::make_shared<ExplorerPayload>(_Explorer)});
                     }
@@ -141,7 +140,7 @@ namespace Frenchie
                     // API
                     void draw(Explorer* _Explorer)
                     {
-                        Frenchie::Editor::Helpers::draw_menu(
+                        Frenchie::Editor::Helpers::imgui_draw_menu(
                             STRINGIFY(Frenchie::Editor::FileSystem::FileMenu),
                             {std::make_shared<ExplorerPayload>(_Explorer)});
                     }
@@ -543,7 +542,7 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
         return;
     }
 
-    Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+    Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this, _Path]()
             {
                 try
@@ -817,7 +816,7 @@ void Explorer::handle_current_directory_hot_keys()
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::CommandsQueue::instance()->push(
+        Frenchie::Application::commands()->push(
             FileMenu::CopyAction::factory_id(),
             {std::make_shared<ExplorerPayload>(this)});
     }
@@ -826,7 +825,7 @@ void Explorer::handle_current_directory_hot_keys()
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::CommandsQueue::instance()->push(
+        Frenchie::Application::commands()->push(
             FileMenu::PasteAction::factory_id(),
             {std::make_shared<ExplorerPayload>(this)});
     }
@@ -834,7 +833,7 @@ void Explorer::handle_current_directory_hot_keys()
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
-        Frenchie::Application::CommandsQueue::instance()->push(
+        Frenchie::Application::commands()->push(
             FileMenu::RemoveAction::factory_id(),
             {std::make_shared<ExplorerPayload>(this)});
     }

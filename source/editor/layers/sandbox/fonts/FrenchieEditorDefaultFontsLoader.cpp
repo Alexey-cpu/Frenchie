@@ -8,7 +8,6 @@
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationCommandsLayer.hpp>
 #include <FrenchieApplicationConfigurationLoader.hpp>
 
 #include <FrenchieEditorHelpers.hpp>
