@@ -1,8 +1,7 @@
 #pragma once
 
 // Application
-#include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 // STL
 #include <string>
@@ -22,15 +21,13 @@ namespace Frenchie
         {
             using namespace Frenchie::Application;
 
-            void draw_menu(
-                const std::string&     _MenuPath,
-                const CommandPayloads& _Payload = CommandPayloads());
+            void imgui_draw_menu(const std::string& _MenuPath, const CommandPayloads& _Payloads = CommandPayloads());
 
-            std::string convert_imgui_text_char_to_utf8(unsigned int c);
+            std::string imgui_convert_text_char_to_utf8(const unsigned int&);
 
-            ImU32 calculate_color(const ImVec4& _Vector);
+            ImU32  imgui_calculate_color(const ImVec4&);
 
-            ImVec2 calculate_text_size(const std::string& _Text);
+            ImVec2 imgui_calculate_text_size(const std::string&);
         }
     }
 }

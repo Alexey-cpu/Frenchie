@@ -4,7 +4,7 @@
 #include <FrenchieCoreStringUnicode.hpp>
 
 // Application
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 namespace Frenchie
 {

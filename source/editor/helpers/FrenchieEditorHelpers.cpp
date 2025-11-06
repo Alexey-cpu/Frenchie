@@ -31,7 +31,7 @@ namespace Frenchie
                 if(_Index == _Actions.size() - 1) 
                 {
                     if(ImGui::MenuItem(translator()->translate(_Actions.back()).c_str()))
-                        Frenchie::Application::CommandsQueue::instance()->push(_Path, _Payloads);
+                        Frenchie::Application::commands()->push(_Path, _Payloads);
 
                     return;
                 }
@@ -82,9 +82,7 @@ namespace Frenchie
     }
 }
 
-void Frenchie::Editor::Helpers::draw_menu(
-    const std::string&     _MenuPath,
-    const CommandPayloads& _Payloads)
+void Frenchie::Editor::Helpers::imgui_draw_menu(const std::string& _MenuPath, const CommandPayloads& _Payloads)
 {
     // parse
     struct Data
@@ -121,21 +119,21 @@ void Frenchie::Editor::Helpers::draw_menu(
     }
 }
 
-std::string Frenchie::Editor::Helpers::convert_imgui_text_char_to_utf8(unsigned int c)
+std::string Frenchie::Editor::Helpers::imgui_convert_text_char_to_utf8(const unsigned int& _Unicode)
 {
     char utf8[5];
-    int count   = ImTextCharToUtf8_inline(utf8, 5, c);
+    int count   = ImTextCharToUtf8_inline(utf8, 5, _Unicode);
     utf8[count] = 0;
 
     return std::string(utf8, count);
 }
 
-ImU32 Frenchie::Editor::Helpers::calculate_color(const ImVec4& _Vector)
+ImU32 Frenchie::Editor::Helpers::imgui_calculate_color(const ImVec4& _Vector)
 {
     return IM_COL32(_Vector.x * 255.f, _Vector.y * 255.f, _Vector.z * 255.f, _Vector.w * 255.f);
 }
 
-ImVec2 Frenchie::Editor::Helpers::calculate_text_size(const std::string& _Text)
+ImVec2 Frenchie::Editor::Helpers::imgui_calculate_text_size(const std::string& _Text)
 {
     return ImGui::GetCurrentContext()->Font->CalcTextSizeA(
         ImGui::GetFontSize(), FLT_MAX, 0.f, _Text.c_str(), nullptr, nullptr);

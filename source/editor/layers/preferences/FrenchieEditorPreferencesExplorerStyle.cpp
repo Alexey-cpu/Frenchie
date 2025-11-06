@@ -5,7 +5,6 @@
 
 // Application
 #include <FrenchieApplication.hpp>
-#include <FrenchieApplicationCommandsLayer.hpp>
 
 // Editor
 #include <FrenchieApplicationEditorDialog.hpp>

@@ -178,7 +178,7 @@ bool TextDocumentView::awake()
                 IM_COL32(0, 255, 0, 255),
                 RegexTextHighlighter::HighlightRule::MULTILINE_FINISH)
         }),
-        Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text])
+        Helpers::imgui_calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text])
     );
 
     // m_Highlighter = std::make_shared<Frenchie::Editor::TreeSitterSyntaxHighlighter>(
@@ -219,7 +219,7 @@ void TextDocumentView::frame_update()
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::CURSOR);
 
         ImGui::GetWindowDrawList()->AddText(
-                _Position + ImVec2(2.f, 0.f) - ImVec2(Helpers::calculate_text_size("|").x, 0.f) * 0.5f,
+                _Position + ImVec2(2.f, 0.f) - ImVec2(Helpers::imgui_calculate_text_size("|").x, 0.f) * 0.5f,
                 IM_COL32(0, 255, 0, 255),
                 "|");
     };
@@ -272,7 +272,7 @@ void TextDocumentView::frame_update()
             ImGui::GetWindowDrawList()->AddRectFilled(
                 ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()), 
                 ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX), 
-                Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+                Helpers::imgui_calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
 
             ImVec2 contentSize = ImVec2(
                 m_MaxWidth * ImGui::GetFontSize(), // this is the room for text width, i.e this width if far greater than text itself
@@ -283,7 +283,7 @@ void TextDocumentView::frame_update()
 
             ImGui::BeginChild(
                 "LineNumbers",
-                ImVec2(Helpers::calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetContentRegionAvail().y),
+                ImVec2(Helpers::imgui_calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetContentRegionAvail().y),
                 ImGuiChildFlags_::ImGuiChildFlags_Borders,
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoDocking         |
                 ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar        |
@@ -310,7 +310,7 @@ void TextDocumentView::frame_update()
                 for (int lineIndex = m_Start; lineIndex < m_End; lineIndex++)
                 {
                     auto position = ImVec2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + lineIndex * ImGui::GetFontSize());
-                    auto size     = ImVec2(Helpers::calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetFontSize());
+                    auto size     = ImVec2(Helpers::imgui_calculate_text_size(std::to_string(INT_MAX)).x, ImGui::GetFontSize());
 
                     ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::BACKGROUND);
 
@@ -318,14 +318,14 @@ void TextDocumentView::frame_update()
                         position,
                         position + size,
                         lineIndex % 2 == 0 ?
-                            Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]) :
-                            Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt]));
+                            Helpers::imgui_calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]) :
+                            Helpers::imgui_calculate_color(ImGui::GetStyle().Colors[ImGuiCol_TableRowBgAlt]));
 
                     ImGui::GetWindowDrawList()->ChannelsSetCurrent(Layers::DOCUMENT);
 
                     ImGui::GetWindowDrawList()->AddText(
                         position,
-                        Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
+                        Helpers::imgui_calculate_color(ImGui::GetStyle().Colors[ImGuiCol_Text]),
                         std::to_string(lineIndex).c_str()
                     );
                 }
@@ -359,7 +359,7 @@ void TextDocumentView::frame_update()
                 ImGui::GetWindowDrawList()->AddRectFilled(
                     ImGui::GetCursorScreenPos() - ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()),
                     ImGui::GetCursorScreenPos() + ImVec2((float)INT_MAX, (float)INT_MAX),
-                    Helpers::calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
+                    Helpers::imgui_calculate_color(ImGui::GetStyle().Colors[ImGuiCol_FrameBg]));
 
                 // draw text
                 m_Scroll   = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
@@ -388,7 +388,7 @@ void TextDocumentView::frame_update()
                               it != lineEndIterator && visibleTextWidth < m_ViewPort.GetSize().x;
                               ++it, ++maximumSymbolsCount)
                     {
-                        visibleTextWidth += Helpers::calculate_text_size(
+                        visibleTextWidth += Helpers::imgui_calculate_text_size(
                             Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, *it))).x;
                     }
                     
@@ -415,7 +415,7 @@ void TextDocumentView::frame_update()
                             ImGui::GetWindowDrawList()->AddText(symbolPosition, match.second.Color, symbol.c_str());
 
                             // highlight symbol
-                            ImVec2 symbolSize      = Helpers::calculate_text_size(symbol);
+                            ImVec2 symbolSize      = Helpers::imgui_calculate_text_size(symbol);
                             ImRect symbolRectangle = ImRect(symbolPosition, symbolPosition + symbolSize);
 
                             if(symbolRectangle.Contains(ImGui::GetMousePos()))
@@ -534,7 +534,7 @@ void TextDocumentView::document_erase_symbol_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_TextDocument->erase(std::max<int>(m_Selection.size(), 1));
@@ -548,7 +548,7 @@ void TextDocumentView::document_move_cursor_left_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -562,7 +562,7 @@ void TextDocumentView::document_move_cursor_right_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -576,7 +576,7 @@ void TextDocumentView::document_move_cursor_down_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -590,7 +590,7 @@ void TextDocumentView::document_move_cursor_up_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -604,7 +604,7 @@ void TextDocumentView::document_undo_command()
 {
     if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_Z))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -618,7 +618,7 @@ void TextDocumentView::document_redo_command()
 {
     if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_Y))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -632,7 +632,7 @@ void TextDocumentView::editor_copy_command()
 {
 	if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_C))
 	{
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 if(m_Selection.empty())
@@ -654,7 +654,7 @@ void TextDocumentView::editor_paste_command()
 {
 	if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_V))
 	{
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 std::string clipBoardText =
@@ -671,7 +671,7 @@ void TextDocumentView::editor_clear_selection_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -685,7 +685,7 @@ void TextDocumentView::editor_select_command(const int& _Position)
     if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) &&
         ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
             [this, _Position]()
             {
                 m_Selection.select(_Position);
@@ -697,7 +697,7 @@ void TextDocumentView::editor_select_command(const int& _Position)
 
 void TextDocumentView::on_character_pressed(const unsigned int& _Char)
 {
-    Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+    Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
         [this, _Char]()
         {
             // remove selection
@@ -706,7 +706,7 @@ void TextDocumentView::on_character_pressed(const unsigned int& _Char)
 
             // insert symbol
             m_TextDocument->insert(Frenchie::Core::String::convert_utf8_to_utf32(
-                Helpers::convert_imgui_text_char_to_utf8(_Char)
+                Helpers::imgui_convert_text_char_to_utf8(_Char)
             ));
         }
     );

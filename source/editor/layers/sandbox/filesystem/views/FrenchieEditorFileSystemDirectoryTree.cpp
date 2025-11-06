@@ -6,7 +6,7 @@
 #include <FrenchieCoreStringUtilities.hpp>
 
 // Application
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 // Editor
 #include <FrenchieEditorHelpers.hpp>
@@ -86,7 +86,7 @@ void DirectoryTree::frame_update()
                 // Delete
                 if(ImGui::IsKeyPressed(ImGuiKey_Delete))
                 {
-                    Frenchie::Application::CommandsQueue::instance()->push(
+                    Frenchie::Application::commands()->push(
                         Frenchie::Editor::FileSystem::RemoveFileCommand::factory_id(),
                         {
                             std::make_shared<CommandDataPayload<std::set<std::filesystem::path>>>(m_Selector.get_selected_paths())
@@ -99,7 +99,7 @@ void DirectoryTree::frame_update()
                 // Ctrl + C
                 if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_C))
                 {
-                    Frenchie::Application::CommandsQueue::instance()->push(
+                    Frenchie::Application::commands()->push(
                         Frenchie::Editor::FileSystem::CopyFileCommand::factory_id(),
                         {
                             std::make_shared<CommandDataPayload<std::set<std::filesystem::path>>>(m_Selector.get_selected_paths())
@@ -112,7 +112,7 @@ void DirectoryTree::frame_update()
                 // Ctrl + V
                 if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_V))
                 {
-                    Frenchie::Application::CommandsQueue::instance()->push(
+                    Frenchie::Application::commands()->push(
                         Frenchie::Editor::FileSystem::PastePathsCommand::factory_id(),
                         {
                             std::make_shared<CommandDataPayload<std::filesystem::path>>(m_FocusedPath),
@@ -142,15 +142,41 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
         std::filesystem::is_directory(_Path) &&
         std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied) != std::filesystem::directory_iterator();
 
+    auto position = ImGui::GetCursorScreenPos();
+    auto size     = ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize());
+
     bool opened = ImGui::TreeNodeEx(
             Frenchie::Core::String::convert_utf32_to_utf8(filename.empty() ? U"Root" : filename).c_str(), 
-            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow                                 |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull                               |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_FramePadding                                |
             (!has_children ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf : 0)                  |
-            //(_Path == m_FocusedPath ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Framed : 0)       |
+            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick                           |
             (m_Selector.contains(_Path) || _Path == m_FocusedPath ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected : 0) |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap);
+
+    // iconify
+    auto default_file          = platform()->load_image(std::filesystem::path("C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_file.png"));
+    auto default_folder        = platform()->load_image(std::filesystem::path("C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_folder.png"));
+    auto default_folder_opened = platform()->load_image(std::filesystem::path("C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_folder_opened.png"));
+
+    auto image = default_file;
+
+    if(std::filesystem::is_directory(_Path))
+    {
+        if(opened)
+            image = default_folder_opened;
+        else
+            image = default_folder;
+    }
+
+    ImGui::GetWindowDrawList()->AddImage(
+        image->Sampler2D, 
+        position, 
+        position + size,
+        ImVec2(0, 1),
+        ImVec2(1, 0)
+    );
+    //
 
     if(ImGui::IsItemHovered())
     {
@@ -170,7 +196,7 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
 
     if (ImGui::BeginPopupContextItem())
     {
-        Helpers::draw_menu(
+        Helpers::imgui_draw_menu(
             std::filesystem::is_directory(_Path) ?
                 STRINGIFY(Frenchie::Editor::FileSystem::Menu::Folder) :
                 STRINGIFY(Frenchie::Editor::FileSystem::Menu::File),

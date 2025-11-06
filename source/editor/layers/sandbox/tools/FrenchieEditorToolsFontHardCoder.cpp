@@ -5,7 +5,7 @@
 #include <FrenchieCoreStringUtilities.hpp>
 
 // Application
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplication.hpp>
 #include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
 
 // Editor
@@ -587,7 +587,7 @@ void FontHardCoderTool::frame_update()
                     ImGui::TableSetColumnIndex(2);
                     ImGui::PushFont(m_FontInfo.Font);
                     ImGui::PushID(id++);
-                    ImGui::TextUnformatted(Helpers::convert_imgui_text_char_to_utf8(codePoint.Code).c_str());
+                    ImGui::TextUnformatted(Helpers::imgui_convert_text_char_to_utf8(codePoint.Code).c_str());
                     ImGui::PopFont();
                     ImGui::PopID();
 
@@ -636,7 +636,7 @@ void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
             m_TTF = dialog->get_current_file();
 
             // load font
-            Frenchie::Application::CommandsQueue::instance()->push<CallbackCommand>(
+            Frenchie::Application::commands()->push<CallbackCommand>(
                 [this]()
                 {
                     // remove previous font

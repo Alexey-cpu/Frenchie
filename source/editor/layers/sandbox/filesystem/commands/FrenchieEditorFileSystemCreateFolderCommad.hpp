@@ -1,7 +1,7 @@
 #pragma once
 
 // Application
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 namespace Frenchie
 {

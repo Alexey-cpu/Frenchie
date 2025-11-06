@@ -4,7 +4,7 @@
 #include <FrenchieCoreFileSystem.hpp>
 
 // Application
-#include <FrenchieApplicationCommandsLayer.hpp>
+#include <FrenchieApplication.hpp>
 
 // Editor
 #include <FrenchieApplicationConfigurationLoaderTranslatorLayer.hpp>
@@ -195,7 +195,7 @@ void Languages::frame_update()
                 if(ImGui::Checkbox(supportedLanguage->get_name().c_str(), &selected))
                 {
                     // setup current language
-                    Frenchie::Application::CommandsQueue::instance()
+                    Frenchie::Application::commands()
                         ->push<Frenchie::Application::CallbackCommand>(
                             [this, supportedLanguage]()
                             {
@@ -274,7 +274,7 @@ void Languages::frame_update()
         
         if(ImGui::Button(translator()->translate("Remove all").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage = translator()->get_current_language();
@@ -289,7 +289,7 @@ void Languages::frame_update()
         
         if(ImGui::Button(translator()->translate("Clear all").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage = translator()->get_current_language();
@@ -307,7 +307,7 @@ void Languages::frame_update()
         
         if(ImGui::Button(translator()->translate("Save").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage = 
@@ -325,7 +325,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Add").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     m_NewKeys.push_back(Frenchie::Application::Configuration::TranslationUnit());
@@ -339,7 +339,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Clear all").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     for(auto&& newKey : m_NewKeys)
@@ -354,7 +354,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Remove all").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     m_NewKeys.clear();
@@ -368,7 +368,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Insert in file").c_str()))
         {
-            Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage  = translator()->get_current_language();
@@ -429,7 +429,7 @@ void Languages::frame_update()
                     ImGui::PushID(++id);
                     if(ImGui::Button(translator()->translate("Remove").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
                     {
-                        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+                        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                             [this, newKey]()
                             {
                                 auto iterator = 
@@ -458,21 +458,27 @@ void Languages::frame_update()
 
         ImGui::Checkbox(translator()->translate("Show column filters").c_str(), &m_ShowFilters);
 
-        if(ImGui::BeginTable("TranslationFile", 
-            2,
+        if(ImGui::BeginTable("TranslationFile",
+            3,
             ImGuiTableFlags_::ImGuiTableFlags_ScrollY      | 
             ImGuiTableFlags_::ImGuiTableFlags_RowBg        | 
             ImGuiTableFlags_::ImGuiTableFlags_BordersOuter | 
             ImGuiTableFlags_::ImGuiTableFlags_BordersV     |
             ImGuiTableFlags_::ImGuiTableFlags_Resizable    |
             ImGuiTableFlags_::ImGuiTableFlags_Reorderable  |
-            ImGuiTableFlags_::ImGuiTableFlags_Hideable))
+            ImGuiTableFlags_::ImGuiTableFlags_Hideable
+        )
+    )
         {
             // setup columns
             ImGui::TableSetupColumn(translator()->translate("Key").c_str(), 
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthStretch |
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
             
+            ImGui::TableSetupColumn(translator()->translate("Buttons").c_str(), 
+                ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthFixed |
+                ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
+
             ImGui::TableSetupColumn(translator()->translate("Value").c_str(), 
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_WidthFixed |
                 ImGuiTableColumnFlags_::ImGuiTableColumnFlags_PreferSortAscending);
@@ -490,7 +496,14 @@ void Languages::frame_update()
                 m_KeyFilter.Draw("##", ImGui::GetContentRegionAvail().x);
                 ImGui::PopID();
 
+                ImGui::PushID(++id);
                 ImGui::TableSetColumnIndex(1);
+                auto nonFilterable = translator()->translate("This column can't be filtered...");
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGui::InputText("##", &nonFilterable, ImGuiInputTextFlags_::ImGuiInputTextFlags_ReadOnly);
+                ImGui::PopID();
+
+                ImGui::TableSetColumnIndex(2);
 
                 ImGui::PushID(++id);
                 m_ValueFilter.Draw("##", ImGui::GetContentRegionAvail().x);
@@ -521,28 +534,20 @@ void Languages::frame_update()
 
                     ImGui::TableNextRow();
 
+                    // draw key
                     ImGui::TableSetColumnIndex(0);
-
                     ImGui::PushID(++id);
                     ImGui::TextUnformatted(translation.Key.c_str());
                     ImGui::PopID();
 
+                    // draw buttons
                     ImGui::TableSetColumnIndex(1);
-
-                    ImGui::PushID(++id);
-                    ImGui::InputText("##", &translation.Value);
-                    ImGui::PopID();
-
-                    ImGui::PopStyleColor(4);
-
-                    ImGui::SameLine();
-
                     ImGui::PushID(++id);
                     auto buttonWidth = ImGui::GetContentRegionAvail().x * 0.5f;
 
                     if(ImGui::Button(translator()->translate("Remove").c_str(), ImVec2(buttonWidth, 0.f)))
                     {
-                        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+                        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                             [this, translation]()
                             {
                                 auto currentLanguage = translator()->get_current_language();
@@ -559,7 +564,7 @@ void Languages::frame_update()
                     ImGui::PushID(++id);
                     if(ImGui::Button(translator()->translate("Rename key").c_str(), ImVec2(buttonWidth, 0.f)))
                     {
-                        Frenchie::Application::CommandsQueue::instance()->push<Frenchie::Application::CallbackCommand>(
+                        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
                             [this, translation]()
                             {
                                 Frenchie::Application::application()->push_layer<Frenchie::Editor::Preferences::RenameKeysDialog>(
@@ -570,6 +575,15 @@ void Languages::frame_update()
                         );
                     }
                     ImGui::PopID();
+
+                    // draw value
+                    ImGui::TableSetColumnIndex(2);
+
+                    ImGui::PushID(++id);
+                    ImGui::InputText("##", &translation.Value);
+                    ImGui::PopID();
+
+                    ImGui::PopStyleColor(4);
                 }
             }
 
