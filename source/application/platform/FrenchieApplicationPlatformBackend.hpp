@@ -14,21 +14,37 @@ namespace Frenchie
     {
         enum PlatformBackendContextWindowHints_ : int
         {
-            PlatformBackendContextWindowHint_None,
-            PlatformBackendContextWindowHint_Visible,
-            PlatformBackendContextWindowHint_Decorated,
-            PlatformBackendContextWindowHint_Resizable,
-            PlatformBackendContextWindowHint_Iconified,
-            PlatformBackendContextWindowHint_Focused,
+            // tweaks
+            PlatformBackendContextWindowHints_None,
+            PlatformBackendContextWindowHints_Visible,
+            PlatformBackendContextWindowHints_Decorated,
+            PlatformBackendContextWindowHints_Resizable,
+            PlatformBackendContextWindowHints_Iconified,
+            PlatformBackendContextWindowHints_Focused,
+
+            // defaults
+            PlatformBackendContextWindowHints_Default =
+                PlatformBackendContextWindowHints_Visible   |
+                PlatformBackendContextWindowHints_Decorated |
+                PlatformBackendContextWindowHints_Resizable |
+                PlatformBackendContextWindowHints_Focused
         };
 
         enum PlatformBackendRendererHints_ : int
         {
+            // tweaks
             PlatformBackendRendererHints_None,
             PlatformBackendRendererHints_ClearColorBuffer,
             PlatformBackendRendererHints_ClearDepthBuffer,
             PlatformBackendRendererHints_ClearStencilBuffer,
-            PlatformBackendRendererHints_PollEvents
+            PlatformBackendRendererHints_PollEvents,
+
+            // defaults
+            PlatformBackendRendererHints_Default =
+                PlatformBackendRendererHints_ClearColorBuffer   |
+                PlatformBackendRendererHints_ClearDepthBuffer   |
+                PlatformBackendRendererHints_ClearStencilBuffer |
+                PlatformBackendRendererHints_PollEvents
         };
 
         enum PlatformBackendRendererTextureFormat_ : int
@@ -77,10 +93,11 @@ namespace Frenchie
         typedef int PlatformBackendRendererTextureMaxFilter;
         typedef int PlatformBackendRendererShaderType;
 
-        // forward declaration
-        template<typename Type> class PlatformBackendAllocator;
+        template<typename Type>
+        class PlatformBackendAllocator;
 
-        struct PlatformBackendRendererTexture
+        // enities
+        struct PlatformBackendRendererTexture final
         {
             PlatformBackendRendererTexture(
                 const unsigned int&                            _Ptr,
@@ -98,6 +115,7 @@ namespace Frenchie
                 MinFilter(_MinFilter),
                 MaxFilter(_MaxFilter){}
 
+            // info
             const unsigned int                    Ptr       {+0};
             const int                             Width     {-1};
             const int                             Height    {-1};
@@ -107,7 +125,7 @@ namespace Frenchie
             const PlatformBackendRendererTextureMaxFilter MaxFilter {PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear};
         };
 
-        struct PlatformBackendRendererShader
+        struct PlatformBackendRendererShader final
         {
             PlatformBackendRendererShader(
                 const unsigned int&                      _Ptr,
@@ -115,6 +133,7 @@ namespace Frenchie
                 Ptr(_Ptr),
                 Type(_Type){}
 
+            // info
             const unsigned int                      Ptr {0};
             const PlatformBackendRendererShaderType Type{PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex};
         };
@@ -126,38 +145,25 @@ namespace Frenchie
             virtual ~PlatformBackendInstance();
 
             // getters
-            void*       get_context() const;             // cache
-            const char* get_context_window_name() const; // cache
-
-            // setters
-            void set_context_window_name(const char*);                           // cache
-            void set_context_window_maximized();                                 // cache
-            void set_context_buffer_swap_interval(const int& _Milliseconds = 1); // cache
+            void* get_context() const;
 
             // virtual API
             virtual bool awake(
-                const char*                       _PlatformBackendContextWindowName    = "DefaultPlatformWindow",
-                const int&                        _PlatformBackendContextWindowWidth   = 2048,
-                const int&                        _PlatformBackendContextWindowHeight  = 1024,
-                void*                             _PlatformBackendContextWindowShare   = nullptr,
-                PlatformBackendContextWindowHints _PlatformBackendContextWindowHints   =
-                    PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_None);
+                const char*                       _Name        = "DefaultPlatformWindow",
+                void*                             _Share       = nullptr,
+                PlatformBackendContextWindowHints _WindowHints = PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Default);
 
             virtual void frame_start(
-                    const PlatformBackendRendererHints& _PlatformBackendRendererHints =
-                    PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer   |
-                    PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearDepthBuffer   |
-                    PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearStencilBuffer |
-                    PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents);
+                const PlatformBackendRendererHints& _RendererHints           = PlatformBackendRendererHints_Default,
+                const int                           _FrameBufferSwapInterval = 1);
 
             virtual void frame_update();
             virtual void frame_render();
             virtual void frame_finish();
             virtual void finish();
             virtual void quit();
-
-            bool is_closed() const; // cache
-            void close();           // cache
+            virtual bool is_closed() const;
+            virtual void close();
 
             // loaders
             virtual PlatformBackendRendererTexture* construct_image(

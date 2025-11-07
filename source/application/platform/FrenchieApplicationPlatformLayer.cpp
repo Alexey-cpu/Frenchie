@@ -48,13 +48,11 @@ bool Platform::awake()
 {
     return m_Backend->awake(
         m_Name.c_str(),
-        2048,
-        1024,
         nullptr,
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Visible   |
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Decorated |
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Resizable |
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Focused
+        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Visible   |
+        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Decorated |
+        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Resizable |
+        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Focused
 );;
 }
 
