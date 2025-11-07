@@ -134,16 +134,16 @@ namespace Frenchie
             virtual ~PlatformBackendInstance();
 
             // getters
-            void*       get_context() const;
-            const char* get_context_window_name() const;
+            void*       get_context() const;             // cache
+            const char* get_context_window_name() const; // cache
 
             // setters
-            void set_context_window_name(const char*);
-            void set_context_window_maximized();
-            void set_context_buffer_swap_interval(const int& _Milliseconds = 1);
+            void set_context_window_name(const char*);                           // cache
+            void set_context_window_maximized();                                 // cache
+            void set_context_buffer_swap_interval(const int& _Milliseconds = 1); // cache
 
-            // API
-            bool awake(
+            // virtual API
+            virtual bool awake(
                 const char*                       _PlatformBackendContextWindowName    = "DefaultPlatformWindow",
                 const int&                        _PlatformBackendContextWindowWidth   = 2048,
                 const int&                        _PlatformBackendContextWindowHeight  = 1024,
@@ -151,21 +151,21 @@ namespace Frenchie
                 PlatformBackendContextWindowHints _PlatformBackendContextWindowHints   =
                     PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_None);
 
-            void frame_start(
+            virtual void frame_start(
                     const PlatformBackendRendererHints& _PlatformBackendRendererHints =
                     PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer   |
                     PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearDepthBuffer   |
                     PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearStencilBuffer |
                     PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents);
 
-            void frame_update();
-            void frame_render();
-            void frame_finish();
-            void finish();
-            void quit();
+            virtual void frame_update();
+            virtual void frame_render();
+            virtual void frame_finish();
+            virtual void finish();
+            virtual void quit();
 
-            bool is_closed() const;
-            void close();
+            bool is_closed() const; // cache
+            void close();           // cache
 
             // loaders
             PlatformBackendRendererTexture* construct_image(

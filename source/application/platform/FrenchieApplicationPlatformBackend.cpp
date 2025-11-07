@@ -379,18 +379,28 @@ bool PlatformBackendInstance::awake(
 
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Visible)
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    else
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Decorated)
         glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    else
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Resizable)
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    else
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Iconified)
         glfwWindowHint(GLFW_ICONIFIED, GLFW_TRUE);
+    else
+        glfwWindowHint(GLFW_ICONIFIED, GLFW_FALSE);
 
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Focused)
         glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    else
+        glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
 
     // create context
     m_Context = glfwCreateWindow(
