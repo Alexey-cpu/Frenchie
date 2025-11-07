@@ -6,6 +6,7 @@
 // Application
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationPlatformImage.hpp>
+#include <FrenchieApplicationPlatformBackend.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -45,7 +46,9 @@ namespace Frenchie
             std::shared_ptr<Image> load_image(const std::filesystem::path&);
 
         protected:
-            void* m_Context {nullptr};
+
+            PlatformBackendInstance m_Backend;
+            void*                   m_Context {nullptr};
         };
     }
 }
