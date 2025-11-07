@@ -80,14 +80,6 @@ namespace Frenchie
         // forward declaration
         template<typename Type> class PlatformBackendAllocator;
 
-        struct PlatformBackendContextWindowSettings
-        {
-            const char*                       _ContextWindowName    = "DefaultPlatformWindow";
-            void*                             _ContextWindowShare   = nullptr;
-            PlatformBackendContextWindowHints _PlatformBackendContextWindowHints   =
-                PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_None;
-        };
-
         struct PlatformBackendRendererTexture
         {
             PlatformBackendRendererTexture(
@@ -168,7 +160,7 @@ namespace Frenchie
             void close();           // cache
 
             // loaders
-            PlatformBackendRendererTexture* construct_image(
+            virtual PlatformBackendRendererTexture* construct_image(
                 const unsigned char*                           _RawBuffer,
                 const int&                                     _Width,
                 const int&                                     _Height,
@@ -178,7 +170,7 @@ namespace Frenchie
                 const PlatformBackendRendererTextureMaxFilter& _MaxFilter = PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear
             );
 
-            PlatformBackendRendererTexture* construct_image(
+            virtual PlatformBackendRendererTexture* construct_image(
                 const char*                                    _FilePath,
                 const PlatformBackendRendererTextureFormat&    _Format                = PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA,
                 const PlatformBackendRendererTextureWrap&      _Wrap                  = PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat,
