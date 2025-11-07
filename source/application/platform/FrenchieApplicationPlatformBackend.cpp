@@ -12,9 +12,6 @@ using namespace Frenchie::Application;
 #include <stb_image.h>
 #include <stb_image_write.h>
 
-// STL
-#include <iostream>
-
 namespace Frenchie
 {
     namespace Application
@@ -116,8 +113,6 @@ namespace Frenchie
                     Memory = nullptr;
                     Next   = nullptr;
                     Prev   = nullptr;
-
-                    std::cout << "~PlatformBackendAllocatorMemoryChunk() \n";
                 }
 
                 void* request(uintptr_t _Size) const
@@ -343,27 +338,10 @@ void* PlatformBackendInstance::get_context() const
     return m_Context;
 }
 
-const char* PlatformBackendInstance::get_context_window_name() const
-{
-    return glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context));
-}
-
-void PlatformBackendInstance::set_context_window_name(const char* _Value)
-{
-    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Value);
-}
-
-void PlatformBackendInstance::set_context_buffer_swap_interval(const int& _Milliseconds)
-{
-    glfwSwapInterval(_Milliseconds);
-}
-
 bool PlatformBackendInstance::awake(
-    const char*                       _PlatformBackendContextWindowName,
-    const int&                        _PlatformBackendContextWindowWidth,
-    const int&                        _PlatformBackendContextWindowHeight,
-    void*                             _PlatformBackendContextWindowShare,
-    PlatformBackendContextWindowHints _PlatformBackendContextWindowHints)
+    const char*                       _Name,
+    void*                             _Share,
+    PlatformBackendContextWindowHints _WindowHints)
 {
     // initialization
     if(glfwInit() == GLFW_FALSE)
@@ -377,38 +355,38 @@ bool PlatformBackendInstance::awake(
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Visible)
+    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Visible)
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Decorated)
+    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Decorated)
         glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-    if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Resizable)
+    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Resizable)
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Iconified)
+    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Iconified)
         glfwWindowHint(GLFW_ICONIFIED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_ICONIFIED, GLFW_FALSE);
 
-    if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Focused)
+    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Focused)
         glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
 
     // create context
     m_Context = glfwCreateWindow(
-        _PlatformBackendContextWindowWidth,
-        _PlatformBackendContextWindowHeight,
-        _PlatformBackendContextWindowName,
+        512,
+        256,
+        _Name,
         nullptr,
-        reinterpret_cast<GLFWwindow*>(_PlatformBackendContextWindowShare));
+        reinterpret_cast<GLFWwindow*>(_Share));
 
     if(m_Context == nullptr)
     {
@@ -430,6 +408,9 @@ bool PlatformBackendInstance::awake(
         return false;
     }
 
+    // maximize context window
+    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Context));
+
     // call window maximize callback if the Window has been maximized
     OpenGLPlatformBackendOnWindowMaximizedCallback(
         reinterpret_cast<GLFWwindow*>(m_Context),
@@ -438,7 +419,9 @@ bool PlatformBackendInstance::awake(
     return true;
 }
 
-void PlatformBackendInstance::frame_start(const PlatformBackendRendererHints& _PlatformBackendRendererHints)
+void PlatformBackendInstance::frame_start(
+    const PlatformBackendRendererHints& _PlatformBackendRendererHints,
+    const int                           _FrameBufferSwapInterval)
 {
     if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer))
         glClear(GL_COLOR_BUFFER_BIT);
@@ -451,6 +434,8 @@ void PlatformBackendInstance::frame_start(const PlatformBackendRendererHints& _P
 
     if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents))
         glfwPollEvents();
+
+    glfwSwapInterval(_FrameBufferSwapInterval);
 }
 
 void PlatformBackendInstance::frame_update()
@@ -473,6 +458,7 @@ void PlatformBackendInstance::frame_finish()
 
 void PlatformBackendInstance::finish()
 {
+    // TODO: clean up renderer commands here
 }
 
 void PlatformBackendInstance::quit()
@@ -492,15 +478,10 @@ void PlatformBackendInstance::close()
     glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context), GL_TRUE);
 }
 
-void PlatformBackendInstance::set_context_window_maximized()
-{
-    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Context));
-}
-
 PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
-    const unsigned char*                   _RawBuffer,
-    const int&                             _Width,
-    const int&                             _Height,
+    const unsigned char*                           _RawBuffer,
+    const int&                                     _Width,
+    const int&                                     _Height,
     const PlatformBackendRendererTextureFormat&    _Format,
     const PlatformBackendRendererTextureWrap&      _Wrap,
     const PlatformBackendRendererTextureMinFilter& _MinFilter, 
@@ -508,9 +489,7 @@ PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
 )
 {
     if(_RawBuffer == nullptr)
-    {
         return nullptr;
-    }
 
     // register image within platform specific low level grphics API
     unsigned int sampler;
@@ -544,8 +523,6 @@ PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Nearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Nearest))
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapNearest))
@@ -569,18 +546,8 @@ PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
     else if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA))
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
 
-    // gemerate MimMaps
-    if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapLinear))
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapNearest))
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapLinear))
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapNearest))
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-    {
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
+    // always generate mipmaps as texture can be displayed at size lower than it realy is
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
