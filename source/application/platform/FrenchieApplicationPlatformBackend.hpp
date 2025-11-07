@@ -22,64 +22,82 @@ namespace Frenchie
             PlatformBackendContextWindowHint_Focused,
         };
 
-        enum PlatformBackendTextureFormat_ : int
+        enum PlatformBackendRendererHints_ : int
         {
-            PlatformBackendTextureFormat_ALPHA,
-            PlatformBackendTextureFormat_RGB,
-            PlatformBackendTextureFormat_RGBA,
+            PlatformBackendRendererHints_None,
+            PlatformBackendRendererHints_ClearColorBuffer,
+            PlatformBackendRendererHints_ClearDepthBuffer,
+            PlatformBackendRendererHints_ClearStencilBuffer,
+            PlatformBackendRendererHints_PollEvents
         };
 
-        enum PlatformBackendTextureWrap_ : int
+        enum PlatformBackendRendererTextureFormat_ : int
         {
-            PlatformBackendTextureWrap_Repeat,
-            PlatformBackendTextureWrap_Mirrored,
-            PlatformBackendTextureWrap_ClampToEdge,
-            PlatformBackendTextureWrap_ClampToBorder
+            PlatformBackendRendererTextureFormat_ALPHA,
+            PlatformBackendRendererTextureFormat_RGB,
+            PlatformBackendRendererTextureFormat_RGBA,
         };
 
-        enum PlatformBackendTextureMinFilter_ : int
+        enum PlatformBackendRendererTextureWrap_ : int
         {
-            PlatformBackendTextureMinFilter_Linear,
-            PlatformBackendTextureMinFilter_Nearest,
-            PlatformBackendTextureMinFilter_NearestMipMapLinear,
-            PlatformBackendTextureMinFilter_NearestMipMapNearest,
-            PlatformBackendTextureMinFilter_LinearMipMapLinear,
-            PlatformBackendTextureMinFilter_LinearMipMapNearest,
+            PlatformBackendRendererTextureWrap_Repeat,
+            PlatformBackendRendererTextureWrap_Mirrored,
+            PlatformBackendRendererTextureWrap_ClampToEdge,
+            PlatformBackendRendererTextureWrap_ClampToBorder
         };
 
-        enum PlatformBackendTextureMaxFilter_ : int
+        enum PlatformBackendRendererTextureMinFilter_ : int
         {
-            PlatformBackendTextureMaxFilter_Linear,
-            PlatformBackendTextureMaxFilter_Nearest
+            PlatformBackendRendererTextureMinFilter_Linear,
+            PlatformBackendRendererTextureMinFilter_Nearest,
+            PlatformBackendRendererTextureMinFilter_NearestMipMapLinear,
+            PlatformBackendRendererTextureMinFilter_NearestMipMapNearest,
+            PlatformBackendRendererTextureMinFilter_LinearMipMapLinear,
+            PlatformBackendRendererTextureMinFilter_LinearMipMapNearest,
         };
 
-        enum PlatformBackendShaderType_ : int
+        enum PlatformBackendRendererTextureMaxFilter_ : int
         {
-            PlatformBackendPlatformBackendShaderType_Vertex,
-            PlatformBackendPlatformBackendShaderType_Fragment,
-            PlatformBackendPlatformBackendShaderType_Program
+            PlatformBackendRendererTextureMaxFilter_Linear,
+            PlatformBackendRendererTextureMaxFilter_Nearest
+        };
+
+        enum PlatformBackendRendererShaderType_ : int
+        {
+            PlatformBackendRendererShaderType_Vertex,
+            PlatformBackendRendererShaderType_Fragment,
+            PlatformBackendRendererShaderType_Program
         };
 
         typedef int PlatformBackendContextWindowHints;
-        typedef int PlatformBackendTextureFormat;
-        typedef int PlatformBackendTextureWrap;
-        typedef int PlatformBackendTextureMinFilter;
-        typedef int PlatformBackendTextureMaxFilter;
-        typedef int PlatformBackendShaderType;
+        typedef int PlatformBackendRendererHints;
+        typedef int PlatformBackendRendererTextureFormat;
+        typedef int PlatformBackendRendererTextureWrap;
+        typedef int PlatformBackendRendererTextureMinFilter;
+        typedef int PlatformBackendRendererTextureMaxFilter;
+        typedef int PlatformBackendRendererShaderType;
 
         // forward declaration
         template<typename Type> class PlatformBackendAllocator;
 
-        struct PlatformBackendTexture
+        struct PlatformBackendContextWindowSettings
         {
-            PlatformBackendTexture(
-                const unsigned int&                    _Ptr,
-                const int&                             _Width,
-                const int&                             _Height,
-                const PlatformBackendTextureFormat&    _Format,
-                const PlatformBackendTextureWrap&      _Wrap,
-                const PlatformBackendTextureMinFilter& _MinFilter,
-                const PlatformBackendTextureMaxFilter& _MaxFilter) : 
+            const char*                       _ContextWindowName    = "DefaultPlatformWindow";
+            void*                             _ContextWindowShare   = nullptr;
+            PlatformBackendContextWindowHints _PlatformBackendContextWindowHints   =
+                PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_None;
+        };
+
+        struct PlatformBackendRendererTexture
+        {
+            PlatformBackendRendererTexture(
+                const unsigned int&                            _Ptr,
+                const int&                                     _Width,
+                const int&                                     _Height,
+                const PlatformBackendRendererTextureFormat&    _Format,
+                const PlatformBackendRendererTextureWrap&      _Wrap,
+                const PlatformBackendRendererTextureMinFilter& _MinFilter,
+                const PlatformBackendRendererTextureMaxFilter& _MaxFilter) : 
                 Width(_Width),
                 Height(_Height),
                 Ptr(_Ptr),
@@ -91,22 +109,22 @@ namespace Frenchie
             const unsigned int                    Ptr       {+0};
             const int                             Width     {-1};
             const int                             Height    {-1};
-            const PlatformBackendTextureFormat    Format    {PlatformBackendTextureFormat_::PlatformBackendTextureFormat_RGBA};
-            const PlatformBackendTextureWrap      Wrap      {PlatformBackendTextureWrap_::PlatformBackendTextureWrap_Repeat};
-            const PlatformBackendTextureMinFilter MinFilter {PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_Linear};
-            const PlatformBackendTextureMaxFilter MaxFilter {PlatformBackendTextureMaxFilter_::PlatformBackendTextureMaxFilter_Linear};
+            const PlatformBackendRendererTextureFormat    Format    {PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA};
+            const PlatformBackendRendererTextureWrap      Wrap      {PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat};
+            const PlatformBackendRendererTextureMinFilter MinFilter {PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Linear};
+            const PlatformBackendRendererTextureMaxFilter MaxFilter {PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear};
         };
 
-        struct PlatformBackendShader
+        struct PlatformBackendRendererShader
         {
-            PlatformBackendShader(
-                const unsigned int&              _Ptr,
-                const PlatformBackendShaderType& _Type) :
+            PlatformBackendRendererShader(
+                const unsigned int&                      _Ptr,
+                const PlatformBackendRendererShaderType& _Type) :
                 Ptr(_Ptr),
                 Type(_Type){}
 
-            const unsigned int              Ptr {0};
-            const PlatformBackendShaderType Type{PlatformBackendShaderType_::PlatformBackendPlatformBackendShaderType_Vertex};
+            const unsigned int                      Ptr {0};
+            const PlatformBackendRendererShaderType Type{PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex};
         };
 
         class PlatformBackendInstance
@@ -116,52 +134,66 @@ namespace Frenchie
             virtual ~PlatformBackendInstance();
 
             // getters
-            int get_context_window_width() const;
-            int get_context_window_height() const;
+            void*       get_context() const;
+            const char* get_context_window_name() const;
 
             // setters
-            void set_context_window_width(const int& _Width);
-            void set_context_window_height(const int& _Height);
+            void set_context_window_name(const char*);
+            void set_context_window_maximized();
+            void set_context_buffer_swap_interval(const int& _Milliseconds = 1);
 
             // API
-            bool initialize();
-
-            void setup_context_window_hints(PlatformBackendContextWindowHints _PlatformBackendContextWindowHints);
-
-            bool create_context_window(
+            bool awake(
                 const char*                       _PlatformBackendContextWindowName    = "DefaultPlatformWindow",
                 const int&                        _PlatformBackendContextWindowWidth   = 2048,
                 const int&                        _PlatformBackendContextWindowHeight  = 1024,
                 void*                             _PlatformBackendContextWindowShare   = nullptr,
                 PlatformBackendContextWindowHints _PlatformBackendContextWindowHints   =
                     PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_None);
-            
-            void maximize_context_window();
 
-            void set_buffers_swap_interval(const int& _Milliseconds = 1);
-            void clear_color_buffer();
-            void clear_depth_buffer();
-            void clear_stencil_buffer();
-            void swap_buffers();
-            void destroy_context_window();
+            void frame_start(
+                    const PlatformBackendRendererHints& _PlatformBackendRendererHints =
+                    PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer   |
+                    PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearDepthBuffer   |
+                    PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearStencilBuffer |
+                    PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents);
+
+            void frame_update();
+            void frame_render();
+            void frame_finish();
+            void finish();
+            void quit();
+
+            bool is_closed() const;
+            void close();
 
             // loaders
-            PlatformBackendTexture* construct_image(
-                const char*                            _FilePath,
-                const PlatformBackendTextureFormat&    _Format                  = PlatformBackendTextureFormat_::PlatformBackendTextureFormat_RGBA,
-                const PlatformBackendTextureWrap&      _Wrap                    = PlatformBackendTextureWrap_::PlatformBackendTextureWrap_Repeat,
-                const PlatformBackendTextureMinFilter& _MinFilter               = PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_Linear, 
-                const PlatformBackendTextureMaxFilter& _MaxFilter               = PlatformBackendTextureMaxFilter_::PlatformBackendTextureMaxFilter_Linear,
-                char**                                 _ImageLoadStatusBuffer   = nullptr // null terminated buffer
+            PlatformBackendRendererTexture* construct_image(
+                const unsigned char*                           _RawBuffer,
+                const int&                                     _Width,
+                const int&                                     _Height,
+                const PlatformBackendRendererTextureFormat&    _Format    = PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA,
+                const PlatformBackendRendererTextureWrap&      _Wrap      = PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat,
+                const PlatformBackendRendererTextureMinFilter& _MinFilter = PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Linear, 
+                const PlatformBackendRendererTextureMaxFilter& _MaxFilter = PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear
             );
 
-            void destroy_image(PlatformBackendTexture* _Image);
+            PlatformBackendRendererTexture* construct_image(
+                const char*                                    _FilePath,
+                const PlatformBackendRendererTextureFormat&    _Format                = PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA,
+                const PlatformBackendRendererTextureWrap&      _Wrap                  = PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat,
+                const PlatformBackendRendererTextureMinFilter& _MinFilter             = PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Linear, 
+                const PlatformBackendRendererTextureMaxFilter& _MaxFilter             = PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear,
+                char**                                         _ImageLoadStatusBuffer = nullptr // null terminated buffer
+            );
+
+            void destroy_image(PlatformBackendRendererTexture* _Image);
 
         protected:
 
-            PlatformBackendAllocator<PlatformBackendTexture>* m_Textures{nullptr};
-            PlatformBackendAllocator<PlatformBackendShader>*  m_Shaders {nullptr};
-            void*                                             m_Context {nullptr};
+            PlatformBackendAllocator<PlatformBackendRendererTexture>* m_Textures{nullptr};
+            PlatformBackendAllocator<PlatformBackendRendererShader>*  m_Shaders {nullptr};
+            void*                                                     m_Context {nullptr};
         };
     }
 }

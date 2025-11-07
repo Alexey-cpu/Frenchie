@@ -110,7 +110,7 @@ std::set<std::filesystem::path> Launcher::get_app_data_directories()
 int Launcher::execute()
 {
     // create and configure application
-    Frenchie::Application::platform()->set_maximized(true);
+    Frenchie::Application::platform()->get_backend()->set_context_window_maximized();
 
     // create app state directories
     auto appDataDirectories = get_app_data_directories();

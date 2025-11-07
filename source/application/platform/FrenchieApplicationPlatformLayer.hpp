@@ -25,13 +25,7 @@ namespace Frenchie
             virtual ~Platform();
 
             // getters
-            template<typename Type>
-            Type* get_context() const;
-            glm::u32vec2 get_window_size() const;
-
-            // setters
-            void set_window_size(const glm::u32vec2& _Value);
-            void set_maximized(const bool& _Value);
+            std::unique_ptr<PlatformBackendInstance>& get_backend() const;
 
             virtual bool awake() override;
             virtual void frame_start() override;
@@ -42,13 +36,8 @@ namespace Frenchie
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
 
-            // API
-            std::shared_ptr<Image> load_image(const std::filesystem::path&);
-
         protected:
-
-            PlatformBackendInstance m_Backend;
-            void*                   m_Context {nullptr};
+            mutable std::unique_ptr<PlatformBackendInstance> m_Backend{nullptr};
         };
     }
 }

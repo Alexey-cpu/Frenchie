@@ -48,7 +48,7 @@ bool Interface::awake()
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
-    ImGui_ImplGlfw_InitForOpenGL(Frenchie::Application::platform()->get_context<GLFWwindow>(), true);
+    ImGui_ImplGlfw_InitForOpenGL(reinterpret_cast<GLFWwindow*>(Frenchie::Application::platform()->get_backend()->get_context()), true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     return true;
