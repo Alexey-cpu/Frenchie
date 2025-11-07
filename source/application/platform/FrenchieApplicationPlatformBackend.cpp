@@ -12,6 +12,9 @@ using namespace Frenchie::Application;
 #include <stb_image.h>
 #include <stb_image_write.h>
 
+// STL
+#include <iostream>
+
 namespace Frenchie
 {
     namespace Application
@@ -113,6 +116,8 @@ namespace Frenchie
                     Memory = nullptr;
                     Next   = nullptr;
                     Prev   = nullptr;
+
+                    std::cout << "~PlatformBackendAllocatorMemoryChunk() \n";
                 }
 
                 void* request(uintptr_t _Size) const
@@ -157,7 +162,7 @@ namespace Frenchie
             };
 
             // constructors
-            PlatformBackendAllocator(uintptr_t _ChunkSize) : 
+            PlatformBackendAllocator(uintptr_t _ChunkSize = 16) : 
                 m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)), 
                 m_Head(new PlatformBackendAllocatorMemoryChunk(sizeof(Type), m_ChunkSize)), 
                 m_Tail(m_Head){}
@@ -321,48 +326,46 @@ namespace Frenchie
     }
 }
 
-PlatformBackendInstance::PlatformBackendInstance()
+PlatformBackendInstance::PlatformBackendInstance() :
+    m_Textures(new PlatformBackendAllocator<PlatformBackendRendererTexture>(32)),
+    m_Shaders(new PlatformBackendAllocator<PlatformBackendRendererShader>(32))
 {
-    PlatformBackendAllocator<PlatformBackendTexture>* m_Textures = new PlatformBackendAllocator<PlatformBackendTexture>(32);
-    PlatformBackendAllocator<PlatformBackendShader>*  m_Shaders  = new PlatformBackendAllocator<PlatformBackendShader>(32);
 }
 
-PlatformBackendInstance::~PlatformBackendInstance(){}
-
-int PlatformBackendInstance::get_context_window_width() const
+PlatformBackendInstance::~PlatformBackendInstance()
 {
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &width, &height);
-    return width;
+    delete m_Textures;
+    delete m_Shaders;
 }
 
-int PlatformBackendInstance::get_context_window_height() const
+void* PlatformBackendInstance::get_context() const
 {
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &width, &height);
-    return height;
+    return m_Context;
 }
 
-void PlatformBackendInstance::set_context_window_width(const int& _Width)
+const char* PlatformBackendInstance::get_context_window_name() const
 {
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &width, &height);
-    glfwSetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), _Width, height);
+    return glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context));
 }
 
-void PlatformBackendInstance::set_context_window_height(const int& _Height)
+void PlatformBackendInstance::set_context_window_name(const char* _Value)
 {
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &width, &height);
-    glfwSetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), width, _Height);
+    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Value);
 }
 
-bool PlatformBackendInstance::initialize()
+void PlatformBackendInstance::set_context_buffer_swap_interval(const int& _Milliseconds)
 {
+    glfwSwapInterval(_Milliseconds);
+}
+
+bool PlatformBackendInstance::awake(
+    const char*                       _PlatformBackendContextWindowName,
+    const int&                        _PlatformBackendContextWindowWidth,
+    const int&                        _PlatformBackendContextWindowHeight,
+    void*                             _PlatformBackendContextWindowShare,
+    PlatformBackendContextWindowHints _PlatformBackendContextWindowHints)
+{
+    // initialization
     if(glfwInit() == GLFW_FALSE)
         return false;
 
@@ -374,12 +377,6 @@ bool PlatformBackendInstance::initialize()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    return true;
-}
-
-void PlatformBackendInstance::setup_context_window_hints(PlatformBackendContextWindowHints _PlatformBackendContextWindowHints)
-{
-    // setup backend context window hints
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Visible)
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 
@@ -394,15 +391,7 @@ void PlatformBackendInstance::setup_context_window_hints(PlatformBackendContextW
 
     if(_PlatformBackendContextWindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHint_Focused)
         glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
-}
 
-bool PlatformBackendInstance::create_context_window(
-    const char*                       _PlatformBackendContextWindowName,
-    const int&                        _PlatformBackendContextWindowWidth,
-    const int&                        _PlatformBackendContextWindowHeight,
-    void*                             _PlatformBackendContextWindowShare,
-    PlatformBackendContextWindowHints _PlatformBackendContextWindowHints)
-{
     // create context
     m_Context = glfwCreateWindow(
         _PlatformBackendContextWindowWidth,
@@ -439,140 +428,145 @@ bool PlatformBackendInstance::create_context_window(
     return true;
 }
 
-void PlatformBackendInstance::maximize_context_window()
+void PlatformBackendInstance::frame_start(const PlatformBackendRendererHints& _PlatformBackendRendererHints)
 {
-    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Context));
+    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer))
+        glClear(GL_COLOR_BUFFER_BIT);
+    
+    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearDepthBuffer))
+        glClear(GL_DEPTH_BUFFER_BIT);
+    
+    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearStencilBuffer))
+        glClear(GL_STENCIL_BUFFER_BIT);
+
+    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents))
+        glfwPollEvents();
 }
 
-void PlatformBackendInstance::set_buffers_swap_interval(const int& _Milliseconds)
+void PlatformBackendInstance::frame_update()
 {
-    glfwSwapInterval(_Milliseconds);
+    int display_w = 0;
+    int display_h = 0;
+    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
 }
 
-void PlatformBackendInstance::clear_color_buffer()
+void PlatformBackendInstance::frame_render()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    // TODO: execute rendering commands here
 }
 
-void PlatformBackendInstance::clear_depth_buffer()
-{
-    glClear(GL_DEPTH_BUFFER_BIT);
-}
-
-void PlatformBackendInstance::clear_stencil_buffer()
-{
-    glClear(GL_STENCIL_BUFFER_BIT);
-}
-
-void PlatformBackendInstance::swap_buffers()
+void PlatformBackendInstance::frame_finish()
 {
     glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Context));
 }
 
-void PlatformBackendInstance::destroy_context_window()
+void PlatformBackendInstance::finish()
+{
+}
+
+void PlatformBackendInstance::quit()
 {
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Context));
     glfwTerminate();
     m_Context = nullptr;
 }
 
-PlatformBackendTexture* PlatformBackendInstance::construct_image(
-    const char*                            _FilePath,
-    const PlatformBackendTextureFormat&    _Format,
-    const PlatformBackendTextureWrap&      _Wrap,
-    const PlatformBackendTextureMinFilter& _MinFilter, 
-    const PlatformBackendTextureMaxFilter& _MaxFilter,
-    char**                                 _ImageLoadStatusBuffer
+bool PlatformBackendInstance::is_closed() const
+{
+    return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context));
+}
+
+void PlatformBackendInstance::close()
+{
+    glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context), GL_TRUE);
+}
+
+void PlatformBackendInstance::set_context_window_maximized()
+{
+    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Context));
+}
+
+PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
+    const unsigned char*                   _RawBuffer,
+    const int&                             _Width,
+    const int&                             _Height,
+    const PlatformBackendRendererTextureFormat&    _Format,
+    const PlatformBackendRendererTextureWrap&      _Wrap,
+    const PlatformBackendRendererTextureMinFilter& _MinFilter, 
+    const PlatformBackendRendererTextureMaxFilter& _MaxFilter
 )
 {
-    // auxiliary lambdas
-    auto formatToRequestdChannels = [](PlatformBackendTextureFormat _Format)->int
+    if(_RawBuffer == nullptr)
     {
-        if(_Format & PlatformBackendTextureFormat_::PlatformBackendTextureFormat_RGBA)  return 4;
-        if(_Format & PlatformBackendTextureFormat_::PlatformBackendTextureFormat_RGB)   return 3;
-        if(_Format & PlatformBackendTextureFormat_::PlatformBackendTextureFormat_ALPHA) return 1;
-
-        return 0; // extract everything
-    };
-
-    int          width   {0};
-    int          height  {0};
-    int          channels{0};
-    unsigned int sampler {0};
-
-    stbi_uc* buffer =
-        stbi_load(_FilePath, &width, &height, &channels, formatToRequestdChannels(_Format));
-
-    if(buffer == nullptr)
-    {
-        OpenGLPlatformBackendPushStatusMessage("Could not load message using stbi_load(har const *filename, int *x, int *y, int *comp, int req_comp)", _ImageLoadStatusBuffer);
         return nullptr;
     }
 
     // register image within platform specific low level grphics API
+    unsigned int sampler;
     glGenTextures(1, &sampler);
     glBindTexture(GL_TEXTURE_2D, sampler); 
     
     // set the texture wrapping parameters
-    if((_Wrap & PlatformBackendTextureWrap_::PlatformBackendTextureWrap_Repeat))
+    if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-    else if((_Wrap & PlatformBackendTextureWrap_::PlatformBackendTextureWrap_Mirrored))
+    else if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Mirrored))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     }
-    else if((_Wrap & PlatformBackendTextureWrap_::PlatformBackendTextureWrap_ClampToEdge))
+    else if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_ClampToEdge))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-    else if((_Wrap & PlatformBackendTextureWrap_::PlatformBackendTextureWrap_ClampToBorder))
+    else if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_ClampToBorder))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     }
     
     // set minifying filter
-    if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_Linear))
+    if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Linear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_Nearest))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Nearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_Nearest))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Nearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_LinearMipMapLinear))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_LinearMipMapNearest))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapNearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_NearestMipMapLinear))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_NearestMipMapNearest))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapNearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     
     // set magnifying filter
-    if((_MaxFilter & PlatformBackendTextureMaxFilter_::PlatformBackendTextureMaxFilter_Linear))
+    if((_MaxFilter & PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    else if((_MaxFilter & PlatformBackendTextureMaxFilter_::PlatformBackendTextureMaxFilter_Nearest))
+    else if((_MaxFilter & PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Nearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // set format
-    if((_Format & PlatformBackendTextureFormat_::PlatformBackendTextureFormat_ALPHA))
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, buffer);
-    else if((_Format & PlatformBackendTextureFormat_::PlatformBackendTextureFormat_RGB))
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-    else if((_Format & PlatformBackendTextureFormat_::PlatformBackendTextureFormat_RGBA))
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_ALPHA))
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _Width, _Height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _RawBuffer);
+    else if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGB))
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _Width, _Height, 0, GL_RGB, GL_UNSIGNED_BYTE, _RawBuffer);
+    else if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA))
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
 
     // gemerate MimMaps
-    if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_LinearMipMapLinear))
+    if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_LinearMipMapNearest))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapNearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_NearestMipMapLinear))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendTextureMinFilter_::PlatformBackendTextureMinFilter_NearestMipMapNearest))
+    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapNearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     {
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -582,13 +576,54 @@ PlatformBackendTexture* PlatformBackendInstance::construct_image(
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sampler);
 
-    // free buffer
-    stbi_image_free(buffer);
-
-    return m_Textures->construct(sampler, width, height, _Format, _Wrap, _MinFilter, _MaxFilter);
+    return m_Textures->construct(sampler, _Width, _Height, _Format, _Wrap, _MinFilter, _MaxFilter);
 }
 
-void PlatformBackendInstance::destroy_image(PlatformBackendTexture* _Image)
+PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
+    const char*                            _FilePath,
+    const PlatformBackendRendererTextureFormat&    _Format,
+    const PlatformBackendRendererTextureWrap&      _Wrap,
+    const PlatformBackendRendererTextureMinFilter& _MinFilter, 
+    const PlatformBackendRendererTextureMaxFilter& _MaxFilter,
+    char**                                 _ImageLoadStatusBuffer
+)
+{
+    // auxiliary lambdas
+    auto formatToRequestdChannels = [](PlatformBackendRendererTextureFormat _Format)->int
+    {
+        if(_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA)  return 4;
+        if(_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGB)   return 3;
+        if(_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_ALPHA) return 1;
+
+        return 0; // extract everything by default
+    };
+
+    int width   {0};
+    int height  {0};
+    int channels{0};
+
+    stbi_uc* buffer =
+        stbi_load(_FilePath, &width, &height, &channels, formatToRequestdChannels(_Format));
+
+    if(buffer == nullptr)
+    {
+        OpenGLPlatformBackendPushStatusMessage(
+            "Could not load message using stbi_load(har const *filename, int *x, int *y, int *comp, int req_comp)",
+            _ImageLoadStatusBuffer);
+        return nullptr;
+    }
+
+    // construct image
+    PlatformBackendRendererTexture* image =
+        construct_image(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter);
+
+    // clear raw image buffer
+    stbi_image_free(buffer);
+
+    return image;
+}
+
+void PlatformBackendInstance::destroy_image(PlatformBackendRendererTexture* _Image)
 {
     if(_Image != nullptr)
         m_Textures->destroy(_Image);

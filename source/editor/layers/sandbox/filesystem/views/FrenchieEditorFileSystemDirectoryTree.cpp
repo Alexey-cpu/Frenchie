@@ -68,6 +68,30 @@ DirectoryTree::DirectoryTree(const std::filesystem::path& _Path) :
 
 DirectoryTree::~DirectoryTree(){}
 
+bool DirectoryTree::awake()
+{
+    // iconify
+    default_file = platform()->get_backend()->construct_image(
+        Frenchie::Core::String::convert_utf32_to_utf8(
+            std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_file.png").u32string()
+        ).c_str()
+    );
+    
+    default_folder = platform()->get_backend()->construct_image(
+        Frenchie::Core::String::convert_utf32_to_utf8(
+            std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder.png").u32string()
+        ).c_str()
+    );
+    
+    default_folder_opened = platform()->get_backend()->construct_image(
+        Frenchie::Core::String::convert_utf32_to_utf8(
+            std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder_opened.png").u32string()
+        ).c_str()
+    );
+
+    return true;
+}
+
 void DirectoryTree::frame_update()
 {
     ImGui::Begin(fmt::format("{}###{}",
@@ -147,17 +171,12 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
 
     bool opened = ImGui::TreeNodeEx(
             Frenchie::Core::String::convert_utf32_to_utf8(filename.empty() ? U"Root" : filename).c_str(), 
-            ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull                               |
+            //ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DrawLinesFull                               |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_FramePadding                                |
             (!has_children ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf : 0)                  |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnDoubleClick                           |
             (m_Selector.contains(_Path) || _Path == m_FocusedPath ? ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected : 0) |
             ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_AllowOverlap);
-
-    // iconify
-    auto default_file          = platform()->load_image(std::filesystem::path("C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_file.png"));
-    auto default_folder        = platform()->load_image(std::filesystem::path("C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_folder.png"));
-    auto default_folder_opened = platform()->load_image(std::filesystem::path("C:/Users/User/Desktop/vscode_icons/vscode-icons-master/png/default_folder_opened.png"));
 
     auto image = default_file;
 
@@ -170,11 +189,11 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
     }
 
     ImGui::GetWindowDrawList()->AddImage(
-        image->Sampler2D, 
+        image->Ptr, 
         position, 
         position + size,
-        ImVec2(0, 1),
-        ImVec2(1, 0)
+        ImVec2(1, 0),
+        ImVec2(0, 1)
     );
     //
 

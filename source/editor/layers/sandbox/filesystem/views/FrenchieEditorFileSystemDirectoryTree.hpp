@@ -7,6 +7,8 @@
 // Editor
 #include <FrenchieEditorFileSystemPathSelector.hpp>
 
+#include <FrenchieApplicationPlatformBackend.hpp>
+
 // STL
 #include <filesystem>
 
@@ -46,6 +48,7 @@ namespace Frenchie
                 virtual ~DirectoryTree();
 
                 // Frenchie::Application::Layer
+                virtual bool awake() override;
                 virtual void frame_update() override;
 
             protected:
@@ -59,6 +62,10 @@ namespace Frenchie
                 void drop_paths_to(const std::filesystem::path& _Path);
 
                 void drag_paths();
+
+                Frenchie::Application::PlatformBackendRendererTexture* default_file;
+                Frenchie::Application::PlatformBackendRendererTexture* default_folder;
+                Frenchie::Application::PlatformBackendRendererTexture* default_folder_opened;
             };
         }
     }
