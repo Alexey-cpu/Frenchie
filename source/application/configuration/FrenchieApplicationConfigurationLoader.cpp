@@ -58,11 +58,11 @@ bool ConfigurationLoader::awake()
             continue;
 
         // create new configuration loader by a command
-        Frenchie::Application::commands()->push(creator.first);
+        Frenchie::Application::application_command_queue()->push(creator.first);
     }
 
     // push configuration layers deserialization command
-    Frenchie::Application::commands()->push<CallbackCommand>(
+    Frenchie::Application::application_command_queue()->push<CallbackCommand>(
         [this]()
         {
             Frenchie::Core::Serialization::Document document;

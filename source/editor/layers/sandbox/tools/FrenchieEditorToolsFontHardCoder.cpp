@@ -636,7 +636,7 @@ void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
             m_TTF = dialog->get_current_file();
 
             // load font
-            Frenchie::Application::commands()->push<CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<CallbackCommand>(
                 [this]()
                 {
                     // remove previous font
@@ -655,7 +655,7 @@ void FontHardCoderTool::on_ttf_file_path_search_button_pressed()
                         ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
 
                     ImGui::GetIO().Fonts->Build();
-                    Frenchie::Application::interface()->reload();
+                    Frenchie::Application::application_user_interface()->reload();
 
                     // load font glyphs codepoints
                     m_FontInfo.Codes = Tools::font_hardcoder_retrieve_codepoints(m_TTF);

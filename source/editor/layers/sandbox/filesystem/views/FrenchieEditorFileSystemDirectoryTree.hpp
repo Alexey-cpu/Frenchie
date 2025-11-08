@@ -63,9 +63,9 @@ namespace Frenchie
 
                 void drag_paths();
 
-                Frenchie::Application::PlatformBackendRendererTexture* default_file;
-                Frenchie::Application::PlatformBackendRendererTexture* default_folder;
-                Frenchie::Application::PlatformBackendRendererTexture* default_folder_opened;
+                std::shared_ptr<Frenchie::Application::PlatformBackendRendererTexture> default_file;
+                std::shared_ptr<Frenchie::Application::PlatformBackendRendererTexture> default_folder;
+                std::shared_ptr<Frenchie::Application::PlatformBackendRendererTexture> default_folder_opened;
             };
         }
     }

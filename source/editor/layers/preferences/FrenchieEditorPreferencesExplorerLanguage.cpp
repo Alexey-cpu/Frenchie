@@ -195,7 +195,7 @@ void Languages::frame_update()
                 if(ImGui::Checkbox(supportedLanguage->get_name().c_str(), &selected))
                 {
                     // setup current language
-                    Frenchie::Application::commands()
+                    Frenchie::Application::application_command_queue()
                         ->push<Frenchie::Application::CallbackCommand>(
                             [this, supportedLanguage]()
                             {
@@ -274,7 +274,7 @@ void Languages::frame_update()
         
         if(ImGui::Button(translator()->translate("Remove all").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage = translator()->get_current_language();
@@ -289,7 +289,7 @@ void Languages::frame_update()
         
         if(ImGui::Button(translator()->translate("Clear all").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage = translator()->get_current_language();
@@ -307,7 +307,7 @@ void Languages::frame_update()
         
         if(ImGui::Button(translator()->translate("Save").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage = 
@@ -325,7 +325,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Add").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     m_NewKeys.push_back(Frenchie::Application::Configuration::TranslationUnit());
@@ -339,7 +339,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Clear all").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     for(auto&& newKey : m_NewKeys)
@@ -354,7 +354,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Remove all").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     m_NewKeys.clear();
@@ -368,7 +368,7 @@ void Languages::frame_update()
         ImGui::PushID(++id);
         if(ImGui::Button(translator()->translate("Insert in file").c_str()))
         {
-            Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+            Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                 [this]()
                 {
                     auto currentLanguage  = translator()->get_current_language();
@@ -429,7 +429,7 @@ void Languages::frame_update()
                     ImGui::PushID(++id);
                     if(ImGui::Button(translator()->translate("Remove").c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.f)))
                     {
-                        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+                        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                             [this, newKey]()
                             {
                                 auto iterator = 
@@ -547,7 +547,7 @@ void Languages::frame_update()
 
                     if(ImGui::Button(translator()->translate("Remove").c_str(), ImVec2(buttonWidth, 0.f)))
                     {
-                        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+                        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                             [this, translation]()
                             {
                                 auto currentLanguage = translator()->get_current_language();
@@ -564,7 +564,7 @@ void Languages::frame_update()
                     ImGui::PushID(++id);
                     if(ImGui::Button(translator()->translate("Rename key").c_str(), ImVec2(buttonWidth, 0.f)))
                     {
-                        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+                        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
                             [this, translation]()
                             {
                                 Frenchie::Application::application()->push_layer<Frenchie::Editor::Preferences::RenameKeysDialog>(
