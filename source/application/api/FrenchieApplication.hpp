@@ -9,10 +9,10 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationThreadQueueLayer.hpp>
 #include <FrenchieApplicationCommandQueueLayer.hpp>
 #include <FrenchieApplicationUserInterfaceLayer.hpp>
+#include <FrenchieApplicationPlatformBackendRenderer.hpp>
 
 // STL
 #include <iostream>
