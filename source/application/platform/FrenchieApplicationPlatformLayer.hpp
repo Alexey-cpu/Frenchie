@@ -25,7 +25,7 @@ namespace Frenchie
             virtual ~Platform();
 
             // getters
-            std::unique_ptr<PlatformBackendInstance>& get_backend() const;
+            std::unique_ptr<PlatformBackendRenderer>& get_backend() const;
 
             virtual bool awake() override;
             virtual void frame_start() override;
@@ -37,7 +37,7 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
         protected:
-            mutable std::unique_ptr<PlatformBackendInstance> m_Backend{nullptr};
+            mutable std::unique_ptr<PlatformBackendRenderer> m_Backend{nullptr};
         };
     }
 }
