@@ -35,11 +35,11 @@ namespace Frenchie
 }
 
 Platform::Platform() :
-    m_Backend(std::make_unique<PlatformBackendInstance>()){}
+    m_Backend(std::make_unique<PlatformBackendRenderer>()){}
 
 Platform::~Platform(){}
 
-std::unique_ptr<PlatformBackendInstance>& Platform::get_backend() const
+std::unique_ptr<PlatformBackendRenderer>& Platform::get_backend() const
 {
     return m_Backend;
 }
@@ -49,10 +49,10 @@ bool Platform::awake()
     return m_Backend->awake(
         m_Name.c_str(),
         nullptr,
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Visible   |
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Decorated |
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Resizable |
-        PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Focused
+        PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Visible   |
+        PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Decorated |
+        PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Resizable |
+        PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Focused
 );;
 }
 

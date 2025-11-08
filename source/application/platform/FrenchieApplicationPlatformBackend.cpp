@@ -1,6 +1,7 @@
 #include <FrenchieApplicationPlatformBackend.hpp>
 
-using namespace Frenchie::Application;
+// Core
+#include <FrenchieCoreFileSystem.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -11,6 +12,12 @@ using namespace Frenchie::Application;
 // STB
 #include <stb_image.h>
 #include <stb_image_write.h>
+
+// STL
+#include <fstream>
+
+using namespace Frenchie::Core::FileSystem;
+using namespace Frenchie::Application;
 
 namespace Frenchie
 {
@@ -31,19 +38,19 @@ namespace Frenchie
             glViewport(0, 0, width, height);
         }
 
-        void OpenGLPlatformBackendPushStatusMessage(char*  _Message, char** _ImageLoadStatusBuffer)
-        {
-            if(_ImageLoadStatusBuffer == nullptr)
-                return;
+        // void OpenGLPlatformBackendPushStatusMessage(char*  _Message, char** _ImageLoadStatusBuffer)
+        // {
+        //     if(_ImageLoadStatusBuffer == nullptr)
+        //         return;
 
-            if(strlen(*_ImageLoadStatusBuffer) < strlen(_Message))
-            {
-                *_ImageLoadStatusBuffer = 
-                    (char*)realloc(*_ImageLoadStatusBuffer, 2 * strlen(_Message) * sizeof(char));
-            }
+        //     if(strlen(*_ImageLoadStatusBuffer) < strlen(_Message))
+        //     {
+        //         *_ImageLoadStatusBuffer = 
+        //             (char*)realloc(*_ImageLoadStatusBuffer, 2 * strlen(_Message) * sizeof(char));
+        //     }
 
-            strcpy(*_ImageLoadStatusBuffer, _Message);
-        }
+        //     strcpy(*_ImageLoadStatusBuffer, _Message);
+        // }
 
         // template<typename Head>
         // inline Head __max__(const Head& _A, const Head& _B)
@@ -68,277 +75,27 @@ namespace Frenchie
         // {
         //     return __min__(__min__( _A, _B ), _Args...);
         // }
-
-        template<typename Type>
-        class PlatformBackendAllocator final
-        {
-        public:
-
-            // nested types
-            struct PlatformBackendAllocatorAllocationInfo final
-            {
-                uintptr_t Chunk {0};
-                uintptr_t Amount{0};
-            };
-
-            struct PlatformBackendAllocatorMemoryChunk final
-            {
-                mutable uintptr_t                            ElementSize   = 0;
-                mutable uintptr_t                            ElementsCount = 0;
-                mutable uintptr_t                            Free          = 0;
-                mutable uintptr_t                            Head          = 0;
-                mutable uintptr_t                            Size          = 0;
-                mutable char*                                Memory        = nullptr;
-                mutable PlatformBackendAllocatorMemoryChunk* Next          = nullptr;
-                mutable PlatformBackendAllocatorMemoryChunk* Prev          = nullptr;
-
-                PlatformBackendAllocatorMemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkSize)
-                {
-                    ElementSize   = std::max<uintptr_t>(_ChunkElementSize, 1);
-                    ElementsCount = std::max<uintptr_t>(_ChunkSize, 1);
-                    Free          = (sizeof(PlatformBackendAllocatorAllocationInfo) + ElementSize) * ElementsCount;
-                    Head          = 0;
-                    Size          = Free;
-                    Memory        = reinterpret_cast<char*>(malloc(Size * sizeof(char)));
-                }
-
-                ~PlatformBackendAllocatorMemoryChunk()
-                {
-                    ElementSize   = 0;
-                    ElementsCount = 0;
-                    Free          = 0;
-                    Head          = 0;
-                    Size          = 0;
-                    free(Memory);
-                    Memory = nullptr;
-                    Next   = nullptr;
-                    Prev   = nullptr;
-                }
-
-                void* request(uintptr_t _Size) const
-                {
-                    uintptr_t amount = sizeof(PlatformBackendAllocatorAllocationInfo) + std::max<uintptr_t>(_Size, 1) * ElementSize;
-
-                    if(Head + amount > Size) 
-                        return nullptr; // out-of memory
-                    
-                    char* buffer         = Memory + Head + sizeof(PlatformBackendAllocatorAllocationInfo);
-                    PlatformBackendAllocatorAllocationInfo* info = reinterpret_cast<PlatformBackendAllocatorAllocationInfo*>(buffer - sizeof(PlatformBackendAllocatorAllocationInfo));
-                    info->Chunk          = reinterpret_cast<uintptr_t>(this);
-                    info->Amount         = amount;
-                    Head                += amount;
-                    Free                -= amount;
-
-                    return buffer;
-                }
-
-                PlatformBackendAllocatorAllocationInfo* release(void* _Pointer) const
-                {
-                    if(_Pointer == nullptr)
-                        return nullptr;
-
-                    PlatformBackendAllocatorAllocationInfo* info  = reinterpret_cast<PlatformBackendAllocatorAllocationInfo*>(reinterpret_cast<char*>(_Pointer) - sizeof(PlatformBackendAllocatorAllocationInfo));
-                    PlatformBackendAllocatorMemoryChunk*    chunk = reinterpret_cast<PlatformBackendAllocatorMemoryChunk*>(info->Chunk);
-                    chunk->Free += info->Amount;
-
-                    if(chunk->Free >= chunk->Size)
-                    {
-                        chunk->Head = 0;
-                        chunk->Free = chunk->Size;
-                    }
-
-                    return info;
-                }
-
-                bool PlatformBackendAllocatorMemoryChunk::is_free() const
-                {
-                    return Free >= Size;
-                }
-            };
-
-            // constructors
-            PlatformBackendAllocator(uintptr_t _ChunkSize = 16) : 
-                m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)), 
-                m_Head(new PlatformBackendAllocatorMemoryChunk(sizeof(Type), m_ChunkSize)), 
-                m_Tail(m_Head){}
-
-            ~PlatformBackendAllocator()
-            {
-                release();
-            }
-
-            Type* allocate(uintptr_t _Size) const
-            {
-                // create chunks list
-                if(m_Head == nullptr && m_Tail == nullptr)
-                {
-                    m_Head = new PlatformBackendAllocatorMemoryChunk(sizeof(Type), m_ChunkSize);
-                    m_Tail= m_Head;
-                }
-
-                // allocate buffer
-                auto buffer = m_Head->request(_Size);
-
-                if(buffer != nullptr) 
-                    return reinterpret_cast<Type*>(buffer);
-
-                m_ChunkSize = std::max<uintptr_t>(m_ChunkSize, _Size);
-
-                PlatformBackendAllocatorMemoryChunk* chunk  = new PlatformBackendAllocatorMemoryChunk(sizeof(Type), m_ChunkSize);
-                chunk->Next = nullptr;
-                chunk->Prev = m_Head;
-
-                m_Head->Next = chunk;
-                m_Head = chunk;
-
-                return reinterpret_cast<Type*>(m_Head->request(_Size));
-            }
-
-            void  deallocate(Type* _Pointer) const
-            {
-                if(m_Head == nullptr && m_Tail == nullptr) 
-                    return;
-
-                // clear pointer and retrieve allocation info
-                auto info  = PlatformBackendAllocatorMemoryChunk::release(_Pointer);
-                auto chunk = info != nullptr ? reinterpret_cast<PlatformBackendAllocatorMemoryChunk*>(info->Chunk) : nullptr;
-
-                // check that this is the first chunk
-                if(chunk == nullptr || 
-                    (chunk->Prev == nullptr && chunk->Next == nullptr) || !chunk->is_free()) 
-                {
-                    return;
-                }
-
-                // update chunk links
-                if(chunk->Prev != nullptr)
-                {
-                    chunk->Prev->Next = chunk->Next;
-                }
-                else
-                {
-                    // update tail
-                    m_Tail = chunk->Next;
-                }
-                
-                if(chunk->Next != nullptr)
-                {
-                    chunk->Next->Prev = chunk->Prev;
-                }
-                else 
-                {
-                    // update head
-                    m_Head = chunk->Prev;
-                }
-
-                // remove chunk
-                delete chunk;
-            }
-
-            void release() const
-            {
-                auto next = m_Tail;
-
-                while (next)
-                {
-                    auto current = next;
-                    next = next->Next;
-                    delete current;
-                }
-
-                // clean up tail
-                m_Tail = nullptr;
-                m_Head = nullptr;
-            }
-
-            template<typename ... Args>
-            Type* construct(Args ... _Args) const
-            {
-                Type* memory = allocate(1);
-                return new(memory) Type(_Args...);
-            }
-
-            void destroy(Type* _Object) const
-            {
-                if(_Object == nullptr)
-                    return;
-
-                _Object->~Type();
-                free(_Object);
-            }
-
-            uintptr_t get_total_memory_size() const
-            {
-                uintptr_t freeMemory = 0;
-
-                auto next = m_Tail;
-
-                while (next)
-                {
-                    freeMemory  += next->Size;
-                    next = next->Next;
-                }
-
-                return freeMemory;
-            }
-
-            uintptr_t get_free_memory_amount() const
-            {
-                uintptr_t freeMemory = 0;
-
-                auto next = m_Tail;
-
-                while (next)
-                {
-                    freeMemory  += next->Free;
-                    next = next->Next;
-                }
-
-                return freeMemory;
-            }
-
-            uintptr_t get_busy_memory_amount() const
-            {
-                uintptr_t freeMemory = 0;
-
-                auto next = m_Tail;
-
-                while (next)
-                {
-                    freeMemory += next->Head;
-                    next = next->Next;
-                }
-
-                return freeMemory;
-            }
-
-        private:
-            
-            mutable  uintptr_t                            m_ChunkSize = 1024;
-            mutable  PlatformBackendAllocatorMemoryChunk* m_Head      = nullptr;
-            mutable  PlatformBackendAllocatorMemoryChunk* m_Tail      = nullptr;
-        };
     }
 }
 
-PlatformBackendInstance::PlatformBackendInstance() :
-    m_Textures(new PlatformBackendAllocator<PlatformBackendRendererTexture>(32)),
-    m_Shaders(new PlatformBackendAllocator<PlatformBackendRendererShader>(32))
+PlatformBackendRenderer::PlatformBackendRenderer() :
+    m_Textures(new PlatformBackendRendererAllocator<PlatformBackendRendererTexture>(32)),
+    m_Shaders(new PlatformBackendRendererAllocator<PlatformBackendRendererShader>(32))
 {
 }
 
-PlatformBackendInstance::~PlatformBackendInstance()
+PlatformBackendRenderer::~PlatformBackendRenderer()
 {
     delete m_Textures;
     delete m_Shaders;
 }
 
-void* PlatformBackendInstance::get_context() const
+void* PlatformBackendRenderer::get_context() const
 {
     return m_Context;
 }
 
-bool PlatformBackendInstance::awake(
+bool PlatformBackendRenderer::awake(
     const char*                       _Name,
     void*                             _Share,
     PlatformBackendContextWindowHints _WindowHints)
@@ -355,27 +112,27 @@ bool PlatformBackendInstance::awake(
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Visible)
+    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Visible)
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Decorated)
+    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Decorated)
         glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Resizable)
+    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Resizable)
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Iconified)
+    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Iconified)
         glfwWindowHint(GLFW_ICONIFIED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_ICONIFIED, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendContextWindowHints_::PlatformBackendContextWindowHints_Focused)
+    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Focused)
         glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
@@ -419,9 +176,7 @@ bool PlatformBackendInstance::awake(
     return true;
 }
 
-void PlatformBackendInstance::frame_start(
-    const PlatformBackendRendererHints& _PlatformBackendRendererHints,
-    const int                           _FrameBufferSwapInterval)
+void PlatformBackendRenderer::frame_start(const PlatformBackendRendererHints& _PlatformBackendRendererHints)
 {
     if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer))
         glClear(GL_COLOR_BUFFER_BIT);
@@ -435,10 +190,10 @@ void PlatformBackendInstance::frame_start(
     if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents))
         glfwPollEvents();
 
-    glfwSwapInterval(_FrameBufferSwapInterval);
+    glfwSwapInterval(1);
 }
 
-void PlatformBackendInstance::frame_update()
+void PlatformBackendRenderer::frame_update()
 {
     int display_w = 0;
     int display_h = 0;
@@ -446,39 +201,39 @@ void PlatformBackendInstance::frame_update()
     glViewport(0, 0, display_w, display_h);
 }
 
-void PlatformBackendInstance::frame_render()
+void PlatformBackendRenderer::frame_render()
 {
     // TODO: execute rendering commands here
 }
 
-void PlatformBackendInstance::frame_finish()
+void PlatformBackendRenderer::frame_finish()
 {
     glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Context));
 }
 
-void PlatformBackendInstance::finish()
+void PlatformBackendRenderer::finish()
 {
     // TODO: clean up renderer commands here
 }
 
-void PlatformBackendInstance::quit()
+void PlatformBackendRenderer::quit()
 {
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Context));
     glfwTerminate();
     m_Context = nullptr;
 }
 
-bool PlatformBackendInstance::is_closed() const
+bool PlatformBackendRenderer::is_closed() const
 {
     return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context));
 }
 
-void PlatformBackendInstance::close()
+void PlatformBackendRenderer::close()
 {
     glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context), GL_TRUE);
 }
 
-PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
+PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
     const unsigned char*                           _RawBuffer,
     const int&                                     _Width,
     const int&                                     _Height,
@@ -556,13 +311,12 @@ PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
     return m_Textures->construct(sampler, _Width, _Height, _Format, _Wrap, _MinFilter, _MaxFilter);
 }
 
-PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
-    const char*                            _FilePath,
+PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
+    const char*                                    _FilePath,
     const PlatformBackendRendererTextureFormat&    _Format,
     const PlatformBackendRendererTextureWrap&      _Wrap,
     const PlatformBackendRendererTextureMinFilter& _MinFilter, 
-    const PlatformBackendRendererTextureMaxFilter& _MaxFilter,
-    char**                                 _ImageLoadStatusBuffer
+    const PlatformBackendRendererTextureMaxFilter& _MaxFilter
 )
 {
     // auxiliary lambdas
@@ -584,9 +338,7 @@ PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
 
     if(buffer == nullptr)
     {
-        OpenGLPlatformBackendPushStatusMessage(
-            "Could not load message using stbi_load(har const *filename, int *x, int *y, int *comp, int req_comp)",
-            _ImageLoadStatusBuffer);
+        // TODO: add log here
         return nullptr;
     }
 
@@ -600,49 +352,156 @@ PlatformBackendRendererTexture* PlatformBackendInstance::construct_image(
     return image;
 }
 
-void PlatformBackendInstance::destroy_image(PlatformBackendRendererTexture* _Image)
+void PlatformBackendRenderer::destroy_image(PlatformBackendRendererTexture* _Image)
 {
-    if(_Image != nullptr)
-        m_Textures->destroy(_Image);
+    if(_Image == nullptr)
+        return;
+    
+    // deallocate texture on GPU
+    glDeleteTextures(1, &_Image->Ptr);
+
+    // destroy texture data on CPU
+    m_Textures->destroy(_Image);
 }
 
-// PlatformBackendShader PlatformBackend::load_shader(
-//     const char*                                     _ShaderPath,
-//     const PlatformBackendShaderType& _ShaderType,
-//     char**                                          _CompileStatusBuffer,
-//     const int&                                      _CompileStatusBufferSize)
-// {
-//     FILE *fptr = fopen(_ShaderPath, "rb");
-    
-//     if (fptr == NULL) 
-//     {
-//         return PlatformBackendShader();
-//     }
+PlatformBackendRendererShader* PlatformBackendRenderer::construct_shader(
+const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _ShaderInfos
+)
+{
+    unsigned int shaderProgram = glCreateProgram();
 
-//     fseek(fptr, 0, SEEK_END);
-//     long file_size = ftell(fptr);
-//     fseek(fptr, 0, SEEK_SET);
+    for(auto&& shaderInfo : _ShaderInfos)
+    {
+        auto[shaderSourceCode, shaderType] = shaderInfo;
 
-//     char *buffer = (char *)malloc(file_size + 1); // +1 for null terminator
-//     if (buffer == NULL) 
-//     {
-//         // Handle error: memory allocation failed
-//         fclose(fptr);
-//         return PlatformBackendShader();
-//     }
+        unsigned int shader = 0;
+        if((shaderType & PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex))
+            shader = glCreateShader(GL_VERTEX_SHADER);
+        else if((shaderType & PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Fragment))
+            shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-//     unsigned int bytes_read = fread(buffer, 1, file_size, fptr);
-//     if (bytes_read != file_size) {
-//         // Handle error: not all bytes were read
-//         fprintf(stderr, "Error reading file, expected %ld bytes, read %zu\n", file_size, bytes_read);
-//         free(buffer);
-//         fclose(fptr);
-//         return PlatformBackendShader();
-//     }
-//     buffer[file_size] = '\0'; // Null-terminate the buffer
+        int status = 1;
+        const char* shaderSourceCodePtr = shaderSourceCode.c_str();
+        glShaderSource(shader, 1, &shaderSourceCodePtr, nullptr);
+        glCompileShader(shader);
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-//     fclose(fptr);
-//     free(buffer);
+        if(status)
+        {
+            glAttachShader(shaderProgram, shader);
+        }
+        else
+        {
+            // TODO: add status message generation logic here
+        }
+    }
 
-//     return PlatformBackendShader();
-// }
+    int status = true;
+    glLinkProgram(shaderProgram);
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &status);
+
+    if(!status)
+    {
+        // TODO: add status message generation logic here
+    }
+
+    return status ? m_Shaders->construct(shaderProgram) : nullptr;
+}
+
+PlatformBackendRendererShader* PlatformBackendRenderer::construct_shader(
+    const std::vector<std::filesystem::path>& _ShaderPaths)
+{
+    std::vector<std::pair<
+        std::string,
+        PlatformBackendRendererShaderType>> shaderInfos;
+
+    for(auto&& path : _ShaderPaths)
+    {
+        std::ifstream ifsream(path);
+
+        std::string source = 
+            std::string(
+                (std::istreambuf_iterator<char>(ifsream)), 
+                (std::istreambuf_iterator<char>()));
+
+        auto extention = get_file_extention(path);
+
+        if(extention == ".vert" || extention == ".vsh" || extention == ".vs")
+        {
+            shaderInfos.push_back(
+                {
+                    source,
+                    PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex
+                }
+            );
+        }
+        else if(extention == ".frag" || extention == ".fsh" || extention == ".fs")
+        {
+            shaderInfos.push_back(
+                {
+                    source,
+                    PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex
+                }
+            );
+        }
+    }
+
+    return construct_shader(shaderInfos);
+}
+
+void PlatformBackendRenderer::destroy_shader(PlatformBackendRendererShader* _Shader)
+{
+    if(_Shader == nullptr)
+        return;
+
+    // deallocate texture on GPU
+    glDeleteProgram(_Shader->Ptr);
+
+    // destroy texture data on CPU
+    m_Shaders->destroy(_Shader);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const bool& _Value)
+{
+    glUniform1i(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), (int)_Value);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const int& _Value)
+{
+    glUniform1i(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), _Value);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const float& _Value)
+{
+    glUniform1f(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), _Value);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::vec2& _Value)
+{
+    glUniform2fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::vec3& _Value)
+{
+    glUniform3fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::vec4& _Value)
+{
+    glUniform4fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::mat2& _Value)
+{
+    glUniformMatrix2fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::mat3& _Value)
+{
+    glUniformMatrix3fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
+}
+
+void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::mat4& _Value)
+{
+    glUniformMatrix4fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
+}
