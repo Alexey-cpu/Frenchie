@@ -534,7 +534,7 @@ void TextDocumentView::document_erase_symbol_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Backspace))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_TextDocument->erase(std::max<int>(m_Selection.size(), 1));
@@ -548,7 +548,7 @@ void TextDocumentView::document_move_cursor_left_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_LeftArrow))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -562,7 +562,7 @@ void TextDocumentView::document_move_cursor_right_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_RightArrow))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -576,7 +576,7 @@ void TextDocumentView::document_move_cursor_down_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_DownArrow))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -590,7 +590,7 @@ void TextDocumentView::document_move_cursor_up_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_UpArrow))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -604,7 +604,7 @@ void TextDocumentView::document_undo_command()
 {
     if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_Z))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -618,7 +618,7 @@ void TextDocumentView::document_redo_command()
 {
     if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_Y))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -632,7 +632,7 @@ void TextDocumentView::editor_copy_command()
 {
 	if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_C))
 	{
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 if(m_Selection.empty())
@@ -654,7 +654,7 @@ void TextDocumentView::editor_paste_command()
 {
 	if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_V))
 	{
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 std::string clipBoardText =
@@ -671,7 +671,7 @@ void TextDocumentView::editor_clear_selection_command()
 {
     if(ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this]()
             {
                 m_Selection.clear();
@@ -685,7 +685,7 @@ void TextDocumentView::editor_select_command(const int& _Position)
     if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) &&
         ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
-        Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+        Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this, _Position]()
             {
                 m_Selection.select(_Position);
@@ -697,7 +697,7 @@ void TextDocumentView::editor_select_command(const int& _Position)
 
 void TextDocumentView::on_character_pressed(const unsigned int& _Char)
 {
-    Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+    Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
         [this, _Char]()
         {
             // remove selection

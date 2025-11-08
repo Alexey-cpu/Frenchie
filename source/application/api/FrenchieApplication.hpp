@@ -9,8 +9,7 @@
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationPlatformLayer.hpp>
-#include <FrenchieApplicationRendererLayer.hpp>
+#include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationThreadQueueLayer.hpp>
 #include <FrenchieApplicationCommandQueueLayer.hpp>
 #include <FrenchieApplicationUserInterfaceLayer.hpp>
@@ -104,16 +103,19 @@ namespace Frenchie
             typedef std::list<std::shared_ptr<Layer>>::const_iterator const_iterator;
 
         protected:
-            std::list<std::shared_ptr<Layer>> m_Layers =  std::list<std::shared_ptr<Layer>>();
-            std::string                       m_Name   = "Frenchie::Application";
-            bool                              m_Opened = true;
+
+            friend Frenchie::Core::Reference<PlatformBackendRenderer> application_platform_backend_renderer();
+
+            std::list<std::shared_ptr<Layer>>        m_Layers                 {std::list<std::shared_ptr<Layer>>()};
+            std::shared_ptr<PlatformBackendRenderer> m_PlatformBackendRenderer{nullptr};
+            std::string                              m_Name                   {"Frenchie::Application"};
+            bool                                     m_Opened                 {true};
         };
 
-        Frenchie::Application::ApplicationInstance* application();
-        Frenchie::Core::Reference<Platform>         platform();
-        Frenchie::Core::Reference<Renderer>         renderer();
-        Frenchie::Core::Reference<Interface>        interface();
-        Frenchie::Core::Reference<ThreadQueue>      thread_queue();
-        Frenchie::Core::Reference<CommandQueue>     commands();
+        Frenchie::Application::ApplicationInstance*        application();
+        Frenchie::Core::Reference<PlatformBackendRenderer> application_platform_backend_renderer();
+        Frenchie::Core::Reference<Interface>               application_user_interface();
+        Frenchie::Core::Reference<ThreadQueue>             application_thread_queue();
+        Frenchie::Core::Reference<CommandQueue>            application_command_queue();
     };
 };

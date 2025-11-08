@@ -2,6 +2,7 @@
 
 // Core
 #include <FrenchieCoreFileSystem.hpp>
+#include <FrenchieCoreStringUnicode.hpp>
 
 // GLAD
 #include <glad/glad.h> 
@@ -79,15 +80,13 @@ namespace Frenchie
 }
 
 PlatformBackendRenderer::PlatformBackendRenderer() :
-    m_Textures(new PlatformBackendRendererAllocator<PlatformBackendRendererTexture>(32)),
-    m_Shaders(new PlatformBackendRendererAllocator<PlatformBackendRendererShader>(32))
+    m_Textures(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererTexture>>(32)),
+    m_Shaders(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererShader>>(32))
 {
 }
 
 PlatformBackendRenderer::~PlatformBackendRenderer()
 {
-    delete m_Textures;
-    delete m_Shaders;
 }
 
 void* PlatformBackendRenderer::get_context() const
@@ -233,15 +232,14 @@ void PlatformBackendRenderer::close()
     glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context), GL_TRUE);
 }
 
-PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
+std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::construct_image(
     const unsigned char*                           _RawBuffer,
     const int&                                     _Width,
     const int&                                     _Height,
     const PlatformBackendRendererTextureFormat&    _Format,
     const PlatformBackendRendererTextureWrap&      _Wrap,
     const PlatformBackendRendererTextureMinFilter& _MinFilter, 
-    const PlatformBackendRendererTextureMaxFilter& _MaxFilter
-)
+    const PlatformBackendRendererTextureMaxFilter& _MaxFilter) const
 {
     if(_RawBuffer == nullptr)
         return nullptr;
@@ -308,16 +306,28 @@ PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sampler);
 
-    return m_Textures->construct(sampler, _Width, _Height, _Format, _Wrap, _MinFilter, _MaxFilter);
+    return std::shared_ptr<PlatformBackendRendererTexture>(
+        m_Textures->construct(sampler, _Width, _Height, _Format, _Wrap, _MinFilter, _MaxFilter),
+        [this](PlatformBackendRendererTexture* _Image)
+        {
+            if(_Image == nullptr)
+                return;
+            
+            // deallocate texture on GPU
+            glDeleteTextures(1, &_Image->Ptr);
+
+            // destroy texture data on CPU
+            m_Textures->destroy(_Image);
+        }
+    );
 }
 
-PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
-    const char*                                    _FilePath,
+std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::construct_image(
+    const std::filesystem::path&                   _FilePath,
     const PlatformBackendRendererTextureFormat&    _Format,
     const PlatformBackendRendererTextureWrap&      _Wrap,
     const PlatformBackendRendererTextureMinFilter& _MinFilter, 
-    const PlatformBackendRendererTextureMaxFilter& _MaxFilter
-)
+    const PlatformBackendRendererTextureMaxFilter& _MaxFilter) const
 {
     // auxiliary lambdas
     auto formatToRequestdChannels = [](PlatformBackendRendererTextureFormat _Format)->int
@@ -333,8 +343,12 @@ PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
     int height  {0};
     int channels{0};
 
-    stbi_uc* buffer =
-        stbi_load(_FilePath, &width, &height, &channels, formatToRequestdChannels(_Format));
+    stbi_uc* buffer = stbi_load(
+        Frenchie::Core::String::convert_utf32_to_utf8(_FilePath.u32string()).c_str(),
+        &width,
+        &height,
+        &channels,
+        formatToRequestdChannels(_Format));
 
     if(buffer == nullptr)
     {
@@ -343,7 +357,7 @@ PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
     }
 
     // construct image
-    PlatformBackendRendererTexture* image =
+    auto image =
         construct_image(buffer, width, height, _Format, _Wrap, _MinFilter, _MaxFilter);
 
     // clear raw image buffer
@@ -352,21 +366,8 @@ PlatformBackendRendererTexture* PlatformBackendRenderer::construct_image(
     return image;
 }
 
-void PlatformBackendRenderer::destroy_image(PlatformBackendRendererTexture* _Image)
-{
-    if(_Image == nullptr)
-        return;
-    
-    // deallocate texture on GPU
-    glDeleteTextures(1, &_Image->Ptr);
-
-    // destroy texture data on CPU
-    m_Textures->destroy(_Image);
-}
-
-PlatformBackendRendererShader* PlatformBackendRenderer::construct_shader(
-const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _ShaderInfos
-)
+std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construct_shader(
+const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _ShaderInfos) const
 {
     unsigned int shaderProgram = glCreateProgram();
 
@@ -403,13 +404,27 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
     if(!status)
     {
         // TODO: add status message generation logic here
+        return nullptr;
     }
 
-    return status ? m_Shaders->construct(shaderProgram) : nullptr;
+    return std::shared_ptr<PlatformBackendRendererShader>(
+        m_Shaders->construct(shaderProgram),
+        [this](PlatformBackendRendererShader* _Shader)
+        {
+            if(_Shader == nullptr)
+                return;
+
+            // deallocate texture on GPU
+            glDeleteProgram(_Shader->Ptr);
+
+            // destroy texture data on CPU
+            m_Shaders->destroy(_Shader);
+        }
+    );
 }
 
-PlatformBackendRendererShader* PlatformBackendRenderer::construct_shader(
-    const std::vector<std::filesystem::path>& _ShaderPaths)
+std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construct_shader(
+    const std::vector<std::filesystem::path>& _ShaderPaths )const
 {
     std::vector<std::pair<
         std::string,
@@ -447,18 +462,6 @@ PlatformBackendRendererShader* PlatformBackendRenderer::construct_shader(
     }
 
     return construct_shader(shaderInfos);
-}
-
-void PlatformBackendRenderer::destroy_shader(PlatformBackendRendererShader* _Shader)
-{
-    if(_Shader == nullptr)
-        return;
-
-    // deallocate texture on GPU
-    glDeleteProgram(_Shader->Ptr);
-
-    // destroy texture data on CPU
-    m_Shaders->destroy(_Shader);
 }
 
 void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const bool& _Value)

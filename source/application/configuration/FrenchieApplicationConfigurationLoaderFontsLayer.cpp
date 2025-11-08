@@ -224,11 +224,11 @@ void Fonts::load_fonts(
         return fonts;
     };
 
-    if(thread_queue()->contains(FONTS_LOADING_THREAD_NAME))
+    if(application_thread_queue()->contains(FONTS_LOADING_THREAD_NAME))
         return;
 
     // try to load from default paths
-    auto loadFontsThread = thread_queue()->push(
+    auto loadFontsThread = application_thread_queue()->push(
         [loadFontsLambda, _Fonts, _Font, this](const Frenchie::Application::Thread* _Thread)
         {
             // try to load
@@ -271,7 +271,7 @@ void Fonts::load_fonts(
             {
                 // build fonts and reload app
                 ImGui::GetIO().Fonts->Build();
-                Frenchie::Application::interface()->reload();
+                Frenchie::Application::application_user_interface()->reload();
 
                 for(ImFont* font : ImGui::GetIO().Fonts->Fonts)
                 {

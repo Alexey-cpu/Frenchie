@@ -542,7 +542,7 @@ void Explorer::change_current_directory(const std::filesystem::path& _Path)
         return;
     }
 
-    Frenchie::Application::commands()->push<Frenchie::Application::CallbackCommand>(
+    Frenchie::Application::application_command_queue()->push<Frenchie::Application::CallbackCommand>(
             [this, _Path]()
             {
                 try
@@ -816,7 +816,7 @@ void Explorer::handle_current_directory_hot_keys()
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_C) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::commands()->push(
+        Frenchie::Application::application_command_queue()->push(
             FileMenu::CopyAction::factory_id(),
             {std::make_shared<ExplorerPayload>(this)});
     }
@@ -825,7 +825,7 @@ void Explorer::handle_current_directory_hot_keys()
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_V) && 
         (ImGui::IsKeyDown(ImGuiKey::ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey::ImGuiKey_RightCtrl)))
     {            
-        Frenchie::Application::commands()->push(
+        Frenchie::Application::application_command_queue()->push(
             FileMenu::PasteAction::factory_id(),
             {std::make_shared<ExplorerPayload>(this)});
     }
@@ -833,7 +833,7 @@ void Explorer::handle_current_directory_hot_keys()
     // Delete
     if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_Delete))
     {            
-        Frenchie::Application::commands()->push(
+        Frenchie::Application::application_command_queue()->push(
             FileMenu::RemoveAction::factory_id(),
             {std::make_shared<ExplorerPayload>(this)});
     }

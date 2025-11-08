@@ -2,8 +2,10 @@
 
 using namespace Frenchie::Application;
 
-ApplicationInstance::ApplicationInstance()
+ApplicationInstance::ApplicationInstance() :
+    m_PlatformBackendRenderer(std::make_shared<PlatformBackendRenderer>())
 {
+    m_PlatformBackendRenderer->awake();
 }
 
 ApplicationInstance::~ApplicationInstance()
@@ -17,6 +19,8 @@ bool ApplicationInstance::awake()
 
 void ApplicationInstance::ApplicationInstance::frame_start()
 {
+    m_PlatformBackendRenderer->frame_start();
+
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden()) 
@@ -26,6 +30,8 @@ void ApplicationInstance::ApplicationInstance::frame_start()
 
 void ApplicationInstance::ApplicationInstance::frame_update()
 {
+    m_PlatformBackendRenderer->frame_update();
+
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden())
@@ -35,6 +41,8 @@ void ApplicationInstance::ApplicationInstance::frame_update()
 
 void ApplicationInstance::ApplicationInstance::frame_render()
 {
+    m_PlatformBackendRenderer->frame_render();
+
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden())
@@ -49,23 +57,32 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         if(!layer->is_hidden())
             layer->frame_finish();
     }
+
+    m_PlatformBackendRenderer->frame_finish();
 }
 
 void ApplicationInstance::ApplicationInstance::finish()
 {
     for(auto layer : m_Layers)
         layer->finish();
+
+    m_PlatformBackendRenderer->finish();
 }
 
 void ApplicationInstance::ApplicationInstance::quit()
 {
+    // deinitialize all application layers
     for(auto layer : m_Layers) 
     {
         layer->close();
         layer->quit();
     }
 
+    // remove all application layers
     m_Layers.clear();
+
+    // deinitialize backend
+    m_PlatformBackendRenderer->quit();
 }
 
 std::string ApplicationInstance::get_name() const
@@ -80,7 +97,7 @@ void ApplicationInstance::set_name(const std::string& _Name)
 
 bool ApplicationInstance::is_closed()
 {
-    return !m_Opened;
+    return !m_Opened || m_PlatformBackendRenderer->is_closed();
 }
 
 void ApplicationInstance::close()
@@ -90,9 +107,7 @@ void ApplicationInstance::close()
 
 int ApplicationInstance::execute()
 {
-    Frenchie::Application::platform();
-    Frenchie::Application::renderer();
-    Frenchie::Application::interface();
+    Frenchie::Application::application_user_interface();
 
     if(!awake()) 
         return -1;
@@ -146,27 +161,12 @@ Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
     return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
 }
 
-Frenchie::Core::Reference<Platform> Frenchie::Application::platform()
+Frenchie::Core::Reference<PlatformBackendRenderer> Frenchie::Application::application_platform_backend_renderer()
 {
-    auto layer = Frenchie::Application::application()->find_layer<Platform>();
-
-    if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<Platform>();
-
-    return layer;
+    return Frenchie::Application::application()->m_PlatformBackendRenderer;
 }
 
-Frenchie::Core::Reference<Renderer> Frenchie::Application::renderer()
-{
-    auto layer = Frenchie::Application::application()->find_layer<Renderer>();
-
-    if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<Renderer>();
-
-    return layer;
-}
-
-Frenchie::Core::Reference<Interface> Frenchie::Application::interface()
+Frenchie::Core::Reference<Interface> Frenchie::Application::application_user_interface()
 {
     auto layer = Frenchie::Application::application()->find_layer<Interface>();
 
@@ -176,7 +176,7 @@ Frenchie::Core::Reference<Interface> Frenchie::Application::interface()
     return layer;
 }
 
-Frenchie::Core::Reference<ThreadQueue> Frenchie::Application::thread_queue()
+Frenchie::Core::Reference<ThreadQueue> Frenchie::Application::application_thread_queue()
 {
     auto layer = Frenchie::Application::application()->find_layer<ThreadQueue>();
 
@@ -186,7 +186,7 @@ Frenchie::Core::Reference<ThreadQueue> Frenchie::Application::thread_queue()
     return layer;
 }
 
-Frenchie::Core::Reference<CommandQueue> Frenchie::Application::commands()
+Frenchie::Core::Reference<CommandQueue> Frenchie::Application::application_command_queue()
 {
     auto commands = Frenchie::Application::application()->find_layer<CommandQueue>();
     

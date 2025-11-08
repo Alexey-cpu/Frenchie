@@ -89,7 +89,7 @@ void Language::setup()
     if(m_Owner == nullptr) 
         return;
 
-    if(thread_queue()->contains(TRANSLATION_FILE_LOAD_NAME))
+    if(application_thread_queue()->contains(TRANSLATION_FILE_LOAD_NAME))
         return;
 
     // deselect all
@@ -97,7 +97,7 @@ void Language::setup()
         supportedLanguage->m_Current = false;
 
     // load translation file
-    auto loadTranslationFile = thread_queue()->push(
+    auto loadTranslationFile = application_thread_queue()->push(
         [this](const Frenchie::Application::Thread* _Thread)
         {
             if(!std::filesystem::exists(m_Path)       || 
@@ -155,11 +155,11 @@ void Language::setup()
 
 void Language::save()
 {
-    if(thread_queue()->contains(TRANSLATION_FILE_SAVE_NAME))
+    if(application_thread_queue()->contains(TRANSLATION_FILE_SAVE_NAME))
         return;
 
     // save translation file
-    auto saveTranslationFile = thread_queue()->push(
+    auto saveTranslationFile = application_thread_queue()->push(
         [this](const Frenchie::Application::Thread* _Thread)
         {
             // write file

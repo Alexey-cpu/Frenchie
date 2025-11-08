@@ -71,23 +71,14 @@ DirectoryTree::~DirectoryTree(){}
 bool DirectoryTree::awake()
 {
     // iconify
-    default_file = platform()->get_backend()->construct_image(
-        Frenchie::Core::String::convert_utf32_to_utf8(
-            std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_file.png").u32string()
-        ).c_str()
-    );
+    default_file = application_platform_backend_renderer()->construct_image(
+        std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_file.png"));
     
-    default_folder = platform()->get_backend()->construct_image(
-        Frenchie::Core::String::convert_utf32_to_utf8(
-            std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder.png").u32string()
-        ).c_str()
-    );
+    default_folder = application_platform_backend_renderer()->construct_image(
+        std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder.png"));
     
-    default_folder_opened = platform()->get_backend()->construct_image(
-        Frenchie::Core::String::convert_utf32_to_utf8(
-            std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder_opened.png").u32string()
-        ).c_str()
-    );
+    default_folder_opened = application_platform_backend_renderer()->construct_image(
+        std::filesystem::path("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder_opened.png"));
 
     return true;
 }
@@ -110,7 +101,7 @@ void DirectoryTree::frame_update()
                 // Delete
                 if(ImGui::IsKeyPressed(ImGuiKey_Delete))
                 {
-                    Frenchie::Application::commands()->push(
+                    Frenchie::Application::application_command_queue()->push(
                         Frenchie::Editor::FileSystem::RemoveFileCommand::factory_id(),
                         {
                             std::make_shared<CommandDataPayload<std::set<std::filesystem::path>>>(m_Selector.get_selected_paths())
@@ -123,7 +114,7 @@ void DirectoryTree::frame_update()
                 // Ctrl + C
                 if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_C))
                 {
-                    Frenchie::Application::commands()->push(
+                    Frenchie::Application::application_command_queue()->push(
                         Frenchie::Editor::FileSystem::CopyFileCommand::factory_id(),
                         {
                             std::make_shared<CommandDataPayload<std::set<std::filesystem::path>>>(m_Selector.get_selected_paths())
@@ -136,7 +127,7 @@ void DirectoryTree::frame_update()
                 // Ctrl + V
                 if(ImGui::Shortcut(ImGuiKey::ImGuiMod_Ctrl | ImGuiKey::ImGuiKey_V))
                 {
-                    Frenchie::Application::commands()->push(
+                    Frenchie::Application::application_command_queue()->push(
                         Frenchie::Editor::FileSystem::PastePathsCommand::factory_id(),
                         {
                             std::make_shared<CommandDataPayload<std::filesystem::path>>(m_FocusedPath),
