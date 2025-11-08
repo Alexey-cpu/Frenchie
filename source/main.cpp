@@ -3,39 +3,93 @@
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplicationEditorLauncher.hpp>
 
-namespace LowLevelRendererAPI
-{
-    // Utils
-    template<typename Head>
-    inline Head __max__(const Head& _A, const Head& _B)
-    {
-        return _A > _B ? _A : _B;
-    }
+// namespace LowLevelRendererAPI
+// {
+//     // Utils
+//     template<typename Head>
+//     inline Head __max__(const Head& _A, const Head& _B)
+//     {
+//         return _A > _B ? _A : _B;
+//     }
 
-    template<typename Head, typename ... Args>
-    Head __max__(const Head& _A, const Head& _B, Args... _Args)
-    {
-        return __max__(__max__(_A, _B), _Args...);
-    }
+//     template<typename Head, typename ... Args>
+//     Head __max__(const Head& _A, const Head& _B, Args... _Args)
+//     {
+//         return __max__(__max__(_A, _B), _Args...);
+//     }
 
-    template<typename Head>
-    inline  Head __min__(const Head& _A, const Head&)
-    {
-        return _A < _B ? _A : _B;
-    }
+//     template<typename Head>
+//     inline  Head __min__(const Head& _A, const Head&)
+//     {
+//         return _A < _B ? _A : _B;
+//     }
 
-    template<typename Head, typename ... Args>
-    Head __min__(const Head& _A, const Head& _B, Args... _Args)
-    {
-        return __min__(__min__( _A, _B ), _Args...);
-    }
-}
+//     template<typename Head, typename ... Args>
+//     Head __min__(const Head& _A, const Head& _B, Args... _Args)
+//     {
+//         return __min__(__min__( _A, _B ), _Args...);
+//     }
+// }
 
-int main(int argc, char *argv[])
-{
-    return Frenchie::Editor::Launcher::execute();
-}
+// int main(int argc, char *argv[])
+// {
+//     return Frenchie::Editor::Launcher::execute();
+// }
 
+// #include "miniz.h"
+// #include <cstdio>
+// #include <string>
+// #include <vector>
+
+// int main() {
+//     const char* zip_filename = "my_archive.zip";
+//     const char* file1_name = "file1.txt";
+//     const char* file2_name = "file2.bin";
+
+//     // Data for the files
+//     std::string file1_content = "This is the content of the first file.";
+//     std::vector<unsigned char> file2_content = {0x01, 0x02, 0x03, 0x04, 0x05};
+
+//     mz_zip_archive zip_archive;
+//     memset(&zip_archive, 0, sizeof(zip_archive));
+
+//     // Initialize the ZIP archive writer
+//     if (!mz_zip_writer_init_file(&zip_archive, zip_filename, 0)) {
+//         printf("Error initializing ZIP archive writer: %s\n", mz_zip_get_error_string(mz_zip_get_last_error(&zip_archive)));
+//         return 1;
+//     }
+
+//     // Add the first file to the archive
+//     if (!mz_zip_writer_add_mem_from_buf(&zip_archive, file1_name, file1_content.data(), file1_content.length(), NULL, 0, MZ_DEFAULT_COMPRESSION)) {
+//         printf("Error adding file1.txt to archive: %s\n", mz_zip_get_error_string(mz_zip_get_last_error(&zip_archive)));
+//         mz_zip_writer_end(&zip_archive);
+//         return 1;
+//     }
+
+//     // Add the second file to the archive
+//     if (!mz_zip_writer_add_mem_from_buf(&zip_archive, file2_name, file2_content.data(), file2_content.size(), NULL, 0, MZ_DEFAULT_COMPRESSION)) {
+//         printf("Error adding file2.bin to archive: %s\n", mz_zip_get_error_string(mz_zip_get_last_error(&zip_archive)));
+//         mz_zip_writer_end(&zip_archive);
+//         return 1;
+//     }
+
+//     // Finalize the archive (write central directory and close file)
+//     if (!mz_zip_writer_finalize_archive(&zip_archive)) {
+//         printf("Error finalizing ZIP archive: %s\n", mz_zip_get_error_string(mz_zip_get_last_error(&zip_archive)));
+//         mz_zip_writer_end(&zip_archive);
+//         return 1;
+//     }
+
+//     // End the writer (free resources)
+//     if (!mz_zip_writer_end(&zip_archive)) {
+//         printf("Error ending ZIP archive writer: %s\n", mz_zip_get_error_string(mz_zip_get_last_error(&zip_archive)));
+//         return 1;
+//     }
+
+//     printf("Archive '%s' created successfully with '%s' and '%s'.\n", zip_filename, file1_name, file2_name);
+
+//     return 0;
+// }
 
 // int main(int argc, char *argv[])
 // {

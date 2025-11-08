@@ -1,13 +1,10 @@
 #pragma once
 
 // Application
-#include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplication.hpp>
 
 // Editor
 #include <FrenchieEditorFileSystemPathSelector.hpp>
-
-#include <FrenchieApplicationPlatformBackend.hpp>
 
 // STL
 #include <filesystem>
