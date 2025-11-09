@@ -16,7 +16,7 @@ namespace Frenchie
                 uintptr_t Amount = 0;
             };
 
-            template<typename Type>
+            template<typename Type, bool DeleteLater = false>
             class MemoryChunkAllocator final
             {
             public:
@@ -117,14 +117,15 @@ namespace Frenchie
                         m_Tail = m_Head;
                     }
 
-                    // allocate buffer
-                    auto buffer = m_Head->request(_Size);
-
-                    if(buffer != nullptr) 
+                    // try to allocate memory
+                    void* buffer = m_Head->request(_Size);
+                    if(buffer != nullptr)
                         return reinterpret_cast<Type*>(buffer);
 
+                    // adjust chunk size
                     m_ChunkSize = std::max<uintptr_t>(m_ChunkSize, _Size);
 
+                    // allocate new chunk
                     MemoryChunk* chunk  = new MemoryChunk(sizeof(Type), m_ChunkSize);
                     chunk->Next = nullptr;
                     chunk->Prev = m_Head;
@@ -145,36 +146,10 @@ namespace Frenchie
                     auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
 
                     // check that this is the first chunk
-                    if(chunk == nullptr || (chunk->Prev == nullptr && chunk->Next == nullptr))
+                    if(chunk == nullptr || (chunk->Prev == nullptr && chunk->Next == nullptr) || !chunk->is_free() || DeleteLater)
                         return;
 
-                    // check that chunk is free
-                    if(!chunk->is_free())
-                        return;
-
-                    // update chunk links
-                    if(chunk->Prev != nullptr)
-                    {
-                        chunk->Prev->Next = chunk->Next;
-                    }
-                    else
-                    {
-                        // update tail
-                        m_Tail = chunk->Next;
-                    }
-                    
-                    if(chunk->Next != nullptr)
-                    {
-                        chunk->Next->Prev = chunk->Prev;
-                    }
-                    else 
-                    {
-                        // update head
-                        m_Head = chunk->Prev;
-                    }
-
-                    // remove chunk
-                    delete chunk;
+                    remove_chunk(chunk);
                 }
 
                 template<typename ... Args>
@@ -195,6 +170,7 @@ namespace Frenchie
 
                 void release()
                 {
+                    // remove all chunks
                     auto next = m_Tail;
 
                     while (next)
@@ -207,6 +183,27 @@ namespace Frenchie
                     // clean up tail
                     m_Tail = nullptr;
                     m_Head = nullptr;
+                }
+
+                void release_unused_chunks()
+                {
+                    if(m_Head == nullptr && m_Tail == nullptr) 
+                        return;
+
+                    if(m_Head == m_Tail)
+                        return;
+
+                    // remove unused chunks
+                    MemoryChunk* next = m_Tail;
+
+                    while (next)
+                    {
+                        MemoryChunk* chunk = next;
+                        next = next->Next;
+                        
+                        if(chunk->is_free())
+                            remove_chunk(chunk);
+                    }
                 }
 
                 uintptr_t get_total_memory_size() const
@@ -254,8 +251,61 @@ namespace Frenchie
                     return freeMemory;
                 }
 
+                uintptr_t get_total_chunks_number() const
+                {
+                    uintptr_t totalChunksNumber = 0;
+
+                    auto next = m_Tail;
+
+                    while (next)
+                    {
+                        ++totalChunksNumber;
+                        next = next->Next;
+                    }
+
+                    return totalChunksNumber;
+                }
+
+                uintptr_t get_free_chunks_number() const
+                {
+                    uintptr_t freeChunksNumber = 0;
+
+                    auto next = m_Tail;
+
+                    while (next)
+                    {
+                        if(next->is_free())
+                            ++freeChunksNumber;
+                        next = next->Next;
+                    }
+
+                    return freeChunksNumber;
+                }
+
             private:
                 
+                void isnert_chunk(MemoryChunk* _What, MemoryChunk* _Where) const
+                {
+                }
+
+                void remove_chunk(MemoryChunk* _Chunk) const
+                {
+                    // check if tail needs update
+                    if(_Chunk->Prev != nullptr)
+                        _Chunk->Prev->Next = _Chunk->Next;
+                    else
+                        m_Tail = _Chunk->Next;
+                    
+                    // check if head needs update
+                    if(_Chunk->Next != nullptr)
+                        _Chunk->Next->Prev = _Chunk->Prev;
+                    else
+                        m_Head = _Chunk->Prev;
+
+                    // remove chunk
+                    delete _Chunk;
+                }
+
                 mutable  uintptr_t    m_ChunkSize = 1024;
                 mutable  MemoryChunk* m_Head      = nullptr;
                 mutable  MemoryChunk* m_Tail      = nullptr;

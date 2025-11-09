@@ -48,7 +48,7 @@ void main()
     UV     = a_UV;
 }            
 )"),
-                            PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex
+                            PlatformRendererBackendShaderType_::PlatformRendererBackendShaderType_Vertex
                         },
 
                         // fragment shader
@@ -69,13 +69,13 @@ void main()
     fragColor = u_Color;
 }
 )"),
-                            PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Fragment
+                            PlatformRendererBackendShaderType_::PlatformRendererBackendShaderType_Fragment
                          },
                     }
                 );
 
                 m_Mesh = Frenchie::Application::application_platform_backend_renderer()->construct_mesh(
-                    std::vector<PlatformBackendRendererMeshVertex>({
+                    std::vector<PlatformRendererBackendMeshVertex>({
                     // trangle 1
                     { glm::vec3(-0.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
                     { glm::vec3(+100.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
@@ -134,7 +134,7 @@ void main()
 
                 Frenchie::Application::application_platform_backend_renderer()->begin_render_mesh(
                     m_Mesh,
-                    PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Lines);
+                    PlatformRendererBackendMeshRenderingHints_::PlatformRendererBackendMeshRenderingHints_Lines);
 
                 Frenchie::Application::application_platform_backend_renderer()->endup_render_mesh();
 
@@ -159,8 +159,8 @@ void main()
             }
 
         protected:
-            std::shared_ptr<PlatformBackendRendererShader> m_Shader{nullptr};
-            std::shared_ptr<PlatformBackendRendererMesh>   m_Mesh  {nullptr};
+            std::shared_ptr<PlatformRendererBackendShader> m_Shader{nullptr};
+            std::shared_ptr<PlatformRendererBackendMesh>   m_Mesh  {nullptr};
         };
     }
 }
