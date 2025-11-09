@@ -3,12 +3,12 @@
 using namespace Frenchie::Application;
 
 ApplicationInstance::ApplicationInstance() :
-    m_PlatformBackendRenderer(std::make_shared<PlatformBackendRenderer>())
+    m_PlatformBackendRenderer(std::make_shared<PlatformRendererBackend>())
 {
     m_PlatformBackendRenderer->awake(
         get_name().c_str(),
         nullptr,
-        PlatformBackendRendererContextHints_::PlatformBackendContextWindowHints_Default
+        PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Default
     );
 }
 
@@ -165,7 +165,7 @@ Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
     return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
 }
 
-Frenchie::Core::Reference<PlatformBackendRenderer> Frenchie::Application::application_platform_backend_renderer()
+Frenchie::Core::Reference<PlatformRendererBackend> Frenchie::Application::application_platform_backend_renderer()
 {
     return Frenchie::Application::application()->m_PlatformBackendRenderer;
 }

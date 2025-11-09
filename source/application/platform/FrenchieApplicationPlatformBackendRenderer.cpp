@@ -1,4 +1,4 @@
-#include <FrenchieApplicationPlatformBackendRenderer.hpp>
+#include <FrenchieApplicationPlatformRendererBackend.hpp>
 
 // Core
 #include <FrenchieCoreLogger.hpp>
@@ -81,26 +81,62 @@ namespace Frenchie
     }
 }
 
-PlatformBackendRenderer::PlatformBackendRenderer() :
-    m_Textures(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererTexture>>(32)),
-    m_Meshes(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererMesh>>(32)),
-    m_Shaders(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererShader>>(32))
+PlatformRendererBackend::PlatformRendererBackend() :
+    m_Textures(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformRendererBackendTexture>>(32)),
+    m_Meshes(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformRendererBackendMesh>>(32)),
+    m_Shaders(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformRendererBackendShader>>(32))
 {
 }
 
-PlatformBackendRenderer::~PlatformBackendRenderer()
+PlatformRendererBackend::~PlatformRendererBackend()
 {
 }
 
-void* PlatformBackendRenderer::get_context() const
+void* PlatformRendererBackend::get_context() const
 {
     return m_Context;
 }
 
-bool PlatformBackendRenderer::awake(
+glm::vec4 PlatformRendererBackend::get_context_window_clear_color() const
+{
+    return m_ClearColor;
+}
+
+glm::vec2 PlatformRendererBackend::get_context_window_position() const
+{
+    int x = 0;
+    int y = 0;
+    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    return {x, y};
+}
+
+glm::vec2 PlatformRendererBackend::get_context_window_size() const
+{
+    int x = 0;
+    int y = 0;
+    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    return {x, y};
+}
+
+void PlatformRendererBackend::set_context_window_clear_color(const glm::vec4& _Value)
+{
+    m_ClearColor = _Value;
+}
+
+void PlatformRendererBackend::set_context_window_position(const glm::vec2& _Value)
+{
+    glfwSetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), (int)_Value.x, (int)_Value.y);
+}
+
+void PlatformRendererBackend::set_context_window_size(const glm::vec2& _Value)
+{
+    glfwSetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), (int)_Value.x, (int)_Value.y);
+}
+
+bool PlatformRendererBackend::awake(
     const char*                       _Name,
     void*                             _Share,
-    PlatformBackendContextWindowHints _WindowHints)
+    PlatformRendererBackendContextHints _WindowHints)
 {
     // initialization
     if(glfwInit() == GLFW_FALSE)
@@ -114,27 +150,27 @@ bool PlatformBackendRenderer::awake(
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Visible)
+    if(_WindowHints & PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Visible)
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Decorated)
+    if(_WindowHints & PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Decorated)
         glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Resizable)
+    if(_WindowHints & PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Resizable)
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Iconified)
+    if(_WindowHints & PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Iconified)
         glfwWindowHint(GLFW_ICONIFIED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_ICONIFIED, GLFW_FALSE);
 
-    if(_WindowHints & PlatformBackendRendererContextHints_::PlatformBackendRendererContextHints_Focused)
+    if(_WindowHints & PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Focused)
         glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     else
         glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
@@ -178,71 +214,76 @@ bool PlatformBackendRenderer::awake(
     return true;
 }
 
-void PlatformBackendRenderer::frame_start(const PlatformBackendRendererHints& _PlatformBackendRendererHints)
+void PlatformRendererBackend::frame_start(const PlatformRendererBackendHints& _PlatformRendererBackendHints)
 {
-    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearColorBuffer))
+    if((_PlatformRendererBackendHints & PlatformRendererBackendHints_::PlatformRendererBackendHints_ClearColorBuffer))
         glClear(GL_COLOR_BUFFER_BIT);
     
-    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearDepthBuffer))
+    if((_PlatformRendererBackendHints & PlatformRendererBackendHints_::PlatformRendererBackendHints_ClearDepthBuffer))
         glClear(GL_DEPTH_BUFFER_BIT);
     
-    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_ClearStencilBuffer))
+    if((_PlatformRendererBackendHints & PlatformRendererBackendHints_::PlatformRendererBackendHints_ClearStencilBuffer))
         glClear(GL_STENCIL_BUFFER_BIT);
 
-    if((_PlatformBackendRendererHints & PlatformBackendRendererHints_::PlatformBackendRendererHints_PollEvents))
+    if((_PlatformRendererBackendHints & PlatformRendererBackendHints_::PlatformRendererBackendHints_PollEvents))
         glfwPollEvents();
+
+    glClearColor(m_ClearColor.x / 255.f, m_ClearColor.y / 255.f, m_ClearColor.z / 255.f, m_ClearColor.w / 255.f);
 
     glfwSwapInterval(1);
 }
 
-void PlatformBackendRenderer::frame_update()
+void PlatformRendererBackend::frame_update()
 {
+    // stretch viewport to cover all the context window
     int display_w = 0;
     int display_h = 0;
     glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
+
+    // setup context info
 }
 
-void PlatformBackendRenderer::frame_render()
+void PlatformRendererBackend::frame_render()
 {
     // TODO: execute rendering commands here
 }
 
-void PlatformBackendRenderer::frame_finish()
+void PlatformRendererBackend::frame_finish()
 {
     glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Context));
 }
 
-void PlatformBackendRenderer::finish()
+void PlatformRendererBackend::finish()
 {
     // TODO: clean up renderer commands here
 }
 
-void PlatformBackendRenderer::quit()
+void PlatformRendererBackend::quit()
 {
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Context));
     glfwTerminate();
     m_Context = nullptr;
 }
 
-bool PlatformBackendRenderer::is_closed() const
+bool PlatformRendererBackend::is_closed() const
 {
     return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context));
 }
 
-void PlatformBackendRenderer::close()
+void PlatformRendererBackend::close()
 {
     glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Context), GL_TRUE);
 }
 
-std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::construct_image(
+std::shared_ptr<PlatformRendererBackendTexture> PlatformRendererBackend::construct_image(
     const unsigned char*                           _RawBuffer,
     const int&                                     _Width,
     const int&                                     _Height,
-    const PlatformBackendRendererTextureFormat&    _Format,
-    const PlatformBackendRendererTextureWrap&      _Wrap,
-    const PlatformBackendRendererTextureMinFilter& _MinFilter, 
-    const PlatformBackendRendererTextureMaxFilter& _MaxFilter) const
+    const PlatformRendererBackendTextureFormat&    _Format,
+    const PlatformRendererBackendTextureWrap&      _Wrap,
+    const PlatformRendererBackendTextureMinFilter& _MinFilter, 
+    const PlatformRendererBackendTextureMaxFilter& _MaxFilter) const
 {
     if(_RawBuffer == nullptr)
         return nullptr;
@@ -253,53 +294,53 @@ std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::constru
     glBindTexture(GL_TEXTURE_2D, sampler); 
     
     // set the texture wrapping parameters
-    if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat))
+    if((_Wrap & PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_Repeat))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-    else if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Mirrored))
+    else if((_Wrap & PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_Mirrored))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     }
-    else if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_ClampToEdge))
+    else if((_Wrap & PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_ClampToEdge))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-    else if((_Wrap & PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_ClampToBorder))
+    else if((_Wrap & PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_ClampToBorder))
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     }
     
     // set minifying filter
-    if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Linear))
+    if((_MinFilter & PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Linear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Nearest))
+    else if((_MinFilter & PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Nearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapLinear))
+    else if((_MinFilter & PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_LinearMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_LinearMipMapNearest))
+    else if((_MinFilter & PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_LinearMipMapNearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapLinear))
+    else if((_MinFilter & PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_NearestMipMapLinear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-    else if((_MinFilter & PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_NearestMipMapNearest))
+    else if((_MinFilter & PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_NearestMipMapNearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     
     // set magnifying filter
-    if((_MaxFilter & PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear))
+    if((_MaxFilter & PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Linear))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    else if((_MaxFilter & PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Nearest))
+    else if((_MaxFilter & PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Nearest))
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // set format
-    if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_ALPHA))
+    if((_Format & PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_ALPHA))
         glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _Width, _Height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _RawBuffer);
-    else if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGB))
+    else if((_Format & PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGB))
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _Width, _Height, 0, GL_RGB, GL_UNSIGNED_BYTE, _RawBuffer);
-    else if((_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA))
+    else if((_Format & PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGBA))
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
 
     // always generate mipmaps as texture can be displayed at size lower than it realy is
@@ -309,9 +350,9 @@ std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::constru
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sampler);
 
-    return std::shared_ptr<PlatformBackendRendererTexture>(
+    return std::shared_ptr<PlatformRendererBackendTexture>(
         m_Textures->construct(sampler, _Width, _Height, _Format, _Wrap, _MinFilter, _MaxFilter),
-        [this](PlatformBackendRendererTexture* _Image)
+        [this](PlatformRendererBackendTexture* _Image)
         {
             if(_Image == nullptr)
                 return;
@@ -325,19 +366,19 @@ std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::constru
     );
 }
 
-std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::construct_image(
+std::shared_ptr<PlatformRendererBackendTexture> PlatformRendererBackend::construct_image(
     const std::filesystem::path&                   _FilePath,
-    const PlatformBackendRendererTextureFormat&    _Format,
-    const PlatformBackendRendererTextureWrap&      _Wrap,
-    const PlatformBackendRendererTextureMinFilter& _MinFilter, 
-    const PlatformBackendRendererTextureMaxFilter& _MaxFilter) const
+    const PlatformRendererBackendTextureFormat&    _Format,
+    const PlatformRendererBackendTextureWrap&      _Wrap,
+    const PlatformRendererBackendTextureMinFilter& _MinFilter, 
+    const PlatformRendererBackendTextureMaxFilter& _MaxFilter) const
 {
     // auxiliary lambdas
-    auto formatToRequestdChannels = [](PlatformBackendRendererTextureFormat _Format)->int
+    auto formatToRequestdChannels = [](PlatformRendererBackendTextureFormat _Format)->int
     {
-        if(_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGBA)  return 4;
-        if(_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_RGB)   return 3;
-        if(_Format & PlatformBackendRendererTextureFormat_::PlatformBackendRendererTextureFormat_ALPHA) return 1;
+        if(_Format & PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGBA)  return 4;
+        if(_Format & PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGB)   return 3;
+        if(_Format & PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_ALPHA) return 1;
 
         return 0; // extract everything by default
     };
@@ -369,8 +410,8 @@ std::shared_ptr<PlatformBackendRendererTexture> PlatformBackendRenderer::constru
     return image;
 }
 
-std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construct_shader(
-const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _ShaderInfos) const
+std::shared_ptr<PlatformRendererBackendShader> PlatformRendererBackend::construct_shader(
+const std::vector<std::pair<std::string, PlatformRendererBackendShaderType>>& _ShaderInfos) const
 {
     unsigned int shaderProgram = glCreateProgram();
 
@@ -379,11 +420,11 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
         auto[shaderSourceCode, shaderType] = shaderInfo;
 
         unsigned int shader = 0;
-        if(shaderType == PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex)
+        if(shaderType == PlatformRendererBackendShaderType_::PlatformRendererBackendShaderType_Vertex)
         {
             shader = glCreateShader(GL_VERTEX_SHADER);
         }
-        else if(shaderType == PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Fragment)
+        else if(shaderType == PlatformRendererBackendShaderType_::PlatformRendererBackendShaderType_Fragment)
         {
             shader = glCreateShader(GL_FRAGMENT_SHADER);
         }
@@ -427,9 +468,9 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
         return nullptr;
     }
 
-    return std::shared_ptr<PlatformBackendRendererShader>(
+    return std::shared_ptr<PlatformRendererBackendShader>(
         m_Shaders->construct(shaderProgram),
-        [this](PlatformBackendRendererShader* _Shader)
+        [this](PlatformRendererBackendShader* _Shader)
         {
             if(_Shader == nullptr)
                 return;
@@ -443,12 +484,12 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
     );
 }
 
-std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construct_shader(
+std::shared_ptr<PlatformRendererBackendShader> PlatformRendererBackend::construct_shader(
     const std::vector<std::filesystem::path>& _ShaderPaths )const
 {
     std::vector<std::pair<
         std::string,
-        PlatformBackendRendererShaderType>> shaderInfos;
+        PlatformRendererBackendShaderType>> shaderInfos;
 
     for(auto&& path : _ShaderPaths)
     {
@@ -466,7 +507,7 @@ std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construc
             shaderInfos.push_back(
                 {
                     source,
-                    PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex
+                    PlatformRendererBackendShaderType_::PlatformRendererBackendShaderType_Vertex
                 }
             );
         }
@@ -475,7 +516,7 @@ std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construc
             shaderInfos.push_back(
                 {
                     source,
-                    PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex
+                    PlatformRendererBackendShaderType_::PlatformRendererBackendShaderType_Vertex
                 }
             );
         }
@@ -484,7 +525,7 @@ std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construc
     return construct_shader(shaderInfos);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const bool& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const bool& _Value)
 {
     if(_Shader != nullptr)
     {
@@ -492,58 +533,58 @@ void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformB
     }
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const int& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const int& _Value)
 {
     glUniform1i(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), _Value);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const float& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const float& _Value)
 {
     glUniform1f(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), _Value);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::vec2& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const glm::vec2& _Value)
 {
     glUniform2fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::vec3& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const glm::vec3& _Value)
 {
     glUniform3fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::vec4& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const glm::vec4& _Value)
 {
     glUniform4fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::mat2& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const glm::mat2& _Value)
 {
     glUniformMatrix2fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::mat3& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const glm::mat3& _Value)
 {
     glUniformMatrix3fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::mat4& _Value)
+void PlatformRendererBackend::set_shader_uniform(const std::shared_ptr<PlatformRendererBackendShader>& _Shader, const std::string& _Name, const glm::mat4& _Value)
 {
     glUniformMatrix4fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
 
-void PlatformBackendRenderer::begin_use_shader(const std::shared_ptr<PlatformBackendRendererShader>& _Shader)
+void PlatformRendererBackend::begin_use_shader(const std::shared_ptr<PlatformRendererBackendShader>& _Shader)
 {
     if(_Shader != nullptr)
         glUseProgram(_Shader->Ptr);
 }
 
-void PlatformBackendRenderer::endup_use_shader()
+void PlatformRendererBackend::endup_use_shader()
 {
     glUseProgram(0);
 }
 
-std::shared_ptr<PlatformBackendRendererMesh> PlatformBackendRenderer::construct_mesh(std::vector<PlatformBackendRendererMeshVertex> _Vertexes)
+std::shared_ptr<PlatformRendererBackendMesh> PlatformRendererBackend::construct_mesh(std::vector<PlatformRendererBackendMeshVertex> _Vertexes)
 {
     // generate vertexes indexses
     std::vector<int> indexes;
@@ -565,22 +606,22 @@ std::shared_ptr<PlatformBackendRendererMesh> PlatformBackendRenderer::construct_
 
     // load vertexes and indexes on GPU
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, _Vertexes.size() * sizeof(PlatformBackendRendererMeshVertex), &_Vertexes[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _Vertexes.size() * sizeof(PlatformRendererBackendMeshVertex), &_Vertexes[0], GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(int),  &indexes[0], GL_DYNAMIC_DRAW);
 
     // setup attributes pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformBackendRendererMeshVertex), (void*)(offsetof(PlatformBackendRendererMeshVertex, Position)));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformBackendRendererMeshVertex), (void*)(offsetof(PlatformBackendRendererMeshVertex, Normal)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(PlatformBackendRendererMeshVertex), (void*)(offsetof(PlatformBackendRendererMeshVertex, UV)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformRendererBackendMeshVertex), (void*)(offsetof(PlatformRendererBackendMeshVertex, Position)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformRendererBackendMeshVertex), (void*)(offsetof(PlatformRendererBackendMeshVertex, Normal)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(PlatformRendererBackendMeshVertex), (void*)(offsetof(PlatformRendererBackendMeshVertex, UV)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
-    return std::shared_ptr<PlatformBackendRendererMesh>(
+    return std::shared_ptr<PlatformRendererBackendMesh>(
         m_Meshes->construct(m_VBO, m_VAO, m_EBO),
-        [](PlatformBackendRendererMesh* _Mesh)
+        [](PlatformRendererBackendMesh* _Mesh)
         {
             if(_Mesh == nullptr)
                 return;
@@ -592,9 +633,9 @@ std::shared_ptr<PlatformBackendRendererMesh> PlatformBackendRenderer::construct_
     );
 }
 
-void PlatformBackendRenderer::begin_render_mesh(
-    const std::shared_ptr<PlatformBackendRendererMesh>& _Mesh,
-    PlatformBackendRendererMeshRenderingHints           _MeshRenderHints)
+void PlatformRendererBackend::begin_render_mesh(
+    const std::shared_ptr<PlatformRendererBackendMesh>& _Mesh,
+    PlatformRendererBackendMeshRenderingHints           _MeshRenderHints)
 {
     if(_Mesh == nullptr)
         return;
@@ -607,17 +648,17 @@ void PlatformBackendRenderer::begin_render_mesh(
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
 
     // draw EBO
-    if((_MeshRenderHints & PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Points))
+    if((_MeshRenderHints & PlatformRendererBackendMeshRenderingHints_::PlatformRendererBackendMeshRenderingHints_Points))
         glDrawArrays(GL_POINTS, 0, bufferSize);
 
-    if((_MeshRenderHints & PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Lines))
+    if((_MeshRenderHints & PlatformRendererBackendMeshRenderingHints_::PlatformRendererBackendMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, bufferSize, GL_UNSIGNED_INT, 0);
     
-    if((_MeshRenderHints & PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Triangles))
+    if((_MeshRenderHints & PlatformRendererBackendMeshRenderingHints_::PlatformRendererBackendMeshRenderingHints_Triangles))
         glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
 }
 
-void PlatformBackendRenderer::endup_render_mesh()
+void PlatformRendererBackend::endup_render_mesh()
 {
     glBindVertexArray(0);
 }

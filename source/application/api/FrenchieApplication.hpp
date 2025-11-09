@@ -12,7 +12,7 @@
 #include <FrenchieApplicationThreadQueueLayer.hpp>
 #include <FrenchieApplicationCommandQueueLayer.hpp>
 #include <FrenchieApplicationUserInterfaceLayer.hpp>
-#include <FrenchieApplicationPlatformBackendRenderer.hpp>
+#include <FrenchieApplicationPlatformRendererBackend.hpp>
 
 // STL
 #include <iostream>
@@ -104,16 +104,16 @@ namespace Frenchie
 
         protected:
 
-            friend Frenchie::Core::Reference<PlatformBackendRenderer> application_platform_backend_renderer();
+            friend Frenchie::Core::Reference<PlatformRendererBackend> application_platform_backend_renderer();
 
             std::list<std::shared_ptr<Layer>>        m_Layers                 {std::list<std::shared_ptr<Layer>>()};
-            std::shared_ptr<PlatformBackendRenderer> m_PlatformBackendRenderer{nullptr};
+            std::shared_ptr<PlatformRendererBackend> m_PlatformBackendRenderer{nullptr};
             std::string                              m_Name                   {"Frenchie::Application"};
             bool                                     m_Opened                 {true};
         };
 
         Frenchie::Application::ApplicationInstance*        application();
-        Frenchie::Core::Reference<PlatformBackendRenderer> application_platform_backend_renderer();
+        Frenchie::Core::Reference<PlatformRendererBackend> application_platform_backend_renderer();
         Frenchie::Core::Reference<Interface>               application_user_interface();
         Frenchie::Core::Reference<ThreadQueue>             application_thread_queue();
         Frenchie::Core::Reference<CommandQueue>            application_command_queue();
