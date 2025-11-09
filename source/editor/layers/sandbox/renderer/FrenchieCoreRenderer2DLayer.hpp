@@ -136,9 +136,9 @@ void main()
                     m_Mesh,
                     PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Lines);
 
-                Frenchie::Application::application_platform_backend_renderer()->end_render_mesh();
+                Frenchie::Application::application_platform_backend_renderer()->endup_render_mesh();
 
-                Frenchie::Application::application_platform_backend_renderer()->end_use_shader();
+                Frenchie::Application::application_platform_backend_renderer()->endup_use_shader();
             }
 
             virtual void frame_finish() override

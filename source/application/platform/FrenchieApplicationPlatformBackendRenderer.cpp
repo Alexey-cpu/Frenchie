@@ -399,6 +399,9 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
         if(status == GL_TRUE)
         {
             glAttachShader(shaderProgram, shader);
+
+            // after shader is loaded on GPU we can delete it
+            glDeleteShader(shader);
         }
         else
         {
@@ -535,7 +538,7 @@ void PlatformBackendRenderer::begin_use_shader(const std::shared_ptr<PlatformBac
         glUseProgram(_Shader->Ptr);
 }
 
-void PlatformBackendRenderer::end_use_shader()
+void PlatformBackendRenderer::endup_use_shader()
 {
     glUseProgram(0);
 }
@@ -614,7 +617,7 @@ void PlatformBackendRenderer::begin_render_mesh(
         glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
 }
 
-void PlatformBackendRenderer::end_render_mesh()
+void PlatformBackendRenderer::endup_render_mesh()
 {
     glBindVertexArray(0);
 }
