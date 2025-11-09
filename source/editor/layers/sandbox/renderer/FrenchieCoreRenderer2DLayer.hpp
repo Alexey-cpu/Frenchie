@@ -75,22 +75,18 @@ void main()
                 );
 
                 m_Mesh = Frenchie::Application::application_platform_backend_renderer()->construct_mesh(
-                    std::vector<PlatformRendererBackendMeshVertex>({
+                    std::vector<PlatformRendererBackendMeshVertex>(
+                    {
                     // trangle 1
                     { glm::vec3(-0.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
                     { glm::vec3(+100.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
                     { glm::vec3(-0.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    // // trangle 1
-                    // { glm::vec3(-100.f, +100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    // { glm::vec3(+100.f, +100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    // { glm::vec3(-100.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-
-                    // // trangle 2
-                    // { glm::vec3(+100.f, +100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    // { glm::vec3(+100.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    // { glm::vec3(-100.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) }
+                }),
+                std::vector<int>(
+                {
+                    0, 1, 2
                 })
-                );
+            );
 
                 return true;
             }
@@ -106,10 +102,8 @@ void main()
             virtual void frame_render() override
             {
                 // 2D projection example
-                
-                // screen size
-                float width  = 2048.f;
-                float height = 2048.f;
+                float width  = Frenchie::Application::application_platform_backend_renderer()->get_context_window_size().x;
+                float height  = Frenchie::Application::application_platform_backend_renderer()->get_context_window_size().y;
 
                 // adjust 2D projection to start at top left corner
                 float left   = -width  * 0.5f;// + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
@@ -159,8 +153,8 @@ void main()
             }
 
         protected:
-            std::shared_ptr<PlatformRendererBackendShader> m_Shader{nullptr};
-            std::shared_ptr<PlatformRendererBackendMesh>   m_Mesh  {nullptr};
+            PlatformRendererBackendShader m_Shader;
+            PlatformRendererBackendMesh   m_Mesh;
         };
     }
 }
