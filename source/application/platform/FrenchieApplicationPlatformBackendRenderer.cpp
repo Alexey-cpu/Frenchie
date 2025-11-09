@@ -1,6 +1,7 @@
 #include <FrenchieApplicationPlatformBackendRenderer.hpp>
 
 // Core
+#include <FrenchieCoreLogger.hpp>
 #include <FrenchieCoreFileSystem.hpp>
 #include <FrenchieCoreStringUnicode.hpp>
 
@@ -16,6 +17,7 @@
 
 // STL
 #include <fstream>
+#include <iostream>
 
 using namespace Frenchie::Core::FileSystem;
 using namespace Frenchie::Application;
@@ -81,6 +83,7 @@ namespace Frenchie
 
 PlatformBackendRenderer::PlatformBackendRenderer() :
     m_Textures(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererTexture>>(32)),
+    m_Meshes(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererMesh>>(32)),
     m_Shaders(std::make_unique<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererShader>>(32))
 {
 }
@@ -376,10 +379,16 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
         auto[shaderSourceCode, shaderType] = shaderInfo;
 
         unsigned int shader = 0;
-        if((shaderType & PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex))
+        if(shaderType == PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Vertex)
+        {
             shader = glCreateShader(GL_VERTEX_SHADER);
-        else if((shaderType & PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Fragment))
+        }
+        else if(shaderType == PlatformBackendRendererShaderType_::PlatformBackendRendererShaderType_Fragment)
+        {
             shader = glCreateShader(GL_FRAGMENT_SHADER);
+        }
+
+        if(shader == 0) Frenchie::Core::Logger::instance()->critical("Shader creation error !!! {}", shaderType);
 
         int status = 1;
         const char* shaderSourceCodePtr = shaderSourceCode.c_str();
@@ -387,13 +396,17 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
         glCompileShader(shader);
         glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-        if(status)
+        if(status == GL_TRUE)
         {
             glAttachShader(shaderProgram, shader);
         }
         else
         {
-            // TODO: add status message generation logic here
+            const int logBufferSize = 512;
+            char logBuffer[logBufferSize];
+            glGetShaderInfoLog(shader, logBufferSize, nullptr, logBuffer);
+            Frenchie::Core::Logger::instance()->critical("Could not compile shader");
+            Frenchie::Core::Logger::instance()->critical(std::string(logBuffer));
         }
     }
 
@@ -401,9 +414,13 @@ const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& _S
     glLinkProgram(shaderProgram);
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &status);
 
-    if(!status)
+    if(status == GL_FALSE)
     {
-        // TODO: add status message generation logic here
+        const int logBufferSize = 4096;
+        char logBuffer[logBufferSize];
+        glGetProgramInfoLog(shaderProgram, logBufferSize, nullptr, logBuffer);
+        Frenchie::Core::Logger::instance()->critical("Could not link shaders");
+        Frenchie::Core::Logger::instance()->critical(std::string(logBuffer));
         return nullptr;
     }
 
@@ -464,47 +481,140 @@ std::shared_ptr<PlatformBackendRendererShader> PlatformBackendRenderer::construc
     return construct_shader(shaderInfos);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const bool& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const bool& _Value)
 {
-    glUniform1i(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), (int)_Value);
+    if(_Shader != nullptr)
+    {
+        glUniform1i(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), (int)_Value);
+    }
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const int& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const int& _Value)
 {
     glUniform1i(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), _Value);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const float& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const float& _Value)
 {
     glUniform1f(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), _Value);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::vec2& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::vec2& _Value)
 {
     glUniform2fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::vec3& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::vec3& _Value)
 {
     glUniform3fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::vec4& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::vec4& _Value)
 {
     glUniform4fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, &_Value[0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::mat2& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::mat2& _Value)
 {
     glUniformMatrix2fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::mat3& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::mat3& _Value)
 {
     glUniformMatrix3fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
 }
 
-void PlatformBackendRenderer::set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Name, const glm::mat4& _Value)
+void PlatformBackendRenderer::set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Name, const glm::mat4& _Value)
 {
     glUniformMatrix4fv(glGetUniformLocation(_Shader->Ptr, _Name.c_str()), 1, GL_FALSE, &_Value[0][0]);
+}
+
+void PlatformBackendRenderer::begin_use_shader(const std::shared_ptr<PlatformBackendRendererShader>& _Shader)
+{
+    if(_Shader != nullptr)
+        glUseProgram(_Shader->Ptr);
+}
+
+void PlatformBackendRenderer::end_use_shader()
+{
+    glUseProgram(0);
+}
+
+std::shared_ptr<PlatformBackendRendererMesh> PlatformBackendRenderer::construct_mesh(std::vector<PlatformBackendRendererMeshVertex> _Vertexes)
+{
+    // generate vertexes indexses
+    std::vector<int> indexes;
+    for(int i = 0; i < _Vertexes.size(); i++) 
+        indexes.push_back((int)i);
+
+    // create mesh
+    unsigned int m_VBO = 0;
+    unsigned int m_VAO = 0;
+    unsigned int m_EBO = 0;
+    
+    // create buffers and vertex array
+    glGenBuffers(1, &m_VBO);
+    glGenBuffers(1, &m_EBO);
+    glGenVertexArrays(1, &m_VAO);
+
+    // bind VAO to remember VBO/EBO configuration and layout
+    glBindVertexArray(m_VAO);
+
+    // load vertexes and indexes on GPU
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+    glBufferData(GL_ARRAY_BUFFER, _Vertexes.size() * sizeof(PlatformBackendRendererMeshVertex), &_Vertexes[0], GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(int),  &indexes[0], GL_DYNAMIC_DRAW);
+
+    // setup attributes pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformBackendRendererMeshVertex), (void*)(offsetof(PlatformBackendRendererMeshVertex, Position)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformBackendRendererMeshVertex), (void*)(offsetof(PlatformBackendRendererMeshVertex, Normal)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(PlatformBackendRendererMeshVertex), (void*)(offsetof(PlatformBackendRendererMeshVertex, UV)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    return std::shared_ptr<PlatformBackendRendererMesh>(
+        m_Meshes->construct(m_VBO, m_VAO, m_EBO),
+        [](PlatformBackendRendererMesh* _Mesh)
+        {
+            if(_Mesh == nullptr)
+                return;
+
+            glDeleteBuffers(1, &_Mesh->VBO);
+            glDeleteBuffers(1, &_Mesh->EBO);
+            glDeleteVertexArrays(1, &_Mesh->VAO);
+        }
+    );
+}
+
+void PlatformBackendRenderer::begin_render_mesh(
+    const std::shared_ptr<PlatformBackendRendererMesh>& _Mesh,
+    PlatformBackendRendererMeshRenderingHints           _MeshRenderHints)
+{
+    if(_Mesh == nullptr)
+        return;
+
+    // bind VAO containing VBO, EBO
+    glBindVertexArray(_Mesh->VAO);
+
+    // get EBO size
+    int bufferSize; 
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+
+    // draw EBO
+    if((_MeshRenderHints & PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Points))
+        glDrawArrays(GL_POINTS, 0, bufferSize);
+
+    if((_MeshRenderHints & PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Lines))
+        glDrawElements(GL_LINE_LOOP, bufferSize, GL_UNSIGNED_INT, 0);
+    
+    if((_MeshRenderHints & PlatformBackendRendererMeshRenderingHints_::PlatformBackendRendererShaderType_Triangles))
+        glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
+}
+
+void PlatformBackendRenderer::end_render_mesh()
+{
+    glBindVertexArray(0);
 }

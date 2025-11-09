@@ -5,7 +5,11 @@ using namespace Frenchie::Application;
 ApplicationInstance::ApplicationInstance() :
     m_PlatformBackendRenderer(std::make_shared<PlatformBackendRenderer>())
 {
-    m_PlatformBackendRenderer->awake();
+    m_PlatformBackendRenderer->awake(
+        get_name().c_str(),
+        nullptr,
+        PlatformBackendRendererContextHints_::PlatformBackendContextWindowHints_Default
+    );
 }
 
 ApplicationInstance::~ApplicationInstance()
@@ -41,13 +45,13 @@ void ApplicationInstance::ApplicationInstance::frame_update()
 
 void ApplicationInstance::ApplicationInstance::frame_render()
 {
-    m_PlatformBackendRenderer->frame_render();
-
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden())
             layer->frame_render();
     }
+
+    m_PlatformBackendRenderer->frame_render();
 }
 
 void ApplicationInstance::ApplicationInstance::frame_finish()
@@ -107,8 +111,6 @@ void ApplicationInstance::close()
 
 int ApplicationInstance::execute()
 {
-    Frenchie::Application::application_user_interface();
-
     if(!awake()) 
         return -1;
 
