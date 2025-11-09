@@ -241,7 +241,7 @@ namespace Frenchie
             void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::mat4& _Value);
 
             void begin_use_shader(const std::shared_ptr<PlatformBackendRendererShader>& _Shader);
-            void end_use_shader();
+            void endup_use_shader();
             
             // mesh
             std::shared_ptr<PlatformBackendRendererMesh> construct_mesh(std::vector<PlatformBackendRendererMeshVertex> _Vertexes);
@@ -250,7 +250,7 @@ namespace Frenchie
                 const std::shared_ptr<PlatformBackendRendererMesh>& _Mesh,
                 PlatformBackendRendererMeshRenderingHints           _MeshRenderHints);
 
-            void end_render_mesh();
+            void endup_render_mesh();
 
         protected:
 

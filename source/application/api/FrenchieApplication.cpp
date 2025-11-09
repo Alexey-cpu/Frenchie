@@ -111,6 +111,8 @@ void ApplicationInstance::close()
 
 int ApplicationInstance::execute()
 {
+    //application_user_interface();
+
     if(!awake()) 
         return -1;
 

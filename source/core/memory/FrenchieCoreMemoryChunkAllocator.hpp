@@ -34,10 +34,10 @@ namespace Frenchie
                     mutable MemoryChunk* Next          = nullptr;
                     mutable MemoryChunk* Prev          = nullptr;
 
-                    MemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkSize)
+                    MemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkElementsCount)
                     {
                         ElementSize   = std::max<uintptr_t>(_ChunkElementSize, 1);
-                        ElementsCount = std::max<uintptr_t>(_ChunkSize, 1);
+                        ElementsCount = std::max<uintptr_t>(_ChunkElementsCount, 1);
                         Free          = (sizeof(AllocationInfo) + ElementSize) * ElementsCount;
                         Head          = 0;
                         Size          = Free;
@@ -145,11 +145,12 @@ namespace Frenchie
                     auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
 
                     // check that this is the first chunk
-                    if(chunk == nullptr || 
-                        (chunk->Prev == nullptr && chunk->Next == nullptr) || !chunk->is_free()) 
-                    {
+                    if(chunk == nullptr || (chunk->Prev == nullptr && chunk->Next == nullptr))
                         return;
-                    }
+
+                    // check that chunk is free
+                    if(!chunk->is_free())
+                        return;
 
                     // update chunk links
                     if(chunk->Prev != nullptr)
