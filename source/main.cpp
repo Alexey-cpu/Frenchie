@@ -5,50 +5,6 @@
 #include <FrenchieCoreRenderer2DLayer.hpp>
 #include <FrenchieCoreTime.hpp>
 
-// int main(int argc, char *argv[])
-// {
-//     // Frenchie::Core::Serialization::Document document;
-
-//     // auto then = Frenchie::Core::Time::tic();
-
-//     // document.read<Frenchie::Core::Serialization::XMLReader>(
-//     //     std::filesystem::path(U"C:/SDK/Qt_Projects/OpenGL/logs/1_Летний минимум_2027_ГОСТ_п.5.3_Г.pwrct"));
-
-//     // std::cout << document.empty() << "\n";
-
-//     // for(auto&& child : document) std::cout << child.get_name() << "\n";
-
-//     // std::cout << "elapsed " << Frenchie::Core::Time::elapsed<std::chrono::milliseconds>(then, Frenchie::Core::Time::tic()) << "ms \n";
-
-//     Frenchie::Core::Memory::MemoryChunkAllocator<int, true> allocator(16);
-
-//     std::vector<int*> ptrs;
-
-//     for (size_t i = 0; i < 16 * 4; i++)ptrs.push_back(allocator.allocate(1));
-
-//     std::cout << "allocator.get_total_chunks_number() " << allocator.get_total_chunks_number() << "\n";
-//     std::cout << "allocator.get_free_chunks_number() " << allocator.get_free_chunks_number() << "\n";
-
-//     for (size_t i = 0; i < 2 * 16; i++)allocator.deallocate(ptrs[i]);
-
-//     std::cout << "allocator.get_total_chunks_number() " << allocator.get_total_chunks_number() << "\n";
-//     std::cout << "allocator.get_free_chunks_number() " << allocator.get_free_chunks_number() << "\n";
-
-//     //for (size_t i = 0; i < 16 * 2; i++) ptrs.push_back(allocator.allocate(1));
-
-//     allocator.release_unused_chunks();
-
-//     std::cout << "allocator.get_total_chunks_number() " << allocator.get_total_chunks_number() << "\n";
-//     std::cout << "allocator.get_free_chunks_number() " << allocator.get_free_chunks_number() << "\n";
-
-//     for (size_t i = 0; i < 2 * 16; i++)allocator.allocate(1);
-    
-//     std::cout << "allocator.get_total_chunks_number() " << allocator.get_total_chunks_number() << "\n";
-//     std::cout << "allocator.get_free_chunks_number() " << allocator.get_free_chunks_number() << "\n";
-
-//     return 0;
-// }
-
 int main(int argc, char *argv[])
 {
     // setup application logger
@@ -68,34 +24,6 @@ int main(int argc, char *argv[])
 
     return Frenchie::Application::application()->execute();
 }
-
-// namespace LowLevelRendererAPI
-// {
-//     // Utils
-//     template<typename Head>
-//     inline Head __max__(const Head& _A, const Head& _B)
-//     {
-//         return _A > _B ? _A : _B;
-//     }
-
-//     template<typename Head, typename ... Args>
-//     Head __max__(const Head& _A, const Head& _B, Args... _Args)
-//     {
-//         return __max__(__max__(_A, _B), _Args...);
-//     }
-
-//     template<typename Head>
-//     inline  Head __min__(const Head& _A, const Head&)
-//     {
-//         return _A < _B ? _A : _B;
-//     }
-
-//     template<typename Head, typename ... Args>
-//     Head __min__(const Head& _A, const Head& _B, Args... _Args)
-//     {
-//         return __min__(__min__( _A, _B ), _Args...);
-//     }
-// }
 
 // int main(int argc, char *argv[])
 // {

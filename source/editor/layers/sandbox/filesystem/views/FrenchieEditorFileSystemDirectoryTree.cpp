@@ -180,7 +180,7 @@ void DirectoryTree::draw_paths_tree(const std::filesystem::path& _Path)
     }
 
     ImGui::GetWindowDrawList()->AddImage(
-        image->Ptr, 
+        image.Ptr, 
         position, 
         position + size,
         ImVec2(1, 0),
