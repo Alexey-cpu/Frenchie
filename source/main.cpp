@@ -2,6 +2,27 @@
 // // Editor
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplicationEditorLauncher.hpp>
+#include <FrenchieCoreRenderer2DLayer.hpp>
+
+int main(int argc, char *argv[])
+{
+    // setup application logger
+    Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
+
+    try
+    {
+        Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
+    }
+    catch(const std::exception& e)
+    {
+        Frenchie::Core::Logger::instance()->info(e.what());
+    }
+
+
+    Frenchie::Application::application()->push_layer<Frenchie::Application::Renderer2D>();
+
+    return Frenchie::Application::application()->execute();
+}
 
 // namespace LowLevelRendererAPI
 // {

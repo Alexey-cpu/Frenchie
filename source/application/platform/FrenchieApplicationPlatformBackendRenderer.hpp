@@ -83,13 +83,20 @@ namespace Frenchie
         enum PlatformBackendRendererTextureMaxFilter_ : int
         {
             PlatformBackendRendererTextureMaxFilter_Linear,
-            PlatformBackendRendererTextureMaxFilter_Nearest
+            PlatformBackendRendererTextureMaxFilter_Nearest,
         };
 
         enum PlatformBackendRendererShaderType_ : int
         {
             PlatformBackendRendererShaderType_Vertex,
             PlatformBackendRendererShaderType_Fragment
+        };
+
+        enum PlatformBackendRendererMeshRenderingHints_ : int
+        {
+            PlatformBackendRendererShaderType_Points,
+            PlatformBackendRendererShaderType_Lines,
+            PlatformBackendRendererShaderType_Triangles,
         };
 
         typedef int PlatformBackendContextWindowHints;
@@ -99,6 +106,7 @@ namespace Frenchie
         typedef int PlatformBackendRendererTextureMinFilter;
         typedef int PlatformBackendRendererTextureMaxFilter;
         typedef int PlatformBackendRendererShaderType;
+        typedef int PlatformBackendRendererMeshRenderingHints;
 
         template<typename Type>
         class PlatformBackendRendererAllocator;
@@ -107,20 +115,20 @@ namespace Frenchie
         struct PlatformBackendRendererTexture final
         {
             PlatformBackendRendererTexture(
-                const unsigned int&                            _Ptr,
-                const int&                                     _Width,
-                const int&                                     _Height,
-                const PlatformBackendRendererTextureFormat&    _Format,
-                const PlatformBackendRendererTextureWrap&      _Wrap,
-                const PlatformBackendRendererTextureMinFilter& _MinFilter,
-                const PlatformBackendRendererTextureMaxFilter& _MaxFilter) : 
-                Width(_Width),
-                Height(_Height),
-                Ptr(_Ptr),
-                Format(_Format),
-                Wrap(_Wrap),
-                MinFilter(_MinFilter),
-                MaxFilter(_MaxFilter){}
+                const unsigned int&                            _Ptr       = 0,
+                const int&                                     _Width     = 128,
+                const int&                                     _Height    = 128,
+                const PlatformBackendRendererTextureFormat&    _Format    = PlatformBackendRendererTextureFormat_RGBA,
+                const PlatformBackendRendererTextureWrap&      _Wrap      = PlatformBackendRendererTextureWrap_::PlatformBackendRendererTextureWrap_Repeat,
+                const PlatformBackendRendererTextureMinFilter& _MinFilter = PlatformBackendRendererTextureMinFilter_::PlatformBackendRendererTextureMinFilter_Linear,
+                const PlatformBackendRendererTextureMaxFilter& _MaxFilter = PlatformBackendRendererTextureMaxFilter_::PlatformBackendRendererTextureMaxFilter_Linear) : 
+            Width(_Width),
+            Height(_Height),
+            Ptr(_Ptr),
+            Format(_Format),
+            Wrap(_Wrap),
+            MinFilter(_MinFilter),
+            MaxFilter(_MaxFilter){}
 
             // info
             const unsigned int                            Ptr       {+0};
@@ -134,10 +142,40 @@ namespace Frenchie
 
         struct PlatformBackendRendererShader final
         {
-            PlatformBackendRendererShader(const unsigned int& _Ptr) : Ptr(_Ptr){}
+            PlatformBackendRendererShader(const unsigned int& _Ptr = 0) : Ptr(_Ptr){}
 
             // info
             const unsigned int Ptr {0};
+        };
+
+        struct PlatformBackendRendererMesh final
+        {
+            PlatformBackendRendererMesh(
+                const unsigned int& _VBO = 0,
+                const unsigned int& _VAO = 0,
+                const unsigned int& _EBO = 0) :
+            VBO(_VBO),
+            VAO(_VAO),
+            EBO(_EBO){}
+
+            const unsigned int VBO{0};
+            const unsigned int VAO{0};
+            const unsigned int EBO{0};
+        };
+
+        struct PlatformBackendRendererMeshVertex
+        {
+            PlatformBackendRendererMeshVertex(
+                const glm::vec3& _Position = glm::vec3(0),
+                const glm::vec3& _Normal   = glm::vec3(0),
+                const glm::vec2& _UV       = glm::vec2(0)) :
+            Position(_Position),
+            Normal(_Normal),
+            UV(_UV){}
+
+            const glm::vec3 Position;
+            const glm::vec3 Normal;
+            const glm::vec2 UV;
         };
 
         class PlatformBackendRenderer final
@@ -185,25 +223,40 @@ namespace Frenchie
 
             // shaders API
             std::shared_ptr<PlatformBackendRendererShader> construct_shader(
-                const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& ShaderInfos) const;
+                const std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>& ShaderInfos =
+                    std::vector<std::pair<std::string, PlatformBackendRendererShaderType>>()) const;
             
             std::shared_ptr<PlatformBackendRendererShader> construct_shader(
-                const std::vector<std::filesystem::path>& _ShaderFilesPaths) const;
+                const std::vector<std::filesystem::path>& _ShaderFilesPaths =
+                    std::vector<std::filesystem::path>()) const;
 
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const bool& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const int& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const float& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const glm::vec2& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const glm::vec3& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const glm::vec4& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const glm::mat2& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const glm::mat3& _Value);
-            void set_shader_uniform(PlatformBackendRendererShader* _Shader, const std::string& _Uniform, const glm::mat4& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const bool& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const int& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const float& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::vec2& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::vec3& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::vec4& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::mat2& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::mat3& _Value);
+            void set_shader_uniform(const std::shared_ptr<PlatformBackendRendererShader>& _Shader, const std::string& _Uniform, const glm::mat4& _Value);
+
+            void begin_use_shader(const std::shared_ptr<PlatformBackendRendererShader>& _Shader);
+            void end_use_shader();
             
+            // mesh
+            std::shared_ptr<PlatformBackendRendererMesh> construct_mesh(std::vector<PlatformBackendRendererMeshVertex> _Vertexes);
+           
+            void begin_render_mesh(
+                const std::shared_ptr<PlatformBackendRendererMesh>& _Mesh,
+                PlatformBackendRendererMeshRenderingHints           _MeshRenderHints);
+
+            void end_render_mesh();
+
         protected:
 
-            std::unique_ptr<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererTexture>> m_Textures{nullptr};
+            std::unique_ptr<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererMesh>>    m_Meshes  {nullptr};
             std::unique_ptr<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererShader>>  m_Shaders {nullptr};
+            std::unique_ptr<Frenchie::Core::Memory::MemoryChunkAllocator<PlatformBackendRendererTexture>> m_Textures{nullptr};
             void*                                                                                         m_Context {nullptr};
         };
     }
