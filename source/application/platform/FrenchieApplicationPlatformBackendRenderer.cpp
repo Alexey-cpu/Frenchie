@@ -564,7 +564,12 @@ void PlatformRendererBackend::endup_use_shader()
     glUseProgram(0);
 }
 
-PlatformRendererBackendMesh PlatformRendererBackend::construct_mesh(std::vector<PlatformRendererBackendMeshVertex> _Vertexes, const std::vector<int>& _Indexes)
+PlatformRendererBackendMesh PlatformRendererBackend::construct_mesh(
+    const PlatformRendererBackendMeshVertex* _Vertexes,
+    const int&                               _VertexesCount,
+    const int*                               _Indexes,
+    const int&                               _IndexesCount
+)
 {
     // create mesh
     unsigned int m_VBO = 0;
@@ -581,10 +586,10 @@ PlatformRendererBackendMesh PlatformRendererBackend::construct_mesh(std::vector<
 
     // load vertexes and indexes on GPU
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, _Vertexes.size() * sizeof(PlatformRendererBackendMeshVertex), &_Vertexes[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(PlatformRendererBackendMeshVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _Indexes.size() * sizeof(int),  &_Indexes[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(int),  _Indexes, GL_DYNAMIC_DRAW);
 
     // setup attributes pointers
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(PlatformRendererBackendMeshVertex), (void*)(offsetof(PlatformRendererBackendMeshVertex, Position)));

@@ -254,7 +254,12 @@ namespace Frenchie
             void endup_use_shader();
             
             // mesh
-            PlatformRendererBackendMesh construct_mesh(std::vector<PlatformRendererBackendMeshVertex> _Vertexes, const std::vector<int>& _Indexes);
+            PlatformRendererBackendMesh construct_mesh(
+                const PlatformRendererBackendMeshVertex* _Vertexes,
+                const int&                               _VertexesCount,
+                const int*                               _Indexes,
+                const int&                               _IndexesCount);
+
             void destroy_mesh(const PlatformRendererBackendMesh& _Mesh);
            
             void begin_render_mesh(
@@ -274,26 +279,6 @@ namespace Frenchie
         public:
             PlatformImmediate2DRenderer(){}
             ~PlatformImmediate2DRenderer(){}
-
-            void push_vertex(const PlatformRendererBackendMeshVertex& _Vertex)
-            {
-                // resize vertex array
-                if((int)m_Vertexes.size() <= m_CurrentVertex)
-                    m_Vertexes.resize(2 * m_Vertexes.size());
-
-                // push vertex
-                m_Vertexes[m_CurrentVertex++] = _Vertex;
-            }
-
-            void push_index(const int& _Index)
-            {
-                // resize vertex array
-                if((int)m_Indexes.size() <= m_CurrentIndex)
-                    m_Indexes.resize(2 * m_Indexes.size());
-
-                // push vertex
-                m_Vertexes[m_CurrentIndex++] = _Index;
-            }
 
         protected:
             std::vector<PlatformRendererBackendMeshVertex> m_Vertexes     {std::vector<PlatformRendererBackendMeshVertex>(1024)};

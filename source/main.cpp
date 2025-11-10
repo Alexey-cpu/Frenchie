@@ -5,25 +5,52 @@
 #include <FrenchieCoreRenderer2DLayer.hpp>
 #include <FrenchieCoreTime.hpp>
 
+#include <FrenchieCoreContainersObjectList.hpp>
+
+class StringNode : public Frenchie::Core::Containers::ObjectListNode<StringNode>
+{
+public:
+    StringNode(const std::string& _Value = std::string()) : Value(_Value){}
+    virtual ~StringNode(){}
+
+    std::string Value{std::string()};
+};
+
 int main(int argc, char *argv[])
 {
-    // setup application logger
-    Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
+    Frenchie::Core::Containers::ObjectList<StringNode> list;
 
-    try
-    {
-        Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
-    }
-    catch(const std::exception& e)
-    {
-        Frenchie::Core::Logger::instance()->info(e.what());
-    }
+    auto node1 = list.insert_after(list.begin(), "item-1");
+    list.insert_before(node1, "item-2");
+    list.insert_before(node1, "item-3");
+    list.insert_after(node1, "item-4");
 
+    for(auto&& item : list) std::cout << item.Value << "\n";
 
-    Frenchie::Application::application()->push_layer<Frenchie::Application::Renderer2D>();
+    std::cout << list.size() << "\n";
 
-    return Frenchie::Application::application()->execute();
+    return 0;
 }
+
+// int main(int argc, char *argv[])
+// {
+//     // setup application logger
+//     Frenchie::Core::Logger::instance()->set_level(spdlog::level::level_enum::trace);
+
+//     try
+//     {
+//         Frenchie::Core::Logger::instance()->register_sink<spdlog::sinks::stdout_color_sink_mt>();
+//     }
+//     catch(const std::exception& e)
+//     {
+//         Frenchie::Core::Logger::instance()->info(e.what());
+//     }
+
+
+//     Frenchie::Application::application()->push_layer<Frenchie::Application::Renderer2D>();
+
+//     return Frenchie::Application::application()->execute();
+// }
 
 // int main(int argc, char *argv[])
 // {
