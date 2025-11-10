@@ -74,19 +74,21 @@ void main()
                     }
                 );
 
-                m_Mesh = Frenchie::Application::application_platform_backend_renderer()->construct_mesh(
-                    std::vector<PlatformRendererBackendMeshVertex>(
+                std::vector<PlatformRendererBackendMeshVertex> vertexes(
                     {
-                    // trangle 1
-                    { glm::vec3(-0.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    { glm::vec3(+100.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                    { glm::vec3(-0.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
-                }),
-                std::vector<int>(
-                {
-                    0, 1, 2
-                })
-            );
+                        { glm::vec3(-0.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+                        { glm::vec3(+100.f, +0.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) },
+                        { glm::vec3(-0.f, -100.f, 0.f), glm::vec3(0.f), glm::vec2(0.f) }
+                    }
+                );
+
+                std::vector<int> indexes({0, 1, 2});
+
+                m_Mesh = Frenchie::Application::application_platform_backend_renderer()->construct_mesh(
+                    &vertexes[0],
+                    (int)vertexes.size(),
+                    &indexes[0],
+                    (int)indexes.size());
 
                 return true;
             }
