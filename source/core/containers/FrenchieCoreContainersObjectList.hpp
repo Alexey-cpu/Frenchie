@@ -20,65 +20,6 @@ namespace Frenchie
                 Type* Prev{nullptr};
             };
 
-            template<typename Type>
-            class ObjectListNodeIterator final
-            {
-            public:
-                ObjectListNodeIterator(const ObjectListNodeInfo<Type>* _Node) : m_Info(_Node){}
-                ~ObjectListNodeIterator(){}
-
-                ObjectListNodeInfo<Type>* operator*() const
-                {
-                    return m_Info;
-                }
-
-                const ObjectListNodeInfo<Type>** operator->() const
-                {
-                    return &m_Info;
-                }
-                
-                ObjectListNodeIterator& operator++()
-                {
-                    if(m_Info != nullptr) 
-                        m_Info = m_Info->Next;
-                    return *this;
-                }
-                
-                ObjectListNodeIterator& operator--()
-                {
-                    if(m_Info != nullptr) 
-                        m_Info = m_Info->Prev
-                    return *this;
-                }
-                
-                ObjectListNodeIterator  operator++(int)
-                {
-                    NodeIterator tmp = *this; 
-                    ++(*this); 
-                    return tmp;
-                }
-                
-                ObjectListNodeIterator  operator--(int)
-                {
-                    NodeIterator tmp = *this; 
-                    --(*this); 
-                    return tmp;
-                }
-
-                friend bool operator==(const ObjectListNodeIterator& _First, const ObjectListNodeIterator& _Second)
-                { 
-                    return _First.m_Info == _Second.m_Info; 
-                }
-
-                friend bool operator!=(const ObjectListNodeIterator& _First, const ObjectListNodeIterator& _Second)
-                { 
-                    return _First.m_Info != _Second.m_Info; 
-                }
-
-            protected:
-                ObjectListNodeInfo<Type>* m_Info;
-            };
-
             template<typename Node, typename Allocator = Frenchie::Core::Memory::DefaultAllocator<Node>>
             class ObjectList : public Frenchie::Core::NonCopyable
             {
@@ -88,16 +29,6 @@ namespace Frenchie
                 virtual ~ObjectList()
                 {
                     clear();
-                }
-
-                Node* raw_memory_first() const
-                {
-                    return m_Tail;
-                }
-
-                Node* raw_memory_last() const
-                {
-                    return m_Head;
                 }
 
                 bool empty() const
@@ -129,6 +60,16 @@ namespace Frenchie
                     // clean up head and tail
                     m_Tail = nullptr;
                     m_Head = nullptr;
+                }
+
+                Node* raw_memory_first() const
+                {
+                    return m_Tail;
+                }
+
+                Node* raw_memory_last() const
+                {
+                    return m_Head;
                 }
 
                 template<typename ...Args>
@@ -223,22 +164,20 @@ namespace Frenchie
                 template<typename ...Args>
                 Node* create_node(Args ... _Args) const
                 {
-                    ++m_Counter;
+                    //++m_Counter;
                     return m_Allocator.construct(_Args ...);
                 }
 
                 void remove_node(Node* _Node) const
                 {
-                    --m_Counter;
+                    //--m_Counter;
                     if(_Node != nullptr)
                         m_Allocator.destroy(_Node);
                 }
 
-            protected:
                 mutable Node*     m_Tail     {nullptr};
                 mutable Node*     m_Head     {nullptr};
                 mutable Allocator m_Allocator{Allocator()};
-
                 mutable int m_Counter = 0;
             };
         }
