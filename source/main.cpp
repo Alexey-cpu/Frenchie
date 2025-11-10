@@ -18,12 +18,19 @@ public:
 
 int main(int argc, char *argv[])
 {
-    Frenchie::Core::Containers::ObjectList<StringNode> list;
+    Frenchie::Core::Memory::DefaultAllocator<StringNode> defaultAllocator;
+
+    Frenchie::Core::Containers::ObjectList<StringNode> list(&defaultAllocator);
 
     auto node1 = list.insert_after(list.begin(), "item-1");
-    list.insert_before(node1, "item-2");
-    list.insert_before(node1, "item-3");
-    list.insert_after(node1, "item-4");
+    auto node2 = list.insert_before(node1, "item-2");
+    auto node3 = list.insert_before(node1, "item-3");
+    auto node4 = list.insert_after(node1, "item-4");
+
+    for(auto&& item : list) std::cout << item.Value << "\n";
+
+    std::cout << "after removal... \n";
+    list.remove(node1);
 
     for(auto&& item : list) std::cout << item.Value << "\n";
 
