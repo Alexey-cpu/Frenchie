@@ -21,11 +21,11 @@ namespace Frenchie
             };
 
             template<typename Node>
-            class ObjectListNodeIterator final
+            class ObjectListIterator final
             {
             public:
-                ObjectListNodeIterator(Node* _Node) : m_Node(_Node){}
-                ~ObjectListNodeIterator(){}
+                ObjectListIterator(Node* _Node) : m_Node(_Node){}
+                ~ObjectListIterator(){}
 
                 Node operator*() const
                 {
@@ -37,40 +37,40 @@ namespace Frenchie
                     return m_Node;
                 }
                 
-                ObjectListNodeIterator& operator++()
+                ObjectListIterator& operator++()
                 {
                     if(m_Node != nullptr)
                         m_Node = m_Node->Next;
                     return *this;
                 }
                 
-                ObjectListNodeIterator& operator--()
+                ObjectListIterator& operator--()
                 {
                     if(m_Node != nullptr)
                         m_Node = m_Node->Prev;
                     return *this;
                 }
                 
-                ObjectListNodeIterator  operator++(int)
+                ObjectListIterator  operator++(int)
                 {
-                    ObjectListNodeIterator tmp = *this; 
+                    ObjectListIterator tmp = *this; 
                     ++(*this); 
                     return tmp; 
                 }
                 
-                ObjectListNodeIterator  operator--(int)
+                ObjectListIterator  operator--(int)
                 {
-                    ObjectListNodeIterator tmp = *this; 
+                    ObjectListIterator tmp = *this; 
                     --(*this); 
                     return tmp; 
                 }
 
-                friend bool operator==(const ObjectListNodeIterator& _First, const ObjectListNodeIterator& _Second)
+                friend bool operator==(const ObjectListIterator& _First, const ObjectListIterator& _Second)
                 { 
                     return _First.m_Node == _Second.m_Node; 
                 }
 
-                friend bool operator!=(const ObjectListNodeIterator& _First, const ObjectListNodeIterator& _Second)
+                friend bool operator!=(const ObjectListIterator& _First, const ObjectListIterator& _Second)
                 { 
                     return _First.m_Node != _Second.m_Node; 
                 }
@@ -78,25 +78,25 @@ namespace Frenchie
                 Node* m_Node{nullptr};
             };
 
-            template<typename Node, typename Allocator = DefaultAllocator<Node>>
+            template<typename Node, typename Allocator = Frenchie::Core::Memory::DefaultAllocator<Node>>
             class ObjectList : public Frenchie::Core::NonCopyable
             {
             public:
-                ObjectList(){}
+                ObjectList(const Allocator* _Allocator) : m_Allocator(_Allocator){}
 
                 ~ObjectList()
                 {
                     clear();
                 }
 
-                ObjectListNodeIterator<Node> begin() const
+                ObjectListIterator<Node> begin() const
                 {
-                    return ObjectListNodeIterator<Node>(m_Tail);
+                    return ObjectListIterator<Node>(m_Tail);
                 }
 
-                ObjectListNodeIterator<Node> end() const
+                ObjectListIterator<Node> end() const
                 {
-                    return ObjectListNodeIterator<Node>(nullptr);
+                    return ObjectListIterator<Node>(nullptr);
                 }
 
                 bool empty() const
@@ -126,29 +126,32 @@ namespace Frenchie
                 }
 
                 template<typename ...Args>
-                ObjectListNodeIterator<Node> insert_after(const ObjectListNodeIterator<Node>& _Iterator, Args ... _Args)
+                ObjectListIterator<Node> insert_after(const ObjectListIterator<Node>& _Iterator, Args ... _Args)
                 {
-                    return ObjectListNodeIterator<Node>(insert_after(_Iterator.m_Node, _Args ...));
+                    return ObjectListIterator<Node>(raw_memory_insert_after(_Iterator.m_Node, _Args ...));
                 }
 
                 template<typename ...Args>
-                ObjectListNodeIterator<Node> insert_before(const ObjectListNodeIterator<Node>& _Iterator, Args ... _Args)
+                ObjectListIterator<Node> insert_before(const ObjectListIterator<Node>& _Iterator, Args ... _Args)
                 {
-                    return ObjectListNodeIterator<Node>(insert_before(_Iterator.m_Node, _Args ...));
+                    return ObjectListIterator<Node>(raw_memory_insert_before(_Iterator.m_Node, _Args ...));
                 }
 
-                void remove(const ObjectListNodeIterator<Node>& _Iterator)
+                void remove(const ObjectListIterator<Node>& _Iterator)
                 {
-                    remove(_Iterator.m_Node);
+                    raw_memory_remove(_Iterator.m_Node);
                 }
 
             protected:
 
                 template<typename ...Args>
-                Node* insert_after(Node* _Node, Args ... _Args)
+                Node* raw_memory_insert_after(Node* _Node, Args ... _Args)
                 {
                     // create node
                     Node* _What = create_node(_Args ...);
+
+                    if(_What == nullptr)
+                        return nullptr;
 
                     // insert into an empty list
                     if(m_Head == nullptr && m_Tail == nullptr)
@@ -176,10 +179,13 @@ namespace Frenchie
                 }
 
                 template<typename ...Args>
-                Node* insert_before(Node* _Node, Args ... _Args)
+                Node* raw_memory_insert_before(Node* _Node, Args ... _Args)
                 {
                     // create node
                     Node* _What = create_node(_Args ...);
+
+                    if(_What == nullptr)
+                        return nullptr;
 
                     // insert into an empty list
                     if(m_Head == nullptr && m_Tail == nullptr)
@@ -206,7 +212,7 @@ namespace Frenchie
                     return _What;
                 }
 
-                void remove(Node* _Node) const
+                void raw_memory_remove(Node* _Node)
                 {
                     if(_Node == nullptr)
                         return;
@@ -230,19 +236,19 @@ namespace Frenchie
                 template<typename ...Args>
                 Node* create_node(Args ... _Args)
                 {
-                    return m_Allocator.construct(_Args ...);
+                    return m_Allocator != nullptr ? m_Allocator->construct(_Args ...) : nullptr;
                 }
 
                 void remove_node(Node* _Node)
                 {
-                    if(_Node != nullptr)
-                        m_Allocator.destroy(_Node);
+                    if(_Node != nullptr && m_Allocator != nullptr)
+                        m_Allocator->destroy(_Node);
                 }
 
             protected:
-                Node*     m_Tail     {nullptr};
-                Node*     m_Head     {nullptr};
-                Allocator m_Allocator{Allocator()};
+                Node*            m_Tail     {nullptr};
+                Node*            m_Head     {nullptr};
+                const Allocator* m_Allocator{nullptr};
             };
         }
     }
