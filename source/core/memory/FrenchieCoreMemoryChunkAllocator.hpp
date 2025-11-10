@@ -158,14 +158,14 @@ namespace Frenchie
                 void release_unused_chunks()
                 {
                     if (empty())
-                        return 0;
+                        return;
 
                     // remove unused chunks
-                    MemoryChunk* next = m_Tail;
+                    auto next = m_Tail;
 
                     while (next)
                     {
-                        MemoryChunk* chunk = next;
+                        auto chunk = next;
                         next = next->Next;
                         
                         if(chunk->is_free())
