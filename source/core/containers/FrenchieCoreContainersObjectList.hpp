@@ -9,176 +9,278 @@ namespace Frenchie
     {
         namespace Containers
         {
-            template<typename Type>
-            class ObjectListNodeInfo : public Frenchie::Core::NonCopyable
+            template<typename NodeType, typename AllocatorType = Frenchie::Core::Memory::DefaultAllocator<NodeType>>
+            class ObjectTreeLeaf : public Frenchie::Core::NonCopyable
             {
             public:
-                ObjectListNodeInfo() : Next(nullptr), Prev(nullptr){}
-                virtual ~ObjectListNodeInfo(){}
 
-                Type* Next{nullptr};
-                Type* Prev{nullptr};
+                ObjectTreeLeaf(AllocatorType* _Allocator = nullptr) : Allocator(_Allocator){}
+
+                virtual ~ObjectTreeLeaf()
+                {
+                    // remove allocator
+                    if(Allocator != nullptr)
+                    {
+                        std::cout << "removing allocator... \n";
+                        delete Allocator;
+                    }
+                }
+
+                // info
+                const ObjectTreeLeaf<NodeType, AllocatorType>* Root       {this   };
+                mutable NodeType*                              NextSibling{nullptr};
+                mutable NodeType*                              PrevSibling{nullptr};
+                mutable NodeType*                              FirstChild {nullptr};
+                mutable NodeType*                              LastChild  {nullptr};
+                mutable AllocatorType*                         Allocator  {nullptr};
+
             };
 
-            template<typename Node, typename Allocator = Frenchie::Core::Memory::DefaultAllocator<Node>>
-            class ObjectList : public Frenchie::Core::NonCopyable
+            template<typename NodeType, typename AllocatorType = Frenchie::Core::Memory::DefaultAllocator<NodeType>>
+            class ObjectTreeNode : public ObjectTreeLeaf<NodeType, AllocatorType>
             {
             public:
-                ObjectList(){}
 
-                virtual ~ObjectList()
+                ObjectTreeNode(AllocatorType* _Allocator = nullptr) : ObjectTreeLeaf<NodeType, AllocatorType>(_Allocator){}
+                virtual ~ObjectTreeNode()
                 {
+                    // remove all children
                     clear();
                 }
 
-                bool empty() const
+                // nested types
+                class Iterator final
                 {
-                    return m_Head == nullptr && m_Tail == nullptr;
+                public:
+                    Iterator(NodeType* _Node) : m_Info(_Node){}
+                    ~Iterator(){}
+
+                    NodeType* operator*() const
+                    {
+                        return m_Info;
+                    }
+
+                    const NodeType** operator->() const
+                    {
+                        return &m_Info;
+                    }
+                    
+                    Iterator& operator++()
+                    {
+                        if(m_Info != nullptr) 
+                            m_Info = m_Info->NextSibling;
+                        return *this;
+                    }
+                    
+                    Iterator& operator--()
+                    {
+                        if(m_Info != nullptr) 
+                            m_Info = m_Info->PrevSibling
+                        return *this;
+                    }
+                    
+                    Iterator  operator++(int)
+                    {
+                        auto tmp = *this; 
+                        ++(*this); 
+                        return tmp;
+                    }
+                    
+                    Iterator  operator--(int)
+                    {
+                        auto tmp = *this; 
+                        --(*this); 
+                        return tmp;
+                    }
+
+                    friend bool operator==(const Iterator& _First, const Iterator& _Second)
+                    { 
+                        return _First.m_Info == _Second.m_Info; 
+                    }
+
+                    friend bool operator!=(const Iterator& _First, const Iterator& _Second)
+                    { 
+                        return _First.m_Info != _Second.m_Info; 
+                    }
+
+                    NodeType* m_Info;
+                };
+
+                template<typename ...Args>
+                Iterator insert_after(const Iterator& _After, Args ... _Args)
+                {
+                    return Iterator(raw_memory_insert_after(_After.m_Info, _Args ...));
                 }
 
+                template<typename ...Args>
+                Iterator insert_before(const Iterator& _Before, Args ... _Args)
+                {
+                    return Iterator(raw_memory_insert_before(_Before.m_Info, _Args ...));
+                }
+
+                Iterator begin() const
+                {
+                    return Iterator(FirstChild);
+                }
+
+                Iterator end() const
+                {
+                    return Iterator(nullptr);
+                }
+
+                // API
                 int size() const
                 {
-                    auto next = m_Tail;
-                    while (next) ++count;
+                    auto NextSibling = FirstChild;
+                    while (NextSibling) ++count;
                     return count;
                 }
 
                 void clear() const
                 {
                     // remove all
-                    auto next = m_Tail;
+                    auto NextSibling = FirstChild;
 
-                    while (next)
+                    while (NextSibling)
                     {
-                        auto current = next;
-                        next = next->Next;
+                        auto current = NextSibling;
+                        NextSibling = NextSibling->NextSibling;
 
                         if(current != nullptr)
                             remove_node(current);
                     }
 
-                    // clean up head and tail
-                    m_Tail = nullptr;
-                    m_Head = nullptr;
+                    // clean up LastChild and FirstChild
+                    FirstChild = nullptr;
+                    LastChild = nullptr;
                 }
 
-                Node* raw_memory_first() const
+                bool empty() const
                 {
-                    return m_Tail;
+                    return LastChild == nullptr && FirstChild == nullptr;
                 }
 
-                Node* raw_memory_last() const
+                NodeType* raw_memory_first() const
                 {
-                    return m_Head;
+                    return FirstChild;
+                }
+
+                NodeType* raw_memory_last() const
+                {
+                    return LastChild;
                 }
 
                 template<typename ...Args>
-                Node* raw_memory_insert_after(Node* _Node, Args ... _Args) const
+                NodeType* raw_memory_insert_after(NodeType* _Node, Args ... _Args) const
                 {
                     // create node
-                    Node* _What = create_node(_Args ...);
+                    NodeType* _What = create_node(_Args ...);
 
                     if(_What == nullptr)
                         return nullptr;
 
                     // insert into an empty list
-                    if(m_Head == nullptr && m_Tail == nullptr)
+                    if(LastChild == nullptr && FirstChild == nullptr)
                     {
-                        m_Head = _What;
-                        m_Tail = _What;
+                        LastChild = _What;
+                        FirstChild = _What;
                         return _What;
                     }
 
                     // insert into not empty list
                     if(_Node == nullptr)
-                        _Node = m_Head;
+                        _Node = LastChild;
 
-                    if(_Node->Next != nullptr)
-                        _Node->Next->Prev = _What;
+                    if(_Node->NextSibling != nullptr)
+                        _Node->NextSibling->PrevSibling = _What;
 
-                    _What->Next = _Node->Next;
-                    _Node->Next = _What;
-                    _What->Prev = _Node;
+                    _What->NextSibling = _Node->NextSibling;
+                    _Node->NextSibling = _What;
+                    _What->PrevSibling = _Node;
 
-                    if(_What->Next == nullptr)
-                        m_Head = _What;
+                    if(_What->NextSibling == nullptr)
+                        LastChild = _What;
 
                     return _What;
                 }
 
                 template<typename ...Args>
-                Node* raw_memory_insert_before(Node* _Node, Args ... _Args) const
+                NodeType* raw_memory_insert_before(NodeType* _Node, Args ... _Args) const
                 {
                     // create node
-                    Node* _What = create_node(_Args ...);
+                    NodeType* _What = create_node(_Args ...);
 
                     if(_What == nullptr)
                         return nullptr;
 
                     // insert into an empty list
-                    if(m_Head == nullptr && m_Tail == nullptr)
+                    if(LastChild == nullptr && FirstChild == nullptr)
                     {
-                        m_Head = _What;
-                        m_Tail = _What;
+                        LastChild = _What;
+                        FirstChild = _What;
                         return _What;
                     }
 
                     // insert into not empty list
                     if(_Node == nullptr)
-                        _Node = m_Tail;
+                        _Node = FirstChild;
 
-                    if(_Node->Prev != nullptr)
-                        _Node->Prev->Next = _What;
+                    if(_Node->PrevSibling != nullptr)
+                        _Node->PrevSibling->NextSibling = _What;
 
-                    _What->Next = _Node;
-                    _What->Prev = _Node->Prev;
-                    _Node->Prev = _What;
+                    _What->NextSibling = _Node;
+                    _What->PrevSibling = _Node->PrevSibling;
+                    _Node->PrevSibling = _What;
 
-                    if(_What->Prev == nullptr)
-                        m_Tail = _What;
+                    if(_What->PrevSibling == nullptr)
+                        FirstChild = _What;
 
                     return _What;
                 }
 
-                void raw_memory_remove(Node* _Node) const
+                void raw_memory_remove(NodeType* _Node) const
                 {
                     if(_Node == nullptr || empty())
                         return;
 
-                    // check if tail needs update
-                    if(_Node->Prev != nullptr)
-                        _Node->Prev->Next = _Node->Next;
+                    // check if FirstChild needs update
+                    if(_Node->PrevSibling != nullptr)
+                        _Node->PrevSibling->NextSibling = _Node->NextSibling;
                     else
-                        m_Tail = _Node->Next;
+                        FirstChild = _Node->NextSibling;
                     
-                    // check if head needs update
-                    if(_Node->Next != nullptr)
-                        _Node->Next->Prev = _Node->Prev;
+                    // check if LastChild needs update
+                    if(_Node->NextSibling != nullptr)
+                        _Node->NextSibling->PrevSibling = _Node->PrevSibling;
                     else
-                        m_Head = _Node->Prev;
+                        LastChild = _Node->PrevSibling;
 
                     // remove node
                     remove_node(_Node);
                 }
 
                 template<typename ...Args>
-                Node* create_node(Args ... _Args) const
+                NodeType* create_node(Args ... _Args) const
                 {
-                    //++m_Counter;
-                    return m_Allocator.construct(_Args ...);
+                    auto node  = Root->Allocator->construct(_Args ...);
+                    node->Root = Root;
+                    return node;
                 }
 
-                void remove_node(Node* _Node) const
+                void remove_node(NodeType* _Node) const
                 {
                     //--m_Counter;
                     if(_Node != nullptr)
-                        m_Allocator.destroy(_Node);
+                        Root->Allocator->destroy(_Node);
                 }
+            };
 
-                mutable Node*     m_Tail     {nullptr};
-                mutable Node*     m_Head     {nullptr};
-                mutable Allocator m_Allocator{Allocator()};
-                mutable int m_Counter = 0;
+            template<typename NodeType, typename AllocatorType = Frenchie::Core::Memory::DefaultAllocator<NodeType>>
+            class ObjectTreeRoot : public ObjectTreeNode<NodeType, AllocatorType>
+            {
+            public:
+                ObjectTreeRoot() : ObjectTreeNode<NodeType, AllocatorType>(new AllocatorType()){}
+                virtual ~ObjectTreeRoot(){}
             };
         }
     }

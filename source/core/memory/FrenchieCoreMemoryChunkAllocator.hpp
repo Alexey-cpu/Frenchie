@@ -19,23 +19,22 @@ namespace Frenchie
             };
 
             // nested types
-            struct MemoryChunk final :
-                public Frenchie::Core::Containers::ObjectListNodeInfo<MemoryChunk>
+            struct MemoryChunk final : public Frenchie::Core::Containers::ObjectTreeLeaf<MemoryChunk, Frenchie::Core::Memory::DefaultAllocator<MemoryChunk>>
             {
                 // info
-                mutable uintptr_t    ElementSize   = 0;
-                mutable uintptr_t    ElementsCount = 0;
-                mutable uintptr_t    Free          = 0;
-                mutable uintptr_t    Head          = 0;
-                mutable uintptr_t    Size          = 0;
-                mutable char*        Memory        = nullptr;
+                mutable uintptr_t ElementSize   = 0;
+                mutable uintptr_t ElementsCount = 0;
+                mutable uintptr_t Free          = 0;
+                mutable uintptr_t Busy          = 0;
+                mutable uintptr_t Size          = 0;
+                mutable char*     Memory        = nullptr;
 
                 MemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkElementsCount)
                 {
                     ElementSize   = std::max<uintptr_t>(_ChunkElementSize, 1);
                     ElementsCount = std::max<uintptr_t>(_ChunkElementsCount, 1);
                     Free          = (sizeof(AllocationInfo) + ElementSize) * ElementsCount;
-                    Head          = 0;
+                    Busy          = 0;
                     Size          = Free;
                     Memory        = reinterpret_cast<char*>(malloc(Size * sizeof(char)));
                 }
@@ -45,7 +44,7 @@ namespace Frenchie
                     ElementSize   = 0;
                     ElementsCount = 0;
                     Free          = 0;
-                    Head          = 0;
+                    Busy          = 0;
                     Size          = 0;
                     free(Memory);
                     Memory = nullptr;
@@ -55,14 +54,14 @@ namespace Frenchie
                 {
                     uintptr_t amount = sizeof(AllocationInfo) + std::max<uintptr_t>(_Size, 1) * ElementSize;
 
-                    if(Head + amount > Size) 
+                    if(Busy + amount > Size) 
                         return nullptr; // out-of memory
                     
-                    char* buffer         = Memory + Head + sizeof(AllocationInfo);
+                    char* buffer         = Memory + Busy + sizeof(AllocationInfo);
                     AllocationInfo* info = reinterpret_cast<AllocationInfo*>(buffer - sizeof(AllocationInfo));
                     info->Chunk          = reinterpret_cast<uintptr_t>(this);
                     info->Amount         = amount;
-                    Head                += amount;
+                    Busy                += amount;
                     Free                -= amount;
 
                     return buffer;
@@ -79,7 +78,7 @@ namespace Frenchie
 
                     if(chunk->Free >= chunk->Size)
                     {
-                        chunk->Head = 0;
+                        chunk->Busy = 0;
                         chunk->Free = chunk->Size;
                     }
 
@@ -93,12 +92,12 @@ namespace Frenchie
             };
 
             template<typename Type, bool DeleteLater = false>
-            class MemoryChunkAllocator final  : public Frenchie::Core::Containers::ObjectList<MemoryChunk>
+            class MemoryChunkAllocator final  :
+                public Frenchie::Core::Containers::ObjectTreeRoot<MemoryChunk, Frenchie::Core::Memory::DefaultAllocator<MemoryChunk>>
             {
             public:
 
-                MemoryChunkAllocator(uintptr_t _ChunkSize) : 
-                    m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)){}
+                MemoryChunkAllocator(uintptr_t _ChunkSize) : m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)){}
 
                 ~MemoryChunkAllocator(){}
 
@@ -128,7 +127,7 @@ namespace Frenchie
                     auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
 
                     // check that this is the first chunk
-                    if(chunk == nullptr || (chunk->Prev == nullptr && chunk->Next == nullptr) || !chunk->is_free() || DeleteLater)
+                    if(chunk == nullptr || empty() || !chunk->is_free() || DeleteLater)
                         return;
 
                     raw_memory_remove(chunk);
@@ -157,20 +156,20 @@ namespace Frenchie
 
                 void release_unused_chunks()
                 {
-                    if (empty())
-                        return;
+                    // if (empty())
+                    //     return;
 
-                    // remove unused chunks
-                    auto next = m_Tail;
+                    // // remove unused chunks
+                    // auto next = m_Tail;
 
-                    while (next)
-                    {
-                        auto chunk = next;
-                        next = next->Next;
+                    // while (next)
+                    // {
+                    //     auto chunk = next;
+                    //     next = next->Next;
                         
-                        if(chunk->is_free())
-                            raw_memory_remove(chunk);
-                    }
+                    //     if(chunk->is_free())
+                    //         raw_memory_remove(chunk);
+                    // }
                 }
 
                 uintptr_t get_total_memory_size() const
@@ -180,13 +179,8 @@ namespace Frenchie
 
                     uintptr_t freeMemory = 0;
 
-                    auto next = m_Tail;
-
-                    while (next)
-                    {
-                        freeMemory  += next->Size;
-                        next = next->Next;
-                    }
+                    for(auto&& child : *this)
+                        freeMemory += child->Size;
 
                     return freeMemory;
                 }
@@ -198,13 +192,8 @@ namespace Frenchie
 
                     uintptr_t freeMemory = 0;
 
-                    auto next = m_Tail;
-
-                    while (next)
-                    {
-                        freeMemory  += next->Free;
-                        next = next->Next;
-                    }
+                    for(auto&& child : *this)
+                        freeMemory += child->Free;
 
                     return freeMemory;
                 }
@@ -216,13 +205,8 @@ namespace Frenchie
 
                     uintptr_t freeMemory = 0;
 
-                    auto next = m_Tail;
-
-                    while (next)
-                    {
-                        freeMemory += next->Head;
-                        next = next->Next;
-                    }
+                    for(auto&& child : *this)
+                        freeMemory += child->Busy;
 
                     return freeMemory;
                 }
@@ -231,13 +215,8 @@ namespace Frenchie
                 {
                     uintptr_t totalChunksNumber = 0;
 
-                    auto next = m_Tail;
-
-                    while (next)
-                    {
+                    for(auto&& child : *this)
                         ++totalChunksNumber;
-                        next = next->Next;
-                    }
 
                     return totalChunksNumber;
                 }
@@ -246,13 +225,10 @@ namespace Frenchie
                 {
                     uintptr_t freeChunksNumber = 0;
 
-                    auto next = m_Tail;
-
-                    while (next)
+                    for(auto&& child : *this)
                     {
-                        if(next->is_free())
+                        if(child->is_free())
                             ++freeChunksNumber;
-                        next = next->Next;
                     }
 
                     return freeChunksNumber;
