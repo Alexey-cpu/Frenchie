@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <algorithm>
 
+#include <FrenchieCoreContainersObjectList.hpp>
+
 namespace Frenchie
 {
     namespace Core
@@ -16,131 +18,111 @@ namespace Frenchie
                 uintptr_t Amount = 0;
             };
 
+            // nested types
+            struct MemoryChunk final :
+                public Frenchie::Core::Containers::ObjectListNodeInfo<MemoryChunk>
+            {
+                // info
+                mutable uintptr_t    ElementSize   = 0;
+                mutable uintptr_t    ElementsCount = 0;
+                mutable uintptr_t    Free          = 0;
+                mutable uintptr_t    Head          = 0;
+                mutable uintptr_t    Size          = 0;
+                mutable char*        Memory        = nullptr;
+
+                MemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkElementsCount)
+                {
+                    ElementSize   = std::max<uintptr_t>(_ChunkElementSize, 1);
+                    ElementsCount = std::max<uintptr_t>(_ChunkElementsCount, 1);
+                    Free          = (sizeof(AllocationInfo) + ElementSize) * ElementsCount;
+                    Head          = 0;
+                    Size          = Free;
+                    Memory        = reinterpret_cast<char*>(malloc(Size * sizeof(char)));
+                }
+
+                ~MemoryChunk()
+                {
+                    ElementSize   = 0;
+                    ElementsCount = 0;
+                    Free          = 0;
+                    Head          = 0;
+                    Size          = 0;
+                    free(Memory);
+                    Memory = nullptr;
+                }
+
+                void* request(uintptr_t _Size)
+                {
+                    uintptr_t amount = sizeof(AllocationInfo) + std::max<uintptr_t>(_Size, 1) * ElementSize;
+
+                    if(Head + amount > Size) 
+                        return nullptr; // out-of memory
+                    
+                    char* buffer         = Memory + Head + sizeof(AllocationInfo);
+                    AllocationInfo* info = reinterpret_cast<AllocationInfo*>(buffer - sizeof(AllocationInfo));
+                    info->Chunk          = reinterpret_cast<uintptr_t>(this);
+                    info->Amount         = amount;
+                    Head                += amount;
+                    Free                -= amount;
+
+                    return buffer;
+                }
+
+                static AllocationInfo* release(void* _Pointer)
+                {
+                    if(_Pointer == nullptr)
+                        return nullptr;
+
+                    AllocationInfo* info  = reinterpret_cast<AllocationInfo*>(reinterpret_cast<char*>(_Pointer) - sizeof(AllocationInfo));
+                    MemoryChunk*    chunk = reinterpret_cast<MemoryChunk*>(info->Chunk);
+                    chunk->Free += info->Amount;
+
+                    if(chunk->Free >= chunk->Size)
+                    {
+                        chunk->Head = 0;
+                        chunk->Free = chunk->Size;
+                    }
+
+                    return info;
+                }
+
+                bool is_free() const
+                {
+                    return Free >= Size;
+                }
+            };
+
             template<typename Type, bool DeleteLater = false>
-            class MemoryChunkAllocator final
+            class MemoryChunkAllocator final  : public Frenchie::Core::Containers::ObjectList<MemoryChunk>
             {
             public:
 
-                // nested types
-                struct MemoryChunk final
-                {
-                    // info
-                    mutable uintptr_t    ElementSize   = 0;
-                    mutable uintptr_t    ElementsCount = 0;
-                    mutable uintptr_t    Free          = 0;
-                    mutable uintptr_t    Head          = 0;
-                    mutable uintptr_t    Size          = 0;
-                    mutable char*        Memory        = nullptr;
-                    mutable MemoryChunk* Next          = nullptr;
-                    mutable MemoryChunk* Prev          = nullptr;
-
-                    MemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkElementsCount)
-                    {
-                        ElementSize   = std::max<uintptr_t>(_ChunkElementSize, 1);
-                        ElementsCount = std::max<uintptr_t>(_ChunkElementsCount, 1);
-                        Free          = (sizeof(AllocationInfo) + ElementSize) * ElementsCount;
-                        Head          = 0;
-                        Size          = Free;
-                        Memory        = reinterpret_cast<char*>(malloc(Size * sizeof(char)));
-                    }
-
-                    ~MemoryChunk()
-                    {
-                        ElementSize   = 0;
-                        ElementsCount = 0;
-                        Free          = 0;
-                        Head          = 0;
-                        Size          = 0;
-                        free(Memory);
-                        Memory = nullptr;
-                        Next   = nullptr;
-                        Prev   = nullptr;
-                    }
-
-                    void* request(uintptr_t _Size)
-                    {
-                        uintptr_t amount = sizeof(AllocationInfo) + std::max<uintptr_t>(_Size, 1) * ElementSize;
-
-                        if(Head + amount > Size) 
-                            return nullptr; // out-of memory
-                        
-                        char* buffer         = Memory + Head + sizeof(AllocationInfo);
-                        AllocationInfo* info = reinterpret_cast<AllocationInfo*>(buffer - sizeof(AllocationInfo));
-                        info->Chunk          = reinterpret_cast<uintptr_t>(this);
-                        info->Amount         = amount;
-                        Head                += amount;
-                        Free                -= amount;
-
-                        return buffer;
-                    }
-
-                    static AllocationInfo* release(void* _Pointer)
-                    {
-                        if(_Pointer == nullptr)
-                            return nullptr;
-
-                        AllocationInfo* info  = reinterpret_cast<AllocationInfo*>(reinterpret_cast<char*>(_Pointer) - sizeof(AllocationInfo));
-                        MemoryChunk*    chunk = reinterpret_cast<MemoryChunk*>(info->Chunk);
-                        chunk->Free += info->Amount;
-
-                        if(chunk->Free >= chunk->Size)
-                        {
-                            chunk->Head = 0;
-                            chunk->Free = chunk->Size;
-                        }
-
-                        return info;
-                    }
-
-                    bool is_free() const
-                    {
-                        return Free >= Size;
-                    }
-                };
-
                 MemoryChunkAllocator(uintptr_t _ChunkSize) : 
-                    m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)), 
-                    m_Head(new MemoryChunk(sizeof(Type), m_ChunkSize)), 
-                    m_Tail(m_Head){}
+                    m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)){}
 
-                ~MemoryChunkAllocator()
-                {
-                    release();
-                }
+                ~MemoryChunkAllocator(){}
 
                 Type* allocate(uintptr_t _Size) const
                 {
                     // create chunks list
-                    if(m_Head == nullptr && m_Tail == nullptr)
-                    {
-                        m_Head = new MemoryChunk(sizeof(Type), m_ChunkSize);
-                        m_Tail = m_Head;
-                    }
+                    if(empty())
+                        raw_memory_insert_after(raw_memory_last(), sizeof(Type), m_ChunkSize);
 
                     // try to allocate memory
-                    void* buffer = m_Head->request(_Size);
+                    void* buffer = raw_memory_last()->request(_Size);
                     if(buffer != nullptr)
                         return reinterpret_cast<Type*>(buffer);
 
                     // adjust chunk size
                     m_ChunkSize = std::max<uintptr_t>(m_ChunkSize, _Size);
 
-                    // allocate new chunk
-                    MemoryChunk* chunk  = new MemoryChunk(sizeof(Type), m_ChunkSize);
-                    chunk->Next = nullptr;
-                    chunk->Prev = m_Head;
-
-                    m_Head->Next = chunk;
-                    m_Head = chunk;
-
-                    return reinterpret_cast<Type*>(m_Head->request(_Size));
+                    // allocate new chunk and request memory from it
+                    return reinterpret_cast<Type*>(
+                        raw_memory_insert_after(raw_memory_last(), sizeof(Type), m_ChunkSize)->request(_Size));
                 }
 
                 void deallocate(Type* _Pointer) const
                 {
-                    if(m_Head == nullptr && m_Tail == nullptr) 
-                        return;
-
                     // clear pointer and retrieve allocation info
                     auto info  = MemoryChunk::release(_Pointer);
                     auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
@@ -149,7 +131,7 @@ namespace Frenchie
                     if(chunk == nullptr || (chunk->Prev == nullptr && chunk->Next == nullptr) || !chunk->is_free() || DeleteLater)
                         return;
 
-                    remove_chunk(chunk);
+                    raw_memory_remove(chunk);
                 }
 
                 template<typename ... Args>
@@ -170,28 +152,13 @@ namespace Frenchie
 
                 void release()
                 {
-                    // remove all chunks
-                    auto next = m_Tail;
-
-                    while (next)
-                    {
-                        auto current = next;
-                        next = next->Next;
-                        delete current;
-                    }
-
-                    // clean up tail
-                    m_Tail = nullptr;
-                    m_Head = nullptr;
+                    clear();
                 }
 
                 void release_unused_chunks()
                 {
-                    if(m_Head == nullptr && m_Tail == nullptr) 
-                        return;
-
-                    if(m_Head == m_Tail)
-                        return;
+                    if (empty())
+                        return 0;
 
                     // remove unused chunks
                     MemoryChunk* next = m_Tail;
@@ -202,12 +169,15 @@ namespace Frenchie
                         next = next->Next;
                         
                         if(chunk->is_free())
-                            remove_chunk(chunk);
+                            raw_memory_remove(chunk);
                     }
                 }
 
                 uintptr_t get_total_memory_size() const
                 {
+                    if (empty())
+                        return 0;
+
                     uintptr_t freeMemory = 0;
 
                     auto next = m_Tail;
@@ -223,6 +193,9 @@ namespace Frenchie
 
                 uintptr_t get_free_memory_amount() const
                 {
+                    if (empty())
+                        return 0;
+
                     uintptr_t freeMemory = 0;
 
                     auto next = m_Tail;
@@ -238,6 +211,9 @@ namespace Frenchie
 
                 uintptr_t get_busy_memory_amount() const
                 {
+                    if (empty())
+                        return 0;
+
                     uintptr_t freeMemory = 0;
 
                     auto next = m_Tail;
@@ -283,32 +259,8 @@ namespace Frenchie
                 }
 
             private:
-                
-                void isnert_chunk(MemoryChunk* _What, MemoryChunk* _Where) const
-                {
-                }
 
-                void remove_chunk(MemoryChunk* _Chunk) const
-                {
-                    // check if tail needs update
-                    if(_Chunk->Prev != nullptr)
-                        _Chunk->Prev->Next = _Chunk->Next;
-                    else
-                        m_Tail = _Chunk->Next;
-                    
-                    // check if head needs update
-                    if(_Chunk->Next != nullptr)
-                        _Chunk->Next->Prev = _Chunk->Prev;
-                    else
-                        m_Head = _Chunk->Prev;
-
-                    // remove chunk
-                    delete _Chunk;
-                }
-
-                mutable  uintptr_t    m_ChunkSize = 1024;
-                mutable  MemoryChunk* m_Head      = nullptr;
-                mutable  MemoryChunk* m_Tail      = nullptr;
+                mutable uintptr_t m_ChunkSize = 1024;
             };
         }
     }
