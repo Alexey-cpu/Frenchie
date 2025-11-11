@@ -7,7 +7,7 @@
 
 #include <FrenchieCoreContainersObjectList.hpp>
 
-class StringNode : public Frenchie::Core::Containers::ObjectListNode<StringNode>
+class StringNode : public Frenchie::Core::Containers::ObjectTreeRoot<StringNode>
 {
 public:
     StringNode(const std::string& _Value = std::string()) : Value(_Value){}
@@ -16,28 +16,10 @@ public:
     std::string Value{std::string()};
 };
 
-int main(int argc, char *argv[])
-{
-    Frenchie::Core::Memory::DefaultAllocator<StringNode> defaultAllocator;
-
-    Frenchie::Core::Containers::ObjectList<StringNode> list(&defaultAllocator);
-
-    auto node1 = list.insert_after(list.begin(), "item-1");
-    auto node2 = list.insert_before(node1, "item-2");
-    auto node3 = list.insert_before(node1, "item-3");
-    auto node4 = list.insert_after(node1, "item-4");
-
-    for(auto&& item : list) std::cout << item.Value << "\n";
-
-    std::cout << "after removal... \n";
-    list.remove(node1);
-
-    for(auto&& item : list) std::cout << item.Value << "\n";
-
-    std::cout << list.size() << "\n";
-
-    return 0;
-}
+// int main(int argc, char *argv[])
+// {
+//     return 0;
+// }
 
 // int main(int argc, char *argv[])
 // {
@@ -59,10 +41,28 @@ int main(int argc, char *argv[])
 //     return Frenchie::Application::application()->execute();
 // }
 
-// int main(int argc, char *argv[])
-// {
-//     return Frenchie::Editor::Launcher::execute();
-// }
+int main(int argc, char *argv[])
+{
+    // StringNode nodes;
+
+    // nodes.insert_after(nodes.begin(), "A");
+    // nodes.insert_after(nodes.begin(), "B");
+    // nodes.insert_after(nodes.begin(), "C");
+
+    // for(auto&& node : nodes) std::cout << node->Value << "\n";
+
+    Frenchie::Core::Serialization::Document document;
+
+    auto then = Frenchie::Core::Time::tic();
+
+    document.read<Frenchie::Core::Serialization::XMLReader>(
+        std::filesystem::path(U"C:/SDK/Qt_Projects/OpenGL/logs/1_Летний минимум_2027_ГОСТ_п.5.3_Г.pwrct")
+    );
+
+    std::cout << "elapsed " << Frenchie::Core::Time::elapsed<std::chrono::milliseconds>(then, Frenchie::Core::Time::tic()) << " ms \n";
+
+    return 0;//Frenchie::Editor::Launcher::execute();
+}
 
 // #include "miniz.h"
 // #include <cstdio>
