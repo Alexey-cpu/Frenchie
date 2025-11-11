@@ -3,6 +3,7 @@
 #include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
 #include <FrenchieCoreNonCopyable.hpp>
+#include <FrenchieCoreStringUtilities.hpp>
 #include <FrenchieCoreMemoryChunkAllocator.hpp>
 
 // PUGIXML
@@ -104,7 +105,7 @@ namespace Frenchie
 
                 template<typename T> T get_value_as() const
                 {
-                    return Core::String::from_string<T>(get_value());
+                    return Frenchie::Core::String::from_string<T>(get_value());
                 }
 
                 // setters
