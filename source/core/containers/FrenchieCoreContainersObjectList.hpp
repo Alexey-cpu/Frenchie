@@ -3,6 +3,8 @@
 #include <FrenchieCoreMemoryDefaultAllocator.hpp>
 #include <FrenchieCoreNonCopyable.hpp>
 
+#include <iostream>
+
 namespace Frenchie
 {
     namespace Core
@@ -75,7 +77,7 @@ namespace Frenchie
                     Iterator& operator--()
                     {
                         if(m_Info != nullptr) 
-                            m_Info = m_Info->PrevSibling
+                            m_Info = m_Info->PrevSibling;
                         return *this;
                     }
                     
@@ -120,7 +122,7 @@ namespace Frenchie
 
                 Iterator begin() const
                 {
-                    return Iterator(FirstChild);
+                    return Iterator(this->FirstChild);
                 }
 
                 Iterator end() const
@@ -131,7 +133,8 @@ namespace Frenchie
                 // API
                 int size() const
                 {
-                    auto NextSibling = FirstChild;
+                    int count = 0;
+                    auto NextSibling = this->FirstChild;
                     while (NextSibling) ++count;
                     return count;
                 }
@@ -139,7 +142,7 @@ namespace Frenchie
                 void clear() const
                 {
                     // remove all
-                    auto NextSibling = FirstChild;
+                    auto NextSibling = this->FirstChild;
 
                     while (NextSibling)
                     {
@@ -151,23 +154,23 @@ namespace Frenchie
                     }
 
                     // clean up LastChild and FirstChild
-                    FirstChild = nullptr;
-                    LastChild = nullptr;
+                    this->FirstChild = nullptr;
+                    this->LastChild = nullptr;
                 }
 
                 bool empty() const
                 {
-                    return LastChild == nullptr && FirstChild == nullptr;
+                    return this->LastChild == nullptr && this->FirstChild == nullptr;
                 }
 
                 NodeType* raw_memory_first() const
                 {
-                    return FirstChild;
+                    return this->FirstChild;
                 }
 
                 NodeType* raw_memory_last() const
                 {
-                    return LastChild;
+                    return this->LastChild;
                 }
 
                 template<typename ...Args>
@@ -180,16 +183,16 @@ namespace Frenchie
                         return nullptr;
 
                     // insert into an empty list
-                    if(LastChild == nullptr && FirstChild == nullptr)
+                    if(this->LastChild == nullptr && this->FirstChild == nullptr)
                     {
-                        LastChild = _What;
-                        FirstChild = _What;
+                        this->LastChild = _What;
+                        this->FirstChild = _What;
                         return _What;
                     }
 
                     // insert into not empty list
                     if(_Node == nullptr)
-                        _Node = LastChild;
+                        _Node = this->LastChild;
 
                     if(_Node->NextSibling != nullptr)
                         _Node->NextSibling->PrevSibling = _What;
@@ -199,7 +202,7 @@ namespace Frenchie
                     _What->PrevSibling = _Node;
 
                     if(_What->NextSibling == nullptr)
-                        LastChild = _What;
+                        this->LastChild = _What;
 
                     return _What;
                 }
@@ -214,16 +217,16 @@ namespace Frenchie
                         return nullptr;
 
                     // insert into an empty list
-                    if(LastChild == nullptr && FirstChild == nullptr)
+                    if(this->LastChild == nullptr && this->FirstChild == nullptr)
                     {
-                        LastChild = _What;
-                        FirstChild = _What;
+                        this->LastChild = _What;
+                        this->FirstChild = _What;
                         return _What;
                     }
 
                     // insert into not empty list
                     if(_Node == nullptr)
-                        _Node = FirstChild;
+                        _Node = this->FirstChild;
 
                     if(_Node->PrevSibling != nullptr)
                         _Node->PrevSibling->NextSibling = _What;
@@ -233,7 +236,7 @@ namespace Frenchie
                     _Node->PrevSibling = _What;
 
                     if(_What->PrevSibling == nullptr)
-                        FirstChild = _What;
+                        this->FirstChild = _What;
 
                     return _What;
                 }
@@ -247,13 +250,13 @@ namespace Frenchie
                     if(_Node->PrevSibling != nullptr)
                         _Node->PrevSibling->NextSibling = _Node->NextSibling;
                     else
-                        FirstChild = _Node->NextSibling;
+                        this->FirstChild = _Node->NextSibling;
                     
                     // check if LastChild needs update
                     if(_Node->NextSibling != nullptr)
                         _Node->NextSibling->PrevSibling = _Node->PrevSibling;
                     else
-                        LastChild = _Node->PrevSibling;
+                        this->LastChild = _Node->PrevSibling;
 
                     // remove node
                     remove_node(_Node);
@@ -262,8 +265,8 @@ namespace Frenchie
                 template<typename ...Args>
                 NodeType* create_node(Args ... _Args) const
                 {
-                    auto node  = Root->Allocator->construct(_Args ...);
-                    node->Root = Root;
+                    auto node  = this->Root->Allocator->construct(_Args ...);
+                    node->Root = this->Root;
                     return node;
                 }
 
@@ -271,7 +274,7 @@ namespace Frenchie
                 {
                     //--m_Counter;
                     if(_Node != nullptr)
-                        Root->Allocator->destroy(_Node);
+                        this->Root->Allocator->destroy(_Node);
                 }
             };
 

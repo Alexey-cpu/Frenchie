@@ -93,7 +93,7 @@ namespace Frenchie
                 uint_fast32_t N = _N < 4 ? sizeof(_M) * 8 : (uint_fast8_t)_N;
 
                 for(uint_fast8_t i = 0 ; i < N ; i += 4)
-                    stream << Bits::__retrieve_bits__<__type, uint_fast64_t>(_M, i, i + 4);
+                    stream << retrieve_bits<__type, uint_fast64_t>(_M, i, i + 4);
 
                 return stream.str();
             }
