@@ -2,14 +2,8 @@
 
 using namespace Frenchie::Application;
 
-ApplicationInstance::ApplicationInstance() :
-    m_PlatformBackendRenderer(std::make_shared<PlatformRendererBackend>())
+ApplicationInstance::ApplicationInstance()
 {
-    m_PlatformBackendRenderer->awake(
-        get_name().c_str(),
-        nullptr,
-        PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Default
-    );
 }
 
 ApplicationInstance::~ApplicationInstance()
@@ -163,31 +157,6 @@ size_t ApplicationInstance::size() const
 Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
 {
     return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
-}
-
-Frenchie::Core::Reference<PlatformRendererBackend> Frenchie::Application::application_platform_backend_renderer()
-{
-    return Frenchie::Application::application()->m_PlatformBackendRenderer;
-}
-
-Frenchie::Core::Reference<Interface> Frenchie::Application::application_user_interface()
-{
-    auto layer = Frenchie::Application::application()->find_layer<Interface>();
-
-    if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<Interface>();
-
-    return layer;
-}
-
-Frenchie::Core::Reference<ThreadQueue> Frenchie::Application::application_thread_queue()
-{
-    auto layer = Frenchie::Application::application()->find_layer<ThreadQueue>();
-
-    if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<ThreadQueue>();
-
-    return layer;
 }
 
 Frenchie::Core::Reference<CommandQueue> Frenchie::Application::application_command_queue()

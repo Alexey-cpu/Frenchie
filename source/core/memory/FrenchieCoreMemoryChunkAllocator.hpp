@@ -15,24 +15,24 @@ namespace Frenchie
             struct AllocationInfo final
             {
                 uintptr_t Chunk  = 0;
-                uintptr_t Amount = 0;
+                int       Amount = 0;
             };
 
             // nested types
-            struct MemoryChunk final : public Frenchie::Core::Containers::ObjectTreeLeaf<MemoryChunk, Frenchie::Core::Memory::DefaultAllocator<MemoryChunk>>
+            struct MemoryChunk final : public Frenchie::Core::Containers::ObjectTreeLeaf<MemoryChunk>
             {
                 // info
-                mutable uintptr_t ElementSize   = 0;
-                mutable uintptr_t ElementsCount = 0;
-                mutable uintptr_t Free          = 0;
-                mutable uintptr_t Busy          = 0;
-                mutable uintptr_t Size          = 0;
-                mutable char*     Memory        = nullptr;
+                mutable int   ElementSize   = 0;
+                mutable int   ElementsCount = 0;
+                mutable int   Free          = 0;
+                mutable int   Busy          = 0;
+                mutable int   Size          = 0;
+                mutable char* Memory        = nullptr;
 
-                MemoryChunk(uintptr_t _ChunkElementSize, uintptr_t _ChunkElementsCount)
+                MemoryChunk(const int& _ChunkElementSize, const int& _ChunkElementsCount)
                 {
-                    ElementSize   = std::max<uintptr_t>(_ChunkElementSize, 1);
-                    ElementsCount = std::max<uintptr_t>(_ChunkElementsCount, 1);
+                    ElementSize   = std::max<int>(_ChunkElementSize, 1);
+                    ElementsCount = std::max<int>(_ChunkElementsCount, 1);
                     Free          = (sizeof(AllocationInfo) + ElementSize) * ElementsCount;
                     Busy          = 0;
                     Size          = Free;
@@ -50,19 +50,19 @@ namespace Frenchie
                     Memory = nullptr;
                 }
 
-                void* request(uintptr_t _Size)
+                void* request(const int& _Size)
                 {
-                    uintptr_t amount = sizeof(AllocationInfo) + std::max<uintptr_t>(_Size, 1) * ElementSize;
+                    int amount = sizeof(AllocationInfo) + std::max<int>(_Size, 1) * ElementSize;
 
                     if(Busy + amount > Size) 
                         return nullptr; // out-of memory
                     
-                    char* buffer         = Memory + Busy + sizeof(AllocationInfo);
-                    AllocationInfo* info = reinterpret_cast<AllocationInfo*>(buffer - sizeof(AllocationInfo));
-                    info->Chunk          = reinterpret_cast<uintptr_t>(this);
-                    info->Amount         = amount;
-                    Busy                += amount;
-                    Free                -= amount;
+                    char*           buffer = Memory + Busy + sizeof(AllocationInfo);
+                    AllocationInfo* info   = reinterpret_cast<AllocationInfo*>(buffer - sizeof(AllocationInfo));
+                    info->Chunk            = reinterpret_cast<uintptr_t>(this);
+                    info->Amount           = amount;
+                    Busy                  += amount;
+                    Free                  -= amount;
 
                     return buffer;
                 }
@@ -92,32 +92,38 @@ namespace Frenchie
             };
 
             template<typename Type, bool DeleteLater = false>
-            class MemoryChunkAllocator final  :
-                public Frenchie::Core::Containers::ObjectTreeRoot<MemoryChunk, Frenchie::Core::Memory::DefaultAllocator<MemoryChunk>>
+            class MemoryChunkAllocator final : public Frenchie::Core::Containers::ObjectTreeRoot<MemoryChunk>
             {
             public:
 
-                MemoryChunkAllocator(uintptr_t _ChunkSize) : m_ChunkSize(std::max<uintptr_t>(_ChunkSize, 16)){}
+                MemoryChunkAllocator(const int& _ChunkSize = 32) : m_ChunkSize(std::max<int>(_ChunkSize, 16)){}
 
                 ~MemoryChunkAllocator(){}
 
-                Type* allocate(uintptr_t _Size) const
+                Type* allocate(const int& _Size) const
                 {
                     // create chunks list
                     if(empty())
-                        raw_memory_insert_after(raw_memory_last(), sizeof(Type), m_ChunkSize);
+                    {
+                        m_CurrentChunk = raw_memory_insert_after(raw_memory_last(), (int)sizeof(Type), m_ChunkSize);
+                        ++m_TotalChunks;
+                    }
 
-                    // try to allocate memory
-                    void* buffer = raw_memory_last()->request(_Size);
-                    if(buffer != nullptr)
-                        return reinterpret_cast<Type*>(buffer);
+                    // try to allocate memory using current chunk
+                    for(; m_CurrentChunk != raw_memory_end(); m_CurrentChunk = raw_memory_next(m_CurrentChunk))
+                    {
+                        void* buffer = m_CurrentChunk->request(_Size);
+                        if(buffer != nullptr)
+                            return reinterpret_cast<Type*>(buffer);
+                    }
 
                     // adjust chunk size
-                    m_ChunkSize = std::max<uintptr_t>(m_ChunkSize, _Size);
+                    m_ChunkSize    = std::max<int>(m_ChunkSize * 2, _Size);
+                    m_CurrentChunk = raw_memory_insert_after(raw_memory_last(), sizeof(Type), m_ChunkSize);
+                    ++m_TotalChunks;
 
-                    // allocate new chunk and request memory from it
-                    return reinterpret_cast<Type*>(
-                        raw_memory_insert_after(raw_memory_last(), sizeof(Type), m_ChunkSize)->request(_Size));
+                    // request memory from just allocated chunk
+                    return reinterpret_cast<Type*>(m_CurrentChunk->request(_Size));
                 }
 
                 void deallocate(Type* _Pointer) const
@@ -127,10 +133,23 @@ namespace Frenchie
                     auto chunk = info != nullptr ? reinterpret_cast<MemoryChunk*>(info->Chunk) : nullptr;
 
                     // check that this is the first chunk
-                    if(chunk == nullptr || empty() || !chunk->is_free() || DeleteLater)
+                    if(chunk == nullptr || empty() || !chunk->is_free())
                         return;
 
-                    raw_memory_remove(chunk);
+                    --m_TotalChunks;
+
+                    if(DeleteLater)
+                    {
+                        if(m_TotalChunks <= 0)
+                        {
+                            m_TotalChunks  = 0;
+                            m_CurrentChunk = raw_memory_first();
+                        }
+                    }
+                    else
+                    {
+                        raw_memory_remove(chunk);
+                    }
                 }
 
                 template<typename ... Args>
@@ -172,12 +191,12 @@ namespace Frenchie
                     // }
                 }
 
-                uintptr_t get_total_memory_size() const
+                int get_total_memory_size() const
                 {
                     if (empty())
                         return 0;
 
-                    uintptr_t freeMemory = 0;
+                    int freeMemory = 0;
 
                     for(auto&& child : *this)
                         freeMemory += child->Size;
@@ -185,12 +204,12 @@ namespace Frenchie
                     return freeMemory;
                 }
 
-                uintptr_t get_free_memory_amount() const
+                int get_free_memory_amount() const
                 {
                     if (empty())
                         return 0;
 
-                    uintptr_t freeMemory = 0;
+                    int freeMemory = 0;
 
                     for(auto&& child : *this)
                         freeMemory += child->Free;
@@ -198,12 +217,12 @@ namespace Frenchie
                     return freeMemory;
                 }
 
-                uintptr_t get_busy_memory_amount() const
+                int get_busy_memory_amount() const
                 {
                     if (empty())
                         return 0;
 
-                    uintptr_t freeMemory = 0;
+                    int freeMemory = 0;
 
                     for(auto&& child : *this)
                         freeMemory += child->Busy;
@@ -211,9 +230,9 @@ namespace Frenchie
                     return freeMemory;
                 }
 
-                uintptr_t get_total_chunks_number() const
+                int get_total_chunks_number() const
                 {
-                    uintptr_t totalChunksNumber = 0;
+                    int totalChunksNumber = 0;
 
                     for(auto&& child : *this)
                         ++totalChunksNumber;
@@ -221,9 +240,9 @@ namespace Frenchie
                     return totalChunksNumber;
                 }
 
-                uintptr_t get_free_chunks_number() const
+                int get_free_chunks_number() const
                 {
-                    uintptr_t freeChunksNumber = 0;
+                    int freeChunksNumber = 0;
 
                     for(auto&& child : *this)
                     {
@@ -236,7 +255,9 @@ namespace Frenchie
 
             private:
 
-                mutable uintptr_t m_ChunkSize = 1024;
+                mutable int          m_ChunkSize    {1024};
+                mutable MemoryChunk* m_CurrentChunk {nullptr};
+                mutable int          m_TotalChunks  {0};
             };
         }
     }

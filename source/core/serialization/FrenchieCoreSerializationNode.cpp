@@ -44,7 +44,7 @@ namespace Frenchie
                     const char*                       _Source, 
                     const MemoryChunkAllocator<char>& _PolymorphicAllocator)
                 {
-                    size_t length  = _Source != nullptr ? std::strlen(_Source) : 0;
+                    int    length  = _Source != nullptr ? (int)std::strlen(_Source) : 0;
                     char*  buffer  = _PolymorphicAllocator.allocate(length + 1);
                     buffer[length] = '\0';
 

@@ -397,6 +397,12 @@ PlatformRendererBackendTexture PlatformRendererBackend::construct_image(
     return image;
 }
 
+void PlatformRendererBackend::bind_image(const PlatformRendererBackendTexture& _Texture)
+{
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
+}
+
 void PlatformRendererBackend::destroy_image(const PlatformRendererBackendTexture& _Texture)
 {
     glDeleteTextures(1, &_Texture.Ptr);
@@ -559,7 +565,7 @@ void PlatformRendererBackend::begin_use_shader(const PlatformRendererBackendShad
     glUseProgram(_Shader.Ptr);
 }
 
-void PlatformRendererBackend::endup_use_shader()
+void PlatformRendererBackend::end_use_shader()
 {
     glUseProgram(0);
 }
