@@ -11,12 +11,71 @@ namespace Frenchie
     {
         namespace Containers
         {
+            // nested types
+            template<typename NodeType>
+            class ObjectTreeIterator final
+            {
+            public:
+                ObjectTreeIterator(NodeType* _Node) : m_Info(_Node){}
+                ~ObjectTreeIterator(){}
+
+                NodeType* operator*() const
+                {
+                    return m_Info;
+                }
+
+                const NodeType** operator->() const
+                {
+                    return &m_Info;
+                }
+                
+                ObjectTreeIterator& operator++()
+                {
+                    if(m_Info != nullptr) 
+                        m_Info = m_Info->NextSibling;
+                    return *this;
+                }
+                
+                ObjectTreeIterator& operator--()
+                {
+                    if(m_Info != nullptr) 
+                        m_Info = m_Info->PrevSibling;
+                    return *this;
+                }
+                
+                ObjectTreeIterator  operator++(int)
+                {
+                    auto tmp = *this; 
+                    ++(*this); 
+                    return tmp;
+                }
+                
+                ObjectTreeIterator  operator--(int)
+                {
+                    auto tmp = *this; 
+                    --(*this); 
+                    return tmp;
+                }
+
+                friend bool operator==(const ObjectTreeIterator& _First, const ObjectTreeIterator& _Second)
+                { 
+                    return _First.m_Info == _Second.m_Info; 
+                }
+
+                friend bool operator!=(const ObjectTreeIterator& _First, const ObjectTreeIterator& _Second)
+                { 
+                    return _First.m_Info != _Second.m_Info; 
+                }
+
+                NodeType* m_Info;
+            };
+
             template<typename NodeType, typename AllocatorType = Frenchie::Core::Memory::DefaultAllocator<NodeType>>
             class ObjectTreeLeaf : public Frenchie::Core::NonCopyable
             {
             public:
 
-                ObjectTreeLeaf(AllocatorType* _Allocator = nullptr) : Allocator(_Allocator){}
+                ObjectTreeLeaf(){}
 
                 virtual ~ObjectTreeLeaf()
                 {
@@ -43,91 +102,39 @@ namespace Frenchie
             {
             public:
 
-                ObjectTreeNode(AllocatorType* _Allocator = nullptr) : ObjectTreeLeaf<NodeType, AllocatorType>(_Allocator){}
+                ObjectTreeNode(){}
+
                 virtual ~ObjectTreeNode()
                 {
                     // remove all children
                     clear();
                 }
 
-                // nested types
-                class Iterator final
+                ObjectTreeIterator<NodeType> to_iterator(NodeType* _Raw)
                 {
-                public:
-                    Iterator(NodeType* _Node) : m_Info(_Node){}
-                    ~Iterator(){}
-
-                    NodeType* operator*() const
-                    {
-                        return m_Info;
-                    }
-
-                    const NodeType** operator->() const
-                    {
-                        return &m_Info;
-                    }
-                    
-                    Iterator& operator++()
-                    {
-                        if(m_Info != nullptr) 
-                            m_Info = m_Info->NextSibling;
-                        return *this;
-                    }
-                    
-                    Iterator& operator--()
-                    {
-                        if(m_Info != nullptr) 
-                            m_Info = m_Info->PrevSibling;
-                        return *this;
-                    }
-                    
-                    Iterator  operator++(int)
-                    {
-                        auto tmp = *this; 
-                        ++(*this); 
-                        return tmp;
-                    }
-                    
-                    Iterator  operator--(int)
-                    {
-                        auto tmp = *this; 
-                        --(*this); 
-                        return tmp;
-                    }
-
-                    friend bool operator==(const Iterator& _First, const Iterator& _Second)
-                    { 
-                        return _First.m_Info == _Second.m_Info; 
-                    }
-
-                    friend bool operator!=(const Iterator& _First, const Iterator& _Second)
-                    { 
-                        return _First.m_Info != _Second.m_Info; 
-                    }
-
-                    NodeType* m_Info;
-                };
-
-                template<typename ...Args>
-                Iterator insert_after(const Iterator& _After, Args ... _Args)
-                {
-                    return Iterator(raw_memory_insert_after(_After.m_Info, _Args ...));
+                    return ObjectTreeIterator(_Raw);
                 }
 
                 template<typename ...Args>
-                Iterator insert_before(const Iterator& _Before, Args ... _Args)
+                ObjectTreeIterator<NodeType> insert_after(const ObjectTreeIterator<NodeType>& _After, Args ... _Args)
                 {
-                    return Iterator(raw_memory_insert_before(_Before.m_Info, _Args ...));
+                    return ObjectTreeIterator(raw_memory_insert_after(_After.m_Info, _Args ...));
                 }
 
-                Iterator begin() const
+                template<typename ...Args>
+                ObjectTreeIterator<NodeType> insert_before(const ObjectTreeIterator<NodeType>& _Before, Args ... _Args)
                 {
-                    return Iterator(this->FirstChild);
+                    return ObjectTreeIterator(raw_memory_insert_before(_Before.m_Info, _Args ...));
                 }
 
-                Iterator end() const
+                ObjectTreeIterator<NodeType> begin() const
                 {
-                    return Iterator(nullptr);
+                    return ObjectTreeIterator<NodeType>(this->FirstChild);
+                }
+
+                ObjectTreeIterator<NodeType> end() const
+                {
+                    return ObjectTreeIterator<NodeType>(nullptr);
                 }
 
                 // API
@@ -282,7 +289,11 @@ namespace Frenchie
             class ObjectTreeRoot : public ObjectTreeNode<NodeType, AllocatorType>
             {
             public:
-                ObjectTreeRoot() : ObjectTreeNode<NodeType, AllocatorType>(new AllocatorType()){}
+                ObjectTreeRoot()
+                {
+                    this->Allocator = new AllocatorType();
+                }
+
                 virtual ~ObjectTreeRoot(){}
             };
         }
