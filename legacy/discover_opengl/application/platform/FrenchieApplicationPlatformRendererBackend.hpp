@@ -2,6 +2,7 @@
 
 // Core
 #include <FrenchieCoreMemoryChunkAllocator.hpp>
+#include <FrenchieCoreContainersObjectList.hpp>
 
 // GLM
 #include <glm/glm.hpp>
@@ -98,6 +99,8 @@ namespace Frenchie
             PlatformRendererBackendMeshRenderingHints_Points,
             PlatformRendererBackendMeshRenderingHints_Lines,
             PlatformRendererBackendMeshRenderingHints_Triangles,
+
+            PlatformRendererBackendMeshRenderingHints_Default = PlatformRendererBackendMeshRenderingHints_Triangles
         };
 
         typedef int PlatformRendererBackendContextHints;
@@ -227,6 +230,8 @@ namespace Frenchie
                 const PlatformRendererBackendTextureMinFilter& _MinFilter = PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Linear, 
                 const PlatformRendererBackendTextureMaxFilter& _MaxFilter = PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Linear) const;
 
+            void bind_image(const PlatformRendererBackendTexture& _Texture);
+
             void destroy_image(const PlatformRendererBackendTexture& _Texture);
 
             // shaders API
@@ -238,8 +243,7 @@ namespace Frenchie
                 const std::vector<std::filesystem::path>& _ShaderFilesPaths =
                     std::vector<std::filesystem::path>()) const;
 
-            void destroy_shader(const PlatformRendererBackendShader& _Shader);
-
+            void begin_use_shader(const PlatformRendererBackendShader& _Shader);
             void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const bool& _Value);
             void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const int& _Value);
             void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const float& _Value);
@@ -249,10 +253,10 @@ namespace Frenchie
             void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::mat2& _Value);
             void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::mat3& _Value);
             void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::mat4& _Value);
-
-            void begin_use_shader(const PlatformRendererBackendShader& _Shader);
-            void endup_use_shader();
+            void end_use_shader();
             
+            void destroy_shader(const PlatformRendererBackendShader& _Shader);
+
             // mesh
             PlatformRendererBackendMesh construct_mesh(
                 const PlatformRendererBackendMeshVertex* _Vertexes,
@@ -274,17 +278,32 @@ namespace Frenchie
             glm::vec4 m_ClearColor{128, 128, 128, 255};
         };
 
-        class PlatformImmediate2DRenderer
-        {
-        public:
-            PlatformImmediate2DRenderer(){}
-            ~PlatformImmediate2DRenderer(){}
+        // immediate 2D renderer
+        // class PlatformImmediate2DRenderer
+        // {
+        // public:
+            
+        //     struct RendererCommand
+        //     {
+        //         RendererCommand(
+        //             const PlatformRendererBackendMesh&    _Mesh    = PlatformRendererBackendMesh(),
+        //             const PlatformRendererBackendShader&  _Shader  = PlatformRendererBackendShader(),
+        //             const PlatformRendererBackendTexture& _Texture = PlatformRendererBackendTexture()
+        //         ) : Mesh(_Mesh), Shader(_Shader), Texture(_Texture){}
 
-        protected:
-            std::vector<PlatformRendererBackendMeshVertex> m_Vertexes     {std::vector<PlatformRendererBackendMeshVertex>(1024)};
-            std::vector<int>                               m_Indexes      {std::vector<int>(1024)};
-            int                                            m_CurrentVertex{0};
-            int                                            m_CurrentIndex {0};
-        };
+        //         PlatformRendererBackendMesh    Mesh;
+        //         PlatformRendererBackendShader  Shader;
+        //         PlatformRendererBackendTexture Texture;
+        //     };
+        
+        //     PlatformImmediate2DRenderer(PlatformRendererBackend& _Backend){}
+        //     ~PlatformImmediate2DRenderer(){}
+
+
+        // protected:
+
+        //     PlatformRendererBackend&     m_Backend;
+        //     std::vector<RendererCommand> m_Commands;
+        // };
     }
 }
