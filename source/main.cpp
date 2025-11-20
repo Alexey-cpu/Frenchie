@@ -1,15 +1,19 @@
 // //---------------------------------------------------------------------------------------------------
 // // Editor
 // //---------------------------------------------------------------------------------------------------
-#include <FrenchieCoreTime.hpp>
-
-#include <FrenchieCoreMemoryChunkAllocator.hpp>
-#include <FrenchieCoreContainersObjectList.hpp>
+#include <FrenchieApplication.hpp>
+#include <FrenchieApplicationRenderingQueueTestLayer.hpp>
 
 int main(int argc, char *argv[])
 {
+    Frenchie::Application::application()->push_layer<Frenchie::Application::RenderingQueueTestLayer>();
+
     return Frenchie::Application::application()->execute();
 }
+
+#include <FrenchieCoreTime.hpp>
+#include <FrenchieCoreMemoryChunkAllocator.hpp>
+#include <FrenchieCoreContainersObjectList.hpp>
 
 // template<typename Type> struct Tree;
 
@@ -90,83 +94,45 @@ int main(int argc, char *argv[])
 
 // int main(int argc, char *argv[])
 // {
-//     Tree<std::string> tree;
+//     Tree<int> tree;
 
-//     auto node1 = tree.construct_node(Node<std::string>(), "node-1");
-//     auto node2 = tree.construct_node(Node<std::string>(), "node-2");
+//     int N = (int)1e6;
 
-//     auto node11 = tree.construct_node(node1, "node-1-1");
-//     tree.construct_node(node1, "node-1-2");
-//     tree.construct_node(node1, "node-1-3");
-
-//     tree.construct_node(node2, "node-2-1");
-//     tree.construct_node(node2, "node-2-2");
-//     tree.construct_node(node2, "node-2-3");
-
-//     tree.construct_node(node11, "node-1-1-1");
-//     tree.construct_node(node11, "node-1-1-2");
-//     tree.construct_node(node11, "node-1-1-3");
-//     tree.construct_node(node11, "node-1-1-4");
-
-//     tree.sort();
-
-//     std::cout << "node1: \n";
-//     for (int i = tree.Indexes[node1.Index]; i <  tree.Indexes[node1.Index + 1]; i++)
+//     for(int frame = 0; frame < 3; frame++)
 //     {
-//         std::cout << tree.Nodes[i].Data << "\n";
-//     }
-
-//     std::cout << "node2: \n";
-//     for (int i = tree.Indexes[node2.Index]; i <  tree.Indexes[node2.Index + 1]; i++)
-//     {
-//         std::cout << tree.Nodes[i].Data << "\n";
-//     }
-
-//     std::cout << "node11: " << tree.Entries[node11.Index] << "\n";
-//     for (int i = tree.Indexes[node11.Index]; i <  tree.Indexes[node11.Index + 1]; i++)
-//     {
-//         std::cout << tree.Nodes[i].Data << "\n";
+//         auto then = Frenchie::Core::Time::tic();
+//         for (int i = 0; i < N; i++) tree.construct_node(Node<int>(), 1);
+//         std::cout << "creating " << N << " has taken " << Frenchie::Core::Time::elapsed<std::chrono::milliseconds>(then, Frenchie::Core::Time::tic()) << " ms\n";
+        
+//         then = Frenchie::Core::Time::tic();
+//         tree.clear();
+//         std::cout << "removing " << N << " has taken " << Frenchie::Core::Time::elapsed<std::chrono::milliseconds>(then, Frenchie::Core::Time::tic()) << " ms\n";
 //     }
 
 //     return 0;
 // }
 
-class StringNode1
-{
-public:
-    StringNode1(){}
-    virtual ~StringNode1(){}
-
-    Frenchie::Application::PlatformRendererBackendMesh   Mesh;
-    Frenchie::Application::PlatformRendererBackendShader Shader;
-};
-
-class StringNode :
-    public Frenchie::Core::Containers::ObjectTreeNode<
-        StringNode, Frenchie::Core::Memory::MemoryChunkAllocator<StringNode, true>>
-{
-public:
-    StringNode(){}
-    virtual ~StringNode(){}
-
-    //std::string Value{std::string()};
-};
-
-class StringTree :
-    public Frenchie::Core::Containers::ObjectTreeRoot<
-        StringNode, Frenchie::Core::Memory::MemoryChunkAllocator<StringNode, true>>
-{
-public:
-    StringTree(){}
-    virtual ~StringTree(){}
-};
-
-// void show_node(const StringNode* _Node)
+// class StringNode : public Frenchie::Core::Containers::ObjectTreeNode<StringNode, Frenchie::Core::Memory::MemoryChunkAllocator<StringNode, true>>
 // {
-//     std::cout << _Node->Value << "\n";
+// public:
+
+//     StringNode(const int& _Value = -1) : Value(_Value){}
+
+//     int Value;
+
+// };
+
+// class StringTree : public Frenchie::Core::Containers::ObjectTreeRoot<StringNode, Frenchie::Core::Memory::MemoryChunkAllocator<StringNode, true>>
+// {
+// public:
+// };
+
+// void show_node(const StringNode* _Node, const std::string _Delimiter = "")
+// {
+//     std::cout << _Delimiter << _Node->Value << "\n";
 
 //     for(auto&& child : *_Node)
-//         show_node(child);
+//         show_node(child, _Delimiter + '\t');
 // }
 
 // void show_tree(const StringTree* _Tree)
@@ -180,6 +146,15 @@ public:
 // int main(int argc, char *argv[])
 // {
 //     StringTree tree;
+
+//     // auto child1 = tree.insert_after(tree.last(), "child-1");
+//     // auto child11 = (*child1)->insert_after((*child1)->last(), "child-1-1");
+//     // auto child12 = (*child1)->insert_after((*child1)->last(), "child-1-2");
+//     // auto child13 = (*child1)->insert_after((*child1)->last(), "child-1-3");
+//     // auto child14 = (*child1)->insert_after((*child1)->last(), "child-1-4");
+//     // auto child2 = tree.insert_after(tree.last(), "child-2");
+
+//     //show_tree(&tree);
 
 //     int N = (int)1e6;
 
