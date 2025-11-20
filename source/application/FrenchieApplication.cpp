@@ -8,21 +8,86 @@
 
 using namespace Frenchie::Application;
 
-// Callbacks
-void OpenGLPlatformBackendOnWindowResize(GLFWwindow* _Window, int _Width, int _Height)
+namespace Frenchie
 {
-    (void)_Window;
-    glViewport(0, 0, _Width, _Height);
+    namespace Application
+    {
+        class ApplicationInputHandler
+        {
+        public:
+
+            static ApplicationMouseButton::Type glfw_mouse_button_to_application_mouse_button(int _MouseButton)
+            {
+                switch (_MouseButton)
+                {
+                case GLFW_MOUSE_BUTTON_LEFT:
+                    return ApplicationMouseButton::Type::ApplicationMouseButton_Left;
+                case GLFW_MOUSE_BUTTON_RIGHT:
+                    return ApplicationMouseButton::Type::ApplicationMouseButton_Right;
+                case GLFW_MOUSE_BUTTON_MIDDLE:
+                    return ApplicationMouseButton::Type::ApplicationMouseButton_Middle;
+                }
+
+                return ApplicationMouseButton::Type::ApplicationMouseButton_End;
+            }
+
+            static bool glfw_boolean_to_application_boolean(int _Boolean)
+            {
+                return _Boolean == GLFW_TRUE;
+            }
+
+            // window callbacks
+            static void on_window_resize_callback(GLFWwindow* _Window, int _Width, int _Height)
+            {
+                (void)_Window;
+                glViewport(0, 0, _Width, _Height);
+            }
+
+            static void on_window_maximized_callback(GLFWwindow* _Window, int _Maximized)
+            {
+                (void)_Window;
+                int width  = 0;
+                int height = 0;
+                glfwGetWindowSize(_Window, &width, &height);
+                glViewport(0, 0, width, height);
+            }
+
+            static void on_window_focused_callback(GLFWwindow* _Window, int _Focused)
+            {
+                application()->m_Inputs.WindowFocused = glfw_boolean_to_application_boolean(_Focused);;
+            }
+
+            // cursor callbacks
+            static void glfw_on_cursor_moved_callback(GLFWwindow* _Window, double _X, double _Y)
+            {
+                (void)_Window;
+                if(application()->m_Inputs.CursorEntered)
+                    application()->m_Inputs.CursorPosition = gs_vec2f(_X, _Y);
+            }
+
+            static void glfw_on_cursor_enter_callback(GLFWwindow* _Window, int _Entered)
+            {
+                application()->m_Inputs.CursorEntered = glfw_boolean_to_application_boolean(_Entered);
+            }
+
+            static void glfw_on_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+            {
+                (void)window;
+
+                // trigger mouse press event
+                application()->m_Inputs.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Pressed  = action == GLFW_PRESS;
+
+                // trigger mouse release event
+                application()->m_Inputs.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Released = action == GLFW_RELEASE;
+            }
+        };
+    }
 }
 
-void OpenGLPlatformBackendOnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
+// translator functions
+void OpenGLPlatformBackendMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(_Window, &width, &height);
-    glViewport(0, 0, width, height);
 }
-
 
 ApplicationInstance::ApplicationInstance()
 {
@@ -66,9 +131,19 @@ bool ApplicationInstance::awake()
 
     // configure context
     glfwMakeContextCurrent(reinterpret_cast<GLFWwindow*>(m_Context));
-    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), &OpenGLPlatformBackendOnWindowResize);
-    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), &OpenGLPlatformBackendOnWindowResize);
-    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), &OpenGLPlatformBackendOnWindowMaximizedCallback);
+    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_resize_callback);
+    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_resize_callback);
+    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_maximized_callback);
+    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_focused_callback);
+    glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_enter_callback);
+    glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_moved_callback);
+    glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_button_callback);
+    // glfwSetScrollCallback(vd->Window, ImGui_ImplGlfw_ScrollCallback);
+    // glfwSetKeyCallback(vd->Window, ImGui_ImplGlfw_KeyCallback);
+    // glfwSetCharCallback(vd->Window, ImGui_ImplGlfw_CharCallback);
+    // glfwSetWindowCloseCallback(vd->Window, ImGui_ImplGlfw_WindowCloseCallback);
+    // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
+    // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
 
     // load OpenGL interface using GLAD
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -81,7 +156,7 @@ bool ApplicationInstance::awake()
     glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Context));
 
     // call window maximize callback if the Window has been maximized
-    OpenGLPlatformBackendOnWindowMaximizedCallback(
+    ApplicationInputHandler::on_window_maximized_callback(
         reinterpret_cast<GLFWwindow*>(m_Context),
         glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Context), GLFW_MAXIMIZED));
 
@@ -101,6 +176,7 @@ bool ApplicationInstance::awake()
                 break;
         }
     }
+    
 
     return true;
 }
@@ -144,6 +220,44 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         if(!layer->is_hidden()) 
             layer->frame_start();
     }
+
+    // update application input input
+    for (int mouseButton = ApplicationMouseButton::Type::ApplicationMouseButton_Begin;
+             mouseButton < ApplicationMouseButton::Type::ApplicationMouseButton_End;
+             mouseButton++)
+    {
+        if(m_Inputs.MouseButtons[mouseButton].Pressed)
+        {
+            m_Inputs.MouseButtons[mouseButton].PressTime = std::chrono::high_resolution_clock::now();
+        }
+        
+        if(m_Inputs.MouseButtons[mouseButton].Released)
+        {
+            m_Inputs.MouseButtons[mouseButton].ReleaseTime =
+                std::chrono::high_resolution_clock::now();
+
+            m_Inputs.MouseButtons[mouseButton].Clicked =
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    m_Inputs.MouseButtons[mouseButton].ReleaseTime - m_Inputs.MouseButtons[mouseButton].PressTime).count() < 0.5 * std::micro().den;
+
+            if(m_Inputs.MouseButtons[mouseButton].Clicked)
+            {
+                ++m_Inputs.MouseButtons[mouseButton].Clicks;
+            }
+        }
+
+        if (m_Inputs.MouseButtons[mouseButton].Clicks >= 2)
+        {
+            /* code */
+        }
+        
+    }
+
+    if(m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].Clicked)
+        std::cout << "m_Inputs.MouseButtons[ApplicationMouseButton_Left].Clicked " << m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].Clicked << "\n";
+    
+    if(m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].DoubleClicked)
+        std::cout << "m_Inputs.MouseButtons[ApplicationMouseButton_Left].DoubleClicked " << m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].DoubleClicked << "\n";
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
@@ -180,6 +294,16 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
     {
         if(!layer->is_hidden())
             layer->frame_finish();
+    }
+
+    for (int mouseButton = ApplicationMouseButton::Type::ApplicationMouseButton_Begin;
+             mouseButton < ApplicationMouseButton::Type::ApplicationMouseButton_End;
+             mouseButton++)
+    {
+        m_Inputs.MouseButtons[mouseButton].Pressed       = false;
+        m_Inputs.MouseButtons[mouseButton].Released      = false;
+        m_Inputs.MouseButtons[mouseButton].Clicked       = false;
+        m_Inputs.MouseButtons[mouseButton].DoubleClicked = false;
     }
 }
 
@@ -272,16 +396,6 @@ size_t ApplicationInstance::size() const
 Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
 {
     return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
-}
-
-std::shared_ptr<CommandQueue> Frenchie::Application::application_command_queue()
-{
-    auto layer = Frenchie::Application::application()->find_layer<CommandQueue>();
-    
-    if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<CommandQueue>();
-
-    return layer;
 }
 
 std::shared_ptr<RenderingQueue> Frenchie::Application::application_rendering_queue()

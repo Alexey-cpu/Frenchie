@@ -19,3 +19,7 @@
 [submodule "tools/pcre2"]
 	path = tools/pcre2
 	url = https://github.com/PCRE2Project/pcre2.git
+[submodule "tools/imgui"]
+	path = tools/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
