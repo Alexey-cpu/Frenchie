@@ -162,7 +162,6 @@ namespace Frenchie
                 {
                     if(Root == this)
                     {
-                        //this->Allocator
                     }
 
                     // remove all
@@ -171,7 +170,7 @@ namespace Frenchie
                     while (NextSibling)
                     {
                         auto current = NextSibling;
-                        NextSibling = NextSibling->NextSibling;
+                        NextSibling  = NextSibling->NextSibling;
 
                         if(current != nullptr)
                             remove_node(current);

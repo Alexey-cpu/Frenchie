@@ -1,15 +1,11 @@
 #pragma once
 
 // Core
-#include <FrenchieCoreReference.hpp>
 #include <FrenchieCoreSingleton.hpp>
-#include <FrenchieCoreISerializer.hpp>
-#include <FrenchieCoreSerializationNode.hpp>
-#include <FrenchieCoreSerializationFormatXML.hpp>
 
 // Application
-#include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationCommandQueueLayer.hpp>
+#include <FrenchieApplicationLayerCommandQueue.hpp>
+#include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 // STL
 #include <iostream>
@@ -25,10 +21,11 @@ namespace Frenchie
             virtual ~ApplicationInstance();
 
             // getters
-            std::string ApplicationInstance::get_name() const;
+            std::string get_name() const;
+            gs_vec2f get_size() const;
 
             // setters
-            void ApplicationInstance::set_name(const std::string&);
+            void set_name(const std::string&);
 
             // API
             bool awake();
@@ -49,7 +46,7 @@ namespace Frenchie
 
             // layers
             template<typename Type, typename ... Arguments>
-            Core::Reference<Type> push_layer(Arguments... _Parameters)
+            std::shared_ptr<Type> push_layer(Arguments... _Parameters)
             {
                 // create layer
                 auto layer = std::make_shared<Type>(_Parameters...);
@@ -59,19 +56,22 @@ namespace Frenchie
                     return find_layer<Type>();
 
                 // awake layer
-                if(!layer->awake())
+                if(m_Context != nullptr)
                 {
-                    Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", layer->get_name()));
-                    return nullptr;
+                    if(!layer->awake())
+                    {
+                        Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", layer->get_name()));
+                        return nullptr;
+                    }
                 }
 
                 // push layer into layers stack
                 m_Layers.push_back(layer);
-                return Core::Reference<Type>(layer);
+                return layer;
             }
 
             template<typename Type>
-            Core::Reference<Type> find_layer()
+            std::shared_ptr<Type> find_layer()
             {
                 auto layer = std::find_if(
                     m_Layers.begin(),
@@ -101,11 +101,12 @@ namespace Frenchie
 
         protected:
 
-            std::list<std::shared_ptr<Layer>> m_Layers {std::list<std::shared_ptr<Layer>>()};
-            void*                             m_Context{nullptr};
+            std::list<std::shared_ptr<Layer>> m_Layers  {std::list<std::shared_ptr<Layer>>()};
+            void*                             m_Context {nullptr};
         };
 
         Frenchie::Application::ApplicationInstance* application();
-        Frenchie::Core::Reference<CommandQueue>     application_command_queue();
+        std::shared_ptr<CommandQueue>               application_command_queue();
+        std::shared_ptr<RenderingQueue>             application_rendering_queue();
     };
 };
