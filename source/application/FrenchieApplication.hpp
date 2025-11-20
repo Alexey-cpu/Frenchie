@@ -4,16 +4,70 @@
 #include <FrenchieCoreSingleton.hpp>
 
 // Application
-#include <FrenchieApplicationLayerCommandQueue.hpp>
 #include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 // STL
 #include <iostream>
+#include <chrono>
 
 namespace Frenchie
 {
     namespace Application
     {
+        struct ApplicationMouseButton
+        {
+            enum Type : int
+            {
+                ApplicationMouseButton_Begin,
+                ApplicationMouseButton_Left = ApplicationMouseButton_Begin,
+                ApplicationMouseButton_Right,
+                ApplicationMouseButton_Middle,
+                ApplicationMouseButton_End
+            };
+
+            int                                            Clicks       {0    };
+            bool                                           Pressed      {false};
+            bool                                           Released     {false};
+            bool                                           Clicked      {false};
+            bool                                           DoubleClicked{false};
+            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
+            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
+        };
+
+        struct ApplicationInput
+        {
+            // ApplicationInput()
+            // {
+            //     for (int mouseButton = ApplicationMouseButton::ApplicationMouseButton_Begin;
+            //              mouseButton < ApplicationMouseButton::ApplicationMouseButton_End;
+            //              mouseButton++)
+            //     {
+            //         MouseButtonPressed      [mouseButton] = false;
+            //         MouseButtonReleased     [mouseButton] = false;
+            //         MouseButtonClicked      [mouseButton] = false;
+            //         MouseButtonDoubleClicked[mouseButton] = false;
+            //     }
+            // }
+
+            // std::chrono::high_resolution_clock::time_point MousePressTimeStamp;
+            // std::chrono::high_resolution_clock::time_point MouseReleaseTimeStamp;
+            // std::chrono::high_resolution_clock::time_point MouseClickElapsedTime;
+            // double                                         MouseClickDetectThreshold = 300;
+            //double CurrentTime = 0;
+
+            gs_vec2f CursorPosition          {gs_vec2f(0.f)};
+            gs_vec2f CursorDragDelta         {gs_vec2f(0.f)};
+            bool     WindowFocused           {false};
+            bool     CursorEntered           {false};
+            
+            ApplicationMouseButton MouseButtons[ApplicationMouseButton::Type::ApplicationMouseButton_End]{};
+
+
+            // bool     MouseButtonReleased     [ApplicationMouseButtonType::ApplicationMouseButton_End]{};
+            // bool     MouseButtonClicked      [Type::ApplicationMouseButton_End]{};
+            // bool     MouseButtonDoubleClicked[Type::ApplicationMouseButton_End]{};
+        };
+
         class ApplicationInstance
         {
         public:
@@ -22,7 +76,7 @@ namespace Frenchie
 
             // getters
             std::string get_name() const;
-            gs_vec2f get_size() const;
+            gs_vec2f    get_size() const;
 
             // setters
             void set_name(const std::string&);
@@ -101,12 +155,14 @@ namespace Frenchie
 
         protected:
 
-            std::list<std::shared_ptr<Layer>> m_Layers  {std::list<std::shared_ptr<Layer>>()};
-            void*                             m_Context {nullptr};
+            friend class ApplicationInputHandler;
+
+            std::list<std::shared_ptr<Layer>> m_Layers {std::list<std::shared_ptr<Layer>>()};
+            void*                             m_Context{nullptr};
+            ApplicationInput                  m_Inputs {ApplicationInput()};
         };
 
         Frenchie::Application::ApplicationInstance* application();
-        std::shared_ptr<CommandQueue>               application_command_queue();
         std::shared_ptr<RenderingQueue>             application_rendering_queue();
     };
 };
