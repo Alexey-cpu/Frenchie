@@ -298,7 +298,7 @@ struct gs_vector final
     }
 
 private:
-    Type Data[Size]{0};
+    mutable Type Data[Size]{0};
 
     // service methods
     template<typename ... Args>
@@ -883,6 +883,59 @@ typedef gs_matrix<double, 4, 4> gs_mat4d;
 typedef gs_matrix<int,    2, 2> gs_mat2i;
 typedef gs_matrix<int,    3, 3> gs_mat3i;
 typedef gs_matrix<int,    4, 4> gs_mat4i;
+
+// binary operators
+
+// vectors vs vectors
+template<typename Type, int Size>
+gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    return _A + _B;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    return _A - _B;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    return _A * _B;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    return _A / _B;
+}
+
+// vectors vs scalars
+template<typename Type, int Size>
+gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    return _A + _B;
+}
+
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    return _A - _B;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    return _A * _B;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    return _A / _B;
+}
 
 // undef all macro
 #undef GS_TO_DEGREES_CONVERSION_MULTIPLYER__
