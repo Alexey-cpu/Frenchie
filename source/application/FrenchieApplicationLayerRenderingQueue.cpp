@@ -28,92 +28,6 @@ void RenderingQueue::set_cameraview_matrix(const gs_mat4f& _Matrix)
 
 bool RenderingQueue::awake()
 {
-    // register default shader here
-    m_DefaultShader = construct_shader(
-        {
-            // Vertex shader
-            {
-                std::string(
-R"(
-#version 330 core
-
-// vertex attributes
-layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec3 a_Normal;
-layout (location = 2) in vec2 a_UV;
-
-// outputs
-out vec3 Normal;
-out vec2 UV;
-
-// uniforms
-uniform mat4 u_ModelMatrix;
-uniform mat4 u_CameraViewMatrix;
-uniform mat4 u_ProjectionMatrix;
-
-void main()
-{
-    // setup position
-    gl_Position = u_ProjectionMatrix * u_CameraViewMatrix * u_ModelMatrix * vec4(a_Position, 1.0);
-
-    // setup outputs
-    Normal = a_Normal;
-    UV     = a_UV;
-}            
-)"),
-                RenderingQueueShaderType_::RenderingQueueShaderType_Vertex
-            },
-
-            // fragment shader
-            {
-                std::string(
-R"(
-#version 330 core
-
-// inputs
-in vec2 UV;
-
-//outputs
-out vec4 fragColor;
-
-//uniforms
-uniform vec4      u_Color;
-uniform sampler2D u_Texture;
-
-void main()
-{
-    // setup vertex color
-    fragColor = u_Color * texture(u_Texture, UV);
-}
-)"),
-                RenderingQueueShaderType_::RenderingQueueShaderType_Fragment
-                },
-        }
-    );    
-
-    // create default white pattern texture
-    const int     height   = 4;
-    const int     width    = 4;
-    const int     channels = 4;
-    const int     red      = 0;
-    const int     green    = 1;
-    const int     blue     = 2;
-    const int     alpha    = 3;
-    unsigned char image[width * height * channels]{};
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            image[channels * (y * width + x) + red  ] = 255;
-            image[channels * (y * width + x) + green] = 255;
-            image[channels * (y * width + x) + blue ] = 255;
-            image[channels * (y * width + x) + alpha] = 255;
-        }
-    }
-
-    m_DefaultTexture = construct_texture(image, width, height);
-
     return true;
 }
 
@@ -168,8 +82,6 @@ void RenderingQueue::finish()
 
 void RenderingQueue::quit()
 {
-    destroy_shader(m_DefaultShader);
-    destroy_texture(m_DefaultTexture);
 }
 
 bool RenderingQueue::allows_multiple_instances() const

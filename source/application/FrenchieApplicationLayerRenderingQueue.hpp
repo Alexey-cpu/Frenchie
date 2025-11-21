@@ -250,55 +250,11 @@ namespace Frenchie
                 m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform));
             }
 
-            // 2D graphics API
-            void PushTriangleFilled2D(const gs_vec3f& _P1, const gs_vec3f& _P2, const gs_vec3f& _P3, const gs_vec4f& _Color, const gs_mat4f& _Transform)
-            {
-                m_Vertexes.push_back(RenderingQueueVertex(_P1, gs_vec3f(0.f), gs_vec2f(_P1[0] / m_DefaultTexture.Width, _P1[1] / m_DefaultTexture.Height)));
-                m_Vertexes.push_back(RenderingQueueVertex(_P2, gs_vec3f(0.f), gs_vec2f(_P2[0] / m_DefaultTexture.Width, _P2[1] / m_DefaultTexture.Height)));
-                m_Vertexes.push_back(RenderingQueueVertex(_P3, gs_vec3f(0.f), gs_vec2f(_P3[0] / m_DefaultTexture.Width, _P3[1] / m_DefaultTexture.Height)));
-                m_Indexes.push_back(0);
-                m_Indexes.push_back(1);
-                m_Indexes.push_back(2);
-
-                push_command(
-                    // construct mesh
-                    construct_mesh(
-                        &m_Vertexes[0],
-                        (int)m_Vertexes.size(),
-                        &m_Indexes[0],
-                        (int)m_Indexes.size()),
-                    
-                    // provide default shader
-                    m_DefaultShader,
-
-                    // setup texture
-                    RenderingQueueTexture(
-                        m_DefaultTexture.Ptr,
-                        m_DefaultTexture.Width,
-                        m_DefaultTexture.Height,
-                        _Color,
-                        m_DefaultTexture.Format,
-                        m_DefaultTexture.Wrap,
-                        m_DefaultTexture.MinFilter,
-                        m_DefaultTexture.MaxFilter),
-                    _Transform);
-
-                // clean-up
-                m_Indexes.clear();
-                m_Vertexes.clear();
-            }
-
         protected:
 
             gs_mat4f                           m_ProjectionMatrix{gs_mat4f(1)};
             gs_mat4f                           m_CameraViewMatrix{gs_mat4f(1)};
             std::vector<RenderingQueueCommand> m_Commands        {std::vector<RenderingQueueCommand>()};
-
-            // this is a plipeline
-            std::vector<RenderingQueueVertex>  m_Vertexes        {std::vector<RenderingQueueVertex>()};
-            std::vector<int>                   m_Indexes         {std::vector<int>()};
-            RenderingQueueShader               m_DefaultShader   {RenderingQueueShader()};
-            RenderingQueueTexture              m_DefaultTexture  {RenderingQueueTexture()};
         };
     }
 }
