@@ -1,9 +1,7 @@
 #pragma once
 
-// Core
-#include <FrenchieCoreSingleton.hpp>
-
 // Application
+#include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 // STL
@@ -16,7 +14,7 @@ namespace Frenchie
     {
         struct ApplicationMouseButton
         {
-            enum Type : int
+            enum Button : int
             {
                 ApplicationMouseButton_Begin,
                 ApplicationMouseButton_Left = ApplicationMouseButton_Begin,
@@ -26,46 +24,43 @@ namespace Frenchie
             };
 
             int                                            Clicks       {0    };
+            bool                                           Down         {false};
             bool                                           Pressed      {false};
             bool                                           Released     {false};
             bool                                           Clicked      {false};
             bool                                           DoubleClicked{false};
             std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
             std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
+
+            
+        };
+
+        struct ApplicationMouseCursor
+        {
+            enum Cursor : int
+            {
+                ApplicationMouseCursor_Begin,
+                ApplicationMouseCursor_Arrow = ApplicationMouseCursor_Begin,
+                ApplicationMouseCursor_TextInput,
+                ApplicationMouseCursor_Crosshair,
+                ApplicationMouseCursor_PointingHand,
+                ApplicationMouseCursor_HorizontalDoubleHeaded,
+                ApplicationMouseCursor_VerticalDoubleHeaded,
+                ApplicationMouseCursor_TopLeftToBottomRightHeaded,
+                ApplicationMouseCursor_TopRighToBottomLeftHeaded,
+                ApplicationMouseCursor_End
+            }         View    {ApplicationMouseCursor_Arrow};
+            bool      Entered {false};
+            gs_vec2f  Position{gs_vec2f(0.f)};
+            uintptr_t Cursors[ApplicationMouseCursor_End]{};
         };
 
         struct ApplicationInput
         {
-            // ApplicationInput()
-            // {
-            //     for (int mouseButton = ApplicationMouseButton::ApplicationMouseButton_Begin;
-            //              mouseButton < ApplicationMouseButton::ApplicationMouseButton_End;
-            //              mouseButton++)
-            //     {
-            //         MouseButtonPressed      [mouseButton] = false;
-            //         MouseButtonReleased     [mouseButton] = false;
-            //         MouseButtonClicked      [mouseButton] = false;
-            //         MouseButtonDoubleClicked[mouseButton] = false;
-            //     }
-            // }
-
-            // std::chrono::high_resolution_clock::time_point MousePressTimeStamp;
-            // std::chrono::high_resolution_clock::time_point MouseReleaseTimeStamp;
-            // std::chrono::high_resolution_clock::time_point MouseClickElapsedTime;
-            // double                                         MouseClickDetectThreshold = 300;
-            //double CurrentTime = 0;
-
-            gs_vec2f CursorPosition          {gs_vec2f(0.f)};
-            gs_vec2f CursorDragDelta         {gs_vec2f(0.f)};
-            bool     WindowFocused           {false};
-            bool     CursorEntered           {false};
+            bool     WindowFocused  {false};
             
-            ApplicationMouseButton MouseButtons[ApplicationMouseButton::Type::ApplicationMouseButton_End]{};
-
-
-            // bool     MouseButtonReleased     [ApplicationMouseButtonType::ApplicationMouseButton_End]{};
-            // bool     MouseButtonClicked      [Type::ApplicationMouseButton_End]{};
-            // bool     MouseButtonDoubleClicked[Type::ApplicationMouseButton_End]{};
+            ApplicationMouseButton MouseButtons[ApplicationMouseButton::Button::ApplicationMouseButton_End]{};
+            ApplicationMouseCursor MouseCursor {ApplicationMouseCursor()};
         };
 
         class ApplicationInstance
@@ -75,11 +70,38 @@ namespace Frenchie
             virtual ~ApplicationInstance();
 
             // getters
-            std::string get_name() const;
+            // std::string get_name() const;
             gs_vec2f    get_size() const;
 
-            // setters
-            void set_name(const std::string&);
+            gs_vec2f get_cursor_position() const
+            {
+                return m_Input.MouseCursor.Position;
+            }
+
+            bool is_mouse_button_down(ApplicationMouseButton::Button _Button) const
+            {
+                return m_Input.MouseButtons[_Button].Down;
+            }
+
+            bool is_mouse_button_pressed(ApplicationMouseButton::Button _Button) const
+            {
+                return m_Input.MouseButtons[_Button].Pressed;
+            }
+
+            bool is_mouse_button_released(ApplicationMouseButton::Button _Button) const
+            {
+                return m_Input.MouseButtons[_Button].Released;
+            }
+
+            bool is_mouse_button_clicked(ApplicationMouseButton::Button _Button) const
+            {
+                return m_Input.MouseButtons[_Button].Clicked;
+            }
+
+            bool is_mouse_button_double_clicked(ApplicationMouseButton::Button _Button) const
+            {
+                return m_Input.MouseButtons[_Button].DoubleClicked;
+            }
 
             // API
             bool awake();
@@ -89,7 +111,6 @@ namespace Frenchie
             void frame_finish();
             void finish();
             void quit();
-            
             bool is_closed();
             void close();
 
@@ -113,10 +134,7 @@ namespace Frenchie
                 if(m_Context != nullptr)
                 {
                     if(!layer->awake())
-                    {
-                        Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", layer->get_name()));
                         return nullptr;
-                    }
                 }
 
                 // push layer into layers stack
@@ -157,9 +175,9 @@ namespace Frenchie
 
             friend class ApplicationInputHandler;
 
+            ApplicationInput                  m_Input  {ApplicationInput()};
             std::list<std::shared_ptr<Layer>> m_Layers {std::list<std::shared_ptr<Layer>>()};
             void*                             m_Context{nullptr};
-            ApplicationInput                  m_Inputs {ApplicationInput()};
         };
 
         Frenchie::Application::ApplicationInstance* application();

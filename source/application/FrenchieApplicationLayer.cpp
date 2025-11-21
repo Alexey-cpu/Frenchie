@@ -1,5 +1,4 @@
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieCoreISerializer.hpp>
 #include <FrenchieCoreSingleton.hpp>
 #include <FrenchieApplication.hpp>
 

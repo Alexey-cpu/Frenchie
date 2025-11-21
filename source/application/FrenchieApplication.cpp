@@ -1,5 +1,8 @@
 #include <FrenchieApplication.hpp>
 
+// Core
+#include <FrenchieCoreSingleton.hpp>
+
 // GLAD
 #include <glad/glad.h>
 
@@ -16,19 +19,44 @@ namespace Frenchie
         {
         public:
 
-            static ApplicationMouseButton::Type glfw_mouse_button_to_application_mouse_button(int _MouseButton)
+            // converters
+            static unsigned int application_mouse_cursor_to_glfw_mouse_cursor(int _MouseCursor)
+            {
+                switch (_MouseCursor)
+                {
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_Arrow:
+                    return GLFW_ARROW_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_TextInput:
+                    return GLFW_IBEAM_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_Crosshair:
+                    return GLFW_CROSSHAIR_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_PointingHand:
+                    return GLFW_POINTING_HAND_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_HorizontalDoubleHeaded:
+                    return GLFW_RESIZE_EW_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_VerticalDoubleHeaded:
+                    return GLFW_RESIZE_NS_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_TopLeftToBottomRightHeaded:
+                    return GLFW_RESIZE_NWSE_CURSOR;
+                case ApplicationMouseCursor::Cursor::ApplicationMouseCursor_TopRighToBottomLeftHeaded:
+                    return GLFW_RESIZE_NESW_CURSOR;
+                }
+                return GLFW_ARROW_CURSOR;
+            }
+
+            static ApplicationMouseButton::Button glfw_mouse_button_to_application_mouse_button(int _MouseButton)
             {
                 switch (_MouseButton)
                 {
                 case GLFW_MOUSE_BUTTON_LEFT:
-                    return ApplicationMouseButton::Type::ApplicationMouseButton_Left;
+                    return ApplicationMouseButton::Button::ApplicationMouseButton_Left;
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    return ApplicationMouseButton::Type::ApplicationMouseButton_Right;
+                    return ApplicationMouseButton::Button::ApplicationMouseButton_Right;
                 case GLFW_MOUSE_BUTTON_MIDDLE:
-                    return ApplicationMouseButton::Type::ApplicationMouseButton_Middle;
+                    return ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
                 }
 
-                return ApplicationMouseButton::Type::ApplicationMouseButton_End;
+                return ApplicationMouseButton::Button::ApplicationMouseButton_End;
             }
 
             static bool glfw_boolean_to_application_boolean(int _Boolean)
@@ -37,13 +65,13 @@ namespace Frenchie
             }
 
             // window callbacks
-            static void on_window_resize_callback(GLFWwindow* _Window, int _Width, int _Height)
+            static void glfw_on_window_resize_callback(GLFWwindow* _Window, int _Width, int _Height)
             {
                 (void)_Window;
                 glViewport(0, 0, _Width, _Height);
             }
 
-            static void on_window_maximized_callback(GLFWwindow* _Window, int _Maximized)
+            static void glfw_on_window_maximized_callback(GLFWwindow* _Window, int _Maximized)
             {
                 (void)_Window;
                 int width  = 0;
@@ -52,33 +80,37 @@ namespace Frenchie
                 glViewport(0, 0, width, height);
             }
 
-            static void on_window_focused_callback(GLFWwindow* _Window, int _Focused)
+            static void glfw_oon_window_focused_callback(GLFWwindow* _Window, int _Focused)
             {
-                application()->m_Inputs.WindowFocused = glfw_boolean_to_application_boolean(_Focused);;
+                application()->m_Input.WindowFocused =
+                    glfw_boolean_to_application_boolean(_Focused);;
             }
 
             // cursor callbacks
             static void glfw_on_cursor_moved_callback(GLFWwindow* _Window, double _X, double _Y)
             {
                 (void)_Window;
-                if(application()->m_Inputs.CursorEntered)
-                    application()->m_Inputs.CursorPosition = gs_vec2f(_X, _Y);
+                if(application()->m_Input.MouseCursor.Entered)
+                    application()->m_Input.MouseCursor.Position = gs_vec2f(_X, _Y);
             }
 
             static void glfw_on_cursor_enter_callback(GLFWwindow* _Window, int _Entered)
             {
-                application()->m_Inputs.CursorEntered = glfw_boolean_to_application_boolean(_Entered);
+                (void)_Window;
+                application()->m_Input.MouseCursor.Entered =
+                    glfw_boolean_to_application_boolean(_Entered);
             }
 
+            // mouse callbacks
             static void glfw_on_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             {
                 (void)window;
 
                 // trigger mouse press event
-                application()->m_Inputs.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Pressed  = action == GLFW_PRESS;
+                application()->m_Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Pressed  = action == GLFW_PRESS;
 
                 // trigger mouse release event
-                application()->m_Inputs.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Released = action == GLFW_RELEASE;
+                application()->m_Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Released = action == GLFW_RELEASE;
             }
         };
     }
@@ -96,6 +128,24 @@ ApplicationInstance::ApplicationInstance()
 ApplicationInstance::~ApplicationInstance()
 {
 }
+
+// std::string ApplicationInstance::get_name() const
+// {
+//     return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context)));
+// }
+
+gs_vec2f  ApplicationInstance::get_size() const
+{
+    int x = 0;
+    int y = 0;
+    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    return {x, y};
+}
+
+// void ApplicationInstance::set_name(const std::string& _Name)
+// {
+//     glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Name.c_str());
+// }
 
 bool ApplicationInstance::awake()
 {
@@ -131,10 +181,10 @@ bool ApplicationInstance::awake()
 
     // configure context
     glfwMakeContextCurrent(reinterpret_cast<GLFWwindow*>(m_Context));
-    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_resize_callback);
-    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_resize_callback);
-    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_maximized_callback);
-    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::on_window_focused_callback);
+    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_resize_callback);
+    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_resize_callback);
+    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_maximized_callback);
+    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_oon_window_focused_callback);
     glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_enter_callback);
     glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_moved_callback);
     glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_button_callback);
@@ -156,17 +206,24 @@ bool ApplicationInstance::awake()
     glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Context));
 
     // call window maximize callback if the Window has been maximized
-    ApplicationInputHandler::on_window_maximized_callback(
+    ApplicationInputHandler::glfw_on_window_maximized_callback(
         reinterpret_cast<GLFWwindow*>(m_Context),
         glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Context), GLFW_MAXIMIZED));
 
+    // create standart cursors
+    for (int mouseCursor = ApplicationMouseCursor::ApplicationMouseCursor_Begin;
+             mouseCursor < ApplicationMouseCursor::ApplicationMouseCursor_End;
+             mouseCursor++)
+    {
+        m_Input.MouseCursor.Cursors[mouseCursor] =
+            (uintptr_t)glfwCreateStandardCursor(ApplicationInputHandler::application_mouse_cursor_to_glfw_mouse_cursor(mouseCursor));
+    }
+    
     // awake layers
     for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
     {
         if(!(*it)->awake())
         {
-            Frenchie::Core::Logger::instance()->error(fmt::format("Could not awake layer {}", (*it)->get_name()));
-
             (*it)->finish();
             auto rm = it;
             it++;
@@ -186,9 +243,6 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     // execute backend
     glfwPollEvents();
     glfwSwapInterval(1);
-    // glClear(GL_COLOR_BUFFER_BIT);
-    // glClear(GL_DEPTH_BUFFER_BIT);
-    // glClear(GL_STENCIL_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
@@ -197,7 +251,11 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // this can be a rendering command !!!
-    glClearColor(128.f / 255.f, 128.f / 255.f, 128.f / 255.f, 255.f / 255.f);
+    glClearColor(
+        150.f / 255.f,
+        150.f / 255.f,
+        150.f / 255.f,
+        255.f / 255.f);
 
     // remove layers that are closed
     for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
@@ -222,42 +280,43 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     }
 
     // update application input input
-    for (int mouseButton = ApplicationMouseButton::Type::ApplicationMouseButton_Begin;
-             mouseButton < ApplicationMouseButton::Type::ApplicationMouseButton_End;
+
+    // mouse buttons
+    for (int mouseButton = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+             mouseButton < ApplicationMouseButton::Button::ApplicationMouseButton_End;
              mouseButton++)
     {
-        if(m_Inputs.MouseButtons[mouseButton].Pressed)
+        if(std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now() - m_Input.MouseButtons[mouseButton].ReleaseTime).count() > 0.2 * std::micro().den)
         {
-            m_Inputs.MouseButtons[mouseButton].PressTime = std::chrono::high_resolution_clock::now();
+            m_Input.MouseButtons[mouseButton].Clicks = 0;
+        }
+
+        if(m_Input.MouseButtons[mouseButton].Pressed)
+        {
+            m_Input.MouseButtons[mouseButton].Down      = true;
+            m_Input.MouseButtons[mouseButton].PressTime = std::chrono::high_resolution_clock::now();
         }
         
-        if(m_Inputs.MouseButtons[mouseButton].Released)
+        if(m_Input.MouseButtons[mouseButton].Released)
         {
-            m_Inputs.MouseButtons[mouseButton].ReleaseTime =
-                std::chrono::high_resolution_clock::now();
+            m_Input.MouseButtons[mouseButton].Down        = false;
+            m_Input.MouseButtons[mouseButton].ReleaseTime = std::chrono::high_resolution_clock::now();
 
-            m_Inputs.MouseButtons[mouseButton].Clicked =
+            m_Input.MouseButtons[mouseButton].Clicked =
                 std::chrono::duration_cast<std::chrono::microseconds>(
-                    m_Inputs.MouseButtons[mouseButton].ReleaseTime - m_Inputs.MouseButtons[mouseButton].PressTime).count() < 0.5 * std::micro().den;
+                    m_Input.MouseButtons[mouseButton].ReleaseTime - m_Input.MouseButtons[mouseButton].PressTime).count() < 0.5 * std::micro().den;
 
-            if(m_Inputs.MouseButtons[mouseButton].Clicked)
-            {
-                ++m_Inputs.MouseButtons[mouseButton].Clicks;
-            }
-        }
-
-        if (m_Inputs.MouseButtons[mouseButton].Clicks >= 2)
-        {
-            /* code */
-        }
-        
+            m_Input.MouseButtons[mouseButton].DoubleClicked =
+                m_Input.MouseButtons[mouseButton].Clicked && ++m_Input.MouseButtons[mouseButton].Clicks >= 2;
+        }        
     }
 
-    if(m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].Clicked)
-        std::cout << "m_Inputs.MouseButtons[ApplicationMouseButton_Left].Clicked " << m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].Clicked << "\n";
-    
-    if(m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].DoubleClicked)
-        std::cout << "m_Inputs.MouseButtons[ApplicationMouseButton_Left].DoubleClicked " << m_Inputs.MouseButtons[ApplicationMouseButton::ApplicationMouseButton_Left].DoubleClicked << "\n";
+    // cursor
+    glfwSetCursor(reinterpret_cast<GLFWwindow*>(m_Context),
+                  reinterpret_cast<GLFWcursor*>(m_Input.MouseCursor.Cursors[m_Input.MouseCursor.View]));
+
+    glfwSetInputMode(reinterpret_cast<GLFWwindow*>(m_Context), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
@@ -296,14 +355,14 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
             layer->frame_finish();
     }
 
-    for (int mouseButton = ApplicationMouseButton::Type::ApplicationMouseButton_Begin;
-             mouseButton < ApplicationMouseButton::Type::ApplicationMouseButton_End;
+    for (int mouseButton = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+             mouseButton < ApplicationMouseButton::Button::ApplicationMouseButton_End;
              mouseButton++)
     {
-        m_Inputs.MouseButtons[mouseButton].Pressed       = false;
-        m_Inputs.MouseButtons[mouseButton].Released      = false;
-        m_Inputs.MouseButtons[mouseButton].Clicked       = false;
-        m_Inputs.MouseButtons[mouseButton].DoubleClicked = false;
+        m_Input.MouseButtons[mouseButton].Pressed       = false;
+        m_Input.MouseButtons[mouseButton].Released      = false;
+        m_Input.MouseButtons[mouseButton].Clicked       = false;
+        m_Input.MouseButtons[mouseButton].DoubleClicked = false;
     }
 }
 
@@ -329,24 +388,6 @@ void ApplicationInstance::ApplicationInstance::quit()
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Context));
     glfwTerminate();
     m_Context = nullptr;
-}
-
-std::string ApplicationInstance::get_name() const
-{
-    return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context)));
-}
-
-gs_vec2f  ApplicationInstance::get_size() const
-{
-    int x = 0;
-    int y = 0;
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
-    return {x, y};
-}
-
-void ApplicationInstance::set_name(const std::string& _Name)
-{
-    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Name.c_str());
 }
 
 bool ApplicationInstance::is_closed()
