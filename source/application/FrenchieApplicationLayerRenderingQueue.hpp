@@ -7,94 +7,12 @@
 #include <FrenchieApplicationLayer.hpp>
 
 // STL
-#include <array>
+#include <vector>
 
 namespace Frenchie
 {
     namespace Application
     {
-        template<typename Type> struct Tree;
-
-        template<typename Type>
-        struct Node
-        {
-            int               Parent{-1};
-            int               Index {-1};
-            Type              Data  {Type()};
-            const Tree<Type>* Tree  {nullptr};
-        };
-
-        template<typename Type>
-        struct Tree
-        {
-            std::vector<Node<Type>> Nodes  {std::vector<Node<Type>>()};
-            std::vector<int>        Indexes{std::vector<int>()};
-            std::vector<int>        Entries{std::vector<int>()};
-            bool                    Dirty  {true};
-
-            template<typename ... Args>
-            Node<Type> construct_node(const Node<Type>& _Parent, Args ... _Args)
-            {
-                // make dirty
-                Dirty = true;
-
-                // create node
-                Node<Type> node;
-                node.Parent = _Parent.Index;
-                node.Index  = (int)Nodes.size();
-                node.Data   = Type(_Args ...);
-                node.Tree   = this;
-                Nodes.push_back(node);
-                return node;
-            }
-
-            void sort()
-            {
-                std::vector<Node<Type>> nodes(Nodes.size());
-                std::vector<int> workspace(Nodes.size()+1);
-
-                Indexes.resize(Nodes.size() + 1);
-                Entries.resize(Nodes.size());
-
-                for(int i = 0; i < Entries.size(); i++)
-                {
-                    Entries[i] = 0;
-                    Indexes[i] = 0;
-                }
-
-                // count items
-                for (int i = 0; i < Nodes.size(); i++)
-                {
-                    if(Nodes[i].Parent < 0) continue;
-                    ++Entries[Nodes[i].Parent];
-                }
-
-                // cumulative sum
-                int sum = 0;
-                for (int i = 0; i < Nodes.size(); i++)
-                {
-                    Indexes  [i] = sum;
-                    workspace[i] = sum;
-                    sum += Entries[i];
-                }
-                Indexes[Nodes.size()] = sum;
-
-                for(int i = 0; i < Nodes.size(); i++ )
-                {
-                    if(Nodes[i].Parent < 0) continue;
-                    nodes[workspace[Nodes[i].Parent]++] = Nodes[i];
-                }
-
-                Nodes = nodes;
-            }
-
-            void clear()
-            {
-                Nodes.clear();
-            }
-        };
-
-
         enum RenderingQueueTextureFormat_ : int
         {
             RenderingQueueTextureFormat_ALPHA,
@@ -230,12 +148,6 @@ namespace Frenchie
             unsigned int EBO{0};
         };
 
-        struct RenderingQueueMaterial
-        {
-            RenderingQueueShader                  Shader  {RenderingQueueShader()};
-            std::array<RenderingQueueTexture, 16> Textures{std::array<RenderingQueueTexture, 16>()};
-        };
-
         struct RenderingQueueCommand final
         {
             RenderingQueueCommand(
@@ -260,6 +172,11 @@ namespace Frenchie
             RenderingQueue();
             virtual ~RenderingQueue();
 
+            // setters
+            void set_projection_matrix(const gs_mat4f&);
+            void set_cameraview_matrix(const gs_mat4f&);
+
+            // Layer API
             virtual bool awake() override;
             virtual void frame_start() override;
             virtual void frame_update() override;
@@ -375,11 +292,11 @@ namespace Frenchie
 
             gs_mat4f                           m_ProjectionMatrix{gs_mat4f(1)};
             gs_mat4f                           m_CameraViewMatrix{gs_mat4f(1)};
-            std::vector<RenderingQueueVertex>  m_Vertexes        {std::vector<RenderingQueueVertex>()};
-            std::vector<int>                   m_Indexes         {std::vector<int>()};
             std::vector<RenderingQueueCommand> m_Commands        {std::vector<RenderingQueueCommand>()};
 
             // this is a plipeline
+            std::vector<RenderingQueueVertex>  m_Vertexes        {std::vector<RenderingQueueVertex>()};
+            std::vector<int>                   m_Indexes         {std::vector<int>()};
             RenderingQueueShader               m_DefaultShader   {RenderingQueueShader()};
             RenderingQueueTexture              m_DefaultTexture  {RenderingQueueTexture()};
         };

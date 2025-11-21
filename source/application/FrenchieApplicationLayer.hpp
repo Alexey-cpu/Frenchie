@@ -1,7 +1,7 @@
 #pragma once
 
-// Core
-#include <FrenchieCoreFactory.hpp>
+// // Core
+// #include <FrenchieCoreFactory.hpp>
 
 // STL
 #include <string>
@@ -12,7 +12,7 @@ namespace Frenchie
 {
     namespace Application
     {
-        class Layer : public Frenchie::Core::Factory::Creator<Layer>
+        class Layer
         {
         public:
             Layer(const std::string& _Name = std::string());
@@ -43,7 +43,7 @@ namespace Frenchie
         protected:
 
             // info
-            std::string m_Name   = STRINGIFY(Layer);
+            std::string m_Name   = "DefaultLayer";
             bool        m_Opened = true;
             bool        m_Shown  = true;
         };

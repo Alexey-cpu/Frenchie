@@ -15,6 +15,17 @@ using namespace Frenchie::Application;
 RenderingQueue::RenderingQueue(){}
 RenderingQueue::~RenderingQueue(){}
 
+void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
+{
+    m_ProjectionMatrix = _Matrix;
+}
+
+void RenderingQueue::set_cameraview_matrix(const gs_mat4f& _Matrix)
+{
+    m_CameraViewMatrix = _Matrix;
+}
+
+
 bool RenderingQueue::awake()
 {
     // register default shader here
@@ -72,8 +83,7 @@ uniform sampler2D u_Texture;
 void main()
 {
     // setup vertex color
-    //fragColor = u_Color * texture(u_Texture, UV);
-    fragColor = u_Color;
+    fragColor = u_Color * texture(u_Texture, UV);
 }
 )"),
                 RenderingQueueShaderType_::RenderingQueueShaderType_Fragment
@@ -124,17 +134,6 @@ void RenderingQueue::frame_render()
         auto color     = command.Texture.Color;
         auto texture   = command.Texture;
         auto transform = command.Transform;
-
-        // compute shader projection matrix
-        float width  = Frenchie::Application::application()->get_size()[0];
-        float height = Frenchie::Application::application()->get_size()[1];
-        float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
-        float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
-        float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
-        float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
-
-        m_ProjectionMatrix = gs_matrix_ortho(left, right, bottom, top, -1000.0f, 1000.0f);
-        m_CameraViewMatrix = gs_mat4f(1.f);
 
         // setup shader projection matrix
         begin_use_shader(shader);
