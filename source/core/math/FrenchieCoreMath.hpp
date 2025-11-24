@@ -23,6 +23,22 @@
 #define GS_TO_RADIANS_CONVERSION_MULTIPLYER__ 0.01745329251994329576923690768489
 #endif
 
+#ifndef PI0
+#define PI0 3.1415926535897932384626433832795
+#endif
+
+#ifndef PI2
+#define PI2 6.283185307179586476925286766559
+#endif
+
+#ifndef PI_2
+#define PI_2 1.5707963267948966192313216916398
+#endif
+
+#ifndef PI_4
+#define PI_4 0.78539816339744830961566084581988
+#endif
+
 // [UTILITY]
 template<typename Type> Type  gs_huge();
 template<typename Type> Type  gs_tiny();
@@ -44,6 +60,15 @@ template<typename Type>
 inline Type gs_abs(const Type& _A)
 {
     return _A < 0 ? -_A : +_A;
+}
+
+template<typename Type>
+inline Type gs_sign(Type _A)
+{
+    if(_A == static_cast<Type>(0))
+        return 0;
+
+    return _A > 0 ? static_cast<Type>(1) : -static_cast<Type>(1);
 }
 
 template<typename Type>
@@ -80,7 +105,47 @@ inline void gs_swap(Type& _A, Type& _B)
 
 // [ALGEBRA]
 template<typename Type, int Size>
-struct gs_vector final
+struct gs_vector_data
+{
+    mutable Type Data[Size]{0};
+};
+
+template<typename Type>
+struct gs_vector_data<Type, 1>
+{
+    mutable Type Data[1]{0};
+    Type& x = Data[0];
+};
+
+template<typename Type>
+struct gs_vector_data<Type, 2>
+{
+    mutable Type Data[2]{0};
+    Type& x = Data[0];
+    Type& y = Data[1];
+};
+
+template<typename Type>
+struct gs_vector_data<Type, 3>
+{
+    mutable Type Data[3]{0};
+    Type& x = Data[0];
+    Type& y = Data[1];
+    Type& z = Data[2];
+};
+
+template<typename Type>
+struct gs_vector_data<Type, 4>
+{
+    mutable Type Data[4]{0};
+    Type& x = Data[0];
+    Type& y = Data[1];
+    Type& z = Data[2];
+    Type& w = Data[3];
+};
+
+template<typename Type, int Size>
+struct gs_vector final : public gs_vector_data<Type, Size>
 {
     typedef Type value_type;
 
@@ -133,92 +198,6 @@ struct gs_vector final
     {
         GS_ASSERT(_Index < Size);
         return Data[_Index];
-    }
-
-    // !=
-    bool operator!=(const gs_vector<Type, Size>& _Other)
-    {
-        bool value = false;
-        for (int i = 0; i < Size; i++)
-            value |= _Other[i] != Data[i];
-        return value;
-    }
-
-    // ==
-    bool operator==(const gs_vector<Type, Size>& _Other)
-    {
-        bool value = true;
-        for (int i = 0; i < Size; i++)
-            value &= _Other[i] == Data[i];
-        return value;
-    }
-
-    // +
-    gs_vector<Type, Size> operator+(const Type& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] + _Value;
-        return result;
-    }
-
-    gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] + _Value[i];
-        return result;
-    }
-
-    // -
-    gs_vector<Type, Size> operator-(const Type& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] - _Value;
-        return result;
-    }
-
-    gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] - _Value[i];
-        return result;
-    }
-
-    // *
-    gs_vector<Type, Size> operator*(const Type& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] * _Value;
-        return result;
-    }
-
-    gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] * _Value[i];
-        return result;
-    }
-
-    // /
-    gs_vector<Type, Size> operator/(const Type& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] / _Value;
-        return result;
-    }
-
-    gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _Value)
-    {
-        gs_vector<Type, Size> result;
-        for (int i = 0; i < Size; i++)
-            result[i] = Data[i] / _Value[i];
-        return result;
     }
 
     // +=
@@ -298,7 +277,6 @@ struct gs_vector final
     }
 
 private:
-    mutable Type Data[Size]{0};
 
     // service methods
     template<typename ... Args>
@@ -358,56 +336,6 @@ struct gs_matrix final
         return &Data[_Column * Rows];
     }
 
-    // !=
-    bool operator!=(const gs_matrix<Type, Rows, Columns>& _Matrix) const
-    {
-        bool output = false;
-        for (int i = 0; i < Size; ++i)
-            output |= _Matrix.Data[i] != Data[i];
-        return output;
-    }
-
-    // ==
-    bool operator==(const gs_matrix<Type, Rows, Columns>& _Matrix) const
-    {
-        bool output = true;
-        for (int i = 0; i < Size; ++i)
-            output &= _Matrix.Data[i] == Data[i];
-        return output;
-    }
-
-    // +
-    gs_matrix<Type, Rows, Columns> operator+(const gs_matrix<Type, Rows, Columns>& _Mat) const
-    {
-        gs_matrix<Type, Rows, Columns> result;
-        add_mat(_Mat, *this, result);
-        return result;
-    }
-
-    // -
-    gs_matrix<Type, Rows, Columns> operator-(const gs_matrix<Type, Rows, Columns>& _Mat) const
-    {
-        gs_matrix<Type, Rows, Columns> result;
-        sub_mat(*this, _Mat, result);
-        return result;
-    }
-
-    // *
-    template<int Dimention>
-    gs_matrix<Type, Rows, Dimention> operator*(const gs_matrix<Type, Columns, Dimention>& _Mat) const
-    {
-        gs_matrix<Type, Rows, Dimention> result;
-        mul_mat(*this, _Mat, result);
-        return result;
-    }
-
-    gs_vector<Type, Rows> operator*(const gs_vector<Type, Rows>& _Vector) const
-    {
-        gs_vector<Type, Rows> result(0);
-        mul_vec(*this, _Vector, result);
-        return result;
-    }
-
     // +=
     gs_matrix<Type, Rows, Columns> operator+=(const gs_matrix<Type, Rows, Columns>& _Mat)
     {
@@ -454,6 +382,25 @@ struct gs_matrix final
     }
 
 private:
+
+    // friends
+    template<typename T, int R, int C>
+    friend bool operator!=(const gs_matrix<T, R, C>& _A, const gs_matrix<T, R, C>& _B);
+
+    template<typename T, int R, int C>
+    friend bool operator==(const gs_matrix<T, R, C>& _A, const gs_matrix<T, R, C>& _B);
+
+    template<typename T, int R, int C>
+    friend gs_matrix<T, R, C> operator*(const gs_matrix<T, R, C>& _A, const gs_matrix<T, R, C>& _B);
+
+    template<typename T, int R, int C>
+    friend gs_vector<T, R> operator*(const gs_matrix<T, R, C>& _A, const gs_vector<T, R>& _V);
+
+    template<typename T, int R, int C>
+    friend gs_matrix<T, R, C> operator+(const gs_matrix<T, R, C>& _A, const gs_matrix<T, R, C>& _B);
+
+    template<typename T, int R, int C>
+    friend gs_matrix<T, R, C> operator-(const gs_matrix<T, R, C>& _A, const gs_matrix<T, R, C>& _B);
 
     Type Data[Rows * Columns]{};
     int  Size{Rows * Columns};
@@ -512,6 +459,195 @@ private:
         }
     }
 };
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// binary operators
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
+// vectors vs vectors
+template<typename Type, int Size>
+gs_vector<Type, Size> operator!=(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    bool value = false;
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        value |= _A[i] != _B[i];
+    return value;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator==(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    bool value = true;
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        value &= _A[i] == _B[i];
+    return value;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] + _B[i];
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] - _B[i];
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] * _B[i];
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] / _B[i];
+    return _C;
+}
+
+// vectors vs scalars
+template<typename Type, int Size>
+gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] + _B;
+    return _C;
+}
+
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] - _B;
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] * _B;
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _A, const Type& _B)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] / _B;
+    return _C;
+}
+
+// scalars vs vectors
+template<typename Type, int Size>
+gs_vector<Type, Size> operator+(const Type& _B, const gs_vector<Type, Size>& _A)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] + _B;
+    return _C;
+}
+
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator-(const Type& _B, const gs_vector<Type, Size>& _A)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] - _B;
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator*(const Type& _B, const gs_vector<Type, Size>& _A)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] * _B;
+    return _C;
+}
+
+template<typename Type, int Size>
+gs_vector<Type, Size> operator/(const Type& _B, const gs_vector<Type, Size>& _A)
+{
+    gs_vector<Type, Size> _C;
+    for (int i = 0; i < Size; ++i)
+        _C[i] = _A[i] / _B;
+    return _C;
+}
+
+// matrix vs matrix
+template<typename Type, int Rows, int Columns>
+bool operator!=(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
+{
+    bool output = false;
+    for (int i = 0; i < Size; ++i)
+        output |= _Matrix.Data[i] != Data[i];
+    return output;
+}
+
+template<typename Type, int Rows, int Columns>
+bool operator==(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
+{
+    bool output = true;
+    for (int i = 0; i < Size; ++i)
+        output &= _Matrix.Data[i] == Data[i];
+    return output;
+}
+
+template<typename Type, int Rows, int Columns>
+gs_matrix<Type, Rows, Columns> operator+(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
+{
+    gs_matrix<Type, Rows, Columns> result;
+    _A.add_mat(_A, _B, result);
+    return result;
+}
+
+template<typename Type, int Rows, int Columns>
+gs_matrix<Type, Rows, Columns> operator-(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
+{
+    gs_matrix<Type, Rows, Columns> result;
+    _A.sub_mat(_A, _B, result);
+    return result;
+}
+
+template<typename Type, int Rows, int Columns>
+gs_matrix<Type, Rows, Columns> operator*(const gs_matrix<Type, Rows, Columns>& _A, const gs_matrix<Type, Rows, Columns>& _B)
+{
+    gs_matrix<Type, Rows, Columns> result;
+    _A.mul_mat(_A, _B, result);
+    return result;
+}
+
+// matrix vs vector
+template<typename Type, int Rows, int Columns>
+gs_vector<Type, Rows> operator*(const gs_matrix<Type, Rows, Columns>& _A, const gs_vector<Type, Rows>& _V)
+{
+    gs_vector<Type, Rows> result(0);
+    _A.mul_vec(_A, _V, result);
+    return result;
+}
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 template<typename Type, int Rows, int Columns>
 inline gs_matrix<Type, Rows, Columns> gs_matrix_transpose(const gs_matrix<Type, Rows, Columns>& _Matrix)
@@ -739,12 +875,13 @@ inline Type gs_vector_cross(const gs_vector<Type, 2>& _A, const gs_vector<Type, 
 template<typename Type>
 inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs_vector<Type, 3>& _B)
 {
-    const Type Ax = _A[0];
-    const Type Ay = _A[1];
-    const Type Az = _A[2];
-    const Type Bx = _B[0];
-    const Type By = _B[1];
-    const Type Bz = _B[2];
+    const Type Ax = _A.x;
+    const Type Ay = _A.y;
+    const Type Az = _A.z;
+
+    const Type Bx = _B.x;
+    const Type By = _B.y;
+    const Type Bz = _B.z;
     return gs_vector<Type, 3>(Ay * Bz - By * Az, Az * Bx - Bz * Ax, Ax * By - Bx * Ay);
 }
 
@@ -883,59 +1020,6 @@ typedef gs_matrix<double, 4, 4> gs_mat4d;
 typedef gs_matrix<int,    2, 2> gs_mat2i;
 typedef gs_matrix<int,    3, 3> gs_mat3i;
 typedef gs_matrix<int,    4, 4> gs_mat4i;
-
-// binary operators
-
-// vectors vs vectors
-template<typename Type, int Size>
-gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
-{
-    return _A + _B;
-}
-
-template<typename Type, int Size>
-gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
-{
-    return _A - _B;
-}
-
-template<typename Type, int Size>
-gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
-{
-    return _A * _B;
-}
-
-template<typename Type, int Size>
-gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
-{
-    return _A / _B;
-}
-
-// vectors vs scalars
-template<typename Type, int Size>
-gs_vector<Type, Size> operator+(const gs_vector<Type, Size>& _A, const Type& _B)
-{
-    return _A + _B;
-}
-
-
-template<typename Type, int Size>
-gs_vector<Type, Size> operator-(const gs_vector<Type, Size>& _A, const Type& _B)
-{
-    return _A - _B;
-}
-
-template<typename Type, int Size>
-gs_vector<Type, Size> operator*(const gs_vector<Type, Size>& _A, const Type& _B)
-{
-    return _A * _B;
-}
-
-template<typename Type, int Size>
-gs_vector<Type, Size> operator/(const gs_vector<Type, Size>& _A, const Type& _B)
-{
-    return _A / _B;
-}
 
 // undef all macro
 #undef GS_TO_DEGREES_CONVERSION_MULTIPLYER__

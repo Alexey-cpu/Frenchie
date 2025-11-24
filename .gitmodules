@@ -23,3 +23,6 @@
 	path = tools/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "tools/glm"]
+	path = tools/glm
+	url = https://github.com/g-truc/glm.git

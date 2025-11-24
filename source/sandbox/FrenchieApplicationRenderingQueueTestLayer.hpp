@@ -2,6 +2,9 @@
 
 #include <FrenchieApplication.hpp>
 
+#include <chrono>
+#include <iostream>
+
 namespace Frenchie
 {
     namespace Application
@@ -9,6 +12,9 @@ namespace Frenchie
         template<typename Type>
         struct gs_rect
         {
+            gs_rect(){}
+            
+
             gs_vector<Type, 2> Min{gs_vec2f(0.f)};
             gs_vector<Type, 2> Max{gs_vec2f(0.f)};
 
@@ -90,6 +96,8 @@ uniform sampler2D u_Texture;
 void main()
 {
     // setup vertex color
+    //fragColor = u_Color;
+    //fragColor = texture(u_Texture, UV);
     fragColor = u_Color * texture(u_Texture, UV);
 }
 )"),
@@ -126,35 +134,96 @@ void main()
 
             virtual void frame_update() override
             {
-                // compute shader projection matrix
-                float width  = Frenchie::Application::application()->get_size()[0];
-                float height = Frenchie::Application::application()->get_size()[1];
-                float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
-                float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
-                float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
-                float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
+                // setup projection matrix
+                {
+                    float width  = Frenchie::Application::application()->get_size().x;
+                    float height = Frenchie::Application::application()->get_size().y;
+                    float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
+                    float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
+                    float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
+                    float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
 
-                Frenchie::Application::application_rendering_queue()
-                    ->set_projection_matrix(gs_matrix_ortho(left, right, bottom, top, -1000.0f, 1000.0f));
+                    Frenchie::Application::application_rendering_queue()
+                        ->set_projection_matrix(gs_matrix_ortho(left, right, bottom, top, -1000.0f, 1000.0f));
 
-                Frenchie::Application::application_rendering_queue()
-                    ->set_cameraview_matrix(gs_mat4f(1.f));
+                    // Frenchie::Application::application_rendering_queue()
+                    //     ->set_projection_matrix(gs_matrix_perspective(gs_to_radians(90.f), 1.f, -1000.f, +1000.f));
+                }
 
                 // add graphical primitives
-                // if(Frenchie::Application::application()
-                //     ->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
-                // {   
-                //     auto x = Frenchie::Application::application()->get_cursor_position()[0];
-                //     auto y = Frenchie::Application::application()->get_cursor_position()[1];
+                if(Frenchie::Application::application()
+                    ->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
+                {   
+                    auto x = Frenchie::Application::application()->get_cursor_position().x;
+                    auto y = Frenchie::Application::application()->get_cursor_position().y;
 
-                //     Transform = gs_matrix_translate(gs_mat4f(1), gs_vec3f(x, -y, -100.f));
-                // }
+                    Transform = gs_matrix_translate(
+                        gs_mat4f(1),
+                        gs_vec3f(
+                            x, 
+                            -y, 
+                            -100.f
+                        )
+                    );
+                }
 
-                // PushTriangleFilled2D(
-                //     gs_vec3f(-0.f, +0.f, -500.f),
-                //     gs_vec3f(+100.f, +0.f, -500.f),
-                //     gs_vec3f(-0.f, -100.f, -500.f),
-                //     gs_vec4f(150.f, 32.f, 32.f, 128.f),
+                //Transform = gs_matrix_translate(gs_mat4f(1), gs_vec3f(Frenchie::Application::application()->get_size().x * 0.25f, -Frenchie::Application::application()->get_size().y * 0.25f, -100.f));
+
+                // push_triangle_filled(
+                //     gs_vec3f(-0.f, +0.f, +0.f),
+                //     gs_vec3f(+100.f, +100.f, 0.f),
+                //     gs_vec3f(+100.f, -100.f, 0.f),
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform
+                // );
+
+                // push_rect_filled(
+                //     gs_vec3f(-0.f, +0.f, +0.f),
+                //     gs_vec3f(+100.f, -100.f, 0.f),
+                //     gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                //     Transform
+                // );
+
+                float lineWidth = 64.f;
+
+                // push_triangle(
+                //     gs_vec3f(+0.f, +0.f, +0.f),
+                //     gs_vec3f(+150.f, +100.f, 0.f),
+                //     gs_vec3f(+150.f, -100.f, 0.f),
+                //     lineWidth,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform
+                // );
+
+                // push_rectangle(
+                //     gs_vec3f(+0.f, +0.f, +0.f),
+                //     gs_vec3f(+100.f, +100.f, 0.f),
+                //     lineWidth,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform
+                // );
+
+                // push_line(
+                //     gs_vec3f(-0.f, +0.f, +0.f),
+                //     gs_vec3f(+100.f, -0.f, 0.f),
+                //     lineWidth,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform
+                // );
+
+                // push_line(
+                //     gs_vec3f(+100.f, -0.f, -100.f),
+                //     gs_vec3f(+100.f, -400.f, -100.f),
+                //     lineWidth,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform
+                // );
+
+                // push_line(
+                //     gs_vec3f(+100.f, -400.f, -100.f),
+                //     gs_vec3f(+200.f, -200.f, 0.f),
+                //     lineWidth,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                 //     Transform
                 // );
             }
@@ -165,45 +234,151 @@ void main()
                 Frenchie::Application::application_rendering_queue()->destroy_texture(m_DefaultTexture);
             }
         
-            // 2D graphics API
-            // void PushTriangleFilled2D(const gs_vec3f& _P1, const gs_vec3f& _P2, const gs_vec3f& _P3, const gs_vec4f& _Color, const gs_mat4f& _Transform)
-            // {
-            //     m_Vertexes.push_back(RenderingQueueVertex(_P1, gs_vec3f(0.f), gs_vec2f(_P1[0] / m_DefaultTexture.Width, _P1[1] / m_DefaultTexture.Height)));
-            //     m_Vertexes.push_back(RenderingQueueVertex(_P2, gs_vec3f(0.f), gs_vec2f(_P2[0] / m_DefaultTexture.Width, _P2[1] / m_DefaultTexture.Height)));
-            //     m_Vertexes.push_back(RenderingQueueVertex(_P3, gs_vec3f(0.f), gs_vec2f(_P3[0] / m_DefaultTexture.Width, _P3[1] / m_DefaultTexture.Height)));
-            //     m_Indexes.push_back(0);
-            //     m_Indexes.push_back(1);
-            //     m_Indexes.push_back(2);
+            // rendering API
+            void push_triangle_filled(const gs_vec3f& _P1, const gs_vec3f& _P2, const gs_vec3f& _P3, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            {
+                m_Vertexes.push_back(RenderingQueueVertex(_P1, gs_vec3f(0.f), gs_vec2f(_P1.x / m_DefaultTexture.Width, _P1.y / m_DefaultTexture.Height)));
+                m_Vertexes.push_back(RenderingQueueVertex(_P2, gs_vec3f(0.f), gs_vec2f(_P2.x / m_DefaultTexture.Width, _P2.y / m_DefaultTexture.Height)));
+                m_Vertexes.push_back(RenderingQueueVertex(_P3, gs_vec3f(0.f), gs_vec2f(_P3.x / m_DefaultTexture.Width, _P3.y / m_DefaultTexture.Height)));
+                m_Indexes.push_back(0);
+                m_Indexes.push_back(1);
+                m_Indexes.push_back(2);
 
-            //     Frenchie::Application::application_rendering_queue()->push_command(
-            //         // construct mesh
-            //         Frenchie::Application::application_rendering_queue()->construct_mesh(
-            //             &m_Vertexes[0],
-            //             (int)m_Vertexes.size(),
-            //             &m_Indexes[0],
-            //             (int)m_Indexes.size()),
+                Frenchie::Application::application_rendering_queue()->push_command(
+                    // construct mesh
+                    Frenchie::Application::application_rendering_queue()->construct_mesh(
+                        &m_Vertexes[0],
+                        (int)m_Vertexes.size(),
+                        &m_Indexes[0],
+                        (int)m_Indexes.size()),
                     
-            //         // provide default shader
-            //         m_DefaultShader,
+                    // provide default shader
+                    m_DefaultShader,
 
-            //         // setup texture
-            //         RenderingQueueTexture(
-            //             m_DefaultTexture.Ptr,
-            //             m_DefaultTexture.Width,
-            //             m_DefaultTexture.Height,
-            //             _Color,
-            //             m_DefaultTexture.Format,
-            //             m_DefaultTexture.Wrap,
-            //             m_DefaultTexture.MinFilter,
-            //             m_DefaultTexture.MaxFilter),
-            //         _Transform);
+                    // setup texture
+                    RenderingQueueTexture(
+                        m_DefaultTexture.Ptr,
+                        m_DefaultTexture.Width,
+                        m_DefaultTexture.Height,
+                        _Color,
+                        m_DefaultTexture.Format,
+                        m_DefaultTexture.Wrap,
+                        m_DefaultTexture.MinFilter,
+                        m_DefaultTexture.MaxFilter),
+                    _Transform);
 
-            //     // clean-up
-            //     m_Indexes.clear();
-            //     m_Vertexes.clear();
-            // }
+                // clean-up
+                m_Indexes.clear();
+                m_Vertexes.clear();
+            }
 
-            // gs_mat4f Transform = gs_matrix_translate(gs_mat4f(1), gs_vec3f(100.f, -100.f, -100.f));
+            void push_rectangle_filled(const gs_vec3f& _Min, const gs_vec3f& _Max, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            {
+                // triangle 1
+                {
+                    const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, gs_min(_Min.z, _Max.z));
+                    const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, gs_min(_Min.z, _Max.z));
+                    const gs_vec3f _P3 = gs_vec3f(_Min.x, _Max.y, gs_min(_Min.z, _Max.z));
+                    m_Vertexes.push_back(RenderingQueueVertex(_P1, gs_vec3f(0.f), gs_vec2f(_P1.x / m_DefaultTexture.Width, _P1.y / m_DefaultTexture.Height)));
+                    m_Vertexes.push_back(RenderingQueueVertex(_P2, gs_vec3f(0.f), gs_vec2f(_P2.x / m_DefaultTexture.Width, _P2.y / m_DefaultTexture.Height)));
+                    m_Vertexes.push_back(RenderingQueueVertex(_P3, gs_vec3f(0.f), gs_vec2f(_P3.x / m_DefaultTexture.Width, _P3.y / m_DefaultTexture.Height)));
+                }
+
+                // triangle 2
+                {
+                    const gs_vec3f _P1 = gs_vec3f(_Max.x, _Min.y, gs_min(_Min.z, _Max.z));
+                    const gs_vec3f _P2 = _Max;
+                    const gs_vec3f _P3 = gs_vec3f(_Min.x, _Max.y, gs_min(_Min.z, _Max.z));
+                    m_Vertexes.push_back(RenderingQueueVertex(_P1, gs_vec3f(0.f), gs_vec2f(_P1.x / m_DefaultTexture.Width, _P1.y / m_DefaultTexture.Height)));
+                    m_Vertexes.push_back(RenderingQueueVertex(_P2, gs_vec3f(0.f), gs_vec2f(_P2.x / m_DefaultTexture.Width, _P2.y / m_DefaultTexture.Height)));
+                    m_Vertexes.push_back(RenderingQueueVertex(_P3, gs_vec3f(0.f), gs_vec2f(_P3.x / m_DefaultTexture.Width, _P3.y / m_DefaultTexture.Height)));
+                }
+
+                m_Indexes.push_back(0);
+                m_Indexes.push_back(1);
+                m_Indexes.push_back(2);
+                m_Indexes.push_back(3);
+                m_Indexes.push_back(4);
+                m_Indexes.push_back(5);
+
+                Frenchie::Application::application_rendering_queue()->push_command(
+                    // construct mesh
+                    Frenchie::Application::application_rendering_queue()->construct_mesh(
+                        &m_Vertexes[0],
+                        (int)m_Vertexes.size(),
+                        &m_Indexes[0],
+                        (int)m_Indexes.size()),
+                    
+                    // provide default shader
+                    m_DefaultShader,
+
+                    // setup texture
+                    RenderingQueueTexture(
+                        m_DefaultTexture.Ptr,
+                        m_DefaultTexture.Width,
+                        m_DefaultTexture.Height,
+                        _Color,
+                        m_DefaultTexture.Format,
+                        m_DefaultTexture.Wrap,
+                        m_DefaultTexture.MinFilter,
+                        m_DefaultTexture.MaxFilter),
+                    _Transform);
+
+                // clean-up
+                m_Indexes.clear();
+                m_Vertexes.clear();
+            }
+
+            void push_line(const gs_vec3f& _P1, const gs_vec3f& _P2, const float& _Width, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            {
+                gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
+                gs_vec3f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
+                push_triangle_filled(_P1 - perpendicular, _P2 - perpendicular, _P1 + perpendicular, _Color, _Transform);
+                push_triangle_filled(_P1 + perpendicular, _P2 - perpendicular, _P2 + perpendicular, _Color, _Transform);
+            }
+
+            void push_triangle(const gs_vec3f& _P1, const gs_vec3f& _P2, const gs_vec3f& _P3, const float& _LineWidth, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            {
+                push_line(_P1, _P2, _LineWidth, _Color, _Transform);
+                push_line(_P2, _P3, _LineWidth, _Color, _Transform);
+                push_line(_P3, _P1, _LineWidth, _Color, _Transform);
+            }
+
+            void push_rectangle(const gs_vec3f& _Min, const gs_vec3f& _Max, const float& _LineWidth, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            {
+                const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, gs_min(_Min.z, _Max.z));
+                const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, gs_min(_Min.z, _Max.z));
+                const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, gs_min(_Min.z, _Max.z));
+                const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, gs_min(_Min.z, _Max.z));
+                
+                push_line(_P1, _P2, _LineWidth, _Color, _Transform);
+                push_line(_P2, _P3, _LineWidth, _Color, _Transform);
+                push_line(_P3, _P4, _LineWidth, _Color, _Transform);
+                push_line(_P4, _P1, _LineWidth, _Color, _Transform);
+            }
+
+            void push_circle(const gs_vec3f _Center, gs_vec2f _Radius, const float& _LineWidth, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            {
+            }
+
+            gs_mat4f Transform = gs_mat4f(1.f);
+
+            // camera
+            mutable gs_vec3f m_CameraWorldPosition           = gs_vec3f(+0.f, +0.f, +1.f);
+            mutable gs_vec3f m_CameraWorldUpAxisDirection    = gs_vec3f(+0.f, +1.f, +0.f);
+            mutable gs_vec3f m_CameraLocalFrontAxisDirection = gs_vec3f(0.f);
+            mutable gs_vec3f m_CameraLocalRightAxisDirection = gs_vec3f(0.f);
+            mutable gs_vec3f m_CameraLocalUpAxisDirection    = gs_vec3f(0.f);
+
+            mutable float     m_Pitch         = 0.f;
+            mutable float     m_Yaw           = 0.f;
+            mutable float     m_Roll          = 0.f;
+
+
+            mutable float     m_MovementSpeed = 1.0f;
+            mutable float     m_Sensitivity   = 0.1f;
+
+            gs_vec2f m_LastCursorPos;
 
             // this is a plipeline
             std::vector<RenderingQueueVertex>  m_Vertexes        {std::vector<RenderingQueueVertex>()};
