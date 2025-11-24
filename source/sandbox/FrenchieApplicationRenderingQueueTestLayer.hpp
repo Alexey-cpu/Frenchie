@@ -132,24 +132,8 @@ void main()
                 return true;
             }
 
-            virtual void frame_update() override
+            virtual void frame_start() override
             {
-                // setup projection matrix
-                {
-                    float width  = Frenchie::Application::application()->get_size().x;
-                    float height = Frenchie::Application::application()->get_size().y;
-                    float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
-                    float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
-                    float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
-                    float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
-
-                    Frenchie::Application::application_rendering_queue()
-                        ->set_projection_matrix(gs_matrix_ortho(left, right, bottom, top, -1000.0f, 1000.0f));
-
-                    // Frenchie::Application::application_rendering_queue()
-                    //     ->set_projection_matrix(gs_matrix_perspective(gs_to_radians(90.f), 1.f, -1000.f, +1000.f));
-                }
-
                 // add graphical primitives
                 if(Frenchie::Application::application()
                     ->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
@@ -166,66 +150,62 @@ void main()
                         )
                     );
                 }
+            
+                // setup projection matrix
+                {
+                    float width  = Frenchie::Application::application()->get_size().x;
+                    float height = Frenchie::Application::application()->get_size().y;
+                    float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
+                    float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
+                    float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
+                    float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
 
-                //Transform = gs_matrix_translate(gs_mat4f(1), gs_vec3f(Frenchie::Application::application()->get_size().x * 0.25f, -Frenchie::Application::application()->get_size().y * 0.25f, -100.f));
+                    Frenchie::Application::application_rendering_queue()
+                        ->set_projection_matrix(gs_matrix_ortho(left, right, bottom, top, -1000.0f, 1000.0f));
 
-                // push_triangle_filled(
-                //     gs_vec3f(-0.f, +0.f, +0.f),
-                //     gs_vec3f(+100.f, +100.f, 0.f),
-                //     gs_vec3f(+100.f, -100.f, 0.f),
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
+                    // Frenchie::Application::application_rendering_queue()
+                    //     ->set_projection_matrix(gs_matrix_perspective(gs_to_radians(90.f), 1.f, -1000.f, +1000.f));
+                }
+            }
 
-                // push_rect_filled(
-                //     gs_vec3f(-0.f, +0.f, +0.f),
-                //     gs_vec3f(+100.f, -100.f, 0.f),
-                //     gs_vec4f(255.f, 255.f, 255.f, 255.f),
-                //     Transform
-                // );
+            virtual void frame_update() override
+            {
+                for(int i = 0; i < 1; ++i)
+                {
+                    for(int j = 0; j < 1; ++j)
+                    {
+                        float lineWidth = 2.f;
+                        float R = 128.f;
 
-                float lineWidth = 64.f;
+                        push_rectangle_rounded(
+                            gs_vec3f(i * R * 2, j * R * 2, -100.f),
+                            gs_vec3f(i * R * 2 + R, j * R * 2 + R, -100.f),
+                            32.f,
+                            lineWidth,
+                            gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                            Transform
+                        );
+                        
+                        push_rectangle(
+                            gs_vec3f(i * R * 2, j * R * 2, +0.f),
+                            gs_vec3f(i * R * 2 + R, j * R * 2 + R, +0.f),
+                            lineWidth,
+                            gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                            Transform
+                        );
 
-                // push_triangle(
-                //     gs_vec3f(+0.f, +0.f, +0.f),
-                //     gs_vec3f(+150.f, +100.f, 0.f),
-                //     gs_vec3f(+150.f, -100.f, 0.f),
-                //     lineWidth,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
-
-                // push_rectangle(
-                //     gs_vec3f(+0.f, +0.f, +0.f),
-                //     gs_vec3f(+100.f, +100.f, 0.f),
-                //     lineWidth,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
-
-                // push_line(
-                //     gs_vec3f(-0.f, +0.f, +0.f),
-                //     gs_vec3f(+100.f, -0.f, 0.f),
-                //     lineWidth,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
-
-                // push_line(
-                //     gs_vec3f(+100.f, -0.f, -100.f),
-                //     gs_vec3f(+100.f, -400.f, -100.f),
-                //     lineWidth,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
-
-                // push_line(
-                //     gs_vec3f(+100.f, -400.f, -100.f),
-                //     gs_vec3f(+200.f, -200.f, 0.f),
-                //     lineWidth,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
+                        // push_arc(
+                        //     gs_vec3f(i * R * 2, j * R * 2, +0.f),
+                        //     +R,
+                        //     +R * 0.5f,
+                        //     90.f,
+                        //     270.f,
+                        //     lineWidth,
+                        //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                        //     Transform
+                        // );
+                    }
+                }
             }
             
             virtual void finish() override
@@ -235,8 +215,13 @@ void main()
             }
         
             // rendering API
-            void push_triangle_filled(const gs_vec3f& _P1, const gs_vec3f& _P2, const gs_vec3f& _P3, const gs_vec4f& _Color, const gs_mat4f& _Transform)
-            {
+            void push_triangle_filled(
+                const gs_vec3f& _P1,
+                const gs_vec3f& _P2,
+                const gs_vec3f& _P3,
+                const gs_vec4f& _ItemColor,
+                const gs_mat4f& _Transform)
+            {   
                 m_Vertexes.push_back(RenderingQueueVertex(_P1, gs_vec3f(0.f), gs_vec2f(_P1.x / m_DefaultTexture.Width, _P1.y / m_DefaultTexture.Height)));
                 m_Vertexes.push_back(RenderingQueueVertex(_P2, gs_vec3f(0.f), gs_vec2f(_P2.x / m_DefaultTexture.Width, _P2.y / m_DefaultTexture.Height)));
                 m_Vertexes.push_back(RenderingQueueVertex(_P3, gs_vec3f(0.f), gs_vec2f(_P3.x / m_DefaultTexture.Width, _P3.y / m_DefaultTexture.Height)));
@@ -260,7 +245,7 @@ void main()
                         m_DefaultTexture.Ptr,
                         m_DefaultTexture.Width,
                         m_DefaultTexture.Height,
-                        _Color,
+                        _ItemColor,
                         m_DefaultTexture.Format,
                         m_DefaultTexture.Wrap,
                         m_DefaultTexture.MinFilter,
@@ -272,7 +257,11 @@ void main()
                 m_Vertexes.clear();
             }
 
-            void push_rectangle_filled(const gs_vec3f& _Min, const gs_vec3f& _Max, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            void push_rectangle_filled(
+                const gs_vec3f& _Min,
+                const gs_vec3f& _Max,
+                const gs_vec4f& _ItemColor,
+                const gs_mat4f& _Transform)
             {
                 // triangle 1
                 {
@@ -317,7 +306,7 @@ void main()
                         m_DefaultTexture.Ptr,
                         m_DefaultTexture.Width,
                         m_DefaultTexture.Height,
-                        _Color,
+                        _ItemColor,
                         m_DefaultTexture.Format,
                         m_DefaultTexture.Wrap,
                         m_DefaultTexture.MinFilter,
@@ -329,56 +318,122 @@ void main()
                 m_Vertexes.clear();
             }
 
-            void push_line(const gs_vec3f& _P1, const gs_vec3f& _P2, const float& _Width, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            void push_line(
+                const gs_vec3f& _P1,
+                const gs_vec3f& _P2,
+                const float&    _LineWidth,
+                const gs_vec4f& _LineColor,
+                const gs_mat4f& _Transform)
             {
                 gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
-                gs_vec3f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
-                push_triangle_filled(_P1 - perpendicular, _P2 - perpendicular, _P1 + perpendicular, _Color, _Transform);
-                push_triangle_filled(_P1 + perpendicular, _P2 - perpendicular, _P2 + perpendicular, _Color, _Transform);
+                gs_vec3f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _LineWidth * 0.5f;
+                push_triangle_filled(_P1 - perpendicular, _P2 - perpendicular, _P1 + perpendicular, _LineColor, _Transform);
+                push_triangle_filled(_P1 + perpendicular, _P2 - perpendicular, _P2 + perpendicular, _LineColor, _Transform);
             }
 
-            void push_triangle(const gs_vec3f& _P1, const gs_vec3f& _P2, const gs_vec3f& _P3, const float& _LineWidth, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            // non filled primitives
+            void push_arc(
+                const gs_vec3f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                float           _SourceAngle,
+                float           _TargetAngle,
+                const float&    _LineWidth,
+                const gs_vec4f& _ItemColor,
+                const gs_mat4f& _Transform)
             {
-                push_line(_P1, _P2, _LineWidth, _Color, _Transform);
-                push_line(_P2, _P3, _LineWidth, _Color, _Transform);
-                push_line(_P3, _P1, _LineWidth, _Color, _Transform);
+                gs_vec3f p0 = gs_vec3f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)), _Center.z);
+                gs_vec3f p1 = p0;
+                gs_vec3f p2 = p0;
+
+                const float angleIncrement = _TargetAngle / 36.f;
+
+                for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
+                {
+                    p2 = gs_vec3f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)), _Center.z);
+                    push_line(p1, p2, _LineWidth, _ItemColor, _Transform);
+                }
             }
 
-            void push_rectangle(const gs_vec3f& _Min, const gs_vec3f& _Max, const float& _LineWidth, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            void push_triangle(
+                const gs_vec3f& _P1,
+                const gs_vec3f& _P2,
+                const gs_vec3f& _P3,
+                const float&    _LineWidth,
+                const gs_vec4f& _ItemColor,
+                const gs_mat4f& _Transform)
+            {
+                push_line(_P1, _P2, _LineWidth, _ItemColor, _Transform);
+                push_line(_P2, _P3, _LineWidth, _ItemColor, _Transform);
+                push_line(_P3, _P1, _LineWidth, _ItemColor, _Transform);
+            }
+
+            void push_rectangle(
+                const gs_vec3f& _Min,
+                const gs_vec3f& _Max,
+                const float&    _LineWidth,
+                const gs_vec4f& _ItemColor,
+                const gs_mat4f& _Transform)
             {
                 const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, gs_min(_Min.z, _Max.z));
                 const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, gs_min(_Min.z, _Max.z));
                 const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, gs_min(_Min.z, _Max.z));
                 const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, gs_min(_Min.z, _Max.z));
-                
-                push_line(_P1, _P2, _LineWidth, _Color, _Transform);
-                push_line(_P2, _P3, _LineWidth, _Color, _Transform);
-                push_line(_P3, _P4, _LineWidth, _Color, _Transform);
-                push_line(_P4, _P1, _LineWidth, _Color, _Transform);
+                push_line(_P1, _P2, _LineWidth, _ItemColor, _Transform);
+                push_line(_P2, _P3, _LineWidth, _ItemColor, _Transform);
+                push_line(_P3, _P4, _LineWidth, _ItemColor, _Transform);
+                push_line(_P4, _P1, _LineWidth, _ItemColor, _Transform);
             }
 
-            void push_circle(const gs_vec3f _Center, gs_vec2f _Radius, const float& _LineWidth, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+            void push_rectangle_rounded(
+                const gs_vec3f& _Min,
+                const gs_vec3f& _Max,
+                const float&    _Radius,
+                const float&    _LineWidth,
+                const gs_vec4f& _ItemColor,
+                const gs_mat4f& _Transform)
             {
+                if(_Radius <= gs_max(_LineWidth, 4.f))
+                {
+                    push_rectangle(_Min, _Max, _LineWidth, _ItemColor, _Transform);
+                    return;
+                }
+
+                // compute radius
+                float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
+
+                // auxiliary lambdas
+                auto arc_point = [](
+                    const gs_vec3f& _Center,
+                    const float&    _MinorRadius,
+                    const float&    _MajorRadius,
+                    const float&    _ArcAngle
+                )->gs_vec3f
+                {
+                    return gs_vec3f(
+                        _Center.x + _MinorRadius * cos(gs_to_radians(_ArcAngle)),
+                        _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)),
+                        _Center.z);
+                };
+
+                // points
+                gs_vec3f TL = gs_vec3f(_Min.x + radius, _Max.y - radius, _Max.z);
+                gs_vec3f BL = gs_vec3f(_Min.x + radius, _Min.y + radius, _Max.z);
+                gs_vec3f TR = gs_vec3f(_Max.x - radius, _Max.y - radius, _Max.z);
+                gs_vec3f BR = gs_vec3f(_Max.x - radius, _Min.y + radius, _Max.z);
+
+                // sides
+                push_arc(TL, radius, radius, 90.f, 180.f, _LineWidth, _ItemColor, _Transform);
+                push_arc(BL, radius, radius, 180.f, 270.f, _LineWidth, _ItemColor, _Transform);
+                push_arc(TR, radius, radius, 0.f, 90.f, _LineWidth, _ItemColor, _Transform);
+                push_arc(BR, radius, radius, 270.f, 360.f, _LineWidth, _ItemColor, _Transform);
+                push_line(arc_point(TL, radius, radius, 180), arc_point(BL, radius, radius, 180), _LineWidth, _ItemColor, _Transform);
+                push_line(arc_point(TL, radius, radius, 90), arc_point(TR, radius, radius, 90), _LineWidth, _ItemColor, _Transform);
+                push_line(arc_point(TR, radius, radius, 0), arc_point(BR, radius, radius, 0), _LineWidth, _ItemColor, _Transform);
+                push_line(arc_point(BL, radius, radius, 270), arc_point(BR, radius, radius, 270), _LineWidth, _ItemColor, _Transform);
             }
 
             gs_mat4f Transform = gs_mat4f(1.f);
-
-            // camera
-            mutable gs_vec3f m_CameraWorldPosition           = gs_vec3f(+0.f, +0.f, +1.f);
-            mutable gs_vec3f m_CameraWorldUpAxisDirection    = gs_vec3f(+0.f, +1.f, +0.f);
-            mutable gs_vec3f m_CameraLocalFrontAxisDirection = gs_vec3f(0.f);
-            mutable gs_vec3f m_CameraLocalRightAxisDirection = gs_vec3f(0.f);
-            mutable gs_vec3f m_CameraLocalUpAxisDirection    = gs_vec3f(0.f);
-
-            mutable float     m_Pitch         = 0.f;
-            mutable float     m_Yaw           = 0.f;
-            mutable float     m_Roll          = 0.f;
-
-
-            mutable float     m_MovementSpeed = 1.0f;
-            mutable float     m_Sensitivity   = 0.1f;
-
-            gs_vec2f m_LastCursorPos;
 
             // this is a plipeline
             std::vector<RenderingQueueVertex>  m_Vertexes        {std::vector<RenderingQueueVertex>()};
