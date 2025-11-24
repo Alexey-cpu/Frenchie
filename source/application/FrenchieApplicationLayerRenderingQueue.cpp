@@ -50,19 +50,19 @@ void RenderingQueue::frame_render()
         auto transform = command.Transform;
 
         // setup shader projection matrix
+        begin_use_texture(texture);
         begin_use_shader(shader);
         begin_use_mesh(mesh);
-        begin_use_texture(texture);
         
         set_shader_uniform(shader, "u_ModelMatrix", transform);
         set_shader_uniform(shader, "u_CameraViewMatrix", m_CameraViewMatrix);
         set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
-        set_shader_uniform(shader, "u_Color", gs_vec4f(color[0] / 255.f, color[1] / 255.f, color[2] / 255.f, color[3] / 255.f));
+        set_shader_uniform(shader, "u_Color", gs_vec4f(color.x / 255.f, color.y / 255.f, color.z / 255.f, color.w / 255.f));
         set_shader_uniform(shader, "u_Texture", 0);
         
+        end_use_texture();
         end_use_shader();
         end_use_mesh();
-        end_use_texture();
 
         // destroy mesh
         destroy_mesh(mesh);
