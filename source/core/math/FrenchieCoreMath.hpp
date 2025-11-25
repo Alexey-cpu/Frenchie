@@ -174,6 +174,18 @@ struct gs_vector final : public gs_vector_data<Type, Size>
             Data[i] = _Other[i];
     }
 
+    template <int OtherSize, typename... Args>
+    gs_vector(const gs_vector<Type, OtherSize>& _Other, Args... _Args) 
+    {
+        int i = 0;
+
+        for (i = 0; i < gs_min(OtherSize, Size); i++)
+            Data[i] = _Other[i];
+
+        if(i < Size)
+            recursive_template_vector_initialization(static_cast<int>(i), static_cast<Type>(_Args)...);
+    }
+
     template <typename... Args>
     gs_vector(Args... _Args) 
     {
@@ -295,6 +307,57 @@ private:
     }
 
     void recursive_template_vector_initialization(const int&){}
+};
+
+template<typename Type>
+struct gs_rect
+{
+    gs_rect(
+        const gs_vector<Type, 2>& _Min = gs_vector<Type, 2>(static_cast<Type>(0)),
+        const gs_vector<Type, 2>& _Max = gs_vector<Type, 2>(static_cast<Type>(0))) :
+    Min(gs_vector<Type, 2>(gs_min(_Min.x, _Max.x), gs_min(_Min.y, _Max.y))),
+    Max(gs_vector<Type, 2>(gs_max(_Min.x, _Max.x), gs_max(_Min.y, _Max.y))){}
+
+    gs_rect(
+        const Type& _MinX = static_cast<Type>(0),
+        const Type& _MinY = static_cast<Type>(0),
+        const Type& _MaxX = static_cast<Type>(0),
+        const Type& _MaxY = static_cast<Type>(0)) :
+    Min(gs_vector<Type, 2>(gs_min(_MinX, _MaxX), gs_min(_MinY, _MaxY))),
+    Max(gs_vector<Type, 2>(gs_max(_MinX, _MaxX), gs_max(_MinY, _MaxY))){}
+
+    gs_vector<Type, 2> Min{gs_vec2f(0.f)};
+    gs_vector<Type, 2> Max{gs_vec2f(0.f)};
+
+    gs_vector<Type, 2> get_size() const
+    {
+        return Max - Min;
+    }
+
+    bool contains(const gs_vector<Type, 2>& _Point) const
+    {
+        return _Point.x >= Min.x &&
+               _Point.y >= Min.y &&
+               _Point.x <= Max.x &&
+               _Point.y <= Max.y;
+    }
+
+    bool contains(const gs_rect<Type>& _Other) const
+    {
+        return _Other.Min.x >= Min.x &&
+               _Other.Min.y >= Min.y &&
+               _Other.Max.x <= Max.x &&
+               _Other.Max.y <= Max.y;
+    }
+
+    bool overlaps(const gs_rect<Type>& _Other) const
+    {
+        const gs_vector<Type, 2> p1 = gs_vector<Type, 2>(_Other.Min.x, _Other.Min.y);
+        const gs_vector<Type, 2> p2 = gs_vector<Type, 2>(_Other.Max.x, _Other.Min.y);
+        const gs_vector<Type, 2> p3 = gs_vector<Type, 2>(_Other.Max.x, _Other.Max.y);
+        const gs_vector<Type, 2> p4 = gs_vector<Type, 2>(_Other.Min.x, _Other.Max.y);
+        return contains(p1) || contains(p2) || contains(p3) || contains(p4);
+    }
 };
 
 template<typename Type, int Rows, int Columns>
@@ -1009,6 +1072,11 @@ typedef gs_vector<double, 4> gs_vec4d;
 typedef gs_vector<int,    2> gs_vec2i;
 typedef gs_vector<int,    3> gs_vec3i;
 typedef gs_vector<int,    4> gs_vec4i;
+
+// rectangle typedefs
+typedef gs_rect<float > gs_rectf;
+typedef gs_rect<double> gs_rectd;
+typedef gs_rect<int   > gs_recti;
 
 // matrix typedefs
 typedef gs_matrix<float,  2, 2> gs_mat2f;

@@ -39,7 +39,8 @@ add_compile_definitions(IMGUI_DEFINE_MATH_OPERATORS)
 list(APPEND KERNEL 
 
 "source/application" 
-"source/core" 
+"source/core"
+"source/rendering"
 "source/editor" 
 "source/vendor"
 "source/sandbox"
