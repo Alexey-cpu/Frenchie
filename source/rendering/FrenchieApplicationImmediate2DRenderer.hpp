@@ -15,10 +15,10 @@ namespace Frenchie
     {
         struct Font
         {
-            std::shared_ptr<stbtt_packedchar>   Chars       {nullptr};
-            std::shared_ptr<stbtt_aligned_quad> Quads       {nullptr};
             int                                 UnicodeMin  {0};
             int                                 UnicodeMax  {0};
+            std::shared_ptr<stbtt_packedchar>   Chars       {nullptr};
+            std::shared_ptr<stbtt_aligned_quad> Quads       {nullptr};
             RenderingQueueTexture               AtlasTexture{RenderingQueueTexture()};
         };
 
@@ -198,10 +198,10 @@ namespace Frenchie
                 return info;
             }
 
-            Font load_font(const int& m_SizeInPixels)
+            Font load_font(const int& _SizeInPixels)
             {
                 // load font file
-                std::shared_ptr<stbtt_fontinfo> m_Info =
+                std::shared_ptr<stbtt_fontinfo> fontInfo =
                     std::shared_ptr<stbtt_fontinfo>(
                         stb_open_ttf_file("C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf"),
                         [](stbtt_fontinfo* _Info)
@@ -217,7 +217,7 @@ namespace Frenchie
 
                 for(unsigned int codepoint = 0; codepoint <= 0xFFFF; codepoint++)
                 {
-                    if(!stbtt_FindGlyphIndex(m_Info.get(), codepoint))
+                    if(!stbtt_FindGlyphIndex(fontInfo.get(), codepoint))
                         continue;
 
                     m_UnicodeMin = std::min<int>(m_UnicodeMin, codepoint);
@@ -225,20 +225,18 @@ namespace Frenchie
                 }
 
                 // compute font geometry metrics
-                float m_SizeInPixelScale = 1.f; // scale font to fit a given font size in pixels
-                int   m_Ascent           = 0;   // distance from the glyph baseline to it's highest point 
-                int   m_Descent          = 0;   // distance fron the glyph baseline to it's lowest point
-                int   m_LineGap          = 0;   // recommended gap between text lines
-        
-                m_SizeInPixelScale = stbtt_ScaleForPixelHeight(m_Info.get(), (float)m_SizeInPixels);
+                float sizeInPixelsScale = stbtt_ScaleForPixelHeight(fontInfo.get(), (float)_SizeInPixels); // scale font to fit a given font size in pixels
+                int   ascent  = 0;                                                                         // distance from the glyph baseline to it's highest point 
+                int   descent = 0;                                                                         // distance fron the glyph baseline to it's lowest point
+                int   lineGap = 0;                                                                         // recommended gap between text lines
 
-                stbtt_GetFontVMetrics(m_Info.get(), &m_Ascent, &m_Descent, &m_LineGap);
-                m_Ascent  = (int)roundf((float)m_Ascent  * m_SizeInPixelScale);
-                m_Descent = (int)roundf((float)m_Descent * m_SizeInPixelScale);
-                m_LineGap = (int)roundf((float)m_LineGap * m_SizeInPixelScale);
+                stbtt_GetFontVMetrics(fontInfo.get(), &ascent, &descent, &lineGap);
+                ascent  = (int)roundf((float)ascent  * sizeInPixelsScale);
+                descent = (int)roundf((float)descent * sizeInPixelsScale);
+                lineGap = (int)roundf((float)lineGap * sizeInPixelsScale);
 
                 // pack font atlas
-                std::shared_ptr<stbtt_packedchar> m_Chars = 
+                std::shared_ptr<stbtt_packedchar> packedCharacters = 
                     std::shared_ptr<stbtt_packedchar>(
                         (stbtt_packedchar*)malloc(sizeof(stbtt_packedchar) * (m_UnicodeMax + 1)),
                         [](stbtt_packedchar* _Range)
@@ -253,6 +251,7 @@ namespace Frenchie
                 int atlasHeight    = 0;
                 int atlasMaxHeight = 16;
                 int atlasMaxWidth  = 32;
+                int atlasMaxSize   = 2048;
                 
                 while (true)
                 {
@@ -273,10 +272,10 @@ namespace Frenchie
                             int glyphYmax = 0;
 
                             stbtt_GetCodepointBitmapBox(
-                                m_Info.get(),
+                                fontInfo.get(),
                                 codepoint,
-                                m_SizeInPixelScale,
-                                m_SizeInPixelScale,
+                                sizeInPixelsScale,
+                                sizeInPixelsScale,
                                 &glyphXmin,
                                 &glyphYmin,
                                 &glyphXmax,
@@ -306,25 +305,28 @@ namespace Frenchie
                         atlasHeight += std::max<int>(maxHeight, 1);
                     }
 
+                    if(atlasHeight >= atlasMaxSize && atlasMaxWidth >= atlasMaxSize)
+                        atlasMaxSize *= 2;
+
                     atlasMaxWidth *= 2;
-                    atlasMaxWidth  = std::min<int>(atlasMaxWidth, 2048);
+                    atlasMaxWidth  = std::min<int>(atlasMaxWidth, atlasMaxSize);
 
                     if(atlasHeight <= atlasMaxHeight)
                         break;
 
                     atlasMaxHeight *= 2;
-                    atlasMaxHeight  = std::min<int>(atlasMaxHeight, 2048);
+                    atlasMaxHeight  = std::min<int>(atlasMaxHeight, atlasMaxSize);
+
+                    printf("iteration...\n");
                 }
 
                 // pack atlas
-                std::shared_ptr<unsigned char> m_Bitmap        = nullptr;
-                int                            m_TextureWidth  = atlasMaxWidth;
-                int                            m_TextureHeight = atlasHeight;
+                std::shared_ptr<unsigned char> atlasBitMap  = nullptr;
 
                 while (true)
                 {
-                    m_Bitmap = std::shared_ptr<unsigned char>(
-                        (unsigned char*)malloc(m_TextureWidth * m_TextureHeight),
+                    atlasBitMap = std::shared_ptr<unsigned char>(
+                        (unsigned char*)malloc(atlasWidth * atlasHeight),
                         [](unsigned char* _Bitmap)
                         {
                             if(_Bitmap != nullptr)
@@ -336,24 +338,24 @@ namespace Frenchie
                     );
 
                     stbtt_pack_context pc;
-                    stbtt_PackBegin(&pc, m_Bitmap.get(), m_TextureWidth, m_TextureHeight, 0, 1, NULL);   
+                    stbtt_PackBegin(&pc, atlasBitMap.get(), atlasWidth, atlasHeight, 0, 1, NULL);   
                     stbtt_PackSetOversampling(&pc, 1, 1);
 
                     if(!stbtt_PackFontRange(
                         &pc,
-                        m_Info->data,
+                        fontInfo->data,
                         0,
-                        (float)m_SizeInPixels,
+                        (float)_SizeInPixels,
                         m_UnicodeMin,
                         m_UnicodeMax - m_UnicodeMin,
-                        m_Chars.get()))
+                        packedCharacters.get()))
                     {
                         stbtt_PackEnd(&pc);
 
-                        if(m_TextureWidth < 4096)
-                            m_TextureWidth *= 2;
+                        if(atlasWidth < 4096)
+                            atlasWidth *= 2;
                         else 
-                            m_TextureHeight *= 2;
+                            atlasHeight *= 2;
                     } 
                     else 
                     {
@@ -365,11 +367,11 @@ namespace Frenchie
                 // write packed png...
                 stbi_write_png(
                     "C:/SDK/Qt_Projects/OpenGL/logs/atlas.png",
-                    m_TextureWidth,
-                    m_TextureHeight,
+                    atlasWidth,
+                    atlasHeight,
                     1,
-                    m_Bitmap.get(),
-                    m_TextureWidth);
+                    atlasBitMap.get(),
+                    atlasWidth);
 
                 // generate atlas glyphs quads
                 std::shared_ptr<stbtt_aligned_quad> m_Quads = 
@@ -387,67 +389,63 @@ namespace Frenchie
                     float unusedX, unusedY;
 
                     stbtt_GetPackedQuad(
-                        m_Chars.get(),      // Array of stbtt_packedchar
-                        m_TextureWidth,     // Width of the font atlas texture
-                        m_TextureHeight,    // Height of the font atlas texture
-                        i,                  // Index of the glyph
-                        &unusedX, &unusedY, // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
-                        &m_Quads.get()[i],  // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
-                        0                   // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
+                        packedCharacters.get(), // Array of stbtt_packedchar
+                        atlasWidth,             // Width of the font atlas texture
+                        atlasHeight,            // Height of the font atlas texture
+                        i,                      // Index of the glyph
+                        &unusedX, &unusedY,     // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
+                        &m_Quads.get()[i],      // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
+                        0                       // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
                     );
                 }
 
                 // generate output font
                 Font font;
-                font.Chars        = m_Chars;
+                font.Chars        = packedCharacters;
                 font.Quads        = m_Quads;
                 font.UnicodeMin   = m_UnicodeMin;
                 font.UnicodeMax   = m_UnicodeMax;
                 
                 // generate font colorified bitmap
-                if(m_Bitmap == nullptr)
+                if(atlasBitMap == nullptr)
                     return font;
 
-                {
-                    const int      channels = 4;
-                    const int      red      = 0;
-                    const int      green    = 1;
-                    const int      blue     = 2;
-                    const int      alpha    = 3;
-                    std::shared_ptr<unsigned char> image = std::shared_ptr<unsigned char>(
-                        (unsigned char*)malloc(sizeof(unsigned char) * m_TextureWidth * m_TextureHeight * channels),
+                const int channels = 4;
+
+                std::shared_ptr<unsigned char> colorifiedAtlasBitMap = 
+                    std::shared_ptr<unsigned char>(
+                        (unsigned char*)malloc(sizeof(unsigned char) * atlasWidth * atlasHeight * channels),
                         [](unsigned char* _Bitmap)
                         {
                             if(_Bitmap != nullptr)
-                            {
                                 free(_Bitmap);
-                                _Bitmap = nullptr;
-                            }
                         }
                     );
 
-                    for (int y = 0; y < m_TextureHeight; y++)
+                for (int y = 0; y < atlasHeight; y++)
+                {
+                    for (int x = 0; x < atlasWidth; x++)
                     {
-                        for (int x = 0; x < m_TextureWidth; x++)
+                        for (int c = 0; c < channels; c++)
                         {
-                            image.get()[channels * (y * m_TextureWidth + x) + red  ] = m_Bitmap.get()[(y * m_TextureWidth + x)];
-                            image.get()[channels * (y * m_TextureWidth + x) + green] = m_Bitmap.get()[(y * m_TextureWidth + x)];
-                            image.get()[channels * (y * m_TextureWidth + x) + blue ] = m_Bitmap.get()[(y * m_TextureWidth + x)];
-                            image.get()[channels * (y * m_TextureWidth + x) + alpha] = m_Bitmap.get()[(y * m_TextureWidth + x)];
+                            colorifiedAtlasBitMap.get()[channels * (y * atlasWidth + x) + c  ] =
+                                atlasBitMap.get()[(y * atlasWidth + x)];
                         }
                     }
+                }
 
-                    font.AtlasTexture = Frenchie::Application::application_rendering_queue()->construct_texture(
-                        image.get(),
-                        m_TextureWidth,
-                        m_TextureHeight,
+                font.AtlasTexture =
+                    Frenchie::Application::application_rendering_queue()->construct_texture(
+                        colorifiedAtlasBitMap.get(),
+                        atlasWidth,
+                        atlasHeight,
                         RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA
                     );
-                }
 
                 return font;
             }
 
+            // text rendering command
             void push_text(const Font& _Font, const gs_mat4f& _Transform)
             {
                 // let's draw a single character
@@ -456,9 +454,11 @@ namespace Frenchie
                 stbtt_packedchar*   packedChar  = &_Font.Chars.get()[ch - _Font.UnicodeMin];
                 stbtt_aligned_quad* alignedQuad = &_Font.Quads.get()[ch - _Font.UnicodeMin];
 
+                float fontSize = 32.f;
+
                 build_rectangle_filled_mesh(
                     gs_vec2f(0.f, 0.f),
-                    gs_vec2f(100.f, -100.f),
+                    gs_vec2f(fontSize, -fontSize),
                     gs_vec2f(alignedQuad->s0, alignedQuad->t0),
                     gs_vec2f(alignedQuad->s1, alignedQuad->t1),
                     0.f,
@@ -467,20 +467,6 @@ namespace Frenchie
                 );
 
                 push_rendering_command(_Font.AtlasTexture, gs_vec4f(255.f, 255.f, 255.f, 255.f), _Transform);
-
-// static void build_rectangle_filled_mesh(
-//     const gs_vec2f&                    _Min,
-//     const gs_vec2f&                    _Max,
-//     const gs_vec2f&                    _MinUV,
-//     const gs_vec2f&                    _MaxUV,
-//     const float&                       _Depth,
-//     std::vector<RenderingQueueVertex>& _Vertexes,
-//     std::vector<int>&                  _Indexes)
-
-                // printf("Atlas width = %d height = %d \n", _Font.AtlasTexture.Width, _Font.AtlasTexture.Height);
-                // printf("stbtt_packedchar  : x0 = %d y0 = %d x1 = %d y1 = %d \n", packedChar->x0, packedChar->y0, packedChar->x1, packedChar->x0);
-                //printf("stbtt_aligned_quad: s0 = %f t0 = %f s1 = %f t1 = %f \n", alignedQuad->s0, alignedQuad->t0, alignedQuad->s1, alignedQuad->t1);
-                // printf("stbtt_aligned_quad: x0 = %f y0 = %f x1 = %f y1 = %f \n", alignedQuad->x0, alignedQuad->y0, alignedQuad->x1, alignedQuad->x0);
             }
         };
     }
