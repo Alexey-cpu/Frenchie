@@ -220,26 +220,36 @@ bool ApplicationInstance::awake()
     }
     
     // awake layers
-    for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
-    {
-        if(!(*it)->awake())
-        {
-            (*it)->finish();
-            auto rm = it;
-            it++;
-            m_Layers.erase(rm);
+    // std::cout << "m_Layers " << m_Layers.size() << "\n";
 
-            if(it == m_Layers.end())
-                break;
-        }
-    }
-    
+    // for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
+    // {
+    //     if(!(*it)->awake())
+    //     {
+    //         (*it)->finish();
+    //         auto rm = it;
+    //         it++;
+    //         m_Layers.erase(rm);
+
+    //         if(it == m_Layers.end())
+    //             break;
+    //     }
+    // }
 
     return true;
 }
 
 void ApplicationInstance::ApplicationInstance::frame_start()
 {
+    // awake layers
+    for(auto it = m_Awakes.begin(); it != m_Awakes.end(); it++)
+    {
+        if((*it)->awake())
+            m_Layers.push_back((*it));
+    }
+    
+    m_Awakes.clear();
+
     // execute backend
     glfwPollEvents();
     glfwSwapInterval(1);

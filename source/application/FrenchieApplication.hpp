@@ -130,15 +130,18 @@ namespace Frenchie
                 if(contains_layer<Type>() && !layer->allows_multiple_instances())
                     return find_layer<Type>();
 
-                // awake layer
-                if(m_Context != nullptr)
-                {
-                    if(!layer->awake())
-                        return nullptr;
-                }
+                m_Awakes.push_back(layer);
 
-                // push layer into layers stack
-                m_Layers.push_back(layer);
+                // // awake layer
+                // if(m_Context != nullptr)
+                // {
+                //     std::cout << "m_Context != nullptr\n";
+                //     if(!layer->awake())
+                //         return nullptr;
+                // }
+
+                // // push layer into layers stack
+                // m_Layers.push_back(layer);
                 return layer;
             }
 
@@ -177,6 +180,7 @@ namespace Frenchie
 
             ApplicationInput                  m_Input  {ApplicationInput()};
             std::list<std::shared_ptr<Layer>> m_Layers {std::list<std::shared_ptr<Layer>>()};
+            std::list<std::shared_ptr<Layer>> m_Awakes {std::list<std::shared_ptr<Layer>>()};
             void*                             m_Context{nullptr};
         };
 

@@ -102,10 +102,34 @@ RenderingQueueTexture RenderingQueue::construct_texture(
         return RenderingQueueTexture();
 
     // register image within platform specific low level grphics API
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    
     unsigned int sampler;
     glGenTextures(1, &sampler);
     glBindTexture(GL_TEXTURE_2D, sampler); 
     
+    // set format
+    switch (_Format)
+    {
+    case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_ALPHA:
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _Width, _Height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _RawBuffer);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, _Width, _Height, 0, GL_RED, GL_UNSIGNED_BYTE, _RawBuffer);
+        break;
+    
+    case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGB:
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _Width, _Height, 0, GL_RGB, GL_UNSIGNED_BYTE, _RawBuffer);
+        break;
+
+    case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA:
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
+        break;
+
+    default:
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
+        break;
+    }
+
     // set the texture wrapping parameters
     switch (_Wrap)
     {
@@ -179,26 +203,6 @@ RenderingQueueTexture RenderingQueue::construct_texture(
 
     default:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        break;
-    }
-
-    // set format
-    switch (_Format)
-    {
-    case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_ALPHA:
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _Width, _Height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _RawBuffer);
-        break;
-    
-    case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGB:
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _Width, _Height, 0, GL_RGB, GL_UNSIGNED_BYTE, _RawBuffer);
-        break;
-
-    case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA:
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
-        break;
-
-    default:
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _RawBuffer);
         break;
     }
 

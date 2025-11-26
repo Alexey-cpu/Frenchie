@@ -7,6 +7,10 @@ Immediate2DRenderer::~Immediate2DRenderer(){}
 
 bool Immediate2DRenderer::awake()
 {
+    std::cout << "Immediate2DRenderer::awake() \n";
+
+    m_Font = load_font(128);
+
     // register default shader here
     m_DefaultShader = Frenchie::Application::application_rendering_queue()->construct_shader(
         {
@@ -61,10 +65,12 @@ uniform sampler2D u_Texture;
 
 void main()
 {
-// setup vertex color
-//fragColor = u_Color;
-//fragColor = texture(u_Texture, UV);
-fragColor = u_Color * texture(u_Texture, UV);
+    // setup vertex color
+    //fragColor = u_Color;
+    //fragColor = texture(u_Texture, UV);
+    //fragColor = u_Color * texture(u_Texture, UV);
+
+    fragColor = u_Color * texture(u_Texture, UV);
 }
 )"),
                 RenderingQueueShaderType_::RenderingQueueShaderType_Fragment
@@ -140,7 +146,7 @@ void Immediate2DRenderer::finish()
     Frenchie::Application::application_rendering_queue()->destroy_texture(m_DefaultTexture);
 }
 
-void Immediate2DRenderer::push_rendering_command(const gs_vec4f& _Color, const gs_mat4f& _Transform)
+void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _Texture, const gs_vec4f& _Color, const gs_mat4f& _Transform)
 {
     if(m_Indexes.empty() || m_Vertexes.empty()) return;
 
@@ -158,14 +164,14 @@ void Immediate2DRenderer::push_rendering_command(const gs_vec4f& _Color, const g
 
         // setup texture
         RenderingQueueTexture(
-            m_DefaultTexture.Ptr,
-            m_DefaultTexture.Width,
-            m_DefaultTexture.Height,
+            _Texture.Ptr,
+            _Texture.Width,
+            _Texture.Height,
             _Color,
-            m_DefaultTexture.Format,
-            m_DefaultTexture.Wrap,
-            m_DefaultTexture.MinFilter,
-            m_DefaultTexture.MaxFilter),
+            _Texture.Format,
+            _Texture.Wrap,
+            _Texture.MinFilter,
+            _Texture.MaxFilter),
         _Transform);
 
     // clean-up
@@ -198,7 +204,11 @@ void Immediate2DRenderer::push_triangle_filled(
         m_Vertexes,
         m_Indexes);
 
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(
+        !_Texture.is_null() ? _Texture : m_DefaultTexture,
+        _Color,
+        _Transform
+    );
 }
 
 void Immediate2DRenderer::push_rectangle_filled(
@@ -225,7 +235,10 @@ void Immediate2DRenderer::push_rectangle_filled(
         m_Vertexes,
         m_Indexes);
 
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(
+        !_Texture.is_null() ? _Texture : m_DefaultTexture,
+        _Color,
+        _Transform);
 }
 
 void Immediate2DRenderer::push_line(
@@ -251,7 +264,7 @@ void Immediate2DRenderer::push_line(
         m_Vertexes,
         m_Indexes);
 
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(m_DefaultTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_arc(
@@ -286,7 +299,7 @@ void Immediate2DRenderer::push_arc(
         m_Vertexes,
         m_Indexes);
 
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(m_DefaultTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_triangle(
@@ -312,7 +325,7 @@ void Immediate2DRenderer::push_triangle(
     build_line_mesh(_P3, _P1, _Depth, _LineWidth, m_DefaultTexture, m_Vertexes, m_Indexes);
 
     // push rendering command
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(m_DefaultTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_rectangle(
@@ -344,7 +357,7 @@ void Immediate2DRenderer::push_rectangle(
     build_line_mesh(_P4, _P1, _Depth, _LineWidth, m_DefaultTexture, m_Vertexes, m_Indexes);
 
     // push rendering command
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(m_DefaultTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_rectangle_rounded(
@@ -411,7 +424,7 @@ void Immediate2DRenderer::push_rectangle_rounded(
     build_line_mesh(arc_point(TR, radius, radius, 0), arc_point(BR, radius, radius, 0), _Depth, _LineWidth, m_DefaultTexture, m_Vertexes, m_Indexes);
     build_line_mesh(arc_point(BL, radius, radius, 270), arc_point(BR, radius, radius, 270), _Depth, _LineWidth, m_DefaultTexture, m_Vertexes, m_Indexes);
 
-    push_rendering_command(_Color, _Transform);
+    push_rendering_command(m_DefaultTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::build_triangle_filled_mesh(
@@ -451,48 +464,108 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
     std::vector<RenderingQueueVertex>& _Vertexes,
     std::vector<int>&                  _Indexes)
 {
+    const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, _Depth);
+    const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, _Depth);
+    const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, _Depth);
+    const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, _Depth);
+
     // triangle 1
-    {
-        const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, _Depth);
-        const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, _Depth);
-        const gs_vec3f _P3 = gs_vec3f(_Min.x, _Max.y, _Depth);
-        const gs_vec3f _P4 = gs_vec3f(_Max.x, _Max.y, _Depth);
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P1,
+            gs_vec3f(0.f),
+            gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height)));
 
-        _Vertexes.push_back(
-            RenderingQueueVertex(
-                _P1,
-                gs_vec3f(0.f),
-                gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height)));
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P2,
+            gs_vec3f(0.f),
+            gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height)));
 
-        _Vertexes.push_back(
-            RenderingQueueVertex(
-                _P2,
-                gs_vec3f(0.f),
-                gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height)));
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P4,
+            gs_vec3f(0.f),
+            gs_vec2f(_P4.x / _Texture.Width, _P4.y / _Texture.Height)));
 
-        _Vertexes.push_back(
-            RenderingQueueVertex(
-                _P3,
-                gs_vec3f(0.f),
-                gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height)));
+    // triangle 2
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P2,
+            gs_vec3f(0.f),
+            gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height)));
 
-        _Vertexes.push_back(
-            RenderingQueueVertex(
-                _P2,
-                gs_vec3f(0.f),
-                gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height)));
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P3, gs_vec3f(0.f),
+            gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height)));
 
-        _Vertexes.push_back(
-            RenderingQueueVertex(
-                _P4, gs_vec3f(0.f),
-                gs_vec2f(_P4.x / _Texture.Width, _P4.y / _Texture.Height)));
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P4,
+            gs_vec3f(0.f),
+            gs_vec2f(_P4.x / _Texture.Width, _P4.y / _Texture.Height)));
 
-        _Vertexes.push_back(
-            RenderingQueueVertex(
-                _P3,
-                gs_vec3f(0.f),
-                gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height)));
-    }
+    for (int i = 0; i < (int)_Vertexes.size(); ++i)
+        _Indexes.push_back(i);
+}
+
+void Immediate2DRenderer::build_rectangle_filled_mesh(
+    const gs_vec2f&                    _Min,
+    const gs_vec2f&                    _Max,
+    const gs_vec2f&                    _MinUV,
+    const gs_vec2f&                    _MaxUV,
+    const float&                       _Depth,
+    std::vector<RenderingQueueVertex>& _Vertexes,
+    std::vector<int>&                  _Indexes)
+{
+    const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, _Depth);
+    const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, _Depth);
+    const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, _Depth);
+    const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, _Depth);
+
+    const gs_vec3f _UV1 = gs_vec3f(_MinUV.x, _MinUV.y, _Depth);
+    const gs_vec3f _UV2 = gs_vec3f(_MaxUV.x, _MinUV.y, _Depth);
+    const gs_vec3f _UV3 = gs_vec3f(_MaxUV.x, _MaxUV.y, _Depth);
+    const gs_vec3f _UV4 = gs_vec3f(_MinUV.x, _MaxUV.y, _Depth);
+
+    // triangle 1
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P1,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV1.x, _UV1.y)));
+
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P2,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV2.x, _UV2.y)));
+
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P4,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV4.x, _UV4.y)));
+
+    // triangle 2
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P2,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV2.x, _UV2.y)));
+
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P3,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV3.x, _UV3.y)));
+
+    _Vertexes.push_back(
+        RenderingQueueVertex(
+            _P4,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV4.x, _UV4.y)));
 
     for (int i = 0; i < (int)_Vertexes.size(); ++i)
         _Indexes.push_back(i);
