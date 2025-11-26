@@ -250,13 +250,6 @@ namespace Frenchie
                 m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform));
             }
 
-            // static API
-            static std::shared_ptr<unsigned char> generate_bit_map(
-                const int&                         _Width,
-                const int&                         _Height,
-                const RenderingQueueTextureFormat& _Channels,
-                const gs_vec4f& _Color);
-
         protected:
 
             gs_mat4f                           m_ProjectionMatrix{gs_mat4f(1)};

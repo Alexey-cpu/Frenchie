@@ -550,33 +550,3 @@ void RenderingQueue::destroy_mesh(const RenderingQueueMesh& _Mesh)
     glDeleteBuffers(1, &_Mesh.EBO);
     glDeleteVertexArrays(1, &_Mesh.VAO);
 }
-
-std::shared_ptr<unsigned char> RenderingQueue::generate_bit_map(
-    const int&      _Width,
-    const int&      _Height,
-    const int&      _Channels,
-    const gs_vec4f& _Color)
-{
-    // create default white pattern texture
-    const int     height   = 4;
-    const int     width    = 4;
-    const int     channels = 4;
-    const int     red      = 0;
-    const int     green    = 1;
-    const int     blue     = 2;
-    const int     alpha    = 3;
-    unsigned char image[width * height * channels]{};
-
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            image[channels * (y * width + x) + red  ] = 255;
-            image[channels * (y * width + x) + green] = 255;
-            image[channels * (y * width + x) + blue ] = 255;
-            image[channels * (y * width + x) + alpha] = 255;
-        }
-    }
-
-    return nullptr;
-}
