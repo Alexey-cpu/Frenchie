@@ -404,13 +404,44 @@ namespace Frenchie
                 font.UnicodeMin   = m_UnicodeMin;
                 font.UnicodeMax   = m_UnicodeMax;
                 
-                if(m_Bitmap != nullptr)
+                // generate font colorified bitmap
+                if(m_Bitmap == nullptr)
+                    return font;
+
                 {
+                    const int      channels = 4;
+                    const int      red      = 0;
+                    const int      green    = 1;
+                    const int      blue     = 2;
+                    const int      alpha    = 3;
+                    std::shared_ptr<unsigned char> image = std::shared_ptr<unsigned char>(
+                        (unsigned char*)malloc(sizeof(unsigned char) * m_TextureWidth * m_TextureHeight * channels),
+                        [](unsigned char* _Bitmap)
+                        {
+                            if(_Bitmap != nullptr)
+                            {
+                                free(_Bitmap);
+                                _Bitmap = nullptr;
+                            }
+                        }
+                    );
+
+                    for (int y = 0; y < m_TextureHeight; y++)
+                    {
+                        for (int x = 0; x < m_TextureWidth; x++)
+                        {
+                            image.get()[channels * (y * m_TextureWidth + x) + red  ] = m_Bitmap.get()[(y * m_TextureWidth + x)];
+                            image.get()[channels * (y * m_TextureWidth + x) + green] = m_Bitmap.get()[(y * m_TextureWidth + x)];
+                            image.get()[channels * (y * m_TextureWidth + x) + blue ] = m_Bitmap.get()[(y * m_TextureWidth + x)];
+                            image.get()[channels * (y * m_TextureWidth + x) + alpha] = m_Bitmap.get()[(y * m_TextureWidth + x)];
+                        }
+                    }
+
                     font.AtlasTexture = Frenchie::Application::application_rendering_queue()->construct_texture(
-                        m_Bitmap.get(),
+                        image.get(),
                         m_TextureWidth,
                         m_TextureHeight,
-                        RenderingQueueTextureFormat_::RenderingQueueTextureFormat_ALPHA
+                        RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA
                     );
                 }
 
@@ -448,7 +479,7 @@ namespace Frenchie
 
                 // printf("Atlas width = %d height = %d \n", _Font.AtlasTexture.Width, _Font.AtlasTexture.Height);
                 // printf("stbtt_packedchar  : x0 = %d y0 = %d x1 = %d y1 = %d \n", packedChar->x0, packedChar->y0, packedChar->x1, packedChar->x0);
-                printf("stbtt_aligned_quad: s0 = %f t0 = %f s1 = %f t1 = %f \n", alignedQuad->s0, alignedQuad->t0, alignedQuad->s1, alignedQuad->t1);
+                //printf("stbtt_aligned_quad: s0 = %f t0 = %f s1 = %f t1 = %f \n", alignedQuad->s0, alignedQuad->t0, alignedQuad->s1, alignedQuad->t1);
                 // printf("stbtt_aligned_quad: x0 = %f y0 = %f x1 = %f y1 = %f \n", alignedQuad->x0, alignedQuad->y0, alignedQuad->x1, alignedQuad->x0);
             }
         };
