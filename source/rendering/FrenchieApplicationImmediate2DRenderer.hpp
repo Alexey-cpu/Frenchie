@@ -247,11 +247,11 @@ namespace Frenchie
                     );
 
                 // make a most likely large enough bitmap, adjust to font type, number of sizes and glyphs and oversampling
-                int atlasWidth     = 0;
-                int atlasHeight    = 0;
+                int atlasWidth     = 32;
+                int atlasHeight    = 32;
                 int atlasMaxHeight = 16;
                 int atlasMaxWidth  = 32;
-                int atlasMaxSize   = 2048;
+                int atlasMaxSize   = 4096;
                 
                 while (true)
                 {
@@ -316,8 +316,6 @@ namespace Frenchie
 
                     atlasMaxHeight *= 2;
                     atlasMaxHeight  = std::min<int>(atlasMaxHeight, atlasMaxSize);
-
-                    printf("iteration...\n");
                 }
 
                 // pack atlas
@@ -364,17 +362,8 @@ namespace Frenchie
                     }
                 }
 
-                // write packed png...
-                stbi_write_png(
-                    "C:/SDK/Qt_Projects/OpenGL/logs/atlas.png",
-                    atlasWidth,
-                    atlasHeight,
-                    1,
-                    atlasBitMap.get(),
-                    atlasWidth);
-
                 // generate atlas glyphs quads
-                std::shared_ptr<stbtt_aligned_quad> m_Quads = 
+                std::shared_ptr<stbtt_aligned_quad> packedCharactersQuads = 
                     std::shared_ptr<stbtt_aligned_quad>(
                         (stbtt_aligned_quad*)malloc(sizeof(stbtt_aligned_quad) * m_UnicodeMax),
                         [](stbtt_aligned_quad* _Range)
@@ -394,7 +383,7 @@ namespace Frenchie
                         atlasHeight,            // Height of the font atlas texture
                         i,                      // Index of the glyph
                         &unusedX, &unusedY,     // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
-                        &m_Quads.get()[i],      // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
+                        &packedCharactersQuads.get()[i],      // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
                         0                       // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
                     );
                 }
@@ -402,7 +391,7 @@ namespace Frenchie
                 // generate output font
                 Font font;
                 font.Chars        = packedCharacters;
-                font.Quads        = m_Quads;
+                font.Quads        = packedCharactersQuads;
                 font.UnicodeMin   = m_UnicodeMin;
                 font.UnicodeMax   = m_UnicodeMax;
                 
@@ -441,6 +430,15 @@ namespace Frenchie
                         atlasHeight,
                         RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA
                     );
+
+                // write packed png...
+                stbi_write_png(
+                    "C:/SDK/Qt_Projects/OpenGL/logs/atlas.png",
+                    atlasWidth,
+                    atlasHeight,
+                    1,
+                    atlasBitMap.get(),
+                    atlasWidth);
 
                 return font;
             }
