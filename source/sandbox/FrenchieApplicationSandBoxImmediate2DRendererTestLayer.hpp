@@ -56,7 +56,7 @@ namespace Frenchie
                 //     Transform, 
                 //     m_Renderer->m_Font.AtlasTexture);
 
-                m_Renderer->push_text(m_Renderer->m_Font, Transform);
+                m_Renderer->push_text(gs_vec2f(0.f, 0.f), 128.f, m_Renderer->m_Font, "Hello\n\tWorld", Transform);
 
                 // for(int i = 0; i < 12; ++i)
                 // {

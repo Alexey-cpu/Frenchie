@@ -319,10 +319,10 @@ struct gs_rect
     Max(gs_vector<Type, 2>(gs_max(_Min.x, _Max.x), gs_max(_Min.y, _Max.y))){}
 
     gs_rect(
-        const Type& _MinX = static_cast<Type>(0),
-        const Type& _MinY = static_cast<Type>(0),
-        const Type& _MaxX = static_cast<Type>(0),
-        const Type& _MaxY = static_cast<Type>(0)) :
+        const Type& _MinX,
+        const Type& _MinY,
+        const Type& _MaxX,
+        const Type& _MaxY) :
     Min(gs_vector<Type, 2>(gs_min(_MinX, _MaxX), gs_min(_MinY, _MaxY))),
     Max(gs_vector<Type, 2>(gs_max(_MinX, _MaxX), gs_max(_MinY, _MaxY))){}
 
