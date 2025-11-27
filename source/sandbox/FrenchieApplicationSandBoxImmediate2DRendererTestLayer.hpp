@@ -56,30 +56,34 @@ namespace Frenchie
                 //     Transform, 
                 //     m_Renderer->m_Font.AtlasTexture);
 
-                //auto size = m_Renderer->calculate_text_size("Hello\n\tWorld", 128.f);
+                auto text = "Im so impressed 123456789\nHello my name Alexey";
+                
+                auto size = m_Renderer->calculate_text_size(text, 128.f);
 
-                m_Renderer->push_text("Hello\n\tWorld", 128.f, gs_vec2f(0.f, 0.f), Transform);
+                m_Renderer->push_text(text, 128.f, gs_vec2f(0.f, 0.f), gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
 
-                m_Renderer->push_rectangle_filled(
-                    gs_vec2f(128.f, -128.f),
-                    gs_vec2f(128.f + 64.f, -128.f -64.f),
-                    +100.f,
+                //m_Renderer->push_line(gs_vec2f(0.f, 0.f), gs_vec2f(1024.f, 0.f), -100.f, 12.f, gs_vec4f(255.f, 0.f, 0.f, 255.f), Transform);
+
+                m_Renderer->push_rectangle(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(size.x, -size.y),
+                    +0.f,
+                    12.f,
                     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                     Transform);
 
-                m_Renderer->push_rectangle_filled(
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(128.f, -128.f),
-                    -100.f,
-                    gs_vec4f(0.f, 0.f, 255.f, 255.f),
-                    Transform);
-
-                // m_Renderer->push_rectangle(
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(size.x, -size.y),
-                //     +0.f,
-                //     12.f,
+                // m_Renderer->push_rectangle_filled(
+                //     gs_vec2f(128.f, -128.f),
+                //     gs_vec2f(128.f + 64.f, -128.f -64.f),
+                //     +100.f,
                 //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform);
+
+                // m_Renderer->push_rectangle_filled(
+                //     gs_vec2f(0.f, 0.f),
+                //     gs_vec2f(128.f, -128.f),
+                //     -100.f,
+                //     gs_vec4f(0.f, 0.f, 255.f, 255.f),
                 //     Transform);
 
                 // for(int i = 0; i < 12; ++i)

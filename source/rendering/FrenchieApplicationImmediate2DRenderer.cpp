@@ -183,30 +183,37 @@ gs_vec2f Immediate2DRenderer::calculate_text_size(
     RenderingQueueFont font = _Font.is_null() ? m_DefaultFont : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
+    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = 0;
-    float positionY = 0;
-
-    float width  = FLT_MIN;
-    float height = FLT_MIN;
+    float positionY = -offset;
+    float width     = gs_tiny<float>();
+    float height    = gs_tiny<float>();
 
     for(int i = 0; i < strlen(_Text.c_str()); ++i)
     {
+        height = gs_max(height, gs_abs(positionY));
+        width  = gs_max(width, positionX);
+
         // fallbacks
         if(!font.contains_glyph(_Text.c_str()[i]))
         {
             // next line
             if(_Text.c_str()[i] == '\n')
             {
-                positionY -= _Size;
-                positionX =  0;
+                positionY -= gs_max(_Size, offset);
+                positionX =  0.f;
             }
             // carriage return
             else if(_Text.c_str()[i] == '\r')
-                positionX =  0;
+            {
+                positionX = 0.f;
+            }
             // tab
             else if(_Text.c_str()[i] == '\t')
+            {
                 positionX += _Size;
-            else
+            }
+            else // fallback
             {
                 // TODO: do someting here...
                 // May be use fallback font and take fallback character from there ???
@@ -215,34 +222,8 @@ gs_vec2f Immediate2DRenderer::calculate_text_size(
             continue;
         }
 
-        // retrieve glyph
-        RenderingQueueGlyph glyph    = font.retrieve_glyph(_Text.c_str()[i]);
-        float glyphWidth             = glyph.Box.get_size().x * scale;
-        float glyphHeight            = glyph.Box.get_size().y * scale;
-        float glyphHorizontalBearing = glyph.Bearing.x * scale;
-        float glyphVerticalBearing   = glyph.Bearing.y * scale;
-        float glyphAdvance           = glyph.Advance * scale;
-
-        gs_rectf rect = gs_rectf(
-            gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
-            gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing)
-        );
-
-        // build_rectangle_filled_mesh(
-        //     gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
-        //     gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing),
-        //     glyph.MinUV,
-        //     glyph.MaxUV,
-        //     0.f,
-        //     m_Vertexes,
-        //     m_Indexes
-        // );
-
-        width  += rect.get_size().x;
-        height += rect.get_size().y;
-
-        // move cursor
-        positionX += glyphAdvance;
+        RenderingQueueGlyph glyph = font.retrieve_glyph(_Text.c_str()[i]);
+        positionX += glyph.Advance * scale;
     }
 
     return {width, height};
@@ -314,14 +295,16 @@ void Immediate2DRenderer::push_text(
     const std::string&        _Text,
     const float&              _Size,
     const gs_vec2f&           _Position,
+    const gs_vec4f&           _Color,
     const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
 {
     RenderingQueueFont font = _Font.is_null() ? m_DefaultFont : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
+    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = _Position.x;
-    float positionY = _Position.y;
+    float positionY = _Position.y - offset;
 
     for(int i = 0; i < strlen(_Text.c_str()); ++i)
     {
@@ -331,7 +314,7 @@ void Immediate2DRenderer::push_text(
             // next line
             if(_Text.c_str()[i] == '\n')
             {
-                positionY -= _Size;
+                positionY -= gs_max(_Size, offset);
                 positionX =  _Position.x;
             }
             // carriage return
@@ -358,7 +341,7 @@ void Immediate2DRenderer::push_text(
 
         build_rectangle_filled_mesh(
             gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
-            gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing),
+            gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphVerticalBearing - glyphHeight),
             glyph.MinUV,
             glyph.MaxUV,
             0.f,
@@ -370,7 +353,7 @@ void Immediate2DRenderer::push_text(
         positionX += glyphAdvance;
     }
 
-    push_rendering_command(font.AtlasTexture, gs_vec4f(255.f, 255.f, 255.f, 255.f), _Transform);
+    push_rendering_command(font.AtlasTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_line(

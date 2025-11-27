@@ -173,20 +173,26 @@ namespace Frenchie
         {
             RenderingQueueFont(
                 const int&                                  _SizeInPixels      = 0,
-                const float&                                _SizeInPixelsScale = 1.f,
+                const float&                                _Ascent            = 0.f,
+                const float&                                _Descent           = 0.f,
+                const float&                                _LineGap           = 0.f,
                 const unsigned int&                         _UnicodeMin        = 0,
                 const unsigned int&                         _UnicodeMax        = 0,
                 const std::shared_ptr<RenderingQueueGlyph>& _Glyphs            = nullptr,
                 const RenderingQueueTexture&                _AtlasTexture      = RenderingQueueTexture()) :
                     SizeInPixels(_SizeInPixels),
-                    SizeInPixelsScale(_SizeInPixelsScale),
+                    Ascent(_Ascent),
+                    Descent(_Descent),
+                    LineGap(_LineGap),
                     UnicodeMin(_UnicodeMin),
                     UnicodeMax(_UnicodeMax),
                     Glyphs(_Glyphs),
                     AtlasTexture(_AtlasTexture){}
 
             int                                  SizeInPixels     {0};
-            float                                SizeInPixelsScale{0.f};
+            float                                Ascent           {0.f};
+            float                                Descent          {0.f};
+            float                                LineGap          {0.f};
             unsigned int                         UnicodeMin       {0};
             unsigned int                         UnicodeMax       {0};
             std::shared_ptr<RenderingQueueGlyph> Glyphs           {nullptr};
