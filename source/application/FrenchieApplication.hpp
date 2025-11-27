@@ -55,12 +55,16 @@ namespace Frenchie
             uintptr_t Cursors[ApplicationMouseCursor_End]{};
         };
 
-        struct ApplicationInput
+        struct ApplicationWindow
         {
-            bool     WindowFocused  {false};
-            
+            bool Focused {false};
+        };
+
+        struct ApplicationInput
+        {            
             ApplicationMouseButton MouseButtons[ApplicationMouseButton::Button::ApplicationMouseButton_End]{};
             ApplicationMouseCursor MouseCursor {ApplicationMouseCursor()};
+            ApplicationWindow      Window      {ApplicationWindow()};
         };
 
         class ApplicationInstance
@@ -70,38 +74,19 @@ namespace Frenchie
             virtual ~ApplicationInstance();
 
             // getters
-            // std::string get_name() const;
-            gs_vec2f    get_size() const;
+            std::string get_window_name() const;
+            gs_vec2f    get_window_size() const;
+            gs_vec2f    get_window_position() const;
+            gs_vec2f    get_window_cursor_position() const;
 
-            gs_vec2f get_cursor_position() const
-            {
-                return m_Input.MouseCursor.Position;
-            }
+            bool is_mouse_button_down(const ApplicationMouseButton::Button&) const;
+            bool is_mouse_button_pressed(const ApplicationMouseButton::Button&) const;
+            bool is_mouse_button_released(const ApplicationMouseButton::Button&) const;
+            bool is_mouse_button_clicked(const ApplicationMouseButton::Button&) const;
+            bool is_mouse_button_double_clicked(const ApplicationMouseButton::Button&) const;
 
-            bool is_mouse_button_down(ApplicationMouseButton::Button _Button) const
-            {
-                return m_Input.MouseButtons[_Button].Down;
-            }
-
-            bool is_mouse_button_pressed(ApplicationMouseButton::Button _Button) const
-            {
-                return m_Input.MouseButtons[_Button].Pressed;
-            }
-
-            bool is_mouse_button_released(ApplicationMouseButton::Button _Button) const
-            {
-                return m_Input.MouseButtons[_Button].Released;
-            }
-
-            bool is_mouse_button_clicked(ApplicationMouseButton::Button _Button) const
-            {
-                return m_Input.MouseButtons[_Button].Clicked;
-            }
-
-            bool is_mouse_button_double_clicked(ApplicationMouseButton::Button _Button) const
-            {
-                return m_Input.MouseButtons[_Button].DoubleClicked;
-            }
+            // setters
+            void set_window_name(const std::string&);
 
             // API
             bool awake();
@@ -131,17 +116,6 @@ namespace Frenchie
                     return find_layer<Type>();
 
                 m_Awakes.push_back(layer);
-
-                // // awake layer
-                // if(m_Context != nullptr)
-                // {
-                //     std::cout << "m_Context != nullptr\n";
-                //     if(!layer->awake())
-                //         return nullptr;
-                // }
-
-                // // push layer into layers stack
-                // m_Layers.push_back(layer);
                 return layer;
             }
 

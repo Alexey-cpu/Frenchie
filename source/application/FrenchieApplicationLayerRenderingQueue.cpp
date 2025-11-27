@@ -334,7 +334,15 @@ RenderingQueueFont RenderingQueue::construct_font(unsigned char* _Memory, const 
     
     // generate font colorified bitmap
     if(atlasBitMap == nullptr)
-        return RenderingQueueFont(_SizeInPixels, ascent, descent, lineGap, unicodeMin, unicodeMax);
+    {
+        return RenderingQueueFont(
+            _SizeInPixels,
+            (float)ascent,
+            (float)descent,
+            (float)lineGap,
+            unicodeMin,
+            unicodeMax);
+    }
 
     const int channels = 4;
 
@@ -362,9 +370,9 @@ RenderingQueueFont RenderingQueue::construct_font(unsigned char* _Memory, const 
 
     return RenderingQueueFont(
         _SizeInPixels,
-        ascent,
-        descent,
-        lineGap,
+        (float)ascent,
+        (float)descent,
+        (float)lineGap,
         unicodeMin,
         unicodeMax,
         glyphs,
@@ -866,4 +874,13 @@ void RenderingQueue::destroy_mesh(const RenderingQueueMesh& _Mesh)
     glDeleteBuffers(1, &_Mesh.VBO);
     glDeleteBuffers(1, &_Mesh.EBO);
     glDeleteVertexArrays(1, &_Mesh.VAO);
+}
+
+void RenderingQueue::push_command(
+    const RenderingQueueMesh&    _Mesh,
+    const RenderingQueueShader&  _Shader,
+    const RenderingQueueTexture& _Texture,
+    const gs_mat4f&              _Transform)
+{
+    m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform));
 }

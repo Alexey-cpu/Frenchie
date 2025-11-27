@@ -104,18 +104,18 @@ void Immediate2DRenderer::frame_start()
     // update viewport bouinding rectangle
     {
         m_Viewport = gs_rectf(
-            -Frenchie::Application::application()->get_size().x,
-            -Frenchie::Application::application()->get_size().y,
-            +Frenchie::Application::application()->get_size().x,
-            +Frenchie::Application::application()->get_size().y
+            -Frenchie::Application::application()->get_window_size().x,
+            -Frenchie::Application::application()->get_window_size().y,
+            +Frenchie::Application::application()->get_window_size().x,
+            +Frenchie::Application::application()->get_window_size().y
         );
     }
 
     // compute projection matrix
     {
         // compute projection matrix
-        float width  = Frenchie::Application::application()->get_size().x;
-        float height = Frenchie::Application::application()->get_size().y;
+        float width  = Frenchie::Application::application()->get_window_size().x;
+        float height = Frenchie::Application::application()->get_window_size().y;
         float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
         float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
         float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
@@ -183,7 +183,7 @@ gs_vec2f Immediate2DRenderer::calculate_text_size(
     RenderingQueueFont font = _Font.is_null() ? m_DefaultFont : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
+    float offset    = gs_max((font.Ascent + font.LineGap) * scale, _Size);
     float positionX = 0;
     float positionY = -offset;
     float width     = gs_tiny<float>();
@@ -225,6 +225,9 @@ gs_vec2f Immediate2DRenderer::calculate_text_size(
         RenderingQueueGlyph glyph = font.retrieve_glyph(_Text.c_str()[i]);
         positionX += glyph.Advance * scale;
     }
+
+    height = gs_max(height, gs_abs(positionY));
+    width  = gs_max(width, positionX);
 
     return {width, height};
 }
@@ -302,7 +305,7 @@ void Immediate2DRenderer::push_text(
     RenderingQueueFont font = _Font.is_null() ? m_DefaultFont : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
+    float offset    = (font.Ascent + font.LineGap) * scale;
     float positionX = _Position.x;
     float positionY = _Position.y - offset;
 

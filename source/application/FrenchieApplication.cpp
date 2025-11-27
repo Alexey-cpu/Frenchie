@@ -82,7 +82,7 @@ namespace Frenchie
 
             static void glfw_oon_window_focused_callback(GLFWwindow* _Window, int _Focused)
             {
-                application()->m_Input.WindowFocused =
+                application()->m_Input.Window.Focused =
                     glfw_boolean_to_application_boolean(_Focused);;
             }
 
@@ -129,12 +129,12 @@ ApplicationInstance::~ApplicationInstance()
 {
 }
 
-// std::string ApplicationInstance::get_name() const
-// {
-//     return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context)));
-// }
+std::string ApplicationInstance::get_window_name() const
+{
+    return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context)));
+}
 
-gs_vec2f  ApplicationInstance::get_size() const
+gs_vec2f ApplicationInstance::get_window_size() const
 {
     int x = 0;
     int y = 0;
@@ -142,10 +142,49 @@ gs_vec2f  ApplicationInstance::get_size() const
     return {x, y};
 }
 
-// void ApplicationInstance::set_name(const std::string& _Name)
-// {
-//     glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Name.c_str());
-// }
+gs_vec2f ApplicationInstance::get_window_position() const
+{
+    // window
+    int x = 0;
+    int y = 0;
+    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    return {x, y};
+}
+
+gs_vec2f ApplicationInstance::get_window_cursor_position() const
+{
+    return m_Input.MouseCursor.Position;
+}
+
+bool ApplicationInstance::is_mouse_button_down(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_Input.MouseButtons[_Button].Down;
+}
+
+bool ApplicationInstance::is_mouse_button_pressed(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_Input.MouseButtons[_Button].Pressed;
+}
+
+bool ApplicationInstance::is_mouse_button_released(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_Input.MouseButtons[_Button].Released;
+}
+
+bool ApplicationInstance::is_mouse_button_clicked(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_Input.MouseButtons[_Button].Clicked;
+}
+
+bool ApplicationInstance::is_mouse_button_double_clicked(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_Input.MouseButtons[_Button].DoubleClicked;
+}
+
+void ApplicationInstance::set_window_name(const std::string& _Name)
+{
+    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Name.c_str());
+}
 
 bool ApplicationInstance::awake()
 {
@@ -218,23 +257,6 @@ bool ApplicationInstance::awake()
         m_Input.MouseCursor.Cursors[mouseCursor] =
             (uintptr_t)glfwCreateStandardCursor(ApplicationInputHandler::application_mouse_cursor_to_glfw_mouse_cursor(mouseCursor));
     }
-    
-    // awake layers
-    // std::cout << "m_Layers " << m_Layers.size() << "\n";
-
-    // for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
-    // {
-    //     if(!(*it)->awake())
-    //     {
-    //         (*it)->finish();
-    //         auto rm = it;
-    //         it++;
-    //         m_Layers.erase(rm);
-
-    //         if(it == m_Layers.end())
-    //             break;
-    //     }
-    // }
 
     return true;
 }
@@ -257,7 +279,6 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     // this can be a rendering commands !!!
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);
     glEnable(GL_STENCIL_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -328,6 +349,15 @@ void ApplicationInstance::ApplicationInstance::frame_start()
                   reinterpret_cast<GLFWcursor*>(m_Input.MouseCursor.Cursors[m_Input.MouseCursor.View]));
 
     glfwSetInputMode(reinterpret_cast<GLFWwindow*>(m_Context), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    // // window
+    // int windowWidth     = 0;
+    // int windowHeight    = 0;
+    // int windowPositionX = 0;
+    // int windowPositionY = 0;
+    // glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &windowWidth, &windowHeight);
+    // glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &windowPositionX, &windowPositionY);
+    // m_Input.Window.Size = {windowWidth, windowHeight};
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
