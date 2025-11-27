@@ -29,8 +29,8 @@ namespace Frenchie
                 if(Frenchie::Application::application()
                     ->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
                 {
-                    auto x = Frenchie::Application::application()->get_cursor_position().x;
-                    auto y = Frenchie::Application::application()->get_cursor_position().y;
+                    auto x = Frenchie::Application::application()->get_window_cursor_position().x;
+                    auto y = Frenchie::Application::application()->get_window_cursor_position().y;
 
                     Transform = gs_matrix_translate(
                         gs_mat4f(1),
@@ -56,19 +56,27 @@ namespace Frenchie
                 //     Transform, 
                 //     m_Renderer->m_Font.AtlasTexture);
 
-                auto text = "Im so impressed 123456789\nHello my name Alexey";
+                auto text = "Hello world\n\tMy name is Alexey =)";
                 
                 auto size = m_Renderer->calculate_text_size(text, 128.f);
 
                 m_Renderer->push_text(text, 128.f, gs_vec2f(0.f, 0.f), gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
 
-                //m_Renderer->push_line(gs_vec2f(0.f, 0.f), gs_vec2f(1024.f, 0.f), -100.f, 12.f, gs_vec4f(255.f, 0.f, 0.f, 255.f), Transform);
+                // m_Renderer->push_rectangle_rounded(
+                //     gs_vec2f(0.f, 0.f),
+                //     gs_vec2f(size.x, -size.y),
+                //     16.f,
+                //     +0.f,
+                //     12.f,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform);
 
-                m_Renderer->push_rectangle(
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(size.x, -size.y),
+                m_Renderer->push_rectangle_rounded(
+                    gs_vec2f(0.f, -size.y),
+                    gs_vec2f(size.x, 0.f),
+                    32,
                     +0.f,
-                    12.f,
+                    4.f,
                     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                     Transform);
 

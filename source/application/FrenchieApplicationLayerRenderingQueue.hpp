@@ -256,9 +256,7 @@ namespace Frenchie
 
             // font API
             RenderingQueueFont construct_font(unsigned char* _Memory, const int& _Size);
-
             RenderingQueueFont construct_font(const char* _FilePath, const int& _Size);
-
             void destroy_font(const RenderingQueueFont& _Font);
 
             // image API
@@ -320,10 +318,7 @@ namespace Frenchie
                 const RenderingQueueMesh&    _Mesh,
                 const RenderingQueueShader&  _Shader,
                 const RenderingQueueTexture& _Texture,
-                const gs_mat4f&              _Transform)
-            {
-                m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform));
-            }
+                const gs_mat4f&              _Transform);
 
         protected:
 
