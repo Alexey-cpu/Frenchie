@@ -13,9 +13,9 @@ namespace Frenchie
 {
     namespace Application
     {
-        struct Glyph
+        struct RenderingQueueGlyph
         {
-            Glyph(
+            RenderingQueueGlyph(
                 const gs_rectf& _Box     = gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f)),
                 const gs_vec2f& _MinUV   = gs_vec2f(0.f),
                 const gs_vec2f& _MaxUV   = gs_vec2f(0.f),
@@ -34,15 +34,15 @@ namespace Frenchie
             float    Advance{0.f};
         };
 
-        struct Font
+        struct RenderingQueueFont
         {
-            Font(
-                const int&                    _SizeInPixels      = 0,
-                const float&                  _SizeInPixelsScale = 0,
-                const int&                    _UnicodeMin        = 0,
-                const int&                    _UnicodeMax        = 0,
-                const std::shared_ptr<Glyph>& _Glyphs            = nullptr,
-                const RenderingQueueTexture&  _AtlasTexture      = RenderingQueueTexture()) :
+            RenderingQueueFont(
+                const int&                                  _SizeInPixels      = 0,
+                const float&                                _SizeInPixelsScale = 1.f,
+                const unsigned int&                         _UnicodeMin        = 0,
+                const unsigned int&                         _UnicodeMax        = 0,
+                const std::shared_ptr<RenderingQueueGlyph>& _Glyphs            = nullptr,
+                const RenderingQueueTexture&                _AtlasTexture      = RenderingQueueTexture()) :
                     SizeInPixels(_SizeInPixels),
                     SizeInPixelsScale(_SizeInPixelsScale),
                     UnicodeMin(_UnicodeMin),
@@ -50,20 +50,21 @@ namespace Frenchie
                     Glyphs(_Glyphs),
                     AtlasTexture(_AtlasTexture){}
 
-            int                    SizeInPixels     {0};
-            float                  SizeInPixelsScale{0.f};
-            int                    UnicodeMin       {0};
-            int                    UnicodeMax       {0};
-            std::shared_ptr<Glyph> Glyphs           {nullptr};
-            RenderingQueueTexture  AtlasTexture     {RenderingQueueTexture()};
+            int                                  SizeInPixels     {0};
+            float                                SizeInPixelsScale{0.f};
+            unsigned int                         UnicodeMin       {0};
+            unsigned int                         UnicodeMax       {0};
+            std::shared_ptr<RenderingQueueGlyph> Glyphs           {nullptr};
+            RenderingQueueTexture                AtlasTexture     {RenderingQueueTexture()};
 
+            // API
             bool contains_glyph(const unsigned int& _UTF8Codepoint) const
             {
                 return _UTF8Codepoint >= UnicodeMin &&
                        _UTF8Codepoint <= UnicodeMax;
             }
 
-            Glyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
+            RenderingQueueGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
             {
                 return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
             }
@@ -201,7 +202,7 @@ namespace Frenchie
             RenderingQueueShader               m_DefaultShader   {RenderingQueueShader()};
             RenderingQueueTexture              m_DefaultTexture  {RenderingQueueTexture()};
 
-            Font m_Font;
+            RenderingQueueFont m_Font;
 
             void stb_free_font_info(stbtt_fontinfo* _Info)
             {
@@ -245,7 +246,7 @@ namespace Frenchie
                 return info;
             }
 
-            Font load_font(const int& _SizeInPixels)
+            RenderingQueueFont load_font(const int& _SizeInPixels)
             {
                 // load font file
                 std::shared_ptr<stbtt_fontinfo> fontInfo =
@@ -437,9 +438,9 @@ namespace Frenchie
                 }
 
                 // retrieve atlas glyphs
-                std::shared_ptr<Glyph> glyphs = std::shared_ptr<Glyph>(
-                    new Glyph[glyphsCount],
-                    [](Glyph* _Data)
+                std::shared_ptr<RenderingQueueGlyph> glyphs = std::shared_ptr<RenderingQueueGlyph>(
+                    new RenderingQueueGlyph[glyphsCount],
+                    [](RenderingQueueGlyph* _Data)
                     {
                         if(_Data != nullptr)
                             delete [] _Data;
@@ -462,7 +463,7 @@ namespace Frenchie
                 
                 // generate font colorified bitmap
                 if(atlasBitMap == nullptr)
-                    return Font(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
+                    return RenderingQueueFont(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
 
                 const int channels = 4;
 
@@ -497,7 +498,7 @@ namespace Frenchie
                 //     atlasBitMap.get(),
                 //     atlasWidth);
 
-                return Font(
+                return RenderingQueueFont(
                     _SizeInPixels,
                     sizeInPixelsScale,
                     unicodeMin,
@@ -515,7 +516,7 @@ namespace Frenchie
             void push_text(
                 const gs_vec2f&    _Position,
                 const float&       _Size,
-                const Font&        _Font,
+                const RenderingQueueFont&        _Font,
                 const std::string& _Text,
                 const gs_mat4f&    _Transform)
             {
@@ -549,7 +550,7 @@ namespace Frenchie
                         continue;
                     }
 
-                    Glyph glyph                  = _Font.retrieve_glyph(_Text.c_str()[i]);
+                    RenderingQueueGlyph glyph                  = _Font.retrieve_glyph(_Text.c_str()[i]);
                     float glyphWidth             = glyph.Box.get_size().x * scale;
                     float glyphHeight            = glyph.Box.get_size().y * scale;
                     float glyphHorizontalBearing = glyph.Bearing.x * scale;
@@ -575,84 +576,3 @@ namespace Frenchie
         };
     }
 }
-
-// template<typename Type> struct Tree;
-
-// template<typename Type>
-// struct Node
-// {
-//     int               Parent{-1};
-//     int               Index {-1};
-//     Type              Data  {Type()};
-//     const Tree<Type>* Tree  {nullptr};
-// };
-
-// template<typename Type>
-// struct Tree
-// {
-//     std::vector<Node<Type>> Nodes  {std::vector<Node<Type>>()};
-//     std::vector<int>        Indexes{std::vector<int>()};
-//     std::vector<int>        Entries{std::vector<int>()};
-//     bool                    Dirty  {true};
-
-//     template<typename ... Args>
-//     Node<Type> construct_node(const Node<Type>& _Parent, Args ... _Args)
-//     {
-//         // make dirty
-//         Dirty = true;
-
-//         // create node
-//         Node<Type> node;
-//         node.Parent = _Parent.Index;
-//         node.Index  = (int)Nodes.size();
-//         node.Data   = Type(_Args ...);
-//         node.Tree   = this;
-//         Nodes.push_back(node);
-//         return node;
-//     }
-
-//     void sort()
-//     {
-//         std::vector<Node<Type>> nodes(Nodes.size());
-//         std::vector<int> workspace(Nodes.size()+1);
-
-//         Indexes.resize(Nodes.size() + 1);
-//         Entries.resize(Nodes.size());
-
-//         for(int i = 0; i < Entries.size(); i++)
-//         {
-//             Entries[i] = 0;
-//             Indexes[i] = 0;
-//         }
-
-//         // count items
-//         for (int i = 0; i < Nodes.size(); i++)
-//         {
-//             if(Nodes[i].Parent < 0) continue;
-//             ++Entries[Nodes[i].Parent];
-//         }
-
-//         // cumulative sum
-//         int sum = 0;
-//         for (int i = 0; i < Nodes.size(); i++)
-//         {
-//             Indexes  [i] = sum;
-//             workspace[i] = sum;
-//             sum += Entries[i];
-//         }
-//         Indexes[Nodes.size()] = sum;
-
-//         for(int i = 0; i < Nodes.size(); i++ )
-//         {
-//             if(Nodes[i].Parent < 0) continue;
-//             nodes[workspace[Nodes[i].Parent]++] = Nodes[i];
-//         }
-
-//         Nodes = nodes;
-//     }
-
-//     void clear()
-//     {
-//         Nodes.clear();
-//     }
-// };
