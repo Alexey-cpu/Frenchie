@@ -40,9 +40,9 @@
 #endif
 
 // [UTILITY]
-template<typename Type> Type  gs_huge();
-template<typename Type> Type  gs_tiny();
-template<typename Type> Type  gs_epsilon();
+template<typename Type> Type gs_huge();
+template<typename Type> Type gs_tiny();
+template<typename Type> Type gs_epsilon();
 
 template<typename Type>
 inline Type gs_to_degrees(const Type& _Angle)
