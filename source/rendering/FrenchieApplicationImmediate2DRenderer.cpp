@@ -7,9 +7,9 @@ Immediate2DRenderer::~Immediate2DRenderer(){}
 
 bool Immediate2DRenderer::awake()
 {
-    std::cout << "Immediate2DRenderer::awake() \n";
-
-    m_Font = load_font(128);
+    m_DefaultFont = Frenchie::Application::application_rendering_queue()->construct_font(
+        "C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf", 128
+    );
 
     // register default shader here
     m_DefaultShader = Frenchie::Application::application_rendering_queue()->construct_shader(
@@ -65,11 +65,6 @@ uniform sampler2D u_Texture;
 
 void main()
 {
-    // setup vertex color
-    //fragColor = u_Color;
-    //fragColor = texture(u_Texture, UV);
-    //fragColor = u_Color * texture(u_Texture, UV);
-
     fragColor = u_Color * texture(u_Texture, UV);
 }
 )"),
@@ -142,6 +137,7 @@ void Immediate2DRenderer::frame_render()
 
 void Immediate2DRenderer::finish()
 {
+    Frenchie::Application::application_rendering_queue()->destroy_font(m_DefaultFont);
     Frenchie::Application::application_rendering_queue()->destroy_shader(m_DefaultShader);
     Frenchie::Application::application_rendering_queue()->destroy_texture(m_DefaultTexture);
 }
@@ -177,6 +173,79 @@ void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _T
     // clean-up
     m_Indexes.clear();
     m_Vertexes.clear();
+}
+
+gs_vec2f Immediate2DRenderer::calculate_text_size(
+    const std::string&        _Text,
+    const float&              _Size,
+    const RenderingQueueFont& _Font)
+{
+    RenderingQueueFont font = _Font.is_null() ? m_DefaultFont : _Font;
+
+    float scale     = _Size / (float)font.SizeInPixels;
+    float positionX = 0;
+    float positionY = 0;
+
+    float width  = FLT_MIN;
+    float height = FLT_MIN;
+
+    for(int i = 0; i < strlen(_Text.c_str()); ++i)
+    {
+        // fallbacks
+        if(!font.contains_glyph(_Text.c_str()[i]))
+        {
+            // next line
+            if(_Text.c_str()[i] == '\n')
+            {
+                positionY -= _Size;
+                positionX =  0;
+            }
+            // carriage return
+            else if(_Text.c_str()[i] == '\r')
+                positionX =  0;
+            // tab
+            else if(_Text.c_str()[i] == '\t')
+                positionX += _Size;
+            else
+            {
+                // TODO: do someting here...
+                // May be use fallback font and take fallback character from there ???
+            }
+
+            continue;
+        }
+
+        // retrieve glyph
+        RenderingQueueGlyph glyph    = font.retrieve_glyph(_Text.c_str()[i]);
+        float glyphWidth             = glyph.Box.get_size().x * scale;
+        float glyphHeight            = glyph.Box.get_size().y * scale;
+        float glyphHorizontalBearing = glyph.Bearing.x * scale;
+        float glyphVerticalBearing   = glyph.Bearing.y * scale;
+        float glyphAdvance           = glyph.Advance * scale;
+
+        gs_rectf rect = gs_rectf(
+            gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
+            gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing)
+        );
+
+        // build_rectangle_filled_mesh(
+        //     gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
+        //     gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing),
+        //     glyph.MinUV,
+        //     glyph.MaxUV,
+        //     0.f,
+        //     m_Vertexes,
+        //     m_Indexes
+        // );
+
+        width  += rect.get_size().x;
+        height += rect.get_size().y;
+
+        // move cursor
+        positionX += glyphAdvance;
+    }
+
+    return {width, height};
 }
 
 void Immediate2DRenderer::push_triangle_filled(
@@ -239,6 +308,69 @@ void Immediate2DRenderer::push_rectangle_filled(
         !_Texture.is_null() ? _Texture : m_DefaultTexture,
         _Color,
         _Transform);
+}
+
+void Immediate2DRenderer::push_text(
+    const std::string&        _Text,
+    const float&              _Size,
+    const gs_vec2f&           _Position,
+    const gs_mat4f&           _Transform,
+    const RenderingQueueFont& _Font)
+{
+    RenderingQueueFont font = _Font.is_null() ? m_DefaultFont : _Font;
+
+    float scale     = _Size / (float)font.SizeInPixels;
+    float positionX = _Position.x;
+    float positionY = _Position.y;
+
+    for(int i = 0; i < strlen(_Text.c_str()); ++i)
+    {
+        // fallbacks
+        if(!font.contains_glyph(_Text.c_str()[i]))
+        {
+            // next line
+            if(_Text.c_str()[i] == '\n')
+            {
+                positionY -= _Size;
+                positionX =  _Position.x;
+            }
+            // carriage return
+            else if(_Text.c_str()[i] == '\r')
+                positionX =  _Position.x;
+            // tab
+            else if(_Text.c_str()[i] == '\t')
+                positionX += _Size;
+            else
+            {
+                // TODO: do someting here...
+                // May be use fallback font and take fallback character from there ???
+            }
+
+            continue;
+        }
+
+        RenderingQueueGlyph glyph    = font.retrieve_glyph(_Text.c_str()[i]);
+        float glyphWidth             = glyph.Box.get_size().x * scale;
+        float glyphHeight            = glyph.Box.get_size().y * scale;
+        float glyphHorizontalBearing = glyph.Bearing.x * scale;
+        float glyphVerticalBearing   = glyph.Bearing.y * scale;
+        float glyphAdvance           = glyph.Advance * scale;
+
+        build_rectangle_filled_mesh(
+            gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
+            gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing),
+            glyph.MinUV,
+            glyph.MaxUV,
+            0.f,
+            m_Vertexes,
+            m_Indexes
+        );
+
+        // move cursor
+        positionX += glyphAdvance;
+    }
+
+    push_rendering_command(font.AtlasTexture, gs_vec4f(255.f, 255.f, 255.f, 255.f), _Transform);
 }
 
 void Immediate2DRenderer::push_line(

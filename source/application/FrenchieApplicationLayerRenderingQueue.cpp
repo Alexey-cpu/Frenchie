@@ -10,6 +10,7 @@ using namespace Frenchie::Application;
 
 // STB
 #include <stb_image.h>
+#include <stb_truetype.h>
 #include <stb_image_write.h>
 
 RenderingQueue::RenderingQueue(){}
@@ -41,13 +42,19 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
-    for (auto&& command : m_Commands)
+    //for (int i = (int)m_Commands.size() - 1; i >= 0; --i)
+    for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
-        auto mesh      = command.Mesh;
-        auto shader    = command.Shader;
-        auto color     = command.Texture.Color;
-        auto texture   = command.Texture;
-        auto transform = command.Transform;
+        auto mesh      = m_Commands[i].Mesh;
+        auto shader    = m_Commands[i].Shader;
+        auto color     = m_Commands[i].Texture.Color;
+        auto texture   = m_Commands[i].Texture;
+        auto transform = m_Commands[i].Transform;
+
+        printf("command mesh     %d          \n", mesh.VAO);
+        printf("command texture  %d          \n", texture.Ptr);
+        printf("command shader   %d          \n", shader.Ptr);
+        printf("command color    %f %f %f %f \n", color.x, color.y, color.z, color.w);
 
         // setup shader projection matrix
         begin_use_texture(texture);
@@ -60,14 +67,16 @@ void RenderingQueue::frame_render()
         set_shader_uniform(shader, "u_Color", gs_vec4f(color.x / 255.f, color.y / 255.f, color.z / 255.f, color.w / 255.f));
         set_shader_uniform(shader, "u_Texture", 0);
         
-        end_use_texture();
         end_use_shader();
+        end_use_texture();
         end_use_mesh();
 
         // destroy mesh
         destroy_mesh(mesh);
     }
     
+    printf("\n");
+
     // clear commands queue
     m_Commands.clear();
 }
@@ -87,6 +96,315 @@ void RenderingQueue::quit()
 bool RenderingQueue::allows_multiple_instances() const
 {
     return false;
+}
+
+RenderingQueueFont RenderingQueue::construct_font(unsigned char* _Memory, const int& _SizeInPixels)
+{
+    auto load_font_from_memory = [](unsigned char* fontBuffer)->stbtt_fontinfo*
+    {
+        // prepare font
+        stbtt_fontinfo* info = new stbtt_fontinfo();
+        info->userdata = nullptr;
+        info->data     = nullptr;
+
+        if (!stbtt_InitFont(info, fontBuffer, 0))
+        {
+            free(fontBuffer);
+            free(info);
+            return nullptr;
+        }
+
+        return info;
+    };
+
+    // load font file
+    std::shared_ptr<stbtt_fontinfo> fontInfo =
+        std::shared_ptr<stbtt_fontinfo>(load_font_from_memory(_Memory),
+        [](stbtt_fontinfo* _Data)
+        {
+            if(_Data == nullptr) return;
+
+            if(_Data->data != nullptr)
+                free(_Data->data);
+
+            if(_Data->userdata != nullptr)
+                free(_Data->userdata);
+
+            delete _Data;
+        });
+    
+    // retrieve available font file characters
+    int unicodeMin  = INT_MAX;
+    int unicodeMax  = INT_MIN;
+
+    for(unsigned int codepoint = 0; codepoint <= 0xFFFF; codepoint++)
+    {
+        if(!stbtt_FindGlyphIndex(fontInfo.get(), codepoint))
+            continue;
+
+        unicodeMin = std::min<int>(unicodeMin, codepoint);
+        unicodeMax = std::max<int>(unicodeMax, codepoint);
+    }
+
+    int glyphsCount = unicodeMax - unicodeMin + 1;
+
+    // compute font geometry metrics
+    float sizeInPixelsScale = stbtt_ScaleForPixelHeight(fontInfo.get(), (float)_SizeInPixels); // scale font to fit a given font size in pixels
+    int   ascent  = 0;                                                                         // distance from the glyph baseline to it's highest point 
+    int   descent = 0;                                                                         // distance fron the glyph baseline to it's lowest point
+    int   lineGap = 0;                                                                         // recommended gap between text lines
+
+    stbtt_GetFontVMetrics(fontInfo.get(), &ascent, &descent, &lineGap);
+    ascent  = (int)roundf((float)ascent  * sizeInPixelsScale);
+    descent = (int)roundf((float)descent * sizeInPixelsScale);
+    lineGap = (int)roundf((float)lineGap * sizeInPixelsScale);
+
+    // make a most likely large enough bitmap, adjust to font type, number of sizes and glyphs and oversampling
+    int atlasWidth     = 32;
+    int atlasHeight    = 32;
+    int atlasMaxHeight = 16;
+    int atlasMaxWidth  = 32;
+    int atlasMaxSize   = 4096;
+    
+    while (true)
+    {
+        atlasWidth  = 0;
+        atlasHeight = 0;
+        
+        for (int codepoint = unicodeMin; codepoint <= unicodeMax;)
+        {
+            int width = 0;
+            int maxHeight = INT_MIN;
+
+            while (true)
+            {
+                // compute glyph bounding box
+                int glyphXmin = 0;
+                int glyphYmin = 0;
+                int glyphXmax = 0;
+                int glyphYmax = 0;
+
+                stbtt_GetCodepointBitmapBox(
+                    fontInfo.get(),
+                    codepoint,
+                    sizeInPixelsScale,
+                    sizeInPixelsScale,
+                    &glyphXmin,
+                    &glyphYmin,
+                    &glyphXmax,
+                    &glyphYmax
+                );
+
+                int glyphWidth  = (glyphXmax - glyphXmin);
+                int glyphHeight = (glyphYmax - glyphYmin);
+
+                width    += std::max<int>(1, glyphWidth);
+                maxHeight = std::max<int>(glyphHeight, maxHeight);
+
+                ++codepoint;
+
+                if(width >= atlasMaxWidth)
+                {
+                    width -= std::max<int>(1, glyphWidth);
+                    width = atlasMaxWidth;
+                    break;
+                }
+                else
+                {
+                }
+            }
+
+            atlasWidth  = std::max<int>(atlasWidth, width);
+            atlasHeight += std::max<int>(maxHeight, 1);
+        }
+
+        if(atlasHeight >= atlasMaxSize && atlasMaxWidth >= atlasMaxSize)
+            atlasMaxSize *= 2;
+
+        atlasMaxWidth *= 2;
+        atlasMaxWidth  = std::min<int>(atlasMaxWidth, atlasMaxSize);
+
+        if(atlasHeight <= atlasMaxHeight)
+            break;
+
+        atlasMaxHeight *= 2;
+        atlasMaxHeight  = std::min<int>(atlasMaxHeight, atlasMaxSize);
+    }
+
+    // pack atlas
+    std::shared_ptr<stbtt_packedchar> packedCharacters = 
+        std::shared_ptr<stbtt_packedchar>(
+            new stbtt_packedchar[glyphsCount],
+            [](stbtt_packedchar* _Range)
+            {
+                if(_Range != nullptr)
+                    delete [] _Range;
+            }
+        );
+
+    std::shared_ptr<unsigned char> atlasBitMap  = nullptr;
+
+    while (true)
+    {
+        atlasBitMap = std::shared_ptr<unsigned char>(
+            (unsigned char*)malloc(atlasWidth * atlasHeight),
+            [](unsigned char* _Bitmap)
+            {
+                if(_Bitmap != nullptr)
+                {
+                    free(_Bitmap);
+                    _Bitmap = nullptr;
+                }
+            }
+        );
+
+        stbtt_pack_context pc;
+        stbtt_PackBegin(&pc, atlasBitMap.get(), atlasWidth, atlasHeight, 0, 1, NULL);   
+        stbtt_PackSetOversampling(&pc, 1, 1);
+
+        if(!stbtt_PackFontRange(
+            &pc,
+            fontInfo->data,
+            0,
+            (float)_SizeInPixels,
+            unicodeMin,
+            glyphsCount,
+            packedCharacters.get()))
+        {
+            stbtt_PackEnd(&pc);
+
+            if(atlasWidth < 4096)
+                atlasWidth *= 2;
+            else 
+                atlasHeight *= 2;
+        } 
+        else 
+        {
+            stbtt_PackEnd(&pc);
+            break;
+        }
+    }
+
+    // generate atlas glyphs quads
+    std::shared_ptr<stbtt_aligned_quad> packedCharactersQuads = 
+        std::shared_ptr<stbtt_aligned_quad>(
+            new stbtt_aligned_quad[glyphsCount],
+            [](stbtt_aligned_quad* _Range)
+            {
+                if(_Range != nullptr)
+                    delete [] _Range;
+            }
+        );
+
+    for (int i = unicodeMin; i <= unicodeMax; i++)
+    {
+        int idx = i - unicodeMin;
+
+        float unusedX, unusedY;
+
+        stbtt_GetPackedQuad(
+            packedCharacters.get(),          // Array of stbtt_packedchar
+            atlasWidth,                      // Width of the font atlas texture
+            atlasHeight,                     // Height of the font atlas texture
+            idx,                               // Index of the glyph
+            &unusedX, &unusedY,              // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
+            &packedCharactersQuads.get()[idx], // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
+            0                                // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
+        );
+    }
+
+    // retrieve atlas glyphs
+    std::shared_ptr<RenderingQueueGlyph> glyphs = std::shared_ptr<RenderingQueueGlyph>(
+        new RenderingQueueGlyph[glyphsCount],
+        [](RenderingQueueGlyph* _Data)
+        {
+            if(_Data != nullptr)
+                delete [] _Data;
+        }
+    );
+
+    for (int i = unicodeMin; i <= unicodeMax; i++)
+    {
+        int idx = i - unicodeMin;
+
+        glyphs.get()[idx].Box = gs_rectf(
+            gs_vec2f(packedCharacters.get()[idx].x0, packedCharacters.get()[idx].y0),
+            gs_vec2f(packedCharacters.get()[idx].x1, packedCharacters.get()[idx].y1));
+        
+        glyphs.get()[idx].MinUV   = gs_vec2f(packedCharactersQuads.get()[idx].s0, packedCharactersQuads.get()[idx].t0);
+        glyphs.get()[idx].MaxUV   = gs_vec2f(packedCharactersQuads.get()[idx].s1, packedCharactersQuads.get()[idx].t1);
+        glyphs.get()[idx].Bearing = gs_vec2f(packedCharacters.get()[idx].xoff, packedCharacters.get()[idx].yoff);
+        glyphs.get()[idx].Advance = packedCharacters.get()[idx].xadvance;
+    }
+    
+    // generate font colorified bitmap
+    if(atlasBitMap == nullptr)
+        return RenderingQueueFont(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
+
+    const int channels = 4;
+
+    std::shared_ptr<unsigned char> colorifiedAtlasBitMap = 
+        std::shared_ptr<unsigned char>(
+            (unsigned char*)malloc(sizeof(unsigned char) * atlasWidth * atlasHeight * channels),
+            [](unsigned char* _Bitmap)
+            {
+                if(_Bitmap != nullptr)
+                    free(_Bitmap);
+            }
+        );
+
+    for (int y = 0; y < atlasHeight; y++)
+    {
+        for (int x = 0; x < atlasWidth; x++)
+        {
+            for (int c = 0; c < channels; c++)
+            {
+                colorifiedAtlasBitMap.get()[channels * (y * atlasWidth + x) + c  ] =
+                    atlasBitMap.get()[(y * atlasWidth + x)];
+            }
+        }
+    }
+
+    return RenderingQueueFont(
+        _SizeInPixels,
+        sizeInPixelsScale,
+        unicodeMin,
+        unicodeMax,
+        glyphs,
+        Frenchie::Application::application_rendering_queue()->construct_texture(
+            colorifiedAtlasBitMap.get(),
+            atlasWidth,
+            atlasHeight,
+            RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA)
+        );
+}
+
+RenderingQueueFont RenderingQueue::construct_font(const char* _FilePath, const int& _SizeInPixels)
+{
+    auto stb_open_ttf_file = [](const char* _FilePathUTF8)->unsigned char*
+    {
+        // load font file
+        long size;
+        unsigned char* fontBuffer;
+        
+        FILE* fontFile = fopen(_FilePathUTF8, "rb");
+        fseek(fontFile, 0, SEEK_END);
+        size = ftell(fontFile);
+        fseek(fontFile, 0, SEEK_SET);
+        
+        fontBuffer = (unsigned char*)malloc(size);
+        fread(fontBuffer, size, 1, fontFile);
+        fclose(fontFile);
+
+        return fontBuffer;
+    };
+
+    return construct_font(stb_open_ttf_file(_FilePath), _SizeInPixels);
+}
+
+void RenderingQueue::destroy_font(const RenderingQueueFont& _Font)
+{
+    destroy_texture(_Font.AtlasTexture);
 }
 
 RenderingQueueTexture RenderingQueue::construct_texture(
@@ -211,7 +529,7 @@ RenderingQueueTexture RenderingQueue::construct_texture(
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sampler);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     return RenderingQueueTexture(sampler, _Width, _Height, {255.f, 255.f, 255.f, 255.f}, _Format, _Wrap, _MinFilter, _MaxFilter);
 }
@@ -505,6 +823,8 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
 
     return RenderingQueueMesh(m_VBO, m_VAO, m_EBO);
 }
