@@ -13,9 +13,9 @@ namespace Frenchie
 {
     namespace Application
     {
-        struct RenderingQueueGlyph
+        struct Glyph
         {
-            RenderingQueueGlyph(
+            Glyph(
                 const gs_rectf& _Box     = gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f)),
                 const gs_vec2f& _MinUV   = gs_vec2f(0.f),
                 const gs_vec2f& _MaxUV   = gs_vec2f(0.f),
@@ -34,15 +34,15 @@ namespace Frenchie
             float    Advance{0.f};
         };
 
-        struct RenderingQueueFont
+        struct Font
         {
-            RenderingQueueFont(
-                const int&                                  _SizeInPixels      = 0,
-                const float&                                _SizeInPixelsScale = 0,
-                const int&                                  _UnicodeMin        = 0,
-                const int&                                  _UnicodeMax        = 0,
-                const std::shared_ptr<RenderingQueueGlyph>& _Glyphs            = nullptr,
-                const RenderingQueueTexture&                _AtlasTexture      = RenderingQueueTexture()) :
+            Font(
+                const int&                    _SizeInPixels      = 0,
+                const float&                  _SizeInPixelsScale = 0,
+                const int&                    _UnicodeMin        = 0,
+                const int&                    _UnicodeMax        = 0,
+                const std::shared_ptr<Glyph>& _Glyphs            = nullptr,
+                const RenderingQueueTexture&  _AtlasTexture      = RenderingQueueTexture()) :
                     SizeInPixels(_SizeInPixels),
                     SizeInPixelsScale(_SizeInPixelsScale),
                     UnicodeMin(_UnicodeMin),
@@ -54,7 +54,7 @@ namespace Frenchie
             float                  SizeInPixelsScale{0.f};
             int                    UnicodeMin       {0};
             int                    UnicodeMax       {0};
-            std::shared_ptr<RenderingQueueGlyph> Glyphs           {nullptr};
+            std::shared_ptr<Glyph> Glyphs           {nullptr};
             RenderingQueueTexture  AtlasTexture     {RenderingQueueTexture()};
 
             bool contains_glyph(const unsigned int& _UTF8Codepoint) const
@@ -63,7 +63,7 @@ namespace Frenchie
                        _UTF8Codepoint <= UnicodeMax;
             }
 
-            RenderingQueueGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
+            Glyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
             {
                 return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
             }
@@ -201,7 +201,7 @@ namespace Frenchie
             RenderingQueueShader               m_DefaultShader   {RenderingQueueShader()};
             RenderingQueueTexture              m_DefaultTexture  {RenderingQueueTexture()};
 
-            RenderingQueueFont m_Font;
+            Font m_Font;
 
             void stb_free_font_info(stbtt_fontinfo* _Info)
             {
@@ -245,7 +245,7 @@ namespace Frenchie
                 return info;
             }
 
-            RenderingQueueFont load_font(const int& _SizeInPixels)
+            Font load_font(const int& _SizeInPixels)
             {
                 // load font file
                 std::shared_ptr<stbtt_fontinfo> fontInfo =
@@ -437,7 +437,7 @@ namespace Frenchie
                 }
 
                 // retrieve atlas glyphs
-                std::shared_ptr<RenderingQueueGlyph> glyphs = std::shared_ptr<RenderingQueueGlyph>(
+                std::shared_ptr<Glyph> glyphs = std::shared_ptr<Glyph>(
                     new Glyph[glyphsCount],
                     [](Glyph* _Data)
                     {
@@ -462,7 +462,7 @@ namespace Frenchie
                 
                 // generate font colorified bitmap
                 if(atlasBitMap == nullptr)
-                    return RenderingQueueFont(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
+                    return Font(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
 
                 const int channels = 4;
 
@@ -497,7 +497,7 @@ namespace Frenchie
                 //     atlasBitMap.get(),
                 //     atlasWidth);
 
-                return RenderingQueueFont(
+                return Font(
                     _SizeInPixels,
                     sizeInPixelsScale,
                     unicodeMin,
@@ -515,7 +515,7 @@ namespace Frenchie
             void push_text(
                 const gs_vec2f&    _Position,
                 const float&       _Size,
-                const RenderingQueueFont&        _Font,
+                const Font&        _Font,
                 const std::string& _Text,
                 const gs_mat4f&    _Transform)
             {
@@ -549,7 +549,7 @@ namespace Frenchie
                         continue;
                     }
 
-                    RenderingQueueGlyph glyph                  = _Font.retrieve_glyph(_Text.c_str()[i]);
+                    Glyph glyph                  = _Font.retrieve_glyph(_Text.c_str()[i]);
                     float glyphWidth             = glyph.Box.get_size().x * scale;
                     float glyphHeight            = glyph.Box.get_size().y * scale;
                     float glyphHorizontalBearing = glyph.Bearing.x * scale;
