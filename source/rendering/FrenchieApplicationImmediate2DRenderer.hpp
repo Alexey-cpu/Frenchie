@@ -25,7 +25,10 @@ namespace Frenchie
             virtual void finish() override;
 
             // command API
-            void push_rendering_command(const RenderingQueueTexture& _Texture, const gs_vec4f& _Color, const gs_mat4f& _Transform);
+            void push_rendering_command(
+                const RenderingQueueTexture& _Texture,
+                const gs_vec4f&              _Color,
+                const gs_mat4f&              _Transform);
 
             // auxiliary API
             gs_vec2f calculate_text_size(
