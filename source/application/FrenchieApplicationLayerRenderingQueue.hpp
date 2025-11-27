@@ -148,6 +148,68 @@ namespace Frenchie
             unsigned int EBO{0};
         };
 
+        struct RenderingQueueGlyph
+        {
+            RenderingQueueGlyph(
+                const gs_rectf& _Box     = gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                const gs_vec2f& _MinUV   = gs_vec2f(0.f),
+                const gs_vec2f& _MaxUV   = gs_vec2f(0.f),
+                const gs_vec2f& _Bearing = gs_vec2f(0.f),
+                const float&    _Advance = 0.f) :
+                    Box(_Box),
+                    MinUV(_MinUV),
+                    MaxUV(_MaxUV),
+                    Bearing(_Bearing),
+                    Advance(_Advance){}
+
+            gs_rectf Box    {gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f))};
+            gs_vec2f MinUV  {gs_vec2f(0.f)};
+            gs_vec2f MaxUV  {gs_vec2f(0.f)};
+            gs_vec2f Bearing{gs_vec2f(0.f)};
+            float    Advance{0.f};
+        };
+
+        struct RenderingQueueFont
+        {
+            RenderingQueueFont(
+                const int&                                  _SizeInPixels      = 0,
+                const float&                                _SizeInPixelsScale = 1.f,
+                const unsigned int&                         _UnicodeMin        = 0,
+                const unsigned int&                         _UnicodeMax        = 0,
+                const std::shared_ptr<RenderingQueueGlyph>& _Glyphs            = nullptr,
+                const RenderingQueueTexture&                _AtlasTexture      = RenderingQueueTexture()) :
+                    SizeInPixels(_SizeInPixels),
+                    SizeInPixelsScale(_SizeInPixelsScale),
+                    UnicodeMin(_UnicodeMin),
+                    UnicodeMax(_UnicodeMax),
+                    Glyphs(_Glyphs),
+                    AtlasTexture(_AtlasTexture){}
+
+            int                                  SizeInPixels     {0};
+            float                                SizeInPixelsScale{0.f};
+            unsigned int                         UnicodeMin       {0};
+            unsigned int                         UnicodeMax       {0};
+            std::shared_ptr<RenderingQueueGlyph> Glyphs           {nullptr};
+            RenderingQueueTexture                AtlasTexture     {RenderingQueueTexture()};
+
+            // API
+            bool is_null() const
+            {
+                return Glyphs == nullptr || AtlasTexture.is_null();
+            }
+
+            bool contains_glyph(const unsigned int& _UTF8Codepoint) const
+            {
+                return _UTF8Codepoint >= UnicodeMin &&
+                       _UTF8Codepoint <= UnicodeMax;
+            }
+
+            RenderingQueueGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
+            {
+                return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
+            }
+        };
+
         struct RenderingQueueCommand final
         {
             RenderingQueueCommand(
@@ -185,6 +247,13 @@ namespace Frenchie
             virtual void finish() override;
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
+
+            // font API
+            RenderingQueueFont construct_font(unsigned char* _Memory, const int& _Size);
+
+            RenderingQueueFont construct_font(const char* _FilePath, const int& _Size);
+
+            void destroy_font(const RenderingQueueFont& _Font);
 
             // image API
             RenderingQueueTexture construct_texture(
