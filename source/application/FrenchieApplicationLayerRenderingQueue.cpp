@@ -55,7 +55,6 @@ void RenderingQueue::frame_render()
         set_shader_uniform(shader, "u_ModelMatrix", transform);
         set_shader_uniform(shader, "u_CameraViewMatrix", m_CameraViewMatrix);
         set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
-        set_shader_uniform(shader, "u_Color", gs_vec4f(color.x / 255.f, color.y / 255.f, color.z / 255.f, color.w / 255.f));
         set_shader_uniform(shader, "u_Texture", 0);
 
         begin_use_texture(texture);
@@ -825,9 +824,11 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Position)));
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Normal)));
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, UV)));
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Color)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
 
     glBindVertexArray(0);
 

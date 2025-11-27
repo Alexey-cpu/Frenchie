@@ -48,51 +48,8 @@ namespace Frenchie
                 if(m_Renderer == nullptr)
                     return;
 
-                // m_Renderer->push_rectangle_filled(
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(m_Renderer->m_Font.AtlasTexture.Width, -m_Renderer->m_Font.AtlasTexture.Height),
-                //     +0.f,
-                //     gs_vec4f(255.f, 255.f, 255.f, 255.f),
-                //     Transform, 
-                //     m_Renderer->m_Font.AtlasTexture);
-
-                auto text = "Hello world\n\tMy name is Alexey =)";
-                
-                auto size = m_Renderer->calculate_text_size(text, 128.f);
-
-                m_Renderer->push_text(text, 128.f, gs_vec2f(0.f, 0.f), gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
-
-                // m_Renderer->push_rectangle_rounded(
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(size.x, -size.y),
-                //     16.f,
-                //     +0.f,
-                //     12.f,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform);
-
-                m_Renderer->push_rectangle_rounded(
-                    gs_vec2f(0.f, -size.y),
-                    gs_vec2f(size.x, 0.f),
-                    32,
-                    +0.f,
-                    4.f,
-                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                    Transform);
-
-                // m_Renderer->push_rectangle_filled(
-                //     gs_vec2f(128.f, -128.f),
-                //     gs_vec2f(128.f + 64.f, -128.f -64.f),
-                //     +100.f,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform);
-
-                // m_Renderer->push_rectangle_filled(
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(128.f, -128.f),
-                //     -100.f,
-                //     gs_vec4f(0.f, 0.f, 255.f, 255.f),
-                //     Transform);
+                //draw_text();
+                draw_triangle_filled();
 
                 // for(int i = 0; i < 12; ++i)
                 // {
@@ -128,14 +85,25 @@ namespace Frenchie
                 //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                 //         //     Transform);
 
-                //         m_Renderer->push_rectangle_rounded(
+                //         m_Renderer->push_arc_filled(
                 //             gs_vec2f(i * R * 2, j * R * 2),
-                //             gs_vec2f(i * R * 2 + R, j * R * 2 + R),
-                //             32,
-                //             +0.f,
-                //             lineWidth,
+                //             +R,
+                //             +R,
+                //             0.f,
+                //             360.f,
+                //             0.f,
                 //             gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //             Transform);
+                //             Transform
+                //         );
+
+                //         // m_Renderer->push_rectangle_rounded(
+                //         //     gs_vec2f(i * R * 2, j * R * 2),
+                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 + R),
+                //         //     32,
+                //         //     +0.f,
+                //         //     lineWidth,
+                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //         //     Transform);
 
                 //         // m_Renderer->push_rectangle_filled(
                 //         //     gs_vec2f(i * R * 2, j * R * 2),
@@ -156,7 +124,70 @@ namespace Frenchie
                 //         //     Transform
                 //         // );
                 //     }
-                //}
+                // }
+            }
+
+            void draw_triangle_filled()
+            {
+                auto bbox = m_Renderer->calculate_triangle_bounding_box(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(+75.f, +150.f),
+                    gs_vec2f(+450.f, -150.f),
+                    Transform
+                );
+
+                m_Renderer->push_triangle_filled(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(+75.f, +150.f),
+                    gs_vec2f(+450.f, -150.f),
+                    +0.f,
+                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                    Transform
+                );
+
+                m_Renderer->push_rectangle(
+                    bbox.Min,
+                    bbox.Max,
+                    -100.f,
+                    12.f,
+                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                    gs_mat4f(1.f)
+                );
+            }
+
+            void draw_rectangle_filled()
+            {
+                m_Renderer->push_rectangle_filled(
+                    gs_vec2f(0.f, -0.f),
+                    gs_vec2f(128.f, -128.f),
+                    +100.f,
+                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                    Transform);
+
+                m_Renderer->push_rectangle_filled(
+                    gs_vec2f(128.f, -128.f),
+                    gs_vec2f(128.f + 64.f, -128.f -64.f),
+                    +100.f,
+                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                    Transform);
+            }
+
+            void draw_text()
+            {
+                auto text = "Hello world\n\tMy name is Alexey =)";
+                
+                m_Renderer->push_text(text, 128.f, gs_vec2f(0.f, 0.f), gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
+
+                auto rect = m_Renderer->calculate_text_bounding_box(text, 128.f, gs_vec2f(0.f, 0.f), Transform, m_Renderer->m_DefaultFont);
+
+                m_Renderer->push_rectangle_rounded(
+                    rect.Min,
+                    rect.Max,
+                    32,
+                    +0.f,
+                    12.f,
+                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                    gs_mat4f(1.f));
             }
 
         protected:

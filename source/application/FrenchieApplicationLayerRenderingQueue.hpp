@@ -118,14 +118,17 @@ namespace Frenchie
             RenderingQueueVertex(
                 const gs_vec3f& _Position = gs_vec3f(0),
                 const gs_vec3f& _Normal   = gs_vec3f(0),
-                const gs_vec2f& _UV       = gs_vec2f(0)) :
+                const gs_vec2f& _UV       = gs_vec2f(0),
+                const gs_vec4f& _Color    = gs_vec4f(1.f)) :
             Position(_Position),
             Normal(_Normal),
-            UV(_UV){}
+            UV(_UV),
+            Color(_Color){}
 
             gs_vec3f Position;
             gs_vec3f Normal;
             gs_vec2f UV;
+            gs_vec4f Color;
         };
 
         struct RenderingQueueMesh final
