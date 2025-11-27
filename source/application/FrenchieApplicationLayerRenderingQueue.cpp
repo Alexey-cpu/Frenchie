@@ -322,15 +322,19 @@ RenderingQueueFont RenderingQueue::construct_font(unsigned char* _Memory, const 
             gs_vec2f(packedCharacters.get()[idx].x0, packedCharacters.get()[idx].y0),
             gs_vec2f(packedCharacters.get()[idx].x1, packedCharacters.get()[idx].y1));
         
-        glyphs.get()[idx].MinUV   = gs_vec2f(packedCharactersQuads.get()[idx].s0, packedCharactersQuads.get()[idx].t0);
-        glyphs.get()[idx].MaxUV   = gs_vec2f(packedCharactersQuads.get()[idx].s1, packedCharactersQuads.get()[idx].t1);
+        gs_rectf BoxUV = gs_rectf(
+            gs_vec2f(packedCharactersQuads.get()[idx].s0, packedCharactersQuads.get()[idx].t0),
+            gs_vec2f(packedCharactersQuads.get()[idx].s1, packedCharactersQuads.get()[idx].t1));
+
+        glyphs.get()[idx].MinUV   = BoxUV.Min;
+        glyphs.get()[idx].MaxUV   = BoxUV.Max;
         glyphs.get()[idx].Bearing = gs_vec2f(packedCharacters.get()[idx].xoff, packedCharacters.get()[idx].yoff);
         glyphs.get()[idx].Advance = packedCharacters.get()[idx].xadvance;
     }
     
     // generate font colorified bitmap
     if(atlasBitMap == nullptr)
-        return RenderingQueueFont(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
+        return RenderingQueueFont(_SizeInPixels, ascent, descent, lineGap, unicodeMin, unicodeMax);
 
     const int channels = 4;
 
@@ -358,7 +362,9 @@ RenderingQueueFont RenderingQueue::construct_font(unsigned char* _Memory, const 
 
     return RenderingQueueFont(
         _SizeInPixels,
-        sizeInPixelsScale,
+        ascent,
+        descent,
+        lineGap,
         unicodeMin,
         unicodeMax,
         glyphs,
