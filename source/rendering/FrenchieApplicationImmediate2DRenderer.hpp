@@ -13,13 +13,60 @@ namespace Frenchie
 {
     namespace Application
     {
-        struct Font
+        struct RenderingQueueGlyph
         {
-            int                                 UnicodeMin  {0};
-            int                                 UnicodeMax  {0};
-            std::shared_ptr<stbtt_packedchar>   Chars       {nullptr};
-            std::shared_ptr<stbtt_aligned_quad> Quads       {nullptr};
-            RenderingQueueTexture               AtlasTexture{RenderingQueueTexture()};
+            RenderingQueueGlyph(
+                const gs_rectf& _Box     = gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                const gs_vec2f& _MinUV   = gs_vec2f(0.f),
+                const gs_vec2f& _MaxUV   = gs_vec2f(0.f),
+                const gs_vec2f& _Bearing = gs_vec2f(0.f),
+                const float&    _Advance = 0.f) :
+                    Box(_Box),
+                    MinUV(_MinUV),
+                    MaxUV(_MaxUV),
+                    Bearing(_Bearing),
+                    Advance(_Advance){}
+
+            gs_rectf Box    {gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f))};
+            gs_vec2f MinUV  {gs_vec2f(0.f)};
+            gs_vec2f MaxUV  {gs_vec2f(0.f)};
+            gs_vec2f Bearing{gs_vec2f(0.f)};
+            float    Advance{0.f};
+        };
+
+        struct RenderingQueueFont
+        {
+            RenderingQueueFont(
+                const int&                                  _SizeInPixels      = 0,
+                const float&                                _SizeInPixelsScale = 0,
+                const int&                                  _UnicodeMin        = 0,
+                const int&                                  _UnicodeMax        = 0,
+                const std::shared_ptr<RenderingQueueGlyph>& _Glyphs            = nullptr,
+                const RenderingQueueTexture&                _AtlasTexture      = RenderingQueueTexture()) :
+                    SizeInPixels(_SizeInPixels),
+                    SizeInPixelsScale(_SizeInPixelsScale),
+                    UnicodeMin(_UnicodeMin),
+                    UnicodeMax(_UnicodeMax),
+                    Glyphs(_Glyphs),
+                    AtlasTexture(_AtlasTexture){}
+
+            int                    SizeInPixels     {0};
+            float                  SizeInPixelsScale{0.f};
+            int                    UnicodeMin       {0};
+            int                    UnicodeMax       {0};
+            std::shared_ptr<RenderingQueueGlyph> Glyphs           {nullptr};
+            RenderingQueueTexture  AtlasTexture     {RenderingQueueTexture()};
+
+            bool contains_glyph(const unsigned int& _UTF8Codepoint) const
+            {
+                return _UTF8Codepoint >= UnicodeMin &&
+                       _UTF8Codepoint <= UnicodeMax;
+            }
+
+            RenderingQueueGlyph retrieve_glyph(const unsigned int& _UTF8Codepoint) const
+            {
+                return Glyphs.get()[_UTF8Codepoint - UnicodeMin];
+            }
         };
 
         class Immediate2DRenderer : public Layer
@@ -154,7 +201,7 @@ namespace Frenchie
             RenderingQueueShader               m_DefaultShader   {RenderingQueueShader()};
             RenderingQueueTexture              m_DefaultTexture  {RenderingQueueTexture()};
 
-            Font m_Font;
+            RenderingQueueFont m_Font;
 
             void stb_free_font_info(stbtt_fontinfo* _Info)
             {
@@ -184,7 +231,7 @@ namespace Frenchie
                 fclose(fontFile);
 
                 // prepare font
-                stbtt_fontinfo* info = (stbtt_fontinfo*)malloc(sizeof(stbtt_fontinfo));
+                stbtt_fontinfo* info = new stbtt_fontinfo();
 
                 if (!stbtt_InitFont(info, fontBuffer, 0))
                 {
@@ -198,31 +245,31 @@ namespace Frenchie
                 return info;
             }
 
-            Font load_font(const int& _SizeInPixels)
+            RenderingQueueFont load_font(const int& _SizeInPixels)
             {
                 // load font file
                 std::shared_ptr<stbtt_fontinfo> fontInfo =
-                    std::shared_ptr<stbtt_fontinfo>(
-                        stb_open_ttf_file("C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf"),
-                        [](stbtt_fontinfo* _Info)
-                        {
-                            if(_Info != nullptr)
-                                free(_Info);
-                        }
-                    );
+                    std::shared_ptr<stbtt_fontinfo>(stb_open_ttf_file("C:/SDK/Qt_Projects/OpenGL/shared/appData/fonts/Alice-Regular.ttf"),
+                    [](stbtt_fontinfo* _Data)
+                    {
+                        if(_Data != nullptr)
+                            delete _Data;
+                    });
                 
                 // retrieve available font file characters
-                int m_UnicodeMin = INT_MAX;
-                int m_UnicodeMax = INT_MIN;
+                int unicodeMin  = INT_MAX;
+                int unicodeMax  = INT_MIN;
 
                 for(unsigned int codepoint = 0; codepoint <= 0xFFFF; codepoint++)
                 {
                     if(!stbtt_FindGlyphIndex(fontInfo.get(), codepoint))
                         continue;
 
-                    m_UnicodeMin = std::min<int>(m_UnicodeMin, codepoint);
-                    m_UnicodeMax = std::max<int>(m_UnicodeMax, codepoint);
+                    unicodeMin = std::min<int>(unicodeMin, codepoint);
+                    unicodeMax = std::max<int>(unicodeMax, codepoint);
                 }
+
+                int glyphsCount = unicodeMax - unicodeMin + 1;
 
                 // compute font geometry metrics
                 float sizeInPixelsScale = stbtt_ScaleForPixelHeight(fontInfo.get(), (float)_SizeInPixels); // scale font to fit a given font size in pixels
@@ -234,17 +281,6 @@ namespace Frenchie
                 ascent  = (int)roundf((float)ascent  * sizeInPixelsScale);
                 descent = (int)roundf((float)descent * sizeInPixelsScale);
                 lineGap = (int)roundf((float)lineGap * sizeInPixelsScale);
-
-                // pack font atlas
-                std::shared_ptr<stbtt_packedchar> packedCharacters = 
-                    std::shared_ptr<stbtt_packedchar>(
-                        (stbtt_packedchar*)malloc(sizeof(stbtt_packedchar) * (m_UnicodeMax + 1)),
-                        [](stbtt_packedchar* _Range)
-                        {
-                            if(_Range != nullptr)
-                                free(_Range);
-                        }
-                    );
 
                 // make a most likely large enough bitmap, adjust to font type, number of sizes and glyphs and oversampling
                 int atlasWidth     = 32;
@@ -258,7 +294,7 @@ namespace Frenchie
                     atlasWidth  = 0;
                     atlasHeight = 0;
                     
-                    for (int codepoint = m_UnicodeMin; codepoint <= m_UnicodeMax;)
+                    for (int codepoint = unicodeMin; codepoint <= unicodeMax;)
                     {
                         int width = 0;
                         int maxHeight = INT_MIN;
@@ -319,6 +355,16 @@ namespace Frenchie
                 }
 
                 // pack atlas
+                std::shared_ptr<stbtt_packedchar> packedCharacters = 
+                    std::shared_ptr<stbtt_packedchar>(
+                        new stbtt_packedchar[glyphsCount],
+                        [](stbtt_packedchar* _Range)
+                        {
+                            if(_Range != nullptr)
+                                delete [] _Range;
+                        }
+                    );
+
                 std::shared_ptr<unsigned char> atlasBitMap  = nullptr;
 
                 while (true)
@@ -344,8 +390,8 @@ namespace Frenchie
                         fontInfo->data,
                         0,
                         (float)_SizeInPixels,
-                        m_UnicodeMin,
-                        m_UnicodeMax - m_UnicodeMin,
+                        unicodeMin,
+                        glyphsCount,
                         packedCharacters.get()))
                     {
                         stbtt_PackEnd(&pc);
@@ -365,39 +411,58 @@ namespace Frenchie
                 // generate atlas glyphs quads
                 std::shared_ptr<stbtt_aligned_quad> packedCharactersQuads = 
                     std::shared_ptr<stbtt_aligned_quad>(
-                        (stbtt_aligned_quad*)malloc(sizeof(stbtt_aligned_quad) * m_UnicodeMax),
+                        new stbtt_aligned_quad[glyphsCount],
                         [](stbtt_aligned_quad* _Range)
                         {
                             if(_Range != nullptr)
-                                free(_Range);
+                                delete [] _Range;
                         }
                     );
 
-                for (int i = 0; i < m_UnicodeMax; i++)
+                for (int i = unicodeMin; i <= unicodeMax; i++)
                 {
+                    int idx = i - unicodeMin;
+
                     float unusedX, unusedY;
 
                     stbtt_GetPackedQuad(
-                        packedCharacters.get(), // Array of stbtt_packedchar
-                        atlasWidth,             // Width of the font atlas texture
-                        atlasHeight,            // Height of the font atlas texture
-                        i,                      // Index of the glyph
-                        &unusedX, &unusedY,     // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
-                        &packedCharactersQuads.get()[i],      // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
-                        0                       // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
+                        packedCharacters.get(),          // Array of stbtt_packedchar
+                        atlasWidth,                      // Width of the font atlas texture
+                        atlasHeight,                     // Height of the font atlas texture
+                        idx,                               // Index of the glyph
+                        &unusedX, &unusedY,              // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
+                        &packedCharactersQuads.get()[idx], // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
+                        0                                // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
                     );
                 }
 
-                // generate output font
-                Font font;
-                font.Chars        = packedCharacters;
-                font.Quads        = packedCharactersQuads;
-                font.UnicodeMin   = m_UnicodeMin;
-                font.UnicodeMax   = m_UnicodeMax;
+                // retrieve atlas glyphs
+                std::shared_ptr<RenderingQueueGlyph> glyphs = std::shared_ptr<RenderingQueueGlyph>(
+                    new Glyph[glyphsCount],
+                    [](Glyph* _Data)
+                    {
+                        if(_Data != nullptr)
+                            delete [] _Data;
+                    }
+                );
+
+                for (int i = unicodeMin; i <= unicodeMax; i++)
+                {
+                    int idx = i - unicodeMin;
+
+                    glyphs.get()[idx].Box = gs_rectf(
+                        gs_vec2f(packedCharacters.get()[idx].x0, packedCharacters.get()[idx].y0),
+                        gs_vec2f(packedCharacters.get()[idx].x1, packedCharacters.get()[idx].y1));
+                    
+                    glyphs.get()[idx].MinUV   = gs_vec2f(packedCharactersQuads.get()[idx].s0, packedCharactersQuads.get()[idx].t0);
+                    glyphs.get()[idx].MaxUV   = gs_vec2f(packedCharactersQuads.get()[idx].s1, packedCharactersQuads.get()[idx].t1);
+                    glyphs.get()[idx].Bearing = gs_vec2f(packedCharacters.get()[idx].xoff, packedCharacters.get()[idx].yoff);
+                    glyphs.get()[idx].Advance = packedCharacters.get()[idx].xadvance;
+                }
                 
                 // generate font colorified bitmap
                 if(atlasBitMap == nullptr)
-                    return font;
+                    return RenderingQueueFont(_SizeInPixels, sizeInPixelsScale, unicodeMin, unicodeMax);
 
                 const int channels = 4;
 
@@ -423,46 +488,87 @@ namespace Frenchie
                     }
                 }
 
-                font.AtlasTexture =
+                // // write packed png...
+                // stbi_write_png(
+                //     "C:/SDK/Qt_Projects/OpenGL/logs/atlas.png",
+                //     atlasWidth,
+                //     atlasHeight,
+                //     1,
+                //     atlasBitMap.get(),
+                //     atlasWidth);
+
+                return RenderingQueueFont(
+                    _SizeInPixels,
+                    sizeInPixelsScale,
+                    unicodeMin,
+                    unicodeMax,
+                    glyphs,
                     Frenchie::Application::application_rendering_queue()->construct_texture(
                         colorifiedAtlasBitMap.get(),
                         atlasWidth,
                         atlasHeight,
-                        RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA
+                        RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA)
                     );
-
-                // write packed png...
-                stbi_write_png(
-                    "C:/SDK/Qt_Projects/OpenGL/logs/atlas.png",
-                    atlasWidth,
-                    atlasHeight,
-                    1,
-                    atlasBitMap.get(),
-                    atlasWidth);
-
-                return font;
             }
 
             // text rendering command
-            void push_text(const Font& _Font, const gs_mat4f& _Transform)
+            void push_text(
+                const gs_vec2f&    _Position,
+                const float&       _Size,
+                const RenderingQueueFont&        _Font,
+                const std::string& _Text,
+                const gs_mat4f&    _Transform)
             {
-                // let's draw a single character
-                char ch = 'A';
+                float scale     = _Size / (float)_Font.SizeInPixels;
+                float positionX = _Position.x;
+                float positionY = _Position.y;
 
-                stbtt_packedchar*   packedChar  = &_Font.Chars.get()[ch - _Font.UnicodeMin];
-                stbtt_aligned_quad* alignedQuad = &_Font.Quads.get()[ch - _Font.UnicodeMin];
+                for(int i = 0; i < strlen(_Text.c_str()); ++i)
+                {
+                    // fallbacks
+                    if(!_Font.contains_glyph(_Text.c_str()[i]))
+                    {
+                        // next line
+                        if(_Text.c_str()[i] == '\n')
+                        {
+                            positionY -= _Size;
+                            positionX =  _Position.x;
+                        }
+                        // carriage return
+                        else if(_Text.c_str()[i] == '\r')
+                            positionX =  _Position.x;
+                        // tab
+                        else if(_Text.c_str()[i] == '\t')
+                            positionX += _Size;
+                        else
+                        {
+                            // TODO: do someting here...
+                            // May be use fallback font ???
+                        }
 
-                float fontSize = 32.f;
+                        continue;
+                    }
 
-                build_rectangle_filled_mesh(
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(fontSize, -fontSize),
-                    gs_vec2f(alignedQuad->s0, alignedQuad->t0),
-                    gs_vec2f(alignedQuad->s1, alignedQuad->t1),
-                    0.f,
-                    m_Vertexes,
-                    m_Indexes
-                );
+                    RenderingQueueGlyph glyph                  = _Font.retrieve_glyph(_Text.c_str()[i]);
+                    float glyphWidth             = glyph.Box.get_size().x * scale;
+                    float glyphHeight            = glyph.Box.get_size().y * scale;
+                    float glyphHorizontalBearing = glyph.Bearing.x * scale;
+                    float glyphVerticalBearing   = glyph.Bearing.y * scale;
+                    float glyphAdvance           = glyph.Advance * scale;
+
+                    build_rectangle_filled_mesh(
+                        gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
+                        gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphHeight - glyphVerticalBearing),
+                        glyph.MinUV,
+                        glyph.MaxUV,
+                        0.f,
+                        m_Vertexes,
+                        m_Indexes
+                    );
+
+                    // move cursor
+                    positionX += glyphAdvance;
+                }
 
                 push_rendering_command(_Font.AtlasTexture, gs_vec4f(255.f, 255.f, 255.f, 255.f), _Transform);
             }

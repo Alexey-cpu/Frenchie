@@ -9,7 +9,7 @@ bool Immediate2DRenderer::awake()
 {
     std::cout << "Immediate2DRenderer::awake() \n";
 
-    m_Font = load_font(512);
+    m_Font = load_font(128);
 
     // register default shader here
     m_DefaultShader = Frenchie::Application::application_rendering_queue()->construct_shader(
