@@ -42,7 +42,6 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
-    //for (int i = (int)m_Commands.size() - 1; i >= 0; --i)
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
         auto mesh      = m_Commands[i].Mesh;
@@ -51,31 +50,23 @@ void RenderingQueue::frame_render()
         auto texture   = m_Commands[i].Texture;
         auto transform = m_Commands[i].Transform;
 
-        printf("command mesh     %d          \n", mesh.VAO);
-        printf("command texture  %d          \n", texture.Ptr);
-        printf("command shader   %d          \n", shader.Ptr);
-        printf("command color    %f %f %f %f \n", color.x, color.y, color.z, color.w);
-
-        // setup shader projection matrix
-        begin_use_texture(texture);
         begin_use_shader(shader);
-        begin_use_mesh(mesh);
-        
+
         set_shader_uniform(shader, "u_ModelMatrix", transform);
         set_shader_uniform(shader, "u_CameraViewMatrix", m_CameraViewMatrix);
         set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
         set_shader_uniform(shader, "u_Color", gs_vec4f(color.x / 255.f, color.y / 255.f, color.z / 255.f, color.w / 255.f));
         set_shader_uniform(shader, "u_Texture", 0);
+
+        begin_use_texture(texture);
+        begin_use_mesh(mesh);
         
         end_use_shader();
         end_use_texture();
         end_use_mesh();
 
-        // destroy mesh
         destroy_mesh(mesh);
     }
-    
-    printf("\n");
 
     // clear commands queue
     m_Commands.clear();
