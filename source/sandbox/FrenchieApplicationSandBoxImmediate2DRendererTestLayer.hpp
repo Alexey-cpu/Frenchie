@@ -58,13 +58,13 @@ namespace Frenchie
 
                 //auto size = m_Renderer->calculate_text_size("Hello\n\tWorld", 128.f);
 
-                //m_Renderer->push_text("Hello\n\tWorld", 128.f, gs_vec2f(0.f, 0.f), Transform);
+                m_Renderer->push_text("Hello\n\tWorld", 128.f, gs_vec2f(0.f, 0.f), Transform);
 
                 m_Renderer->push_rectangle_filled(
                     gs_vec2f(128.f, -128.f),
                     gs_vec2f(128.f + 64.f, -128.f -64.f),
                     +100.f,
-                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
                     Transform);
 
                 m_Renderer->push_rectangle_filled(
