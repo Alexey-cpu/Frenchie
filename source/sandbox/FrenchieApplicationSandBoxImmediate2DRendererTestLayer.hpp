@@ -129,30 +129,68 @@ namespace Frenchie
 
             void draw_triangle_filled()
             {
-                auto bbox = m_Renderer->calculate_triangle_bounding_box(
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(+75.f, +150.f),
-                    gs_vec2f(+450.f, -150.f),
-                    Transform
-                );
+                // m_Renderer->push_polygon(
+                //     0.f,
+                //     m_Renderer->m_DefaultTexture,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform,
+                //     gs_vec2f(0.f, -150.f),
+                //     gs_vec2f(-150.f, +0.f),
+                //     gs_vec2f(-75.f, +75.f),
+                //     gs_vec2f(-150.f, +150.f),
+                //     gs_vec2f(+150.f, +150.f)
+                // );
 
-                m_Renderer->push_triangle_filled(
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(+75.f, +150.f),
-                    gs_vec2f(+450.f, -150.f),
-                    +0.f,
+                // m_Renderer->push_polygon(
+                //     0.f,
+                //     m_Renderer->m_DefaultTexture,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform,
+                //     gs_vec2f(0.f, -100.f),
+                //     gs_vec2f(-50.f, +0.f),
+                //     gs_vec2f(-100.f, +100.f),
+                //     gs_vec2f(0.f, +150.f),
+                //     gs_vec2f(+50.f, +100.f),
+                //     gs_vec2f(+0.f, +50.f),
+                //     gs_vec2f(+50.f, +0.f),
+                //     gs_vec2f(+50.f, -50.f)
+                // );
+
+                m_Renderer->push_polygon(
+                    0.f,
+                    m_Renderer->m_DefaultTexture,
                     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                    Transform
+                    Transform,
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(0.f, +50.f),
+                    gs_vec2f(+50.f, +50.f),
+                    gs_vec2f(+50.f, +0.f)
                 );
 
-                m_Renderer->push_rectangle(
-                    bbox.Min,
-                    bbox.Max,
-                    -100.f,
-                    12.f,
-                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                    gs_mat4f(1.f)
-                );
+                // auto bbox = m_Renderer->calculate_bounding_box(
+                //     Transform,
+                //     gs_vec2f(0.f, 0.f),
+                //     gs_vec2f(+75.f, +150.f),
+                //     gs_vec2f(+450.f, -150.f)
+                // );
+
+                // m_Renderer->push_triangle_filled(
+                //     gs_vec2f(0.f, 0.f),
+                //     gs_vec2f(+50.f, +50.f),
+                //     gs_vec2f(0, +50.f),
+                //     +0.f,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform
+                // );
+
+                // m_Renderer->push_rectangle(
+                //     bbox.Min,
+                //     bbox.Max,
+                //     -100.f,
+                //     12.f,
+                //     gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                //     gs_mat4f(1.f)
+                // );
             }
 
             void draw_rectangle_filled()
