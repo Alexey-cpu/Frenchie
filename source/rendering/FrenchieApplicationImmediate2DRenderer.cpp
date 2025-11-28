@@ -176,6 +176,9 @@ void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _T
     // clean-up
     m_Indexes.clear();
     m_Vertexes.clear();
+
+    m_TriangulationQueue.clear();
+    m_TriangulationIndexes.clear();
 }
 
 void Immediate2DRenderer::push_triangle_filled(
@@ -598,41 +601,6 @@ gs_rectf Immediate2DRenderer::calculate_text_bounding_box(
         transformedPosition,
         transformedPosition + gs_vec2f(width, -height)
     };
-}
-
-gs_rectf Immediate2DRenderer::calculate_arc_bounding_box(
-    const gs_vec2f& _Center,
-    const float&    _MinorRadius,
-    const float&    _MajorRadius,
-    const float&    _SourceAngle,
-    const float&    _TargetAngle,
-    gs_mat4f&       _Transform)
-{
-    return gs_rectf(
-            _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 1.f, 1.f),
-            _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 1.f, 1.f));
-}
-
-gs_rectf Immediate2DRenderer::calculate_triangle_bounding_box(
-    const gs_vec2f& _P1,
-    const gs_vec2f& _P2,
-    const gs_vec2f& _P3,
-    const gs_mat4f& _Transform)
-{
-    return gs_rectf(
-        _Transform * gs_vec4f(gs_vec2f(gs_min(_P1.x, _P2.x, _P3.x), gs_min(_P1.y, _P2.y, _P3.y)), 1.f, 1.f),
-        _Transform * gs_vec4f(gs_vec2f(gs_max(_P1.x, _P2.x, _P3.x), gs_max(_P1.y, _P2.y, _P3.y)), 1.f, 1.f)
-    );
-}
-
-gs_rectf Immediate2DRenderer::calculate_rectangle_bounding_box(
-    const gs_vec2f& _Min,
-    const gs_vec2f& _Max,
-    const gs_mat4f& _Transform)
-{
-    return gs_rectf(
-        _Transform * gs_vec4f(_Min, 1.f, 1.f),
-        _Transform * gs_vec4f(_Max, 1.f, 1.f));
 }
 
 void Immediate2DRenderer::build_triangle_filled_mesh(
