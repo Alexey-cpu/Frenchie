@@ -172,17 +172,6 @@ namespace Frenchie
                     return _Vertexes[index];
                 };
 
-                auto triangle_contains_point = [](
-                    const gs_vec2f& _P,
-                    const gs_vec2f& _A,
-                    const gs_vec2f& _B,
-                    const gs_vec2f& _C)
-                {
-                    return !(gs_vector_cross(gs_vec2f(_B - _A), gs_vec2f(_P - _A)) > 0.f) &&
-                           !(gs_vector_cross(gs_vec2f(_C - _B), gs_vec2f(_P - _B)) > 0.f) &&
-                           !(gs_vector_cross(gs_vec2f(_A - _C), gs_vec2f(_P - _C)) > 0.f);
-                };
-
                 for (int i = 0; i < (int)m_TriangulationQueue.size(); i++)
                     m_TriangulationIndexes.push_back(i);
 
@@ -209,7 +198,9 @@ namespace Frenchie
                             if(j == ia || j == ib || j == ic)
                                 continue;
 
-                            if(triangle_contains_point(m_TriangulationQueue[j].Position, b, a, c))
+                            gs_vec2f poly[3] = {a, b, c};
+
+                            if(gs_point_in_2D_polygon(poly, 3, gs_vec2f(m_TriangulationQueue[j].Position)))
                             {
                                 isEar = false;
                                 break;
