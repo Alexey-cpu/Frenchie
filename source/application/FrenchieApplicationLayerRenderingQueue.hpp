@@ -80,7 +80,7 @@ namespace Frenchie
             Ptr(_Ptr),
             Width(_Width),
             Height(_Height),
-            Color(_Color),
+            Color(_Color.x / 255.f, _Color.y / 255.f, _Color.z / 255.f, _Color.w / 255.f),
             Format(_Format),
             Wrap(_Wrap),
             MinFilter(_MinFilter),
@@ -123,7 +123,7 @@ namespace Frenchie
             Position(_Position),
             Normal(_Normal),
             UV(_UV),
-            Color(_Color){}
+            Color(_Color.x / 255.f, _Color.y / 255.f, _Color.z / 255.f, _Color.w / 255.f){}
 
             gs_vec3f Position;
             gs_vec3f Normal;
