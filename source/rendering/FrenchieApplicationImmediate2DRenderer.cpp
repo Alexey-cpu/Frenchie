@@ -5529,9 +5529,6 @@ void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _T
     // clean-up
     m_Indexes.clear();
     m_Vertexes.clear();
-
-    m_TriangulationQueue.clear();
-    m_TriangulationIndexes.clear();
 }
 
 void Immediate2DRenderer::push_triangle_filled(

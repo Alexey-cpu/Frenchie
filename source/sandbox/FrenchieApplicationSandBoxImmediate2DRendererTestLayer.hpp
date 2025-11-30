@@ -145,8 +145,8 @@ namespace Frenchie
                 if(m_Renderer == nullptr)
                     return;
 
-                draw_rectangle_filled();
-                //draw_text();
+                //draw_rectangle_filled();
+                draw_text();
                 //draw_triangle_filled();
 
                 // for(int i = 0; i < 12; ++i)
@@ -239,20 +239,20 @@ namespace Frenchie
                 //     gs_vec2f(+150.f, +150.f)
                 // );
 
-                m_Renderer->push_polygon(
-                    0.f,
-                    m_Renderer->m_DefaultTexture,
-                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                    Transform,
-                    gs_vec2f(0.f, -100.f),
-                    gs_vec2f(-50.f, +0.f),
-                    gs_vec2f(-100.f, +100.f),
-                    gs_vec2f(0.f, +150.f),
-                    gs_vec2f(+50.f, +100.f),
-                    gs_vec2f(+0.f, +50.f),
-                    gs_vec2f(+50.f, +0.f),
-                    gs_vec2f(+50.f, -50.f)
-                );
+                // m_Renderer->push_polygon(
+                //     0.f,
+                //     m_Renderer->m_DefaultTexture,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform,
+                //     gs_vec2f(0.f, -100.f),
+                //     gs_vec2f(-50.f, +0.f),
+                //     gs_vec2f(-100.f, +100.f),
+                //     gs_vec2f(0.f, +150.f),
+                //     gs_vec2f(+50.f, +100.f),
+                //     gs_vec2f(+0.f, +50.f),
+                //     gs_vec2f(+50.f, +0.f),
+                //     gs_vec2f(+50.f, -50.f)
+                // );
 
                 // m_Renderer->push_polygon(
                 //     0.f,
@@ -324,7 +324,7 @@ namespace Frenchie
                     32.f,
                     position,
                     0.f,
-                    gs_mat4f(1.f));
+                    gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(25.f, -25.f)));
             }
 
         protected:
@@ -352,8 +352,8 @@ namespace Frenchie
                 const gs_mat4f&    _Transform)
             {
                 auto Hovered = gs_vec4f(0.f, 0.f, 255.f, 32.f);
-                auto Pushed  = gs_vec4f(128.f, 128.f, 0.f, 64.f);
-                auto Default = gs_vec4f(255.f, 0.f, 0.f, 64.f);
+                auto Pushed  = gs_vec4f(0.f, 255.f, 0.f, 255.f);
+                auto Default = gs_vec4f(255.f, 0.f, 0.f, 255.f);
 
                 // compute text bounding box
                 gs_rectf textBoundingBox =
@@ -378,24 +378,22 @@ namespace Frenchie
                     else
                     {
                         Color = Hovered;
-
-                        std::cout << "textBoundingBox.contains " << x << "\t" << -y << "\n";
                     }
                 }
-
-                m_Renderer->push_rectangle_filled(
-                    gs_vec2f(x, -y),
-                    gs_vec2f(x, -y) + gs_vec2f(16.f, 16.f),
-                    _Depth,
-                    Color,
-                    _Transform);
 
                 m_Renderer->push_rectangle_filled(
                     textBoundingBox.Min,
                     textBoundingBox.Max,
                     _Depth,
                     Color,
-                    _Transform);
+                    gs_mat4f(1.f));
+
+                m_Renderer->push_rectangle_filled(
+                    textBoundingBox.Min,
+                    textBoundingBox.Max,
+                    _Depth,
+                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                    gs_mat4f(1.f));
 
                 // m_Renderer->push_utf8_text(
                 //     _Name,
