@@ -59,8 +59,24 @@ namespace Frenchie
                 const gs_mat4f&                _Transform,
                 const RenderingQueueTexture&   _Texture = RenderingQueueTexture());
 
-            void push_text(
+            void push_utf8_text(
                 const std::string&        _Text,
+                const float&              _Size,
+                const gs_vec2f&           _Position,
+                const gs_vec4f&           _Color,
+                const gs_mat4f&           _Transform,
+                const RenderingQueueFont& _Font = RenderingQueueFont());
+
+            void push_utf16_text(
+                const std::u16string&     _Text,
+                const float&              _Size,
+                const gs_vec2f&           _Position,
+                const gs_vec4f&           _Color,
+                const gs_mat4f&           _Transform,
+                const RenderingQueueFont& _Font = RenderingQueueFont());
+
+            void push_utf32_text(
+                const std::u32string&     _Text,
                 const float&              _Size,
                 const gs_vec2f&           _Position,
                 const gs_vec4f&           _Color,
@@ -119,6 +135,27 @@ namespace Frenchie
                             _Transform * gs_vec4f(gs_vec2f(gs_min(static_cast<gs_vec2f>(_Args).x...), gs_min(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f),
                             _Transform * gs_vec4f(gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f));
             }
+
+            static gs_rectf calculate_utf32_text_bounding_box(
+                const std::u32string&     _Text,
+                const float&              _Size,
+                const gs_vec2f&           _Position,
+                const gs_mat4f&           _Transform,
+                const RenderingQueueFont& _Font);
+
+            static gs_rectf calculate_utf16_text_bounding_box(
+                const std::u16string&     _Text,
+                const float&              _Size,
+                const gs_vec2f&           _Position,
+                const gs_mat4f&           _Transform,
+                const RenderingQueueFont& _Font);
+
+            static gs_rectf calculate_utf8_text_bounding_box(
+                const std::string&        _Text,
+                const float&              _Size,
+                const gs_vec2f&           _Position,
+                const gs_mat4f&           _Transform,
+                const RenderingQueueFont& _Font);
 
             template<typename ...Args>
             void push_polygon(
@@ -289,13 +326,6 @@ namespace Frenchie
                 const gs_vec4f&                    _Color,
                 std::vector<RenderingQueueVertex>& _Vertexes,
                 std::vector<int>&                  _Indexes);
-
-            static gs_rectf calculate_text_bounding_box(
-                const std::string&        _Text,
-                const float&              _Size,
-                const gs_vec2f&           _Position,
-                const gs_mat4f&           _Transform,
-                const RenderingQueueFont& _Font);
 
             // this is a plipeline
             std::vector<RenderingQueueVertex>  m_TriangulationQueue      {std::vector<RenderingQueueVertex>()};

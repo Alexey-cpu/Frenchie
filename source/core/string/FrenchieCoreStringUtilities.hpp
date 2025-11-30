@@ -38,6 +38,14 @@ namespace Frenchie
             // to string conversion
             template <typename Type>
             std::string to_string(const Type& _Input);
+
+            // to UTF-8
+            std::string convert_utf16_to_utf8(const std::u16string&);
+            std::string convert_utf32_to_utf8(const std::u32string&);
+
+            // from UTF-8
+            std::u16string convert_utf8_to_utf16(const std::string&);
+            std::u32string convert_utf8_to_utf32(const std::string&);
         }
     }
 }
