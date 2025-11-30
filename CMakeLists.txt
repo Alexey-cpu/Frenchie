@@ -24,13 +24,7 @@ message("===================================================")
 # include CMake utilities
 #--------------------------------------------------------------
 include("cmake/collect_source_code_and_resources.cmake")
-include("tools/fmt.cmake")
 include("tools/glfw.cmake")
-include("tools/spdlog.cmake")
-include("tools/rapidjson.cmake")
-include("tools/ryml.cmake")
-include("tools/pugixml.cmake")
-include("tools/pcre2.cmake")
 
 #--------------------------------------------------------------
 # add executable
@@ -56,29 +50,7 @@ add_executable(
 
     "source/main.cpp"
     )
-target_link_libraries(
-    OpenGL
-
-    # OpenGL backend
-    glfw
-
-    # FMT
-    fmt::fmt
-
-    # RYML
-    ryml::ryml
-
-    # PUGIXML
-    pugixml::pugixml
-
-    # SPDLOG
-    spdlog::spdlog
-
-    # PCRE
-    pcre2-8
-    pcre2-16
-    pcre2-32
-    )
+target_link_libraries(OpenGL glfw)
 
 target_include_directories(
     OpenGL 

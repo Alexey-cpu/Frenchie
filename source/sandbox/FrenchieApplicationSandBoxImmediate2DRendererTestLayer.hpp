@@ -141,31 +141,31 @@ namespace Frenchie
                 //     gs_vec2f(+150.f, +150.f)
                 // );
 
-                // m_Renderer->push_polygon(
-                //     0.f,
-                //     m_Renderer->m_DefaultTexture,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform,
-                //     gs_vec2f(0.f, -100.f),
-                //     gs_vec2f(-50.f, +0.f),
-                //     gs_vec2f(-100.f, +100.f),
-                //     gs_vec2f(0.f, +150.f),
-                //     gs_vec2f(+50.f, +100.f),
-                //     gs_vec2f(+0.f, +50.f),
-                //     gs_vec2f(+50.f, +0.f),
-                //     gs_vec2f(+50.f, -50.f)
-                // );
-
                 m_Renderer->push_polygon(
                     0.f,
                     m_Renderer->m_DefaultTexture,
                     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                     Transform,
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(0.f, +50.f),
-                    gs_vec2f(+50.f, +50.f),
-                    gs_vec2f(+50.f, +0.f)
+                    gs_vec2f(0.f, -100.f),
+                    gs_vec2f(-50.f, +0.f),
+                    gs_vec2f(-100.f, +100.f),
+                    gs_vec2f(0.f, +150.f),
+                    gs_vec2f(+50.f, +100.f),
+                    gs_vec2f(+0.f, +50.f),
+                    gs_vec2f(+50.f, +0.f),
+                    gs_vec2f(+50.f, -50.f)
                 );
+
+                // m_Renderer->push_polygon(
+                //     0.f,
+                //     m_Renderer->m_DefaultTexture,
+                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                //     Transform,
+                //     gs_vec2f(0.f, 0.f),
+                //     gs_vec2f(0.f, +50.f),
+                //     gs_vec2f(+50.f, +50.f),
+                //     gs_vec2f(+50.f, +0.f)
+                // );
 
                 // auto bbox = m_Renderer->calculate_bounding_box(
                 //     Transform,
@@ -214,9 +214,11 @@ namespace Frenchie
             {
                 auto text = "Hello world\n\tMy name is Alexey =)";
                 
-                m_Renderer->push_text(text, 128.f, gs_vec2f(0.f, 0.f), gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
+                gs_vec2f position = gs_vec2f(32.f, 32.f);
 
-                auto rect = m_Renderer->calculate_text_bounding_box(text, 128.f, gs_vec2f(0.f, 0.f), Transform, m_Renderer->m_DefaultFont);
+                m_Renderer->push_text(text, 128.f, position, gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
+
+                auto rect = m_Renderer->calculate_text_bounding_box(text, 128.f, position, Transform, m_Renderer->m_DefaultFont);
 
                 m_Renderer->push_rectangle_rounded(
                     rect.Min,

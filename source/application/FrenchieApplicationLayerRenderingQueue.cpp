@@ -58,6 +58,7 @@ void RenderingQueue::frame_render()
         set_shader_uniform(shader, "u_Texture", 0);
 
         begin_use_texture(texture);
+        //begin_use_mesh(mesh, RenderingQueueRendererHints_::RenderingQueueRendererHints_Lines);
         begin_use_mesh(mesh);
         
         end_use_shader();

@@ -948,6 +948,22 @@ inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs
     return gs_vector<Type, 3>(Ay * Bz - By * Az, Az * Bx - Bz * Ax, Ax * By - Bx * Ay);
 }
 
+// Function to check if a point is inside a polygon using
+// the ray-casting algorithm
+template<typename Type>
+int gs_point_in_2D_polygon(const gs_vector<Type, 2>* polygon, const int nvert, const gs_vector<Type, 2>& point)
+{
+    int i, j, c = 0;
+
+    for (i = 0, j = nvert-1; i < nvert; j = i++) 
+    {
+        if(((polygon[i].y > point.y) != (polygon[j].y>point.y)) &&
+            (point.x < (polygon[j].x-polygon[i].x) * (point.y-polygon[i].y) / (polygon[j].y-polygon[i].y) + polygon[i].x)) c = !c;
+    }
+
+    return c;
+}
+
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_scale(const gs_matrix<Type, 4, 4>& _Matrix, const gs_vector<Type, 3>& _Transform)
 {
