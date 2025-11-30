@@ -269,11 +269,11 @@ RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, 
     // make a most likely large enough bitmap, adjust to font type, number of sizes and glyphs and oversampling
     int atlasWidth     = 32;
     int atlasHeight    = 32;
-    int atlasMaxHeight = 4096;
-    int atlasMaxWidth  = 4096;
+    int atlasMaxHeight = 16;
+    int atlasMaxWidth  = 32;
     int atlasMaxSize   = 4096;
     
-    while (true)
+    while (atlasWidth < atlasMaxWidth && atlasHeight < atlasMaxHeight)
     {
         atlasWidth  = 0;
         atlasHeight = 0;
@@ -324,9 +324,6 @@ RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, 
             atlasWidth  = std::max<int>(atlasWidth, width);
             atlasHeight += std::max<int>(maxHeight, 1);
         }
-
-        if(atlasHeight >= atlasMaxSize && atlasMaxWidth >= atlasMaxSize)
-            atlasMaxSize *= 2;
 
         atlasMaxWidth *= 2;
         atlasMaxWidth  = std::min<int>(atlasMaxWidth, atlasMaxSize);
@@ -410,13 +407,13 @@ RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, 
         float unusedX, unusedY;
 
         stbtt_GetPackedQuad(
-            packedCharacters.get(),          // Array of stbtt_packedchar
-            atlasWidth,                      // Width of the font atlas texture
-            atlasHeight,                     // Height of the font atlas texture
+            packedCharacters.get(),            // Array of stbtt_packedchar
+            atlasWidth,                        // Width of the font atlas texture
+            atlasHeight,                       // Height of the font atlas texture
             idx,                               // Index of the glyph
-            &unusedX, &unusedY,              // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
+            &unusedX, &unusedY,                // current position of the glyph in screen pixel coordinates, (not required as we have a different corrdinate system)
             &packedCharactersQuads.get()[idx], // stbtt_alligned_quad struct. (this struct mainly consists of the texture coordinates)
-            0                                // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
+            0                                  // Allign X and Y position to a integer (doesn't matter because we are not using 'unusedX' and 'unusedY')
         );
     }
 
