@@ -48,8 +48,8 @@ namespace Frenchie
                 if(m_Renderer == nullptr)
                     return;
 
-                //draw_text();
-                draw_triangle_filled();
+                draw_text();
+                //draw_triangle_filled();
 
                 // for(int i = 0; i < 12; ++i)
                 // {
@@ -212,13 +212,13 @@ namespace Frenchie
 
             void draw_text()
             {
-                auto text = "Hello world\n\tMy name is Alexey =)";
+                auto text = "Всем привет, меня зовут Алексей !!!";
                 
                 gs_vec2f position = gs_vec2f(32.f, 32.f);
 
-                m_Renderer->push_text(text, 128.f, position, gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
+                m_Renderer->push_utf8_text(text, 128.f, position, gs_vec4f(255.f, 0.f ,0.f, 128.f), Transform);
 
-                auto rect = m_Renderer->calculate_text_bounding_box(text, 128.f, position, Transform, m_Renderer->m_DefaultFont);
+                auto rect = m_Renderer->calculate_utf8_text_bounding_box(text, 128.f, position, Transform, m_Renderer->m_DefaultFont);
 
                 m_Renderer->push_rectangle_rounded(
                     rect.Min,

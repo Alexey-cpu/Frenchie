@@ -258,7 +258,8 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
             // font API
-            RenderingQueueFont construct_font(unsigned char* _Memory, const int& _Size);
+            RenderingQueueFont construct_font(const unsigned char* _Memory, const int& _Size);
+            RenderingQueueFont construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _Size);
             RenderingQueueFont construct_font(const char* _FilePath, const int& _Size);
             void destroy_font(const RenderingQueueFont& _Font);
 
