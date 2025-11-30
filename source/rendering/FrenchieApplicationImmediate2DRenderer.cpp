@@ -5641,6 +5641,7 @@ void Immediate2DRenderer::push_utf8_text(
     const std::string&        _Text,
     const float&              _Size,
     const gs_vec2f&           _Position,
+    const float&              _Depth,
     const gs_vec4f&           _Color,
     const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
@@ -5649,6 +5650,7 @@ void Immediate2DRenderer::push_utf8_text(
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
         _Size,
         _Position,
+        _Depth,
         _Color,
         _Transform,
         _Font
@@ -5659,6 +5661,7 @@ void Immediate2DRenderer::push_utf16_text(
     const std::u16string&     _Text,
     const float&              _Size,
     const gs_vec2f&           _Position,
+    const float&              _Depth,
     const gs_vec4f&           _Color,
     const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
@@ -5667,6 +5670,7 @@ void Immediate2DRenderer::push_utf16_text(
         Frenchie::Core::String::convert_utf16_to_utf8(_Text),
         _Size,
         _Position,
+        _Depth,
         _Color,
         _Transform,
         _Font
@@ -5677,6 +5681,7 @@ void Immediate2DRenderer::push_utf32_text(
     const std::u32string&     _Text,
     const float&              _Size,
     const gs_vec2f&           _Position,
+    const float&              _Depth,
     const gs_vec4f&           _Color,
     const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
@@ -5729,7 +5734,7 @@ void Immediate2DRenderer::push_utf32_text(
             glyph.MinUV,
             glyph.MaxUV,
             _Color,
-            0.f,
+            _Depth,
             m_Vertexes,
             m_Indexes
         );

@@ -334,6 +334,11 @@ struct gs_rect
         return Max - Min;
     }
 
+    // gs_vector<Type, 2> get_center() const
+    // {
+    //     return (Max - Min) * 0.5f;
+    // }
+
     bool contains(const gs_vector<Type, 2>& _Point) const
     {
         return _Point.x >= Min.x &&

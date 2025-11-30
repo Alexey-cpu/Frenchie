@@ -167,6 +167,7 @@ void RenderingQueue::frame_render()
         auto texture   = m_Commands[i].Texture;
         auto transform = m_Commands[i].Transform;
 
+        begin_use_texture(texture);
         begin_use_shader(shader);
 
         set_shader_uniform(shader, "u_ModelMatrix", transform);
@@ -174,12 +175,11 @@ void RenderingQueue::frame_render()
         set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
         set_shader_uniform(shader, "u_Texture", 0);
 
-        begin_use_texture(texture);
         //begin_use_mesh(mesh, RenderingQueueRendererHints_::RenderingQueueRendererHints_Lines);
         begin_use_mesh(mesh);
         
-        end_use_shader();
         end_use_texture();
+        end_use_shader();
         end_use_mesh();
 
         destroy_mesh(mesh);
@@ -475,7 +475,7 @@ RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, 
         {
             for (int c = 0; c < channels; c++)
             {
-                colorifiedAtlasBitMap.get()[channels * (y * atlasWidth + x) + c  ] =
+                colorifiedAtlasBitMap.get()[channels * (y * atlasWidth + x) + c] =
                     atlasBitMap.get()[(y * atlasWidth + x)];
             }
         }

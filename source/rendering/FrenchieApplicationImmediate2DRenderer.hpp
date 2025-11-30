@@ -63,6 +63,7 @@ namespace Frenchie
                 const std::string&        _Text,
                 const float&              _Size,
                 const gs_vec2f&           _Position,
+                const float&              _Depth,
                 const gs_vec4f&           _Color,
                 const gs_mat4f&           _Transform,
                 const RenderingQueueFont& _Font = RenderingQueueFont());
@@ -71,6 +72,7 @@ namespace Frenchie
                 const std::u16string&     _Text,
                 const float&              _Size,
                 const gs_vec2f&           _Position,
+                const float&              _Depth,
                 const gs_vec4f&           _Color,
                 const gs_mat4f&           _Transform,
                 const RenderingQueueFont& _Font = RenderingQueueFont());
@@ -79,6 +81,7 @@ namespace Frenchie
                 const std::u32string&     _Text,
                 const float&              _Size,
                 const gs_vec2f&           _Position,
+                const float&              _Depth,
                 const gs_vec4f&           _Color,
                 const gs_mat4f&           _Transform,
                 const RenderingQueueFont& _Font = RenderingQueueFont());
