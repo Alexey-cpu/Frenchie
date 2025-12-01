@@ -1,8 +1,5 @@
 #pragma once
 
-// // Core
-// #include <FrenchieCoreFactory.hpp>
-
 // STL
 #include <string>
 #include <memory>

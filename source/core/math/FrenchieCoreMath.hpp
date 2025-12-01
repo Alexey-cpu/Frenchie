@@ -742,6 +742,9 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
 
     for(int i = 0; i < Size; i++)
     {
+        // initialize permutations vector
+        result.InverseRowsPermutations[i] = i;
+
         // search pivot within the column
         Type vmax = result.Matrix[i][i];
         int  imax = i;
@@ -757,7 +760,8 @@ auto gs_matrix_factor_square(const gs_matrix<Type, Size, Size>& _Matrix)
             }
         }
 
-        if(gs_abs(vmax) <= 0) continue;
+        if(gs_abs(vmax) <= 0)
+            continue;
 
         // intercnange rows
         result.InverseRowsPermutations[i] = imax;
@@ -999,7 +1003,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const gs_matrix<Type, 4, 4>& _Matr
     gs_vector<Type, 3> axis(gs_vector_normalize(_Axis));
     gs_vector<Type, 3> temp(axis * (static_cast<Type>(1) - c));
 
-    gs_matrix<Type, 4, 4> transform;
+    gs_matrix<Type, 4, 4> transform(1.f);
     transform[0][0] = c + temp[0] * axis[0];
     transform[0][1] = temp[0] * axis[1] + s * axis[2];
     transform[0][2] = temp[0] * axis[2] - s * axis[1];

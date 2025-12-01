@@ -143,6 +143,15 @@ void RenderingQueue::set_cameraview_matrix(const gs_mat4f& _Matrix)
     m_CameraViewMatrix = _Matrix;
 }
 
+gs_mat4f RenderingQueue::get_projection_matrix() const
+{
+    return m_ProjectionMatrix;
+}
+
+gs_mat4f RenderingQueue::get_cameraview_matrix() const
+{
+    return m_CameraViewMatrix;
+}
 
 bool RenderingQueue::awake()
 {
@@ -204,6 +213,16 @@ void RenderingQueue::quit()
 bool RenderingQueue::allows_multiple_instances() const
 {
     return false;
+}
+
+gs_vec2f RenderingQueue::convert_to_NDC(const gs_vec2f& _Position)
+{
+    auto size = Frenchie::Application::application()->get_window_size();
+
+    float ndc_x = (2.0f * _Position.x) / size.x - 1.0f;
+    float ndc_y = 1.0f - (2.0f * _Position.y) / size.y;
+
+    return {ndc_x, ndc_y};
 }
 
 RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, const int& _SizeInPixels)
