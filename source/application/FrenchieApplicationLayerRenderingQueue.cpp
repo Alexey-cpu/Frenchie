@@ -133,16 +133,6 @@ namespace Frenchie
 RenderingQueue::RenderingQueue(){}
 RenderingQueue::~RenderingQueue(){}
 
-void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
-{
-    m_ProjectionMatrix = _Matrix;
-}
-
-void RenderingQueue::set_cameraview_matrix(const gs_mat4f& _Matrix)
-{
-    m_CameraViewMatrix = _Matrix;
-}
-
 gs_mat4f RenderingQueue::get_projection_matrix() const
 {
     return m_ProjectionMatrix;
@@ -151,6 +141,29 @@ gs_mat4f RenderingQueue::get_projection_matrix() const
 gs_mat4f RenderingQueue::get_cameraview_matrix() const
 {
     return m_CameraViewMatrix;
+}
+
+void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
+{
+    m_ProjectionMatrix = _Matrix;
+}
+
+gs_vec3f RenderingQueue::get_cursor_postion() const
+{
+    auto size     = Frenchie::Application::application()->get_window_size();
+    auto position = Frenchie::Application::application()->get_window_cursor_position();
+
+    float ndc_x = (2.0f * position.x) / size.x - 1.0f;
+    float ndc_y = 1.0f - (2.0f * position.y) / size.y;
+
+    return gs_matrix_invert_square(Frenchie::Application::application_rendering_queue()->get_projection_matrix()) *
+           gs_matrix_invert_square(Frenchie::Application::application_rendering_queue()->get_cameraview_matrix()) *
+           gs_vec4f(ndc_x, ndc_y, 0.f, 1.f);
+}
+
+void RenderingQueue::set_cameraview_matrix(const gs_mat4f& _Matrix)
+{
+    m_CameraViewMatrix = _Matrix;
 }
 
 bool RenderingQueue::awake()

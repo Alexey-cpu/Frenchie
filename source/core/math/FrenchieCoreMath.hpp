@@ -334,11 +334,6 @@ struct gs_rect
         return Max - Min;
     }
 
-    // gs_vector<Type, 2> get_center() const
-    // {
-    //     return (Max - Min) * 0.5f;
-    // }
-
     bool contains(const gs_vector<Type, 2>& _Point) const
     {
         return _Point.x >= Min.x &&
@@ -960,14 +955,14 @@ inline gs_vector<Type, 3> gs_vector_cross(const gs_vector<Type, 3>& _A, const gs
 // Function to check if a point is inside a polygon using
 // the ray-casting algorithm
 template<typename Type>
-int gs_point_in_2D_polygon(const gs_vector<Type, 2>* polygon, const int nvert, const gs_vector<Type, 2>& point)
+int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _VertexesCount, const gs_vector<Type, 2>& _Point)
 {
     int i, j, c = 0;
 
-    for (i = 0, j = nvert-1; i < nvert; j = i++) 
+    for (i = 0, j = _VertexesCount-1; i < _VertexesCount; j = i++) 
     {
-        if(((polygon[i].y > point.y) != (polygon[j].y>point.y)) &&
-            (point.x < (polygon[j].x-polygon[i].x) * (point.y-polygon[i].y) / (polygon[j].y-polygon[i].y) + polygon[i].x)) c = !c;
+        if(((_Polygon[i].y > _Point.y) != (_Polygon[j].y > _Point.y)) &&
+            (_Point.x < (_Polygon[j].x - _Polygon[i].x) * (_Point.y - _Polygon[i].y) / (_Polygon[j].y-_Polygon[i].y) + _Polygon[i].x)) c = !c;
     }
 
     return c;

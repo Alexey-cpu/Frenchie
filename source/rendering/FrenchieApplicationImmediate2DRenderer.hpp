@@ -17,9 +17,6 @@ namespace Frenchie
             Immediate2DRenderer();
             virtual ~Immediate2DRenderer();
 
-            // getters
-
-
             virtual bool awake() override;
             virtual void frame_start() override;
             virtual void frame_render() override;
@@ -32,7 +29,7 @@ namespace Frenchie
                 const gs_mat4f&              _Transform);
 
             // rendering API
-            void push_triangle_filled(
+            bool push_triangle_filled(
                 const gs_vec2f&              _P1,
                 const gs_vec2f&              _P2,
                 const gs_vec2f&              _P3,
@@ -43,7 +40,7 @@ namespace Frenchie
                 const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
 
-            void push_rectangle_filled(
+            bool push_rectangle_filled(
                 const gs_vec2f&              _Min,
                 const gs_vec2f&              _Max,
                 const gs_vec4f&              _Color,
@@ -53,7 +50,17 @@ namespace Frenchie
                 const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
 
-            void push_utf32_text(
+            bool push_rectangle_rounded_filled(
+                const gs_vec2f& _Min,
+                const gs_vec2f& _Max,
+                const float&    _Radius,
+                const gs_vec4f& _Color,
+                const float&    _Depth,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+
+            bool push_utf32_text(
                 const std::u32string&     _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
@@ -63,7 +70,7 @@ namespace Frenchie
                 const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueFont& _Font     = RenderingQueueFont());
 
-            void push_utf16_text(
+            bool push_utf16_text(
                 const std::u16string&     _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
@@ -73,7 +80,7 @@ namespace Frenchie
                 const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueFont& _Font     = RenderingQueueFont());
 
-            void push_utf8_text(
+            bool push_utf8_text(
                 const std::string&        _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
@@ -83,7 +90,7 @@ namespace Frenchie
                 const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueFont& _Font     = RenderingQueueFont());
 
-            void push_arc_filled(
+            bool push_arc_filled(
                 const gs_vec2f&              _Center,
                 const float&                 _MinorRadius,
                 const float&                 _MajorRadius,
@@ -96,7 +103,7 @@ namespace Frenchie
                 const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
 
-            void push_line(
+            bool push_line(
                 const gs_vec2f& _P1,
                 const gs_vec2f& _P2,
                 const float&    _Width,
@@ -106,7 +113,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            void push_arc(
+            bool push_arc(
                 const gs_vec2f& _Center,
                 const float&    _MinorRadius,
                 const float&    _MajorRadius,
@@ -119,7 +126,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            void push_triangle(
+            bool push_triangle(
                 const gs_vec2f& _P1,
                 const gs_vec2f& _P2,
                 const gs_vec2f& _P3,
@@ -130,7 +137,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            void push_rectangle(
+            bool push_rectangle(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Width,
@@ -140,7 +147,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            void push_rectangle_rounded(
+            bool push_rectangle_rounded(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Radius,
