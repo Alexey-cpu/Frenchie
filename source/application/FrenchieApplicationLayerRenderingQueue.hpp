@@ -247,6 +247,10 @@ namespace Frenchie
             void set_projection_matrix(const gs_mat4f&);
             void set_cameraview_matrix(const gs_mat4f&);
 
+            // getters
+            gs_mat4f get_projection_matrix() const;
+            gs_mat4f get_cameraview_matrix() const;
+
             // Layer API
             virtual bool awake() override;
             virtual void frame_start() override;
@@ -256,6 +260,8 @@ namespace Frenchie
             virtual void finish() override;
             virtual void quit() override;
             virtual bool allows_multiple_instances() const override;
+
+            gs_vec2f convert_to_NDC(const gs_vec2f&);
 
             // font API
             RenderingQueueFont construct_font(const unsigned char* _Memory, const int& _Size);

@@ -2,6 +2,9 @@
 
 #include <FrenchieApplicationImmediate2DRenderer.hpp>
 
+// STL
+#include <chrono>
+
 template<typename Type> struct Tree;
 
 template<typename Type>
@@ -117,27 +120,30 @@ namespace Frenchie
                     m_Renderer = Frenchie::Application::application()->push_layer<Immediate2DRenderer>();
                 }
 
+                AwakeTime = std::chrono::high_resolution_clock::now();
+
                 return m_Renderer != nullptr;
             }
 
             virtual void frame_start() override
             {
                 // add graphical primitives
-                // if(Frenchie::Application::application()
-                //     ->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
-                // {
-                //     auto x = Frenchie::Application::application()->get_window_cursor_position().x;
-                //     auto y = Frenchie::Application::application()->get_window_cursor_position().y;
+                if(Frenchie::Application::application()
+                    ->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
+                {
+                    auto size     = Frenchie::Application::application()->get_window_size();
+                    auto position = Frenchie::Application::application()->get_window_cursor_position();
 
-                //     Transform = gs_matrix_translate(
-                //         gs_mat4f(1),
-                //         gs_vec3f(
-                //             x, 
-                //             -y, 
-                //             -100.f
-                //         )
-                //     );
-                // }
+                    float ndc_x = (2.0f * position.x) / size.x - 1.0f;
+                    float ndc_y = 1.0f - (2.0f * position.y) / size.y;
+
+                    Position =
+                        gs_matrix_invert_square(Frenchie::Application::application_rendering_queue()->get_projection_matrix()) *
+                        gs_matrix_invert_square(Frenchie::Application::application_rendering_queue()->get_cameraview_matrix()) *
+                        gs_vec4f(ndc_x, ndc_y, 0, 1.f);
+                }
+
+                Time = std::chrono::high_resolution_clock::now();
             }
 
             virtual void frame_update() override
@@ -145,266 +151,260 @@ namespace Frenchie
                 if(m_Renderer == nullptr)
                     return;
 
+                m_Renderer->push_rectangle(
+                    m_Renderer->m_Viewport.Min,
+                    m_Renderer->m_Viewport.Max,
+                    12.f,
+                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                    0.f
+                );
+
+                //draw_triangle_filled();
                 //draw_rectangle_filled();
                 draw_text();
-                //draw_triangle_filled();
-
-                // for(int i = 0; i < 12; ++i)
-                // {
-                //     for(int j = 0; j < 12; ++j)
-                //     {
-                //         float lineWidth = 8.f;
-                //         float R = 128.f;
-
-                //         // m_Renderer->push_triangle_filled(
-                //         //     gs_vec2f(i * R * 2, j * R * 2),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 + R),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 - R),
-                //         //     +0.f,
-                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //         //     Transform
-                //         // );
-
-                //         // m_Renderer->push_triangle(
-                //         //     gs_vec2f(i * R * 2, j * R * 2),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 + R),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 - R),
-                //         //     +0.f,
-                //         //     lineWidth,
-                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //         //     Transform
-                //         // );
-
-                //         // m_Renderer->push_rectangle(
-                //         //     gs_vec2f(i * R * 2, j * R * 2),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 + R),
-                //         //     +0.f,
-                //         //     lineWidth,
-                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //         //     Transform);
-
-                //         m_Renderer->push_arc_filled(
-                //             gs_vec2f(i * R * 2, j * R * 2),
-                //             +R,
-                //             +R,
-                //             0.f,
-                //             360.f,
-                //             0.f,
-                //             gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //             Transform
-                //         );
-
-                //         // m_Renderer->push_rectangle_rounded(
-                //         //     gs_vec2f(i * R * 2, j * R * 2),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 + R),
-                //         //     32,
-                //         //     +0.f,
-                //         //     lineWidth,
-                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //         //     Transform);
-
-                //         // m_Renderer->push_rectangle_filled(
-                //         //     gs_vec2f(i * R * 2, j * R * 2),
-                //         //     gs_vec2f(i * R * 2 + R, j * R * 2 + R),
-                //         //     +0.f,
-                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //         //     Transform);
-
-                //         // m_Renderer->push_arc(
-                //         //     gs_vec2f(i * R * 2, j * R * 2),
-                //         //     +R,
-                //         //     +R * 0.5f,
-                //         //     0.f,
-                //         //     360.f,
-                //         //     0.f,
-                //         //     lineWidth,
-                //         //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //         //     Transform
-                //         // );
-                //     }
-                // }
+                //draw_arc_filled();
+                //draw_line();
+                //draw_arc();
+                //draw_rectangle();
+                //draw_rectangle_rounded();
             }
 
             void draw_triangle_filled()
             {
-                // m_Renderer->push_polygon(
-                //     0.f,
-                //     m_Renderer->m_DefaultTexture,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform,
-                //     gs_vec2f(0.f, -150.f),
-                //     gs_vec2f(-150.f, +0.f),
-                //     gs_vec2f(-75.f, +75.f),
-                //     gs_vec2f(-150.f, +150.f),
-                //     gs_vec2f(+150.f, +150.f)
-                // );
-
-                // m_Renderer->push_polygon(
-                //     0.f,
-                //     m_Renderer->m_DefaultTexture,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform,
-                //     gs_vec2f(0.f, -100.f),
-                //     gs_vec2f(-50.f, +0.f),
-                //     gs_vec2f(-100.f, +100.f),
-                //     gs_vec2f(0.f, +150.f),
-                //     gs_vec2f(+50.f, +100.f),
-                //     gs_vec2f(+0.f, +50.f),
-                //     gs_vec2f(+50.f, +0.f),
-                //     gs_vec2f(+50.f, -50.f)
-                // );
-
-                // m_Renderer->push_polygon(
-                //     0.f,
-                //     m_Renderer->m_DefaultTexture,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform,
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(0.f, +50.f),
-                //     gs_vec2f(+50.f, +50.f),
-                //     gs_vec2f(+50.f, +0.f)
-                // );
-
-                // auto bbox = m_Renderer->calculate_bounding_box(
-                //     Transform,
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(+75.f, +150.f),
-                //     gs_vec2f(+450.f, -150.f)
-                // );
-
-                // m_Renderer->push_triangle_filled(
-                //     gs_vec2f(0.f, 0.f),
-                //     gs_vec2f(+50.f, +50.f),
-                //     gs_vec2f(0, +50.f),
-                //     +0.f,
-                //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                //     Transform
-                // );
-
-                // m_Renderer->push_rectangle(
-                //     bbox.Min,
-                //     bbox.Max,
-                //     -100.f,
-                //     12.f,
-                //     gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                //     gs_mat4f(1.f)
-                // );
+                m_Renderer->push_triangle_filled(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(+150.f, +150.f),
+                    gs_vec2f(+150.f, -150.f),
+                    gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                    +0.f,
+                    Position,
+                    (float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f),
+                    gs_vec2f(1.5, 2.5)
+                );
             }
 
             void draw_rectangle_filled()
             {
                 m_Renderer->push_rectangle_filled(
-                    gs_vec2f(0.f, -0.f),
-                    gs_vec2f(128.f, -128.f),
-                    +100.f,
-                    gs_vec4f(255.f, 0.f, 0.f, 32.f),
-                    Transform);
-
-                m_Renderer->push_rectangle_filled(
-                    gs_vec2f(128.f, -128.f),
-                    gs_vec2f(128.f + 64.f, -128.f -64.f),
-                    +100.f,
-                    gs_vec4f(0.f, 255.f, 0.f, 12.f),
-                    Transform);
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(+150.f, +150.f),
+                    gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                    +0.f,
+                    Position,
+                    (float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f),
+                    gs_vec2f(1.5, 2.5)
+                );
             }
 
             void draw_text()
             {
-                auto text = "Всем привет, меня зовут Алексей !!!";
-                
-                auto x = Frenchie::Application::application()->get_window_size().x;
-                auto y = Frenchie::Application::application()->get_window_size().y;
+                std::string text = "Hello. My name is Alexey\n\t and im very glad to see you )";
 
-                gs_vec2f position = gs_vec2f(x * 0.5f, -y * 0.5f) ;
+                float    lineWidth = 8.f;
+                gs_vec4f lineColor = gs_vec4f(255.f, 32.f, 32.f, 128.f);
+                float    lineAngle = 0.f;//(float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f);
+                gs_vec2f scale     = gs_vec2f(1.f, 1.f);
 
-                float size = 32.f;
-
-                build_push_button_mesh(
+                auto textBox = m_Renderer->calculate_bounding_box(
+                    +0.f,
+                    Position,
+                    lineAngle,
+                    scale,
                     text,
                     32.f,
-                    position,
+                    m_Renderer->m_DefaultFont
+                );
+
+                m_Renderer->push_rectangle(
+                    textBox.Min - lineWidth,
+                    textBox.Max + lineWidth,
+                    lineWidth,
+                    gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                    +0.f
+                );
+
+                m_Renderer->push_utf8_text(
+                    text,
+                    32.f,
+                    gs_vec4f(255.f, 0.f, 0.f, 128.f),
+                    +0.f,
+                    Position,
+                    lineAngle,
+                    scale
+                );
+            }
+
+            void draw_arc_filled()
+            {
+                m_Renderer->push_arc_filled(
+                    gs_vec2f(0.f, 0.f),
+                    128.f,
+                    256.f,
                     0.f,
-                    gs_matrix_translate(gs_mat4f(1.f), gs_vec3f(25.f, -25.f)));
+                    270.f,
+                    gs_vec4f(255.f, 32.f, 32.f, 128.f),
+                    +0.f,
+                    Position,
+                    (float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f),
+                    gs_vec2f(1.5, 2.5)
+                );
+            }
+
+            void draw_line()
+            {
+                float    lineWidth = 16.f;
+                gs_vec4f lineColor = gs_vec4f(255.f, 32.f, 32.f, 128.f);
+                float    lineAngle = 0.f;// (float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f);
+
+                m_Renderer->push_line(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(150.f, 150.f),
+                    lineWidth,
+                    lineColor,
+                    +0.f,
+                    Position,
+                    lineAngle,
+                    gs_vec2f(1.5, 2.5)
+                );
+
+                m_Renderer->push_line(
+                    gs_vec2f(150.f, 150.f),
+                    gs_vec2f(150.f, -150.f),
+                    lineWidth,
+                    lineColor,
+                    +0.f,
+                    Position,
+                    lineAngle,
+                    gs_vec2f(1.5, 2.5)
+                );
+            }
+
+            void draw_arc()
+            {
+                float lineWidth = 16.f;
+
+                m_Renderer->push_arc(
+                    gs_vec2f(0.f, 0.f),
+                    128.f,
+                    256.f,
+                    0.f,
+                    270.f,
+                    lineWidth,
+                    gs_vec4f(255.f, 32.f, 32.f, 128.f),
+                    +0.f,
+                    Position,
+                    (float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f),
+                    gs_vec2f(1.5, 2.5)
+                );
+            }
+
+            void draw_rectangle()
+            {
+                float lineWidth = 16.f;
+                
+                m_Renderer->push_rectangle(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(+150.f, +150.f),
+                    lineWidth,
+                    gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                    +0.f,
+                    Position,
+                    0.f,//(float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f),
+                    gs_vec2f(1.5, 2.5)
+                );
+            }
+
+            void draw_rectangle_rounded()
+            {
+                float lineWidth = 16.f;
+
+                m_Renderer->push_rectangle_rounded(
+                    gs_vec2f(0.f, 0.f),
+                    gs_vec2f(+150.f, +150.f),
+                    32.f,
+                    lineWidth,
+                    gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                    +0.f,
+                    Position,
+                    (float)(PI2 * 50.f * (float)std::chrono::duration_cast<std::chrono::milliseconds>(Time - AwakeTime).count() / 1000.f),
+                    gs_vec2f(1.5, 2.5)
+                );
             }
 
         protected:
 
-            enum ImmedidateUserInterfaceButtonColors
-            {
-                // enabled
-                ImmedidateUserInterfaceButton_Enabled,
-                ImmedidateUserInterfaceButton_EnabledPushed,
-                ImmedidateUserInterfaceButton_EnabledHovered,
-                ImmedidateUserInterfaceButton_EnabledFocused,
+            // enum ImmedidateUserInterfaceButtonColors
+            // {
+            //     // enabled
+            //     ImmedidateUserInterfaceButton_Enabled,
+            //     ImmedidateUserInterfaceButton_EnabledPushed,
+            //     ImmedidateUserInterfaceButton_EnabledHovered,
+            //     ImmedidateUserInterfaceButton_EnabledFocused,
                 
-                // disabled
-                ImmedidateUserInterfaceButton_Disabled,
-                ImmedidateUserInterfaceButton_DisabledPushed,
-                ImmedidateUserInterfaceButton_DisabledHovered,
-                ImmedidateUserInterfaceButton_DisabledFocused,
-            };
+            //     // disabled
+            //     ImmedidateUserInterfaceButton_Disabled,
+            //     ImmedidateUserInterfaceButton_DisabledPushed,
+            //     ImmedidateUserInterfaceButton_DisabledHovered,
+            //     ImmedidateUserInterfaceButton_DisabledFocused,
+            // };
 
-            void build_push_button_mesh(
-                const std::string& _Name,
-                const float&       _FontSize,
-                const gs_vec2f&    _Position,
-                const float&       _Depth,
-                const gs_mat4f&    _Transform)
-            {
-                auto Hovered = gs_vec4f(0.f, 0.f, 255.f, 32.f);
-                auto Pushed  = gs_vec4f(0.f, 255.f, 0.f, 255.f);
-                auto Default = gs_vec4f(255.f, 0.f, 0.f, 255.f);
+            // void build_push_button_mesh(
+            //     const std::string& _Name,
+            //     const float&       _FontSize,
+            //     const gs_vec2f&    _Position,
+            //     const float&       _Depth,
+            //     const gs_mat4f&    _Transform)
+            // {
+            //     auto Hovered = gs_vec4f(0.f, 0.f, 255.f, 32.f);
+            //     auto Pushed  = gs_vec4f(0.f, 255.f, 0.f, 255.f);
+            //     auto Default = gs_vec4f(255.f, 0.f, 0.f, 255.f);
 
-                // compute text bounding box
-                gs_rectf textBoundingBox =
-                    m_Renderer->calculate_utf8_text_bounding_box(
-                        _Name,
-                        _FontSize,
-                        _Position,
-                        _Transform,
-                        m_Renderer->m_DefaultFont);
+            //     // compute text bounding box
+            //     gs_rectf textBoundingBox =
+            //         m_Renderer->calculate_utf8_text_bounding_box(
+            //             _Name,
+            //             _FontSize,
+            //             _Position,
+            //             _Transform,
+            //             m_Renderer->m_DefaultFont);
 
-                auto Color = Default;
+            //     auto Color = Default;
 
-                auto x = Frenchie::Application::application()->get_window_cursor_position().x;
-                auto y = Frenchie::Application::application()->get_window_cursor_position().y;
+            //     auto x = Frenchie::Application::application()->get_window_cursor_position().x;
+            //     auto y = Frenchie::Application::application()->get_window_cursor_position().y;
 
-                if(textBoundingBox.contains(gs_vec2f(x, -y)))
-                {
-                    if(Frenchie::Application::application()->is_mouse_button_pressed(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
-                    {
-                        Color = Pushed;
-                    }
-                    else
-                    {
-                        Color = Hovered;
-                    }
-                }
+            //     if(textBoundingBox.contains(gs_vec2f(x, -y)))
+            //     {
+            //         if(Frenchie::Application::application()->is_mouse_button_pressed(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
+            //         {
+            //             Color = Pushed;
+            //         }
+            //         else
+            //         {
+            //             Color = Hovered;
+            //         }
+            //     }
 
-                m_Renderer->push_rectangle_filled(
-                    textBoundingBox.Min,
-                    textBoundingBox.Max,
-                    _Depth,
-                    Color,
-                    gs_mat4f(1.f));
+            //     m_Renderer->push_rectangle_filled(
+            //         textBoundingBox.Min,
+            //         textBoundingBox.Max,
+            //         _Depth,
+            //         Color,
+            //         gs_mat4f(1.f));
 
-                m_Renderer->push_rectangle_filled(
-                    textBoundingBox.Min,
-                    textBoundingBox.Max,
-                    _Depth,
-                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                    gs_mat4f(1.f));
+            //     m_Renderer->push_rectangle_filled(
+            //         textBoundingBox.Min,
+            //         textBoundingBox.Max,
+            //         _Depth,
+            //         gs_vec4f(0.f, 255.f, 0.f, 255.f),
+            //         gs_mat4f(1.f));
+            // }
 
-                // m_Renderer->push_utf8_text(
-                //     _Name,
-                //     _FontSize,
-                //     _Position,
-                //     _Depth + 1,
-                //     gs_vec4f(0.f, 255.f ,0.f, 128.f),
-                //     _Transform);
-            }
+            gs_vec2f Position;
+            std::chrono::high_resolution_clock::time_point  Time;
+            std::chrono::high_resolution_clock::time_point   AwakeTime;
 
-            gs_mat4f Transform = gs_mat4f(1.f);
+            //gs_mat4f Transform = gs_mat4f(1.f);
             std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
 
         };
