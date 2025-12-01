@@ -267,73 +267,8 @@ RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, 
     lineGap = (int)roundf((float)lineGap * sizeInPixelsScale);
 
     // make a most likely large enough bitmap, adjust to font type, number of sizes and glyphs and oversampling
-    int atlasWidth     = 32;
-    int atlasHeight    = 32;
-    int atlasMaxHeight = 16;
-    int atlasMaxWidth  = 32;
-    int atlasMaxSize   = 4096;
-    
-    while (atlasWidth < atlasMaxWidth && atlasHeight < atlasMaxHeight)
-    {
-        atlasWidth  = 0;
-        atlasHeight = 0;
-        
-        for (int codepoint = unicodeMin; codepoint <= unicodeMax;)
-        {
-            int width = 0;
-            int maxHeight = INT_MIN;
-
-            while (true)
-            {
-                // compute glyph bounding box
-                int glyphXmin = 0;
-                int glyphYmin = 0;
-                int glyphXmax = 0;
-                int glyphYmax = 0;
-
-                stbtt_GetCodepointBitmapBox(
-                    fontInfo.get(),
-                    codepoint,
-                    sizeInPixelsScale,
-                    sizeInPixelsScale,
-                    &glyphXmin,
-                    &glyphYmin,
-                    &glyphXmax,
-                    &glyphYmax
-                );
-
-                int glyphWidth  = (glyphXmax - glyphXmin);
-                int glyphHeight = (glyphYmax - glyphYmin);
-
-                width    += std::max<int>(1, glyphWidth);
-                maxHeight = std::max<int>(glyphHeight, maxHeight);
-
-                ++codepoint;
-
-                if(width >= atlasMaxWidth)
-                {
-                    width -= std::max<int>(1, glyphWidth);
-                    width = atlasMaxWidth;
-                    break;
-                }
-                else
-                {
-                }
-            }
-
-            atlasWidth  = std::max<int>(atlasWidth, width);
-            atlasHeight += std::max<int>(maxHeight, 1);
-        }
-
-        atlasMaxWidth *= 2;
-        atlasMaxWidth  = std::min<int>(atlasMaxWidth, atlasMaxSize);
-
-        if(atlasHeight <= atlasMaxHeight)
-            break;
-
-        atlasMaxHeight *= 2;
-        atlasMaxHeight  = std::min<int>(atlasMaxHeight, atlasMaxSize);
-    }
+    int atlasWidth  = 32;
+    int atlasHeight = 32;
 
     // pack atlas
     std::shared_ptr<stbtt_packedchar> packedCharacters = 
