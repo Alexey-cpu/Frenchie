@@ -243,13 +243,14 @@ namespace Frenchie
             RenderingQueue();
             virtual ~RenderingQueue();
 
-            // setters
-            void set_projection_matrix(const gs_mat4f&);
-            void set_cameraview_matrix(const gs_mat4f&);
-
             // getters
             gs_mat4f get_projection_matrix() const;
             gs_mat4f get_cameraview_matrix() const;
+            gs_vec3f get_cursor_postion() const;
+
+            // setters
+            void set_projection_matrix(const gs_mat4f&);
+            void set_cameraview_matrix(const gs_mat4f&);
 
             // Layer API
             virtual bool awake() override;

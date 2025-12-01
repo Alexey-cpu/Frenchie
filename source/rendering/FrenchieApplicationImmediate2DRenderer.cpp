@@ -183,7 +183,7 @@ void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _T
     m_Vertexes.clear();
 }
 
-void Immediate2DRenderer::push_triangle_filled(
+bool Immediate2DRenderer::push_triangle_filled(
     const gs_vec2f&              _P1,
     const gs_vec2f&              _P2,
     const gs_vec2f&              _P3,
@@ -201,7 +201,7 @@ void Immediate2DRenderer::push_triangle_filled(
         !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)) &&
         !m_Viewport.contains(_Transform * gs_vec4f(_P3, _Depth, 1.f)))
     {
-        return;
+        return false;
     }
 
     Immediate2DRenderer::build_triangle_filled_mesh(
@@ -218,9 +218,11 @@ void Immediate2DRenderer::push_triangle_filled(
         _Color,
         _Transform
     );
+
+    return true;
 }
 
-void Immediate2DRenderer::push_rectangle_filled(
+bool Immediate2DRenderer::push_rectangle_filled(
     const gs_vec2f&              _Min,
     const gs_vec2f&              _Max,
     const gs_vec4f&              _Color,
@@ -238,7 +240,7 @@ void Immediate2DRenderer::push_rectangle_filled(
             _Transform * gs_vec4f(_Min, _Depth, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f))))
     {
-        return;
+        return false;
     }
 
     Immediate2DRenderer::build_rectangle_filled_mesh(
@@ -253,9 +255,69 @@ void Immediate2DRenderer::push_rectangle_filled(
         !_Texture.is_null() ? _Texture : m_DefaultTexture,
         _Color,
         _Transform);
+
+    return true;
 }
 
-void Immediate2DRenderer::push_utf32_text(
+bool Immediate2DRenderer::push_rectangle_rounded_filled(
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Radius,
+    const gs_vec4f& _Color,
+    const float&    _Depth,
+    const gs_vec2f& _Position,
+    const float&    _Rotation,
+    const gs_vec2f& _Scale)
+{
+    gs_mat4f _Transform =
+        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+
+    // check that we are within viewport
+    if(!m_Viewport.overlaps(
+        gs_rectf(
+            _Transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
+            _Transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
+    {
+        return false;
+    }
+
+    // compute radius
+    float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
+
+    // points
+    gs_vec2f TL = gs_vec2f(_Min.x + radius, _Max.y - radius);
+    gs_vec2f BL = gs_vec2f(_Min.x + radius, _Min.y + radius);
+    gs_vec2f TR = gs_vec2f(_Max.x - radius, _Max.y - radius);
+    gs_vec2f BR = gs_vec2f(_Max.x - radius, _Min.y + radius);
+
+    // sides
+    build_arc_filled_mesh(TL, radius, radius, 90.f, 180.f, _Color, m_DefaultTexture, m_Vertexes, m_Indexes);
+    build_arc_filled_mesh(BL, radius, radius, 180.f, 270.f, _Color, m_DefaultTexture, m_Vertexes, m_Indexes);
+    build_arc_filled_mesh(TR, radius, radius, 0.f, 90.f, _Color, m_DefaultTexture, m_Vertexes, m_Indexes);
+    build_arc_filled_mesh(BR, radius, radius, 270.f, 360.f, _Color, m_DefaultTexture, m_Vertexes, m_Indexes);
+
+    Immediate2DRenderer::build_rectangle_filled_mesh(
+        gs_vec2f(_Min.x + 0.f, _Max.y - radius),
+        gs_vec2f(_Max.x - 0.f, _Min.y + radius),
+        _Color,
+        m_DefaultTexture,
+        m_Vertexes,
+        m_Indexes);
+
+    Immediate2DRenderer::build_rectangle_filled_mesh(
+        gs_vec2f(_Min.x + radius, _Max.y - 0.f),
+        gs_vec2f(_Max.x - radius, _Min.y + 0.f),
+        _Color,
+        m_DefaultTexture,
+        m_Vertexes,
+        m_Indexes);
+
+    push_rendering_command(m_DefaultTexture, _Color, _Transform);
+
+    return true;
+}
+
+bool Immediate2DRenderer::push_utf32_text(
     const std::u32string&     _Text,
     const float&              _Size,
     const gs_vec4f&           _Color,
@@ -325,9 +387,11 @@ void Immediate2DRenderer::push_utf32_text(
         font.AtlasTexture,
         _Color,
         construct_transform_matrix(_Depth, _Position, _Rotation, _Scale));
+
+    return true;
 }
 
-void Immediate2DRenderer::push_utf16_text(
+bool Immediate2DRenderer::push_utf16_text(
     const std::u16string&     _Text,
     const float&              _Size,
     const gs_vec4f&           _Color,
@@ -337,7 +401,7 @@ void Immediate2DRenderer::push_utf16_text(
     const gs_vec2f&           _Scale,
     const RenderingQueueFont& _Font)
 {
-    push_utf8_text(
+    return push_utf8_text(
         Frenchie::Core::String::convert_utf16_to_utf8(_Text),
         _Size,
         _Color,
@@ -349,7 +413,7 @@ void Immediate2DRenderer::push_utf16_text(
     );
 }
 
-void Immediate2DRenderer::push_utf8_text(
+bool Immediate2DRenderer::push_utf8_text(
     const std::string&        _Text,
     const float&              _Size,
     const gs_vec4f&           _Color,
@@ -359,7 +423,7 @@ void Immediate2DRenderer::push_utf8_text(
     const gs_vec2f&           _Scale,
     const RenderingQueueFont& _Font)
 {
-    push_utf32_text(
+    return push_utf32_text(
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
         _Size,
         _Color,
@@ -371,7 +435,7 @@ void Immediate2DRenderer::push_utf8_text(
     );
 }
 
-void Immediate2DRenderer::push_arc_filled(
+bool Immediate2DRenderer::push_arc_filled(
     const gs_vec2f&              _Center,
     const float&                 _MinorRadius,
     const float&                 _MajorRadius,
@@ -393,7 +457,7 @@ void Immediate2DRenderer::push_arc_filled(
                 _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f),
                 _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f))))
     {
-        return;
+        return false;
     }
 
     Immediate2DRenderer::build_arc_filled_mesh(
@@ -411,9 +475,11 @@ void Immediate2DRenderer::push_arc_filled(
         !_Texture.is_null() ? _Texture : m_DefaultTexture,
         _Color,
         _Transform);
+
+    return true;
 }
 
-void Immediate2DRenderer::push_line(
+bool Immediate2DRenderer::push_line(
     const gs_vec2f& _P1,
     const gs_vec2f& _P2,
     const float&    _Width,
@@ -429,7 +495,7 @@ void Immediate2DRenderer::push_line(
     if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
         !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)))
     {
-        return;
+        return false;
     }
 
     Immediate2DRenderer::build_line_mesh(
@@ -442,9 +508,11 @@ void Immediate2DRenderer::push_line(
         m_Indexes);
 
     push_rendering_command(m_DefaultTexture, _Color, _Transform);
+
+    return true;
 }
 
-void Immediate2DRenderer::push_arc(
+bool Immediate2DRenderer::push_arc(
     const gs_vec2f& _Center,
     const float&    _MinorRadius,
     const float&    _MajorRadius,
@@ -466,7 +534,7 @@ void Immediate2DRenderer::push_arc(
                 _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f),
                 _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f))))
     {
-        return;
+        return false;
     }
 
     Immediate2DRenderer::build_arc_mesh(
@@ -482,9 +550,11 @@ void Immediate2DRenderer::push_arc(
         m_Indexes);
 
     push_rendering_command(m_DefaultTexture, _Color, _Transform);
+
+    return true;
 }
 
-void Immediate2DRenderer::push_triangle(
+bool Immediate2DRenderer::push_triangle(
     const gs_vec2f& _P1,
     const gs_vec2f& _P2,
     const gs_vec2f& _P3,
@@ -503,7 +573,7 @@ void Immediate2DRenderer::push_triangle(
         !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)) &&
         !m_Viewport.contains(_Transform * gs_vec4f(_P3, _Depth, 1.f)))
     {
-        return;
+        return false;
     }
 
     // build mesh
@@ -513,9 +583,11 @@ void Immediate2DRenderer::push_triangle(
 
     // push rendering command
     push_rendering_command(m_DefaultTexture, _Color, _Transform);
+
+    return true;
 }
 
-void Immediate2DRenderer::push_rectangle(
+bool Immediate2DRenderer::push_rectangle(
     const gs_vec2f& _Min,
     const gs_vec2f& _Max,
     const float&    _Width,
@@ -534,7 +606,7 @@ void Immediate2DRenderer::push_rectangle(
             _Transform * gs_vec4f(_Min, _Depth, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f))))
     {
-        return;
+        return false;
     }
 
     // build mesh
@@ -550,9 +622,11 @@ void Immediate2DRenderer::push_rectangle(
 
     // push rendering command
     push_rendering_command(m_DefaultTexture, _Color, _Transform);
+
+    return true;
 }
 
-void Immediate2DRenderer::push_rectangle_rounded(
+bool Immediate2DRenderer::push_rectangle_rounded(
     const gs_vec2f& _Min,
     const gs_vec2f& _Max,
     const float&    _Radius,
@@ -572,13 +646,13 @@ void Immediate2DRenderer::push_rectangle_rounded(
             _Transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
     {
-        return;
+        return false;
     }
 
     // check rounding radius
     if(_Radius <= gs_max(_Width, 4.f))
     {
-        push_rectangle(
+        return push_rectangle(
             _Min,
             _Max,
             _Width,
@@ -587,8 +661,6 @@ void Immediate2DRenderer::push_rectangle_rounded(
             _Position,
             _Rotation,
             _Scale);
-
-        return;
     }
 
     // compute radius
@@ -624,6 +696,8 @@ void Immediate2DRenderer::push_rectangle_rounded(
     build_line_mesh(arc_point(BL, radius, radius, 270), arc_point(BR, radius, radius, 270), _Width, _Color, m_DefaultTexture, m_Vertexes, m_Indexes);
 
     push_rendering_command(m_DefaultTexture, _Color, _Transform);
+
+    return true;
 }
 
 void Immediate2DRenderer::build_triangle_filled_mesh(
