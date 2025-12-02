@@ -23,21 +23,43 @@ void Immedidate2DRendererTestLayer::frame_update()
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
 
+    m_Renderer->push_rectangle(
+        gs_vec2f(0.f, 0.f),
+        gs_vec2f(width * 0.5, -height * 0.5),
+        8.f,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        0.f,
+        gs_vec2f(0.f, 0.f),
+        0.f,
+        gs_vec2f(1.f, 1.f)
+    );
+
+    m_Renderer->push_rectangle(
+        gs_vec2f(0.f, 0.f),
+        gs_vec2f(width, -height),
+        8.f,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        0.f,
+        gs_vec2f(0.f, 0.f),
+        0.f,
+        gs_vec2f(1.f, 1.f)
+    );
+
     push_button_widget(
-        "Button-1",
-        gs_vec2f(256.f, 128.f),
+        "Hello !!! I am Button !!!",
+        gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
         true,
         0.f,
         gs_vec2f(width, -height) * 0.5f
     );
 
-    // push_button_widget(
-    //     "Button-2",
-    //     gs_vec2f(256.f, 128.f),
-    //     false,
-    //     0.f,
-    //     gs_vec2f(width, -height) * 0.5f + gs_vec2f(512.f, 0.f)
-    // );
+    push_button_widget(
+        "Hello !!! I am Button !!!",
+        gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
+        false,
+        0.f,
+        gs_vec2f(width, -height - 512.f) * 0.5f
+    );
 }
 
 bool Immedidate2DRendererTestLayer::push_button_widget(
@@ -92,39 +114,54 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor];
     };
 
-    gs_rectf textBoundingBox = m_Renderer->calculate_bounding_box(
-        _Depth,
-        gs_vec2f(0.f),
-        0.f,
-        gs_vec2f(1.f, 1.f),
-        _Name,
-        m_Style.TextSize,
-        m_Renderer->m_RenderingQueue->get_default_font());
+    auto retreive_text_color = [this](const bool& _Enabled, const bool _Hovered, const bool& _Pressed)->gs_vec4f
+    {
+        if(_Hovered || _Pressed)
+        {
+            return _Enabled ?
+                m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor] :
+                m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
+        }
 
-    gs_vec2f min = gs_vec2f(0.f);
-    gs_vec2f max = min + gs_vec2f(+_Size.x, -_Size.y);
+        return _Enabled ?
+            m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor] :
+            m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
+    };
 
-    min = gs_vec2f(gs_min(textBoundingBox.Min.x, min.x), gs_min(textBoundingBox.Min.y, min.y));
-    max = gs_vec2f(gs_max(textBoundingBox.Max.x, max.x), gs_max(textBoundingBox.Max.y, max.y));
+    gs_rectf textBoundingBox = 
+        m_Renderer->calculate_bounding_box(
+            _Depth,
+            gs_vec2f(0.f),
+            0.f,
+            gs_vec2f(1.f, 1.f),
+            _Name,
+            m_Style.FontSize,
+            m_Renderer->m_RenderingQueue->get_default_font());
+
+    gs_rectf buttonBoundingBox =
+        gs_rectf(
+            gs_vec2f(0.f, 0.f),
+            gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), -gs_max(_Size.y, textBoundingBox.get_size().y)));
 
     bool hovered = m_Renderer->calculate_bounding_box(
         _Depth,
         _Position,
         _Rotation,
         _Scale,
-        min,
-        max).contains(m_Renderer->get_rendering_queue()->get_cursor_postion());
+        buttonBoundingBox.Min,
+        buttonBoundingBox.Max).contains(m_Renderer->get_rendering_queue()->get_cursor_postion());
     
     bool pressed =
         hovered &&
         Frenchie::Application::application()->is_mouse_button_down(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left);
 
     // draw background
-    m_Renderer->push_rectangle_filled(
-        min,
-        max,
+    m_Renderer->push_rectangle_rounded_filled(
+        buttonBoundingBox.Min,
+        buttonBoundingBox.Max,
+        m_Style.PushButtonRoundingRadius,
         retreive_button_background_color(_Enabled, hovered, pressed),
-        _Depth + 1.f,
+        _Depth + 3.f,
         _Position,
         _Rotation,
         _Scale
@@ -132,8 +169,8 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
 
     // draw frame
     m_Renderer->push_rectangle_rounded(
-        min,
-        max,
+        buttonBoundingBox.Min,
+        buttonBoundingBox.Max,
         m_Style.PushButtonRoundingRadius,
         m_Style.PushButtonFrameWidth,
         retreive_frame_color(_Enabled, hovered, pressed),
@@ -145,16 +182,15 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
     
     // draw text
     gs_mat4f transform = m_Renderer->construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-    gs_vec2f textSize  = textBoundingBox.get_size();
-    min = transform * gs_vec4f(min, _Depth, 1.f);
-    max = transform * gs_vec4f(max, _Depth, 1.f);
+    gs_vec2f min = transform * gs_vec4f(buttonBoundingBox.Min, _Depth, 1.f);
+    gs_vec2f max = transform * gs_vec4f(buttonBoundingBox.Max, _Depth, 1.f);
 
     m_Renderer->push_text(
         _Name,
-        m_Style.TextSize,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        m_Style.FontSize,
+        retreive_text_color(_Enabled, hovered, pressed),
         _Depth + 6.f,
-        _Position,//(max + min) * 0.5f + gs_vec2f(-textSize.x, +textSize.y) * 0.5f,
+        (min + max) * 0.5f + gs_vec2f(-textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f,
         _Rotation,
         _Scale
     );

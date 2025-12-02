@@ -252,9 +252,9 @@ namespace Frenchie
             }
 
             // auxiliary functions
-            static int IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(float _RAD, float _MAXERROR)
+            static int calculate_arc_segments_number(float _RAD, float _MAXERROR)
             {
-                return gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MAXERROR), (_RAD)) / (_RAD)))), 8, 512);
+                return (int)gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MAXERROR), (_RAD)) / (_RAD)))), 8, 512);
             }
 
             gs_vec2f calculate_arc_point(
@@ -293,7 +293,7 @@ namespace Frenchie
             // this is a plipeline
             std::vector<RenderingQueueVertex> m_Vertexes      {std::vector<RenderingQueueVertex>()};
             std::vector<int>                  m_Indexes       {std::vector<int>()};
-            gs_rectf                          m_Viewport      {-gs_huge<float>(), -gs_huge<float>(), +gs_huge<float>(), +gs_huge<float>()};
+            gs_rectf                          m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::shared_ptr<RenderingQueue>   m_RenderingQueue{nullptr};
         };
     }
