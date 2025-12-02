@@ -2,6 +2,7 @@
 
 // Application
 #include <FrenchieApplication.hpp>
+#include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 // STB
 #include "stb_image_write.h"
@@ -17,9 +18,12 @@ namespace Frenchie
             Immediate2DRenderer();
             virtual ~Immediate2DRenderer();
 
+            // getters
+            std::shared_ptr<RenderingQueue> get_rendering_queue() const;
+
             virtual bool awake() override;
             virtual void frame_start() override;
-            virtual void frame_render() override;
+            virtual void frame_finish() override;
             virtual void finish() override;
 
             // command API
@@ -29,7 +33,7 @@ namespace Frenchie
                 const gs_mat4f&              _Transform);
 
             // rendering API
-            bool push_triangle_filled(
+            void push_triangle_filled(
                 const gs_vec2f&              _P1,
                 const gs_vec2f&              _P2,
                 const gs_vec2f&              _P3,
@@ -40,7 +44,7 @@ namespace Frenchie
                 const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
 
-            bool push_rectangle_filled(
+            void push_rectangle_filled(
                 const gs_vec2f&              _Min,
                 const gs_vec2f&              _Max,
                 const gs_vec4f&              _Color,
@@ -50,7 +54,7 @@ namespace Frenchie
                 const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
 
-            bool push_rectangle_rounded_filled(
+            void push_rectangle_rounded_filled(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Radius,
@@ -60,7 +64,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            bool push_utf32_text(
+            void push_text(
                 const std::u32string&     _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
@@ -70,7 +74,7 @@ namespace Frenchie
                 const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueFont& _Font     = RenderingQueueFont());
 
-            bool push_utf16_text(
+            void push_text(
                 const std::u16string&     _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
@@ -80,7 +84,7 @@ namespace Frenchie
                 const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueFont& _Font     = RenderingQueueFont());
 
-            bool push_utf8_text(
+            void push_text(
                 const std::string&        _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
@@ -90,7 +94,7 @@ namespace Frenchie
                 const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueFont& _Font     = RenderingQueueFont());
 
-            bool push_arc_filled(
+            void push_arc_filled(
                 const gs_vec2f&              _Center,
                 const float&                 _MinorRadius,
                 const float&                 _MajorRadius,
@@ -103,7 +107,7 @@ namespace Frenchie
                 const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
                 const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
 
-            bool push_line(
+            void push_line(
                 const gs_vec2f& _P1,
                 const gs_vec2f& _P2,
                 const float&    _Width,
@@ -113,7 +117,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            bool push_arc(
+            void push_arc(
                 const gs_vec2f& _Center,
                 const float&    _MinorRadius,
                 const float&    _MajorRadius,
@@ -126,7 +130,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            bool push_triangle(
+            void push_triangle(
                 const gs_vec2f& _P1,
                 const gs_vec2f& _P2,
                 const gs_vec2f& _P3,
@@ -137,7 +141,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            bool push_rectangle(
+            void push_rectangle(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Width,
@@ -147,7 +151,7 @@ namespace Frenchie
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
-            bool push_rectangle_rounded(
+            void push_rectangle_rounded(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Radius,
@@ -185,7 +189,7 @@ namespace Frenchie
                 std::vector<RenderingQueueVertex>& _Vertexes,
                 std::vector<int>&                  _Indexes);
 
-            void build_arc_filled_mesh(
+            static void build_arc_filled_mesh(
                 const gs_vec2f&                    _Center,
                 const float&                       _MinorRadius,
                 const float&                       _MajorRadius,
@@ -194,7 +198,8 @@ namespace Frenchie
                 const gs_vec4f&                    _Color,
                 const RenderingQueueTexture&       _Texture,
                 std::vector<RenderingQueueVertex>& _Vertexes,
-                std::vector<int>&                  _Indexes);
+                std::vector<int>&                  _Indexes,
+                const int&                         _SegmentsCount = 36);
 
             static void build_line_mesh(
                 const gs_vec2f&                    _P1,
@@ -246,6 +251,18 @@ namespace Frenchie
                             _Transform * gs_vec4f(gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f));
             }
 
+            // auxiliary functions
+            static int IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(float _RAD, float _MAXERROR)
+            {
+                return gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MAXERROR), (_RAD)) / (_RAD)))), 8, 512);
+            }
+
+            gs_vec2f calculate_arc_point(
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _ArcAngle);
+
             gs_rectf calculate_bounding_box(
                 const float&              _Depth,
                 const gs_vec2f&           _Position,
@@ -274,19 +291,10 @@ namespace Frenchie
                 const RenderingQueueFont& _Font);
 
             // this is a plipeline
-            std::vector<RenderingQueueVertex>  m_Vertexes      {std::vector<RenderingQueueVertex>()};
-            std::vector<int>                   m_Indexes       {std::vector<int>()};
-            gs_rectf                           m_Viewport      {-gs_huge<float>(), -gs_huge<float>(), +gs_huge<float>(), +gs_huge<float>()}; 
-            RenderingQueueShader               m_DefaultShader {RenderingQueueShader()};
-            RenderingQueueTexture              m_DefaultTexture{RenderingQueueTexture()};
-            RenderingQueueFont                 m_DefaultFont   {RenderingQueueFont()};
-        };
-
-        class Immediate2DRendererDefaultFont
-        {
-        public:
-            static unsigned int  COMPRESSED_SIZE;
-            static unsigned char BUFFER[316235];
+            std::vector<RenderingQueueVertex> m_Vertexes      {std::vector<RenderingQueueVertex>()};
+            std::vector<int>                  m_Indexes       {std::vector<int>()};
+            gs_rectf                          m_Viewport      {-gs_huge<float>(), -gs_huge<float>(), +gs_huge<float>(), +gs_huge<float>()};
+            std::shared_ptr<RenderingQueue>   m_RenderingQueue{nullptr};
         };
     }
 }

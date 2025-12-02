@@ -248,6 +248,10 @@ namespace Frenchie
             gs_mat4f get_cameraview_matrix() const;
             gs_vec3f get_cursor_postion() const;
 
+            RenderingQueueFont    get_default_font() const;
+            RenderingQueueShader  get_default_shader() const;
+            RenderingQueueTexture get_default_texture() const;
+
             // setters
             void set_projection_matrix(const gs_mat4f&);
             void set_cameraview_matrix(const gs_mat4f&);
@@ -336,6 +340,9 @@ namespace Frenchie
             gs_mat4f                           m_ProjectionMatrix{gs_mat4f(1)};
             gs_mat4f                           m_CameraViewMatrix{gs_mat4f(1)};
             std::vector<RenderingQueueCommand> m_Commands        {std::vector<RenderingQueueCommand>()};
+            RenderingQueueShader               m_DefaultShader {RenderingQueueShader()};
+            RenderingQueueTexture              m_DefaultTexture{RenderingQueueTexture()};
+            RenderingQueueFont                 m_DefaultFont   {RenderingQueueFont()};
         };
     }
 }

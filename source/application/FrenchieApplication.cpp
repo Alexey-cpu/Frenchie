@@ -477,13 +477,3 @@ Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
 {
     return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
 }
-
-std::shared_ptr<RenderingQueue> Frenchie::Application::application_rendering_queue()
-{
-    auto layer = Frenchie::Application::application()->find_layer<RenderingQueue>();
-    
-    if(layer == nullptr) 
-        layer = Frenchie::Application::application()->push_layer<RenderingQueue>();
-
-    return layer;
-}
