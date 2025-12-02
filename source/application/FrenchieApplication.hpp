@@ -1,8 +1,10 @@
 #pragma once
 
+// Core
+#include <FrenchieCoreMath.hpp>
+
 // Application
 #include <FrenchieApplicationLayer.hpp>
-#include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 // STL
 #include <iostream>
@@ -159,6 +161,5 @@ namespace Frenchie
         };
 
         Frenchie::Application::ApplicationInstance* application();
-        std::shared_ptr<RenderingQueue>             application_rendering_queue();
     };
 };
