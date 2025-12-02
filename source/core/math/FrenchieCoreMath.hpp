@@ -709,9 +709,9 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
 }
 
 template<typename Type, int Size>
-inline double gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
-    double dot = 0;
+    Type dot = 0;
     for (int i = 0; i < Size; i++)
         dot += _A[i] * _B[i];
     return dot;
@@ -1130,6 +1130,29 @@ inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
     transform[2][3] = - static_cast<Type>(1);
     transform[3][2] = - (static_cast<Type>(2) * _Far * _Near) / (_Far - _Near);
     return transform;
+}
+
+template<typename Type>
+inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, const gs_vector<Type, 3>& center, const gs_vector<Type, 3>& up)
+{
+    gs_vector<Type, 3> const f(gs_vector_normalize(center - eye));
+    gs_vector<Type, 3> const s(gs_vector_normalize(gs_vector_cross(f, up)));
+    gs_vector<Type, 3> const u(gs_vector_cross(s, f));
+
+    gs_matrix<Type, 4, 4> Result(1);
+    Result[0][0] = s.x;
+    Result[1][0] = s.y;
+    Result[2][0] = s.z;
+    Result[0][1] = u.x;
+    Result[1][1] = u.y;
+    Result[2][1] = u.z;
+    Result[0][2] =-f.x;
+    Result[1][2] =-f.y;
+    Result[2][2] =-f.z;
+    Result[3][0] =-gs_vectors_dot(s, eye);
+    Result[3][1] =-gs_vectors_dot(u, eye);
+    Result[3][2] = gs_vectors_dot(f, eye);
+    return Result;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
