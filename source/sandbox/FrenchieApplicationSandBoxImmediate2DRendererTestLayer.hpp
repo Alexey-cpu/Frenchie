@@ -108,6 +108,11 @@ namespace Frenchie
     {
         enum ImmedidateUserInterfaceColors_ : int
         {
+            // application text
+            ImmedidateUserInterfaceColors_TextEnabledColor,
+            ImmedidateUserInterfaceColors_TextDisabledColor,
+            ImmedidateUserInterfaceColors_TextHoveredColor,
+
             // push button background
             ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor,
             ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor,
@@ -134,6 +139,9 @@ namespace Frenchie
             ImmedidateUserInterfaceStyle()
             {
                 // setup push button color scheme
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                        ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                       ] = gs_vec4f(128.f, 128.f, 128.f, 128);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                        ] = gs_vec4f(255.f, 200.f, 200.f, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
@@ -149,8 +157,8 @@ namespace Frenchie
             }
 
             RenderingQueueFont Font;
-            float              TextSize                 = 128.f;
-            float              PushButtonFrameWidth     = 16.f;
+            float              FontSize                 = 32.f;
+            float              PushButtonFrameWidth     = 1.f;
             float              PushButtonRoundingRadius = 32.f;
 
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};

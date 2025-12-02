@@ -55,8 +55,6 @@ void Immediate2DRenderer::frame_finish()
 {
     m_Vertexes.clear();
     m_Indexes.clear();
-
-    std::cout << "m_Vertexes.capacity() " << m_Vertexes.capacity() << "\n";
 }
 
 void Immediate2DRenderer::finish(){}
@@ -235,7 +233,7 @@ void Immediate2DRenderer::push_text(
     RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.LineGap) * scale;
+    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = 0.f;
     float positionY = -offset;
 
@@ -620,54 +618,53 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
     std::vector<RenderingQueueVertex>& _Vertexes,
     std::vector<int>&                  _Indexes)
 {
-    const int size = (int)_Vertexes.size();
-
-    const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
-    const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
-    const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, 0.f);
-    const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, 0.f);
+    const int      size   = (int)_Vertexes.size();
+    const gs_vec3f point1 = gs_vec3f(_Min.x, _Min.y, 0.f);
+    const gs_vec3f point2 = gs_vec3f(_Max.x, _Min.y, 0.f);
+    const gs_vec3f point3 = gs_vec3f(_Max.x, _Max.y, 0.f);
+    const gs_vec3f point4 = gs_vec3f(_Min.x, _Max.y, 0.f);
 
     // triangle 1
     _Vertexes.push_back(
         RenderingQueueVertex(
-            _P1,
+            point1,
             gs_vec3f(0.f),
-            gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
+            gs_vec2f(point1.x / _Texture.Width, point1.y / _Texture.Height),
             _Color));
 
     _Vertexes.push_back(
         RenderingQueueVertex(
-            _P2,
+            point2,
             gs_vec3f(0.f),
-            gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
+            gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
             _Color));
 
     _Vertexes.push_back(
         RenderingQueueVertex(
-            _P4,
+            point4,
             gs_vec3f(0.f),
-            gs_vec2f(_P4.x / _Texture.Width, _P4.y / _Texture.Height),
+            gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
             _Color));
 
     // triangle 2
     _Vertexes.push_back(
         RenderingQueueVertex(
-            _P2,
+            point2,
             gs_vec3f(0.f),
-            gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
+            gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
             _Color));
 
     _Vertexes.push_back(
         RenderingQueueVertex(
-            _P3, gs_vec3f(0.f),
-            gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
+            point3, gs_vec3f(0.f),
+            gs_vec2f(point3.x / _Texture.Width, point3.y / _Texture.Height),
             _Color));
 
     _Vertexes.push_back(
         RenderingQueueVertex(
-            _P4,
+            point4,
             gs_vec3f(0.f),
-            gs_vec2f(_P4.x / _Texture.Width, _P4.y / _Texture.Height),
+            gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
             _Color));
 
     for (int i = size; i < (int)_Vertexes.size(); ++i)
@@ -759,22 +756,12 @@ void Immediate2DRenderer::build_arc_filled_mesh(
     gs_vec2f p1 = p0;
     gs_vec2f p2 = p0;
 
-    gs_complex<float> rotate =
-    {
-        cos(gs_to_radians(_TargetAngle / _SegmentsCount)),
-        sin(gs_to_radians(_TargetAngle / _SegmentsCount))
-    };
+    const float angleIncrement = _TargetAngle / 36.f;
 
-    gs_complex<float> angle = 
+    for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {
-        cos(gs_to_radians(_SourceAngle)),
-        sin(gs_to_radians(_SourceAngle))
-    };
+        p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
 
-    for (int i = 0; i < _SegmentsCount; angle *= rotate, p1 = p2, ++i)
-    {
-        p2 = gs_vec2f(_Center.x + _MinorRadius * gs_realf(angle), _Center.y + _MajorRadius * gs_imagf(angle));
-        
         Immediate2DRenderer::build_triangle_filled_mesh(
             _Center,
             p1,
@@ -784,6 +771,37 @@ void Immediate2DRenderer::build_arc_filled_mesh(
             _Vertexes,
             _Indexes);
     }
+
+
+    // gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
+    // gs_vec2f p1 = p0;
+    // gs_vec2f p2 = p0;
+
+    // gs_complex<float> rotate =
+    // {
+    //     cos(gs_to_radians(_TargetAngle / _SegmentsCount)),
+    //     sin(gs_to_radians(_TargetAngle / _SegmentsCount))
+    // };
+
+    // gs_complex<float> angle = 
+    // {
+    //     cos(gs_to_radians(_SourceAngle)),
+    //     sin(gs_to_radians(_SourceAngle))
+    // };
+
+    // for (int i = 0; i < _SegmentsCount; angle *= rotate, p1 = p2, ++i)
+    // {
+    //     p2 = gs_vec2f(_Center.x + _MinorRadius * gs_realf(angle), _Center.y + _MajorRadius * gs_imagf(angle));
+        
+    //     Immediate2DRenderer::build_triangle_filled_mesh(
+    //         _Center,
+    //         p1,
+    //         p2,
+    //         _Color,
+    //         _Texture,
+    //         _Vertexes,
+    //         _Indexes);
+    // }
 }
 
 void Immediate2DRenderer::build_line_mesh(
@@ -812,8 +830,7 @@ void Immediate2DRenderer::build_line_mesh(
             _Color,
             _Texture,
             _Vertexes,
-            _Indexes,
-            4
+            _Indexes
         );
 
         Immediate2DRenderer::build_arc_filled_mesh(
@@ -825,8 +842,7 @@ void Immediate2DRenderer::build_line_mesh(
             _Color,
             _Texture,
             _Vertexes,
-            _Indexes,
-            4
+            _Indexes
         );
     }
 
@@ -899,7 +915,7 @@ gs_rectf Immediate2DRenderer::calculate_bounding_box(
     RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.LineGap) * scale;
+    float offset    = (font.Ascent + font.Descent - font.LineGap) * scale;
     float positionX = 0.f;
     float positionY = -offset;
 
@@ -958,7 +974,7 @@ gs_rectf Immediate2DRenderer::calculate_bounding_box(
     auto transform = construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     return gs_rectf(
-        transform * gs_vec4f(min + font.Descent * scale, _Depth, 1.f),
+        transform * gs_vec4f(min, _Depth, 1.f),
         transform * gs_vec4f(max, _Depth, 1.f)
     );
 }

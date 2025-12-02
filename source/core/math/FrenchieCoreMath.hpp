@@ -1161,26 +1161,19 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, co
 template<typename Type>
 struct gs_rect
 {
-    gs_rect(
-        const gs_vector<Type, 2>& _Min = gs_vector<Type, 2>(static_cast<Type>(0)),
-        const gs_vector<Type, 2>& _Max = gs_vector<Type, 2>(static_cast<Type>(0))) :
-    Min(gs_vector<Type, 2>(gs_min(_Min.x, _Max.x), gs_min(_Min.y, _Max.y))),
-    Max(gs_vector<Type, 2>(gs_max(_Min.x, _Max.x), gs_max(_Min.y, _Max.y))){}
-
-    gs_rect(
-        const Type& _MinX,
-        const Type& _MinY,
-        const Type& _MaxX,
-        const Type& _MaxY) :
-    Min(gs_vector<Type, 2>(gs_min(_MinX, _MaxX), gs_min(_MinY, _MaxY))),
-    Max(gs_vector<Type, 2>(gs_max(_MinX, _MaxX), gs_max(_MinY, _MaxY))){}
+    template<typename ... Args>
+    gs_rect(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
+    {
+        Min = gs_vec2f(gs_min(_A.x, _B.x, static_cast<gs_vec2f>(_Args).x...), gs_min(_A.y, _B.y, static_cast<gs_vec2f>(_Args).y...));
+        Max = gs_vec2f(gs_max(_A.x, _B.x, static_cast<gs_vec2f>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vec2f>(_Args).y...));
+    }
 
     gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)};
     gs_vector<Type, 2> Max{gs_vector<Type, 2>(0.f)};
 
     gs_vector<Type, 2> get_size() const
     {
-        return Max - Min;
+        return gs_vec2f(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
     }
 
     bool contains(const gs_vector<Type, 2>& _Point) const
