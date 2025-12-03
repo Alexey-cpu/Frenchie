@@ -1111,6 +1111,15 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     const T& zNear,
     const T& zFar)
 {
+    // mat<4, 4, T, defaultp> Result(1);
+    // Result[0][0] = static_cast<T>(2) / (right - left);
+    // Result[1][1] = static_cast<T>(2) / (top - bottom);
+    // Result[2][2] = - static_cast<T>(2) / (zFar - zNear);
+    // Result[3][0] = - (right + left) / (right - left);
+    // Result[3][1] = - (top + bottom) / (top - bottom);
+    // Result[3][2] = - (zFar + zNear) / (zFar - zNear);
+    // return Result;
+
     gs_matrix<T, 4, 4> Result(1);
     Result[0][0] = static_cast<T>(2) / (right - left);
     Result[1][1] = static_cast<T>(2) / (top - bottom);
@@ -1167,7 +1176,7 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, co
 
 template<typename Type>
 auto gs_matrix_calculate_orthographic_camera_view_and_projection(
-    const gs_vector<Type, 3>& _CameraWorldPosition,
+    const gs_vector<Type, 2>& _CameraWorldPosition,
     const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
     const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
     const gs_vector<Type, 2>& _CameraResolution,
@@ -1187,12 +1196,23 @@ auto gs_matrix_calculate_orthographic_camera_view_and_projection(
     gs_matrix<Type, 4, 4> rotateZ = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.z), gs_vector<Type, 3>(0.f, 0.f, 1.f));
 
     // camera orientation
-    gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vector<Type, 3>(0.f, 0.f, -_CameraWorldFrontAxisDirection.z));
+    gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
     gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
     gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
 
-    gs_matrix<Type, 4, 4> cameraview = gs_matrix_look_at(gs_vector<Type, 3>(0.f, 0.f, _CameraWorldFrontAxisDirection.z), gs_vector<Type, 3>(0.f, 0.f, _CameraWorldFrontAxisDirection.z) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
-    gs_matrix<Type, 4, 4> projection = gs_matrix_ortho(left, right, bottom, top, _CameraNearPlanePosition, _CameraFarPlanePosition) * rotateZ * rotateY * rotateX;
+    gs_matrix<Type, 4, 4> cameraview =
+        gs_matrix_look_at(
+            gs_vector<Type, 3>(0.f, 0.f, 1),
+            gs_vector<Type, 3>(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+    
+    gs_matrix<Type, 4, 4> projection =
+        gs_matrix_ortho(
+            left,
+            right,
+            bottom,
+            top,
+            _CameraNearPlanePosition,
+            _CameraFarPlanePosition) * rotateZ * rotateY * rotateX;
 
     struct
     {
@@ -1223,7 +1243,7 @@ auto gs_matrix_calculate_perspective_camera_view_and_projection(
 
     // camera local attributes
     gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(+0.f, +1.f, +0.f);
-    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vec3f(0.f, 0.f, -1.f));
+    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
     gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
     gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
 
