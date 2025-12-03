@@ -52,11 +52,6 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _ArcAngle);
 
-            int calculate_arc_segments_number(float _Radius, float _MaximumError)
-            {
-                return (int)gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MaximumError), (_Radius)) / (_Radius)))), 8, 512);
-            }
-
             template<typename ...Args> 
             gs_2dboxf calculate_bounding_box(
                 const float&    _Depth,
@@ -287,7 +282,8 @@ namespace Frenchie
                 const gs_vec4f&                    _Color,
                 const RenderingQueueTexture&       _Texture,
                 std::vector<RenderingQueueVertex>& _Vertexes,
-                std::vector<int>&                  _Indexes);
+                std::vector<int>&                  _Indexes,
+                const int&                         _SegmentsCount = 36);
 
             // this is a plipeline
             std::vector<RenderingQueueVertex> m_Vertexes      {std::vector<RenderingQueueVertex>()};

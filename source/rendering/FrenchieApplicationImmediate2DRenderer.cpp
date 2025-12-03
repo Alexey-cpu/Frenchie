@@ -5,6 +5,11 @@
 
 using namespace Frenchie::Application;
 
+int calculate_arc_segments_number(float _Radius, float _MaximumError)
+{
+    return (int)gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MaximumError), (_Radius)) / (_Radius)))), 8, 512);
+}
+
 // Immediate2DRenderer
 Immediate2DRenderer::Immediate2DRenderer(){}
 Immediate2DRenderer::~Immediate2DRenderer(){}
@@ -23,28 +28,18 @@ void Immediate2DRenderer::frame_start()
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
 
-    auto camera = gs_matrix_calculate_orthographic_camera_view_and_projection(
+    auto camera = gs_matrix_calculate_2d_camera_view_and_projection(
         gs_vec2f(width * 0.5f, -height * 0.5f),
         gs_vec3f(0.f, 1.f, 0.f),
         gs_vec3f(0.f, 0.f, -1.f),
         gs_vec2f(width, height),
-        gs_vec3f(0.f, 0.f, 0.f),
+        0.f,
         -1000.f,
         +1000.f
     );
 
-    // auto camera = gs_matrix_calculate_perspective_camera_view_and_projection(
-    //     gs_vec3f(width * 0.5f, -height * 0.5f, 5000.f),
-    //     gs_vec3f(0.f, 1.f, 0.f),
-    //     gs_vec3f(0.f, 0.f, -1.f),
-    //     gs_vec2f(width, height),
-    //     gs_vec3f(0.f, 0.f, 0.f),
-    //     +500.f,
-    //     -1000.f
-    // );
-
-    auto cameraview = camera.cameraview;
-    auto projection = camera.projection;
+    gs_mat4f cameraview = camera.cameraview;
+    gs_mat4f projection = camera.projection;
 
     m_RenderingQueue->set_cameraview_matrix(cameraview);
     m_RenderingQueue->set_projection_matrix(projection);
@@ -136,9 +131,9 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
     RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.Descent - font.LineGap) * scale;
+    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = 0.f;
-    float positionY = -offset;
+    float positionY = RenderingQueue::down(gs_vec2f(0.f, offset)).y;
 
     gs_vec2f min;
     gs_vec2f max;
@@ -153,7 +148,7 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
             // next line
             if(symbol == '\n')
             {
-                positionY -= gs_max(_Size, gs_abs(offset));
+                positionY += RenderingQueue::down(gs_vec2f(0.f, gs_max(_Size, gs_abs(offset)))).y;
                 positionX =  0.f;
             }
             // carriage return
@@ -161,7 +156,7 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
                 positionX =  0.f;
             // tab
             else if(symbol == '\t')
-                positionX += _Size;
+                positionX += RenderingQueue::right(gs_vec2f(_Size, 0.f)).x;
             else
             {
                 // TODO: do someting here...
@@ -171,28 +166,14 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
             continue;
         }
 
-        RenderingQueueGlyph glyph    = font.retrieve_glyph(symbol);
-        float glyphWidth             = glyph.Box.get_size().x * scale;
-        float glyphHeight            = glyph.Box.get_size().y * scale;
-        float glyphHorizontalBearing = glyph.Bearing.x * scale;
-        float glyphVerticalBearing   = glyph.Bearing.y * scale;
-        float glyphAdvance           = glyph.Advance * scale;
-
-        min = gs_vec2f(
-            gs_min(positionX + glyphHorizontalBearing, min.x),
-            gs_min(positionY - glyphVerticalBearing, min.y)
-        );
-
-        max = gs_vec2f(
-            gs_max(positionX + glyphHorizontalBearing + glyphWidth, max.y),
-            gs_max(positionY - glyphVerticalBearing - glyphHeight, max.y)
-        );
+        min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
+        max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
 
         // move cursor
-        positionX += glyphAdvance;
+        positionX += RenderingQueue::right(gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f)).x;
     }
 
-    auto transform = calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+    gs_mat4f transform = calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     return gs_2dboxf(
         transform * gs_vec4f(min, _Depth, 1.f),
@@ -322,14 +303,13 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
     const float&    _Rotation,
     const gs_vec2f& _Scale)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+    gs_mat4f transform = calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check that we are within viewport
     if(!m_Viewport.overlaps(
         gs_2dboxf(
-            _Transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
-            _Transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
+            transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
+            transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
     {
         return;
     }
@@ -337,35 +317,40 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
     // compute radius
     float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
 
-    // points
-    gs_vec2f TL = gs_vec2f(_Min.x + radius, _Max.y - radius);
-    gs_vec2f BL = gs_vec2f(_Min.x + radius, _Min.y + radius);
-    gs_vec2f TR = gs_vec2f(_Max.x - radius, _Max.y - radius);
-    gs_vec2f BR = gs_vec2f(_Max.x - radius, _Min.y + radius);
+    // build angle ellipses
+    const gs_vec2f p1 = gs_vec2f(_Min.x, _Min.y);
+    const gs_vec2f p2 = gs_vec2f(_Max.x, _Min.y);
+    const gs_vec2f p3 = gs_vec2f(_Max.x, _Max.y);
+    const gs_vec2f p4 = gs_vec2f(_Min.x, _Max.y);
 
-    // sides
-    build_arc_filled_mesh(TL, radius, radius, 90.f, 180.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_arc_filled_mesh(BL, radius, radius, 180.f, 270.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_arc_filled_mesh(TR, radius, radius, 0.f, 90.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_arc_filled_mesh(BR, radius, radius, 270.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
+    gs_vec2f p13 = gs_vector_normalize(p1 - p3);
+    gs_vec2f p24 = gs_vector_normalize(p2 - p4);
+    p13 = gs_vec2f(gs_sign(p13.x), gs_sign(p13.y));
+    p24 = gs_vec2f(gs_sign(p24.x), gs_sign(p24.y));
 
+    build_arc_filled_mesh(p1 - p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
+    build_arc_filled_mesh(p2 - p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
+    build_arc_filled_mesh(p3 + p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
+    build_arc_filled_mesh(p4 + p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
+
+    // build inner rectnagle
     Immediate2DRenderer::build_rectangle_filled_mesh(
-        gs_vec2f(_Min.x + 0.f, _Max.y - radius),
-        gs_vec2f(_Max.x - 0.f, _Min.y + radius),
+        p1 - p13 * gs_vec2f(radius, 0.f),
+        p3 + p13 * gs_vec2f(radius, 0.f),
         _Color,
         m_RenderingQueue->get_default_texture(),
         m_Vertexes,
         m_Indexes);
 
     Immediate2DRenderer::build_rectangle_filled_mesh(
-        gs_vec2f(_Min.x + radius, _Max.y - 0.f),
-        gs_vec2f(_Max.x - radius, _Min.y + 0.f),
+        p1 - p13 * gs_vec2f(0.f, radius),
+        p3 + p13 * gs_vec2f(0.f, radius),
         _Color,
         m_RenderingQueue->get_default_texture(),
         m_Vertexes,
         m_Indexes);
 
-    push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
+    push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, transform);
 }
 
 void Immediate2DRenderer::push_text(
@@ -383,7 +368,7 @@ void Immediate2DRenderer::push_text(
     float scale     = _Size / (float)font.SizeInPixels;
     float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = 0.f;
-    float positionY = -offset;
+    float positionY = RenderingQueue::down(gs_vec2f(0.f, offset)).y;
 
     for(int i = 0; i < (int)_Text.size(); ++i)
     {
@@ -395,7 +380,7 @@ void Immediate2DRenderer::push_text(
             // next line
             if(symbol == '\n')
             {
-                positionY -= gs_max(_Size, gs_abs(offset));
+                positionY += RenderingQueue::down(gs_vec2f(0.f, gs_max(_Size, gs_abs(offset)))).y;
                 positionX =  0.f;
             }
             // carriage return
@@ -403,7 +388,7 @@ void Immediate2DRenderer::push_text(
                 positionX =  0.f;
             // tab
             else if(symbol == '\t')
-                positionX += _Size;
+                positionX += RenderingQueue::right(gs_vec2f(_Size, 0.f)).x;
             else
             {
                 // TODO: do someting here...
@@ -420,9 +405,12 @@ void Immediate2DRenderer::push_text(
         float glyphVerticalBearing   = glyph.Bearing.y * scale;
         float glyphAdvance           = glyph.Advance * scale;
 
+        auto min = gs_vec2f(positionX, positionY) + RenderingQueue::bottom_right(gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing));
+        auto max = min + RenderingQueue::bottom_right(gs_vec2f(glyphWidth, glyphHeight));
+
         build_rectangle_filled_mesh(
-            gs_vec2f(positionX + glyphHorizontalBearing, positionY - glyphVerticalBearing),
-            gs_vec2f(positionX + glyphHorizontalBearing + glyphWidth, positionY - glyphVerticalBearing - glyphHeight),
+            min,
+            max,
             glyph.MinUV,
             glyph.MaxUV,
             _Color,
@@ -431,7 +419,7 @@ void Immediate2DRenderer::push_text(
         );
 
         // move cursor
-        positionX += glyphAdvance;
+        positionX += RenderingQueue::right(gs_vec2f(glyphAdvance, 0.f)).x;
     }
 
     push_rendering_command(
@@ -904,7 +892,7 @@ void Immediate2DRenderer::build_arc_filled_mesh(
     gs_vec2f p1 = p0;
     gs_vec2f p2 = p0;
 
-    const float angleIncrement = _TargetAngle / 36.f;
+    const float angleIncrement = _TargetAngle / _SegmentsCount;
 
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {
@@ -919,37 +907,6 @@ void Immediate2DRenderer::build_arc_filled_mesh(
             _Vertexes,
             _Indexes);
     }
-
-
-    // gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
-    // gs_vec2f p1 = p0;
-    // gs_vec2f p2 = p0;
-
-    // gs_complex<float> rotate =
-    // {
-    //     cos(gs_to_radians(_TargetAngle / _SegmentsCount)),
-    //     sin(gs_to_radians(_TargetAngle / _SegmentsCount))
-    // };
-
-    // gs_complex<float> angle = 
-    // {
-    //     cos(gs_to_radians(_SourceAngle)),
-    //     sin(gs_to_radians(_SourceAngle))
-    // };
-
-    // for (int i = 0; i < _SegmentsCount; angle *= rotate, p1 = p2, ++i)
-    // {
-    //     p2 = gs_vec2f(_Center.x + _MinorRadius * gs_realf(angle), _Center.y + _MajorRadius * gs_imagf(angle));
-        
-    //     Immediate2DRenderer::build_triangle_filled_mesh(
-    //         _Center,
-    //         p1,
-    //         p2,
-    //         _Color,
-    //         _Texture,
-    //         _Vertexes,
-    //         _Indexes);
-    // }
 }
 
 void Immediate2DRenderer::build_line_mesh(
@@ -973,24 +930,26 @@ void Immediate2DRenderer::build_line_mesh(
             _P1,
             _Width * 0.5f,
             _Width * 0.5f,
-            90.f,
-            180.f,
+            0.f,
+            360.f,
             _Color,
             _Texture,
             _Vertexes,
-            _Indexes
+            _Indexes,
+            8
         );
 
         Immediate2DRenderer::build_arc_filled_mesh(
             _P2,
             _Width * 0.5f,
             _Width * 0.5f,
-            270.f,
+            0.f,
             360.f,
             _Color,
             _Texture,
             _Vertexes,
-            _Indexes
+            _Indexes,
+            8
         );
     }
 
@@ -1025,13 +984,14 @@ void Immediate2DRenderer::build_arc_mesh(
     const gs_vec4f&                    _Color,
     const RenderingQueueTexture&       _Texture,
     std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes)
+    std::vector<int>&                  _Indexes,
+    const int&                         _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
     gs_vec2f p2 = p0;
 
-    const float angleIncrement = _TargetAngle / 36.f;
+    const float angleIncrement = _TargetAngle / _SegmentsCount;
 
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {

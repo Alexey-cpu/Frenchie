@@ -332,6 +332,16 @@ namespace Frenchie
                 const RenderingQueueTexture& _Texture,
                 const gs_mat4f&              _Transform);
 
+            // static API
+            static gs_vec2f left(const gs_vec2f&);
+            static gs_vec2f right(const gs_vec2f&);
+            static gs_vec2f top(const gs_vec2f&);
+            static gs_vec2f down(const gs_vec2f&);
+            static gs_vec2f top_left(const gs_vec2f&);
+            static gs_vec2f top_right(const gs_vec2f&);
+            static gs_vec2f bottom_left(const gs_vec2f&);
+            static gs_vec2f bottom_right(const gs_vec2f&);
+
         protected:
 
             gs_mat4f                           m_ProjectionMatrix{gs_mat4f(1)};
