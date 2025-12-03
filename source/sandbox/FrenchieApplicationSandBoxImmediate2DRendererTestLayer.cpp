@@ -128,7 +128,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
     };
 
-    gs_rectf textBoundingBox = 
+    gs_2dboxf textBoundingBox = 
         m_Renderer->calculate_bounding_box(
             _Depth,
             gs_vec2f(0.f),
@@ -138,8 +138,8 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
             m_Style.FontSize,
             m_Renderer->m_RenderingQueue->get_default_font());
 
-    gs_rectf buttonBoundingBox =
-        gs_rectf(
+    gs_2dboxf buttonBoundingBox =
+        gs_2dboxf(
             gs_vec2f(0.f, 0.f),
             gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), -gs_max(_Size.y, textBoundingBox.get_size().y)));
 
@@ -181,7 +181,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
     );
     
     // draw text
-    gs_mat4f transform = m_Renderer->construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+    gs_mat4f transform = m_Renderer->calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
     gs_vec2f min = transform * gs_vec4f(buttonBoundingBox.Min, _Depth, 1.f);
     gs_vec2f max = transform * gs_vec4f(buttonBoundingBox.Max, _Depth, 1.f);
 

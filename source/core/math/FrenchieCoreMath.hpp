@@ -1155,14 +1155,96 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, co
     return Result;
 }
 
+template<typename Type>
+auto gs_matrix_calculate_orthographic_camera_view_and_projection(
+    const gs_vector<Type, 3>& _CameraWorldPosition,
+    const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
+    const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
+    const gs_vector<Type, 2>& _CameraResolution,
+    const gs_vector<Type, 3>& _CameraEulerAngles,
+    const Type&               _CameraNearPlanePosition,
+    const Type&               _CameraFarPlanePosition)
+{
+    // compute projection matrix
+    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+    float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+    float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+
+    // camera rotation angles
+    gs_matrix<Type, 4, 4> rotateX = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.x), gs_vector<Type, 3>(1.f, 0.f, 0.f));
+    gs_matrix<Type, 4, 4> rotateY = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.y), gs_vector<Type, 3>(0.f, 1.f, 0.f));
+    gs_matrix<Type, 4, 4> rotateZ = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.z), gs_vector<Type, 3>(0.f, 0.f, 1.f));
+
+    // camera orientation
+    gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vector<Type, 3>(0.f, 0.f, -_CameraWorldFrontAxisDirection.z));
+    gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
+    gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+
+    gs_matrix<Type, 4, 4> cameraview = gs_matrix_look_at(gs_vector<Type, 3>(0.f, 0.f, _CameraWorldFrontAxisDirection.z), gs_vector<Type, 3>(0.f, 0.f, _CameraWorldFrontAxisDirection.z) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+    gs_matrix<Type, 4, 4> projection = gs_matrix_ortho(left, right, bottom, top, _CameraNearPlanePosition, _CameraFarPlanePosition) * rotateZ * rotateY * rotateX;
+
+    struct
+    {
+        gs_matrix<Type, 4, 4> cameraview;
+        gs_matrix<Type, 4, 4> projection;
+    } result = {cameraview, projection};
+
+    return result;
+}
+
+template<typename Type>
+auto gs_matrix_calculate_perspective_camera_view_and_projection(
+    const gs_vector<Type, 3>& _CameraWorldPosition,
+    const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
+    const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
+    const gs_vector<Type, 2>& _CameraResolution,
+    const gs_vector<Type, 3>& _CameraEulerAngles,
+    const Type&               _CameraNearPlanePosition,
+    const Type&               _CameraFarPlanePosition,
+    const Type&               _FieldOfView = 90,
+    const Type&               _Aspect      = 1)
+{
+    // camera rotation angles
+    // gs_matrix<Type, 4, 4> rotateX = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.x), gs_vector<Type, 3>(1.f, 0.f, 0.f));
+    // gs_matrix<Type, 4, 4> rotateY = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.y), gs_vector<Type, 3>(0.f, 1.f, 0.f));
+    // gs_matrix<Type, 4, 4> rotateZ = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.z), gs_vector<Type, 3>(0.f, 0.f, 1.f));
+
+    // camera orientation
+    gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vector<Type, 3>(0, 0, -1));
+    gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
+    gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+
+    gs_matrix<Type, 4, 4> resolutionScaleMatrix = gs_matrix_scale(
+        gs_matrix<Type, 4, 4>(1.f), 
+        gs_vector<Type, 3>(
+            static_cast<Type>(1) / gs_max(_CameraResolution.x, static_cast<Type>(1)), 
+            static_cast<Type>(1) / gs_max(_CameraResolution.y, static_cast<Type>(1)), 
+            static_cast<Type>(1) / gs_abs(_CameraFarPlanePosition - _CameraNearPlanePosition)
+        )
+    );
+
+    //gs_vector<Type, 3>    cameraPosition = resolutionScaleMatrix * gs_vector<Type, 4>(_CameraWorldPosition, static_cast<Type>(1));
+    gs_matrix<Type, 4, 4> cameraview  = gs_matrix_look_at(_CameraWorldPosition, _CameraWorldPosition + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection) * resolutionScaleMatrix;
+    gs_matrix<Type, 4, 4> projection  = gs_matrix_perspective(gs_to_radians(_FieldOfView), _Aspect, _CameraFarPlanePosition, _CameraNearPlanePosition);
+
+    struct
+    {
+        gs_matrix<Type, 4, 4> cameraview;
+        gs_matrix<Type, 4, 4> projection;
+    } result = {cameraview, projection};
+
+    return result;
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [RECT]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 template<typename Type>
-struct gs_rect
+struct gs_2dbox
 {
     template<typename ... Args>
-    gs_rect(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
+    gs_2dbox(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
     {
         Min = gs_vec2f(gs_min(_A.x, _B.x, static_cast<gs_vec2f>(_Args).x...), gs_min(_A.y, _B.y, static_cast<gs_vec2f>(_Args).y...));
         Max = gs_vec2f(gs_max(_A.x, _B.x, static_cast<gs_vec2f>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vec2f>(_Args).y...));
@@ -1184,7 +1266,7 @@ struct gs_rect
                _Point.y <= Max.y;
     }
 
-    bool contains(const gs_rect<Type>& _Other) const
+    bool contains(const gs_2dbox<Type>& _Other) const
     {
         return _Other.Min.x >= Min.x &&
                _Other.Min.y >= Min.y &&
@@ -1192,7 +1274,7 @@ struct gs_rect
                _Other.Max.y <= Max.y;
     }
 
-    bool overlaps(const gs_rect<Type>& _Other) const
+    bool overlaps(const gs_2dbox<Type>& _Other) const
     {
         const gs_vector<Type, 2> p1 = gs_vector<Type, 2>(_Other.Min.x, _Other.Min.y);
         const gs_vector<Type, 2> p2 = gs_vector<Type, 2>(_Other.Max.x, _Other.Min.y);
@@ -1528,9 +1610,9 @@ typedef gs_vector<int,    3> gs_vec3i;
 typedef gs_vector<int,    4> gs_vec4i;
 
 // rectangle typedefs
-typedef gs_rect<float > gs_rectf;
-typedef gs_rect<double> gs_rectd;
-typedef gs_rect<int   > gs_recti;
+typedef gs_2dbox<float > gs_2dboxf;
+typedef gs_2dbox<double> gs_2dboxd;
+typedef gs_2dbox<int   > gs_2dboxi;
 
 // matrix typedefs
 typedef gs_matrix<float,  2, 2> gs_mat2f;

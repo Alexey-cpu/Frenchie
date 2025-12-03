@@ -26,13 +26,72 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
 
-            // command API
+            // API
             void push_rendering_command(
                 const RenderingQueueTexture& _Texture,
                 const gs_vec4f&              _Color,
                 const gs_mat4f&              _Transform);
 
-            // rendering API
+            gs_mat4f calculate_transform_matrix(
+                const float&    _Depth,
+                const gs_vec2f& _Position,
+                const float&    _Rotation,
+                const gs_vec2f& _Scale);
+
+            gs_vec2f calculate_arc_point(
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _ArcAngle);
+
+            int calculate_arc_segments_number(float _Radius, float _MaximumError)
+            {
+                return (int)gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MaximumError), (_Radius)) / (_Radius)))), 8, 512);
+            }
+
+            template<typename ...Args> 
+            gs_2dboxf calculate_bounding_box(
+                const float&    _Depth,
+                const gs_vec2f& _Position,
+                const float&    _Rotation,
+                const gs_vec2f& _Scale,
+                Args ...        _Args)
+            {
+                gs_mat4f _Transform =
+                    calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+
+                return gs_2dboxf(
+                            _Transform * gs_vec4f(gs_vec2f(gs_min(static_cast<gs_vec2f>(_Args).x...), gs_min(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f),
+                            _Transform * gs_vec4f(gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f));
+            }
+
+            gs_2dboxf calculate_bounding_box(
+                const float&              _Depth,
+                const gs_vec2f&           _Position,
+                const float&              _Rotation,
+                const gs_vec2f&           _Scale,
+                const std::u32string&     _Text,
+                const float&              _Size,
+                const RenderingQueueFont& _Font);
+
+            gs_2dboxf calculate_bounding_box(
+                const float&              _Depth,
+                const gs_vec2f&           _Position,
+                const float&              _Rotation,
+                const gs_vec2f&           _Scale,
+                const std::u16string&     _Text,
+                const float&              _Size,
+                const RenderingQueueFont& _Font);
+
+            gs_2dboxf calculate_bounding_box(
+                const float&              _Depth,
+                const gs_vec2f&           _Position,
+                const float&              _Rotation,
+                const gs_vec2f&           _Scale,
+                const std::string&        _Text,
+                const float&              _Size,
+                const RenderingQueueFont& _Font);
+
             void push_triangle_filled(
                 const gs_vec2f&              _P1,
                 const gs_vec2f&              _P2,
@@ -222,78 +281,10 @@ namespace Frenchie
                 std::vector<RenderingQueueVertex>& _Vertexes,
                 std::vector<int>&                  _Indexes);
 
-            static gs_mat4f construct_transform_matrix(
-                const float&    _Depth,
-                const gs_vec2f& _Position,
-                const float&    _Rotation,
-                const gs_vec2f& _Scale)
-            {
-                gs_mat4f matrix(1.f);
-
-                return gs_matrix_translate(matrix, gs_vec3f(_Position, _Depth)) *
-                       gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
-                       gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
-            }
-
-            template<typename ...Args> 
-            gs_rectf calculate_bounding_box(
-                const float&    _Depth,
-                const gs_vec2f& _Position,
-                const float&    _Rotation,
-                const gs_vec2f& _Scale,
-                Args ...        _Args)
-            {
-                gs_mat4f _Transform =
-                    construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
-                return gs_rectf(
-                            _Transform * gs_vec4f(gs_vec2f(gs_min(static_cast<gs_vec2f>(_Args).x...), gs_min(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f),
-                            _Transform * gs_vec4f(gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f));
-            }
-
-            // auxiliary functions
-            static int calculate_arc_segments_number(float _RAD, float _MAXERROR)
-            {
-                return (int)gs_clamp(gs_round_to_even((int)ceil(PI0 / acos(1 - gs_min((_MAXERROR), (_RAD)) / (_RAD)))), 8, 512);
-            }
-
-            gs_vec2f calculate_arc_point(
-                const gs_vec2f& _Center,
-                const float&    _MinorRadius,
-                const float&    _MajorRadius,
-                const float&    _ArcAngle);
-
-            gs_rectf calculate_bounding_box(
-                const float&              _Depth,
-                const gs_vec2f&           _Position,
-                const float&              _Rotation,
-                const gs_vec2f&           _Scale,
-                const std::u32string&     _Text,
-                const float&              _Size,
-                const RenderingQueueFont& _Font);
-
-            gs_rectf calculate_bounding_box(
-                const float&              _Depth,
-                const gs_vec2f&           _Position,
-                const float&              _Rotation,
-                const gs_vec2f&           _Scale,
-                const std::u16string&     _Text,
-                const float&              _Size,
-                const RenderingQueueFont& _Font);
-
-            gs_rectf calculate_bounding_box(
-                const float&              _Depth,
-                const gs_vec2f&           _Position,
-                const float&              _Rotation,
-                const gs_vec2f&           _Scale,
-                const std::string&        _Text,
-                const float&              _Size,
-                const RenderingQueueFont& _Font);
-
             // this is a plipeline
             std::vector<RenderingQueueVertex> m_Vertexes      {std::vector<RenderingQueueVertex>()};
             std::vector<int>                  m_Indexes       {std::vector<int>()};
-            gs_rectf                          m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            gs_2dboxf                         m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::shared_ptr<RenderingQueue>   m_RenderingQueue{nullptr};
         };
     }

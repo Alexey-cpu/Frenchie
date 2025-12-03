@@ -517,11 +517,11 @@ RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, 
     {
         int idx = i - unicodeMin;
 
-        glyphs.get()[idx].Box = gs_rectf(
+        glyphs.get()[idx].Box = gs_2dboxf(
             gs_vec2f(packedCharacters.get()[idx].x0, packedCharacters.get()[idx].y0),
             gs_vec2f(packedCharacters.get()[idx].x1, packedCharacters.get()[idx].y1));
         
-        gs_rectf BoxUV = gs_rectf(
+        gs_2dboxf BoxUV = gs_2dboxf(
             gs_vec2f(packedCharactersQuads.get()[idx].s0, packedCharactersQuads.get()[idx].t0),
             gs_vec2f(packedCharactersQuads.get()[idx].s1, packedCharactersQuads.get()[idx].t1));
 

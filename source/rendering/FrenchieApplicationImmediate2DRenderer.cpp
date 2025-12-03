@@ -27,25 +27,38 @@ void Immediate2DRenderer::frame_start()
     // compute projection matrix
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
-    float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
-    float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
-    float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
-    float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
 
-    auto cameraview = gs_mat4f(1.f);
-    auto projection = gs_matrix_ortho(left, right, bottom, top, -1000.0f, 1000.0f);
+    // auto camera = gs_matrix_calculate_orthographic_camera_view_and_projection(
+    //     gs_vec3f(width * 0.5f, -height * 0.5f, +1.f),
+    //     gs_vec3f(0.f, 1.f, 0.f),
+    //     gs_vec3f(0.f, 0.f, 1.f),
+    //     gs_vec2f(width, height),
+    //     gs_vec3f(0.f, 0.f, 0.f),
+    //     -1000.f,
+    //     +1000.f
+    // );
+
+    auto camera = gs_matrix_calculate_perspective_camera_view_and_projection(
+        gs_vec3f(0.5f, -0.5f, +1.f),
+        gs_vec3f(0.f, 1.f, 0.f),
+        gs_vec3f(0.f, 0.f, 1.f),
+        gs_vec2f(width, height),
+        gs_vec3f(0.f, 0.f, 0.f),
+        -1000.f,
+        +1000.f
+    );
+
+    auto cameraview = camera.cameraview;
+    auto projection = camera.projection;
 
     m_RenderingQueue->set_cameraview_matrix(cameraview);
     m_RenderingQueue->set_projection_matrix(projection);
 
-    // compute view port
-    gs_vec3f viewportMin = m_RenderingQueue->convert_to_NDC(
-        gs_vec2f(0.f, 0.f));
+    // compute viewport
+    gs_vec3f viewportMin = m_RenderingQueue->convert_to_NDC(gs_vec2f(0.f, 0.f));
+    gs_vec3f viewportMax = m_RenderingQueue->convert_to_NDC(Frenchie::Application::application()->get_window_size());
 
-    gs_vec3f viewportMax = m_RenderingQueue->convert_to_NDC(
-        Frenchie::Application::application()->get_window_size());
-
-    m_Viewport = gs_rectf(
+    m_Viewport = gs_2dboxf(
         gs_matrix_invert_square(projection) * gs_matrix_invert_square(cameraview) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(projection) * gs_matrix_invert_square(cameraview) * gs_vec4f(viewportMax, 1.f)
     );
@@ -92,6 +105,146 @@ void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _T
     m_Vertexes.clear();
 }
 
+gs_mat4f Immediate2DRenderer::calculate_transform_matrix(
+    const float&    _Depth,
+    const gs_vec2f& _Position,
+    const float&    _Rotation,
+    const gs_vec2f& _Scale)
+{
+    gs_mat4f matrix(1.f);
+
+    return gs_matrix_translate(matrix, gs_vec3f(_Position, _Depth)) *
+            gs_matrix_rotate(matrix, gs_to_radians(_Rotation), gs_vec3f(0.f, 0.f, 1.f)) * 
+            gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
+}
+
+gs_vec2f Immediate2DRenderer::calculate_arc_point(
+    const gs_vec2f& _Center,
+    const float&    _MinorRadius,
+    const float&    _MajorRadius,
+    const float&    _ArcAngle)
+{
+    return gs_vec2f(
+        _Center.x + _MinorRadius * cos(gs_to_radians(_ArcAngle)),
+        _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)));
+}
+
+gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
+    const float&              _Depth,
+    const gs_vec2f&           _Position,
+    const float&              _Rotation,
+    const gs_vec2f&           _Scale,
+    const std::u32string&     _Text,
+    const float&              _Size,
+    const RenderingQueueFont& _Font)
+{
+    RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
+
+    float scale     = _Size / (float)font.SizeInPixels;
+    float offset    = (font.Ascent + font.Descent - font.LineGap) * scale;
+    float positionX = 0.f;
+    float positionY = -offset;
+
+    gs_vec2f min;
+    gs_vec2f max;
+
+    for(int i = 0; i < (int)_Text.size(); ++i)
+    {
+        unsigned int symbol = _Text[i];
+
+        // fallbacks
+        if(!font.contains_glyph(symbol))
+        {
+            // next line
+            if(symbol == '\n')
+            {
+                positionY -= gs_max(_Size, gs_abs(offset));
+                positionX =  0.f;
+            }
+            // carriage return
+            else if(symbol == '\r')
+                positionX =  0.f;
+            // tab
+            else if(symbol == '\t')
+                positionX += _Size;
+            else
+            {
+                // TODO: do someting here...
+                // May be use fallback font and take fallback character from there ???
+            }
+
+            continue;
+        }
+
+        RenderingQueueGlyph glyph    = font.retrieve_glyph(symbol);
+        float glyphWidth             = glyph.Box.get_size().x * scale;
+        float glyphHeight            = glyph.Box.get_size().y * scale;
+        float glyphHorizontalBearing = glyph.Bearing.x * scale;
+        float glyphVerticalBearing   = glyph.Bearing.y * scale;
+        float glyphAdvance           = glyph.Advance * scale;
+
+        min = gs_vec2f(
+            gs_min(positionX + glyphHorizontalBearing, min.x),
+            gs_min(positionY - glyphVerticalBearing, min.y)
+        );
+
+        max = gs_vec2f(
+            gs_max(positionX + glyphHorizontalBearing + glyphWidth, max.y),
+            gs_max(positionY - glyphVerticalBearing - glyphHeight, max.y)
+        );
+
+        // move cursor
+        positionX += glyphAdvance;
+    }
+
+    auto transform = calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+
+    return gs_2dboxf(
+        transform * gs_vec4f(min, _Depth, 1.f),
+        transform * gs_vec4f(max, _Depth, 1.f)
+    );
+}
+
+gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
+    const float&              _Depth,
+    const gs_vec2f&           _Position,
+    const float&              _Rotation,
+    const gs_vec2f&           _Scale,
+    const std::u16string&     _Text,
+    const float&              _Size,
+    const RenderingQueueFont& _Font)
+{
+    return calculate_bounding_box(
+        _Depth,
+        _Position,
+        _Rotation,
+        _Scale,
+        Frenchie::Core::String::convert_utf16_to_utf8(_Text),
+        _Size,
+        _Font
+    );
+}
+
+gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
+    const float&              _Depth,
+    const gs_vec2f&           _Position,
+    const float&              _Rotation,
+    const gs_vec2f&           _Scale,
+    const std::string&        _Text,
+    const float&              _Size,
+    const RenderingQueueFont& _Font)
+{
+    return calculate_bounding_box(
+        _Depth,
+        _Position,
+        _Rotation,
+        _Scale,
+        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
+        _Size,
+        _Font
+    );
+}
+
 void Immediate2DRenderer::push_triangle_filled(
     const gs_vec2f&              _P1,
     const gs_vec2f&              _P2,
@@ -104,7 +257,7 @@ void Immediate2DRenderer::push_triangle_filled(
     const RenderingQueueTexture& _Texture)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
         !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)) &&
@@ -140,10 +293,10 @@ void Immediate2DRenderer::push_rectangle_filled(
     const RenderingQueueTexture& _Texture)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     if(!m_Viewport.overlaps(
-        gs_rectf(
+        gs_2dboxf(
             _Transform * gs_vec4f(_Min, _Depth, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f))))
     {
@@ -175,11 +328,11 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
     const gs_vec2f& _Scale)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check that we are within viewport
     if(!m_Viewport.overlaps(
-        gs_rectf(
+        gs_2dboxf(
             _Transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
     {
@@ -289,7 +442,7 @@ void Immediate2DRenderer::push_text(
     push_rendering_command(
         font.AtlasTexture,
         _Color,
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale));
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale));
 }
 
 void Immediate2DRenderer::push_text(
@@ -350,11 +503,11 @@ void Immediate2DRenderer::push_arc_filled(
     const RenderingQueueTexture& _Texture)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check that we are within viewport
     if(!m_Viewport.overlaps(
-            gs_rectf(
+            gs_2dboxf(
                 _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f),
                 _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f))))
     {
@@ -389,7 +542,7 @@ void Immediate2DRenderer::push_line(
     const gs_vec2f& _Scale)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
         !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)))
@@ -423,11 +576,11 @@ void Immediate2DRenderer::push_arc(
     const gs_vec2f& _Scale)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check that we are within viewport
     if(!m_Viewport.overlaps(
-            gs_rectf(
+            gs_2dboxf(
                 _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f),
                 _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f))))
     {
@@ -461,7 +614,7 @@ void Immediate2DRenderer::push_triangle(
     const gs_vec2f& _Scale)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check if we are within viewport
     if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
@@ -491,11 +644,11 @@ void Immediate2DRenderer::push_rectangle(
     const gs_vec2f& _Scale)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check that we are within viewport
     if(!m_Viewport.overlaps(
-        gs_rectf(
+        gs_2dboxf(
             _Transform * gs_vec4f(_Min, _Depth, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f))))
     {
@@ -529,11 +682,11 @@ void Immediate2DRenderer::push_rectangle_rounded(
     const gs_vec2f& _Scale)
 {
     gs_mat4f _Transform =
-        construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
+        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
 
     // check that we are within viewport
     if(!m_Viewport.overlaps(
-        gs_rectf(
+        gs_2dboxf(
             _Transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
             _Transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
     {
@@ -890,131 +1043,4 @@ void Immediate2DRenderer::build_arc_mesh(
         p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
         build_line_mesh(p1, p2, _LineWidth, _Color, _Texture, _Vertexes, _Indexes);
     }
-}
-
-gs_vec2f Immediate2DRenderer::calculate_arc_point(
-    const gs_vec2f& _Center,
-    const float&    _MinorRadius,
-    const float&    _MajorRadius,
-    const float&    _ArcAngle)
-{
-    return gs_vec2f(
-        _Center.x + _MinorRadius * cos(gs_to_radians(_ArcAngle)),
-        _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)));
-}
-
-gs_rectf Immediate2DRenderer::calculate_bounding_box(
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
-    const std::u32string&     _Text,
-    const float&              _Size,
-    const RenderingQueueFont& _Font)
-{
-    RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
-
-    float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.Descent - font.LineGap) * scale;
-    float positionX = 0.f;
-    float positionY = -offset;
-
-    gs_vec2f min;
-    gs_vec2f max;
-
-    for(int i = 0; i < (int)_Text.size(); ++i)
-    {
-        unsigned int symbol = _Text[i];
-
-        // fallbacks
-        if(!font.contains_glyph(symbol))
-        {
-            // next line
-            if(symbol == '\n')
-            {
-                positionY -= gs_max(_Size, gs_abs(offset));
-                positionX =  0.f;
-            }
-            // carriage return
-            else if(symbol == '\r')
-                positionX =  0.f;
-            // tab
-            else if(symbol == '\t')
-                positionX += _Size;
-            else
-            {
-                // TODO: do someting here...
-                // May be use fallback font and take fallback character from there ???
-            }
-
-            continue;
-        }
-
-        RenderingQueueGlyph glyph    = font.retrieve_glyph(symbol);
-        float glyphWidth             = glyph.Box.get_size().x * scale;
-        float glyphHeight            = glyph.Box.get_size().y * scale;
-        float glyphHorizontalBearing = glyph.Bearing.x * scale;
-        float glyphVerticalBearing   = glyph.Bearing.y * scale;
-        float glyphAdvance           = glyph.Advance * scale;
-
-        min = gs_vec2f(
-            gs_min(positionX + glyphHorizontalBearing, min.x),
-            gs_min(positionY - glyphVerticalBearing, min.y)
-        );
-
-        max = gs_vec2f(
-            gs_max(positionX + glyphHorizontalBearing + glyphWidth, max.y),
-            gs_max(positionY - glyphVerticalBearing - glyphHeight, max.y)
-        );
-
-        // move cursor
-        positionX += glyphAdvance;
-    }
-
-    auto transform = construct_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
-    return gs_rectf(
-        transform * gs_vec4f(min, _Depth, 1.f),
-        transform * gs_vec4f(max, _Depth, 1.f)
-    );
-}
-
-gs_rectf Immediate2DRenderer::calculate_bounding_box(
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
-    const std::u16string&     _Text,
-    const float&              _Size,
-    const RenderingQueueFont& _Font)
-{
-    return calculate_bounding_box(
-        _Depth,
-        _Position,
-        _Rotation,
-        _Scale,
-        Frenchie::Core::String::convert_utf16_to_utf8(_Text),
-        _Size,
-        _Font
-    );
-}
-
-gs_rectf Immediate2DRenderer::calculate_bounding_box(
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
-    const std::string&        _Text,
-    const float&              _Size,
-    const RenderingQueueFont& _Font)
-{
-    return calculate_bounding_box(
-        _Depth,
-        _Position,
-        _Rotation,
-        _Scale,
-        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
-        _Size,
-        _Font
-    );
 }
