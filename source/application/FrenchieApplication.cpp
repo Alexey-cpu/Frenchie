@@ -400,6 +400,8 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
              mouseButton < ApplicationMouseButton::Button::ApplicationMouseButton_End;
              mouseButton++)
     {
+        m_Input.MouseButtons[mouseButton].Released      = false;
+        m_Input.MouseButtons[mouseButton].Pressed       = false;
         m_Input.MouseButtons[mouseButton].Clicked       = false;
         m_Input.MouseButtons[mouseButton].DoubleClicked = false;
     }
