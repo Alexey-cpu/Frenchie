@@ -55,24 +55,109 @@ void Immedidate2DRendererTestLayer::frame_update()
         gs_vec2f(1.f, 1.f)
     );
 
-    push_button_widget(
-        "Hello !!! I am Button !!!",
+    draw_push_button_widget(
+        "BTN !!!",
         gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
         true,
         0.f,
-        gs_vec2f(width, -height) * 0.5f
+        gs_vec2f(12.f, -12.f)
     );
 
-    push_button_widget(
-        "Hello !!! I am Button !!!",
+    draw_push_button_widget(
+        "Hello !!! I am ANOTHER Button !!!",
         gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
         false,
         0.f,
-        gs_vec2f(width, -height - 512.f) * 0.5f
+        gs_vec2f(12.f, -12.f) + gs_vec2f(0.f, -256.f)
+    );
+
+    static bool pushed = true;
+    draw_radio_button_widget(
+        "Hello !!! I am radio button !!!",
+        32.f,
+        pushed,
+        0.f,
+        gs_vec2f(12.f, -12.f) + gs_vec2f(0.f, -512.f)
     );
 }
 
-bool Immedidate2DRendererTestLayer::push_button_widget(
+bool Immedidate2DRendererTestLayer::draw_radio_button_widget(
+    const std::string& _Name,
+    const float&       _Radius,
+    bool&              _Pushed,
+    const float&       _Depth,
+    const gs_vec2f&    _Position,
+    const float&       _Rotation,
+    const gs_vec2f&    _Scale)
+{
+    gs_2dboxf buttonBoundingBox =
+        gs_2dboxf(
+            gs_vec2f(0.f, 0.f),
+            gs_vec2f(_Radius, _Radius) * 2.f);
+    
+    if(Frenchie::Application::application()
+        ->is_mouse_button_clicked(Frenchie::Application::ApplicationMouseButton::ApplicationMouseButton_Left))
+    {
+        if(m_Renderer->calculate_bounding_box(
+            _Depth,
+            _Position,
+            _Rotation,
+            _Scale,
+            buttonBoundingBox.Min,
+            buttonBoundingBox.Max).contains(m_Renderer->get_cursor_postion()))
+        {
+            _Pushed = !_Pushed;
+        }
+    }
+
+    // draw background
+    m_Renderer->push_arc_filled(
+        gs_vec2f(_Radius, _Radius),
+        _Radius,
+        _Radius,
+        0.f,
+        360.f,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        _Depth,
+        _Position,
+        _Rotation,
+        _Scale
+    );
+
+    if(_Pushed)
+    {
+        m_Renderer->push_arc_filled(
+            gs_vec2f(_Radius, _Radius),
+            _Radius,
+            _Radius,
+            0.f,
+            360.f,
+            gs_vec4f(0.f, 255.f, 0.f, 255.f),
+            _Depth + 1,
+            _Position,
+            _Rotation,
+            _Scale
+        );
+    }
+
+    m_Renderer->push_arc(
+        gs_vec2f(_Radius, _Radius),
+        _Radius,
+        _Radius,
+        0.f,
+        360.f,
+        12.f, // line width
+        gs_vec4f(0.f, 0.f, 255.f, 255.f),
+        _Depth + 2,
+        _Position,
+        _Rotation,
+        _Scale
+    );
+
+    return true;
+}
+
+bool Immedidate2DRendererTestLayer::draw_push_button_widget(
     const std::string& _Name,
     const gs_vec2f&    _Size,
     const bool&        _Enabled,
@@ -149,7 +234,9 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
             m_Renderer->m_RenderingQueue->get_default_font());
 
     gs_2dboxf buttonBoundingBox =
-        gs_2dboxf(gs_vec2f(0.f, 0.f), Immediate2DRenderer::bottomRight(gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), gs_max(_Size.y, textBoundingBox.get_size().y)) + gs_vec2f(_Size.x, _Size.y) * 0.25f));
+        gs_2dboxf(
+            gs_vec2f(0.f, 0.f),
+            RenderingQueue::bottom_right(gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), gs_max(_Size.y, textBoundingBox.get_size().y)) + gs_vec2f(m_Style.FontSize, m_Style.FontSize)));
 
     bool hovered = m_Renderer->calculate_bounding_box(
         _Depth,
@@ -169,7 +256,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
         buttonBoundingBox.Max,
         m_Style.PushButtonRoundingRadius,
         retreive_button_background_color(_Enabled, hovered, pressed),
-        _Depth + 3.f,
+        _Depth,
         _Position,
         _Rotation,
         _Scale
@@ -182,7 +269,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
         m_Style.PushButtonRoundingRadius,
         m_Style.PushButtonFrameWidth,
         retreive_frame_color(_Enabled, hovered, pressed),
-        _Depth + 3.f,
+        _Depth + 1.f,
         _Position,
         _Rotation,
         _Scale
@@ -197,8 +284,8 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
         _Name,
         m_Style.FontSize,
         retreive_text_color(_Enabled, hovered, pressed),
-        _Depth + 6.f,
-        (min + max) * 0.5f + Immediate2DRenderer::topLeft(gs_vec2f(+textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f),
+        _Depth + 2.f,
+        (min + max) * 0.5f + RenderingQueue::top_left(gs_vec2f(+textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f),
         _Rotation,
         _Scale
     );

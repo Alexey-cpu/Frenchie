@@ -4,6 +4,7 @@
 
 // STL
 #include <chrono>
+#include <stack>
 
 // template<typename Type> struct Tree;
 
@@ -106,6 +107,17 @@ namespace Frenchie
 {
     namespace Application
     {
+        // DrawingCursorPosition
+        // AvailableDrawingSpace
+
+        struct ImmedidateUserInterfaceWindow
+        {
+            gs_vec2f Size;
+            gs_vec2f Position;
+            gs_vec2f DrawingSpaceSize     {gs_vec2f(0.f, 0.f)};
+            gs_vec2f DrawingCursorPosition{gs_vec2f(0.f, 0.f)};
+        };
+
         enum ImmedidateUserInterfaceColors_ : int
         {
             // application text
@@ -157,8 +169,8 @@ namespace Frenchie
             }
 
             RenderingQueueFont Font;
-            float              FontSize                 = 32.f;
-            float              PushButtonFrameWidth     = 1.f;
+            float              FontSize                 = 24.f;
+            float              PushButtonFrameWidth     = 4.f;
             float              PushButtonRoundingRadius = 32.f;
 
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
@@ -174,7 +186,21 @@ namespace Frenchie
             virtual void frame_start() override;
             virtual void frame_update() override;
 
-            bool push_button_widget(
+            bool push_window();
+            void pop_window();
+
+        protected:
+
+            bool draw_radio_button_widget(
+                const std::string& _Name,
+                const float&       _Radius,
+                bool&              _Pushed,
+                const float&       _Depth,
+                const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
+                const float&       _Rotation = 0.f,
+                const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
+
+            bool draw_push_button_widget(
                 const std::string& _Name,
                 const gs_vec2f&    _Size,
                 const bool&        _Enabled,
@@ -183,10 +209,9 @@ namespace Frenchie
                 const float&       _Rotation = 0.f,
                 const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
 
-        protected:
+            std::stack<ImmedidateUserInterfaceWindow> m_WindowsStack{std::stack<ImmedidateUserInterfaceWindow>()};
 
-            ImmedidateUserInterfaceStyle m_Style;
-
+            ImmedidateUserInterfaceStyle         m_Style   {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
 
         };
