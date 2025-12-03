@@ -760,6 +760,14 @@ int gs_point_in_2D_polygon(const gs_vector<Type, 2>* _Polygon, const int _Vertex
     return c;
 }
 
+template<typename Type>
+gs_vector<Type, 2> gs_vector_convert_to_NDC(const gs_vector<Type, 2>& _Position, const gs_vector<Type, 2>& _Screen)
+{
+    return gs_vector<Type, 2>(
+        (2.0f * _Position.x) / _Screen.x - 1.0f,
+        1.0f - (2.0f * _Position.y) / _Screen.y);
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [MATRIX]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1116,20 +1124,22 @@ inline gs_matrix<T, 4, 4> gs_matrix_ortho(
 
 template<typename Type>
 inline gs_matrix<Type, 4, 4> gs_matrix_perspective(
-    const Type& _FieldOfView,
-    const Type& _Aspect,
-    const Type& _Far,
-    const Type& _Near)
+    const Type& fovy,
+    const Type& aspect,
+    const Type& zNear,
+    const Type& zFar)
 {
-    GS_ASSERT(abs(_Aspect - gs_epsilon<Type>())> static_cast<Type>(0));
-    Type const tanHalfFovy = tan(_FieldOfView / static_cast<Type>(2));
-    gs_matrix<Type, 4, 4> transform(static_cast<Type>(0));
-    transform[0][0] = static_cast<Type>(1) / (_Aspect * tanHalfFovy);
-    transform[1][1] = static_cast<Type>(1) / (tanHalfFovy);
-    transform[2][2] = - (_Far + _Near) / (_Far - _Near);
-    transform[2][3] = - static_cast<Type>(1);
-    transform[3][2] = - (static_cast<Type>(2) * _Far * _Near) / (_Far - _Near);
-    return transform;
+    //assert(abs(aspect - std::numeric_limits<T>::epsilon()) > static_cast<T>(0));
+
+    Type const tanHalfFovy = tan(fovy / static_cast<Type>(2));
+
+    gs_matrix<Type, 4, 4> Result(static_cast<Type>(0));
+    Result[0][0] = static_cast<Type>(1) / (aspect * tanHalfFovy);
+    Result[1][1] = static_cast<Type>(1) / (tanHalfFovy);
+    Result[2][2] = - (zFar + zNear) / (zFar - zNear);
+    Result[2][3] = - static_cast<Type>(1);
+    Result[3][2] = - (static_cast<Type>(2) * zFar * zNear) / (zFar - zNear);
+    return Result;
 }
 
 template<typename Type>
@@ -1203,30 +1213,42 @@ auto gs_matrix_calculate_perspective_camera_view_and_projection(
     const Type&               _CameraNearPlanePosition,
     const Type&               _CameraFarPlanePosition,
     const Type&               _FieldOfView = 90,
-    const Type&               _Aspect      = 1)
+    const Type&               _Aspect      = 1,
+    const float&              _Depth       = 10000)
 {
     // camera rotation angles
-    // gs_matrix<Type, 4, 4> rotateX = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.x), gs_vector<Type, 3>(1.f, 0.f, 0.f));
-    // gs_matrix<Type, 4, 4> rotateY = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.y), gs_vector<Type, 3>(0.f, 1.f, 0.f));
-    // gs_matrix<Type, 4, 4> rotateZ = gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraEulerAngles.z), gs_vector<Type, 3>(0.f, 0.f, 1.f));
+    // gs_mat4f rotateX  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(1.f, 0.f, 0.f));
+    // gs_mat4f rotateY  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(0.f, 1.f, 0.f));
+    gs_mat4f rotateZ  = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(0.f), gs_vec3f(0.f, 0.f, 1.f));
 
-    // camera orientation
-    gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vector<Type, 3>(0, 0, -1));
-    gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
-    gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+    // camera local attributes
+    gs_vec3f cameraWorldUpAxisDirection    = gs_vec3f(+0.f, +1.f, +0.f);
+    gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vec3f(0.f, 0.f, -1.f));
+    gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, cameraWorldUpAxisDirection));
+    gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
 
-    gs_matrix<Type, 4, 4> resolutionScaleMatrix = gs_matrix_scale(
-        gs_matrix<Type, 4, 4>(1.f), 
-        gs_vector<Type, 3>(
-            static_cast<Type>(1) / gs_max(_CameraResolution.x, static_cast<Type>(1)), 
-            static_cast<Type>(1) / gs_max(_CameraResolution.y, static_cast<Type>(1)), 
-            static_cast<Type>(1) / gs_abs(_CameraFarPlanePosition - _CameraNearPlanePosition)
+    // rotate around Z axis
+    cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraLocalFrontAxisDirection, 1.f)));
+    cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraWorldUpAxisDirection, 1.f)));
+
+    // setup projection matrixes
+    gs_mat4f scaleMatrix = gs_matrix_scale(
+        gs_mat4f(1.f), 
+        gs_vec3f(
+            1.f / std::max<float>(_CameraResolution.x, 1.f), 
+            1.f / std::max<float>(_CameraResolution.y, 1.f), 
+            1.f / _Depth
         )
     );
 
-    //gs_vector<Type, 3>    cameraPosition = resolutionScaleMatrix * gs_vector<Type, 4>(_CameraWorldPosition, static_cast<Type>(1));
-    gs_matrix<Type, 4, 4> cameraview  = gs_matrix_look_at(_CameraWorldPosition, _CameraWorldPosition + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection) * resolutionScaleMatrix;
-    gs_matrix<Type, 4, 4> projection  = gs_matrix_perspective(gs_to_radians(_FieldOfView), _Aspect, _CameraFarPlanePosition, _CameraNearPlanePosition);
+    gs_vec3f cameraWorldPosition = gs_vec3f(+0.0f, -0.0f, +1.f); // scaleMatrix * gs_vec4f(_CameraWorldPosition, 1.f);
+
+    gs_mat4f cameraview = gs_matrix_look_at(cameraWorldPosition, cameraWorldPosition + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection) * scaleMatrix;
+    gs_mat4f projection = gs_matrix_perspective(
+        gs_to_radians(_FieldOfView),
+        1.f,
+        _CameraNearPlanePosition / _Depth,
+        _CameraFarPlanePosition / _Depth);
 
     struct
     {

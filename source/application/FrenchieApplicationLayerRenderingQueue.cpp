@@ -155,19 +155,6 @@ void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
     m_ProjectionMatrix = _Matrix;
 }
 
-gs_vec3f RenderingQueue::get_cursor_postion() const
-{
-    auto size     = Frenchie::Application::application()->get_window_size();
-    auto position = Frenchie::Application::application()->get_window_cursor_position();
-
-    float ndc_x = (2.0f * position.x) / size.x - 1.0f;
-    float ndc_y = 1.0f - (2.0f * position.y) / size.y;
-
-    return gs_matrix_invert_square(get_projection_matrix()) *
-           gs_matrix_invert_square(get_cameraview_matrix()) *
-           gs_vec4f(ndc_x, ndc_y, 0.f, 1.f);
-}
-
 RenderingQueueFont RenderingQueue::get_default_font() const
 {
     return m_DefaultFont;
@@ -345,16 +332,6 @@ void RenderingQueue::quit()
 bool RenderingQueue::allows_multiple_instances() const
 {
     return true;
-}
-
-gs_vec2f RenderingQueue::convert_to_NDC(const gs_vec2f& _Position)
-{
-    auto size = Frenchie::Application::application()->get_window_size();
-
-    float ndc_x = (2.0f * _Position.x) / size.x - 1.0f;
-    float ndc_y = 1.0f - (2.0f * _Position.y) / size.y;
-
-    return {ndc_x, ndc_y};
 }
 
 RenderingQueueFont RenderingQueue::construct_font(const unsigned char* _Memory, const int& _SizeInPixels)

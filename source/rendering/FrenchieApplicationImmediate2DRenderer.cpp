@@ -9,11 +9,6 @@ using namespace Frenchie::Application;
 Immediate2DRenderer::Immediate2DRenderer(){}
 Immediate2DRenderer::~Immediate2DRenderer(){}
 
-std::shared_ptr<RenderingQueue> Immediate2DRenderer::get_rendering_queue() const
-{
-    return m_RenderingQueue;
-}
-
 bool Immediate2DRenderer::awake()
 {
     if(m_RenderingQueue == nullptr)
@@ -22,30 +17,70 @@ bool Immediate2DRenderer::awake()
     return m_RenderingQueue != nullptr;
 }
 
+// auto calculate_orthographic_camera_view_and_projection_matrix(
+//     const gs_vec3f& _CameraWorldPosition,
+//     const gs_vec3f& _CameraWorldUpAxisDirection,
+//     const gs_vec2f& _CameraResolution,
+//     const gs_vec4f& _CameraEulerAngles,
+//     const float&    _CameraNearPlanePosition,
+//     const float&    _CameraFarPlanePosition)
+// {
+//     // compute projection matrix
+//     float width  = _CameraResolution.x;
+//     float height = _CameraResolution.y;
+
+//     float left   = -width  * 0.5f + _CameraWorldPosition.x; // The x-coordinate of the left edge of the viewable area.
+//     float right  = +width  * 0.5f + _CameraWorldPosition.x; // The x-coordinate of the right edge of the viewable area.
+//     float bottom = -height * 0.5f + _CameraWorldPosition.y; // The y-coordinate of the bottom edge of the viewable area.
+//     float top    = +height * 0.5f + _CameraWorldPosition.y; // The y-coordinate of the top edge of the viewable area.
+
+//     // float left   = -width  * 0.5f + width  * 0.5f; // The x-coordinate of the left edge of the viewable area.
+//     // float right  = +width  * 0.5f + width  * 0.5f; // The x-coordinate of the right edge of the viewable area.
+//     // float bottom = -height * 0.5f - height * 0.5f; // The y-coordinate of the bottom edge of the viewable area.
+//     // float top    = +height * 0.5f - height * 0.5f; // The y-coordinate of the top edge of the viewable area.
+
+//     // camera rotation angles
+//     gs_mat4f rotateX = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraEulerAngles.x), gs_vec3f(1.f, 0.f, 0.f));
+//     gs_mat4f rotateY = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraEulerAngles.y), gs_vec3f(0.f, 1.f, 0.f));
+//     gs_mat4f rotateZ = gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraEulerAngles.z), gs_vec3f(0.f, 0.f, 1.f));
+
+//     // camera orientation
+//     gs_vec3f cameraLocalFrontAxisDirection = gs_vector_normalize(rotateY * rotateX * gs_vec4f(gs_vec3f(0.f, 0.f, -1), 1.f));//gs_vector_normalize(gs_vec3f(0.f, 0.f, -1.f));
+//     gs_vec3f cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
+//     gs_vec3f cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+
+//     // rotate around Z axis
+//     cameraLocalFrontAxisDirection = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(cameraLocalFrontAxisDirection, 1.f)));
+//     cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vec3f(rotateZ * gs_vec4f(_CameraWorldUpAxisDirection, 1.f)));
+
+//     gs_vec3f pos = {0.f, 0.f, 1.f};
+
+//     struct
+//     {
+//         gs_mat4f cameraview;
+//         gs_mat4f projection;
+//     } result = {
+//         gs_matrix_look_at(pos, pos + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection),
+//         gs_matrix_ortho(left, right, bottom, top, _CameraNearPlanePosition, _CameraFarPlanePosition)
+//     };
+
+//     return result;
+// }
+
 void Immediate2DRenderer::frame_start()
 {
     // compute projection matrix
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
 
-    // auto camera = gs_matrix_calculate_orthographic_camera_view_and_projection(
-    //     gs_vec3f(width * 0.5f, -height * 0.5f, +1.f),
-    //     gs_vec3f(0.f, 1.f, 0.f),
-    //     gs_vec3f(0.f, 0.f, 1.f),
-    //     gs_vec2f(width, height),
-    //     gs_vec3f(0.f, 0.f, 0.f),
-    //     -1000.f,
-    //     +1000.f
-    // );
-
     auto camera = gs_matrix_calculate_perspective_camera_view_and_projection(
-        gs_vec3f(0.5f, -0.5f, +1.f),
+        gs_vec3f(width * 0.5f, -height * 0.5f, 5000.f),
         gs_vec3f(0.f, 1.f, 0.f),
-        gs_vec3f(0.f, 0.f, 1.f),
+        gs_vec3f(0.f, 0.f, -1.f),
         gs_vec2f(width, height),
         gs_vec3f(0.f, 0.f, 0.f),
-        -1000.f,
-        +1000.f
+        +500.f,
+        -1000.f
     );
 
     auto cameraview = camera.cameraview;
@@ -55,8 +90,8 @@ void Immediate2DRenderer::frame_start()
     m_RenderingQueue->set_projection_matrix(projection);
 
     // compute viewport
-    gs_vec3f viewportMin = m_RenderingQueue->convert_to_NDC(gs_vec2f(0.f, 0.f));
-    gs_vec3f viewportMax = m_RenderingQueue->convert_to_NDC(Frenchie::Application::application()->get_window_size());
+    gs_vec3f viewportMin = gs_vector_convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));
+    gs_vec3f viewportMax = gs_vector_convert_to_NDC(Frenchie::Application::application()->get_window_size(), gs_vec2f(width, height));
 
     m_Viewport = gs_2dboxf(
         gs_matrix_invert_square(projection) * gs_matrix_invert_square(cameraview) * gs_vec4f(viewportMin, 1.f),

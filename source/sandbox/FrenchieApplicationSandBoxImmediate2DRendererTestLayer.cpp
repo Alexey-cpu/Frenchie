@@ -23,20 +23,30 @@ void Immedidate2DRendererTestLayer::frame_update()
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
 
-    m_Renderer->push_rectangle(
-        gs_vec2f(0.f, 0.f),
-        gs_vec2f(width * 0.5, -height * 0.5),
-        8.f,
+    // m_Renderer->push_rectangle(
+    //     gs_vec2f(0.f, 0.f),
+    //     gs_vec2f(width * 0.5, -height * 0.5),
+    //     8.f,
+    //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+    //     0.f,
+    //     gs_vec2f(0.f, 0.f),
+    //     0.f,
+    //     gs_vec2f(1.f, 1.f)
+    // );
+
+    m_Renderer->push_text(
+        std::to_string(m_Renderer->get_cursor_postion().x).append(" ").append(
+             std::to_string(m_Renderer->get_cursor_postion().y)
+        ),
+        m_Style.FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         0.f,
-        gs_vec2f(0.f, 0.f),
-        0.f,
-        gs_vec2f(1.f, 1.f)
+        m_Renderer->get_cursor_postion() + gs_vec3f(32.f, 32.f)
     );
 
     m_Renderer->push_rectangle(
-        gs_vec2f(0.f, 0.f),
-        gs_vec2f(width, -height),
+        m_Renderer->m_Viewport.Min,
+        m_Renderer->m_Viewport.Max,
         8.f,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         0.f,
@@ -149,7 +159,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
         _Rotation,
         _Scale,
         buttonBoundingBox.Min,
-        buttonBoundingBox.Max).contains(m_Renderer->get_rendering_queue()->get_cursor_postion());
+        buttonBoundingBox.Max).contains(m_Renderer->get_cursor_postion());
     
     bool pressed =
         hovered &&
