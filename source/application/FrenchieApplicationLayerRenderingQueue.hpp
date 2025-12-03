@@ -154,18 +154,18 @@ namespace Frenchie
         struct RenderingQueueGlyph
         {
             RenderingQueueGlyph(
-                const gs_rectf& _Box     = gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f)),
-                const gs_vec2f& _MinUV   = gs_vec2f(0.f),
-                const gs_vec2f& _MaxUV   = gs_vec2f(0.f),
-                const gs_vec2f& _Bearing = gs_vec2f(0.f),
-                const float&    _Advance = 0.f) :
+                const gs_2dboxf& _Box    = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                const gs_vec2f&  _MinUV   = gs_vec2f(0.f),
+                const gs_vec2f&  _MaxUV   = gs_vec2f(0.f),
+                const gs_vec2f&  _Bearing = gs_vec2f(0.f),
+                const float&     _Advance = 0.f) :
                     Box(_Box),
                     MinUV(_MinUV),
                     MaxUV(_MaxUV),
                     Bearing(_Bearing),
                     Advance(_Advance){}
 
-            gs_rectf Box    {gs_rectf(gs_vec2f(0.f), gs_vec2f(0.f))};
+            gs_2dboxf Box    {gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f))};
             gs_vec2f MinUV  {gs_vec2f(0.f)};
             gs_vec2f MaxUV  {gs_vec2f(0.f)};
             gs_vec2f Bearing{gs_vec2f(0.f)};
