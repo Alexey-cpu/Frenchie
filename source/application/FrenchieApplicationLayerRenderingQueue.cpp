@@ -1081,6 +1081,46 @@ void RenderingQueue::push_command(
     m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform));
 }
 
+gs_vec2f RenderingQueue::left(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(-1.f, 0.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::right(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(+1.f, 0.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::top(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(0.f, +1.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::down(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(0.f, -1.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::top_left(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(-1.f, 1.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::top_right(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(+1.f, 1.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::bottom_left(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(-1.f, -1.f) * _Vector;
+}
+
+gs_vec2f RenderingQueue::bottom_right(const gs_vec2f& _Vector)
+{
+    return gs_vec2f(+1.f, -1.f) * _Vector;
+}
+
 // Immediate2DRendererDefaultFont
 unsigned int RenderingQueueDefaultFont::COMPRESSED_SIZE = 316235;
 

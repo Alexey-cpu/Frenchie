@@ -149,9 +149,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
             m_Renderer->m_RenderingQueue->get_default_font());
 
     gs_2dboxf buttonBoundingBox =
-        gs_2dboxf(
-            gs_vec2f(0.f, 0.f),
-            gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), -gs_max(_Size.y, textBoundingBox.get_size().y)));
+        gs_2dboxf(gs_vec2f(0.f, 0.f), Immediate2DRenderer::bottomRight(gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), gs_max(_Size.y, textBoundingBox.get_size().y)) + gs_vec2f(_Size.x, _Size.y) * 0.25f));
 
     bool hovered = m_Renderer->calculate_bounding_box(
         _Depth,
@@ -200,7 +198,7 @@ bool Immedidate2DRendererTestLayer::push_button_widget(
         m_Style.FontSize,
         retreive_text_color(_Enabled, hovered, pressed),
         _Depth + 6.f,
-        (min + max) * 0.5f + gs_vec2f(-textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f,
+        (min + max) * 0.5f + Immediate2DRenderer::topLeft(gs_vec2f(+textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f),
         _Rotation,
         _Scale
     );
