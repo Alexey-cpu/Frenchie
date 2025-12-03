@@ -18,8 +18,16 @@ namespace Frenchie
             Immediate2DRenderer();
             virtual ~Immediate2DRenderer();
 
-            // getters
-            std::shared_ptr<RenderingQueue> get_rendering_queue() const;
+            gs_vec3f get_cursor_postion() const
+            {
+                gs_vec2f size   = Frenchie::Application::application()->get_window_size();
+                gs_vec2f cursor = Frenchie::Application::application()->get_window_cursor_position();
+                gs_mat4f matrix =
+                    gs_matrix_invert_square(m_RenderingQueue->get_cameraview_matrix()) *
+                    gs_matrix_invert_square(m_RenderingQueue->get_projection_matrix());
+                
+                return matrix * gs_vec4f(gs_vector_convert_to_NDC(cursor, size), -1.f, 1.f);
+            }
 
             virtual bool awake() override;
             virtual void frame_start() override;
