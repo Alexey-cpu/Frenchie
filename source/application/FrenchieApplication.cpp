@@ -156,6 +156,11 @@ gs_vec2f ApplicationInstance::get_window_cursor_position() const
     return m_Input.MouseCursor.Position;
 }
 
+gs_vec2f ApplicationInstance::get_window_cursor_dragdelta() const
+{
+    return m_Input.MouseCursor.DragDelta;
+}
+
 bool ApplicationInstance::is_mouse_button_down(const ApplicationMouseButton::Button& _Button) const
 {
     return m_Input.MouseButtons[_Button].Down;
@@ -328,8 +333,13 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         {
             m_Input.MouseButtons[mouseButton].Down      = true;
             m_Input.MouseButtons[mouseButton].PressTime = std::chrono::high_resolution_clock::now();
+
+            m_Input.MouseCursor.MousePressPosition = m_Input.MouseCursor.Position;
         }
         
+        if(m_Input.MouseButtons[mouseButton].Down)
+            m_Input.MouseCursor.DragDelta = m_Input.MouseCursor.Position - m_Input.MouseCursor.MousePressPosition;
+
         if(m_Input.MouseButtons[mouseButton].Released)
         {
             m_Input.MouseButtons[mouseButton].Down        = false;
@@ -405,6 +415,8 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         m_Input.MouseButtons[mouseButton].Clicked       = false;
         m_Input.MouseButtons[mouseButton].DoubleClicked = false;
     }
+
+    m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
 }
 
 void ApplicationInstance::ApplicationInstance::finish()

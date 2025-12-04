@@ -1279,6 +1279,31 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, co
 // [RECT]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 template<typename Type>
+struct gs_2d_ellipse
+{
+    gs_2d_ellipse(const gs_vector<Type, 2>& _Center, const Type& _Radius) : Center(_Center), Radius(_Radius){}
+
+    gs_vector<Type, 2> Center;
+    Type               Radius;
+
+    bool contains(const gs_vector<Type, 2>& _Point) const
+    {
+        return _Point.x >= Center.x - Radius &&
+               _Point.y >= Center.y - Radius &&
+               _Point.x <= Center.x + Radius &&
+               _Point.y <= Center.y + Radius;
+    }
+
+    gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
+    {
+        return gs_2d_ellipse<Type>(
+            _Transform * gs_vector<Type, 4>(Center, 0.f, 1.f),
+            Radius
+        );
+    }
+};
+
+template<typename Type>
 struct gs_2dbox
 {
     template<typename ... Args>
@@ -1310,6 +1335,14 @@ struct gs_2dbox
                _Other.Min.y >= Min.y &&
                _Other.Max.x <= Max.x &&
                _Other.Max.y <= Max.y;
+    }
+
+    gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
+    {
+        return gs_2dbox<Type>(
+            _Transform * gs_vector<Type, 4>(Min, 0.f, 1.f),
+            _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f)
+        );
     }
 
     bool overlaps(const gs_2dbox<Type>& _Other) const
@@ -1651,6 +1684,8 @@ typedef gs_vector<int,    4> gs_vec4i;
 typedef gs_2dbox<float > gs_2dboxf;
 typedef gs_2dbox<double> gs_2dboxd;
 typedef gs_2dbox<int   > gs_2dboxi;
+
+typedef gs_2d_ellipse<float> gs_2d_ellipsef;
 
 // matrix typedefs
 typedef gs_matrix<float,  2, 2> gs_mat2f;
