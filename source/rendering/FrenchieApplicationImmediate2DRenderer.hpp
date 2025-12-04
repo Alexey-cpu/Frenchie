@@ -285,6 +285,46 @@ namespace Frenchie
                 std::vector<int>&                  _Indexes,
                 const int&                         _SegmentsCount = 36);
 
+            static gs_vec2f left(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(-1.f, 0.f) * _Vector;
+            }
+
+            static gs_vec2f right(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(+1.f, 0.f) * _Vector;
+            }
+
+            static gs_vec2f top(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(0.f, -1.f) * _Vector;
+            }
+
+            static gs_vec2f down(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(0.f, +1.f) * _Vector;
+            }
+
+            static gs_vec2f top_left(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(Immediate2DRenderer::left(_Vector).x, Immediate2DRenderer::top(_Vector).y);
+            }
+
+            static gs_vec2f top_right(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(Immediate2DRenderer::right(_Vector).x, Immediate2DRenderer::top(_Vector).y);
+            }
+
+            static gs_vec2f bottom_left(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(Immediate2DRenderer::left(_Vector).x, Immediate2DRenderer::down(_Vector).y);
+            }
+
+            static gs_vec2f bottom_right(const gs_vec2f& _Vector)
+            {
+                return gs_vec2f(Immediate2DRenderer::right(_Vector).x, Immediate2DRenderer::down(_Vector).y);
+            }
+
             // this is a plipeline
             std::vector<RenderingQueueVertex> m_Vertexes      {std::vector<RenderingQueueVertex>()};
             std::vector<int>                  m_Indexes       {std::vector<int>()};
