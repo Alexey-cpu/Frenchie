@@ -43,8 +43,8 @@ namespace Frenchie
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
                 const gs_vec2f& _Position,
-                const float&    _Rotation,
-                const gs_vec2f& _Scale);
+                const float&    _Rotation = 0.f,
+                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 
             gs_vec2f calculate_arc_point(
                 const gs_vec2f& _Center,
@@ -52,45 +52,25 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _ArcAngle);
 
-            template<typename ...Args> 
-            gs_2dboxf calculate_bounding_box(
-                const float&    _Depth,
-                const gs_vec2f& _Position,
-                const float&    _Rotation,
-                const gs_vec2f& _Scale,
-                Args ...        _Args)
-            {
-                gs_mat4f _Transform =
-                    calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
-                return gs_2dboxf(
-                            _Transform * gs_vec4f(gs_vec2f(gs_min(static_cast<gs_vec2f>(_Args).x...), gs_min(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f),
-                            _Transform * gs_vec4f(gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)), 1.f, 1.f));
-            }
+            // template<typename ...Args> 
+            // gs_2dboxf calculate_bounding_box(Args ... _Args)
+            // {
+            //     return gs_2dboxf(
+            //         gs_vec2f(gs_min(static_cast<gs_vec2f>(_Args).x...), gs_min(static_cast<gs_vec2f>(_Args).y...)),
+            //         gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)));
+            // }
 
             gs_2dboxf calculate_bounding_box(
-                const float&              _Depth,
-                const gs_vec2f&           _Position,
-                const float&              _Rotation,
-                const gs_vec2f&           _Scale,
                 const std::u32string&     _Text,
                 const float&              _Size,
                 const RenderingQueueFont& _Font);
 
             gs_2dboxf calculate_bounding_box(
-                const float&              _Depth,
-                const gs_vec2f&           _Position,
-                const float&              _Rotation,
-                const gs_vec2f&           _Scale,
                 const std::u16string&     _Text,
                 const float&              _Size,
                 const RenderingQueueFont& _Font);
 
             gs_2dboxf calculate_bounding_box(
-                const float&              _Depth,
-                const gs_vec2f&           _Position,
-                const float&              _Rotation,
-                const gs_vec2f&           _Scale,
                 const std::string&        _Text,
                 const float&              _Size,
                 const RenderingQueueFont& _Font);

@@ -51,9 +51,11 @@ namespace Frenchie
                 ApplicationMouseCursor_TopLeftToBottomRightHeaded,
                 ApplicationMouseCursor_TopRighToBottomLeftHeaded,
                 ApplicationMouseCursor_End
-            }         View    {ApplicationMouseCursor_Arrow};
-            bool      Entered {false};
-            gs_vec2f  Position{gs_vec2f(0.f)};
+            }         View              {ApplicationMouseCursor_Arrow};
+            bool      Entered           {false};
+            gs_vec2f  Position          {gs_vec2f(0.f)};
+            gs_vec2f  MousePressPosition{gs_vec2f(0.f)};
+            gs_vec2f  DragDelta         {gs_vec2f(0.f)};
             uintptr_t Cursors[ApplicationMouseCursor_End]{};
         };
 
@@ -80,6 +82,7 @@ namespace Frenchie
             gs_vec2f    get_window_size() const;
             gs_vec2f    get_window_position() const;
             gs_vec2f    get_window_cursor_position() const;
+            gs_vec2f    get_window_cursor_dragdelta() const;
 
             bool is_mouse_button_down(const ApplicationMouseButton::Button&) const;
             bool is_mouse_button_pressed(const ApplicationMouseButton::Button&) const;

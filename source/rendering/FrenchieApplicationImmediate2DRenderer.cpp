@@ -175,10 +175,6 @@ gs_vec2f Immediate2DRenderer::calculate_arc_point(
 }
 
 gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
     const std::u32string&     _Text,
     const float&              _Size,
     const RenderingQueueFont& _Font)
@@ -228,28 +224,15 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
         positionX += Immediate2DRenderer::right(gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f)).x;
     }
 
-    gs_mat4f transform = calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
-    return gs_2dboxf(
-        transform * gs_vec4f(min, _Depth, 1.f),
-        transform * gs_vec4f(max, _Depth, 1.f)
-    );
+    return gs_2dboxf(min, max);
 }
 
 gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
     const std::u16string&     _Text,
     const float&              _Size,
     const RenderingQueueFont& _Font)
 {
     return calculate_bounding_box(
-        _Depth,
-        _Position,
-        _Rotation,
-        _Scale,
         Frenchie::Core::String::convert_utf16_to_utf8(_Text),
         _Size,
         _Font
@@ -257,19 +240,11 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
 }
 
 gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
     const std::string&        _Text,
     const float&              _Size,
     const RenderingQueueFont& _Font)
 {
     return calculate_bounding_box(
-        _Depth,
-        _Position,
-        _Rotation,
-        _Scale,
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
         _Size,
         _Font

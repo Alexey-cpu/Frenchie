@@ -108,6 +108,22 @@ namespace Frenchie
 {
     namespace Application
     {
+        struct ImmedidateUserInterfaceWindow
+        {
+            gs_vec2f PreviousPosition;
+            gs_vec2f CurrentPosition;
+            gs_vec2f PreviousSize;
+            gs_vec2f CurrentSize;
+            float    Depth;
+
+            bool IsDirty                  {true };
+            bool IsBeingDragged           {false};
+            bool IsBeingResizedTopLeft    {false};
+            bool IsBeingResizedTopRight   {false};
+            bool IsBeingResizedBottomLeft {false};
+            bool IsBeingResizedBottomRight{false};
+        };
+
         enum ImmedidateUserInterfaceColors_ : int
         {
             // application text
@@ -187,13 +203,6 @@ namespace Frenchie
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
         };
 
-        struct ImmedidateUserInterfaceWindow
-        {
-            gs_vec2f Size     {gs_vec2f(256.f, 128.f)};
-            gs_vec2f Position {gs_vec2f(12.f, 12.f)};
-            bool     Dragging {false};
-        };
-
         class Immedidate2DRendererTestLayer : public Layer
         {
         public:
@@ -211,88 +220,109 @@ namespace Frenchie
 
         protected:
 
-            bool draw_radio_button_widget(
-                const std::string& _Name,
-                const float&       _Radius,
-                bool&              _Pushed,
-                const bool&        _Enabled,
-                const float&       _Depth,
-                const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
-                const float&       _Rotation = 0.f,
-                const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
+            // bool draw_radio_button_widget(
+            //     const std::string& _Name,
+            //     const float&       _Radius,
+            //     bool&              _Pushed,
+            //     const bool&        _Enabled,
+            //     const float&       _Depth,
+            //     const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
+            //     const float&       _Rotation = 0.f,
+            //     const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
 
-            bool draw_push_button_widget(
-                const std::string& _Name,
-                const gs_vec2f&    _Size,
-                const bool&        _Enabled,
-                const float&       _Depth,
-                const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
-                const float&       _Rotation = 0.f,
-                const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
+            // bool draw_push_button_widget(
+            //     const std::string& _Name,
+            //     const gs_vec2f&    _Size,
+            //     const bool&        _Enabled,
+            //     const float&       _Depth,
+            //     const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
+            //     const float&       _Rotation = 0.f,
+            //     const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
 
+            // bool bounding_box_contains(const gs_vec2f& _Position, const gs_2dboxf& _Box, const gs_vec2f& _Point)
+            // {
+            //     return m_Renderer->calculate_bounding_box(
+            //             _Position,
+            //             0.f,
+            //             gs_vec2f(1.f, 1.f),
+            //             _Box.Min,
+            //             _Box.Max).contains(_Point);
+            // }
+
+            // gs_2dboxf calculate_text_bounding_box(const std::string& _Text)
+            // {
+            //     return m_Renderer->calculate_bounding_box(
+            //         gs_vec2f(0.f, 0.f),
+            //         0.f,
+            //         gs_vec2f(1.f, 1.f),
+            //         _Text,
+            //         m_Style.FontSize,
+            //         m_Renderer->m_RenderingQueue->get_default_font());
+            // }
+            
             // auxiliary lambdas
-            gs_vec4f retreive_push_button_background_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
-            {
-                if(_Pressed)
-                {
-                    return _Enabled ?
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor] :
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor];
-                }
+            // gs_vec4f retreive_push_button_background_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
+            // {
+            //     if(_Pressed)
+            //     {
+            //         return _Enabled ?
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor] :
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor];
+            //     }
 
-                if(_Hovered)
-                {
-                    return _Enabled ?
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor] :
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor];
-                }
+            //     if(_Hovered)
+            //     {
+            //         return _Enabled ?
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor] :
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor];
+            //     }
 
-                return _Enabled ?
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor] :
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor];
-            };
+            //     return _Enabled ?
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor] :
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor];
+            // };
 
-            gs_vec4f retreive_push_frame_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
-            {
-                if(_Pressed)
-                {
-                    return _Enabled ?
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor] :
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor];
-                }
+            // gs_vec4f retreive_push_frame_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
+            // {
+            //     if(_Pressed)
+            //     {
+            //         return _Enabled ?
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor] :
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor];
+            //     }
 
-                if(_Hovered)
-                {
-                    return _Enabled ?
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor] :
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor];
-                }
+            //     if(_Hovered)
+            //     {
+            //         return _Enabled ?
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor] :
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor];
+            //     }
 
-                return _Enabled ?
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor] :
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor];
-            };
+            //     return _Enabled ?
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor] :
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor];
+            // };
 
-            gs_vec4f retreive_text_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
-            {
-                if(_Hovered || _Pressed)
-                {
-                    return _Enabled ?
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor] :
-                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
-                }
+            // gs_vec4f retreive_text_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
+            // {
+            //     if(_Hovered || _Pressed)
+            //     {
+            //         return _Enabled ?
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor] :
+            //             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
+            //     }
 
-                return _Enabled ?
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor] :
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
-            };
+            //     return _Enabled ?
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor] :
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
+            // };
 
-            gs_vec4f retrieve_radio_button_pressed_state_color(const bool& _Enabled, const bool& _Pressed)
-            {
-                return _Enabled ?
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor] :
-                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor];
-            }
+            // gs_vec4f retrieve_radio_button_pressed_state_color(const bool& _Enabled, const bool& _Pressed)
+            // {
+            //     return _Enabled ?
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor] :
+            //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor];
+            // }
 
             std::map<std::string, ImmedidateUserInterfaceWindow> m_Cache{std::map<std::string, ImmedidateUserInterfaceWindow>()};
 
