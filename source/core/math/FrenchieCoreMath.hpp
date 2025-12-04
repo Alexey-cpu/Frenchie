@@ -1174,49 +1174,49 @@ inline gs_matrix<Type, 4, 4> gs_matrix_look_at(const gs_vector<Type, 3>& eye, co
     return Result;
 }
 
-template<typename Type>
-auto gs_matrix_calculate_2d_camera_view_and_projection(
-    const gs_vector<Type, 2>& _CameraWorldPosition,
-    const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
-    const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
-    const gs_vector<Type, 2>& _CameraResolution,
-    const float&              _CameraRotationAngle,
-    const Type&               _CameraNearPlanePosition,
-    const Type&               _CameraFarPlanePosition)
-{
-    // compute projection matrix
-    float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+// template<typename Type>
+// auto gs_matrix_calculate_2d_camera_view_and_projection(
+//     const gs_vector<Type, 2>& _CameraWorldPosition,
+//     const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
+//     const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
+//     const gs_vector<Type, 2>& _CameraResolution,
+//     const float&              _CameraRotationAngle,
+//     const Type&               _CameraNearPlanePosition,
+//     const Type&               _CameraFarPlanePosition)
+// {
+//     // compute projection matrix
+//     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+//     float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+//     float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+//     float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
 
-    // camera orientation
-    gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
-    gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
-    gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+//     // camera orientation
+//     gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
+//     gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
+//     gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
 
-    gs_matrix<Type, 4, 4> cameraview =
-        gs_matrix_look_at(
-            gs_vector<Type, 3>(0.f, 0.f, 1),
-            gs_vector<Type, 3>(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+//     gs_matrix<Type, 4, 4> cameraview =
+//         gs_matrix_look_at(
+//             gs_vector<Type, 3>(0.f, 0.f, 1),
+//             gs_vector<Type, 3>(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
     
-    gs_matrix<Type, 4, 4> projection =
-        gs_matrix_ortho(
-            left,
-            right,
-            bottom,
-            top,
-            _CameraNearPlanePosition,
-            _CameraFarPlanePosition) * gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraRotationAngle), gs_vector<Type, 3>(0.f, 0.f, 1.f));
+//     gs_matrix<Type, 4, 4> projection =
+//         gs_matrix_ortho(
+//             left,
+//             right,
+//             bottom,
+//             top,
+//             _CameraNearPlanePosition,
+//             _CameraFarPlanePosition) * gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraRotationAngle), gs_vector<Type, 3>(0.f, 0.f, 1.f));
 
-    struct
-    {
-        gs_matrix<Type, 4, 4> cameraview;
-        gs_matrix<Type, 4, 4> projection;
-    } result = {cameraview, projection};
+//     struct
+//     {
+//         gs_matrix<Type, 4, 4> cameraview;
+//         gs_matrix<Type, 4, 4> projection;
+//     } result = {cameraview, projection};
 
-    return result;
-}
+//     return result;
+// }
 
 // TODO: implement 3D perspective camera when it's needed
 // template<typename Type>

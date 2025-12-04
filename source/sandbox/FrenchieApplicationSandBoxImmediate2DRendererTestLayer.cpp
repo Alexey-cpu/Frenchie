@@ -41,7 +41,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         m_Style.FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         0.f,
-        m_Renderer->get_cursor_postion() + gs_vec3f(RenderingQueue::top_right(gs_vec2f(32.f, 32.f)))
+        m_Renderer->get_cursor_postion() + gs_vec3f(Immediate2DRenderer::bottom_right(gs_vec2f(12.f, 12.f)))
     );
 
     m_Renderer->push_rectangle(
@@ -55,7 +55,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         gs_vec2f(1.f, 1.f)
     );
 
-    gs_vec2f start = RenderingQueue::bottom_right(gs_vec2f(12.f, 12.f));
+    gs_vec2f start = Immediate2DRenderer::bottom_right(gs_vec2f(12.f, 12.f));
 
     draw_push_button_widget(
         "BTN !!!",
@@ -70,7 +70,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
         false,
         0.f,
-        start + RenderingQueue::bottom_right(gs_vec2f(0.f, 256.f))
+        start + Immediate2DRenderer::bottom_right(gs_vec2f(0.f, 256.f))
     );
 
     static bool pushed = true;
@@ -79,7 +79,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         32.f,
         pushed,
         0.f,
-        start + RenderingQueue::bottom_right(gs_vec2f(0.f, 512.f))
+        start + Immediate2DRenderer::bottom_right(gs_vec2f(0.f, 512.f))
     );
 }
 
@@ -238,7 +238,7 @@ bool Immedidate2DRendererTestLayer::draw_push_button_widget(
     gs_2dboxf buttonBoundingBox =
         gs_2dboxf(
             gs_vec2f(0.f, 0.f),
-            RenderingQueue::bottom_right(gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), gs_max(_Size.y, textBoundingBox.get_size().y)) + gs_vec2f(m_Style.FontSize, m_Style.FontSize)));
+            Immediate2DRenderer::bottom_right(gs_vec2f(+gs_max(_Size.x, textBoundingBox.get_size().x), gs_max(_Size.y, textBoundingBox.get_size().y)) + gs_vec2f(m_Style.FontSize, m_Style.FontSize)));
 
     bool hovered = m_Renderer->calculate_bounding_box(
         _Depth,
@@ -287,7 +287,7 @@ bool Immedidate2DRendererTestLayer::draw_push_button_widget(
         m_Style.FontSize,
         retreive_text_color(_Enabled, hovered, pressed),
         _Depth + 2.f,
-        (min + max) * 0.5f + RenderingQueue::top_left(gs_vec2f(+textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f),
+        (min + max) * 0.5f + Immediate2DRenderer::top_left(gs_vec2f(+textBoundingBox.get_size().x, +textBoundingBox.get_size().y) * 0.5f),
         _Rotation,
         _Scale
     );
