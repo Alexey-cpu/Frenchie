@@ -41,7 +41,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         m_Style.FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         0.f,
-        m_Renderer->get_cursor_postion() + gs_vec3f(32.f, 32.f)
+        m_Renderer->get_cursor_postion() + gs_vec3f(RenderingQueue::top_right(gs_vec2f(32.f, 32.f)))
     );
 
     m_Renderer->push_rectangle(
@@ -55,12 +55,14 @@ void Immedidate2DRendererTestLayer::frame_update()
         gs_vec2f(1.f, 1.f)
     );
 
+    gs_vec2f start = RenderingQueue::bottom_right(gs_vec2f(12.f, 12.f));
+
     draw_push_button_widget(
         "BTN !!!",
         gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
         true,
         0.f,
-        gs_vec2f(12.f, -12.f)
+        start
     );
 
     draw_push_button_widget(
@@ -68,7 +70,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         gs_vec2f(256.f, gs_min(m_Style.FontSize, 128.f)),
         false,
         0.f,
-        gs_vec2f(12.f, -12.f) + gs_vec2f(0.f, -256.f)
+        start + RenderingQueue::bottom_right(gs_vec2f(0.f, 256.f))
     );
 
     static bool pushed = true;
@@ -77,7 +79,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         32.f,
         pushed,
         0.f,
-        gs_vec2f(12.f, -12.f) + gs_vec2f(0.f, -512.f)
+        start + RenderingQueue::bottom_right(gs_vec2f(0.f, 512.f))
     );
 }
 
