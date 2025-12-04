@@ -5,6 +5,7 @@
 // STL
 #include <chrono>
 #include <stack>
+#include <map>
 
 // template<typename Type> struct Tree;
 
@@ -107,17 +108,6 @@ namespace Frenchie
 {
     namespace Application
     {
-        // DrawingCursorPosition
-        // AvailableDrawingSpace
-
-        struct ImmedidateUserInterfaceWindow
-        {
-            gs_vec2f Size;
-            gs_vec2f Position;
-            gs_vec2f DrawingSpaceSize     {gs_vec2f(0.f, 0.f)};
-            gs_vec2f DrawingCursorPosition{gs_vec2f(0.f, 0.f)};
-        };
-
         enum ImmedidateUserInterfaceColors_ : int
         {
             // application text
@@ -141,19 +131,33 @@ namespace Frenchie
             ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor,
             ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor,
 
-            // push button text
+            // radio buton
+            ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor,
+            ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor,
 
             ImmedidateUserInterfaceColors_ColorEnd,
         };
+
+        enum ImmedidateUserInterfaceWindowHints_
+        {
+            ImmedidateUserInterfaceWindowHints_Movable,
+            ImmedidateUserInterfaceWindowHints_Resizable,
+            ImmedidateUserInterfaceWindowHints_Default = ImmedidateUserInterfaceWindowHints_Movable | ImmedidateUserInterfaceWindowHints_Resizable
+        };
+
+        typedef int ImmedidateUserInterfaceWindowHints;
 
         struct ImmedidateUserInterfaceStyle
         {
             ImmedidateUserInterfaceStyle()
             {
                 // setup push button color scheme
+                // Text
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                        ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                       ] = gs_vec4f(128.f, 128.f, 128.f, 128);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                        ] = gs_vec4f(255.f, 200.f, 200.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                       ] = gs_vec4f(200.f, 200.f, 200.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                        ] = gs_vec4f(255.f, 32.f, 32.f, 255.f);
+
+                // Push button
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
@@ -166,14 +170,28 @@ namespace Frenchie
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor            ] = gs_vec4f(30, 30, 31, 255);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor     ] = gs_vec4f(30, 1, 31, 255);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor     ] = gs_vec4f(30, 12, 31, 255);
+
+                // radio button
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor          ] = gs_vec4f(255, 255, 255, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor         ] = gs_vec4f(200, 200, 200, 255);
+
+                // radio button
+
             }
 
             RenderingQueueFont Font;
-            float              FontSize                 = 24.f;
+            float              FontSize                 = 32.f;
             float              PushButtonFrameWidth     = 4.f;
             float              PushButtonRoundingRadius = 32.f;
 
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
+        };
+
+        struct ImmedidateUserInterfaceWindow
+        {
+            gs_vec2f Size     {gs_vec2f(256.f, 128.f)};
+            gs_vec2f Position {gs_vec2f(12.f, 12.f)};
+            bool     Dragging {false};
         };
 
         class Immedidate2DRendererTestLayer : public Layer
@@ -186,7 +204,9 @@ namespace Frenchie
             virtual void frame_start() override;
             virtual void frame_update() override;
 
-            bool push_window();
+            bool push_window(
+                const std::string&                        _Name,
+                const ImmedidateUserInterfaceWindowHints& _Hints = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
             void pop_window();
 
         protected:
@@ -195,6 +215,7 @@ namespace Frenchie
                 const std::string& _Name,
                 const float&       _Radius,
                 bool&              _Pushed,
+                const bool&        _Enabled,
                 const float&       _Depth,
                 const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
                 const float&       _Rotation = 0.f,
@@ -209,7 +230,73 @@ namespace Frenchie
                 const float&       _Rotation = 0.f,
                 const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
 
-            std::stack<ImmedidateUserInterfaceWindow> m_WindowsStack{std::stack<ImmedidateUserInterfaceWindow>()};
+            // auxiliary lambdas
+            gs_vec4f retreive_push_button_background_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
+            {
+                if(_Pressed)
+                {
+                    return _Enabled ?
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor] :
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor];
+                }
+
+                if(_Hovered)
+                {
+                    return _Enabled ?
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor] :
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor];
+                }
+
+                return _Enabled ?
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor] :
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor];
+            };
+
+            gs_vec4f retreive_push_frame_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
+            {
+                if(_Pressed)
+                {
+                    return _Enabled ?
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor] :
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor];
+                }
+
+                if(_Hovered)
+                {
+                    return _Enabled ?
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor] :
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor];
+                }
+
+                return _Enabled ?
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor] :
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor];
+            };
+
+            gs_vec4f retreive_text_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
+            {
+                if(_Hovered || _Pressed)
+                {
+                    return _Enabled ?
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor] :
+                        m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
+                }
+
+                return _Enabled ?
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor] :
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
+            };
+
+            gs_vec4f retrieve_radio_button_pressed_state_color(const bool& _Enabled, const bool& _Pressed)
+            {
+                return _Enabled ?
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor] :
+                    m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor];
+            }
+
+            std::map<std::string, ImmedidateUserInterfaceWindow> m_Cache{std::map<std::string, ImmedidateUserInterfaceWindow>()};
+
+            //std::stack<ImmedidateUserInterfaceWindow> m_WindowsStack{std::stack<ImmedidateUserInterfaceWindow>()};
 
             ImmedidateUserInterfaceStyle         m_Style   {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
