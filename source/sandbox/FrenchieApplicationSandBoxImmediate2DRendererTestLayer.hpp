@@ -110,55 +110,68 @@ namespace Frenchie
     {
         struct ImmedidateUserInterfaceWindow
         {
+            int ChildrenCount = 0;
+            int ChildIndex    = 0;
+            int StackIndex    = 0;
+
+            gs_mat4f  Transform{gs_mat4f(1.f)};
             gs_2dboxf PreviousBox;
             gs_2dboxf CurrentBox;
             float     Depth;
 
-            bool IsDirty                  {true };
+            void set_dirty(const bool& _Value) 
+            {
+                IsDirty = _Value;
+            }
+
+            bool is_dirty() const
+            {
+                return IsDirty;
+            }
 
             bool is_being_moved() const
             {
-                return IsBeingMoved;
+                return IsBeingMoved && !is_dirty();
             }
 
             bool is_being_resized_top_left() const
             {
-                return IsBeingResizedTopLeft;
+                return IsBeingResizedTopLeft && !is_dirty();
             }
 
             bool is_being_resized_top_right() const
             {
-                return IsBeingResizedTopRight;
+                return IsBeingResizedTopRight && !is_dirty();
             }
 
             bool is_being_resized_bottom_left() const
             {
-                return IsBeingResizedBottomLeft;
+                return IsBeingResizedBottomLeft && !is_dirty();
             }
 
             bool is_being_resized_bottom_right() const
             {
-                return IsBeingResizedBottomRight;
+                return IsBeingResizedBottomRight && !is_dirty();
             }
 
             bool is_being_resized_top() const
             {
-                return IsBeingResizedTop;
+                return IsBeingResizedTop && !is_dirty();
             }
 
             bool is_being_resized_left() const
             {
-                return IsBeingResizedLeft;
+                return IsBeingResizedLeft && !is_dirty();
             }
 
             bool is_being_resized_right() const
             {
-                return IsBeingResizedRight;
+                return IsBeingResizedRight && !is_dirty();
             }
 
             bool is_being_resized_bottom() const
             {
-                return IsBeingResizedBottom;
+                return IsBeingResizedBottom && !is_dirty();
             }
 
             void being_move()
@@ -206,6 +219,18 @@ namespace Frenchie
                 IsBeingResizedBottom = true;
             }
             
+            bool is_being_resized() const
+            {
+                return (IsBeingResizedTopLeft    ||
+                       IsBeingResizedTopRight    ||
+                       IsBeingResizedBottomLeft  ||
+                       IsBeingResizedBottomRight ||
+                       IsBeingResizedTop         ||
+                       IsBeingResizedLeft        ||
+                       IsBeingResizedRight       ||
+                       IsBeingResizedBottom) && !is_dirty();
+            }
+
             void end_move()
             {
                 IsBeingMoved = false;
@@ -223,18 +248,6 @@ namespace Frenchie
                 IsBeingResizedBottom      = false;
             }
 
-            bool is_being_resized() const
-            {
-                return IsBeingResizedTopLeft     ||
-                       IsBeingResizedTopRight    ||
-                       IsBeingResizedBottomLeft  ||
-                       IsBeingResizedBottomRight ||
-                       IsBeingResizedTop         ||
-                       IsBeingResizedLeft        ||
-                       IsBeingResizedRight       ||
-                       IsBeingResizedBottom;
-            }
-
         protected:
 
             bool IsBeingMoved             {false};
@@ -246,6 +259,7 @@ namespace Frenchie
             bool IsBeingResizedLeft       {false};
             bool IsBeingResizedRight      {false};
             bool IsBeingResizedBottom     {false};
+            bool IsDirty                  {true };
         };
 
         enum ImmedidateUserInterfaceColors_ : int
@@ -356,6 +370,7 @@ namespace Frenchie
             virtual bool awake() override;
             virtual void frame_start() override;
             virtual void frame_update() override;
+            virtual void frame_finish() override;
 
             bool push_window(
                 const std::string&                        _Name,
@@ -468,10 +483,11 @@ namespace Frenchie
             //         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor];
             // }
 
-            std::map<std::string, ImmedidateUserInterfaceWindow> m_Cache{std::map<std::string, ImmedidateUserInterfaceWindow>()};
+            std::map<std::string, ImmedidateUserInterfaceWindow> m_WindowsCache{std::map<std::string, ImmedidateUserInterfaceWindow>()};
+            std::vector<ImmedidateUserInterfaceWindow>           m_WindowsStack{std::vector<ImmedidateUserInterfaceWindow>()};
 
-            //std::stack<ImmedidateUserInterfaceWindow> m_WindowsStack{std::stack<ImmedidateUserInterfaceWindow>()};
-
+            int CurrentWindow = -1;
+            
             ImmedidateUserInterfaceStyle         m_Style   {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
 
