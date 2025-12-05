@@ -1306,6 +1306,8 @@ struct gs_2d_ellipse
 template<typename Type>
 struct gs_2dbox
 {
+    gs_2dbox() : Min(gs_vector<Type, 2>(0.f)), Max(gs_vector<Type, 2>(0.f)){}
+
     template<typename ... Args>
     gs_2dbox(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
     {
@@ -1316,9 +1318,14 @@ struct gs_2dbox
     gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)};
     gs_vector<Type, 2> Max{gs_vector<Type, 2>(0.f)};
 
-    gs_vector<Type, 2> get_size() const
+    gs_vector<Type, 2> size() const
     {
         return gs_vec2f(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
+    }
+
+    gs_vector<Type, 2> center() const
+    {
+        return (Min + Max) * 0.5f;
     }
 
     bool contains(const gs_vector<Type, 2>& _Point) const
