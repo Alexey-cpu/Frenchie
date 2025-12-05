@@ -486,8 +486,6 @@ namespace Frenchie
             std::map<std::string, ImmedidateUserInterfaceWindow> m_WindowsCache{std::map<std::string, ImmedidateUserInterfaceWindow>()};
             std::vector<ImmedidateUserInterfaceWindow>           m_WindowsStack{std::vector<ImmedidateUserInterfaceWindow>()};
 
-            int CurrentWindow = -1;
-            
             ImmedidateUserInterfaceStyle         m_Style   {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
 

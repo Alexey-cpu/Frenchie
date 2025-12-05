@@ -12,13 +12,34 @@ bool Immedidate2DRendererTestLayer::awake()
 }
 
 void Immedidate2DRendererTestLayer::frame_start()
-{
+{    
 }
 
 void Immedidate2DRendererTestLayer::frame_update()
 {
     if(m_Renderer == nullptr)
         return;
+
+    // // determine if it's a current window
+    // int maxDepth = -1000;
+
+    // for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+    //          button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+    // {
+    //     if (!application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+    //         continue;
+
+    //     for (auto&& cachedWindow : m_WindowsCache)
+    //     {
+    //         if(cachedWindow.second.CurrentBox.contains(m_Renderer->get_cursor_postion()) && cachedWindow.second.Depth > maxDepth)
+    //         {
+    //             maxDepth      = (int)cachedWindow.second.Depth;
+    //             CurrentWindow = cachedWindow.second.StackIndex;
+
+    //             std::cout << cachedWindow.first << "\t" << cachedWindow.second.Depth << "\n";
+    //         }
+    //     }
+    // }
 
     push_window("Some window");
     push_window("Another window");
@@ -27,7 +48,7 @@ void Immedidate2DRendererTestLayer::frame_update()
     // render cursor
     m_Renderer->push_text(
         std::to_string(m_Renderer->get_cursor_postion().x).append(" ").append(
-             std::to_string(m_Renderer->get_cursor_postion().y)
+             std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(-1000))
         ),
         m_Style.FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
@@ -59,6 +80,18 @@ bool Immedidate2DRendererTestLayer::push_window(
     // create or load window
     ImmedidateUserInterfaceWindow& window = m_WindowsCache[_Name];
 
+    bool isCurrent = true;
+
+    for (auto wnd : m_WindowsCache)
+    {
+        if ((wnd.second.is_being_moved() || wnd.second.is_being_resized()) &&
+             wnd.second.StackIndex != window.StackIndex)
+        {
+            isCurrent = false;
+            break;
+        }
+    }
+
     if(window.is_dirty())
     {
         window.CurrentBox = gs_2dboxf(gs_vec2f(0.f, 0.f), 512.f, 512.f);
@@ -66,7 +99,7 @@ bool Immedidate2DRendererTestLayer::push_window(
     }
 
     // parent
-    gs_mat4f parentTransform        = gs_mat4f(1.f);
+    gs_mat4f parentTransform = gs_mat4f(1.f);
 
     if(!m_WindowsStack.empty())
     {
@@ -157,23 +190,6 @@ bool Immedidate2DRendererTestLayer::push_window(
     gs_2dboxf      resizeLeft        = gs_2dboxf(windowBoundingBox.Min - gs_vec2f(m_Style.WindowResizeSideGizmoWidth, 0.f), windowBoundingBox.Min + gs_vec2f(m_Style.WindowResizeSideGizmoWidth, window.CurrentBox.size().y));
     gs_2dboxf      resizeRight       = gs_2dboxf(windowBoundingBox.Min + gs_vec2f(window.CurrentBox.size().x - m_Style.WindowResizeSideGizmoWidth, 0.f), windowBoundingBox.Max + gs_vec2f(m_Style.WindowResizeSideGizmoWidth, 0.f));
     gs_2dboxf      resizeBottom      = gs_2dboxf(windowBoundingBox.Min + gs_vec2f(0.f, window.CurrentBox.size().y - m_Style.WindowResizeSideGizmoWidth), windowBoundingBox.Max + gs_vec2f(0.f, m_Style.WindowResizeSideGizmoWidth));
-
-    //if (CurrentWindow != window.StackIndex)
-    {
-        if(window.CurrentBox.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
-        {
-            for (int i = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                    i < ApplicationMouseButton::Button::ApplicationMouseButton_End; i++)
-            {
-                if (application()->is_mouse_button_clicked((ApplicationMouseButton::Button)i))
-                    CurrentWindow = window.StackIndex;
-            }
-        }
-    }
-
-    bool isCurrent = CurrentWindow == window.StackIndex;
-
-    std::cout << "CurrentWindow " << CurrentWindow << "\n";
 
     if(isCurrent && resizeTopLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
