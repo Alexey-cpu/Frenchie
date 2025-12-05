@@ -29,6 +29,16 @@ namespace Frenchie
                 return matrix * gs_vec4f(gs_vector_convert_to_NDC(cursor, size), -1.f, 1.f);
             }
 
+            float get_near_plane() const
+            {
+                return -1000.f;
+            }
+
+            float get_far_plane() const
+            {
+                return +1000.f;
+            }
+
             virtual bool awake() override;
             virtual void frame_start() override;
             virtual void frame_finish() override;
@@ -52,14 +62,6 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _ArcAngle);
 
-            // template<typename ...Args> 
-            // gs_2dboxf calculate_bounding_box(Args ... _Args)
-            // {
-            //     return gs_2dboxf(
-            //         gs_vec2f(gs_min(static_cast<gs_vec2f>(_Args).x...), gs_min(static_cast<gs_vec2f>(_Args).y...)),
-            //         gs_vec2f(gs_max(static_cast<gs_vec2f>(_Args).x...), gs_max(static_cast<gs_vec2f>(_Args).y...)));
-            // }
-
             gs_2dboxf calculate_bounding_box(
                 const std::u32string&     _Text,
                 const float&              _Size,
@@ -80,61 +82,43 @@ namespace Frenchie
                 const gs_vec2f&              _P2,
                 const gs_vec2f&              _P3,
                 const gs_vec4f&              _Color,
-                const float&                 _Depth,
-                const gs_vec2f&              _Position = gs_vec2f(0.f, 0.f),
-                const float&                 _Rotation = 0.f,
-                const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
-                const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
+                const gs_mat4f&              _Transform = gs_mat4f(1.f),
+                const RenderingQueueTexture& _Texture   = RenderingQueueTexture());
 
             void push_rectangle_filled(
                 const gs_vec2f&              _Min,
                 const gs_vec2f&              _Max,
                 const gs_vec4f&              _Color,
-                const float&                 _Depth,
-                const gs_vec2f&              _Position = gs_vec2f(0.f, 0.f),
-                const float&                 _Rotation = 0.f,
-                const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
-                const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
+                const gs_mat4f&              _Transform = gs_mat4f(1.f),
+                const RenderingQueueTexture& _Texture   = RenderingQueueTexture());
 
             void push_rectangle_rounded_filled(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Radius,
                 const gs_vec4f& _Color,
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_text(
                 const std::u32string&     _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
-                const float&              _Depth,
-                const gs_vec2f&           _Position = gs_vec2f(0.f, 0.f),
-                const float&              _Rotation = 0.f,
-                const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
-                const RenderingQueueFont& _Font     = RenderingQueueFont());
+                const gs_mat4f&           _Transform = gs_mat4f(1.f),
+                const RenderingQueueFont& _Font      = RenderingQueueFont());
 
             void push_text(
                 const std::u16string&     _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
-                const float&              _Depth,
-                const gs_vec2f&           _Position = gs_vec2f(0.f, 0.f),
-                const float&              _Rotation = 0.f,
-                const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
-                const RenderingQueueFont& _Font     = RenderingQueueFont());
+                const gs_mat4f&           _Transform = gs_mat4f(1.f),
+                const RenderingQueueFont& _Font      = RenderingQueueFont());
 
             void push_text(
                 const std::string&        _Text,
                 const float&              _Size,
                 const gs_vec4f&           _Color,
-                const float&              _Depth,
-                const gs_vec2f&           _Position = gs_vec2f(0.f, 0.f),
-                const float&              _Rotation = 0.f,
-                const gs_vec2f&           _Scale    = gs_vec2f(1.f, 1.f),
-                const RenderingQueueFont& _Font     = RenderingQueueFont());
+                const gs_mat4f&           _Transform = gs_mat4f(1.f),
+                const RenderingQueueFont& _Font      = RenderingQueueFont());
 
             void push_arc_filled(
                 const gs_vec2f&              _Center,
@@ -143,21 +127,15 @@ namespace Frenchie
                 const float&                 _SourceAngle,
                 const float&                 _TargetAngle,
                 const gs_vec4f&              _Color,
-                const float&                 _Depth,
-                const gs_vec2f&              _Position = gs_vec2f(0.f, 0.f),
-                const float&                 _Rotation = 0.f,
-                const gs_vec2f&              _Scale    = gs_vec2f(1.f, 1.f),
-                const RenderingQueueTexture& _Texture  = RenderingQueueTexture());
+                const gs_mat4f&              _Transform = gs_mat4f(1.f),
+                const RenderingQueueTexture& _Texture   = RenderingQueueTexture());
 
             void push_line(
                 const gs_vec2f& _P1,
                 const gs_vec2f& _P2,
                 const float&    _Width,
                 const gs_vec4f& _Color,
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_arc(
                 const gs_vec2f& _Center,
@@ -167,10 +145,7 @@ namespace Frenchie
                 const float&    _TargetAngle,
                 const float&    _Width,
                 const gs_vec4f& _Color,
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_triangle(
                 const gs_vec2f& _P1,
@@ -178,20 +153,14 @@ namespace Frenchie
                 const gs_vec2f& _P3,
                 const float&    _Width,
                 const gs_vec4f& _Color,
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_rectangle(
                 const gs_vec2f& _Min,
                 const gs_vec2f& _Max,
                 const float&    _Width,
                 const gs_vec4f& _Color,
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_rectangle_rounded(
                 const gs_vec2f& _Min,
@@ -199,10 +168,7 @@ namespace Frenchie
                 const float&    _Radius,
                 const float&    _Width,
                 const gs_vec4f& _Color,
-                const float&    _Depth,
-                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
-                const float&    _Rotation = 0.f,
-                const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             // static API
             static void build_triangle_filled_mesh(

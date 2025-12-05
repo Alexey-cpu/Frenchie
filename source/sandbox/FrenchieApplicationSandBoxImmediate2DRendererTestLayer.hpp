@@ -110,22 +110,153 @@ namespace Frenchie
     {
         struct ImmedidateUserInterfaceWindow
         {
-            gs_vec2f PreviousPosition;
-            gs_vec2f CurrentPosition;
-            gs_vec2f PreviousSize;
-            gs_vec2f CurrentSize;
-            float    Depth;
+            gs_2dboxf PreviousBox;
+            gs_2dboxf CurrentBox;
+            float     Depth;
 
             bool IsDirty                  {true };
-            bool IsBeingDragged           {false};
+
+            bool is_being_moved() const
+            {
+                return IsBeingMoved;
+            }
+
+            bool is_being_resized_top_left() const
+            {
+                return IsBeingResizedTopLeft;
+            }
+
+            bool is_being_resized_top_right() const
+            {
+                return IsBeingResizedTopRight;
+            }
+
+            bool is_being_resized_bottom_left() const
+            {
+                return IsBeingResizedBottomLeft;
+            }
+
+            bool is_being_resized_bottom_right() const
+            {
+                return IsBeingResizedBottomRight;
+            }
+
+            bool is_being_resized_top() const
+            {
+                return IsBeingResizedTop;
+            }
+
+            bool is_being_resized_left() const
+            {
+                return IsBeingResizedLeft;
+            }
+
+            bool is_being_resized_right() const
+            {
+                return IsBeingResizedRight;
+            }
+
+            bool is_being_resized_bottom() const
+            {
+                return IsBeingResizedBottom;
+            }
+
+            void being_move()
+            {
+                IsBeingMoved = true;
+            }
+
+            void begin_resize_top_left()
+            {
+                IsBeingResizedTopLeft = true;
+            }
+
+            void begin_resize_top_right()
+            {
+                IsBeingResizedTopRight = true;
+            }
+
+            void begin_resize_bottom_left()
+            {
+                IsBeingResizedBottomLeft = true;
+            }
+            
+            void begin_resize_bottom_right()
+            {
+                IsBeingResizedBottomRight = true;
+            }
+
+            void begin_resize_top()
+            {
+                IsBeingResizedTop = true;
+            }
+
+            void begin_resize_left()
+            {
+                IsBeingResizedLeft = true;
+            }
+
+            void begin_resize_right()
+            {
+                IsBeingResizedRight = true;
+            }
+
+            void begin_resize_bottom()
+            {
+                IsBeingResizedBottom = true;
+            }
+            
+            void end_move()
+            {
+                IsBeingMoved = false;
+            }
+
+            void end_resize()
+            {
+                IsBeingResizedTopLeft     = false;
+                IsBeingResizedTopRight    = false;
+                IsBeingResizedBottomLeft  = false;
+                IsBeingResizedBottomRight = false;
+                IsBeingResizedTop         = false;
+                IsBeingResizedLeft        = false;
+                IsBeingResizedRight       = false;
+                IsBeingResizedBottom      = false;
+            }
+
+            bool is_being_resized() const
+            {
+                return IsBeingResizedTopLeft     ||
+                       IsBeingResizedTopRight    ||
+                       IsBeingResizedBottomLeft  ||
+                       IsBeingResizedBottomRight ||
+                       IsBeingResizedTop         ||
+                       IsBeingResizedLeft        ||
+                       IsBeingResizedRight       ||
+                       IsBeingResizedBottom;
+            }
+
+        protected:
+
+            bool IsBeingMoved             {false};
             bool IsBeingResizedTopLeft    {false};
             bool IsBeingResizedTopRight   {false};
             bool IsBeingResizedBottomLeft {false};
             bool IsBeingResizedBottomRight{false};
+            bool IsBeingResizedTop        {false};
+            bool IsBeingResizedLeft       {false};
+            bool IsBeingResizedRight      {false};
+            bool IsBeingResizedBottom     {false};
         };
 
         enum ImmedidateUserInterfaceColors_ : int
         {
+            // application window
+            ImmedidateUserInterfaceColors_WindowResizeGizmoColor,
+            ImmedidateUserInterfaceColors_WindowContentSpaceColor,
+            ImmedidateUserInterfaceColors_WindowDecorationFrameColor,
+            ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor,
+            ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor,
+
             // application text
             ImmedidateUserInterfaceColors_TextEnabledColor,
             ImmedidateUserInterfaceColors_TextDisabledColor,
@@ -168,7 +299,15 @@ namespace Frenchie
             ImmedidateUserInterfaceStyle()
             {
                 // setup push button color scheme
-                // Text
+
+                // applciation windows
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor                  ] = gs_vec4f(5, 255, 255, 200.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor                 ] = gs_vec4f(125, 204, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameColor              ] = gs_vec4f(5, 126, 255, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor            ] = gs_vec4f(15, 47, 66, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor         ] = gs_vec4f(15, 47, 66, 255.f);
+
+                // application text
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                        ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                       ] = gs_vec4f(200.f, 200.f, 200.f, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                        ] = gs_vec4f(255.f, 32.f, 32.f, 255.f);
@@ -196,9 +335,14 @@ namespace Frenchie
             }
 
             RenderingQueueFont Font;
-            float              FontSize                 = 32.f;
-            float              PushButtonFrameWidth     = 4.f;
-            float              PushButtonRoundingRadius = 32.f;
+            float              FontSize                     = 32.f;
+            float              WindowResizeAngleGizmoRadius = 32.f;
+            float              WindowResizeSideGizmoWidth   = 12.f;
+            float              WindowFrameCloseButtonSize   = 32.f;
+            float              WindowMinimumWidth           = 128.f;
+            float              WindowMinimumHeight          = 128.f;
+            float              FrameWidth                   = 8.f;
+            float              FrameRoundingRadius          = 32.f;
 
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
         };

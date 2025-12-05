@@ -89,8 +89,8 @@ void Immediate2DRenderer::frame_start()
         gs_vec3f(0.f, 0.f, -1.f),
         gs_vec2f(width, height),
         0.f,
-        -1000.f,
-        +1000.f
+        get_near_plane(),
+        get_far_plane()
     );
 
     gs_mat4f cameraview = camera.cameraview;
@@ -256,18 +256,12 @@ void Immediate2DRenderer::push_triangle_filled(
     const gs_vec2f&              _P2,
     const gs_vec2f&              _P3,
     const gs_vec4f&              _Color,
-    const float&                 _Depth,
-    const gs_vec2f&              _Position,
-    const float&                 _Rotation,
-    const gs_vec2f&              _Scale,
+    const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
-    if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
-        !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)) &&
-        !m_Viewport.contains(_Transform * gs_vec4f(_P3, _Depth, 1.f)))
+    if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
+        !m_Viewport.contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)) &&
+        !m_Viewport.contains(_Transform * gs_vec4f(_P3, 0.f, 1.f)))
     {
         return;
     }
@@ -292,19 +286,13 @@ void Immediate2DRenderer::push_rectangle_filled(
     const gs_vec2f&              _Min,
     const gs_vec2f&              _Max,
     const gs_vec4f&              _Color,
-    const float&                 _Depth,
-    const gs_vec2f&              _Position,
-    const float&                 _Rotation,
-    const gs_vec2f&              _Scale,
+    const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     if(!m_Viewport.overlaps(
         gs_2dboxf(
-            _Transform * gs_vec4f(_Min, _Depth, 1.f),
-            _Transform * gs_vec4f(_Max, _Depth, 1.f))))
+            _Transform * gs_vec4f(_Min, 0.f, 1.f),
+            _Transform * gs_vec4f(_Max, 0.f, 1.f))))
     {
         return;
     }
@@ -328,18 +316,13 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
     const gs_vec2f& _Max,
     const float&    _Radius,
     const gs_vec4f& _Color,
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+    const gs_mat4f& _Transform)
 {
-    gs_mat4f transform = calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     // check that we are within viewport
     if(!m_Viewport.overlaps(
         gs_2dboxf(
-            transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
-            transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
+            _Transform * gs_vec4f(_Min, 0.f, 1.f),
+            _Transform * gs_vec4f(_Max, 0.f, 1.f))))
     {
         return;
     }
@@ -380,17 +363,14 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
         m_Vertexes,
         m_Indexes);
 
-    push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, transform);
+    push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_text(
     const std::u32string&     _Text,
     const float&              _Size,
     const gs_vec4f&           _Color,
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
+    const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
 {
     RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
@@ -429,8 +409,8 @@ void Immediate2DRenderer::push_text(
         }
 
         RenderingQueueGlyph glyph    = font.retrieve_glyph(symbol);
-        float glyphWidth             = glyph.Box.get_size().x * scale;
-        float glyphHeight            = glyph.Box.get_size().y * scale;
+        float glyphWidth             = glyph.Box.size().x * scale;
+        float glyphHeight            = glyph.Box.size().y * scale;
         float glyphHorizontalBearing = glyph.Bearing.x * scale;
         float glyphVerticalBearing   = glyph.Bearing.y * scale;
         float glyphAdvance           = glyph.Advance * scale;
@@ -452,30 +432,21 @@ void Immediate2DRenderer::push_text(
         positionX += Immediate2DRenderer::right(gs_vec2f(glyphAdvance, 0.f)).x;
     }
 
-    push_rendering_command(
-        font.AtlasTexture,
-        _Color,
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale));
+    push_rendering_command(font.AtlasTexture, _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_text(
     const std::u16string&     _Text,
     const float&              _Size,
     const gs_vec4f&           _Color,
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
+    const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf16_to_utf8(_Text),
         _Size,
         _Color,
-        _Depth,
-        _Position,
-        _Rotation,
-        _Scale,
+        _Transform,
         _Font
     );
 }
@@ -484,20 +455,14 @@ void Immediate2DRenderer::push_text(
     const std::string&        _Text,
     const float&              _Size,
     const gs_vec4f&           _Color,
-    const float&              _Depth,
-    const gs_vec2f&           _Position,
-    const float&              _Rotation,
-    const gs_vec2f&           _Scale,
+    const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
         _Size,
         _Color,
-        _Depth,
-        _Position,
-        _Rotation,
-        _Scale,
+        _Transform,
         _Font
     );
 }
@@ -509,20 +474,14 @@ void Immediate2DRenderer::push_arc_filled(
     const float&                 _SourceAngle,
     const float&                 _TargetAngle,
     const gs_vec4f&              _Color,
-    const float&                 _Depth,
-    const gs_vec2f&              _Position,
-    const float&                 _Rotation,
-    const gs_vec2f&              _Scale,
+    const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     // check that we are within viewport
     if(!m_Viewport.overlaps(
             gs_2dboxf(
-                _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f),
-                _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f))))
+                _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f),
+                _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f))))
     {
         return;
     }
@@ -549,16 +508,10 @@ void Immediate2DRenderer::push_line(
     const gs_vec2f& _P2,
     const float&    _Width,
     const gs_vec4f& _Color,
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+    const gs_mat4f& _Transform)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
-    if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
-        !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)))
+    if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
+        !m_Viewport.contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)))
     {
         return;
     }
@@ -583,19 +536,13 @@ void Immediate2DRenderer::push_arc(
     const float&    _TargetAngle,
     const float&    _Width,
     const gs_vec4f& _Color,
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+    const gs_mat4f& _Transform)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     // check that we are within viewport
     if(!m_Viewport.overlaps(
             gs_2dboxf(
-                _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f),
-                _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), _Depth, 1.f))))
+                _Transform * gs_vec4f((_Center - gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f),
+                _Transform * gs_vec4f((_Center + gs_vec2f(_MinorRadius, _MajorRadius)), 0.f, 1.f))))
     {
         return;
     }
@@ -621,18 +568,12 @@ void Immediate2DRenderer::push_triangle(
     const gs_vec2f& _P3,
     const float&    _Width,
     const gs_vec4f& _Color,
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+    const gs_mat4f& _Transform)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     // check if we are within viewport
-    if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, _Depth, 1.f)) &&
-        !m_Viewport.contains(_Transform * gs_vec4f(_P2, _Depth, 1.f)) &&
-        !m_Viewport.contains(_Transform * gs_vec4f(_P3, _Depth, 1.f)))
+    if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
+        !m_Viewport.contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)) &&
+        !m_Viewport.contains(_Transform * gs_vec4f(_P3, 0.f, 1.f)))
     {
         return;
     }
@@ -651,19 +592,13 @@ void Immediate2DRenderer::push_rectangle(
     const gs_vec2f& _Max,
     const float&    _Width,
     const gs_vec4f& _Color,
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation ,
-    const gs_vec2f& _Scale)
+    const gs_mat4f& _Transform)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     // check that we are within viewport
     if(!m_Viewport.overlaps(
         gs_2dboxf(
-            _Transform * gs_vec4f(_Min, _Depth, 1.f),
-            _Transform * gs_vec4f(_Max, _Depth, 1.f))))
+            _Transform * gs_vec4f(_Min, 0.f, 1.f),
+            _Transform * gs_vec4f(_Max, 0.f, 1.f))))
     {
         return;
     }
@@ -689,19 +624,13 @@ void Immediate2DRenderer::push_rectangle_rounded(
     const float&    _Radius,
     const float&    _Width,
     const gs_vec4f& _Color,
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+    const gs_mat4f& _Transform)
 {
-    gs_mat4f _Transform =
-        calculate_transform_matrix(_Depth, _Position, _Rotation, _Scale);
-
     // check that we are within viewport
     if(!m_Viewport.overlaps(
         gs_2dboxf(
-            _Transform * gs_vec4f(_Min, _Depth, 1.f, 1.f),
-            _Transform * gs_vec4f(_Max, _Depth, 1.f, 1.f))))
+            _Transform * gs_vec4f(_Min, 0.f, 1.f, 1.f),
+            _Transform * gs_vec4f(_Max, 0.f, 1.f, 1.f))))
     {
         return;
     }
@@ -714,10 +643,7 @@ void Immediate2DRenderer::push_rectangle_rounded(
             _Max,
             _Width,
             _Color,
-            _Depth,
-            _Position,
-            _Rotation,
-            _Scale);
+            _Transform);
     }
 
     // compute radius
