@@ -43,12 +43,16 @@ namespace Frenchie
                 template<typename Type> 
                 bool basic_string_contains_substring(const std::basic_string<Type>& _String, const std::basic_string<Type>& _Substring)
                 {
+                    #if __cplusplus == 201703L
                     auto iterator = std::search(
                         _String.begin(),
                         _String.end(), 
                         std::boyer_moore_searcher(_Substring.begin(), _Substring.end()));
 
                     return !_Substring.empty() && !_String.empty() && iterator != _String.end();
+                    #else
+                    return _String.find(_Substring) != std::string::npos;
+                    #endif
                 }
 
                 template<typename Type> 

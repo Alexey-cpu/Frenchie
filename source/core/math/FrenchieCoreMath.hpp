@@ -1323,6 +1323,16 @@ struct gs_2dbox
         return gs_vec2f(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
     }
 
+    Type width() const
+    {
+        return size().x;
+    }
+
+    Type height() const
+    {
+        return size().y;
+    }
+
     gs_vector<Type, 2> center() const
     {
         return (Min + Max) * 0.5f;
