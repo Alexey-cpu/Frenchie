@@ -4,6 +4,7 @@
 
 // STL
 #include <type_traits>
+#include <memory>
 #include <chrono>
 #include <stack>
 #include <map>
@@ -165,69 +166,59 @@ namespace Frenchie
         {
             std::string Name; // TODO: this MUST BE A HASH !!!
 
-            // window frame state
+            // window hierarchy data
+            int   Depth         {0};
+            int   Thickness     {0};
             int   ChildIndex    {0};
             int   ChildrenCount {0};
 
             // window cache state
-            gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             gs_2dboxf CurrentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            float Depth         {0.f};
-            float Thickness     {0.f};
+            gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
 
-            float push_child()
+            int push_child()
             {
-                return (Thickness = Depth + (float)(++ChildrenCount));
-            }
-
-            void set_dirty(const bool& _Value) 
-            {
-                IsDirty = _Value;
-            }
-
-            bool is_dirty() const
-            {
-                return IsDirty;
+                return (Thickness = Depth + (++ChildrenCount));
             }
 
             bool is_being_resized_top_left() const
             {
-                return IsBeingResizedTopLeft && !is_dirty();
+                return IsBeingResizedTopLeft;
             }
 
             bool is_being_resized_top_right() const
             {
-                return IsBeingResizedTopRight && !is_dirty();
+                return IsBeingResizedTopRight;
             }
 
             bool is_being_resized_bottom_left() const
             {
-                return IsBeingResizedBottomLeft && !is_dirty();
+                return IsBeingResizedBottomLeft;
             }
 
             bool is_being_resized_bottom_right() const
             {
-                return IsBeingResizedBottomRight && !is_dirty();
+                return IsBeingResizedBottomRight;
             }
 
             bool is_being_resized_top() const
             {
-                return IsBeingResizedTop && !is_dirty();
+                return IsBeingResizedTop;
             }
 
             bool is_being_resized_left() const
             {
-                return IsBeingResizedLeft && !is_dirty();
+                return IsBeingResizedLeft;
             }
 
             bool is_being_resized_right() const
             {
-                return IsBeingResizedRight && !is_dirty();
+                return IsBeingResizedRight;
             }
 
             bool is_being_resized_bottom() const
             {
-                return IsBeingResizedBottom && !is_dirty();
+                return IsBeingResizedBottom;
             }
 
             void being_move()
@@ -304,7 +295,7 @@ namespace Frenchie
 
             bool is_being_moved() const
             {
-                return IsBeingMoved && !is_dirty();
+                return IsBeingMoved;
             }
 
             bool is_being_resized() const
@@ -316,7 +307,7 @@ namespace Frenchie
                        IsBeingResizedTop         ||
                        IsBeingResizedLeft        ||
                        IsBeingResizedRight       ||
-                       IsBeingResizedBottom) && !is_dirty();
+                       IsBeingResizedBottom);
             }
 
             bool is_being_modified() const
@@ -341,7 +332,6 @@ namespace Frenchie
             bool IsBeingResizedRight      {false};
             bool IsBeingResizedBottom     {false};
             bool IsFocused                {false};
-            bool IsDirty                  {true };
         };
 
         struct ImmedidateUserInterfaceFrameData
@@ -369,9 +359,11 @@ namespace Frenchie
 
         protected:
 
-            std::map<std::string, ImmedidateUserInterfaceWindow> m_WindowsCache{std::map<std::string, ImmedidateUserInterfaceWindow>()};
-            std::vector<ImmedidateUserInterfaceWindow>           m_WindowsStack{std::vector<ImmedidateUserInterfaceWindow>()};
-            int                                                  m_WindowsCount{0};
+            std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
+            std::vector<ImmedidateUserInterfaceWindow*>           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
+            std::vector<ImmedidateUserInterfaceWindow*>           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
+
+
             ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
 
