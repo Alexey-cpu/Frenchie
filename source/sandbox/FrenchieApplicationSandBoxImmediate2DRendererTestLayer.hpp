@@ -167,18 +167,28 @@ namespace Frenchie
             std::string Name; // TODO: this MUST BE A HASH !!!
 
             // window hierarchy data
-            int   Depth         {0};
-            int   Thickness     {0};
-            int   ChildIndex    {0};
-            int   ChildrenCount {0};
+            int                            Depth     {0};
+            int                            Thickness {0};
+            int                            ChildIndex{0};
+            ImmedidateUserInterfaceWindow* Parent    {nullptr};
 
             // window cache state
             gs_2dboxf CurrentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            gs_mat4f  Transform  {gs_mat4f(1.f)};
 
-            int push_child()
+            auto push_child()
             {
-                return (Thickness = Depth + (++ChildrenCount));
+                struct
+                {
+                    int Depth     {0};
+                    int ChildIndex{0};
+                } result;
+
+                result.ChildIndex = Thickness;
+                result.Depth      = Depth + (++Thickness);
+
+                return result;
             }
 
             bool is_being_resized_top_left() const
@@ -268,7 +278,16 @@ namespace Frenchie
             
             void begin_focus()
             {
-                IsFocused = true;
+                auto parent = Parent;
+                auto window = this;
+
+                while (parent != nullptr)
+                {
+                    window = parent;
+                    parent = parent->Parent;
+                }
+
+                window->IsFocused = true;
             }
             
             void end_move()
@@ -317,7 +336,16 @@ namespace Frenchie
 
             bool is_being_focused() const
             {
-                return IsFocused;
+                auto parent = Parent;
+                auto window = this;
+
+                while (parent != nullptr)
+                {
+                    window = parent;
+                    parent = parent->Parent;
+                }
+
+                return window->IsFocused;
             }
 
         protected:
@@ -358,6 +386,14 @@ namespace Frenchie
             void pop_window();
 
         protected:
+
+            ImmedidateUserInterfaceWindow* create_window(const std::string&);
+            gs_2dboxf calculate_window_bounding_box(ImmedidateUserInterfaceWindow*);
+            gs_2dboxf calculate_window_frame_bounding_box(ImmedidateUserInterfaceWindow*);
+            void render_window_background(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
+            void render_window_frame(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
+            void render_window_title(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
+            void sink_window_events(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
 
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
             std::vector<ImmedidateUserInterfaceWindow*>           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
