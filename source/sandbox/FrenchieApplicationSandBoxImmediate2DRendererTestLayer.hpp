@@ -65,6 +65,11 @@ namespace Frenchie
             ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor,
             ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor,
 
+            // application window close buttons
+            ImmedidateUserInterfaceColors_WindowCloseButtonDefaultColor,
+            ImmedidateUserInterfaceColors_WindowCloseButtonHoveredColor,
+            ImmedidateUserInterfaceColors_WindowCloseButtonPressedColor,
+
             // application text
             ImmedidateUserInterfaceColors_TextEnabledColor,
             ImmedidateUserInterfaceColors_TextDisabledColor,
@@ -95,9 +100,17 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceWindowHints_ : int
         {
-            ImmedidateUserInterfaceWindowHints_Movable   = 1,
-            ImmedidateUserInterfaceWindowHints_Resizable = 2,
-            ImmedidateUserInterfaceWindowHints_Default = ImmedidateUserInterfaceWindowHints_Movable | ImmedidateUserInterfaceWindowHints_Resizable
+            ImmedidateUserInterfaceWindowHints_Movable          = 2,
+            ImmedidateUserInterfaceWindowHints_Closable         = 4,
+            ImmedidateUserInterfaceWindowHints_Resizable        = 8,
+            ImmedidateUserInterfaceWindowHints_HorizontalLayout = 16,
+            ImmedidateUserInterfaceWindowHints_VerticalLayout   = 32,
+
+            ImmedidateUserInterfaceWindowHints_Default          =
+                ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_HorizontalLayout
         };
 
         enum ImmedidateUserInterfaceConditions_ : int
@@ -121,6 +134,11 @@ namespace Frenchie
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameColor              ] = gs_vec4f(5, 126, 255, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor            ] = gs_vec4f(15, 47, 66, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor         ] = gs_vec4f(15, 47, 66, 255.f);
+
+                // application windows close button
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonDefaultColor           ] = gs_vec4f(80.f, 0.f, 0.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonHoveredColor           ] = gs_vec4f(120.f, 0.f, 0.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonPressedColor           ] = gs_vec4f(40.f, 0.f, 0.f, 255.f);
 
                 // application text
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                        ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
@@ -167,28 +185,33 @@ namespace Frenchie
             std::string Name; // TODO: this MUST BE A HASH !!!
 
             // window hierarchy data
-            int                            Depth     {0};
-            int                            Thickness {0};
-            int                            ChildIndex{0};
-            ImmedidateUserInterfaceWindow* Parent    {nullptr};
+            int                            Depth        {0};
+            int                            Thickness    {0};
+            int                            ChildIndex   {0};
+            int                            ChildrenCount{0};
+            ImmedidateUserInterfaceWindow* Parent       {nullptr};
+
+            // layouting
+            float    LayoutChildFillWeight                {1.f};
+            float    LayoutChildrenFillWeightPreviousSumm {1.f};
+            float    LayoutChildrenFillWeightCurrentSumm  {1.f};
+            gs_vec2f LayoutCursorPositon                  {gs_vec2f(0.f, 0.f)};
+
+            ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
             // window cache state
             gs_2dboxf CurrentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             gs_mat4f  Transform  {gs_mat4f(1.f)};
 
-            auto push_child()
+            int push_widget()
             {
-                struct
-                {
-                    int Depth     {0};
-                    int ChildIndex{0};
-                } result;
+                return ChildrenCount++;
+            }
 
-                result.ChildIndex = Thickness;
-                result.Depth      = Depth + (++Thickness);
-
-                return result;
+            int push_graphics()
+            {
+                return (Depth + (Thickness++));
             }
 
             bool is_being_resized_top_left() const
@@ -381,8 +404,10 @@ namespace Frenchie
             void set_next_window_size(const gs_vec2f&);
 
             bool push_window(
-                const std::string&                        _Name,
-                const ImmedidateUserInterfaceWindowHints& _Hints = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
+                const std::string&                 _Name,
+                const float&                       _Weight = 1.f,
+                bool*                              _Opened = nullptr,
+                ImmedidateUserInterfaceWindowHints _Hints  = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
             void pop_window();
 
         protected:
@@ -390,13 +415,14 @@ namespace Frenchie
             ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
 
-            ImmedidateUserInterfaceWindow* create_window(const std::string&);
             gs_2dboxf calculate_window_bounding_box(ImmedidateUserInterfaceWindow*);
             gs_2dboxf calculate_window_frame_bounding_box(ImmedidateUserInterfaceWindow*);
-            void render_window_background(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
-            void render_window_frame(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
-            void render_window_title(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
-            void sink_window_events(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
+            
+            void render_window_background(ImmedidateUserInterfaceWindow*);
+            void render_window_classic_frame(ImmedidateUserInterfaceWindow*, bool*);
+            bool render_window_close_button( const gs_2dboxf& _Box, const float& _Depth, const gs_vec3f& _Position);
+
+            void sink_window_events(ImmedidateUserInterfaceWindow*);
 
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
