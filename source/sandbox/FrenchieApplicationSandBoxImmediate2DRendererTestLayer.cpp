@@ -30,7 +30,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Horizontal))
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
     {
         if(push_window("Alpha window", 1.f)) pop_window();
 
@@ -40,7 +40,7 @@ void Immedidate2DRendererTestLayer::frame_update()
             ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
             ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
             ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Vertical))
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
         {
             if(push_window("Theta window",
                 1.f,
@@ -48,7 +48,7 @@ void Immedidate2DRendererTestLayer::frame_update()
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Horizontal))
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
             {
                 if(push_window("Theta-1 window", 3.f)) pop_window();
                 if(push_window("Theta-2 window", 3.f)) pop_window();
@@ -212,7 +212,7 @@ bool Immedidate2DRendererTestLayer::push_window(
             next = next->Parent;
         }
 
-        if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Horizontal))
+        if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
         {
             window->CurrentBox = gs_2dboxf(
                 gs_vec2f(0.f, 0.f),
@@ -265,10 +265,6 @@ bool Immedidate2DRendererTestLayer::push_window(
     }
     else
     {
-            // window->Transform = m_Renderer->calculate_transform_matrix(
-            //     0.f,
-            //     window->CurrentBox.Min + window->LayoutCursorPositon);
-
         if(window->is_being_focused())
         {
             window->Depth = (int)(m_Renderer->get_far_plane() / 2);

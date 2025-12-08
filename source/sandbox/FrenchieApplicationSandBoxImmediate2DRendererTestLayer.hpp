@@ -100,16 +100,16 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceWindowHints_ : int
         {
-            ImmedidateUserInterfaceWindowHints_Movable          = 2,
-            ImmedidateUserInterfaceWindowHints_Closable         = 4,
-            ImmedidateUserInterfaceWindowHints_Resizable        = 8,
-            ImmedidateUserInterfaceWindowHints_Vertical        = 16,
-            ImmedidateUserInterfaceWindowHints_Horizontal        = 32,
+            ImmedidateUserInterfaceWindowHints_Movable          = 1 << 1,
+            ImmedidateUserInterfaceWindowHints_Closable         = 1 << 2,
+            ImmedidateUserInterfaceWindowHints_Resizable        = 1 << 3,
+            ImmedidateUserInterfaceWindowHints_LayoutVertical   = 1 << 4,
+            ImmedidateUserInterfaceWindowHints_LayoutHorizontal = 1 << 5,
 
             ImmedidateUserInterfaceWindowHints_Default          =
                 ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_Resizable | ImmedidateUserInterfaceWindowHints_Vertical
+                ImmedidateUserInterfaceWindowHints_Resizable | ImmedidateUserInterfaceWindowHints_LayoutVertical
         };
 
         enum ImmedidateUserInterfaceConditions_ : int
