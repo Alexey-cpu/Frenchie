@@ -46,10 +46,10 @@ namespace Frenchie
 
         enum RenderingQueueRendererHints_ : int
         {
-            RenderingQueueRendererHints_Lines,
-            RenderingQueueRendererHints_Points,
-            RenderingQueueRendererHints_Triangles,
-            RenderingQueueRendererHints_Default = RenderingQueueRendererHints_Triangles
+            RenderingQueueRendererHints_Lines     = 1 << 1,
+            RenderingQueueRendererHints_Points    = 1 << 2,
+            RenderingQueueRendererHints_Triangles = 1 << 3,
+            RenderingQueueRendererHints_Default   = RenderingQueueRendererHints_Triangles
         };
 
         enum RenderingQueueShaderType_ : int
@@ -222,19 +222,22 @@ namespace Frenchie
         struct RenderingQueueCommand final
         {
             RenderingQueueCommand(
-                const RenderingQueueMesh&    _Mesh,
-                const RenderingQueueShader&  _Shader,
-                const RenderingQueueTexture& _Texture,
-                const gs_mat4f&              _Transform) :
+                const RenderingQueueMesh&          _Mesh,
+                const RenderingQueueShader&        _Shader,
+                const RenderingQueueTexture&       _Texture,
+                const gs_mat4f&                    _Transform,
+                const RenderingQueueRendererHints& _RendererHints) :
                 Mesh(_Mesh),
                 Transform(_Transform),
                 Texture(_Texture),
-                Shader(_Shader){}
+                Shader(_Shader),
+                RendererHints(_RendererHints){}
 
-            RenderingQueueMesh    Mesh     {RenderingQueueMesh()};
-            RenderingQueueShader  Shader   {RenderingQueueShader()};
-            RenderingQueueTexture Texture  {RenderingQueueTexture()};
-            gs_mat4f              Transform{gs_mat4f(1.f)};
+            RenderingQueueMesh          Mesh         {RenderingQueueMesh()};
+            RenderingQueueShader        Shader       {RenderingQueueShader()};
+            RenderingQueueTexture       Texture      {RenderingQueueTexture()};
+            gs_mat4f                    Transform    {gs_mat4f(1.f)};
+            RenderingQueueRendererHints RendererHints{RenderingQueueRendererHints_::RenderingQueueRendererHints_Default};
         };
 
         class RenderingQueue : public Layer
@@ -327,10 +330,11 @@ namespace Frenchie
 
             // commands API
             void push_command(
-                const RenderingQueueMesh&    _Mesh,
-                const RenderingQueueShader&  _Shader,
-                const RenderingQueueTexture& _Texture,
-                const gs_mat4f&              _Transform);
+                const RenderingQueueMesh&          _Mesh,
+                const RenderingQueueShader&        _Shader,
+                const RenderingQueueTexture&       _Texture,
+                const gs_mat4f&                    _Transform,
+                const RenderingQueueRendererHints& _RendererHints);
 
         protected:
 

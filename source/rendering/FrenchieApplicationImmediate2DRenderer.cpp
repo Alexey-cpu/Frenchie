@@ -111,13 +111,18 @@ void Immediate2DRenderer::frame_start()
 
 void Immediate2DRenderer::frame_finish()
 {
+    m_Segmetns.clear();
     m_Vertexes.clear();
     m_Indexes.clear();
 }
 
 void Immediate2DRenderer::finish(){}
 
-void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _Texture, const gs_vec4f& _Color, const gs_mat4f& _Transform)
+void Immediate2DRenderer::push_rendering_command(
+    const RenderingQueueTexture&       _Texture,
+    const gs_vec4f&                    _Color,
+    const gs_mat4f&                    _Transform,
+    const RenderingQueueRendererHints& _Hints)
 {
     if(m_Indexes.empty() || m_Vertexes.empty()) return;
 
@@ -143,7 +148,8 @@ void Immediate2DRenderer::push_rendering_command(const RenderingQueueTexture& _T
             _Texture.Wrap,
             _Texture.MinFilter,
             _Texture.MaxFilter),
-        _Transform);
+        _Transform,
+        _Hints);
 
     // clean-up
     m_Indexes.clear();
@@ -556,6 +562,7 @@ void Immediate2DRenderer::push_arc(
         _Width,
         _Color,
         m_RenderingQueue->get_default_texture(),
+        m_Segmetns,
         m_Vertexes,
         m_Indexes);
 
@@ -656,10 +663,10 @@ void Immediate2DRenderer::push_rectangle_rounded(
     gs_vec2f BR = gs_vec2f(_Max.x - radius, _Min.y + radius);
 
     // sides
-    build_arc_mesh(TL, radius, radius, 90.f, 180.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_arc_mesh(BL, radius, radius, 180.f, 270.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_arc_mesh(TR, radius, radius, 0.f, 90.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_arc_mesh(BR, radius, radius, 270.f, 360.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
+    build_arc_mesh(TL, radius, radius, 90.f, 180.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
+    build_arc_mesh(BL, radius, radius, 180.f, 270.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
+    build_arc_mesh(TR, radius, radius, 0.f, 90.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
+    build_arc_mesh(BR, radius, radius, 270.f, 360.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
     build_line_mesh(calculate_arc_point(TL, radius, radius, 180), calculate_arc_point(BL, radius, radius, 180), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
     build_line_mesh(calculate_arc_point(TL, radius, radius, 90), calculate_arc_point(TR, radius, radius, 90), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
     build_line_mesh(calculate_arc_point(TR, radius, radius, 0), calculate_arc_point(BR, radius, radius, 0), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
@@ -880,34 +887,35 @@ void Immediate2DRenderer::build_line_mesh(
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
     gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
 
-    if(_Width > 4.f)
-    {
-        Immediate2DRenderer::build_arc_filled_mesh(
-            _P1,
-            _Width * 0.5f,
-            _Width * 0.5f,
-            0.f,
-            360.f,
-            _Color,
-            _Texture,
-            _Vertexes,
-            _Indexes,
-            8
-        );
+    // TODO: implement another line smoothing algorithm...
+    // if(_Width > 4.f)
+    // {
+    //     Immediate2DRenderer::build_arc_filled_mesh(
+    //         _P1,
+    //         _Width * 0.5f,
+    //         _Width * 0.5f,
+    //         0.f,
+    //         360.f,
+    //         _Color,
+    //         _Texture,
+    //         _Vertexes,
+    //         _Indexes,
+    //         6
+    //     );
 
-        Immediate2DRenderer::build_arc_filled_mesh(
-            _P2,
-            _Width * 0.5f,
-            _Width * 0.5f,
-            0.f,
-            360.f,
-            _Color,
-            _Texture,
-            _Vertexes,
-            _Indexes,
-            8
-        );
-    }
+    //     Immediate2DRenderer::build_arc_filled_mesh(
+    //         _P2,
+    //         _Width * 0.5f,
+    //         _Width * 0.5f,
+    //         0.f,
+    //         360.f,
+    //         _Color,
+    //         _Texture,
+    //         _Vertexes,
+    //         _Indexes,
+    //         6
+    //     );
+    // }
 
     Immediate2DRenderer::build_triangle_filled_mesh(
         _P1 - perpendicular,
@@ -931,17 +939,18 @@ void Immediate2DRenderer::build_line_mesh(
 }
 
 void Immediate2DRenderer::build_arc_mesh(
-    const gs_vec2f&                    _Center,
-    const float&                       _MinorRadius,
-    const float&                       _MajorRadius,
-    const float&                       _SourceAngle,
-    const float&                       _TargetAngle,
-    const float&                       _LineWidth,
-    const gs_vec4f&                    _Color,
-    const RenderingQueueTexture&       _Texture,
-    std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes,
-    const int&                         _SegmentsCount)
+    const gs_vec2f&                           _Center,
+    const float&                              _MinorRadius,
+    const float&                              _MajorRadius,
+    const float&                              _SourceAngle,
+    const float&                              _TargetAngle,
+    const float&                              _LineWidth,
+    const gs_vec4f&                           _Color,
+    const RenderingQueueTexture&              _Texture,
+    std::vector<Immediate2DRendererPathSegment>& _Segments,
+    std::vector<RenderingQueueVertex>&        _Vertexes,
+    std::vector<int>&                         _Indexes,
+    const int&                                _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
@@ -949,9 +958,14 @@ void Immediate2DRenderer::build_arc_mesh(
 
     const float angleIncrement = _TargetAngle / _SegmentsCount;
 
+    Immediate2DRendererPathBuilder pathBuilder;
+
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {
         p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
-        build_line_mesh(p1, p2, _LineWidth, _Color, _Texture, _Vertexes, _Indexes);
+
+        pathBuilder.push_segment(p1, p2, _LineWidth, _Segments);
     }
+
+    pathBuilder.build_mesh(_Color, _Texture, _Segments, _Vertexes, _Indexes);
 }

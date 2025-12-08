@@ -12,6 +12,168 @@ namespace Frenchie
 {
     namespace Application
     {
+        class Immediate2DRendererPathSegment
+        {
+        public:
+            Immediate2DRendererPathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float _Width = 4.f)
+            {
+                P1 = _P1;
+                P2 = _P2;
+
+                gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
+                gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
+
+                P1min = _P1 - perpendicular;
+                P1max = _P1 + perpendicular;
+                P2min = _P2 - perpendicular;
+                P2max = _P2 + perpendicular;
+            }
+
+            gs_vec2f P1;
+            gs_vec2f P1min;
+            gs_vec2f P1max;
+
+            gs_vec2f P2;
+            gs_vec2f P2min;
+            gs_vec2f P2max;
+        };
+
+        class Immediate2DRendererPathBuilder
+        {
+        public:
+
+            void push_segment(
+                const gs_vec2f&                              _P1,
+                const gs_vec2f&                              _P2,
+                const float                                  _Width,
+                std::vector<Immediate2DRendererPathSegment>& _Segments)
+            {
+                _Segments.push_back(Immediate2DRendererPathSegment(_P1, _P2, _Width));
+            }
+
+            void build_mesh(
+                const gs_vec4f&                    _Color,
+                const RenderingQueueTexture&       _Texture,
+                std::vector<Immediate2DRendererPathSegment>&          _Segments,
+                std::vector<RenderingQueueVertex>& _Vertexes,
+                std::vector<int>&                  _Indexes)
+            {
+                if(_Segments.empty())
+                    return;
+
+                if (_Segments.size() == 1)
+                {
+                    build_triangle_filled_mesh(
+                        _Segments[0].P1min,
+                        _Segments[0].P2min,
+                        _Segments[0].P1max,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+
+                    build_triangle_filled_mesh(
+                        _Segments[0].P1max,
+                        _Segments[0].P2min,
+                        _Segments[0].P2max,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+                    
+                    _Segments.clear();
+
+                    return;
+                }
+                
+                auto get_element = [](const int& _Index, const int& _Size)->int
+                {
+                    int index = _Index;
+                    while (index < 0)      index += _Size;
+                    while (index >= _Size) index -= _Size;
+                    return index;
+                };
+
+                for (int i = 1; i < (int)_Segments.size(); i++)
+                {
+                    build_triangle_filled_mesh(
+                        _Segments[i].P1min,
+                        _Segments[i].P2min,
+                        _Segments[i].P1max,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+
+                    build_triangle_filled_mesh(
+                        _Segments[i].P1max,
+                        _Segments[i].P2min,
+                        _Segments[i].P2max,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+
+                    build_triangle_filled_mesh(
+                        _Segments[i].P1max,
+                        _Segments[get_element(i-1, (int)_Segments.size())].P2max,
+                        _Segments[get_element(i-1, (int)_Segments.size())].P2,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+
+                    build_triangle_filled_mesh(
+                        _Segments[i].P1min,
+                        _Segments[get_element(i-1, (int)_Segments.size())].P2min,
+                        _Segments[get_element(i-1, (int)_Segments.size())].P2,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+                }
+                
+                _Segments.clear();
+            }
+
+        protected:
+
+            // service methods
+            void build_triangle_filled_mesh(
+                const gs_vec2f&                    _P1,
+                const gs_vec2f&                    _P2,
+                const gs_vec2f&                    _P3,
+                const gs_vec4f&                    _Color,
+                const RenderingQueueTexture&       _Texture,
+                std::vector<RenderingQueueVertex>& _Vertexes,
+                std::vector<int>&                  _Indexes)
+            {
+                const int size = (int)_Vertexes.size();
+
+                _Vertexes.push_back(
+                    RenderingQueueVertex(
+                        gs_vec3f(_P1.x, _P1.y, 0.f),
+                        gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
+                        _Color));
+                
+                _Vertexes.push_back(
+                    RenderingQueueVertex(
+                        gs_vec3f(_P2.x, _P2.y, 0.f),
+                        gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
+                        _Color));
+                
+                _Vertexes.push_back(
+                    RenderingQueueVertex(
+                        gs_vec3f(_P3.x, _P3.y, 0.f),
+                        gs_vec3f(0.f),
+                        gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
+                        _Color));
+                
+                for (int i = size; i < (int)_Vertexes.size(); ++i)
+                    _Indexes.push_back(i);
+            }
+        };
+
         class Immediate2DRenderer : public Layer
         {
         public:
@@ -47,9 +209,10 @@ namespace Frenchie
 
             // API
             void push_rendering_command(
-                const RenderingQueueTexture& _Texture,
-                const gs_vec4f&              _Color,
-                const gs_mat4f&              _Transform);
+                const RenderingQueueTexture&       _Texture,
+                const gs_vec4f&                    _Color,
+                const gs_mat4f&                    _Transform,
+                const RenderingQueueRendererHints& _Hints = RenderingQueueRendererHints_::RenderingQueueRendererHints_Default);
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
@@ -220,17 +383,18 @@ namespace Frenchie
                 std::vector<int>&                  _Indexes);
 
             static void build_arc_mesh(
-                const gs_vec2f&                    _Center,
-                const float&                       _MinorRadius,
-                const float&                       _MajorRadius,
-                const float&                       _SourceAngle,
-                const float&                       _TargetAngle,
-                const float&                       _LineWidth,
-                const gs_vec4f&                    _Color,
-                const RenderingQueueTexture&       _Texture,
-                std::vector<RenderingQueueVertex>& _Vertexes,
-                std::vector<int>&                  _Indexes,
-                const int&                         _SegmentsCount = 36);
+                const gs_vec2f&                           _Center,
+                const float&                              _MinorRadius,
+                const float&                              _MajorRadius,
+                const float&                              _SourceAngle,
+                const float&                              _TargetAngle,
+                const float&                              _LineWidth,
+                const gs_vec4f&                           _Color,
+                const RenderingQueueTexture&              _Texture,
+                std::vector<Immediate2DRendererPathSegment>& _Segments,
+                std::vector<RenderingQueueVertex>&        _Vertexes,
+                std::vector<int>&                         _Indexes,
+                const int&                                _SegmentsCount = 36);
 
             static gs_vec2f left(const gs_vec2f& _Vector)
             {
@@ -273,10 +437,11 @@ namespace Frenchie
             }
 
             // this is a plipeline
-            std::vector<RenderingQueueVertex> m_Vertexes      {std::vector<RenderingQueueVertex>()};
-            std::vector<int>                  m_Indexes       {std::vector<int>()};
-            gs_2dboxf                         m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::shared_ptr<RenderingQueue>   m_RenderingQueue{nullptr};
+            std::vector<Immediate2DRendererPathSegment> m_Segmetns      {std::vector<Immediate2DRendererPathSegment>()};
+            std::vector<RenderingQueueVertex>           m_Vertexes      {std::vector<RenderingQueueVertex>()};
+            std::vector<int>                            m_Indexes       {std::vector<int>()};
+            gs_2dboxf                                   m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::shared_ptr<RenderingQueue>             m_RenderingQueue{nullptr};
         };
     }
 }

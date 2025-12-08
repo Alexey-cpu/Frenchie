@@ -76,6 +76,19 @@ void Immedidate2DRendererTestLayer::frame_update()
         pop_window();
     }
 
+    static bool independentWindowOpened = true;
+
+    if(push_window("Independent window",
+        1.f,
+        &independentWindowOpened,
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+    {
+        pop_window();
+    }
+
     // render cursor
     m_Renderer->push_text(
         std::to_string(m_Renderer->get_cursor_postion().x).append(" ").append(
@@ -191,7 +204,7 @@ bool Immedidate2DRendererTestLayer::push_window(
         m_WindowsCache[_Name] = std::move(window);
     }
 
-    ImmedidateUserInterfaceWindow* window = m_WindowsCache[_Name].get();
+    ImmedidateUserInterfaceWindow* window = m_WindowsCache.find(_Name)->second.get();
     window->LayoutChildFillWeight = _Weight;
     window->Hints                 = _Hints;
 
@@ -404,16 +417,16 @@ bool Immedidate2DRendererTestLayer::render_window_close_button(const gs_2dboxf& 
         m_Renderer->calculate_transform_matrix(_Depth, _Position));
 
     m_Renderer->push_line(
-        _Box.Min + gs_vec2f(4.f, 4.f),
-        _Box.Max - gs_vec2f(4.f, 4.f),
-        8.f,
+        _Box.Min,
+        _Box.Max,
+        2.f,
         gs_vec4f(0, 0, 0, 255.f),
         m_Renderer->calculate_transform_matrix(_Depth + 1.f, _Position));
 
     m_Renderer->push_line(
-        gs_vec2f(_Box.Max.x, _Box.Min.y) + gs_vec2f(-4.f, 4.f),
-        gs_vec2f(_Box.Min.x, _Box.Max.y) + gs_vec2f(4.f, -4.f),
-        8.f,
+        gs_vec2f(_Box.Max.x, _Box.Min.y),
+        gs_vec2f(_Box.Min.x, _Box.Max.y),
+        2.f,
         gs_vec4f(0, 0, 0, 255.f),
         m_Renderer->calculate_transform_matrix(_Depth + 1.f, _Position));
     

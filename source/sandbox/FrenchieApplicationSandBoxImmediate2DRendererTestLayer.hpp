@@ -106,7 +106,7 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowHints_LayoutVertical   = 1 << 4,
             ImmedidateUserInterfaceWindowHints_LayoutHorizontal = 1 << 5,
 
-            ImmedidateUserInterfaceWindowHints_Default          =
+            ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_Closable  |
                 ImmedidateUserInterfaceWindowHints_Resizable | ImmedidateUserInterfaceWindowHints_LayoutVertical

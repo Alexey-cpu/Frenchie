@@ -300,8 +300,7 @@ void RenderingQueue::frame_render()
         set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
         set_shader_uniform(shader, "u_Texture", 0);
 
-        //begin_use_mesh(mesh, RenderingQueueRendererHints_::RenderingQueueRendererHints_Lines);
-        begin_use_mesh(mesh);
+        begin_use_mesh(mesh, m_Commands[i].RendererHints);
         
         end_use_texture();
         end_use_shader();
@@ -630,7 +629,6 @@ RenderingQueueTexture RenderingQueue::construct_texture(
     {
     case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_ALPHA:
         //glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _Width, _Height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _RawBuffer);
-
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, _Width, _Height, 0, GL_RED, GL_UNSIGNED_BYTE, _RawBuffer);
         break;
     
@@ -735,7 +733,7 @@ RenderingQueueTexture RenderingQueue::construct_texture(
 
 RenderingQueueTexture RenderingQueue::construct_texture(
     const char*                           _FilePath,
-    const RenderingQueueTextureFormat&     _Format,
+    const RenderingQueueTextureFormat&    _Format,
     const RenderingQueueTextureWrapMode&  _Wrap,
     const RenderingQueueTextureMinFilter& _MinFilter, 
     const RenderingQueueTextureMaxFilter& _MaxFilter)
@@ -743,9 +741,17 @@ RenderingQueueTexture RenderingQueue::construct_texture(
     // auxiliary lambdas
     auto formatToRequestdChannels = [](RenderingQueueTextureFormat _Format)->int
     {
-        if(_Format & RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA)  return 4;
-        if(_Format & RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGB)   return 3;
-        if(_Format & RenderingQueueTextureFormat_::RenderingQueueTextureFormat_ALPHA) return 1;
+        switch (_Format)
+        {
+        case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA:
+            return 4;
+        
+        case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGB:
+            return 3;
+
+        case RenderingQueueTextureFormat_::RenderingQueueTextureFormat_ALPHA:
+            return 1;
+        }
 
         return 0; // extract everything by default
     };
@@ -1042,22 +1048,14 @@ void RenderingQueue::begin_use_mesh(
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
 
     // draw EBO
-    switch (_MeshRenderHints)
-    {
-    case RenderingQueueRendererHints_::RenderingQueueRendererHints_Points:
-    glDrawArrays(GL_POINTS, 0, bufferSize);
-        break;
-    case RenderingQueueRendererHints_::RenderingQueueRendererHints_Lines:
-    glDrawElements(GL_LINE_LOOP, bufferSize, GL_UNSIGNED_INT, 0);
-        break;
-    case RenderingQueueRendererHints_::RenderingQueueRendererHints_Triangles:
-    glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
-        break;
+    if((_MeshRenderHints & RenderingQueueRendererHints_::RenderingQueueRendererHints_Points))
+        glDrawArrays(GL_POINTS, 0, bufferSize);
 
-    default:
+    if((_MeshRenderHints & RenderingQueueRendererHints_::RenderingQueueRendererHints_Lines))
+        glDrawElements(GL_LINE_LOOP, bufferSize, GL_UNSIGNED_INT, 0);
+
+    if((_MeshRenderHints & RenderingQueueRendererHints_::RenderingQueueRendererHints_Triangles))
         glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
-        break;
-    }
 }
 
 void RenderingQueue::end_use_mesh()
@@ -1073,12 +1071,13 @@ void RenderingQueue::destroy_mesh(const RenderingQueueMesh& _Mesh)
 }
 
 void RenderingQueue::push_command(
-    const RenderingQueueMesh&    _Mesh,
-    const RenderingQueueShader&  _Shader,
-    const RenderingQueueTexture& _Texture,
-    const gs_mat4f&              _Transform)
+    const RenderingQueueMesh&          _Mesh,
+    const RenderingQueueShader&        _Shader,
+    const RenderingQueueTexture&       _Texture,
+    const gs_mat4f&                    _Transform,
+    const RenderingQueueRendererHints& _RendererHints)
 {
-    m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform));
+    m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform, _RendererHints));
 }
 
 // Immediate2DRendererDefaultFont
