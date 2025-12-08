@@ -50,13 +50,26 @@ void Immedidate2DRendererTestLayer::frame_update()
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
             {
-                if(push_window("Theta-1 window", 3.f)) pop_window();
-                if(push_window("Theta-2 window", 3.f)) pop_window();
+                if(push_window("Theta-1 window", 1.f)) pop_window();
+                if(push_window("Theta-2 window", 1.f)) pop_window();
 
                 pop_window();
             }
 
-            if(push_window("Cappa window", 3.f)) pop_window();
+            if(push_window("Cappa window",
+                1.f,
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+            {
+                if(push_window("Cappa-1 window", 1.f)) pop_window();
+                if(push_window("Cappa-2 window", 1.f)) pop_window();
+
+                pop_window();
+            }
+
             pop_window();
         }
 
@@ -190,73 +203,40 @@ bool Immedidate2DRendererTestLayer::push_window(
     // calculate window geometry
     if(!m_WindowsHierarchy.empty())
     {
-        auto childHorizonalPadding = gs_max(m_Style.FrameWidth * 2.f, 8.f);
-        auto childVerticalPadding  = calculate_window_frame_bounding_box(window).height();//(m_WindowsHierarchy.size() <= 1 ? calculate_window_frame_bounding_box(window).height() : 0.f);
-
-        auto parentTransform = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->Transform;
-        
-        window->Parent       = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-        window->ChildIndex   = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_widget();
-        window->Depth        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
-
+        window->Parent                                       = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+        window->ChildIndex                                   = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_widget();
+        window->Depth                                        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
         window->Parent->LayoutChildrenFillWeightCurrentSumm += window->LayoutChildFillWeight;
 
-        gs_vec2f size = window->Parent->CurrentBox.size() * window->LayoutChildFillWeight / window->Parent->LayoutChildrenFillWeightPreviousSumm;
+        auto childVerticalPadding  = calculate_window_frame_bounding_box(window).height();
 
-        ImmedidateUserInterfaceWindow* next = window->Parent;
-        ImmedidateUserInterfaceWindow* topMostParent = window->Parent;
-
-        while (next != nullptr)
-        {
-            topMostParent = next;
-            next = next->Parent;
-        }
+        gs_vec2f childSize = gs_vec2f(
+            window->Parent->CurrentBox.width(),
+            window->Parent->CurrentBox.height() - childVerticalPadding) * window->LayoutChildFillWeight / window->Parent->LayoutChildrenFillWeightPreviousSumm;
 
         if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
         {
             window->CurrentBox = gs_2dboxf(
                 gs_vec2f(0.f, 0.f),
-                gs_vec2f(size.x, window->Parent->CurrentBox.height()));
+                gs_vec2f(childSize.x, window->Parent->CurrentBox.height() - childVerticalPadding));
 
-            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
+            window->Transform = window->Parent->Transform * m_Renderer->calculate_transform_matrix(
                 0.f,
                 window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
 
-            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - topMostParent->CurrentBox.Max.y, 0.f, gs_huge<float>());
-            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - topMostParent->CurrentBox.Max.x, 0.f, gs_huge<float>());
-
-            window->CurrentBox = gs_2dboxf(
-                gs_vec2f(0.f, 0.f),
-                gs_vec2f(size.x, window->Parent->CurrentBox.height()) - gs_vec2f(deltaX, deltaY));
-
-            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
-                0.f,
-                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
-
-            window->Parent->LayoutCursorPositon += gs_vec2f(size.x, 0.f);
+            window->Parent->LayoutCursorPositon += gs_vec2f(childSize.x, 0.f);
         }
         else
         {
             window->CurrentBox = gs_2dboxf(
                 gs_vec2f(0.f, 0.f),
-                gs_vec2f(window->Parent->CurrentBox.width(), size.y));
+                gs_vec2f(window->Parent->CurrentBox.width(), childSize.y));
 
-            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
+            window->Transform = window->Parent->Transform * m_Renderer->calculate_transform_matrix(
                 0.f,
                 window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
 
-            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - topMostParent->CurrentBox.Max.y, 0.f, gs_huge<float>());
-            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - topMostParent->CurrentBox.Max.x, 0.f, gs_huge<float>());
-
-            window->CurrentBox = gs_2dboxf(
-                gs_vec2f(0.f, 0.f),
-                gs_vec2f(window->Parent->CurrentBox.width(), size.y) - gs_vec2f(deltaX, deltaY));
-
-            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
-                0.f,
-                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
-
-            window->Parent->LayoutCursorPositon += gs_vec2f(0.f, size.y);
+            window->Parent->LayoutCursorPositon += gs_vec2f(0.f, childSize.y);
         }
 
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
@@ -319,12 +299,12 @@ void Immedidate2DRendererTestLayer::pop_window()
         m_WindowsHierarchy.pop_back();
 }
 
-gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_bounding_box(ImmedidateUserInterfaceWindow* _Window)
+gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_bounding_box(const ImmedidateUserInterfaceWindow* _Window)
 {
     return gs_2dboxf(gs_vec2f(0.f, 0.f), _Window->CurrentBox.size()).transform(_Window->Transform);
 }
 
-gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_frame_bounding_box(ImmedidateUserInterfaceWindow* _Window)
+gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_frame_bounding_box(const ImmedidateUserInterfaceWindow* _Window)
 {
     return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(_Window->CurrentBox.width(), m_Style.FontSize)).transform(_Window->Transform);
 }

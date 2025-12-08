@@ -18,6 +18,7 @@ namespace Frenchie
             Immediate2DRenderer();
             virtual ~Immediate2DRenderer();
 
+            // getters
             gs_vec3f get_cursor_postion() const
             {
                 gs_vec2f size   = Frenchie::Application::application()->get_window_size();

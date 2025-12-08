@@ -199,9 +199,9 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
             // window cache state
-            gs_2dboxf CurrentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            gs_mat4f  Transform  {gs_mat4f(1.f)};
+            mutable gs_2dboxf CurrentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_mat4f  Transform  {gs_mat4f(1.f)};
 
             int push_widget()
             {
@@ -414,8 +414,8 @@ namespace Frenchie
             ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
 
-            gs_2dboxf calculate_window_bounding_box(ImmedidateUserInterfaceWindow*);
-            gs_2dboxf calculate_window_frame_bounding_box(ImmedidateUserInterfaceWindow*);
+            gs_2dboxf calculate_window_bounding_box(const ImmedidateUserInterfaceWindow*);
+            gs_2dboxf calculate_window_frame_bounding_box(const ImmedidateUserInterfaceWindow*);
             
             void render_window_background(ImmedidateUserInterfaceWindow*);
             void render_window_classic_frame(ImmedidateUserInterfaceWindow*, bool*);
