@@ -24,16 +24,41 @@ void Immedidate2DRendererTestLayer::frame_update()
 
     static bool bettaWindowOpened = true;
 
-    if(push_window("Beta window", 1.f,
+    if(push_window("Beta window",
+        1.f,
         &bettaWindowOpened,
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_VerticalLayout))
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Horizontal))
     {
         if(push_window("Alpha window", 1.f)) pop_window();
-        if(push_window("Theta window", 2.f)) pop_window();
-        if(push_window("Cappa window", 3.f)) pop_window();
+
+        if(push_window("Container window",
+            1.f,
+            nullptr,
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Vertical))
+        {
+            if(push_window("Theta window",
+                1.f,
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Horizontal))
+            {
+                if(push_window("Theta-1 window", 3.f)) pop_window();
+                if(push_window("Theta-2 window", 3.f)) pop_window();
+
+                pop_window();
+            }
+
+            if(push_window("Cappa window", 3.f)) pop_window();
+            pop_window();
+        }
 
         pop_window();
     }
@@ -105,7 +130,7 @@ void Immedidate2DRendererTestLayer::frame_finish()
         // layout
         cachedWindow.second->LayoutChildrenFillWeightPreviousSumm = cachedWindow.second->LayoutChildrenFillWeightCurrentSumm;
         cachedWindow.second->LayoutChildrenFillWeightCurrentSumm  = 0.f;
-        cachedWindow.second->LayoutCursorPositon                 = gs_vec2f(0.f, 0.f);
+        cachedWindow.second->LayoutCursorPositon                  = gs_vec2f(0.f, 0.f);
 
         // hierarchy
         cachedWindow.second->Depth         = 0;
@@ -165,11 +190,11 @@ bool Immedidate2DRendererTestLayer::push_window(
     // calculate window geometry
     if(!m_WindowsHierarchy.empty())
     {
-        auto hierarchyInfo         = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
         auto childHorizonalPadding = gs_max(m_Style.FrameWidth * 2.f, 8.f);
-        auto childVerticalPadding  = (m_WindowsHierarchy.size() <= 1 ? calculate_window_frame_bounding_box(window).height() : 0.f);
+        auto childVerticalPadding  = calculate_window_frame_bounding_box(window).height();//(m_WindowsHierarchy.size() <= 1 ? calculate_window_frame_bounding_box(window).height() : 0.f);
 
         auto parentTransform = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->Transform;
+        
         window->Parent       = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
         window->ChildIndex   = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_widget();
         window->Depth        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
@@ -178,7 +203,16 @@ bool Immedidate2DRendererTestLayer::push_window(
 
         gs_vec2f size = window->Parent->CurrentBox.size() * window->LayoutChildFillWeight / window->Parent->LayoutChildrenFillWeightPreviousSumm;
 
-        if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_HorizontalLayout))
+        ImmedidateUserInterfaceWindow* next = window->Parent;
+        ImmedidateUserInterfaceWindow* topMostParent = window->Parent;
+
+        while (next != nullptr)
+        {
+            topMostParent = next;
+            next = next->Parent;
+        }
+
+        if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Horizontal))
         {
             window->CurrentBox = gs_2dboxf(
                 gs_vec2f(0.f, 0.f),
@@ -188,8 +222,8 @@ bool Immedidate2DRendererTestLayer::push_window(
                 0.f,
                 window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
 
-            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - window->Parent->CurrentBox.Max.y, 0.f, gs_huge<float>());
-            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - window->Parent->CurrentBox.Max.x, 0.f, gs_huge<float>());
+            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - topMostParent->CurrentBox.Max.y, 0.f, gs_huge<float>());
+            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - topMostParent->CurrentBox.Max.x, 0.f, gs_huge<float>());
 
             window->CurrentBox = gs_2dboxf(
                 gs_vec2f(0.f, 0.f),
@@ -211,8 +245,8 @@ bool Immedidate2DRendererTestLayer::push_window(
                 0.f,
                 window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
 
-            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - window->Parent->CurrentBox.Max.y, 0.f, gs_huge<float>());
-            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - window->Parent->CurrentBox.Max.x, 0.f, gs_huge<float>());
+            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - topMostParent->CurrentBox.Max.y, 0.f, gs_huge<float>());
+            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - topMostParent->CurrentBox.Max.x, 0.f, gs_huge<float>());
 
             window->CurrentBox = gs_2dboxf(
                 gs_vec2f(0.f, 0.f),
@@ -231,6 +265,10 @@ bool Immedidate2DRendererTestLayer::push_window(
     }
     else
     {
+            // window->Transform = m_Renderer->calculate_transform_matrix(
+            //     0.f,
+            //     window->CurrentBox.Min + window->LayoutCursorPositon);
+
         if(window->is_being_focused())
         {
             window->Depth = (int)(m_Renderer->get_far_plane() / 2);

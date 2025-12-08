@@ -103,14 +103,13 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowHints_Movable          = 2,
             ImmedidateUserInterfaceWindowHints_Closable         = 4,
             ImmedidateUserInterfaceWindowHints_Resizable        = 8,
-            ImmedidateUserInterfaceWindowHints_HorizontalLayout = 16,
-            ImmedidateUserInterfaceWindowHints_VerticalLayout   = 32,
+            ImmedidateUserInterfaceWindowHints_Vertical        = 16,
+            ImmedidateUserInterfaceWindowHints_Horizontal        = 32,
 
             ImmedidateUserInterfaceWindowHints_Default          =
                 ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_HorizontalLayout
+                ImmedidateUserInterfaceWindowHints_Resizable | ImmedidateUserInterfaceWindowHints_Vertical
         };
 
         enum ImmedidateUserInterfaceConditions_ : int
