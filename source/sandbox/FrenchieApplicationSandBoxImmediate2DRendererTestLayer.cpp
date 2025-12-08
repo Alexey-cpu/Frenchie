@@ -167,10 +167,10 @@ ImmedidateUserInterfaceWindow* Immedidate2DRendererTestLayer::create_window(cons
     // calculate window transform
     if(!m_WindowsHierarchy.empty())
     {
+        auto hierarchyInfo = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_child();
         window->Parent     = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-        auto child = window->Parent->push_child();
-        window->ChildIndex = child.ChildIndex;
-        window->Depth      = child.Depth;
+        window->ChildIndex = hierarchyInfo.ChildIndex;
+        window->Depth      = hierarchyInfo.Depth;
         window->Transform  = m_Renderer->calculate_transform_matrix(0.f, window->Parent->CurrentBox.Min + gs_vec2f(0.f, m_Style.FontSize));
     }
     else
@@ -178,7 +178,7 @@ ImmedidateUserInterfaceWindow* Immedidate2DRendererTestLayer::create_window(cons
         // calculate window depth
         if(window->is_being_focused())
         {
-            window->Depth = 500;
+            window->Depth = (int)(m_Renderer->get_far_plane() / 2);
         }
         else
         {
@@ -207,8 +207,6 @@ gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_frame_bounding_box(Imm
 
 void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window, const ImmedidateUserInterfaceWindowHints&)
 {
-    std::cout << _Window->Name << "\t" << _Window->Depth << "\n";
-
     gs_2dboxf windowBoundingBox       = calculate_window_bounding_box(_Window);
     gs_2dboxf windowFrameBoundingBox  = calculate_window_frame_bounding_box(_Window);
 
