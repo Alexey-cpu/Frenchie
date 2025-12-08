@@ -22,18 +22,21 @@ void Immedidate2DRendererTestLayer::frame_update()
     if(m_Renderer == nullptr)
         return;
 
-    push_window("Beta window");
-    push_window("Alpha window", ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable);
-    pop_window();
-    pop_window();
+    static bool bettaWindowOpened = true;
 
-    set_next_window_position(gs_vec2f(512.f, 512.f));
-    push_window("Theta window");
-    pop_window();
+    if(push_window("Beta window", 1.f,
+        &bettaWindowOpened,
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_VerticalLayout))
+    {
+        if(push_window("Alpha window", 1.f)) pop_window();
+        if(push_window("Theta window", 2.f)) pop_window();
+        if(push_window("Cappa window", 3.f)) pop_window();
 
-    set_next_window_position(gs_vec2f(1024.f, 1024.f));
-    push_window("Cappa window");
-    pop_window();
+        pop_window();
+    }
 
     // render cursor
     m_Renderer->push_text(
@@ -96,13 +99,20 @@ void Immedidate2DRendererTestLayer::frame_finish()
         }
     }
 
-    // clean up windows hierarchy data
+    // clean up windows hierarchy and layout data
     for (auto& cachedWindow : m_WindowsCache)
     {
-        cachedWindow.second->Depth      = 0;
-        cachedWindow.second->Thickness  = 0;
-        cachedWindow.second->ChildIndex = 0;
-        cachedWindow.second->Parent     = nullptr;
+        // layout
+        cachedWindow.second->LayoutChildrenFillWeightPreviousSumm = cachedWindow.second->LayoutChildrenFillWeightCurrentSumm;
+        cachedWindow.second->LayoutChildrenFillWeightCurrentSumm  = 0.f;
+        cachedWindow.second->LayoutCursorPositon                 = gs_vec2f(0.f, 0.f);
+
+        // hierarchy
+        cachedWindow.second->Depth         = 0;
+        cachedWindow.second->Thickness     = 0;
+        cachedWindow.second->ChildIndex    = 0;
+        cachedWindow.second->ChildrenCount = 0;
+        cachedWindow.second->Parent        = nullptr;
     }
 
     // clear hierarchy and draw lists
@@ -121,29 +131,10 @@ void Immedidate2DRendererTestLayer::set_next_window_size(const gs_vec2f& _Value)
 }
 
 bool Immedidate2DRendererTestLayer::push_window(
-    const std::string&                        _Name,
-    const ImmedidateUserInterfaceWindowHints& _Hints)
-{
-    ImmedidateUserInterfaceWindow* window = create_window(_Name);
-
-    render_window_background(window, _Hints);
-    render_window_frame(window, _Hints);
-    render_window_title(window, _Hints);
-    sink_window_events(window, _Hints);
-
-    m_WindowsDrawList.push_back(window);
-    m_WindowsHierarchy.push_back(window);
-
-    return true;
-}
-
-void Immedidate2DRendererTestLayer::pop_window()
-{
-    if(!m_WindowsHierarchy.empty())
-        m_WindowsHierarchy.pop_back();
-}
-
-ImmedidateUserInterfaceWindow* Immedidate2DRendererTestLayer::create_window(const std::string& _Name)
+    const std::string&                 _Name,
+    const float&                       _Weight,
+    bool*                              _Opened,
+    ImmedidateUserInterfaceWindowHints _Hints)
 {
     // request window from cache
     if(m_WindowsCache.find(_Name) == m_WindowsCache.end())
@@ -162,20 +153,84 @@ ImmedidateUserInterfaceWindow* Immedidate2DRendererTestLayer::create_window(cons
         m_WindowsCache[_Name] = std::move(window);
     }
 
-    auto& window = m_WindowsCache[_Name];
+    ImmedidateUserInterfaceWindow* window = m_WindowsCache[_Name].get();
+    window->LayoutChildFillWeight = _Weight;
+    window->Hints                 = _Hints;
 
-    // calculate window transform
+    if(_Opened == nullptr)
+        window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
+    else
+        window->Hints |= ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
+
+    // calculate window geometry
     if(!m_WindowsHierarchy.empty())
     {
-        auto hierarchyInfo = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_child();
-        window->Parent     = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-        window->ChildIndex = hierarchyInfo.ChildIndex;
-        window->Depth      = hierarchyInfo.Depth;
-        window->Transform  = m_Renderer->calculate_transform_matrix(0.f, window->Parent->CurrentBox.Min + gs_vec2f(0.f, m_Style.FontSize));
+        auto hierarchyInfo         = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
+        auto childHorizonalPadding = gs_max(m_Style.FrameWidth * 2.f, 8.f);
+        auto childVerticalPadding  = (m_WindowsHierarchy.size() <= 1 ? calculate_window_frame_bounding_box(window).height() : 0.f);
+
+        auto parentTransform = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->Transform;
+        window->Parent       = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+        window->ChildIndex   = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_widget();
+        window->Depth        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
+
+        window->Parent->LayoutChildrenFillWeightCurrentSumm += window->LayoutChildFillWeight;
+
+        gs_vec2f size = window->Parent->CurrentBox.size() * window->LayoutChildFillWeight / window->Parent->LayoutChildrenFillWeightPreviousSumm;
+
+        if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_HorizontalLayout))
+        {
+            window->CurrentBox = gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(size.x, window->Parent->CurrentBox.height()));
+
+            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
+                0.f,
+                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
+
+            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - window->Parent->CurrentBox.Max.y, 0.f, gs_huge<float>());
+            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - window->Parent->CurrentBox.Max.x, 0.f, gs_huge<float>());
+
+            window->CurrentBox = gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(size.x, window->Parent->CurrentBox.height()) - gs_vec2f(deltaX, deltaY));
+
+            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
+                0.f,
+                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
+
+            window->Parent->LayoutCursorPositon += gs_vec2f(size.x, 0.f);
+        }
+        else
+        {
+            window->CurrentBox = gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(window->Parent->CurrentBox.width(), size.y));
+
+            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
+                0.f,
+                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
+
+            float deltaY = gs_clamp(window->CurrentBox.transform(window->Transform).Max.y - window->Parent->CurrentBox.Max.y, 0.f, gs_huge<float>());
+            float deltaX = gs_clamp(window->CurrentBox.transform(window->Transform).Max.x - window->Parent->CurrentBox.Max.x, 0.f, gs_huge<float>());
+
+            window->CurrentBox = gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(window->Parent->CurrentBox.width(), size.y) - gs_vec2f(deltaX, deltaY));
+
+            window->Transform = parentTransform * m_Renderer->calculate_transform_matrix(
+                0.f,
+                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
+
+            window->Parent->LayoutCursorPositon += gs_vec2f(0.f, size.y);
+        }
+
+        window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
+        window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
+        window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
     }
     else
     {
-        // calculate window depth
         if(window->is_being_focused())
         {
             window->Depth = (int)(m_Renderer->get_far_plane() / 2);
@@ -192,7 +247,42 @@ ImmedidateUserInterfaceWindow* Immedidate2DRendererTestLayer::create_window(cons
         }
     }
 
-    return m_WindowsCache[_Name].get();
+    // check parent
+    if((window->Parent != nullptr) &&
+       (std::find(m_WindowsDrawList.begin(), m_WindowsDrawList.end(), window->Parent) == m_WindowsDrawList.end()))
+    {
+        m_WindowsHierarchy.push_back(window);
+        return false;
+    }
+    
+    // check self
+    if(_Opened != nullptr && !(*_Opened))
+    {
+        m_WindowsHierarchy.push_back(window);
+        return false;
+    }
+
+    // render window
+    render_window_background(window);
+
+    //if(window->Parent == nullptr)
+    {
+        render_window_classic_frame(window, _Opened);
+    }
+
+    sink_window_events(window);
+
+    // push window into hierarchy stack and draw list
+    m_WindowsDrawList.push_back(window);
+    m_WindowsHierarchy.push_back(window);
+
+    return true;
+}
+
+void Immedidate2DRendererTestLayer::pop_window()
+{
+    if(!m_WindowsHierarchy.empty())
+        m_WindowsHierarchy.pop_back();
 }
 
 gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_bounding_box(ImmedidateUserInterfaceWindow* _Window)
@@ -205,7 +295,7 @@ gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_frame_bounding_box(Imm
     return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(_Window->CurrentBox.width(), m_Style.FontSize)).transform(_Window->Transform);
 }
 
-void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window, const ImmedidateUserInterfaceWindowHints&)
+void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window)
 {
     gs_2dboxf windowBoundingBox       = calculate_window_bounding_box(_Window);
     gs_2dboxf windowFrameBoundingBox  = calculate_window_frame_bounding_box(_Window);
@@ -215,7 +305,7 @@ void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         windowBoundingBox.Max,
         m_Style.FrameRoundingRadius,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
-        m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+        m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
 
     m_Renderer->push_rectangle_rounded(
         windowBoundingBox.Min,
@@ -223,10 +313,10 @@ void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         m_Style.FrameRoundingRadius,
         m_Style.FrameWidth,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+        m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
 }
 
-void Immedidate2DRendererTestLayer::render_window_frame(ImmedidateUserInterfaceWindow* _Window, const ImmedidateUserInterfaceWindowHints&)
+void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserInterfaceWindow* _Window, bool* _Opened)
 {
     gs_2dboxf windowBoundingBox       = calculate_window_bounding_box(_Window);
     gs_2dboxf windowFrameBoundingBox  = calculate_window_frame_bounding_box(_Window);
@@ -237,40 +327,86 @@ void Immedidate2DRendererTestLayer::render_window_frame(ImmedidateUserInterfaceW
         windowFrameBoundingBox.Max,
         m_Style.FrameRoundingRadius,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameColor],
-        m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+        m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
 
+    // frame border
     m_Renderer->push_rectangle_rounded(
         windowFrameBoundingBox.Min,
         windowFrameBoundingBox.Max,
         m_Style.FrameRoundingRadius,
         m_Style.FrameWidth,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor],
-        m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+        m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
+
+    // window title
+    auto windowFrameBoundingBoxTransformed = windowFrameBoundingBox.transform(m_Renderer->calculate_transform_matrix(0.f, _Window->CurrentBox.Min));
+    
+    m_Renderer->push_text(
+        _Window->Name,
+        m_Style.FontSize,
+       gs_vec4f(80.f, 0.f, 0.f, 255.f),
+       m_Renderer->calculate_transform_matrix(
+            (float)_Window->push_graphics(),
+            gs_vec2f(
+                windowFrameBoundingBoxTransformed.Min.x + m_Style.FontSize,
+                windowFrameBoundingBoxTransformed.center().y - m_Renderer->calculate_bounding_box(_Window->Name, m_Style.FontSize, m_Style.Font).height() * 0.5f))
+    );
 
     // frame close button
-    auto windowFrameBoundingBoxTransformed = windowFrameBoundingBox.transform(m_Renderer->calculate_transform_matrix(0.f, _Window->CurrentBox.Min));
-    auto windowFrameCloseButtonSize        = gs_min(m_Style.WindowFrameCloseButtonSize, (windowFrameBoundingBoxTransformed.size().y - m_Style.FrameWidth * 2.f) * 0.9f);
+    if(_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable && _Opened != nullptr)
+    {
+        float closeButtonSize = gs_min(
+            m_Style.WindowFrameCloseButtonSize,
+            (windowFrameBoundingBoxTransformed.size().y - m_Style.FrameWidth * 2.f) * 0.9f);
 
-    gs_2dboxf windowFrameCloseButtonBoundingBox =
-        gs_2dboxf(
-            gs_vec2f(0.f, 0.f),
-            gs_vec2f(windowFrameCloseButtonSize));
-
-    m_Renderer->push_rectangle_filled(
-        windowFrameCloseButtonBoundingBox.Min,
-        windowFrameCloseButtonBoundingBox.Max,
-        gs_vec4f(80.f, 0.f, 0.f, 255.f),
-        m_Renderer->calculate_transform_matrix(
-            (float)_Window->push_child().Depth,
-            gs_vec2f(windowFrameBoundingBoxTransformed.Max.x - windowFrameCloseButtonSize - m_Style.WindowResizeAngleGizmoRadius,
-                        windowFrameBoundingBoxTransformed.center().y - windowFrameCloseButtonSize * 0.5f)));
+        *_Opened = !render_window_close_button(
+            gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(closeButtonSize)),
+            (float)_Window->push_graphics(),
+            gs_vec2f(windowFrameBoundingBoxTransformed.Max.x - closeButtonSize - m_Style.WindowResizeAngleGizmoRadius,
+                    windowFrameBoundingBoxTransformed.center().y - closeButtonSize * 0.5f));
+    }
 }
 
-void Immedidate2DRendererTestLayer::render_window_title(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&)
+bool Immedidate2DRendererTestLayer::render_window_close_button(const gs_2dboxf& _Box, const float& _Depth, const gs_vec3f& _Position)
 {
+    auto retrieve_close_button_color = [this](const bool& _Pressed, const bool& _Hovered)->gs_vec4f
+    {
+        if(_Pressed) return m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonPressedColor];
+        if(_Hovered) return m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonHoveredColor];
+        return m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonDefaultColor];
+    };
+
+    gs_mat4f transform = m_Renderer->calculate_transform_matrix(0.f, _Position);
+    bool     hovered   = gs_2dboxf(_Box.Min, _Box.Max).transform(m_Renderer->calculate_transform_matrix(0.f, _Position)).contains(m_Renderer->get_cursor_postion());
+    m_Renderer->push_arc_filled(
+        (_Box.Min + _Box.Max) * 0.5f,
+        12.f,
+        12.f,
+        0.f,
+        360.f,
+        retrieve_close_button_color(hovered && application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left), hovered),
+        m_Renderer->calculate_transform_matrix(_Depth, _Position));
+
+    m_Renderer->push_line(
+        _Box.Min + gs_vec2f(4.f, 4.f),
+        _Box.Max - gs_vec2f(4.f, 4.f),
+        8.f,
+        gs_vec4f(0, 0, 0, 255.f),
+        m_Renderer->calculate_transform_matrix(_Depth + 1.f, _Position));
+
+    m_Renderer->push_line(
+        gs_vec2f(_Box.Max.x, _Box.Min.y) + gs_vec2f(-4.f, 4.f),
+        gs_vec2f(_Box.Min.x, _Box.Max.y) + gs_vec2f(4.f, -4.f),
+        8.f,
+        gs_vec4f(0, 0, 0, 255.f),
+        m_Renderer->calculate_transform_matrix(_Depth + 1.f, _Position));
+    
+    return hovered && application()->is_mouse_button_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Left);
 }
 
-void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window, const ImmedidateUserInterfaceWindowHints& _Hints)
+void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window)
 {
     gs_2dboxf windowBoundingBox       = calculate_window_bounding_box(_Window);
     gs_2dboxf windowFrameBoundingBox  = calculate_window_frame_bounding_box(_Window);
@@ -290,45 +426,45 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
 
     if(resizeTopLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_top_left();
     }
     else if(resizeTopRight.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_top_right();
     }
     else if(resizeBottomLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_bottom_left();
     }
     else if(resizeBottomRight.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_bottom_right();
     }
     else if(resizeTop.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_top();
     }
     else if(resizeLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_left();
     }
     else if(resizeRight.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_right();
     }
     else if(resizeBottom.transform(wnidowTransformMatrix).contains(wnidowCursorPosition))
     {
-        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left) && !_Window->is_being_resized() && !_Window->is_being_moved() && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
             _Window->begin_resize_bottom();
     }
-    else if(windowFrameBoundingBox.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable))
+    else if(windowFrameBoundingBox.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable))
     {
         if(application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left))
             _Window->being_move();
@@ -358,8 +494,8 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
         _Window->end_resize();
     }
 
-    // // process events
-    if(!anyWindowIsBeingModified && (_Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+    // process events
+    if(!anyWindowIsBeingModified && (_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
     {
         if((resizeTopLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_top_left()) && !_Window->is_being_moved())
         {
@@ -370,7 +506,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 0.f,
                 360.f,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeTopRight.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_top_right()) && !_Window->is_being_moved())
         {
@@ -381,7 +517,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 0.f,
                 360.f,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeBottomLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_bottom_left()) && !_Window->is_being_moved())
         {
@@ -391,7 +527,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 resizeBottomLeft.Radius,
                 0.f, 360.f,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeBottomRight.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_bottom_right()) && !_Window->is_being_moved())
         {
@@ -402,7 +538,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 0.f,
                 360.f,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeTop.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_top()) && !_Window->is_being_moved())
         {
@@ -411,7 +547,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 resizeTop.Max,
                 m_Style.FrameRoundingRadius,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeLeft.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_left()) && !_Window->is_being_moved())
         {
@@ -420,7 +556,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 resizeLeft.Max,
                 m_Style.FrameRoundingRadius,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeRight.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_right()) && !_Window->is_being_moved())
         {
@@ -429,7 +565,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 resizeRight.Max,
                 m_Style.FrameRoundingRadius,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
         else if((resizeBottom.transform(wnidowTransformMatrix).contains(wnidowCursorPosition) || _Window->is_being_resized_bottom()) && !_Window->is_being_moved())
         {
@@ -438,7 +574,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 resizeBottom.Max,
                 m_Style.FrameRoundingRadius,
                 m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                m_Renderer->calculate_transform_matrix((float)_Window->push_child().Depth, _Window->CurrentBox.Min));
+                m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
         }
     }
 
