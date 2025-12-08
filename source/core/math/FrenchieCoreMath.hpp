@@ -1354,7 +1354,7 @@ struct gs_2dbox
                _Other.Max.y <= Max.y;
     }
 
-    gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
+    gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
     {
         return gs_2dbox<Type>(
             _Transform * gs_vector<Type, 4>(Min, 0.f, 1.f),
