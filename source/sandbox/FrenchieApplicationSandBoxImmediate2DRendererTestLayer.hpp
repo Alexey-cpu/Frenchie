@@ -387,6 +387,9 @@ namespace Frenchie
 
         protected:
 
+            ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
+            std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
+
             ImmedidateUserInterfaceWindow* create_window(const std::string&);
             gs_2dboxf calculate_window_bounding_box(ImmedidateUserInterfaceWindow*);
             gs_2dboxf calculate_window_frame_bounding_box(ImmedidateUserInterfaceWindow*);
@@ -396,12 +399,8 @@ namespace Frenchie
             void sink_window_events(ImmedidateUserInterfaceWindow*, const ImmedidateUserInterfaceWindowHints&);
 
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
-            std::vector<ImmedidateUserInterfaceWindow*>           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
-            std::vector<ImmedidateUserInterfaceWindow*>           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
-
-
-            ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
-            std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
+            std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
+            std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
 
             Optional<ImmedidateUserInterfaceConditions> m_Conditions;
             Optional<gs_vec2f>                          m_NextWindowSize;
