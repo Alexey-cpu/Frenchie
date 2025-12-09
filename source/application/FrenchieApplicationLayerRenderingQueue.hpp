@@ -44,13 +44,20 @@ namespace Frenchie
             RenderingQueueTextureMaxFilter_Nearest,
         };
 
-        enum RenderingQueueRendererHints_ : int
+        enum RenderingQueueMeshRenderingHints_ : int
         {
-            RenderingQueueRendererHints_Lines     = 1 << 1,
-            RenderingQueueRendererHints_Points    = 1 << 2,
-            RenderingQueueRendererHints_Triangles = 1 << 3,
-            RenderingQueueRendererHints_Default   = RenderingQueueRendererHints_Triangles
+            RenderingQueueMeshRenderingHints_Lines     = 1 << 1,
+            RenderingQueueMeshRenderingHints_Points    = 1 << 2,
+            RenderingQueueMeshRenderingHints_Triangles = 1 << 3,
+            RenderingQueueMeshRenderingHints_Default   = RenderingQueueMeshRenderingHints_Triangles
         };
+
+        // enum RenderingQueueRendererHints_ : int
+        // {
+        //     RenderingQueueRendererHints_Blend,
+        //     RenderingQueueRendererHints_DepthTest,
+        //     RenderingQueueRendererHints_StencilTest,
+        // };
 
         enum RenderingQueueShaderType_ : int
         {
@@ -192,14 +199,14 @@ namespace Frenchie
                     Glyphs(_Glyphs),
                     AtlasTexture(_AtlasTexture){}
 
-            int                                  SizeInPixels     {0};
-            float                                Ascent           {0.f};
-            float                                Descent          {0.f};
-            float                                LineGap          {0.f};
-            unsigned int                         UnicodeMin       {0};
-            unsigned int                         UnicodeMax       {0};
-            std::shared_ptr<RenderingQueueGlyph> Glyphs           {nullptr};
-            RenderingQueueTexture                AtlasTexture     {RenderingQueueTexture()};
+            int                                  SizeInPixels{0};
+            float                                Ascent      {0.f};
+            float                                Descent     {0.f};
+            float                                LineGap     {0.f};
+            unsigned int                         UnicodeMin  {0};
+            unsigned int                         UnicodeMax  {0};
+            std::shared_ptr<RenderingQueueGlyph> Glyphs      {nullptr};
+            RenderingQueueTexture                AtlasTexture{RenderingQueueTexture()};
 
             // API
             bool is_null() const
@@ -237,7 +244,7 @@ namespace Frenchie
             RenderingQueueShader        Shader       {RenderingQueueShader()};
             RenderingQueueTexture       Texture      {RenderingQueueTexture()};
             gs_mat4f                    Transform    {gs_mat4f(1.f)};
-            RenderingQueueRendererHints RendererHints{RenderingQueueRendererHints_::RenderingQueueRendererHints_Default};
+            RenderingQueueRendererHints RendererHints{RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default};
         };
 
         class RenderingQueue : public Layer
@@ -299,10 +306,10 @@ namespace Frenchie
             // shader API
             RenderingQueueShader construct_shader(const std::vector<std::pair<std::string, RenderingQueueShaderType>>& _ShaderInfos) const;
 
-            void begin_use_shader(const RenderingQueueShader& _Shader);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const bool& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const int& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const float& _Value);
+            void begin_use_shader(const RenderingQueueShader&   _Shader);
+            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const bool&     _Value);
+            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const int&      _Value);
+            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const float&    _Value);
             void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec2f& _Value);
             void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec3f& _Value);
             void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec4f& _Value);
@@ -322,7 +329,7 @@ namespace Frenchie
             
             void begin_use_mesh(
                 const RenderingQueueMesh&          _Mesh,
-                const RenderingQueueRendererHints& _MeshRenderHints = RenderingQueueRendererHints_Default);
+                const RenderingQueueRendererHints& _MeshRenderHints = RenderingQueueMeshRenderingHints_Default);
 
             void end_use_mesh();
 

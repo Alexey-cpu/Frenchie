@@ -212,7 +212,7 @@ namespace Frenchie
                 const RenderingQueueTexture&       _Texture,
                 const gs_vec4f&                    _Color,
                 const gs_mat4f&                    _Transform,
-                const RenderingQueueRendererHints& _Hints = RenderingQueueRendererHints_::RenderingQueueRendererHints_Default);
+                const RenderingQueueRendererHints& _Hints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
