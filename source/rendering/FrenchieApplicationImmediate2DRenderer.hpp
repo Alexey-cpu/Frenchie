@@ -231,7 +231,7 @@ namespace Frenchie
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
-                const gs_vec2f& _Position,
+                const gs_vec2f& _Position = gs_vec2f(0.f, 0.f),
                 const float&    _Rotation = 0.f,
                 const gs_vec2f& _Scale    = gs_vec2f(1.f, 1.f));
 

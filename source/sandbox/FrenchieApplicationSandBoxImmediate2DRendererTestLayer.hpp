@@ -141,35 +141,31 @@ namespace Frenchie
         {
             std::string Name; // TODO: this MUST BE A HASH !!!
 
-            // window hierarchy data
-            int                            Depth        {0};
-            int                            Thickness    {0};
-            int                            ChildIndex   {0};
-            int                            ChildrenCount{0};
-            ImmedidateUserInterfaceWindow* Parent       {nullptr};
+            // hierarchy
+            mutable int                    Depth    {0};
+            mutable int                    Thickness{0};
+            ImmedidateUserInterfaceWindow* Parent   {nullptr};
 
             // layouting
-            float    LayoutChildFillWeight                {1.f};
-            float    LayoutChildrenFillWeightPreviousSumm {1.f};
-            float    LayoutChildrenFillWeightCurrentSumm  {1.f};
-            gs_vec2f LayoutCursorPositon                  {gs_vec2f(0.f, 0.f)};
+            mutable float    LayoutFillWeightPreviousSumm{1.f};
+            mutable float    LayoutFillWeightCurrentSumm {1.f};
+            mutable float    LayoutFillWeight            {1.f};
+            mutable gs_vec2f LayoutCursorPositon         {gs_vec2f(0.f, 0.f)};
 
-            gs_2dboxf ContentBox;
-            gs_vec2f  ContentPosition;
+            // geometry
+            mutable float     FrameHeight   {32.f};
+            mutable gs_2dboxf PreviousBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf CurrentBox    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf ContentBox    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf FrameBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf TitleBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf CloseButtonBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};            
+            mutable gs_mat4f  Transform     {gs_mat4f(1.f)};
 
             ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
-            // window cache state
-            mutable gs_2dboxf CurrentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf PreviousBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_mat4f  Transform  {gs_mat4f(1.f)};
-
-            int push_widget()
-            {
-                return ChildrenCount++;
-            }
-
-            int push_graphics()
+            // API
+            int calculate_child_width() const
             {
                 return (Depth + (Thickness++));
             }
@@ -214,9 +210,40 @@ namespace Frenchie
                 return IsBeingResizedBottom;
             }
 
-            void being_move()
+            bool is_being_resized() const
             {
-                IsBeingMoved = true;
+                return is_being_resized_top_left()     ||
+                       is_being_resized_top_right()    ||
+                       is_being_resized_bottom_left()  ||
+                       is_being_resized_bottom_right() ||
+                       is_being_resized_top()          ||
+                       is_being_resized_left()         ||
+                       is_being_resized_right()        ||
+                       is_being_resized_bottom();
+            }
+
+            bool is_being_moved() const
+            {
+                return IsBeingMoved;
+            }
+
+            bool is_being_modified() const
+            {
+                return is_being_moved() || is_being_resized();
+            }
+
+            bool is_being_focused() const
+            {
+                auto parent = Parent;
+                auto window = this;
+
+                while (parent != nullptr)
+                {
+                    window = parent;
+                    parent = parent->Parent;
+                }
+
+                return window->IsFocused;
             }
 
             void begin_resize_top_left()
@@ -259,6 +286,11 @@ namespace Frenchie
                 IsBeingResizedBottom = true;
             }
             
+            void being_move()
+            {
+                IsBeingMoved = true;
+            }
+
             void begin_focus()
             {
                 auto parent = Parent;
@@ -273,11 +305,6 @@ namespace Frenchie
                 window->IsFocused = true;
             }
             
-            void end_move()
-            {
-                IsBeingMoved = false;
-            }
-
             void end_resize()
             {
                 IsBeingResizedTopLeft     = false;
@@ -290,48 +317,17 @@ namespace Frenchie
                 IsBeingResizedBottom      = false;
             }
 
+            void end_move()
+            {
+                IsBeingMoved = false;
+            }
+
             void end_focus()
             {
                 IsFocused = false;
             }
 
-            bool is_being_moved() const
-            {
-                return IsBeingMoved;
-            }
-
-            bool is_being_resized() const
-            {
-                return (IsBeingResizedTopLeft    ||
-                       IsBeingResizedTopRight    ||
-                       IsBeingResizedBottomLeft  ||
-                       IsBeingResizedBottomRight ||
-                       IsBeingResizedTop         ||
-                       IsBeingResizedLeft        ||
-                       IsBeingResizedRight       ||
-                       IsBeingResizedBottom);
-            }
-
-            bool is_being_modified() const
-            {
-                return is_being_moved() || is_being_resized();
-            }
-
-            bool is_being_focused() const
-            {
-                auto parent = Parent;
-                auto window = this;
-
-                while (parent != nullptr)
-                {
-                    window = parent;
-                    parent = parent->Parent;
-                }
-
-                return window->IsFocused;
-            }
-
-        protected:
+        private:
 
             bool IsBeingMoved             {false};
             bool IsBeingResizedTopLeft    {false};
@@ -375,15 +371,15 @@ namespace Frenchie
             ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
 
-            gs_2dboxf calculate_window_bounding_box(const ImmedidateUserInterfaceWindow*);
-            gs_2dboxf calculate_window_frame_bounding_box(const ImmedidateUserInterfaceWindow*);
-            gs_2dboxf calculate_window_content_bounding_box(const ImmedidateUserInterfaceWindow*);
-            
+            // window utility functions
+            void calculate_window_geometry(const ImmedidateUserInterfaceWindow*);
             void render_window_background(ImmedidateUserInterfaceWindow*);
             void render_window_classic_frame(ImmedidateUserInterfaceWindow*, bool*);
-            bool render_window_close_button( const gs_2dboxf& _Box, const float& _Depth, const gs_vec3f& _Position);
 
             void sink_window_events(ImmedidateUserInterfaceWindow*);
+
+            // widgets rendering functions
+            bool render_close_button_widget(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_mat4f& _Transform);
 
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
