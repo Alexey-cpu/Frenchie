@@ -1115,10 +1115,10 @@ void RenderingQueue::destroy_mesh(const RenderingQueueMesh& _Mesh)
 }
 
 void RenderingQueue::push_rendering_command(
-    const RenderingQueueMesh&          _Mesh,
-    const RenderingQueueShader&        _Shader,
-    const RenderingQueueTexture&       _Texture,
-    const gs_mat4f&                    _Transform,
+    const RenderingQueueMesh&               _Mesh,
+    const RenderingQueueShader&             _Shader,
+    const RenderingQueueTexture&            _Texture,
+    const gs_mat4f&                         _Transform,
     const RenderingQueueMeshRenderingHints& _RendererHints)
 {
     m_Commands.push_back(
