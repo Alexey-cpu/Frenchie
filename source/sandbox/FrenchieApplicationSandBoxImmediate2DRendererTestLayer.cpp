@@ -388,7 +388,7 @@ void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
     if(_Window->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable && _Opened != nullptr)
     {
         float closeButtonSize = gs_min(
-            m_Style.WindowFrameCloseButtonSize,
+            m_Style.WindowFrameCloseMinimumButtonSize,
             (windowFrameBoundingBoxTransformed.size().y - m_Style.FrameWidth * 2.f) * 0.9f);
 
         *_Opened = !render_window_close_button(
