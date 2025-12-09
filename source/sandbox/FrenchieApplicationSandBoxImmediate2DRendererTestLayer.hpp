@@ -154,6 +154,9 @@ namespace Frenchie
             float    LayoutChildrenFillWeightCurrentSumm  {1.f};
             gs_vec2f LayoutCursorPositon                  {gs_vec2f(0.f, 0.f)};
 
+            gs_2dboxf ContentBox;
+            gs_vec2f  ContentPosition;
+
             ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
             // window cache state
@@ -374,6 +377,7 @@ namespace Frenchie
 
             gs_2dboxf calculate_window_bounding_box(const ImmedidateUserInterfaceWindow*);
             gs_2dboxf calculate_window_frame_bounding_box(const ImmedidateUserInterfaceWindow*);
+            gs_2dboxf calculate_window_content_bounding_box(const ImmedidateUserInterfaceWindow*);
             
             void render_window_background(ImmedidateUserInterfaceWindow*);
             void render_window_classic_frame(ImmedidateUserInterfaceWindow*, bool*);
