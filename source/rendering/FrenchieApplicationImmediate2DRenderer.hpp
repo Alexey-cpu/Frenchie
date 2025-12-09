@@ -214,6 +214,21 @@ namespace Frenchie
                 const gs_mat4f&                         _Transform,
                 const RenderingQueueMeshRenderingHints& _MeshRenderingHints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
 
+            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f))
+            {
+                m_RenderingQueue->push_renderer_command(_Value.transform(_Transform));
+            }
+
+            void pop_clip_box()
+            {
+                m_RenderingQueue->push_renderer_command(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
+            }
+
+            void push_clear_color(const gs_vec4f& _Value)
+            {
+                m_RenderingQueue->push_renderer_command(_Value);
+            }
+
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
                 const gs_vec2f& _Position,

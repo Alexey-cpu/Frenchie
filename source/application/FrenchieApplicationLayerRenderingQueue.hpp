@@ -9,6 +9,49 @@
 // STL
 #include <vector>
 
+template <class Type>
+struct Optional final
+{
+    union 
+    {
+        char PlaceHolder;
+        Type Value;
+    };
+    bool m_HasValue{false};   // Flag indicating if a value is present
+
+    constexpr Optional(const Optional<Type>& _Other) : Value(_Other.Value), m_HasValue(_Other.m_HasValue){}
+    constexpr Optional() noexcept : PlaceHolder(0), m_HasValue(false) {}
+    constexpr Optional(const Type& _Value) : Value(_Value), m_HasValue(true) {}
+
+    Optional<Type>& operator=(const Optional<Type>& _Other)
+    {
+        Value      = _Other.Value;
+        m_HasValue = _Other.m_HasValue;
+        return *this;
+    }
+
+    ~Optional() 
+    {
+        if(m_HasValue && std::is_destructible<Type>::value) Value.~Type();
+    }
+
+    void reset()
+    {
+        if(m_HasValue && std::is_destructible<Type>::value) Value.~Type();
+        m_HasValue = false;
+    }
+
+    bool has_value() const
+    {
+        return m_HasValue;
+    }
+
+    Type value() const
+    {
+        return Value;
+    }
+};
+
 namespace Frenchie
 {
     namespace Application
@@ -226,13 +269,13 @@ namespace Frenchie
             }
         };
 
-        struct RenderingQueueCommand final
+        struct RenderingQueueRenderingCommand final
         {
-            RenderingQueueCommand(
-                const RenderingQueueMesh&          _Mesh,
-                const RenderingQueueShader&        _Shader,
-                const RenderingQueueTexture&       _Texture,
-                const gs_mat4f&                    _Transform,
+            RenderingQueueRenderingCommand(
+                const RenderingQueueMesh&               _Mesh,
+                const RenderingQueueShader&             _Shader,
+                const RenderingQueueTexture&            _Texture,
+                const gs_mat4f&                         _Transform,
                 const RenderingQueueMeshRenderingHints& _MeshRenderingHints) :
                 Mesh(_Mesh),
                 Transform(_Transform),
@@ -240,11 +283,29 @@ namespace Frenchie
                 Shader(_Shader),
                 MeshRendererHints(_MeshRenderingHints){}
 
-            RenderingQueueMesh          Mesh             {RenderingQueueMesh()};
-            RenderingQueueShader        Shader           {RenderingQueueShader()};
-            RenderingQueueTexture       Texture          {RenderingQueueTexture()};
-            gs_mat4f                    Transform        {gs_mat4f(1.f)};
+            RenderingQueueMesh               Mesh             {RenderingQueueMesh()};
+            RenderingQueueShader             Shader           {RenderingQueueShader()};
+            RenderingQueueTexture            Texture          {RenderingQueueTexture()};
+            gs_mat4f                         Transform        {gs_mat4f(1.f)};
             RenderingQueueMeshRenderingHints MeshRendererHints{RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default};
+        };
+
+        struct RenderingQueueRendererCommand
+        {
+            RenderingQueueRendererCommand(const Optional<gs_2dboxf>& _ClippinBox) : ClippingBox(_ClippinBox){}
+            RenderingQueueRendererCommand(const Optional<gs_vec4f>&  _ClearColor) : ClearColor(_ClearColor){}
+
+            Optional<gs_2dboxf> ClippingBox;
+            Optional<gs_vec4f>  ClearColor;
+        };
+
+        struct RenderingQueueCommand
+        {
+            RenderingQueueCommand(const RenderingQueueRenderingCommand& _Command) : RenderingCommand(_Command){}
+            RenderingQueueCommand(const RenderingQueueRendererCommand&  _Command) : RendererCommand(_Command){}
+
+            Optional<RenderingQueueRenderingCommand> RenderingCommand;
+            Optional<RenderingQueueRendererCommand>  RendererCommand;
         };
 
         class RenderingQueue : public Layer
@@ -336,21 +397,24 @@ namespace Frenchie
             void destroy_mesh(const RenderingQueueMesh& _Mesh);
 
             // commands API
-            void push_command(
+            void push_rendering_command(
                 const RenderingQueueMesh&               _Mesh,
                 const RenderingQueueShader&             _Shader,
                 const RenderingQueueTexture&            _Texture,
                 const gs_mat4f&                         _Transform,
                 const RenderingQueueMeshRenderingHints& _RendererHints);
 
+            void push_renderer_command(const gs_2dboxf& _ClippinBox);
+            void push_renderer_command(const gs_vec4f&  _ClearColor);
+
         protected:
 
             gs_mat4f                           m_ProjectionMatrix{gs_mat4f(1)};
             gs_mat4f                           m_CameraViewMatrix{gs_mat4f(1)};
             std::vector<RenderingQueueCommand> m_Commands        {std::vector<RenderingQueueCommand>()};
-            RenderingQueueShader               m_DefaultShader {RenderingQueueShader()};
-            RenderingQueueTexture              m_DefaultTexture{RenderingQueueTexture()};
-            RenderingQueueFont                 m_DefaultFont   {RenderingQueueFont()};
+            RenderingQueueShader               m_DefaultShader   {RenderingQueueShader()};
+            RenderingQueueTexture              m_DefaultTexture  {RenderingQueueTexture()};
+            RenderingQueueFont                 m_DefaultFont     {RenderingQueueFont()};
         };
     }
 }
