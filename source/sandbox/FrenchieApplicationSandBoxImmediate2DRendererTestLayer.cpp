@@ -366,7 +366,12 @@ void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
         m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
 
     // window title
-    auto windowFrameBoundingBoxTransformed = windowFrameBoundingBox.transform(m_Renderer->calculate_transform_matrix(0.f, _Window->CurrentBox.Min));
+    m_Renderer->push_clip_box(
+        gs_2dboxf(windowFrameBoundingBox.Min + gs_vec2f(m_Style.FrameWidth, 0.f), windowFrameBoundingBox.Max - gs_vec2f(m_Style.FrameWidth, 0.f)),
+        m_Renderer->calculate_transform_matrix(0.f, _Window->CurrentBox.Min));
+    
+    auto windowFrameBoundingBoxTransformed =
+        windowFrameBoundingBox.transform(m_Renderer->calculate_transform_matrix(0.f, _Window->CurrentBox.Min));
     
     m_Renderer->push_text(
         _Window->Name,
@@ -394,6 +399,8 @@ void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
             gs_vec2f(windowFrameBoundingBoxTransformed.Max.x - closeButtonSize - m_Style.WindowResizeAngleGizmoRadius,
                     windowFrameBoundingBoxTransformed.center().y - closeButtonSize * 0.5f));
     }
+
+    m_Renderer->pop_clip_box();
 }
 
 bool Immedidate2DRendererTestLayer::render_window_close_button(const gs_2dboxf& _Box, const float& _Depth, const gs_vec3f& _Position)

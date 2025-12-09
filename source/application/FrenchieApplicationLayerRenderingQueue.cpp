@@ -284,33 +284,77 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
+    // this can be a rendering commands !!!
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
-        auto mesh      = m_Commands[i].Mesh;
-        auto shader    = m_Commands[i].Shader;
-        auto color     = m_Commands[i].Texture.Color;
-        auto texture   = m_Commands[i].Texture;
-        auto transform = m_Commands[i].Transform;
+        // execute renderer command
+        auto rendererCommand  = m_Commands[i].RendererCommand;
 
-        begin_use_texture(texture);
-        begin_use_shader(shader);
+        if(rendererCommand.has_value())
+        {
+            if(rendererCommand.value().ClippingBox.has_value())
+            {
+                auto clippingRect = rendererCommand.value().ClippingBox.value();
 
-        set_shader_uniform(shader, "u_ModelMatrix", transform);
-        set_shader_uniform(shader, "u_CameraViewMatrix", m_CameraViewMatrix);
-        set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
-        set_shader_uniform(shader, "u_Texture", 0);
+                glEnable(GL_SCISSOR_TEST);
 
-        begin_use_mesh(mesh, m_Commands[i].MeshRendererHints);
-        
-        end_use_texture();
-        end_use_shader();
-        end_use_mesh();
+                glScissor(
+                    (int)clippingRect.Min.x,
+                    (int)gs_clamp<float>(application()->get_window_framebuffer_size().y - clippingRect.Max.y, 0, application()->get_window_framebuffer_size().y),
+                    (int)clippingRect.width(),
+                    (int)clippingRect.height());
+            }
 
-        destroy_mesh(mesh);
+            if(rendererCommand.value().ClearColor.has_value())
+            {
+                gs_vec4f clearColor = rendererCommand.value().ClearColor.value() / 255.f;
+                glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+            }
+        }
+
+        // execute rendering command
+        auto renderingCommand = m_Commands[i].RenderingCommand;
+
+        if(renderingCommand.has_value())
+        {
+            auto mesh               = renderingCommand.value().Mesh;
+            auto shader             = renderingCommand.value().Shader;
+            auto color              = renderingCommand.value().Texture.Color;
+            auto texture            = renderingCommand.value().Texture;
+            auto transform          = renderingCommand.value().Transform;
+            auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
+
+            begin_use_texture(texture);
+            begin_use_shader(shader);
+
+            set_shader_uniform(shader, "u_ModelMatrix", transform);
+            set_shader_uniform(shader, "u_CameraViewMatrix", m_CameraViewMatrix);
+            set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
+            set_shader_uniform(shader, "u_Texture", 0);
+
+            begin_use_mesh(mesh, meshRenderingHints);
+            
+            end_use_texture();
+            end_use_shader();
+            end_use_mesh();
+
+            destroy_mesh(mesh);
+        }
     }
 
     // clear commands queue
     m_Commands.clear();
+
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
 }
 
 void RenderingQueue::frame_finish()
@@ -1070,14 +1114,31 @@ void RenderingQueue::destroy_mesh(const RenderingQueueMesh& _Mesh)
     glDeleteVertexArrays(1, &_Mesh.VAO);
 }
 
-void RenderingQueue::push_command(
+void RenderingQueue::push_rendering_command(
     const RenderingQueueMesh&          _Mesh,
     const RenderingQueueShader&        _Shader,
     const RenderingQueueTexture&       _Texture,
     const gs_mat4f&                    _Transform,
     const RenderingQueueMeshRenderingHints& _RendererHints)
 {
-    m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform, _RendererHints));
+    m_Commands.push_back(
+        RenderingQueueCommand(
+            RenderingQueueRenderingCommand(
+                _Mesh,
+                _Shader,
+                _Texture,
+                _Transform,
+                _RendererHints)));
+}
+
+void RenderingQueue::push_renderer_command(const gs_2dboxf& _ClippinBox)
+{
+    m_Commands.push_back(RenderingQueueCommand(RenderingQueueRendererCommand(_ClippinBox)));
+}
+
+void RenderingQueue::push_renderer_command(const gs_vec4f&  _ClearColor)
+{
+    m_Commands.push_back(RenderingQueueCommand(RenderingQueueRendererCommand(_ClearColor)));
 }
 
 // Immediate2DRendererDefaultFont

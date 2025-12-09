@@ -79,6 +79,10 @@ bool Immediate2DRenderer::awake()
 
 void Immediate2DRenderer::frame_start()
 {
+    // push clear colo
+    push_clear_color(gs_vec4f(150.f, 150.f, 150.f, 150.f));
+    push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
+
     // compute projection matrix
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
@@ -127,7 +131,7 @@ void Immediate2DRenderer::push_rendering_command(
     if(m_Indexes.empty() || m_Vertexes.empty()) return;
 
     // push rendering command
-    m_RenderingQueue->push_command(
+    m_RenderingQueue->push_rendering_command(
         // construct mesh
         m_RenderingQueue->construct_mesh(
             &m_Vertexes[0],

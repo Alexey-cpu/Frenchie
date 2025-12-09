@@ -161,6 +161,15 @@ gs_vec2f ApplicationInstance::get_window_cursor_dragdelta() const
     return m_Input.MouseCursor.DragDelta;
 }
 
+gs_vec2f ApplicationInstance::get_window_framebuffer_size() const
+{
+    // execute backend
+    int display_w = 0;
+    int display_h = 0;
+    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
+    return gs_vec2f(display_w, display_h);
+}
+
 bool ApplicationInstance::is_mouse_button_down(const ApplicationMouseButton::Button& _Button) const
 {
     return m_Input.MouseButtons[_Button].Down;
@@ -280,19 +289,6 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     // execute backend
     glfwPollEvents();
     glfwSwapInterval(1);
-
-    // this can be a rendering commands !!!
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glClearColor(
-        150.f / 255.f,
-        150.f / 255.f,
-        150.f / 255.f,
-        255.f / 255.f);
 
     // remove layers that are closed
     for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)

@@ -83,6 +83,7 @@ namespace Frenchie
             gs_vec2f    get_window_position() const;
             gs_vec2f    get_window_cursor_position() const;
             gs_vec2f    get_window_cursor_dragdelta() const;
+            gs_vec2f    get_window_framebuffer_size() const;
 
             bool is_mouse_button_down(const ApplicationMouseButton::Button&) const;
             bool is_mouse_button_pressed(const ApplicationMouseButton::Button&) const;
