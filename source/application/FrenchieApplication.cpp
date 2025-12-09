@@ -359,15 +359,6 @@ void ApplicationInstance::ApplicationInstance::frame_start()
                   reinterpret_cast<GLFWcursor*>(m_Input.MouseCursor.Cursors[m_Input.MouseCursor.View]));
 
     glfwSetInputMode(reinterpret_cast<GLFWwindow*>(m_Context), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-    // // window
-    // int windowWidth     = 0;
-    // int windowHeight    = 0;
-    // int windowPositionX = 0;
-    // int windowPositionY = 0;
-    // glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &windowWidth, &windowHeight);
-    // glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &windowPositionX, &windowPositionY);
-    // m_Input.Window.Size = {windowWidth, windowHeight};
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()

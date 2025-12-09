@@ -1048,13 +1048,13 @@ void RenderingQueue::begin_use_mesh(
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
 
     // draw EBO
-    if((_MeshRenderHints & RenderingQueueRendererHints_::RenderingQueueRendererHints_Points))
+    if((_MeshRenderHints & RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Points))
         glDrawArrays(GL_POINTS, 0, bufferSize);
 
-    if((_MeshRenderHints & RenderingQueueRendererHints_::RenderingQueueRendererHints_Lines))
+    if((_MeshRenderHints & RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, bufferSize, GL_UNSIGNED_INT, 0);
 
-    if((_MeshRenderHints & RenderingQueueRendererHints_::RenderingQueueRendererHints_Triangles))
+    if((_MeshRenderHints & RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Triangles))
         glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
 }
 
