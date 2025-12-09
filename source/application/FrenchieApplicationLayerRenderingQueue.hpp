@@ -2,55 +2,13 @@
 
 // Core
 #include <FrenchieCoreMath.hpp>
+#include <FrenchieCoreOptional.hpp>
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
 
 // STL
 #include <vector>
-
-template <class Type>
-struct Optional final
-{
-    union 
-    {
-        char PlaceHolder;
-        Type Value;
-    };
-    bool m_HasValue{false};   // Flag indicating if a value is present
-
-    constexpr Optional(const Optional<Type>& _Other) : Value(_Other.Value), m_HasValue(_Other.m_HasValue){}
-    constexpr Optional() noexcept : PlaceHolder(0), m_HasValue(false) {}
-    constexpr Optional(const Type& _Value) : Value(_Value), m_HasValue(true) {}
-
-    Optional<Type>& operator=(const Optional<Type>& _Other)
-    {
-        Value      = _Other.Value;
-        m_HasValue = _Other.m_HasValue;
-        return *this;
-    }
-
-    ~Optional() 
-    {
-        if(m_HasValue && std::is_destructible<Type>::value) Value.~Type();
-    }
-
-    void reset()
-    {
-        if(m_HasValue && std::is_destructible<Type>::value) Value.~Type();
-        m_HasValue = false;
-    }
-
-    bool has_value() const
-    {
-        return m_HasValue;
-    }
-
-    Type value() const
-    {
-        return Value;
-    }
-};
 
 namespace Frenchie
 {
@@ -292,11 +250,11 @@ namespace Frenchie
 
         struct RenderingQueueRendererCommand
         {
-            RenderingQueueRendererCommand(const Optional<gs_2dboxf>& _ClippinBox) : ClippingBox(_ClippinBox){}
-            RenderingQueueRendererCommand(const Optional<gs_vec4f>&  _ClearColor) : ClearColor(_ClearColor){}
+            RenderingQueueRendererCommand(const Frenchie::Core::Optional<gs_2dboxf>& _ClippinBox) : ClippingBox(_ClippinBox){}
+            RenderingQueueRendererCommand(const Frenchie::Core::Optional<gs_vec4f>&  _ClearColor) : ClearColor(_ClearColor){}
 
-            Optional<gs_2dboxf> ClippingBox;
-            Optional<gs_vec4f>  ClearColor;
+            Frenchie::Core::Optional<gs_2dboxf> ClippingBox;
+            Frenchie::Core::Optional<gs_vec4f>  ClearColor;
         };
 
         struct RenderingQueueCommand
@@ -304,8 +262,8 @@ namespace Frenchie
             RenderingQueueCommand(const RenderingQueueRenderingCommand& _Command) : RenderingCommand(_Command){}
             RenderingQueueCommand(const RenderingQueueRendererCommand&  _Command) : RendererCommand(_Command){}
 
-            Optional<RenderingQueueRenderingCommand> RenderingCommand;
-            Optional<RenderingQueueRendererCommand>  RendererCommand;
+            Frenchie::Core::Optional<RenderingQueueRenderingCommand> RenderingCommand;
+            Frenchie::Core::Optional<RenderingQueueRendererCommand>  RendererCommand;
         };
 
         class RenderingQueue : public Layer

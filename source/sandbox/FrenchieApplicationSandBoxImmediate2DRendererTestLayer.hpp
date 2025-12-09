@@ -125,14 +125,14 @@ namespace Frenchie
             }
 
             RenderingQueueFont Font;
-            float              FontSize                     = 32.f;
-            float              WindowResizeAngleGizmoRadius = 32.f;
-            float              WindowResizeSideGizmoWidth   = 12.f;
-            float              WindowFrameCloseButtonSize   = 32.f;
-            float              WindowMinimumWidth           = 128.f;
-            float              WindowMinimumHeight          = 128.f;
-            float              FrameWidth                   = 8.f;
-            float              FrameRoundingRadius          = 32.f;
+            float              FontSize                          = 32.f;
+            float              WindowResizeAngleGizmoRadius      = 32.f;
+            float              WindowResizeSideGizmoWidth        = 12.f;
+            float              WindowFrameCloseMinimumButtonSize = 32.f;
+            float              WindowMinimumWidth                = 128.f;
+            float              WindowMinimumHeight               = 128.f;
+            float              FrameWidth                        = 8.f;
+            float              FrameRoundingRadius               = 16.f;
 
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
         };
@@ -385,9 +385,9 @@ namespace Frenchie
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
 
-            Optional<ImmedidateUserInterfaceConditions> m_Conditions;
-            Optional<gs_vec2f>                          m_NextWindowSize;
-            Optional<gs_vec2f>                          m_NextWindowPosition;
+            Frenchie::Core::Optional<ImmedidateUserInterfaceConditions> m_Conditions;
+            Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowSize;
+            Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowPosition;
         };
     }
 }
