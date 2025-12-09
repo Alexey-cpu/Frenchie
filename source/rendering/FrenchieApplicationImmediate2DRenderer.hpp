@@ -209,10 +209,10 @@ namespace Frenchie
 
             // API
             void push_rendering_command(
-                const RenderingQueueTexture&       _Texture,
-                const gs_vec4f&                    _Color,
-                const gs_mat4f&                    _Transform,
-                const RenderingQueueMeshRenderingHints& _Hints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
+                const RenderingQueueTexture&            _Texture,
+                const gs_vec4f&                         _Color,
+                const gs_mat4f&                         _Transform,
+                const RenderingQueueMeshRenderingHints& _MeshRenderingHints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,

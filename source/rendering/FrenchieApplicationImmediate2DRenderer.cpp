@@ -119,10 +119,10 @@ void Immediate2DRenderer::frame_finish()
 void Immediate2DRenderer::finish(){}
 
 void Immediate2DRenderer::push_rendering_command(
-    const RenderingQueueTexture&       _Texture,
-    const gs_vec4f&                    _Color,
-    const gs_mat4f&                    _Transform,
-    const RenderingQueueMeshRenderingHints& _Hints)
+    const RenderingQueueTexture&            _Texture,
+    const gs_vec4f&                         _Color,
+    const gs_mat4f&                         _Transform,
+    const RenderingQueueMeshRenderingHints& _MeshRenderingHints)
 {
     if(m_Indexes.empty() || m_Vertexes.empty()) return;
 
@@ -149,7 +149,7 @@ void Immediate2DRenderer::push_rendering_command(
             _Texture.MinFilter,
             _Texture.MaxFilter),
         _Transform,
-        _Hints);
+        _MeshRenderingHints);
 
     // clean-up
     m_Indexes.clear();
