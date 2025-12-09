@@ -30,9 +30,10 @@ void Immedidate2DRendererTestLayer::frame_update()
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
     {
-        if(push_window("Alpha window", 1.f)) pop_window();
+        if(push_window("Alpha-1 window", 1.f)) pop_window();
+        if(push_window("Alpha-2 window", 1.f)) pop_window();
 
         if(push_window("Container window",
             1.f,
@@ -76,18 +77,18 @@ void Immedidate2DRendererTestLayer::frame_update()
         pop_window();
     }
 
-    static bool independentWindowOpened = true;
+    // static bool independentWindowOpened = true;
 
-    if(push_window("Independent window",
-        1.f,
-        &independentWindowOpened,
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-    {
-        pop_window();
-    }
+    // if(push_window("Independent window",
+    //     1.f,
+    //     &independentWindowOpened,
+    //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+    //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+    //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+    //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+    // {
+    //     pop_window();
+    // }
 
     // render cursor
     m_Renderer->push_text(
@@ -208,6 +209,16 @@ bool Immedidate2DRendererTestLayer::push_window(
     window->LayoutChildFillWeight = _Weight;
     window->Hints                 = _Hints;
 
+    auto childVerticalPadding  = calculate_window_frame_bounding_box(window).height();
+
+    window->ContentPosition = gs_vec2f(0.f, childVerticalPadding);
+
+    window->ContentBox = gs_2dboxf(
+        gs_vec2f(0.f, 0.f),
+        window->CurrentBox.size() - gs_vec2f(0.f, childVerticalPadding));
+
+    window->ContentPosition = window->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding);
+
     if(_Opened == nullptr)
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
     else
@@ -221,11 +232,11 @@ bool Immedidate2DRendererTestLayer::push_window(
         window->Depth                                        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->push_graphics();
         window->Parent->LayoutChildrenFillWeightCurrentSumm += window->LayoutChildFillWeight;
 
-        auto childVerticalPadding  = calculate_window_frame_bounding_box(window).height();
-
         gs_vec2f childSize = gs_vec2f(
             window->Parent->CurrentBox.width(),
             window->Parent->CurrentBox.height() - childVerticalPadding) * window->LayoutChildFillWeight / window->Parent->LayoutChildrenFillWeightPreviousSumm;
+
+        window->Parent->ContentPosition = window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding);
 
         if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
         {
@@ -235,9 +246,17 @@ bool Immedidate2DRendererTestLayer::push_window(
 
             window->Transform = window->Parent->Transform * m_Renderer->calculate_transform_matrix(
                 0.f,
-                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
+                window->Parent->ContentPosition + window->Parent->LayoutCursorPositon);
 
             window->Parent->LayoutCursorPositon += gs_vec2f(childSize.x, 0.f);
+
+            //------------------------------------------------------------------------------------------------------------------
+            // content box
+            //------------------------------------------------------------------------------------------------------------------
+            window->Parent->ContentBox = gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(window->Parent->LayoutCursorPositon.x, window->Parent->CurrentBox.height() - childVerticalPadding));
+            //------------------------------------------------------------------------------------------------------------------
         }
         else
         {
@@ -247,9 +266,17 @@ bool Immedidate2DRendererTestLayer::push_window(
 
             window->Transform = window->Parent->Transform * m_Renderer->calculate_transform_matrix(
                 0.f,
-                window->Parent->CurrentBox.Min + gs_vec2f(0.f, childVerticalPadding) + window->Parent->LayoutCursorPositon);
+                window->Parent->ContentPosition + window->Parent->LayoutCursorPositon);
 
             window->Parent->LayoutCursorPositon += gs_vec2f(0.f, childSize.y);
+
+            //------------------------------------------------------------------------------------------------------------------
+            // content box
+            //------------------------------------------------------------------------------------------------------------------
+            window->Parent->ContentBox = gs_2dboxf(
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(window->Parent->CurrentBox.width(), window->Parent->LayoutCursorPositon.y));
+            //------------------------------------------------------------------------------------------------------------------
         }
 
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
@@ -322,6 +349,11 @@ gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_frame_bounding_box(con
     return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(_Window->CurrentBox.width(), m_Style.FontSize)).transform(_Window->Transform);
 }
 
+gs_2dboxf Immedidate2DRendererTestLayer::calculate_window_content_bounding_box(const ImmedidateUserInterfaceWindow* _Window)
+{
+    return _Window->ContentBox.transform(_Window->Transform);
+}
+
 void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window)
 {
     gs_2dboxf windowBoundingBox       = calculate_window_bounding_box(_Window);
@@ -341,6 +373,15 @@ void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         m_Style.FrameWidth,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
         m_Renderer->calculate_transform_matrix((float)_Window->push_graphics(), _Window->CurrentBox.Min));
+
+    auto windowContentBoundingBox = calculate_window_content_bounding_box(_Window);
+
+    m_Renderer->push_rectangle(
+        windowContentBoundingBox.Min,
+        windowContentBoundingBox.Max,
+        m_Style.FrameWidth,
+        gs_vec4f(255.f),
+        m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane(), _Window->ContentPosition));
 }
 
 void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserInterfaceWindow* _Window, bool* _Opened)
@@ -675,7 +716,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
     {
         _Window->CurrentBox = gs_2dboxf(
             _Window->PreviousBox.Min + application()->get_window_cursor_dragdelta(),
-            _Window->PreviousBox.Min + application()->get_window_cursor_dragdelta() + _Window->PreviousBox.size());
+            _Window->PreviousBox.Max + application()->get_window_cursor_dragdelta());
 
         // dock space
     }
