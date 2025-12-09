@@ -300,7 +300,7 @@ void RenderingQueue::frame_render()
         set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
         set_shader_uniform(shader, "u_Texture", 0);
 
-        begin_use_mesh(mesh, m_Commands[i].RendererHints);
+        begin_use_mesh(mesh, m_Commands[i].MeshRendererHints);
         
         end_use_texture();
         end_use_shader();
@@ -1037,8 +1037,8 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
 }
 
 void RenderingQueue::begin_use_mesh(
-    const RenderingQueueMesh&          _Mesh,
-    const RenderingQueueRendererHints& _MeshRenderHints)
+    const RenderingQueueMesh&               _Mesh,
+    const RenderingQueueMeshRenderingHints& _MeshRenderHints)
 {
     // bind VAO containing VBO, EBO
     glBindVertexArray(_Mesh.VAO);
@@ -1075,7 +1075,7 @@ void RenderingQueue::push_command(
     const RenderingQueueShader&        _Shader,
     const RenderingQueueTexture&       _Texture,
     const gs_mat4f&                    _Transform,
-    const RenderingQueueRendererHints& _RendererHints)
+    const RenderingQueueMeshRenderingHints& _RendererHints)
 {
     m_Commands.push_back(RenderingQueueCommand(_Mesh, _Shader, _Texture, _Transform, _RendererHints));
 }

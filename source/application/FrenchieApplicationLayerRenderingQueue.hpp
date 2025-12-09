@@ -69,7 +69,7 @@ namespace Frenchie
         typedef int RenderingQueueTextureWrapMode;
         typedef int RenderingQueueTextureMinFilter;
         typedef int RenderingQueueTextureMaxFilter;
-        typedef int RenderingQueueRendererHints;
+        typedef int RenderingQueueMeshRenderingHints;
         typedef int RenderingQueueShaderType;
 
         // Enities
@@ -233,18 +233,18 @@ namespace Frenchie
                 const RenderingQueueShader&        _Shader,
                 const RenderingQueueTexture&       _Texture,
                 const gs_mat4f&                    _Transform,
-                const RenderingQueueRendererHints& _RendererHints) :
+                const RenderingQueueMeshRenderingHints& _MeshRenderingHints) :
                 Mesh(_Mesh),
                 Transform(_Transform),
                 Texture(_Texture),
                 Shader(_Shader),
-                RendererHints(_RendererHints){}
+                MeshRendererHints(_MeshRenderingHints){}
 
-            RenderingQueueMesh          Mesh         {RenderingQueueMesh()};
-            RenderingQueueShader        Shader       {RenderingQueueShader()};
-            RenderingQueueTexture       Texture      {RenderingQueueTexture()};
-            gs_mat4f                    Transform    {gs_mat4f(1.f)};
-            RenderingQueueRendererHints RendererHints{RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default};
+            RenderingQueueMesh          Mesh             {RenderingQueueMesh()};
+            RenderingQueueShader        Shader           {RenderingQueueShader()};
+            RenderingQueueTexture       Texture          {RenderingQueueTexture()};
+            gs_mat4f                    Transform        {gs_mat4f(1.f)};
+            RenderingQueueMeshRenderingHints MeshRendererHints{RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default};
         };
 
         class RenderingQueue : public Layer
@@ -328,8 +328,8 @@ namespace Frenchie
                 const int&                  _IndexesCount);
             
             void begin_use_mesh(
-                const RenderingQueueMesh&          _Mesh,
-                const RenderingQueueRendererHints& _MeshRenderHints = RenderingQueueMeshRenderingHints_Default);
+                const RenderingQueueMesh&               _Mesh,
+                const RenderingQueueMeshRenderingHints& _MeshRenderHints = RenderingQueueMeshRenderingHints_Default);
 
             void end_use_mesh();
 
@@ -337,11 +337,11 @@ namespace Frenchie
 
             // commands API
             void push_command(
-                const RenderingQueueMesh&          _Mesh,
-                const RenderingQueueShader&        _Shader,
-                const RenderingQueueTexture&       _Texture,
-                const gs_mat4f&                    _Transform,
-                const RenderingQueueRendererHints& _RendererHints);
+                const RenderingQueueMesh&               _Mesh,
+                const RenderingQueueShader&             _Shader,
+                const RenderingQueueTexture&            _Texture,
+                const gs_mat4f&                         _Transform,
+                const RenderingQueueMeshRenderingHints& _RendererHints);
 
         protected:
 

@@ -122,7 +122,7 @@ void Immediate2DRenderer::push_rendering_command(
     const RenderingQueueTexture&       _Texture,
     const gs_vec4f&                    _Color,
     const gs_mat4f&                    _Transform,
-    const RenderingQueueRendererHints& _Hints)
+    const RenderingQueueMeshRenderingHints& _Hints)
 {
     if(m_Indexes.empty() || m_Vertexes.empty()) return;
 
