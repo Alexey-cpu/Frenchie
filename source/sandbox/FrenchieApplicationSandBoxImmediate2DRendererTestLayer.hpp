@@ -200,16 +200,16 @@ namespace Frenchie
             ImmedidateUserInterfaceWindow* Parent   {nullptr};
 
             // layouting
-            mutable float    LayoutFillWeightSumm {1.f};
+            mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
             mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
             mutable float    LayoutFillWeight     {1.f};
+            mutable float    LayoutTotalWeight    {1.f};
 
             // scrolling
             mutable ImmedidateUserInterfaceScrollBar VerticalScrollBar;
 
             // geometry
-            mutable float     WindowFrameHeight                 {32.f};
             mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
@@ -226,9 +226,9 @@ namespace Frenchie
             mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
 
             // cache
-            mutable gs_2dboxf PreviousWindowContentBox    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf PreviousWindowBox           {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable float     PreviousLayoutFillWeightSumm{1.f};
+            mutable gs_2dboxf PreviousWindowBox         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf PreviousWindowContentBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable float     PreviousLayoutTotalWeight {1.f};
 
             ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
