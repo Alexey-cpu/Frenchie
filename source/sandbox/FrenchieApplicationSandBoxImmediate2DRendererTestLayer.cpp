@@ -36,48 +36,48 @@ void Immedidate2DRendererTestLayer::frame_update()
         if(push_window("Alpha-2 window", 1.f)) pop_window();
         if(push_window("Alpha-3 window", 1.f)) pop_window();
 
-        for (int i = 0; i < 4; i++)push_close_button_widget();
+        for (int i = 0; i < 10; i++)push_close_button_widget();
 
-        if(push_window("Alpha-4 window", 1.f)) pop_window();
+        //if(push_window("Alpha-4 window", 1.f)) pop_window();
 
-        // if(push_window("Container window",
-        //     1.f,
-        //     nullptr,
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
-        // {
-        //     if(push_window("Theta window",
-        //         1.f,
-        //         nullptr, 
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-        //     {
-        //         if(push_window("Theta-1 window", 1.f)) pop_window();
-        //         if(push_window("Theta-2 window", 1.f)) pop_window();
+        if(push_window("Container window",
+            1.f,
+            nullptr,
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
+        {
+            if(push_window("Theta window",
+                1.f,
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+            {
+                if(push_window("Theta-1 window", 1.f)) pop_window();
+                if(push_window("Theta-2 window", 1.f)) pop_window();
 
-        //         pop_window();
-        //     }
+                pop_window();
+            }
 
-        //     if(push_window("Cappa window",
-        //         1.f,
-        //         nullptr, 
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-        //     {
-        //         if(push_window("Cappa-1 window", 1.f)) pop_window();
-        //         if(push_window("Cappa-2 window", 1.f)) pop_window();
+            if(push_window("Cappa window",
+                1.f,
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+            {
+                if(push_window("Cappa-1 window", 1.f)) pop_window();
+                if(push_window("Cappa-2 window", 1.f)) pop_window();
 
-        //         pop_window();
-        //     }
+                pop_window();
+            }
 
-        //     pop_window();
-        // }
+            pop_window();
+        }
 
         pop_window();
     }
@@ -162,11 +162,11 @@ void Immedidate2DRendererTestLayer::frame_finish()
     for (auto& cachedWindow : m_WindowsCache)
     {
         // cache
-        cachedWindow.second->PreviousLayoutFillWeightSumm = cachedWindow.second->LayoutFillWeightSumm;
+        cachedWindow.second->PreviousLayoutTotalWeight = cachedWindow.second->LayoutTotalWeight;
         cachedWindow.second->PreviousWindowContentBox     = cachedWindow.second->WindowContentBox;
 
         // layouting
-        cachedWindow.second->LayoutFillWeightSumm = 0.f;
+        cachedWindow.second->LayoutTotalWeight = 0.f;
         cachedWindow.second->LayoutCursorPositon  = gs_vec2f(0.f, 0.f);
         cachedWindow.second->LayoutCursorSize     = gs_vec2f(0.f, 0.f);
         cachedWindow.second->WindowContentBox     = cachedWindow.second->WindowViewportBox;
@@ -208,7 +208,10 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
     float height  = 64.f;
     float padding = 8.f;
 
+    window->LayoutCursorPositon += window->LayoutCursorSize * window->LayoutCursorDirection;
+
     gs_vec2f min = window->LayoutCursorPositon + gs_vec2f(m_Style.FrameWidth, m_Style.FrameWidth);
+    
     gs_vec2f max = min + gs_vec2f(width, height);
 
     render_close_button_widget(
@@ -216,8 +219,8 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
         window->WindowContentBox.Min + max,
         window->WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
 
-    window->LayoutCursorPositon += gs_vec2f(0.f, height + padding);
-    window->LayoutCursorSize     = gs_2dboxf(min, max).size();
+    window->LayoutCursorSize      = gs_vec2f(width, height + padding);
+    window->LayoutCursorDirection = gs_vec2f(0.f, 1.f);
 
     calculate_window_geometry(window);
 
@@ -237,18 +240,15 @@ bool Immedidate2DRendererTestLayer::push_window(
     {
         std::unique_ptr<ImmedidateUserInterfaceWindow> window = std::make_unique<ImmedidateUserInterfaceWindow>();
 
-        gs_vec2f position = m_NextWindowPosition.has_value() ? m_NextWindowPosition.value() : gs_vec2f(0.f, 0.f);
-        gs_vec2f size     = m_NextWindowSize.has_value() ? m_NextWindowSize.value() : gs_vec2f(512.f, 512.f);
+        gs_vec2f position     = m_NextWindowPosition.has_value() ? m_NextWindowPosition.value() : gs_vec2f(0.f, 0.f);
+        gs_vec2f size         = m_NextWindowSize.has_value() ? m_NextWindowSize.value() : gs_vec2f(512.f, 512.f);
+        window->Name          = _Name;
+        window->WindowBox     = gs_2dboxf(position, position + size);
+        m_WindowsCache[_Name] = std::move(window);
+
+        // reset optional next frame paramters
         m_NextWindowPosition.reset();
         m_NextWindowSize.reset();
-
-        window->Name        = _Name;
-        window->WindowBox  = gs_2dboxf(position, position + size);
-        window->PreviousWindowBox = window->WindowBox;
-        window->WindowFrameHeight = m_Style.FontSize;
-        window->WindowTransform   = gs_mat4f(1.f);
-
-        m_WindowsCache[_Name] = std::move(window);
     }
 
     ImmedidateUserInterfaceWindow* window = m_WindowsCache.find(_Name)->second.get();
@@ -266,11 +266,11 @@ bool Immedidate2DRendererTestLayer::push_window(
     // calculate window geometry
     if(!m_WindowsHierarchy.empty())
     {
-        window->Parent                               = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-        window->Depth                                = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->calculate_child_depth();
-        window->Parent->LayoutFillWeightSumm += window->LayoutFillWeight;
+        window->Parent                        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+        window->Depth                         = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->calculate_child_depth();
+        window->Parent->LayoutTotalWeight += window->LayoutFillWeight;
 
-        gs_vec2f childSize = window->Parent->WindowViewportBox.size() * window->LayoutFillWeight / window->Parent->PreviousLayoutFillWeightSumm;
+        gs_vec2f childSize = window->Parent->WindowViewportBox.size() * window->LayoutFillWeight / window->Parent->PreviousLayoutTotalWeight;
 
         if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
         {
@@ -278,12 +278,14 @@ bool Immedidate2DRendererTestLayer::push_window(
                 window->Parent->WindowContentBox.Min,
                 window->Parent->WindowContentBox.Min + gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height()));
 
+            window->Parent->LayoutCursorPositon += window->Parent->LayoutCursorSize * window->Parent->LayoutCursorDirection;
+
             window->WindowTransform = window->Parent->WindowTransform * m_Renderer->calculate_transform_matrix(
                 0.f,
                 window->Parent->LayoutCursorPositon);
 
-            window->Parent->LayoutCursorPositon += gs_vec2f(childSize.x, 0.f);
-            window->Parent->LayoutCursorSize     = gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height());
+            window->Parent->LayoutCursorSize      = gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height());
+            window->Parent->LayoutCursorDirection = gs_vec2f(1.f, 0.f);
         }
         else
         {
@@ -291,12 +293,14 @@ bool Immedidate2DRendererTestLayer::push_window(
                 window->Parent->WindowContentBox.Min,
                 window->Parent->WindowContentBox.Min + gs_vec2f(window->Parent->WindowBox.width(), childSize.y));
 
+            window->Parent->LayoutCursorPositon += window->Parent->LayoutCursorSize * window->Parent->LayoutCursorDirection;
+
             window->WindowTransform = window->Parent->WindowTransform * m_Renderer->calculate_transform_matrix(
                 0.f,
                 window->Parent->LayoutCursorPositon);
 
-            window->Parent->LayoutCursorPositon += gs_vec2f(0.f, childSize.y);
-            window->Parent->LayoutCursorSize    += gs_vec2f(window->Parent->WindowBox.width(), childSize.y);
+            window->Parent->LayoutCursorSize      = gs_vec2f(window->Parent->WindowBox.width(), childSize.y);
+            window->Parent->LayoutCursorDirection = gs_vec2f(0.f, 1.f);
         }
 
         // recursivelly recompute parental geometry
@@ -386,8 +390,7 @@ void Immedidate2DRendererTestLayer::pop_window()
 void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUserInterfaceWindow* _Window)
 {    
     // frame
-    _Window->WindowFrameHeight = m_Style.FontSize;
-    _Window->WindowFrameBox    = gs_2dboxf(_Window->WindowBox.Min, _Window->WindowBox.Min + gs_vec2f(_Window->WindowBox.width(), _Window->WindowFrameHeight));
+    _Window->WindowFrameBox    = gs_2dboxf(_Window->WindowBox.Min, _Window->WindowBox.Min + gs_vec2f(_Window->WindowBox.width(), m_Style.FontSize));
 
     // title
     gs_vec2f titleSize = m_Renderer->calculate_bounding_box(_Window->Name, m_Style.FontSize, m_Style.Font).size();
@@ -410,7 +413,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
 
     _Window->WindowVerticalScrollBarBox = gs_2dboxf(
         gs_vec2f(_Window->WindowViewportBox.Max.x, _Window->WindowViewportBox.Min.y),
-        gs_vec2f(_Window->WindowViewportBox.Max.x, _Window->WindowViewportBox.Max.y) - gs_vec2f(m_Style.WindowScrollBarSliderWidth, 0.f));
+        gs_vec2f(_Window->WindowViewportBox.Max.x, _Window->WindowViewportBox.Max.y) + gs_vec2f(m_Style.WindowScrollBarSliderWidth, 0.f));
 
     _Window->WindowVerticalScrollBarSliderBox = gs_2dboxf(
         _Window->WindowVerticalScrollBarBox.Min + gs_vec2f(0.f, _Window->VerticalScrollBar.SliderPosition),
@@ -421,8 +424,8 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
 
     // viewport
     _Window->WindowViewportBox = gs_2dboxf(
-        _Window->WindowBox.Min + gs_vec2f(0.f, _Window->WindowFrameHeight),
-        _Window->WindowBox.Max);
+        _Window->WindowBox.Min + gs_vec2f(0.f, _Window->WindowFrameBox.height()),
+        _Window->WindowBox.Max + gs_vec2f(-m_Style.WindowScrollBarSliderWidth, 0.f));
     
     // content
     _Window->WindowContentBox  = gs_2dboxf(
