@@ -36,7 +36,9 @@ void Immedidate2DRendererTestLayer::frame_update()
         if(push_window("Alpha-2 window", 1.f)) pop_window();
         if(push_window("Alpha-3 window", 1.f)) pop_window();
 
-        for (int i = 0; i < 10; i++)push_close_button_widget();
+        for (int i = 0; i < 4; i++)push_close_button_widget();
+
+        if(push_window("Alpha-4 window", 1.f)) pop_window();
 
         // if(push_window("Container window",
         //     1.f,
@@ -166,6 +168,7 @@ void Immedidate2DRendererTestLayer::frame_finish()
         // layouting
         cachedWindow.second->LayoutFillWeightSumm = 0.f;
         cachedWindow.second->LayoutCursorPositon  = gs_vec2f(0.f, 0.f);
+        cachedWindow.second->LayoutCursorSize     = gs_vec2f(0.f, 0.f);
         cachedWindow.second->WindowContentBox     = cachedWindow.second->WindowViewportBox;
 
         // hierarchy
@@ -197,9 +200,9 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
 
     auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
 
-    m_Renderer->push_clip_box(
-        gs_2dboxf(window->WindowViewportBox.Min, window->WindowBox.Max),
-        window->WindowTransform);
+    // m_Renderer->push_clip_box(
+    //     gs_2dboxf(window->WindowViewportBox.Min, window->WindowBox.Max),
+    //     window->WindowTransform);
 
     float width   = 64.f;
     float height  = 64.f;
@@ -214,10 +217,11 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
         window->WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
 
     window->LayoutCursorPositon += gs_vec2f(0.f, height + padding);
+    window->LayoutCursorSize     = gs_2dboxf(min, max).size();
 
     calculate_window_geometry(window);
 
-    m_Renderer->pop_clip_box();
+    //m_Renderer->pop_clip_box();
 
     return true;
 }
@@ -266,19 +270,20 @@ bool Immedidate2DRendererTestLayer::push_window(
         window->Depth                                = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->calculate_child_depth();
         window->Parent->LayoutFillWeightSumm += window->LayoutFillWeight;
 
-        gs_vec2f childSize = window->Parent->WindowContentBox.size() * window->LayoutFillWeight / window->Parent->PreviousLayoutFillWeightSumm;
+        gs_vec2f childSize = window->Parent->WindowViewportBox.size() * window->LayoutFillWeight / window->Parent->PreviousLayoutFillWeightSumm;
 
         if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
         {
             window->WindowBox = gs_2dboxf(
                 window->Parent->WindowContentBox.Min,
-                window->Parent->WindowContentBox.Min + gs_vec2f(childSize.x, window->Parent->WindowContentBox.height()));
+                window->Parent->WindowContentBox.Min + gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height()));
 
             window->WindowTransform = window->Parent->WindowTransform * m_Renderer->calculate_transform_matrix(
                 0.f,
                 window->Parent->LayoutCursorPositon);
 
             window->Parent->LayoutCursorPositon += gs_vec2f(childSize.x, 0.f);
+            window->Parent->LayoutCursorSize     = gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height());
         }
         else
         {
@@ -291,13 +296,17 @@ bool Immedidate2DRendererTestLayer::push_window(
                 window->Parent->LayoutCursorPositon);
 
             window->Parent->LayoutCursorPositon += gs_vec2f(0.f, childSize.y);
+            window->Parent->LayoutCursorSize    += gs_vec2f(window->Parent->WindowBox.width(), childSize.y);
         }
 
-        // calculate total content box
-        window->Parent->WindowContentBox = gs_2dboxf(
-            window->Parent->WindowViewportBox.Min,
-            window->Parent->WindowViewportBox.Max,
-            window->Parent->WindowViewportBox.Min + window->Parent->LayoutCursorPositon);
+        // recursivelly recompute parental geometry
+        auto parent = window->Parent;
+
+        while (parent)
+        {
+            calculate_window_geometry(parent);
+            parent = parent->Parent;
+        }
 
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
@@ -408,6 +417,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
         gs_vec2f(_Window->WindowVerticalScrollBarBox.Max.x, _Window->WindowVerticalScrollBarBox.Min.y + _Window->VerticalScrollBar.SliderLength + _Window->VerticalScrollBar.SliderPosition));
 
     // horizontal scrollbar
+    // TODO: implemente horizontal scrollbar geometry computation
 
     // viewport
     _Window->WindowViewportBox = gs_2dboxf(
@@ -418,7 +428,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
     _Window->WindowContentBox  = gs_2dboxf(
         _Window->WindowViewportBox.Min,
         _Window->WindowViewportBox.Max,
-        _Window->WindowViewportBox.Min + _Window->LayoutCursorPositon);
+        _Window->WindowViewportBox.Min + _Window->LayoutCursorPositon + _Window->LayoutCursorSize);
 
     _Window->WindowContentBox.Min += gs_vec2f(0.f, -_Window->VerticalScrollBar.SliderPosition * _Window->VerticalScrollBar.SliderScale);
     _Window->WindowContentBox.Max += gs_vec2f(0.f, -_Window->VerticalScrollBar.SliderPosition * _Window->VerticalScrollBar.SliderScale);
@@ -442,12 +452,12 @@ void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         _Window->WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
 
     // draw content gizmo
-    // m_Renderer->push_rectangle(
-    //     _Window->PreviousWindowContentBox.Min,
-    //     _Window->PreviousWindowContentBox.Max,
-    //     m_Style.FrameWidth,
-    //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
-    //     _Window->WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+    m_Renderer->push_rectangle(
+        _Window->PreviousWindowContentBox.Min,
+        _Window->PreviousWindowContentBox.Max,
+        m_Style.FrameWidth,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        _Window->WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
 
     // m_Renderer->push_rectangle(
     //     _Window->WindowViewportBox.Min,
