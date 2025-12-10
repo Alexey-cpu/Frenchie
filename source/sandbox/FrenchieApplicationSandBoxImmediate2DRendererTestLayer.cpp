@@ -222,7 +222,16 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
     window->LayoutCursorSize      = gs_vec2f(width, height + padding);
     window->LayoutCursorDirection = gs_vec2f(0.f, 1.f);
 
-    calculate_window_geometry(window);
+
+    // recursivelly recompute parental geometry
+    auto parent = window->Parent;
+
+    while (parent)
+    {
+        calculate_window_geometry(parent);
+        parent = parent->Parent;
+    }
+    //calculate_window_geometry(window);
 
     //m_Renderer->pop_clip_box();
 
@@ -266,17 +275,17 @@ bool Immedidate2DRendererTestLayer::push_window(
     // calculate window geometry
     if(!m_WindowsHierarchy.empty())
     {
-        window->Parent                        = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-        window->Depth                         = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->calculate_child_depth();
+        window->Parent                     = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+        window->Depth                      = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->calculate_child_depth();
         window->Parent->LayoutTotalWeight += window->LayoutFillWeight;
 
-        gs_vec2f childSize = window->Parent->WindowViewportBox.size() * window->LayoutFillWeight / window->Parent->PreviousLayoutTotalWeight;
+        gs_vec2f childSize = window->Parent->WindowContentBox.size() * window->LayoutFillWeight / window->Parent->PreviousLayoutTotalWeight;
 
         if((window->Parent->Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
         {
             window->WindowBox = gs_2dboxf(
                 window->Parent->WindowContentBox.Min,
-                window->Parent->WindowContentBox.Min + gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height()));
+                window->Parent->WindowContentBox.Min + gs_vec2f(childSize.x, window->Parent->WindowContentBox.height()));
 
             window->Parent->LayoutCursorPositon += window->Parent->LayoutCursorSize * window->Parent->LayoutCursorDirection;
 
@@ -284,7 +293,7 @@ bool Immedidate2DRendererTestLayer::push_window(
                 0.f,
                 window->Parent->LayoutCursorPositon);
 
-            window->Parent->LayoutCursorSize      = gs_vec2f(childSize.x, window->Parent->WindowViewportBox.height());
+            window->Parent->LayoutCursorSize      = gs_vec2f(childSize.x, window->Parent->WindowContentBox.height());
             window->Parent->LayoutCursorDirection = gs_vec2f(1.f, 0.f);
         }
         else
