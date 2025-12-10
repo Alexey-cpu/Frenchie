@@ -153,19 +153,20 @@ namespace Frenchie
             mutable gs_vec2f LayoutCursorPositon         {gs_vec2f(0.f, 0.f)};
 
             // geometry
-            mutable float     FrameHeight   {32.f};
-            mutable gs_2dboxf PreviousBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf CurrentBox    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf ContentBox    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf FrameBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf TitleBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf CloseButtonBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};            
-            mutable gs_mat4f  Transform     {gs_mat4f(1.f)};
+            mutable float     FrameHeight      {32.f};
+            mutable gs_2dboxf PreviousBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf CurrentBox       {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf VisibleContentBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf TotalContentBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};            
+            mutable gs_2dboxf FrameBox         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf TitleBox         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf CloseButtonBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};            
+            mutable gs_mat4f  Transform        {gs_mat4f(1.f)};
 
             ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
             // API
-            int calculate_child_width() const
+            int calculate_child_depth() const
             {
                 return (Depth + (Thickness++));
             }
@@ -359,11 +360,14 @@ namespace Frenchie
             void set_next_window_position(const gs_vec2f&);
             void set_next_window_size(const gs_vec2f&);
 
+            bool push_close_button_widget();
+
             bool push_window(
                 const std::string&                 _Name,
                 const float&                       _Weight = 1.f,
                 bool*                              _Opened = nullptr,
                 ImmedidateUserInterfaceWindowHints _Hints  = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
+
             void pop_window();
 
         protected:

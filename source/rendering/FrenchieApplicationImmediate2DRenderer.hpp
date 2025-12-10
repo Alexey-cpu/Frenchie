@@ -216,12 +216,22 @@ namespace Frenchie
 
             void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f))
             {
+                m_Clipbox.push_back(_Value.transform(_Transform));
                 m_RenderingQueue->push_renderer_command(_Value.transform(_Transform));
             }
 
             void pop_clip_box()
             {
-                m_RenderingQueue->push_renderer_command(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
+                m_Clipbox.pop_back();
+
+                if(!m_Clipbox.empty())
+                {
+                    m_RenderingQueue->push_renderer_command(m_Clipbox[m_Clipbox.size() - 1]);
+                }
+                else
+                {
+                    m_RenderingQueue->push_renderer_command(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));                    
+                }
             }
 
             void push_clear_color(const gs_vec4f& _Value)
@@ -452,6 +462,7 @@ namespace Frenchie
             }
 
             // this is a plipeline
+            std::vector<gs_2dboxf>                      m_Clipbox       {std::vector<gs_2dboxf>()};
             std::vector<Immediate2DRendererPathSegment> m_Segmetns      {std::vector<Immediate2DRendererPathSegment>()};
             std::vector<RenderingQueueVertex>           m_Vertexes      {std::vector<RenderingQueueVertex>()};
             std::vector<int>                            m_Indexes       {std::vector<int>()};
