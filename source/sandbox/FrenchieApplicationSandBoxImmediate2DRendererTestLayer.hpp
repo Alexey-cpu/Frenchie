@@ -28,41 +28,55 @@ namespace Frenchie
             ImmedidateUserInterfaceColors_WindowCloseButtonHoveredColor,
             ImmedidateUserInterfaceColors_WindowCloseButtonPressedColor,
 
+            // application window scroll bar
+            ImmedidateUserInterfaceColors_WindowScrollBarColor,
+            ImmedidateUserInterfaceColors_WindowScrollBarSliderColor,
+            ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor,
+            ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor,
+
             // application text
             ImmedidateUserInterfaceColors_TextEnabledColor,
             ImmedidateUserInterfaceColors_TextDisabledColor,
             ImmedidateUserInterfaceColors_TextHoveredColor,
 
-            // push button background
-            ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor,
-            ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor,
-            ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor,
-            ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor,
-            ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor,
-            ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor,
+            // // push button background
+            // ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor,
+            // ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor,
+            // ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor,
+            // ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor,
+            // ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor,
+            // ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor,
 
-            // push button frame
-            ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor,
-            ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor,
-            ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor,
-            ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor,
-            ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor,
-            ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor,
+            // // push button frame
+            // ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor,
+            // ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor,
+            // ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor,
+            // ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor,
+            // ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor,
+            // ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor,
 
-            // radio buton
-            ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor,
-            ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor,
+            // // radio buton
+            // ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor,
+            // ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor,
 
             ImmedidateUserInterfaceColors_ColorEnd,
         };
 
         enum ImmedidateUserInterfaceWindowHints_ : int
         {
-            ImmedidateUserInterfaceWindowHints_Movable          = 1 << 1,
-            ImmedidateUserInterfaceWindowHints_Closable         = 1 << 2,
-            ImmedidateUserInterfaceWindowHints_Resizable        = 1 << 3,
-            ImmedidateUserInterfaceWindowHints_LayoutVertical   = 1 << 4,
-            ImmedidateUserInterfaceWindowHints_LayoutHorizontal = 1 << 5,
+            ImmedidateUserInterfaceWindowHints_Movable                   = 1 << 1,
+            ImmedidateUserInterfaceWindowHints_Closable                  = 1 << 2,
+            ImmedidateUserInterfaceWindowHints_Resizable                 = 1 << 3,
+            
+            // children layouting
+            ImmedidateUserInterfaceWindowHints_LayoutVertical            = 1 << 4,
+            ImmedidateUserInterfaceWindowHints_LayoutHorizontal          = 1 << 5,
+
+            // scrollbars
+            ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar = 1 << 6,
+            ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar   = 1 << 7,
+            ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar = 1 << 8,
+            ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar   = 1 << 9,
 
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
@@ -97,28 +111,33 @@ namespace Frenchie
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonHoveredColor           ] = gs_vec4f(120.f, 0.f, 0.f, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonPressedColor           ] = gs_vec4f(40.f, 0.f, 0.f, 255.f);
 
+                // application windows scroll bar
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor                    ] = gs_vec4f(125, 10, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor              ] = gs_vec4f(125, 200, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor       ] = gs_vec4f(150, 250, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor       ] = gs_vec4f(170, 170, 250, 255.f);
                 // application text
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                        ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                       ] = gs_vec4f(200.f, 200.f, 200.f, 255.f);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                        ] = gs_vec4f(255.f, 32.f, 32.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                         ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                        ] = gs_vec4f(200.f, 200.f, 200.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                         ] = gs_vec4f(255.f, 32.f, 32.f, 255.f);
 
-                // Push button
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor       ] = gs_vec4f(53, 53, 54, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor] = gs_vec4f(87, 87, 89, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor] = gs_vec4f(117, 117, 120, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor             ] = gs_vec4f(1, 16, 77, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor      ] = gs_vec4f(0, 16, 77, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor      ] = gs_vec4f(1, 32, 77, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor            ] = gs_vec4f(30, 30, 31, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor     ] = gs_vec4f(30, 1, 31, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor     ] = gs_vec4f(30, 12, 31, 255);
+                // // Push button
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor       ] = gs_vec4f(53, 53, 54, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor] = gs_vec4f(87, 87, 89, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor] = gs_vec4f(117, 117, 120, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor             ] = gs_vec4f(1, 16, 77, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor      ] = gs_vec4f(0, 16, 77, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor      ] = gs_vec4f(1, 32, 77, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor            ] = gs_vec4f(30, 30, 31, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor     ] = gs_vec4f(30, 1, 31, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor     ] = gs_vec4f(30, 12, 31, 255);
 
-                // radio button
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor          ] = gs_vec4f(255, 255, 255, 255);
-                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor         ] = gs_vec4f(200, 200, 200, 255);
+                // // radio button
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor          ] = gs_vec4f(255, 255, 255, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor         ] = gs_vec4f(200, 200, 200, 255);
 
                 // radio button
 
@@ -126,15 +145,49 @@ namespace Frenchie
 
             RenderingQueueFont Font;
             float              FontSize                          = 32.f;
+
             float              WindowResizeAngleGizmoRadius      = 32.f;
             float              WindowResizeSideGizmoWidth        = 12.f;
             float              WindowFrameCloseMinimumButtonSize = 32.f;
             float              WindowMinimumWidth                = 128.f;
             float              WindowMinimumHeight               = 128.f;
+            float              WindowScrollBarSliderWidth        = 32.f;
+
             float              FrameWidth                        = 8.f;
             float              FrameRoundingRadius               = 16.f;
 
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
+        };
+
+        struct ImmedidateUserInterfaceScrollBar
+        {
+            void setup(
+                const float& _Min,
+                const float& _Max,
+                const float  _Total,
+                const float& _Track)
+            {
+                Min          = _Min;
+                Max          = _Max;
+                Total        = _Total;
+                Track        = _Track;
+                SliderScale  = gs_abs(Total) / gs_abs(Max - Min);
+                SliderLength = gs_abs(Max - Min) / gs_abs(Total) * Track;
+            }
+
+            void reposition(const float& _Position)
+            {
+                SliderPosition = gs_clamp(_Position, 0.f, gs_abs(Max - SliderLength));
+            }
+
+            float Min;
+            float Max;
+            float Total;
+            float Track;
+            float SliderScale;
+            float SliderLength;
+            float SliderPosition;
+            float SliderPreviousPosition;
         };
 
         struct ImmedidateUserInterfaceWindow
@@ -147,21 +200,34 @@ namespace Frenchie
             ImmedidateUserInterfaceWindow* Parent   {nullptr};
 
             // layouting
-            mutable float    LayoutFillWeightPreviousSumm{1.f};
-            mutable float    LayoutFillWeightCurrentSumm {1.f};
-            mutable float    LayoutFillWeight            {1.f};
-            mutable gs_vec2f LayoutCursorPositon         {gs_vec2f(0.f, 0.f)};
+            mutable float    LayoutFillWeightSumm {1.f};
+            mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
+            mutable float    LayoutFillWeight     {1.f};
+
+            // scrolling
+            mutable ImmedidateUserInterfaceScrollBar VerticalScrollBar;
 
             // geometry
-            mutable float     FrameHeight      {32.f};
-            mutable gs_2dboxf PreviousBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf CurrentBox       {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf VisibleContentBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf TotalContentBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};            
-            mutable gs_2dboxf FrameBox         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf TitleBox         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf CloseButtonBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};            
-            mutable gs_mat4f  Transform        {gs_mat4f(1.f)};
+            mutable float     WindowFrameHeight                 {32.f};
+            mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            
+            mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+
+            mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+
+            mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
+
+            // cache
+            mutable gs_2dboxf PreviousWindowContentBox    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf PreviousWindowBox           {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable float     PreviousLayoutFillWeightSumm{1.f};
 
             ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
@@ -247,6 +313,21 @@ namespace Frenchie
                 return window->IsFocused;
             }
 
+            bool is_being_scrolled_vertically() const
+            {
+                return IsBeingScrolledVertically;
+            }
+
+            bool is_being_scrolled_horizontally() const
+            {
+                return IsBeingScrolledHorizontally;
+            }
+
+            bool is_being_scrolled() const
+            {
+                return is_being_scrolled_vertically() || is_being_scrolled_horizontally();
+            }
+
             void begin_resize_top_left()
             {
                 IsBeingResizedTopLeft = true;
@@ -306,6 +387,16 @@ namespace Frenchie
                 window->IsFocused = true;
             }
             
+            void begin_scroll_vertically()
+            {
+                IsBeingScrolledVertically = true;
+            }
+
+            void begin_scroll_horizontally()
+            {
+                IsBeingScrolledHorizontally = true;
+            }
+
             void end_resize()
             {
                 IsBeingResizedTopLeft     = false;
@@ -328,6 +419,12 @@ namespace Frenchie
                 IsFocused = false;
             }
 
+            void end_scroll()
+            {
+                IsBeingScrolledVertically   = false;
+                IsBeingScrolledHorizontally = false;
+            }
+            
         private:
 
             bool IsBeingMoved             {false};
@@ -340,6 +437,8 @@ namespace Frenchie
             bool IsBeingResizedRight      {false};
             bool IsBeingResizedBottom     {false};
             bool IsFocused                {false};
+            bool IsBeingScrolledHorizontally{false};
+            bool IsBeingScrolledVertically  {false};
         };
 
         struct ImmedidateUserInterfaceFrameData
@@ -377,8 +476,10 @@ namespace Frenchie
 
             // window utility functions
             void calculate_window_geometry(const ImmedidateUserInterfaceWindow*);
+
             void render_window_background(ImmedidateUserInterfaceWindow*);
             void render_window_classic_frame(ImmedidateUserInterfaceWindow*, bool*);
+            void render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
 
             void sink_window_events(ImmedidateUserInterfaceWindow*);
 
