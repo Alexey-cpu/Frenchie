@@ -294,10 +294,10 @@ bool Immedidate2DRendererTestLayer::push_window(
         }
 
         // calculate total content box
-        // window->Parent->WindowContentBox = gs_2dboxf(
-        //     window->Parent->WindowViewportBox.Min,
-        //     window->Parent->WindowViewportBox.Max,
-        //     window->Parent->WindowViewportBox.Min + window->Parent->LayoutCursorPositon);
+        window->Parent->WindowContentBox = gs_2dboxf(
+            window->Parent->WindowViewportBox.Min,
+            window->Parent->WindowViewportBox.Max,
+            window->Parent->WindowViewportBox.Min + window->Parent->LayoutCursorPositon);
 
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
