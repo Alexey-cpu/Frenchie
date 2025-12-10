@@ -202,6 +202,7 @@ namespace Frenchie
             // layouting
             mutable float    LayoutFillWeightSumm {1.f};
             mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
+            mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
             mutable float    LayoutFillWeight     {1.f};
 
             // scrolling
