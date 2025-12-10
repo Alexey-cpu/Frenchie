@@ -115,6 +115,7 @@ void Immediate2DRenderer::frame_start()
 
 void Immediate2DRenderer::frame_finish()
 {
+    m_Clipbox.clear();
     m_Segmetns.clear();
     m_Vertexes.clear();
     m_Indexes.clear();
