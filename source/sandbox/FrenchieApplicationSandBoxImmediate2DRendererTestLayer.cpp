@@ -43,46 +43,46 @@ void Immedidate2DRendererTestLayer::frame_update()
         push_close_button_widget();
         push_close_button_widget();
 
-        // if(push_window("Alpha-2 window")) pop_window();
-        // if(push_window("Alpha-3 window")) pop_window();
+        if(push_window("Alpha-2 window")) pop_window();
+        if(push_window("Alpha-3 window")) pop_window();
 
-        //if(push_window("Alpha-4 window")) pop_window();
+        if(push_window("Alpha-4 window")) pop_window();
 
-        // if(push_window("Container window",
-        //     nullptr,
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
-        // {
-        //     if(push_window("Theta window",
-        //         nullptr, 
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-        //     {
-        //         if(push_window("Theta-1 window")) pop_window();
-        //         if(push_window("Theta-2 window")) pop_window();
+        if(push_window("Container window",
+            nullptr,
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
+        {
+            if(push_window("Theta window",
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+            {
+                if(push_window("Theta-1 window")) pop_window();
+                if(push_window("Theta-2 window")) pop_window();
 
-        //         pop_window();
-        //     }
+                pop_window();
+            }
 
-        //     if(push_window("Cappa window",
-        //         nullptr, 
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-        //     {
-        //         if(push_window("Cappa-1 window")) pop_window();
-        //         if(push_window("Cappa-2 window")) pop_window();
+            if(push_window("Cappa window",
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+            {
+                if(push_window("Cappa-1 window")) pop_window();
+                if(push_window("Cappa-2 window")) pop_window();
 
-        //         pop_window();
-        //     }
+                pop_window();
+            }
 
-        //     pop_window();
-        // }
+            pop_window();
+        }
 
         pop_window();
     }
@@ -280,10 +280,6 @@ bool Immedidate2DRendererTestLayer::push_window(const std::string& _Name, bool* 
     window->State.WindowScrollAreaBox.Min = window->Cache.WindowScrollAreaBox.Min + gs_vec2f(0.f, -window->State.VerticalScrollBar.SliderPosition);
     window->State.WindowScrollAreaBox.Max = window->Cache.WindowScrollAreaBox.Max + gs_vec2f(0.f, -window->State.VerticalScrollBar.SliderPosition);
 
-    // m_Renderer->push_clip_box(
-    //     window->State.WindowBox,
-    //     window->State.WindowTransform);
-
     if(_Opened == nullptr)
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
     else
@@ -373,6 +369,20 @@ bool Immedidate2DRendererTestLayer::push_window(const std::string& _Name, bool* 
     }
 
     // render window
+    if(window->State.Parent != nullptr)
+    {
+        auto next   = window;
+        auto parent = window->State.Parent;
+
+        while (parent)
+        {
+            next = parent;
+            parent = parent->State.Parent;
+        }
+
+        m_Renderer->push_clip_box(next->State.WindowViewportBox, next->State.WindowTransform);
+    }
+
     render_window_background(window);
 
     //if(window->State.Parent == nullptr)
@@ -409,9 +419,9 @@ void Immedidate2DRendererTestLayer::pop_window()
 
     sink_window_events(window);
 
-    //m_Renderer->pop_clip_box();
-
     m_WindowsHierarchy.pop_back();
+
+    //if(window->State.Parent == nullptr) m_Renderer->pop_clip_box();
 }
 
 void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterfaceWindow* _Window)
@@ -433,6 +443,11 @@ void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterf
     gs_vec2f closeButtonMax = closeButtonMin + gs_vec2f(titleSize.y, titleSize.y);
     _Window->State.WindowCloseButtonBox = gs_2dboxf(closeButtonMin, closeButtonMax);
 
+    // viewport
+    _Window->State.WindowViewportBox = gs_2dboxf(
+        _Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowFrameBox.height()),
+        _Window->State.WindowBox.Max);
+
     // vertical scrollbar
     _Window->State.VerticalScrollBar.setup(
         0.f,
@@ -441,8 +456,8 @@ void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterf
         _Window->State.WindowViewportBox.height());
 
     _Window->State.WindowVerticalScrollBarBox = gs_2dboxf(
-        gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Min.y),
-        gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y) + gs_vec2f(m_Style.WindowScrollBarSliderWidth, 0.f));
+        gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Min.y) + gs_vec2f(-m_Style.WindowScrollBarSliderWidth, 0.f),
+        gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y));
 
     _Window->State.WindowVerticalScrollBarSliderBox = gs_2dboxf(
         _Window->State.WindowVerticalScrollBarBox.Min + gs_vec2f(0.f, _Window->State.VerticalScrollBar.SliderPosition),
@@ -450,11 +465,6 @@ void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterf
 
     // horizontal scrollbar
     // TODO: implement horizontal scrollbar geometry computation
-
-    // viewport
-    _Window->State.WindowViewportBox = gs_2dboxf(
-        _Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowFrameBox.height()),
-        _Window->State.WindowBox.Max + gs_vec2f(-m_Style.WindowScrollBarSliderWidth, 0.f));
     
     // scroll area
     _Window->State.WindowScrollAreaBox  = gs_2dboxf(
@@ -528,19 +538,11 @@ bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
 
     // window title
-    m_Renderer->push_clip_box(
-        gs_2dboxf(
-            _Window->State.WindowFrameBox.Min + gs_vec2f(m_Style.FrameWidth, 0.f),
-            gs_vec2f(_Window->State.WindowCloseButtonBox.Min.x, _Window->State.WindowCloseButtonBox.Max.y)),
-        _Window->State.WindowTransform);
-
     m_Renderer->push_text(
         _Window->Name,
         m_Style.FontSize,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor],
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth(), _Window->State.WindowTitleBox.Min));
-
-    m_Renderer->pop_clip_box();
 
     // frame close button
     if(_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable)
@@ -557,10 +559,6 @@ bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
 bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow* _Window)
 {
     if(_Window == nullptr) return false;
-
-    m_Renderer->push_clip_box(
-        gs_2dboxf(_Window->State.WindowVerticalScrollBarBox.Min - m_Style.FrameWidth, _Window->State.WindowVerticalScrollBarBox.Max + m_Style.FrameWidth),
-        _Window->State.WindowTransform);
 
     // draw scroll panel
     m_Renderer->push_rectangle_rounded_filled(
@@ -600,8 +598,6 @@ bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateU
         m_Style.FrameWidth,
         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
-
-    m_Renderer->pop_clip_box();
     
     return true;
 }

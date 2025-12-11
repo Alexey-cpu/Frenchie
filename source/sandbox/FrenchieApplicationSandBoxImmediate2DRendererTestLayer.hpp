@@ -470,24 +470,7 @@ namespace Frenchie
 
             void same_line()
             {
-                //if(m_WindowsHierarchy.empty()) return;
-
                 m_NextCursorDirection = gs_vec2f(1.f, 0.f);
-
-                //ImmedidateUserInterfaceWindow* window  = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-
-                // gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
-                // m_NextCursorDirection.reset();
-
-                // if(window->State.LayoutCursorDirection != cursorDirection)
-                // {
-                //     if(window->State.LayoutCursorDirection.y == 1.f)
-                //     {
-                //         window->State.LayoutCursorDirection = cursorDirection;
-                //         window->State.LayoutCursorPositon   = gs_vec2f(0.f, window->State.WindowContentBox.height());
-                //         window->State.LayoutCursorSize      = gs_vec2f(0.f, 0.f);
-                //     }
-                // }
             }
 
             bool push_close_button_widget();
