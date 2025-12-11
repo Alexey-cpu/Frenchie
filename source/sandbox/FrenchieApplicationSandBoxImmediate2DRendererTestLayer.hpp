@@ -214,7 +214,11 @@ namespace Frenchie
                 // geometry
                 mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                
+                mutable gs_2dboxf WindowScrollAreaBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+
                 mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+
                 mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
@@ -241,6 +245,7 @@ namespace Frenchie
             mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
             mutable WindowState State{WindowState()};
             mutable WindowState Cache{WindowState()};
+            mutable WindowState Changed{WindowState()};
 
             // API
             int calculate_child_depth() const
@@ -250,13 +255,13 @@ namespace Frenchie
 
             bool needs_vertical_scroll_bar() const
             {
-                return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) || gs_abs(Cache.WindowViewportBox.height() - Cache.WindowContentBox.height()) > 1.f) &&
+                return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) || gs_abs(Cache.WindowViewportBox.height() - Cache.WindowScrollAreaBox.height()) > 1.f) &&
                         !(State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar);
             }
 
             bool needs_horizontal_scroll_bar() const
             {
-                return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) || gs_abs(Cache.WindowViewportBox.width() - Cache.WindowContentBox.width()) > 1.f) &&
+                return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) || gs_abs(Cache.WindowViewportBox.width() - Cache.WindowScrollAreaBox.width()) > 1.f) &&
                         !(State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar);
             }
 
