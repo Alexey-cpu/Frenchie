@@ -329,8 +329,6 @@ bool Immedidate2DRendererTestLayer::push_window(const std::string& _Name, bool* 
             window->State.Parent->State.LayoutCursorDirection = gs_vec2f(0.f, 1.f);
         }
 
-        compute_window_geometry(window);
-
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
@@ -351,9 +349,9 @@ bool Immedidate2DRendererTestLayer::push_window(const std::string& _Name, bool* 
             }
             window->State.Depth = windowMaximumDepth;
         }
-
-        compute_window_geometry(window);
     }
+
+    compute_window_geometry(window);
 
     // check state.parent
     if((window->State.Parent != nullptr) &&
@@ -366,21 +364,6 @@ bool Immedidate2DRendererTestLayer::push_window(const std::string& _Name, bool* 
     if(_Opened != nullptr && !(*_Opened))
     {
         return false;
-    }
-
-    // render window
-    if(window->State.Parent != nullptr)
-    {
-        auto next   = window;
-        auto parent = window->State.Parent;
-
-        while (parent)
-        {
-            next = parent;
-            parent = parent->State.Parent;
-        }
-
-        m_Renderer->push_clip_box(next->State.WindowViewportBox, next->State.WindowTransform);
     }
 
     render_window_background(window);
@@ -421,7 +404,7 @@ void Immedidate2DRendererTestLayer::pop_window()
 
     m_WindowsHierarchy.pop_back();
 
-    //if(window->State.Parent == nullptr) m_Renderer->pop_clip_box();
+    if(window->State.Parent == nullptr) m_Renderer->pop_clip_box();
 }
 
 void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterfaceWindow* _Window)
@@ -480,6 +463,20 @@ void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterf
         _Window->State.WindowScrollAreaBox.Min,
         _Window->State.WindowScrollAreaBox.Min + _Window->State.WindowContentBox.size(),
         _Window->State.WindowScrollAreaBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
+
+    if(_Window->State.Parent != nullptr)
+    {
+        auto next   = _Window;
+        auto parent = _Window->State.Parent;
+
+        while (parent)
+        {
+            next = parent;
+            parent = parent->State.Parent;
+        }
+
+        m_Renderer->push_clip_box(next->State.WindowViewportBox, next->State.WindowTransform);
+    }
 
     compute_window_geometry(_Window->State.Parent);
 }
