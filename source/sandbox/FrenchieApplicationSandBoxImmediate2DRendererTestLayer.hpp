@@ -463,7 +463,9 @@ namespace Frenchie
             void set_next_window_position(const gs_vec2f&);
             void set_next_window_size(const gs_vec2f&);
 
-            bool push_close_button_widget();
+            bool push_close_button_widget(const bool& _Vertical);
+
+            gs_2dboxf push_widget(const gs_vec2f& _Size, const bool& _Vertical);
 
             bool push_window(
                 const std::string&                 _Name,
@@ -493,6 +495,7 @@ namespace Frenchie
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
 
+            
             Frenchie::Core::Optional<ImmedidateUserInterfaceConditions> m_Conditions;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowSize;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowPosition;

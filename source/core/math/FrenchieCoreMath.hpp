@@ -1378,7 +1378,7 @@ struct gs_2dbox
 
 // [VECTORS VS VECTORS]
 template<typename Type, int Size>
-gs_vector<Type, Size> operator!=(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+bool operator!=(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
     bool value = false;
     gs_vector<Type, Size> _C;
