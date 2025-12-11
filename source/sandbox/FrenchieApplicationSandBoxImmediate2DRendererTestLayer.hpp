@@ -245,7 +245,7 @@ namespace Frenchie
             mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
             mutable WindowState State{WindowState()};
             mutable WindowState Cache{WindowState()};
-            mutable WindowState Changed{WindowState()};
+            //mutable WindowState Changed{WindowState()};
 
             // API
             int calculate_child_depth() const
@@ -468,9 +468,31 @@ namespace Frenchie
             void set_next_window_position(const gs_vec2f&);
             void set_next_window_size(const gs_vec2f&);
 
-            bool push_close_button_widget(const bool& _Vertical);
+            void same_line()
+            {
+                //if(m_WindowsHierarchy.empty()) return;
 
-            gs_2dboxf push_widget(const gs_vec2f& _Size, const bool& _Vertical);
+                m_NextCursorDirection = gs_vec2f(1.f, 0.f);
+
+                //ImmedidateUserInterfaceWindow* window  = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+
+                // gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
+                // m_NextCursorDirection.reset();
+
+                // if(window->State.LayoutCursorDirection != cursorDirection)
+                // {
+                //     if(window->State.LayoutCursorDirection.y == 1.f)
+                //     {
+                //         window->State.LayoutCursorDirection = cursorDirection;
+                //         window->State.LayoutCursorPositon   = gs_vec2f(0.f, window->State.WindowContentBox.height());
+                //         window->State.LayoutCursorSize      = gs_vec2f(0.f, 0.f);
+                //     }
+                // }
+            }
+
+            bool push_close_button_widget();
+
+            gs_2dboxf push_widget(const gs_vec2f& _Size);
 
             bool push_window(
                 const std::string&                 _Name,
@@ -495,15 +517,28 @@ namespace Frenchie
             // widgets rendering functions
             bool render_close_button_widget(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_mat4f& _Transform);
 
+            // cursor manipulation
+            // gs_vec2f next_cursor_direction()
+            // {
+            //     if(m_NextCursorDirection.has_value())
+            //     {
+            //         auto direction = m_NextCursorDirection.value();
+            //         m_NextCursorDirection.reset();
+            //         return direction;
+            //     }
+
+            //     return gs_vec2f(0.f, 1.f);
+            // }
+
             // info
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache    {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
-
             
             Frenchie::Core::Optional<ImmedidateUserInterfaceConditions> m_Conditions;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowSize;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowPosition;
+            Frenchie::Core::Optional<gs_vec2f>                          m_NextCursorDirection;
         };
     }
 }
