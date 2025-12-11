@@ -159,123 +159,132 @@ namespace Frenchie
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
         };
 
-        struct ImmedidateUserInterfaceScrollBar
-        {
-            void setup(
-                const float& _Min,
-                const float& _Max,
-                const float  _Total,
-                const float& _Track)
-            {
-                Min          = _Min;
-                Max          = _Max;
-                Total        = _Total;
-                Track        = _Track;
-                SliderScale  = gs_abs(Total) / gs_abs(Max - Min);
-                SliderLength = gs_abs(Max - Min) / gs_abs(Total) * Track;
-            }
-
-            void reposition(const float& _Position)
-            {
-                SliderPosition = gs_clamp(_Position, 0.f, gs_abs(Max - SliderLength));
-            }
-
-            float Min;
-            float Max;
-            float Total;
-            float Track;
-            float SliderScale;
-            float SliderLength;
-            float SliderPosition;
-            float SliderPreviousPosition;
-        };
-
         struct ImmedidateUserInterfaceWindow
         {
-            std::string Name; // TODO: this MUST BE A HASH !!!
+            struct Scrollbar
+            {
+                void setup(
+                    const float& _Min,
+                    const float& _Max,
+                    const float  _Total,
+                    const float& _Track)
+                {
+                    Min          = _Min;
+                    Max          = _Max;
+                    Total        = _Total;
+                    Track        = _Track;
+                    SliderScale  = gs_abs(Total) / gs_abs(Max - Min);
+                    SliderLength = gs_abs(Max - Min) / gs_abs(Total) * Track;
+                }
 
-            // hierarchy
-            mutable int                    Depth    {0};
-            mutable int                    Thickness{0};
-            ImmedidateUserInterfaceWindow* Parent   {nullptr};
+                void reposition(const float& _Position)
+                {
+                    SliderPosition = gs_clamp(_Position, 0.f, gs_abs(Max - SliderLength));
+                }
 
-            // layouting
-            mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
-            mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
-            mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
-            mutable float    LayoutFillWeight     {1.f};
-            mutable float    LayoutTotalWeight    {1.f};
+                float Min;
+                float Max;
+                float Total;
+                float Track;
+                float SliderScale;
+                float SliderLength;
+                float SliderPosition;
+            };
 
-            // scrolling
-            mutable ImmedidateUserInterfaceScrollBar VerticalScrollBar;
+            struct WindowState
+            {
+                mutable ImmedidateUserInterfaceWindowHints Hints {ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
-            // geometry
-            mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            
-            mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                // hierarchy
+                mutable int                            Depth    {0};
+                mutable int                            Thickness{0};
+                mutable ImmedidateUserInterfaceWindow* Parent   {nullptr}; // parent is never nullptr as ALL windows are cached...
 
-            mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                // layouting
+                mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
+                mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
+                mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
+                mutable float    LayoutFillWeight     {1.f};
+                mutable float    LayoutTotalWeight    {1.f};
 
-            mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
+                // scrolling
+                mutable Scrollbar VerticalScrollBar;
 
-            // cache
-            mutable gs_2dboxf PreviousWindowBox         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf PreviousWindowContentBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable float     PreviousLayoutTotalWeight {1.f};
+                // geometry
+                mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
 
-            ImmedidateUserInterfaceWindowHints Hints{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
+                mutable bool IsBeingMoved               {false};
+                mutable bool IsBeingResizedTopLeft      {false};
+                mutable bool IsBeingResizedTopRight     {false};
+                mutable bool IsBeingResizedBottomLeft   {false};
+                mutable bool IsBeingResizedBottomRight  {false};
+                mutable bool IsBeingResizedTop          {false};
+                mutable bool IsBeingResizedLeft         {false};
+                mutable bool IsBeingResizedRight        {false};
+                mutable bool IsBeingResizedBottom       {false};
+                mutable bool IsFocused                  {false};
+                mutable bool IsBeingScrolledHorizontally{false};
+                mutable bool IsBeingScrolledVertically  {false};
+            };
+
+            mutable std::string                        Name  {"Default"    }; // TODO: this MUST BE A HASH !!!
+            mutable WindowState                        State {WindowState()};
+            mutable WindowState                        Cache {WindowState()};
 
             // API
             int calculate_child_depth() const
             {
-                return (Depth + (Thickness++));
+                return (State.Depth + (State.Thickness++));
             }
 
             bool is_being_resized_top_left() const
             {
-                return IsBeingResizedTopLeft;
+                return State.IsBeingResizedTopLeft;
             }
 
             bool is_being_resized_top_right() const
             {
-                return IsBeingResizedTopRight;
+                return State.IsBeingResizedTopRight;
             }
 
             bool is_being_resized_bottom_left() const
             {
-                return IsBeingResizedBottomLeft;
+                return State.IsBeingResizedBottomLeft;
             }
 
             bool is_being_resized_bottom_right() const
             {
-                return IsBeingResizedBottomRight;
+                return State.IsBeingResizedBottomRight;
             }
 
             bool is_being_resized_top() const
             {
-                return IsBeingResizedTop;
+                return State.IsBeingResizedTop;
             }
 
             bool is_being_resized_left() const
             {
-                return IsBeingResizedLeft;
+                return State.IsBeingResizedLeft;
             }
 
             bool is_being_resized_right() const
             {
-                return IsBeingResizedRight;
+                return State.IsBeingResizedRight;
             }
 
             bool is_being_resized_bottom() const
             {
-                return IsBeingResizedBottom;
+                return State.IsBeingResizedBottom;
             }
 
             bool is_being_resized() const
@@ -292,7 +301,7 @@ namespace Frenchie
 
             bool is_being_moved() const
             {
-                return IsBeingMoved;
+                return State.IsBeingMoved;
             }
 
             bool is_being_modified() const
@@ -302,26 +311,26 @@ namespace Frenchie
 
             bool is_being_focused() const
             {
-                auto parent = Parent;
+                auto parent = State.Parent;
                 auto window = this;
 
                 while (parent != nullptr)
                 {
                     window = parent;
-                    parent = parent->Parent;
+                    parent = parent->State.Parent;
                 }
 
-                return window->IsFocused;
+                return window->State.IsFocused;
             }
 
             bool is_being_scrolled_vertically() const
             {
-                return IsBeingScrolledVertically;
+                return State.IsBeingScrolledVertically;
             }
 
             bool is_being_scrolled_horizontally() const
             {
-                return IsBeingScrolledHorizontally;
+                return State.IsBeingScrolledHorizontally;
             }
 
             bool is_being_scrolled() const
@@ -331,119 +340,100 @@ namespace Frenchie
 
             void begin_resize_top_left()
             {
-                IsBeingResizedTopLeft = true;
+                State.IsBeingResizedTopLeft = true;
             }
 
             void begin_resize_top_right()
             {
-                IsBeingResizedTopRight = true;
+                State.IsBeingResizedTopRight = true;
             }
 
             void begin_resize_bottom_left()
             {
-                IsBeingResizedBottomLeft = true;
+                State.IsBeingResizedBottomLeft = true;
             }
             
             void begin_resize_bottom_right()
             {
-                IsBeingResizedBottomRight = true;
+                State.IsBeingResizedBottomRight = true;
             }
 
             void begin_resize_top()
             {
-                IsBeingResizedTop = true;
+                State.IsBeingResizedTop = true;
             }
 
             void begin_resize_left()
             {
-                IsBeingResizedLeft = true;
+                State.IsBeingResizedLeft = true;
             }
 
             void begin_resize_right()
             {
-                IsBeingResizedRight = true;
+                State.IsBeingResizedRight = true;
             }
 
             void begin_resize_bottom()
             {
-                IsBeingResizedBottom = true;
+                State.IsBeingResizedBottom = true;
             }
             
             void being_move()
             {
-                IsBeingMoved = true;
+                State.IsBeingMoved = true;
             }
 
             void begin_focus()
             {
-                auto parent = Parent;
+                auto parent = State.Parent;
                 auto window = this;
 
                 while (parent != nullptr)
                 {
                     window = parent;
-                    parent = parent->Parent;
+                    parent = parent->State.Parent;
                 }
 
-                window->IsFocused = true;
+                window->State.IsFocused = true;
             }
             
             void begin_scroll_vertically()
             {
-                IsBeingScrolledVertically = true;
+                State.IsBeingScrolledVertically = true;
             }
 
             void begin_scroll_horizontally()
             {
-                IsBeingScrolledHorizontally = true;
+                State.IsBeingScrolledHorizontally = true;
             }
 
             void end_resize()
             {
-                IsBeingResizedTopLeft     = false;
-                IsBeingResizedTopRight    = false;
-                IsBeingResizedBottomLeft  = false;
-                IsBeingResizedBottomRight = false;
-                IsBeingResizedTop         = false;
-                IsBeingResizedLeft        = false;
-                IsBeingResizedRight       = false;
-                IsBeingResizedBottom      = false;
+                State.IsBeingResizedTopLeft     = false;
+                State.IsBeingResizedTopRight    = false;
+                State.IsBeingResizedBottomLeft  = false;
+                State.IsBeingResizedBottomRight = false;
+                State.IsBeingResizedTop         = false;
+                State.IsBeingResizedLeft        = false;
+                State.IsBeingResizedRight       = false;
+                State.IsBeingResizedBottom      = false;
             }
 
             void end_move()
             {
-                IsBeingMoved = false;
+                State.IsBeingMoved = false;
             }
 
             void end_focus()
             {
-                IsFocused = false;
+                State.IsFocused = false;
             }
 
             void end_scroll()
             {
-                IsBeingScrolledVertically   = false;
-                IsBeingScrolledHorizontally = false;
+                State.IsBeingScrolledVertically   = false;
+                State.IsBeingScrolledHorizontally = false;
             }
-            
-        private:
-
-            bool IsBeingMoved             {false};
-            bool IsBeingResizedTopLeft    {false};
-            bool IsBeingResizedTopRight   {false};
-            bool IsBeingResizedBottomLeft {false};
-            bool IsBeingResizedBottomRight{false};
-            bool IsBeingResizedTop        {false};
-            bool IsBeingResizedLeft       {false};
-            bool IsBeingResizedRight      {false};
-            bool IsBeingResizedBottom     {false};
-            bool IsFocused                {false};
-            bool IsBeingScrolledHorizontally{false};
-            bool IsBeingScrolledVertically  {false};
-        };
-
-        struct ImmedidateUserInterfaceFrameData
-        {
         };
 
         class Immedidate2DRendererTestLayer : public Layer
