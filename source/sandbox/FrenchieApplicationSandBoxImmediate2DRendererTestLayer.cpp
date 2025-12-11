@@ -35,45 +35,45 @@ void Immedidate2DRendererTestLayer::frame_update()
         if(push_window("Alpha-2 window")) pop_window();
         if(push_window("Alpha-3 window")) pop_window();
 
-        for (int i = 0; i < 10; i++)push_close_button_widget();
+        for (int i = 0; i < 10; i++) push_close_button_widget(i % 2 > 0);
 
         //if(push_window("Alpha-4 window", 1.f)) pop_window();
 
-        if(push_window("Container window",
-            nullptr,
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
-        {
-            if(push_window("Theta window",
-                nullptr, 
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-            {
-                if(push_window("Theta-1 window")) pop_window();
-                if(push_window("Theta-2 window")) pop_window();
+        // if(push_window("Container window",
+        //     nullptr,
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
+        // {
+        //     if(push_window("Theta window",
+        //         nullptr, 
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+        //     {
+        //         if(push_window("Theta-1 window")) pop_window();
+        //         if(push_window("Theta-2 window")) pop_window();
 
-                pop_window();
-            }
+        //         pop_window();
+        //     }
 
-            if(push_window("Cappa window",
-                nullptr, 
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-            {
-                if(push_window("Cappa-1 window")) pop_window();
-                if(push_window("Cappa-2 window")) pop_window();
+        //     if(push_window("Cappa window",
+        //         nullptr, 
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+        //     {
+        //         if(push_window("Cappa-1 window")) pop_window();
+        //         if(push_window("Cappa-2 window")) pop_window();
 
-                pop_window();
-            }
+        //         pop_window();
+        //     }
 
-            pop_window();
-        }
+        //     pop_window();
+        // }
 
         pop_window();
     }
@@ -191,7 +191,7 @@ void Immedidate2DRendererTestLayer::set_next_window_size(const gs_vec2f& _Value)
     m_NextWindowSize = _Value;
 }
 
-bool Immedidate2DRendererTestLayer::push_close_button_widget()
+bool Immedidate2DRendererTestLayer::push_close_button_widget(const bool& _Vertical)
 {
     if(m_WindowsHierarchy.empty()) return false;
 
@@ -201,29 +201,40 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
     //     gs_2dboxf(window->WindowViewportBox.Min, window->WindowBox.Max),
     //     window->WindowTransform);
 
-    float width   = 64.f;
-    float height  = 64.f;
-    float padding = 8.f;
+    auto box = push_widget(gs_vec2f(64.f, 64.f), +_Vertical);
+
+    render_close_button_widget(
+        box.Min + window->State.WindowContentBox.Min,
+        box.Max + window->State.WindowContentBox.Min,
+        window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
+
+    m_Renderer->push_rectangle(
+        window->Cache.WindowContentBox.Min,
+        window->Cache.WindowContentBox.Max,
+        m_Style.FrameWidth,
+        gs_vec4f(0.f, 255.f, 0.f, 255.f),
+        window->State.WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+
+    return true;
+}
+
+gs_2dboxf Immedidate2DRendererTestLayer::push_widget(const gs_vec2f& _Size, const bool& _Vertical)
+{
+    if(m_WindowsHierarchy.empty()) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+
+    auto  window  = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+    float padding = 8.f; // TODO: this MUST BE a setting !!!
 
     window->State.LayoutCursorPositon += window->State.LayoutCursorSize * window->State.LayoutCursorDirection;
 
     gs_vec2f min = window->State.LayoutCursorPositon + gs_vec2f(m_Style.FrameWidth, m_Style.FrameWidth);
-    
-    gs_vec2f max = min + gs_vec2f(width, height);
 
-    render_close_button_widget(
-        window->State.WindowContentBox.Min + min,
-        window->State.WindowContentBox.Min + max,
-        window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
-
-    window->State.LayoutCursorSize      = gs_vec2f(width, height + padding);
-    window->State.LayoutCursorDirection = gs_vec2f(0.f, 1.f);
+    window->State.LayoutCursorSize      = _Size + gs_vec2f(0.f, padding);
+    window->State.LayoutCursorDirection = _Vertical ? gs_vec2f(0.f, 1.f) : gs_vec2f(1.f, 0.f);
 
     compute_window_geometry(window);
 
-    //m_Renderer->pop_clip_box();
-
-    return true;
+    return gs_2dboxf(min, min + _Size);
 }
 
 bool Immedidate2DRendererTestLayer::push_window(
@@ -443,18 +454,11 @@ bool Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
 
     // draw content gizmo
-    m_Renderer->push_rectangle(
-        _Window->Cache.WindowContentBox.Min,
-        _Window->Cache.WindowContentBox.Max,
-        m_Style.FrameWidth,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
-
     // m_Renderer->push_rectangle(
-    //     _Window->WindowViewportBox.Min,
-    //     _Window->WindowViewportBox.Max,
+    //     _Window->Cache.WindowContentBox.Min,
+    //     _Window->Cache.WindowContentBox.Max,
     //     m_Style.FrameWidth,
-    //     gs_vec4f(0.f, 255.f, 0.f, 255.f),
+    //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
     //     _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
 
     return true;
