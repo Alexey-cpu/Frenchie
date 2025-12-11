@@ -193,12 +193,13 @@ namespace Frenchie
 
             struct WindowState
             {
+                // hints
                 mutable ImmedidateUserInterfaceWindowHints Hints {ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
 
                 // hierarchy
                 mutable int                            Depth    {0};
-                mutable int                            Thickness{0};
                 mutable ImmedidateUserInterfaceWindow* Parent   {nullptr}; // parent is never nullptr as ALL windows are cached...
+                mutable int                            Thickness{0};
 
                 // layouting
                 mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
@@ -237,14 +238,26 @@ namespace Frenchie
                 mutable bool IsBeingScrolledVertically  {false};
             };
 
-            mutable std::string                        Name  {"Default"    }; // TODO: this MUST BE A HASH !!!
-            mutable WindowState                        State {WindowState()};
-            mutable WindowState                        Cache {WindowState()};
+            mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
+            mutable WindowState State{WindowState()};
+            mutable WindowState Cache{WindowState()};
 
             // API
             int calculate_child_depth() const
             {
                 return (State.Depth + (State.Thickness++));
+            }
+
+            bool needs_vertical_scroll_bar() const
+            {
+                return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) || gs_abs(Cache.WindowViewportBox.height() - Cache.WindowContentBox.height()) > 1.f) &&
+                        !(State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar);
+            }
+
+            bool needs_horizontal_scroll_bar() const
+            {
+                return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) || gs_abs(Cache.WindowViewportBox.width() - Cache.WindowContentBox.width()) > 1.f) &&
+                        !(State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar);
             }
 
             bool is_being_resized_top_left() const
@@ -454,30 +467,29 @@ namespace Frenchie
 
             bool push_window(
                 const std::string&                 _Name,
-                const float&                       _Weight = 1.f,
-                bool*                              _Opened = nullptr,
-                ImmedidateUserInterfaceWindowHints _Hints  = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
+                bool*                              _Opened           = nullptr,
+                ImmedidateUserInterfaceWindowHints _Hints            = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
 
             void pop_window();
 
         protected:
 
-            ImmedidateUserInterfaceStyle                         m_Style       {ImmedidateUserInterfaceStyle()};
-            std::shared_ptr<Immediate2DRenderer>                 m_Renderer    {nullptr};
+            ImmedidateUserInterfaceStyle         m_Style   {ImmedidateUserInterfaceStyle()};
+            std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
 
             // window utility functions
-            void calculate_window_geometry(const ImmedidateUserInterfaceWindow*);
-
-            void render_window_background(ImmedidateUserInterfaceWindow*);
-            void render_window_classic_frame(ImmedidateUserInterfaceWindow*, bool*);
-            void render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
-
+            void compute_window_geometry(ImmedidateUserInterfaceWindow*);
+            bool render_window_background(ImmedidateUserInterfaceWindow*);
+            bool render_window_classic_frame(ImmedidateUserInterfaceWindow*);
+            bool render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
+            bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
             void sink_window_events(ImmedidateUserInterfaceWindow*);
 
             // widgets rendering functions
             bool render_close_button_widget(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_mat4f& _Transform);
 
-            std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
+            // info
+            std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache    {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
 
