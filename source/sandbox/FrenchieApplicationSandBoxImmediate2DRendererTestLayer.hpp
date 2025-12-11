@@ -297,7 +297,7 @@ namespace Frenchie
 
             bool is_being_modified() const
             {
-                return is_being_moved() || is_being_resized();
+                return is_being_moved() || is_being_resized() || is_being_scrolled();
             }
 
             bool is_being_focused() const
