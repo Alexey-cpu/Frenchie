@@ -222,7 +222,7 @@ namespace Frenchie
 
             void pop_clip_box()
             {
-                m_Clipbox.pop_back();
+                if(!m_Clipbox.empty())m_Clipbox.pop_back();
 
                 if(!m_Clipbox.empty())
                 {
