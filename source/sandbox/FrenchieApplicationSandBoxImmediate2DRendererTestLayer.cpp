@@ -25,23 +25,21 @@ void Immedidate2DRendererTestLayer::frame_update()
     static bool bettaWindowOpened = true;
 
     if(push_window("Beta window",
-        1.f,
         &bettaWindowOpened,
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
     {
-        if(push_window("Alpha-1 window", 1.f)) pop_window();
-        if(push_window("Alpha-2 window", 1.f)) pop_window();
-        if(push_window("Alpha-3 window", 1.f)) pop_window();
+        if(push_window("Alpha-1 window")) pop_window();
+        if(push_window("Alpha-2 window")) pop_window();
+        if(push_window("Alpha-3 window")) pop_window();
 
         for (int i = 0; i < 10; i++)push_close_button_widget();
 
         //if(push_window("Alpha-4 window", 1.f)) pop_window();
 
         if(push_window("Container window",
-            1.f,
             nullptr,
             ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
             ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
@@ -49,29 +47,27 @@ void Immedidate2DRendererTestLayer::frame_update()
             ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
         {
             if(push_window("Theta window",
-                1.f,
                 nullptr, 
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
             {
-                if(push_window("Theta-1 window", 1.f)) pop_window();
-                if(push_window("Theta-2 window", 1.f)) pop_window();
+                if(push_window("Theta-1 window")) pop_window();
+                if(push_window("Theta-2 window")) pop_window();
 
                 pop_window();
             }
 
             if(push_window("Cappa window",
-                1.f,
                 nullptr, 
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
                 ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
             {
-                if(push_window("Cappa-1 window", 1.f)) pop_window();
-                if(push_window("Cappa-2 window", 1.f)) pop_window();
+                if(push_window("Cappa-1 window")) pop_window();
+                if(push_window("Cappa-2 window")) pop_window();
 
                 pop_window();
             }
@@ -223,7 +219,7 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
     window->State.LayoutCursorSize      = gs_vec2f(width, height + padding);
     window->State.LayoutCursorDirection = gs_vec2f(0.f, 1.f);
 
-    calculate_window_geometry(window);
+    compute_window_geometry(window);
 
     //m_Renderer->pop_clip_box();
 
@@ -232,7 +228,6 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
 
 bool Immedidate2DRendererTestLayer::push_window(
     const std::string&                 _Name,
-    const float&                       _Weight,
     bool*                              _Opened,
     ImmedidateUserInterfaceWindowHints _Hints)
 {
@@ -253,7 +248,7 @@ bool Immedidate2DRendererTestLayer::push_window(
     }
 
     ImmedidateUserInterfaceWindow* window = m_WindowsCache.find(_Name)->second.get();
-    window->State.LayoutFillWeight = _Weight;
+    window->State.LayoutFillWeight = 1.f;
     window->State.Hints            = _Hints;
 
     window->State.WindowContentBox.Min = window->Cache.WindowContentBox.Min + gs_vec2f(0.f, -window->State.VerticalScrollBar.SliderPosition);
@@ -305,7 +300,7 @@ bool Immedidate2DRendererTestLayer::push_window(
         }
 
         // recursivelly recompute state.parental geometry
-        calculate_window_geometry(window);
+        compute_window_geometry(window);
 
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
@@ -328,7 +323,7 @@ bool Immedidate2DRendererTestLayer::push_window(
             window->State.Depth = windowMaximumDepth;
         }
 
-        calculate_window_geometry(window);
+        compute_window_geometry(window);
     }
 
     // check state.parent
@@ -349,23 +344,15 @@ bool Immedidate2DRendererTestLayer::push_window(
 
     //if(window->State.Parent == nullptr)
     {
-        render_window_classic_frame(window, _Opened);
+        bool frameCloseButtonPressed = render_window_classic_frame(window);
+        if(_Opened != nullptr)
+            *_Opened = !frameCloseButtonPressed;
     }
 
-    // render vertical scrollbar
-    if((window->State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) ||
-        window->State.WindowViewportBox.height() < window->Cache.WindowContentBox.height())
-    {
-        if(!(window->State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar))
-            render_window_vertical_scrollbar(window);
-    }
-
-    // render horizontal scrollbar
-    if((window->State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) ||
-        window->State.WindowViewportBox.width() < window->Cache.WindowContentBox.width())
-    {
-        if(!(window->State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar)){} // TODO: render horizontal scrollbar here...
-    }
+    if(window->needs_vertical_scroll_bar())
+        render_window_vertical_scrollbar(window);
+    if(window->needs_horizontal_scroll_bar())
+        render_window_horizontal_scrollbar(window);
 
     sink_window_events(window);
 
@@ -382,7 +369,7 @@ void Immedidate2DRendererTestLayer::pop_window()
         m_WindowsHierarchy.pop_back();
 }
 
-void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUserInterfaceWindow* _Window)
+void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterfaceWindow* _Window)
 {
     if(_Window == nullptr) return;
 
@@ -417,7 +404,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
         gs_vec2f(_Window->State.WindowVerticalScrollBarBox.Max.x, _Window->State.WindowVerticalScrollBarBox.Min.y + _Window->State.VerticalScrollBar.SliderLength + _Window->State.VerticalScrollBar.SliderPosition));
 
     // horizontal scrollbar
-    // TODO: implemente horizontal scrollbar geometry computation
+    // TODO: implement horizontal scrollbar geometry computation
 
     // viewport
     _Window->State.WindowViewportBox = gs_2dboxf(
@@ -433,11 +420,13 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
     _Window->State.WindowContentBox.Min += gs_vec2f(0.f, -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
     _Window->State.WindowContentBox.Max += gs_vec2f(0.f, -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
 
-    calculate_window_geometry(_Window->State.Parent);
+    compute_window_geometry(_Window->State.Parent);
 }
 
-void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window)
+bool Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window)
 {
+    if(_Window == nullptr) return false;
+
     m_Renderer->push_rectangle_rounded_filled(
         _Window->State.WindowBox.Min,
         _Window->State.WindowBox.Max,
@@ -467,10 +456,16 @@ void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
     //     m_Style.FrameWidth,
     //     gs_vec4f(0.f, 255.f, 0.f, 255.f),
     //     _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+
+    return true;
 }
 
-void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserInterfaceWindow* _Window, bool* _Opened)
+bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserInterfaceWindow* _Window)
 {
+    if(_Window == nullptr) return true; // we think it's closed in this case
+
+    bool closeButtonPressed = false;
+
     // frame rectangle
     m_Renderer->push_rectangle_rounded_filled(
         _Window->State.WindowFrameBox.Min,
@@ -504,17 +499,21 @@ void Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
     m_Renderer->pop_clip_box();
 
     // frame close button
-    if(_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable && _Opened != nullptr)
+    if(_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable)
     {
-        *_Opened = !render_close_button_widget(
+        closeButtonPressed = render_close_button_widget(
             _Window->State.WindowCloseButtonBox.Min,
             _Window->State.WindowCloseButtonBox.Max,
             _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
     }
+
+    return closeButtonPressed;
 }
 
-void Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow* _Window)
+bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow* _Window)
 {
+    if(_Window == nullptr) return false;
+
     m_Renderer->push_clip_box(
         gs_2dboxf(_Window->State.WindowVerticalScrollBarBox.Min - m_Style.FrameWidth, _Window->State.WindowVerticalScrollBarBox.Max + m_Style.FrameWidth),
         _Window->State.WindowTransform);
@@ -559,6 +558,15 @@ void Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateU
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
 
     m_Renderer->pop_clip_box();
+    
+    return true;
+}
+
+bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return false;
+
+    return true;
 }
 
 void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window)
