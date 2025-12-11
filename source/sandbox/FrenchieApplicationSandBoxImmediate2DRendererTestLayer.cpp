@@ -33,56 +33,56 @@ void Immedidate2DRendererTestLayer::frame_update()
     {
         if(push_window("Alpha-1 window")) pop_window();
 
-        // same_line(); push_close_button_widget();
-        // same_line(); push_close_button_widget();
-        // same_line(); push_close_button_widget();
-        // same_line(); push_close_button_widget();
+        same_line(); push_close_button_widget();
+        same_line(); push_close_button_widget();
+        same_line(); push_close_button_widget();
+        same_line(); push_close_button_widget();
 
-        // push_close_button_widget();
-        // push_close_button_widget();
-        // push_close_button_widget();
-        // push_close_button_widget();
+        push_close_button_widget();
+        push_close_button_widget();
+        push_close_button_widget();
+        push_close_button_widget();
 
-        if(push_window("Alpha-2 window")) pop_window();
-        if(push_window("Alpha-3 window")) pop_window();
+        // if(push_window("Alpha-2 window")) pop_window();
+        // if(push_window("Alpha-3 window")) pop_window();
 
         //if(push_window("Alpha-4 window")) pop_window();
 
-        if(push_window("Container window",
-            nullptr,
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
-        {
-            if(push_window("Theta window",
-                nullptr, 
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-            {
-                if(push_window("Theta-1 window")) pop_window();
-                if(push_window("Theta-2 window")) pop_window();
+        // if(push_window("Container window",
+        //     nullptr,
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutVertical))
+        // {
+        //     if(push_window("Theta window",
+        //         nullptr, 
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+        //     {
+        //         if(push_window("Theta-1 window")) pop_window();
+        //         if(push_window("Theta-2 window")) pop_window();
 
-                pop_window();
-            }
+        //         pop_window();
+        //     }
 
-            if(push_window("Cappa window",
-                nullptr, 
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
-            {
-                if(push_window("Cappa-1 window")) pop_window();
-                if(push_window("Cappa-2 window")) pop_window();
+        //     if(push_window("Cappa window",
+        //         nullptr, 
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal))
+        //     {
+        //         if(push_window("Cappa-1 window")) pop_window();
+        //         if(push_window("Cappa-2 window")) pop_window();
 
-                pop_window();
-            }
+        //         pop_window();
+        //     }
 
-            pop_window();
-        }
+        //     pop_window();
+        // }
 
         pop_window();
     }
@@ -209,10 +209,6 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
 
     auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
 
-    // m_Renderer->push_clip_box(
-    //     gs_2dboxf(window->WindowViewportBox.Min, window->WindowBox.Max),
-    //     window->WindowTransform);
-
     auto box = push_widget(gs_vec2f(64.f, 64.f));
 
     render_close_button_widget(
@@ -259,10 +255,7 @@ gs_2dboxf Immedidate2DRendererTestLayer::push_widget(const gs_vec2f& _Size)
     return gs_2dboxf(min, min + _Size);
 }
 
-bool Immedidate2DRendererTestLayer::push_window(
-    const std::string&                 _Name,
-    bool*                              _Opened,
-    ImmedidateUserInterfaceWindowHints _Hints)
+bool Immedidate2DRendererTestLayer::push_window(const std::string& _Name, bool* _Opened, ImmedidateUserInterfaceWindowHints _Hints)
 {
     // request window from cache
     if(m_WindowsCache.find(_Name) == m_WindowsCache.end())
@@ -286,6 +279,10 @@ bool Immedidate2DRendererTestLayer::push_window(
 
     window->State.WindowScrollAreaBox.Min = window->Cache.WindowScrollAreaBox.Min + gs_vec2f(0.f, -window->State.VerticalScrollBar.SliderPosition);
     window->State.WindowScrollAreaBox.Max = window->Cache.WindowScrollAreaBox.Max + gs_vec2f(0.f, -window->State.VerticalScrollBar.SliderPosition);
+
+    // m_Renderer->push_clip_box(
+    //     window->State.WindowBox,
+    //     window->State.WindowTransform);
 
     if(_Opened == nullptr)
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
@@ -385,12 +382,12 @@ bool Immedidate2DRendererTestLayer::push_window(
             *_Opened = !frameCloseButtonPressed;
     }
 
-    if(window->needs_vertical_scroll_bar())
-        render_window_vertical_scrollbar(window);
-    if(window->needs_horizontal_scroll_bar())
-        render_window_horizontal_scrollbar(window);
+    // if(window->needs_vertical_scroll_bar())
+    //     render_window_vertical_scrollbar(window);
+    // if(window->needs_horizontal_scroll_bar())
+    //     render_window_horizontal_scrollbar(window);
 
-    sink_window_events(window);
+    // sink_window_events(window);
 
     // push window into hierarchy stack and draw list
     m_WindowsDrawList.push_back(window);
@@ -401,8 +398,20 @@ bool Immedidate2DRendererTestLayer::push_window(
 
 void Immedidate2DRendererTestLayer::pop_window()
 {
-    if(!m_WindowsHierarchy.empty())
-        m_WindowsHierarchy.pop_back();
+    if(m_WindowsHierarchy.empty()) return;
+
+    auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+
+    if(window->needs_vertical_scroll_bar())
+        render_window_vertical_scrollbar(window);
+    if(window->needs_horizontal_scroll_bar())
+        render_window_horizontal_scrollbar(window);
+
+    sink_window_events(window);
+
+    //m_Renderer->pop_clip_box();
+
+    m_WindowsHierarchy.pop_back();
 }
 
 void Immedidate2DRendererTestLayer::compute_window_geometry(ImmedidateUserInterfaceWindow* _Window)
