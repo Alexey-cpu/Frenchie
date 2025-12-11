@@ -162,8 +162,14 @@ void Immedidate2DRendererTestLayer::frame_finish()
     for (auto& cachedWindow : m_WindowsCache)
     {
         // cache
-        cachedWindow.second->PreviousLayoutTotalWeight = cachedWindow.second->LayoutTotalWeight;
-        cachedWindow.second->PreviousWindowContentBox     = cachedWindow.second->WindowContentBox;
+        if(!cachedWindow.second->is_being_modified())
+        {
+            cachedWindow.second->PreviousLayoutTotalWeight = cachedWindow.second->LayoutTotalWeight;
+            cachedWindow.second->PreviousWindowContentBox  = cachedWindow.second->WindowContentBox;
+
+            cachedWindow.second->PreviousWindowBox                        = cachedWindow.second->WindowBox;
+            cachedWindow.second->VerticalScrollBar.SliderPreviousPosition = cachedWindow.second->VerticalScrollBar.SliderPosition;
+        }
 
         // layouting
         cachedWindow.second->LayoutTotalWeight = 0.f;
@@ -222,16 +228,7 @@ bool Immedidate2DRendererTestLayer::push_close_button_widget()
     window->LayoutCursorSize      = gs_vec2f(width, height + padding);
     window->LayoutCursorDirection = gs_vec2f(0.f, 1.f);
 
-
-    // recursivelly recompute parental geometry
-    auto parent = window->Parent;
-
-    while (parent)
-    {
-        calculate_window_geometry(parent);
-        parent = parent->Parent;
-    }
-    //calculate_window_geometry(window);
+    calculate_window_geometry(window);
 
     //m_Renderer->pop_clip_box();
 
@@ -313,13 +310,7 @@ bool Immedidate2DRendererTestLayer::push_window(
         }
 
         // recursivelly recompute parental geometry
-        auto parent = window->Parent;
-
-        while (parent)
-        {
-            calculate_window_geometry(parent);
-            parent = parent->Parent;
-        }
+        calculate_window_geometry(window);
 
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
         window->Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
@@ -341,6 +332,8 @@ bool Immedidate2DRendererTestLayer::push_window(
             }
             window->Depth = windowMaximumDepth;
         }
+
+        calculate_window_geometry(window);
     }
 
     // check parent
@@ -355,8 +348,6 @@ bool Immedidate2DRendererTestLayer::push_window(
     {
         return false;
     }
-
-    calculate_window_geometry(window);
 
     // render window
     render_window_background(window);
@@ -397,9 +388,11 @@ void Immedidate2DRendererTestLayer::pop_window()
 }
 
 void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUserInterfaceWindow* _Window)
-{    
+{
+    if(_Window == nullptr) return;
+
     // frame
-    _Window->WindowFrameBox    = gs_2dboxf(_Window->WindowBox.Min, _Window->WindowBox.Min + gs_vec2f(_Window->WindowBox.width(), m_Style.FontSize));
+    _Window->WindowFrameBox = gs_2dboxf(_Window->WindowBox.Min, _Window->WindowBox.Min + gs_vec2f(_Window->WindowBox.width(), m_Style.FontSize));
 
     // title
     gs_vec2f titleSize = m_Renderer->calculate_bounding_box(_Window->Name, m_Style.FontSize, m_Style.Font).size();
@@ -444,6 +437,8 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(const ImmedidateUs
 
     _Window->WindowContentBox.Min += gs_vec2f(0.f, -_Window->VerticalScrollBar.SliderPosition * _Window->VerticalScrollBar.SliderScale);
     _Window->WindowContentBox.Max += gs_vec2f(0.f, -_Window->VerticalScrollBar.SliderPosition * _Window->VerticalScrollBar.SliderScale);
+
+    calculate_window_geometry(_Window->Parent);
 }
 
 void Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInterfaceWindow* _Window)
@@ -817,8 +812,8 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
     }
     else
     {
-        _Window->PreviousWindowBox                        = _Window->WindowBox;
-        _Window->VerticalScrollBar.SliderPreviousPosition = _Window->VerticalScrollBar.SliderPosition;
+        // _Window->PreviousWindowBox                        = _Window->WindowBox;
+        // _Window->VerticalScrollBar.SliderPreviousPosition = _Window->VerticalScrollBar.SliderPosition;
     }
 }
 
