@@ -109,8 +109,9 @@ void Immediate2DRenderer::frame_start()
 
     m_Viewport = gs_2dboxf(
         gs_matrix_invert_square(projection) * gs_matrix_invert_square(cameraview) * gs_vec4f(viewportMin, 1.f),
-        gs_matrix_invert_square(projection) * gs_matrix_invert_square(cameraview) * gs_vec4f(viewportMax, 1.f)
-    );
+        gs_matrix_invert_square(projection) * gs_matrix_invert_square(cameraview) * gs_vec4f(viewportMax, 1.f));
+
+    pop_clip_box();
 }
 
 void Immediate2DRenderer::frame_finish()
