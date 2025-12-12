@@ -768,6 +768,40 @@ gs_vector<Type, 2> gs_vector_convert_to_NDC(const gs_vector<Type, 2>& _Position,
         1.0f - (2.0f * _Position.y) / _Screen.y);
 }
 
+template<typename Type, int Size>
+inline gs_vector<Type, Size> gs_min(
+    const gs_vector<Type, Size>& _A,
+    const gs_vector<Type, Size>& _B)
+{
+    gs_vector<Type, Size> Vector;
+    for (int i = 0; i < Size; ++i)
+        Vector[i] = gs_min(_A[i], _B[i]);
+    return Vector;
+}
+
+template<typename Type, int Size>
+inline gs_vector<Type, Size> gs_max(
+    const gs_vector<Type, Size>& _A,
+    const gs_vector<Type, Size>& _B)
+{
+    gs_vector<Type, Size> Vector;
+    for (int i = 0; i < Size; ++i)
+        Vector[i] = gs_max(_A[i], _B[i]);
+    return Vector;
+}
+
+template<typename Type, int Size>
+inline gs_vector<Type, Size> gs_clamp(
+    const gs_vector<Type, Size>& _Value,
+    const gs_vector<Type, Size>& _Min,
+    const gs_vector<Type, Size>& _Max)
+{
+    gs_vector<Type, Size> Vector;
+    for (int i = 0; i < Size; ++i)
+        Vector[i] = gs_clamp(_Value[i], _Min[i], _Max[i]);
+    return Vector;
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 // [MATRIX]
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
