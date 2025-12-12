@@ -376,7 +376,10 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
     if(_Window == nullptr) return;
 
     // frame
-    _Window->State.WindowFrameBox = gs_2dboxf(_Window->State.WindowBox.Min, _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style.FontSize));
+    _Window->State.WindowFrameBox =
+        gs_2dboxf(
+            _Window->State.WindowBox.Min,
+            _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style.FontSize));
 
     // title
     gs_vec2f titleSize = m_Renderer->calculate_bounding_box(_Window->Name, m_Style.FontSize, m_Style.Font).size();
@@ -482,8 +485,8 @@ bool Immedidate2DRendererTestLayer::render_window_clipbox(ImmedidateUserInterfac
 
         _Window->State.WindowOuterClipAreaBox =
             gs_2dboxf(
-                next->State.WindowViewportBox.transform(_Window->State.WindowTransform).Min,
-                next->State.WindowViewportBox.transform(_Window->State.WindowTransform).Max + gs_vec2f(m_Style.WindowScrollBarSliderWidth, 0.f));
+                next->State.WindowViewportBox.transform(next->State.WindowTransform).Min,
+                next->State.WindowViewportBox.transform(next->State.WindowTransform).Max + gs_vec2f(m_Style.WindowScrollBarSliderWidth, 0.f));
     }
     else
     {
@@ -504,8 +507,7 @@ bool Immedidate2DRendererTestLayer::render_window_clipbox(ImmedidateUserInterfac
     m_Renderer->push_clip_box(
         gs_2dboxf(
             gs_clamp(_Window->State.WindowInnerClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Max),
-            gs_clamp(_Window->State.WindowInnerClipAreaBox.Max, _Window->State.WindowOuterClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Max)),
-        _Window->State.WindowTransform);
+            gs_clamp(_Window->State.WindowInnerClipAreaBox.Max, _Window->State.WindowOuterClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Max)));
 
     return true;
 }
