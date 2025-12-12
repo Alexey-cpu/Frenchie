@@ -269,6 +269,17 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
         window->State.Depth                            = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1]->calculate_child_depth();
         window->State.Parent->State.LayoutTotalWeight += window->State.LayoutFillWeight;
 
+        // update parental depth
+        {
+            auto parent = window->State.Parent;
+
+            while (parent)
+            {
+                parent->State.Depth = parent->calculate_child_depth();
+                parent = parent->State.Parent;
+            }
+        }
+
         gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
         m_NextCursorDirection.reset();
 
