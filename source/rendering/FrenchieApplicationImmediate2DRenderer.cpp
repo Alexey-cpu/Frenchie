@@ -80,8 +80,8 @@ bool Immediate2DRenderer::awake()
 void Immediate2DRenderer::frame_start()
 {
     // push clear colo
-    push_clear_color(gs_vec4f(150.f, 150.f, 150.f, 150.f));
-    push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
+    m_RenderingQueue->push_renderer_command(gs_vec4f(150.f, 150.f, 150.f, 150.f));
+    m_RenderingQueue->push_renderer_command(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
 
     // compute projection matrix
     float width  = Frenchie::Application::application()->get_window_size().x;

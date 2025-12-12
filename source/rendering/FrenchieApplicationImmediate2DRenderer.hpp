@@ -216,22 +216,18 @@ namespace Frenchie
 
             void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f))
             {
-                m_Clipbox.push_back(_Value.transform(_Transform));
-                m_RenderingQueue->push_renderer_command(_Value.transform(_Transform));
+                gs_2dboxf clipRect = _Value.transform(_Transform);
+                m_Clipbox.push_back(clipRect);
+                m_RenderingQueue->push_renderer_command(clipRect);
             }
 
             void pop_clip_box()
             {
-                if(!m_Clipbox.empty())m_Clipbox.pop_back();
-
                 if(!m_Clipbox.empty())
-                {
-                    m_RenderingQueue->push_renderer_command(m_Clipbox[m_Clipbox.size() - 1]);
-                }
-                else
-                {
-                    m_RenderingQueue->push_renderer_command(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));                    
-                }
+                    m_Clipbox.pop_back();
+
+                m_RenderingQueue->push_renderer_command(
+                    !m_Clipbox.empty() ? m_Clipbox[m_Clipbox.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
             }
 
             void push_clear_color(const gs_vec4f& _Value)

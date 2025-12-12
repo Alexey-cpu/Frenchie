@@ -64,24 +64,21 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceWindowHints_ : int
         {
+            // window common hints
             ImmedidateUserInterfaceWindowHints_Movable                   = 1 << 1,
             ImmedidateUserInterfaceWindowHints_Closable                  = 1 << 2,
             ImmedidateUserInterfaceWindowHints_Resizable                 = 1 << 3,
-            
-            // children layouting
-            ImmedidateUserInterfaceWindowHints_LayoutVertical            = 1 << 4,
-            ImmedidateUserInterfaceWindowHints_LayoutHorizontal          = 1 << 5,
 
             // scrollbars
-            ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar = 1 << 6,
-            ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar   = 1 << 7,
-            ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar = 1 << 8,
-            ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar   = 1 << 9,
+            ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar = 1 << 4,
+            ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar   = 1 << 5,
+            ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar  = 1 << 6,
+            ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar    = 1 << 7,
 
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_Resizable | ImmedidateUserInterfaceWindowHints_LayoutVertical
+                ImmedidateUserInterfaceWindowHints_Resizable
         };
 
         enum ImmedidateUserInterfaceConditions_ : int
@@ -213,12 +210,13 @@ namespace Frenchie
 
                 // geometry
                 mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 
-                mutable gs_2dboxf WindowScrollAreaBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-
+                mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                
+                mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-
                 mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
@@ -245,7 +243,6 @@ namespace Frenchie
             mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
             mutable WindowState State{WindowState()};
             mutable WindowState Cache{WindowState()};
-            //mutable WindowState Changed{WindowState()};
 
             // API
             int calculate_child_depth() const
@@ -460,58 +457,30 @@ namespace Frenchie
             Immedidate2DRendererTestLayer(){}
             virtual ~Immedidate2DRendererTestLayer(){}
 
-            virtual bool awake() override;
-            virtual void frame_start() override;
+            virtual bool awake()        override;
+            virtual void frame_start()  override;
             virtual void frame_update() override;
             virtual void frame_finish() override;
 
             void set_next_window_position(const gs_vec2f&);
             void set_next_window_size(const gs_vec2f&);
 
-            void same_line()
-            {
-                m_NextCursorDirection = gs_vec2f(1.f, 0.f);
-            }
+            void same_line();
 
+            // API
             bool push_close_button_widget();
 
-            gs_2dboxf push_widget(const gs_vec2f& _Size);
-
-            bool push_window(
+            bool begin_window(
                 const std::string&                 _Name,
-                bool*                              _Opened           = nullptr,
-                ImmedidateUserInterfaceWindowHints _Hints            = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
+                bool*                              _Opened = nullptr,
+                ImmedidateUserInterfaceWindowHints _Hints  = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
 
-            void pop_window();
+            void end_window();
 
         protected:
 
             ImmedidateUserInterfaceStyle         m_Style   {ImmedidateUserInterfaceStyle()};
             std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
-
-            // window utility functions
-            void compute_window_geometry(ImmedidateUserInterfaceWindow*);
-            bool render_window_background(ImmedidateUserInterfaceWindow*);
-            bool render_window_classic_frame(ImmedidateUserInterfaceWindow*);
-            bool render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
-            bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
-            void sink_window_events(ImmedidateUserInterfaceWindow*);
-
-            // widgets rendering functions
-            bool render_close_button_widget(const gs_vec2f& _Min, const gs_vec2f& _Max, const gs_mat4f& _Transform);
-
-            // cursor manipulation
-            // gs_vec2f next_cursor_direction()
-            // {
-            //     if(m_NextCursorDirection.has_value())
-            //     {
-            //         auto direction = m_NextCursorDirection.value();
-            //         m_NextCursorDirection.reset();
-            //         return direction;
-            //     }
-
-            //     return gs_vec2f(0.f, 1.f);
-            // }
 
             // info
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache    {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
@@ -522,6 +491,23 @@ namespace Frenchie
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowSize;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowPosition;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextCursorDirection;
+
+            // service methods
+
+            // geometry calculation
+            void      calculate_window_geometry(ImmedidateUserInterfaceWindow*);
+            gs_2dboxf calculate_widget_geometry(const gs_vec2f& _Size);
+
+            // rendering
+            bool render_window_clipbox(ImmedidateUserInterfaceWindow*);
+            bool render_window_background(ImmedidateUserInterfaceWindow*);
+            bool render_window_classic_frame(ImmedidateUserInterfaceWindow*);
+            bool render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
+            bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
+
+            bool render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
+
+            void sink_window_events(ImmedidateUserInterfaceWindow*);
         };
     }
 }
