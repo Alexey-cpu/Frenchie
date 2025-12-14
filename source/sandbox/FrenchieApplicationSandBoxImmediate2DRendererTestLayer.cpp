@@ -248,51 +248,51 @@ void Immedidate2DRendererTestLayer::frame_update()
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable
     ))
     {
-        if(begin_window("Alpha-1 window"))end_window();
+        for (int i = 0; i < 10; i++)
+        {
+            same_line();
+            close_button_widget();
+        }
 
-        if(begin_window("Alpha-2 window"))end_window();
+        if(begin_window("Container window",
+            nullptr,
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        {
+            same_line();
+            if(begin_window("Theta window",
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+            {
+                if(begin_window("Theta-1 window")) end_window();
+                if(begin_window("Theta-2 window")) end_window();
 
-        if(begin_window("Alpha-3 window"))end_window();
+                end_window();
+            }
 
-        // if(begin_window("Alpha-2 window")) end_window();
-        // if(begin_window("Alpha-3 window")) end_window();
+            same_line();
+            if(begin_window("Cappa window",
+                nullptr, 
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+            {
+                if(begin_window("Cappa-1 window")) end_window();
+                if(begin_window("Cappa-2 window")) end_window();
 
-        // if(begin_window("Alpha-4 window")) end_window();
+                end_window();
+            }
 
-        // if(begin_window("Container window",
-        //     nullptr,
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
-        // {
-        //     same_line();
-        //     if(begin_window("Theta window",
-        //         nullptr, 
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
-        //     {
-        //         if(begin_window("Theta-1 window")) end_window();
-        //         if(begin_window("Theta-2 window")) end_window();
+            end_window();
+        }
 
-        //         end_window();
-        //     }
-
-        //     same_line();
-        //     if(begin_window("Cappa window",
-        //         nullptr, 
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
-        //     {
-        //         if(begin_window("Cappa-1 window")) end_window();
-        //         if(begin_window("Cappa-2 window")) end_window();
-
-        //         end_window();
-        //     }
-
-        //     end_window();
-        // }
+        for (int i = 0; i < 10; i++)
+        {
+            close_button_widget();
+        }
 
         end_window();
     }
@@ -451,8 +451,8 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
         window->State.Depth                            = window->State.Parent->calculate_child_depth();
         window->State.Parent->State.LayoutTotalWeight += window->State.LayoutFillWeight;
 
-        gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
-        m_NextCursorDirection.reset();
+        // gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
+        // m_NextCursorDirection.reset();
 
         gs_2dboxf windowsLayoutBox = gs_2dboxf(
             window->State.Parent->State.WindowScrollAreaBox.Min,
@@ -462,7 +462,7 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
 
         window->State.Parent->State.LayoutCursorPositon += window->State.Parent->State.LayoutCursorSize * window->State.Parent->State.LayoutCursorDirection;
 
-        if(cursorDirection.x == 1.f)
+        if(true)
         {
             window->State.WindowBox = gs_2dboxf(
                 windowsLayoutBox.Min,
