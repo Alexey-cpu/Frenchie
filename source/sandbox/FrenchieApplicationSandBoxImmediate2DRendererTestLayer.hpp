@@ -76,13 +76,15 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar    = 1 << 7,
 
             // child windows layouting
-            // ImmedidateUserInterfaceWindowHints_LayoutChildWindowsHorizontally,
-            // ImmedidateUserInterfaceWindowHints_LayoutChildWindowsVertically,
+            ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally = 1 << 8,
+            ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically   = 1 << 9,
+            ImmedidateUserInterfaceWindowHints_LayoutChildrenFixedSize    = 1 << 10,
 
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_Resizable
+                ImmedidateUserInterfaceWindowHints_Resizable |
+                ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically
         };
 
         typedef int ImmedidateUserInterfaceWindowHints;
