@@ -84,8 +84,186 @@ namespace Frenchie
         typedef int ImmedidateUserInterfaceWindowHints;
         typedef int ImmedidateUserInterfaceConditions;
 
-        struct ImmedidateUserInterfaceStyle;
-        struct ImmedidateUserInterfaceWindow;
+        struct ImmedidateUserInterfaceStyle
+        {
+            ImmedidateUserInterfaceStyle()
+            {
+                // setup push button color scheme
+
+                // applciation windows
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor                  ] = gs_vec4f(5, 255, 255, 200.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor                 ] = gs_vec4f(125, 204, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameColor              ] = gs_vec4f(5, 126, 255, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor            ] = gs_vec4f(15, 47, 66, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor         ] = gs_vec4f(15, 47, 66, 255.f);
+
+                // application windows close button
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonDefaultColor           ] = gs_vec4f(80.f, 0.f, 0.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonHoveredColor           ] = gs_vec4f(120.f, 0.f, 0.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowCloseButtonPressedColor           ] = gs_vec4f(40.f, 0.f, 0.f, 255.f);
+
+                // application windows scroll bar
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor                    ] = gs_vec4f(125, 10, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor              ] = gs_vec4f(125, 200, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor       ] = gs_vec4f(150, 250, 250, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor       ] = gs_vec4f(170, 170, 250, 255.f);
+                // application text
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor                         ] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                        ] = gs_vec4f(200.f, 200.f, 200.f, 255.f);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                         ] = gs_vec4f(255.f, 32.f, 32.f, 255.f);
+
+                // // Push button
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor       ] = gs_vec4f(53, 53, 54, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor] = gs_vec4f(87, 87, 89, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor] = gs_vec4f(117, 117, 120, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor             ] = gs_vec4f(1, 16, 77, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor      ] = gs_vec4f(0, 16, 77, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor      ] = gs_vec4f(1, 32, 77, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor            ] = gs_vec4f(30, 30, 31, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor     ] = gs_vec4f(30, 1, 31, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor     ] = gs_vec4f(30, 12, 31, 255);
+
+                // // radio button
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor          ] = gs_vec4f(255, 255, 255, 255);
+                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor         ] = gs_vec4f(200, 200, 200, 255);
+
+                // radio button
+
+            }
+
+            RenderingQueueFont Font;
+            float              FontSize                          = 32.f;
+
+            float              WindowResizeAngleGizmoRadius      = 32.f;
+            float              WindowResizeSideGizmoWidth        = 12.f;
+            float              WindowFrameCloseMinimumButtonSize = 32.f;
+            float              WindowMinimumWidth                = 128.f;
+            float              WindowMinimumHeight               = 128.f;
+            float              WindowScrollBarSliderWidth        = 32.f;
+
+            float              FrameWidth                        = 8.f;
+            float              FrameRoundingRadius               = 16.f;
+
+            gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
+        };
+
+        struct ImmedidateUserInterfaceWindow
+        {
+            struct Scrollbar
+            {
+                void setup(const float& _Min, const float& _Max, const float  _Total, const float& _Track)
+                {
+                    Min          = _Min;
+                    Max          = _Max;
+                    SliderScale  = gs_abs(_Total) / gs_abs(_Max - _Min);
+                    SliderLength = gs_abs(_Max - _Min) / gs_abs(_Total) * _Track;
+                }
+
+                void reposition(const float& _Position)
+                {
+                    SliderPosition = gs_clamp(_Position, 0.f, gs_abs(Max - SliderLength));
+                }
+
+                float Min;
+                float Max;
+                float SliderScale;
+                float SliderLength;
+                float SliderPosition;
+            };
+
+            struct WindowState
+            {
+                // hints
+                mutable ImmedidateUserInterfaceWindowHints Hints {ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
+
+                // hierarchy
+                mutable int                            Depth    {0};
+                mutable ImmedidateUserInterfaceWindow* Parent   {nullptr}; // parent is never nullptr as ALL windows are cached...
+                mutable int                            Thickness{0};
+
+                // layouting
+                mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
+                mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
+                mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
+                mutable float    LayoutFillWeight     {1.f};
+                mutable float    LayoutTotalWeight    {1.f};
+
+                // scrolling
+                mutable Scrollbar VerticalScrollBar;
+
+                // geometry
+                mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
+
+                mutable bool IsBeingMoved               {false};
+                mutable bool IsBeingResizedTopLeft      {false};
+                mutable bool IsBeingResizedTopRight     {false};
+                mutable bool IsBeingResizedBottomLeft   {false};
+                mutable bool IsBeingResizedBottomRight  {false};
+                mutable bool IsBeingResizedTop          {false};
+                mutable bool IsBeingResizedLeft         {false};
+                mutable bool IsBeingResizedRight        {false};
+                mutable bool IsBeingResizedBottom       {false};
+                mutable bool IsFocused                  {false};
+                mutable bool IsBeingScrolledHorizontally{false};
+                mutable bool IsBeingScrolledVertically  {false};
+            };
+
+            mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
+            mutable WindowState State{WindowState()};
+            mutable WindowState Cache{WindowState()};
+
+            // API
+            int  calculate_child_depth() const;
+            bool needs_vertical_scroll_bar() const;
+            bool needs_horizontal_scroll_bar() const;
+            bool is_being_resized_top_left() const;
+            bool is_being_resized_top_right() const;
+            bool is_being_resized_bottom_left() const;
+            bool is_being_resized_bottom_right() const;
+            bool is_being_resized_top() const;
+            bool is_being_resized_left() const;
+            bool is_being_resized_right() const;
+            bool is_being_resized_bottom() const;
+            bool is_being_resized() const;
+            bool is_being_moved() const;
+            bool is_being_modified() const;
+            bool is_being_focused() const;
+            bool is_being_scrolled_vertically() const;
+            bool is_being_scrolled_horizontally() const;
+            bool is_being_scrolled() const;
+            void begin_resize_top_left();
+            void begin_resize_top_right();
+            void begin_resize_bottom_left();
+            void begin_resize_bottom_right();
+            void begin_resize_top();
+            void begin_resize_left();
+            void begin_resize_right();
+            void begin_resize_bottom();
+            void being_move();
+            void begin_focus();
+            void begin_scroll_vertically();
+            void begin_scroll_horizontally();
+            void end_resize();
+            void end_move();
+            void end_focus();
+            void end_scroll();
+        };
 
         class Immedidate2DRendererTestLayer : public Layer
         {
