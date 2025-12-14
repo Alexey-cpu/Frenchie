@@ -9,14 +9,20 @@ int ImmedidateUserInterfaceWindow::calculate_child_depth() const
 
 bool ImmedidateUserInterfaceWindow::needs_vertical_scroll_bar() const
 {
-    return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) || gs_abs(Cache.WindowViewportBox.height() - Cache.WindowScrollAreaBox.height()) > 1.f) &&
-            !(State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar);
+    if (State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar) return false;
+    if (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) return true;
+
+    return Cache.WindowContentBox.height() > Cache.WindowViewportBox.height() &&
+            gs_abs(Cache.WindowViewportBox.height() - Cache.WindowContentBox.height()) > 1.f;
 }
 
 bool ImmedidateUserInterfaceWindow::needs_horizontal_scroll_bar() const
 {
-    return ( (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) || gs_abs(Cache.WindowViewportBox.width() - Cache.WindowScrollAreaBox.width()) > 1.f) &&
-            !(State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar);
+    if (State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar) return false;
+    if (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) return true;
+
+    return Cache.WindowContentBox.width() > Cache.WindowViewportBox.width() &&
+            gs_abs(Cache.WindowViewportBox.width() - Cache.WindowContentBox.width()) > 1.f;
 }
 
 bool ImmedidateUserInterfaceWindow::is_being_resized_top_left() const
@@ -242,70 +248,51 @@ void Immedidate2DRendererTestLayer::frame_update()
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable
     ))
     {
-        if(begin_window("Alpha-1 window"))
-        {
-            same_line(); push_close_button_widget();
-            same_line(); push_close_button_widget();
-            same_line(); push_close_button_widget();
-            same_line(); push_close_button_widget();
+        if(begin_window("Alpha-1 window"))end_window();
 
-            push_close_button_widget();
-            push_close_button_widget();
-            push_close_button_widget();
-            push_close_button_widget();
+        if(begin_window("Alpha-2 window"))end_window();
 
-            end_window();
-        }
+        if(begin_window("Alpha-3 window"))end_window();
 
-        same_line(); push_close_button_widget();
-        same_line(); push_close_button_widget();
-        same_line(); push_close_button_widget();
-        same_line(); push_close_button_widget();
+        // if(begin_window("Alpha-2 window")) end_window();
+        // if(begin_window("Alpha-3 window")) end_window();
 
-        push_close_button_widget();
-        push_close_button_widget();
-        push_close_button_widget();
-        push_close_button_widget();
+        // if(begin_window("Alpha-4 window")) end_window();
 
-        if(begin_window("Alpha-2 window")) end_window();
-        if(begin_window("Alpha-3 window")) end_window();
+        // if(begin_window("Container window",
+        //     nullptr,
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //     ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        // {
+        //     same_line();
+        //     if(begin_window("Theta window",
+        //         nullptr, 
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        //     {
+        //         if(begin_window("Theta-1 window")) end_window();
+        //         if(begin_window("Theta-2 window")) end_window();
 
-        if(begin_window("Alpha-4 window")) end_window();
+        //         end_window();
+        //     }
 
-        if(begin_window("Container window",
-            nullptr,
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-            ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
-        {
-            same_line();
-            if(begin_window("Theta window",
-                nullptr, 
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
-            {
-                if(begin_window("Theta-1 window")) end_window();
-                if(begin_window("Theta-2 window")) end_window();
+        //     same_line();
+        //     if(begin_window("Cappa window",
+        //         nullptr, 
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
+        //         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+        //     {
+        //         if(begin_window("Cappa-1 window")) end_window();
+        //         if(begin_window("Cappa-2 window")) end_window();
 
-                end_window();
-            }
+        //         end_window();
+        //     }
 
-            same_line();
-            if(begin_window("Cappa window",
-                nullptr, 
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
-            {
-                if(begin_window("Cappa-1 window")) end_window();
-                if(begin_window("Cappa-2 window")) end_window();
-
-                end_window();
-            }
-
-            end_window();
-        }
+        //     end_window();
+        // }
 
         end_window();
     }
@@ -319,7 +306,7 @@ void Immedidate2DRendererTestLayer::frame_update()
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable // | ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutHorizontal
     ))
     {
-        for (int i = 0; i < 10; i++)push_close_button_widget();
+        for (int i = 0; i < 10; i++)close_button_widget();
         
         end_window();
     }
@@ -397,7 +384,7 @@ void Immedidate2DRendererTestLayer::frame_finish()
         cachedWindow.second->State.LayoutTotalWeight    = 0.f;
         cachedWindow.second->State.LayoutCursorPositon  = gs_vec2f(0.f, 0.f);
         cachedWindow.second->State.LayoutCursorSize     = gs_vec2f(0.f, 0.f);
-        cachedWindow.second->State.WindowScrollAreaBox     = cachedWindow.second->State.WindowViewportBox;
+        cachedWindow.second->State.WindowScrollAreaBox  = cachedWindow.second->State.WindowViewportBox;
         cachedWindow.second->State.WindowContentBox     = gs_2dboxf(cachedWindow.second->State.WindowViewportBox.Min, cachedWindow.second->State.WindowViewportBox.Min);
 
         //cachedWindow.second->Changed = cachedWindow.second->State;
@@ -428,22 +415,6 @@ void Immedidate2DRendererTestLayer::set_next_window_size(const gs_vec2f& _Value)
 void Immedidate2DRendererTestLayer::same_line()
 {
     m_NextCursorDirection = gs_vec2f(1.f, 0.f);
-}
-
-bool Immedidate2DRendererTestLayer::push_close_button_widget()
-{
-    if(m_WindowsHierarchy.empty()) return false;
-
-    auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-
-    auto box = calculate_widget_geometry(gs_vec2f(64.f, 64.f));
-
-    render_close_button_widget(
-        gs_2dboxf(box.Min + window->State.WindowScrollAreaBox.Min, box.Max + window->State.WindowScrollAreaBox.Min),
-        window->State.WindowViewportBox,
-        window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
-
-    return true;
 }
 
 bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool* _Opened, ImmedidateUserInterfaceWindowHints _Hints)
@@ -479,17 +450,6 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
         window->State.Parent                           = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
         window->State.Depth                            = window->State.Parent->calculate_child_depth();
         window->State.Parent->State.LayoutTotalWeight += window->State.LayoutFillWeight;
-
-        // update parental depth
-        {
-            auto parent = window->State.Parent;
-
-            while (parent)
-            {
-                parent->State.Depth = parent->calculate_child_depth();
-                parent = parent->State.Parent;
-            }
-        }
 
         gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
         m_NextCursorDirection.reset();
@@ -532,6 +492,15 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable;
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable;
         window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
+
+        // update parental depth
+        auto parent = window->State.Parent;
+
+        while (parent)
+        {
+            parent->State.Depth = parent->calculate_child_depth();
+            parent = parent->State.Parent;
+        }
     }
     else
     {
@@ -593,6 +562,22 @@ void Immedidate2DRendererTestLayer::end_window()
     m_WindowsHierarchy.pop_back();
 }
 
+bool Immedidate2DRendererTestLayer::close_button_widget(const gs_vec2f& _Size)
+{
+    if(m_WindowsHierarchy.empty()) return false;
+
+    auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+
+    auto box = calculate_widget_geometry(_Size);
+
+    render_close_button_widget(
+        gs_2dboxf(box.Min + window->State.WindowScrollAreaBox.Min, box.Max + window->State.WindowScrollAreaBox.Min),
+        window->State.WindowInnerClipAreaBox,
+        window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
+
+    return true;
+}
+
 void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInterfaceWindow* _Window)
 {
     if(_Window == nullptr) return;
@@ -621,22 +606,44 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
         _Window->State.WindowBox.Max - gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
 
     // vertical scrollbar
-    _Window->State.VerticalScrollBar.setup(
-        0.f,
-        _Window->State.WindowViewportBox.height(),
-        _Window->Cache.WindowScrollAreaBox.height() + m_Style->WindowScrollBarSliderWidth,
-        _Window->State.WindowViewportBox.height());
+    {
+        _Window->State.VerticalScrollBar.setup(
+            0.f,
+            _Window->State.WindowViewportBox.height(),
+            _Window->Cache.WindowContentBox.height() + m_Style->WindowScrollBarSliderWidth,
+            _Window->State.WindowViewportBox.height());
 
-    _Window->State.WindowVerticalScrollBarBox = gs_2dboxf(
-        gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Min.y),
-        gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y) + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+        if(!_Window->needs_vertical_scroll_bar())
+            _Window->State.VerticalScrollBar.SliderPosition = 0.f;
 
-    _Window->State.WindowVerticalScrollBarSliderBox = gs_2dboxf(
-        _Window->State.WindowVerticalScrollBarBox.Min + gs_vec2f(0.f, _Window->State.VerticalScrollBar.SliderPosition),
-        gs_vec2f(_Window->State.WindowVerticalScrollBarBox.Max.x, _Window->State.WindowVerticalScrollBarBox.Min.y + _Window->State.VerticalScrollBar.SliderLength + _Window->State.VerticalScrollBar.SliderPosition));
+        _Window->State.WindowVerticalScrollBarBox = gs_2dboxf(
+            gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Min.y),
+            gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y) + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+
+        _Window->State.WindowVerticalScrollBarSliderBox = gs_2dboxf(
+            _Window->State.WindowVerticalScrollBarBox.Min + gs_vec2f(0.f, _Window->State.VerticalScrollBar.SliderPosition),
+            gs_vec2f(_Window->State.WindowVerticalScrollBarBox.Max.x, _Window->State.WindowVerticalScrollBarBox.Min.y + _Window->State.VerticalScrollBar.SliderLength + _Window->State.VerticalScrollBar.SliderPosition));
+    }
 
     // horizontal scrollbar
-    // TODO: implement horizontal scrollbar geometry computation
+    {
+        _Window->State.HorizontalScrollBar.setup(
+            0.f,
+            _Window->State.WindowViewportBox.width(),
+            _Window->Cache.WindowContentBox.width() + m_Style->WindowScrollBarSliderWidth,
+            _Window->State.WindowViewportBox.width());
+
+        if(!_Window->needs_horizontal_scroll_bar())
+            _Window->State.HorizontalScrollBar.SliderPosition = 0.f;
+
+        _Window->State.WindowHorizontalScrollBarBox = gs_2dboxf(
+            gs_vec2f(_Window->State.WindowViewportBox.Min.x, _Window->State.WindowViewportBox.Max.y) + gs_vec2f(0.f, -m_Style->WindowScrollBarSliderWidth),
+            gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y));
+
+        _Window->State.WindowHorizontalScrollBarSliderBox = gs_2dboxf(
+            _Window->State.WindowHorizontalScrollBarBox.Min + gs_vec2f(_Window->State.HorizontalScrollBar.SliderPosition, 0.f),
+            gs_vec2f(_Window->State.WindowHorizontalScrollBarBox.Min.x + _Window->State.HorizontalScrollBar.SliderLength + _Window->State.HorizontalScrollBar.SliderPosition, _Window->State.WindowHorizontalScrollBarBox.Max.y));
+    }
     
     // scroll area
     _Window->State.WindowScrollAreaBox  = gs_2dboxf(
@@ -644,8 +651,13 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
         _Window->State.WindowViewportBox.Max,
         _Window->State.WindowViewportBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
 
-    _Window->State.WindowScrollAreaBox.Min += gs_vec2f(0.f, -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
-    _Window->State.WindowScrollAreaBox.Max += gs_vec2f(0.f, -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
+    _Window->State.WindowScrollAreaBox.Min += gs_vec2f(
+        -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
+        -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
+    
+    _Window->State.WindowScrollAreaBox.Max += gs_vec2f(
+        -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
+        -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
 
     // content box
     _Window->State.WindowContentBox  = gs_2dboxf(
@@ -653,6 +665,19 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
         _Window->State.WindowScrollAreaBox.Min + _Window->State.WindowContentBox.size(),
         _Window->State.WindowScrollAreaBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
 
+    // recalculate parental content box
+    auto parent = _Window->State.Parent;
+
+    while (parent)
+    {
+        parent->State.WindowContentBox = gs_2dboxf(
+            parent->State.WindowScrollAreaBox.Min,
+            parent->State.WindowScrollAreaBox.Min + gs_max(_Window->State.WindowContentBox.size(), parent->State.WindowContentBox.size()),
+            parent->State.WindowScrollAreaBox.Min + parent->State.LayoutCursorPositon + parent->State.LayoutCursorSize);
+
+        parent = parent->State.Parent;
+    }
+    
     calculate_window_geometry(_Window->State.Parent);
 }
 
@@ -700,15 +725,18 @@ bool Immedidate2DRendererTestLayer::render_window_clipbox(ImmedidateUserInterfac
             parent = parent->State.Parent;
         }
 
-        _Window->State.WindowInnerClipAreaBox =
-            gs_2dboxf(
-                _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Min,
-                _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+        _Window->State.WindowInnerClipAreaBox = next->State.WindowInnerClipAreaBox;
+        _Window->State.WindowOuterClipAreaBox = next->State.WindowOuterClipAreaBox;
 
-        _Window->State.WindowOuterClipAreaBox =
-            gs_2dboxf(
-                next->State.WindowViewportBox.transform(next->State.WindowTransform).Min,
-                next->State.WindowViewportBox.transform(next->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+        // _Window->State.WindowInnerClipAreaBox =
+        //     gs_2dboxf(
+        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Min,
+        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+
+        // _Window->State.WindowOuterClipAreaBox =
+        //     gs_2dboxf(
+        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Min,
+        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
     }
     else
     {
@@ -760,6 +788,14 @@ bool Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         m_Style->FrameWidth,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+
+    // m_Renderer->push_rectangle(
+    //     _Window->Cache.WindowScrollAreaBox.Min,
+    //     _Window->Cache.WindowScrollAreaBox.Max,
+    //     m_Style->FrameWidth,
+    //     gs_vec4f(0.f, 255.f, 0.f, 255.f),
+    //     _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+
 
     return true;
 }
@@ -872,11 +908,52 @@ bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(Immedidat
 {
     if(_Window == nullptr) return false;
 
+    // draw scroll panel
+    m_Renderer->push_rectangle_rounded_filled(
+        _Window->State.WindowHorizontalScrollBarBox.Min,
+        _Window->State.WindowHorizontalScrollBarBox.Max,
+        m_Style->FrameRoundingRadius,
+        m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor],
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+
+    // draw slider
+    if(_Window->State.WindowHorizontalScrollBarSliderBox.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+    {
+        m_Renderer->push_rectangle_rounded_filled(
+            _Window->State.WindowHorizontalScrollBarSliderBox.Min,
+            _Window->State.WindowHorizontalScrollBarSliderBox.Max,
+            m_Style->FrameRoundingRadius,
+            application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left) ?
+                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor] :
+                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor],
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+    }
+    else
+    {
+        m_Renderer->push_rectangle_rounded_filled(
+            _Window->State.WindowHorizontalScrollBarSliderBox.Min,
+            _Window->State.WindowHorizontalScrollBarSliderBox.Max,
+            m_Style->FrameRoundingRadius,
+            m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor],
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+    }
+
+    // draw frame
+    m_Renderer->push_rectangle_rounded(
+        _Window->State.WindowHorizontalScrollBarBox.Min,
+        _Window->State.WindowHorizontalScrollBarBox.Max,
+        m_Style->FrameRoundingRadius,
+        m_Style->FrameWidth,
+        m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+    
     return true;
 }
 
 void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window)
 {
+    if(_Window == nullptr) return;
+
     // begin poll events
     gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Window->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
     gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
@@ -922,13 +999,44 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
         _Window->being_move();
     }
 
-    // poll window vertical scroll event
-    if( application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                  &&
-         _Window->State.WindowVerticalScrollBarSliderBox.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-        !_Window->is_being_resized() &&
-        !_Window->is_being_moved())
+    // here we must poll the top most scroll bar
+    auto next = _Window;
+
+    while (next)
     {
-        _Window->begin_scroll_vertically();
+        // poll window vertical scroll event
+        if( application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                              &&
+            next->State.WindowVerticalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
+            next->needs_vertical_scroll_bar()                                                                                                 &&
+            !next->is_being_resized()                                                                                                          &&
+            !next->is_being_moved())
+        {
+            if(next != _Window)
+            {
+                _Window->end_scroll();
+                break;
+            }
+
+            next->begin_scroll_vertically();
+        }
+
+        // poll window horizontal scroll event
+        if( application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                                &&
+            next->State.WindowHorizontalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
+            next->needs_horizontal_scroll_bar()                                                                                                 &&
+            !next->is_being_resized()                                                                                                            &&
+            !next->is_being_moved())
+        {
+            if(next != _Window)
+            {
+                _Window->end_scroll();
+                break;
+            }
+
+            next->begin_scroll_horizontally();
+        }
+
+        next = next->State.Parent;
     }
 
     // end poll events
@@ -1111,11 +1219,11 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
     }
     else if(_Window->is_being_scrolled_horizontally())
     {
-        // TODO: rocess horizontal scroll here
+        _Window->State.HorizontalScrollBar.reposition(
+            _Window->Cache.HorizontalScrollBar.SliderPosition + application()->get_window_cursor_dragdelta().x);
     }
     else if(_Window->is_being_scrolled_vertically())
     {
-        // TODO: rocess vertical scroll here
         _Window->State.VerticalScrollBar.reposition(
             _Window->Cache.VerticalScrollBar.SliderPosition + application()->get_window_cursor_dragdelta().y);
     }

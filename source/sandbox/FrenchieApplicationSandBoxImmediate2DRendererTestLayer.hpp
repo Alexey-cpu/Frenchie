@@ -75,6 +75,10 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar  = 1 << 6,
             ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar    = 1 << 7,
 
+            // child windows layouting
+            // ImmedidateUserInterfaceWindowHints_LayoutChildWindowsHorizontally,
+            // ImmedidateUserInterfaceWindowHints_LayoutChildWindowsVertically,
+
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
                 ImmedidateUserInterfaceWindowHints_Closable  |
@@ -193,6 +197,7 @@ namespace Frenchie
 
                 // scrolling
                 mutable Scrollbar VerticalScrollBar;
+                mutable Scrollbar HorizontalScrollBar;
 
                 // geometry
                 mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
@@ -204,10 +209,13 @@ namespace Frenchie
                 mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+                
                 mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+
                 mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
                 mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+
                 mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
 
                 mutable bool IsBeingMoved               {false};
@@ -281,15 +289,17 @@ namespace Frenchie
 
             void same_line();
 
-            // API
-            bool push_close_button_widget();
-
+            // windows API
             bool begin_window(
                 const std::string&                 _Name,
                 bool*                              _Opened = nullptr,
                 ImmedidateUserInterfaceWindowHints _Hints  = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
 
             void end_window();
+
+            // widgets API
+            bool close_button_widget(const gs_vec2f& _Size = gs_vec2f(64.f, 64.f));
+
 
         protected:
 
