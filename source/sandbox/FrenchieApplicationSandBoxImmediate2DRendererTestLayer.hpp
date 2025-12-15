@@ -14,6 +14,10 @@ namespace Frenchie
 {
     namespace Application
     {
+        struct ImmedidateUserInterfaceStyle;
+        struct ImmedidateUserInterfaceWindow;
+        struct ImmedidateUserInterfaceWindowState;
+
         enum ImmedidateUserInterfaceColors_ : int
         {
             // application window
@@ -87,8 +91,24 @@ namespace Frenchie
                 ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically
         };
 
+        enum ImmedidateUserInterfaceWindowStateChangeHints_ : int
+        {
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMoved                = 1 << 0,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTopLeft       = 1 << 1,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTopRight      = 1 << 2,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottomLeft    = 1 << 3,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottomRight   = 1 << 4,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTop           = 1 << 5,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedLeft          = 1 << 6,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedRight         = 1 << 7,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottom        = 1 << 8,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingFocused              = 1 << 9,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledHorizontally = 1 << 10,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledVertically   = 1 << 11
+        };
+
         typedef int ImmedidateUserInterfaceWindowHints;
-        typedef int ImmedidateUserInterfaceConditions;
+        typedef int ImmedidateUserInterfaceWindowStateChangeHints;
 
         struct ImmedidateUserInterfaceStyle
         {
@@ -141,7 +161,7 @@ namespace Frenchie
             }
 
             RenderingQueueFont Font;
-            float              FontSize                          = 32.f;
+            float              FontSize                          = 64.f;
 
             float              WindowResizeAngleGizmoRadius      = 32.f;
             float              WindowResizeSideGizmoWidth        = 12.f;
@@ -156,94 +176,81 @@ namespace Frenchie
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
         };
 
-        struct ImmedidateUserInterfaceWindow
+        struct ImmedidateUserInterfaceWindowScrollbar
         {
-            struct Scrollbar
+            void setup(const float& _Min, const float& _Max, const float  _Total, const float& _Track)
             {
-                void setup(const float& _Min, const float& _Max, const float  _Total, const float& _Track)
-                {
-                    Min          = _Min;
-                    Max          = _Max;
-                    SliderScale  = gs_abs(_Total) / gs_abs(_Max - _Min);
-                    SliderLength = gs_abs(_Max - _Min) / gs_abs(_Total) * _Track;
-                }
+                Min          = _Min;
+                Max          = _Max;
+                SliderScale  = gs_abs(_Total) / gs_abs(_Max - _Min);
+                SliderLength = gs_abs(_Max - _Min) / gs_abs(_Total) * _Track;
+            }
 
-                void reposition(const float& _Position)
-                {
-                    SliderPosition = gs_clamp(_Position, 0.f, gs_abs(Max - SliderLength));
-                }
-
-                float Min;
-                float Max;
-                float SliderScale;
-                float SliderLength;
-                float SliderPosition;
-            };
-
-            struct WindowState
+            void reposition(const float& _Position)
             {
-                // hints
-                mutable ImmedidateUserInterfaceWindowHints Hints {ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
+                SliderPosition = gs_clamp(_Position, 0.f, gs_abs(Max - SliderLength));
+            }
 
-                // hierarchy
-                mutable int                            Depth    {0};
-                mutable ImmedidateUserInterfaceWindow* Parent   {nullptr}; // parent is never nullptr as ALL windows are cached...
-                mutable int                            Thickness{0};
-
-                // layouting
-                mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
-                mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
-                mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
-                mutable float    LayoutFillWeight     {1.f};
-                mutable float    LayoutTotalWeight    {1.f};
-
-                // scrolling
-                mutable Scrollbar VerticalScrollBar;
-                mutable Scrollbar HorizontalScrollBar;
-
-                // geometry
-                mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                
-                mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-
-                mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-                mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-
-                mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
-
-                mutable bool IsBeingMoved               {false};
-                mutable bool IsBeingResizedTopLeft      {false};
-                mutable bool IsBeingResizedTopRight     {false};
-                mutable bool IsBeingResizedBottomLeft   {false};
-                mutable bool IsBeingResizedBottomRight  {false};
-                mutable bool IsBeingResizedTop          {false};
-                mutable bool IsBeingResizedLeft         {false};
-                mutable bool IsBeingResizedRight        {false};
-                mutable bool IsBeingResizedBottom       {false};
-                mutable bool IsFocused                  {false};
-                mutable bool IsBeingScrolledHorizontally{false};
-                mutable bool IsBeingScrolledVertically  {false};
-            };
-
-            mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
-            mutable WindowState State{WindowState()};
-            mutable WindowState Cache{WindowState()};
+            float Min;
+            float Max;
+            float SliderScale;
+            float SliderLength;
+            float SliderPosition;
         };
 
-        class Immedidate2DRendererTestLayer : public Layer
+        struct ImmedidateUserInterfaceWindowState
+        {
+            // hints
+            mutable ImmedidateUserInterfaceWindowHints            Settings{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
+            mutable ImmedidateUserInterfaceWindowStateChangeHints Changes {0};
+
+            // hierarchy
+            mutable int                            Depth     {0};
+            mutable ImmedidateUserInterfaceWindow* Parent    {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable int                            Thickness {0};
+
+            // layouting
+            mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
+            mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
+            mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
+            mutable float    LayoutFillWeight     {1.f};
+            mutable float    LayoutTotalWeight    {1.f};
+            mutable int      LayoutChildIndex     {0};
+            mutable int      LayoutChildrenCount  {0};
+
+            // scrolling
+            mutable ImmedidateUserInterfaceWindowScrollbar VerticalScrollBar;
+            mutable ImmedidateUserInterfaceWindowScrollbar HorizontalScrollBar;
+
+            // geometry
+            mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))}; 
+            mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
+        };
+
+        struct ImmedidateUserInterfaceWindow
+        {
+            mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
+            mutable ImmedidateUserInterfaceWindowState State{ImmedidateUserInterfaceWindowState()};
+            mutable ImmedidateUserInterfaceWindowState Cache{ImmedidateUserInterfaceWindowState()};
+        };
+
+        class ImmedidateUserInterfaceContextLayer : public Layer
         {
         public:
-            Immedidate2DRendererTestLayer();
-            virtual ~Immedidate2DRendererTestLayer();
+            ImmedidateUserInterfaceContextLayer();
+            virtual ~ImmedidateUserInterfaceContextLayer();
 
             virtual bool awake()        override;
             virtual void frame_start()  override;
@@ -276,8 +283,7 @@ namespace Frenchie
             std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache    {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
-            
-            Frenchie::Core::Optional<ImmedidateUserInterfaceConditions> m_Conditions;
+
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowSize;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowPosition;
             Frenchie::Core::Optional<gs_vec2f>                          m_NextCursorDirection;
@@ -336,7 +342,7 @@ namespace Frenchie
 
             bool render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
 
-            void poll_window_events();
+            void receive_window_events();
             void process_window_events(ImmedidateUserInterfaceWindow*);
         };
     }
