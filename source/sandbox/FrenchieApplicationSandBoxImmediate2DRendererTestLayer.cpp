@@ -1120,7 +1120,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
     }
 
     // poll events of the top most window
-    auto next = _Window;
+    ImmedidateUserInterfaceWindow* next = _Window;
 
     while (next && !(allMouseButtonsAreReleased || anyWindowIsBeingModified))
     {
