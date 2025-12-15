@@ -215,8 +215,6 @@ namespace Frenchie
             mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
             mutable float    LayoutFillWeight     {1.f};
             mutable float    LayoutTotalWeight    {1.f};
-            mutable int      LayoutChildIndex     {0};
-            mutable int      LayoutChildrenCount  {0};
 
             // scrolling
             mutable ImmedidateUserInterfaceWindowScrollbar VerticalScrollBar;

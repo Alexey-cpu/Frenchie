@@ -35,19 +35,20 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable   |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable  |
         ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable |
-        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally
+        ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically
     ))
     {
-        for (int i = 0; i < 10; i++)
-        {
-            if(begin_window(std::string("Child").append(std::to_string(i)))) end_window();
-        }
-
         // for (int i = 0; i < 10; i++)
         // {
+        //     close_button_widget();
         //     same_line();
         //     close_button_widget();
         // }
+
+        for (int i = 0; i < 5; i++)
+        {
+            if(begin_window(std::string("Child").append(std::to_string(i)))) end_window();
+        }
 
         // if(begin_window("Container window",
         //     nullptr,
@@ -182,9 +183,6 @@ void ImmedidateUserInterfaceContextLayer::frame_finish()
         cachedWindow.second->State.LayoutTotalWeight    = 0.f;
         cachedWindow.second->State.LayoutCursorPositon  = gs_vec2f(0.f, 0.f);
         cachedWindow.second->State.LayoutCursorSize     = gs_vec2f(0.f, 0.f);
-        cachedWindow.second->State.LayoutChildIndex     = 0;
-        cachedWindow.second->State.LayoutChildrenCount  = 0;
-
         cachedWindow.second->State.WindowScrollAreaBox  = cachedWindow.second->State.WindowViewportBox;
         cachedWindow.second->State.WindowContentBox     = gs_2dboxf(cachedWindow.second->State.WindowViewportBox.Min, cachedWindow.second->State.WindowViewportBox.Min);
 
@@ -244,7 +242,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
     {
         window->State.Parent                           = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
         window->State.Depth                            = calculate_child_depth(window->State.Parent);
-        window->State.LayoutChildIndex                 = window->State.Parent->State.LayoutChildrenCount++;
         window->State.Parent->State.LayoutTotalWeight += window->State.LayoutFillWeight;
 
         // compute parent layout box
@@ -1140,9 +1137,9 @@ void ImmedidateUserInterfaceContextLayer::receive_window_events()
 
         // poll window resize events
         if( (next->State.Settings & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable) &&
-            application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)             &&
-            !is_being_scrolled(next)                                                                                &&
-            !is_being_resized(next)                                                                                 &&
+            application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                &&
+            !is_being_scrolled(next)                                                                                   &&
+            !is_being_resized(next)                                                                                    &&
             !is_being_moved(next))
         {
             if(resizeTopLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
@@ -1153,13 +1150,13 @@ void ImmedidateUserInterfaceContextLayer::receive_window_events()
                 begin_resize_bottom_left(next);
             else if(resizeBottomRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 begin_resize_bottom_right(next);
-            else if(resizeTop.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
+            else if(resizeTop.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
                 begin_resize_top(next);
             else if(resizeLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
                 begin_resize_left(next);
             else if(resizeRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 begin_resize_right(next);
-            else if(resizeBottom.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            else if(resizeBottom.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 begin_resize_bottom(next);
         }
 
@@ -1303,13 +1300,20 @@ void ImmedidateUserInterfaceContextLayer::process_window_events(ImmedidateUserIn
             float    fillWeight = 1.f;
             
             if(_Window->State.Parent->State.Settings & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally)
-                fillWeight = gs_clamp(fillSize.x, 0.f, _Window->State.Parent->Cache.LayoutTotalWeight);
+                fillWeight = fillSize.x;
             else if(_Window->Cache.Parent->State.Settings & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically)
-                fillWeight = gs_clamp(fillSize.y, 0.f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
+                fillWeight = fillSize.y;
 
-            float fillWeightDelta = (fillWeight - _Window->State.LayoutFillWeight) / _Window->State.Parent->Cache.LayoutTotalWeight;
+            int source = -1;
+            int target = -1;
 
-            fillWeightDelta *= gs_max((float)(_Window->State.Parent->State.LayoutChildrenCount - _Window->State.LayoutChildIndex), 1.f);
+            for (int i = 0; i < (int)m_WindowsDrawList.size(); ++i)
+            {
+                if(_Window->Cache.Parent == m_WindowsDrawList[i]->Cache.Parent && source < 0) source = i;
+                if(_Window == m_WindowsDrawList[i] && target < 0) target = i;
+            }
+
+            float fillWeightDelta = (fillWeight - _Window->State.LayoutFillWeight) / gs_max((target - source), 1);
 
             for (auto child : m_WindowsDrawList)
             {
@@ -1317,11 +1321,10 @@ void ImmedidateUserInterfaceContextLayer::process_window_events(ImmedidateUserIn
                     continue;
 
                 child->State.LayoutFillWeight -= fillWeightDelta;
-                child->State.LayoutFillWeight  = gs_clamp(child->State.LayoutFillWeight, 0.1f, _Window->State.Parent->Cache.LayoutTotalWeight);
+                child->State.LayoutFillWeight  = gs_clamp(child->State.LayoutFillWeight, 0.1f, child->State.Parent->Cache.LayoutTotalWeight);
             }
 
-            _Window->State.LayoutFillWeight += fillWeightDelta;
-            _Window->State.LayoutFillWeight  = gs_clamp(_Window->State.LayoutFillWeight, 0.1f, _Window->State.Parent->Cache.LayoutTotalWeight);
+            _Window->State.LayoutFillWeight = fillWeight;
         }
     }
     else if(is_being_moved(_Window))
