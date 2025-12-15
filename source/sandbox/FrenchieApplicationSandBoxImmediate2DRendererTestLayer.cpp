@@ -2,217 +2,6 @@
 
 using namespace Frenchie::Application;
 
-int ImmedidateUserInterfaceWindow::calculate_child_depth() const
-{
-    return (State.Depth + (State.Thickness++));
-}
-
-bool ImmedidateUserInterfaceWindow::needs_vertical_scroll_bar() const
-{
-    if (State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar) return false;
-    if (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) return true;
-
-    return Cache.WindowContentBox.height() > Cache.WindowViewportBox.height() &&
-            gs_abs(Cache.WindowViewportBox.height() - Cache.WindowContentBox.height()) > 1.f;
-}
-
-bool ImmedidateUserInterfaceWindow::needs_horizontal_scroll_bar() const
-{
-    if (State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar) return false;
-    if (State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) return true;
-
-    return Cache.WindowContentBox.width() > Cache.WindowViewportBox.width() &&
-            gs_abs(Cache.WindowViewportBox.width() - Cache.WindowContentBox.width()) > 1.f;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_top_left() const
-{
-    return State.IsBeingResizedTopLeft;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_top_right() const
-{
-    return State.IsBeingResizedTopRight;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_bottom_left() const
-{
-    return State.IsBeingResizedBottomLeft;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_bottom_right() const
-{
-    return State.IsBeingResizedBottomRight;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_top() const
-{
-    return State.IsBeingResizedTop;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_left() const
-{
-    return State.IsBeingResizedLeft;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_right() const
-{
-    return State.IsBeingResizedRight;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized_bottom() const
-{
-    return State.IsBeingResizedBottom;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_resized() const
-{
-    return is_being_resized_top_left()     ||
-            is_being_resized_top_right()    ||
-            is_being_resized_bottom_left()  ||
-            is_being_resized_bottom_right() ||
-            is_being_resized_top()          ||
-            is_being_resized_left()         ||
-            is_being_resized_right()        ||
-            is_being_resized_bottom();
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_moved() const
-{
-    return State.IsBeingMoved;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_modified() const
-{
-    return is_being_moved() || is_being_resized() || is_being_scrolled();
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_focused() const
-{
-    auto parent = State.Parent;
-    auto window = this;
-
-    while (parent != nullptr)
-    {
-        window = parent;
-        parent = parent->State.Parent;
-    }
-
-    return window->State.IsFocused;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_scrolled_vertically() const
-{
-    return State.IsBeingScrolledVertically;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_scrolled_horizontally() const
-{
-    return State.IsBeingScrolledHorizontally;
-}
-
-bool ImmedidateUserInterfaceWindow::is_being_scrolled() const
-{
-    return is_being_scrolled_vertically() || is_being_scrolled_horizontally();
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_top_left()
-{
-    State.IsBeingResizedTopLeft = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_top_right()
-{
-    State.IsBeingResizedTopRight = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_bottom_left()
-{
-    State.IsBeingResizedBottomLeft = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_bottom_right()
-{
-    State.IsBeingResizedBottomRight = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_top()
-{
-    State.IsBeingResizedTop = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_left()
-{
-    State.IsBeingResizedLeft = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_right()
-{
-    State.IsBeingResizedRight = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_resize_bottom()
-{
-    State.IsBeingResizedBottom = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_move()
-{
-    State.IsBeingMoved = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_focus()
-{
-    auto parent = State.Parent;
-    auto window = this;
-
-    while (parent != nullptr)
-    {
-        window = parent;
-        parent = parent->State.Parent;
-    }
-
-    window->State.IsFocused = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_scroll_vertically()
-{
-    State.IsBeingScrolledVertically = true;
-}
-
-void ImmedidateUserInterfaceWindow::begin_scroll_horizontally()
-{
-    State.IsBeingScrolledHorizontally = true;
-}
-
-void ImmedidateUserInterfaceWindow::end_resize()
-{
-    State.IsBeingResizedTopLeft     = false;
-    State.IsBeingResizedTopRight    = false;
-    State.IsBeingResizedBottomLeft  = false;
-    State.IsBeingResizedBottomRight = false;
-    State.IsBeingResizedTop         = false;
-    State.IsBeingResizedLeft        = false;
-    State.IsBeingResizedRight       = false;
-    State.IsBeingResizedBottom      = false;
-}
-
-void ImmedidateUserInterfaceWindow::end_move()
-{
-    State.IsBeingMoved = false;
-}
-
-void ImmedidateUserInterfaceWindow::end_focus()
-{
-    State.IsFocused = false;
-}
-
-void ImmedidateUserInterfaceWindow::end_scroll()
-{
-    State.IsBeingScrolledVertically   = false;
-    State.IsBeingScrolledHorizontally = false;
-}
-
 // Immedidate2DRendererTestLayer
 Immedidate2DRendererTestLayer::Immedidate2DRendererTestLayer(){}
 Immedidate2DRendererTestLayer::~Immedidate2DRendererTestLayer(){}
@@ -348,7 +137,7 @@ void Immedidate2DRendererTestLayer::frame_finish()
             int                            maxDepth      = -1;
             for (auto drawnWindow : m_WindowsDrawList)
             {
-                drawnWindow->end_focus();
+                end_focus(drawnWindow);
 
                 if(!drawnWindow->State.WindowBox.transform(drawnWindow->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) ||
                     drawnWindow->State.Depth <= maxDepth)
@@ -361,7 +150,7 @@ void Immedidate2DRendererTestLayer::frame_finish()
             }
 
             if(topMostWindow != nullptr)
-                topMostWindow->begin_focus();
+                begin_focus(topMostWindow);
 
             break;
         }
@@ -370,11 +159,11 @@ void Immedidate2DRendererTestLayer::frame_finish()
     // focus any modified or moved window
     for (int i = 0; i < (int)m_WindowsDrawList.size(); i++)
     {
-        if(m_WindowsDrawList[i]->is_being_modified() || m_WindowsDrawList[i]->is_being_moved())
+        if(is_being_modified(m_WindowsDrawList[i]) || is_being_moved(m_WindowsDrawList[i]))
         {
             for (int j = 0; j < (int)m_WindowsDrawList.size(); j++)
-                m_WindowsDrawList[j]->end_focus();
-            m_WindowsDrawList[i]->begin_focus();
+                end_focus(m_WindowsDrawList[j]);
+            begin_focus(m_WindowsDrawList[i]);
             break;
         }
     }
@@ -386,7 +175,7 @@ void Immedidate2DRendererTestLayer::frame_finish()
     for (auto& cachedWindow : m_WindowsCache)
     {
         // save state
-        if(!cachedWindow.second->is_being_modified())
+        if(!is_being_modified(cachedWindow.second.get()))
             cachedWindow.second->Cache = cachedWindow.second->State;
 
         // TODO: this MUST BE DEFAULTS
@@ -457,7 +246,7 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
     if(!m_WindowsHierarchy.empty())
     {
         window->State.Parent                           = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-        window->State.Depth                            = window->State.Parent->calculate_child_depth();
+        window->State.Depth                            = calculate_child_depth(window->State.Parent);
         window->State.Parent->State.LayoutTotalWeight += window->State.LayoutFillWeight;
 
         // compute parent layout box
@@ -523,13 +312,13 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
 
         while (parent)
         {
-            parent->State.Depth = parent->calculate_child_depth();
+            parent->State.Depth = calculate_child_depth(parent);
             parent = parent->State.Parent;
         }
     }
     else
     {
-        if(window->is_being_focused())
+        if(is_being_focused(window))
         {
             window->State.Depth = (int)(m_Renderer->get_far_plane() / 2);
         }
@@ -538,7 +327,7 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
             int windowMaximumDepth = 0;
             for (auto drawnWindow : m_WindowsDrawList)
             {
-                if(!drawnWindow->is_being_focused())
+                if(!is_being_focused(drawnWindow))
                     windowMaximumDepth = gs_max(drawnWindow->State.Depth + drawnWindow->State.Thickness, windowMaximumDepth);
             }
             window->State.Depth = windowMaximumDepth;
@@ -577,19 +366,9 @@ void Immedidate2DRendererTestLayer::end_window()
 
     auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
 
-    bool anyChildWindowIsBeingModified = false;
-
-    for (auto child : m_WindowsDrawList)
-    {
-        if (child->State.Parent != window) continue;
-        
-        if(child->is_being_modified()) anyChildWindowIsBeingModified = true;
-    }
-    
-
-    if(window->needs_vertical_scroll_bar() && !anyChildWindowIsBeingModified)
+    if(needs_vertical_scroll_bar(window))
         render_window_vertical_scrollbar(window);
-    if(window->needs_horizontal_scroll_bar() && !anyChildWindowIsBeingModified)
+    if(needs_horizontal_scroll_bar(window))
         render_window_horizontal_scrollbar(window);
 
     render_window_resize_events_gizmos(window);
@@ -610,7 +389,7 @@ bool Immedidate2DRendererTestLayer::close_button_widget(const gs_vec2f& _Size)
     render_close_button_widget(
         gs_2dboxf(box.Min + window->State.WindowScrollAreaBox.Min, box.Max + window->State.WindowScrollAreaBox.Min),
         window->State.WindowInnerClipAreaBox,
-        window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window->calculate_child_depth()));
+        window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(window)));
 
     return true;
 }
@@ -646,8 +425,8 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
 
     // viewport
     {
-        float verticalScrollBarPadding   = _Window->needs_vertical_scroll_bar()   ? m_Style->WindowScrollBarSliderWidth : 0.f;
-        float horizontalScrollBarPadding = _Window->needs_horizontal_scroll_bar() ? m_Style->WindowScrollBarSliderWidth : 0.f;
+        float verticalScrollBarPadding   = needs_vertical_scroll_bar(_Window)   ? m_Style->WindowScrollBarSliderWidth : 0.f;
+        float horizontalScrollBarPadding = needs_horizontal_scroll_bar(_Window) ? m_Style->WindowScrollBarSliderWidth : 0.f;
 
         _Window->State.WindowViewportBox = gs_2dboxf(
             _Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowFrameBox.height()),
@@ -662,7 +441,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
             _Window->Cache.WindowContentBox.height() + m_Style->WindowScrollBarSliderWidth,
             _Window->State.WindowViewportBox.height());
 
-        if(!_Window->needs_vertical_scroll_bar())
+        if(!needs_vertical_scroll_bar(_Window))
             _Window->State.VerticalScrollBar.SliderPosition = 0.f;
 
         _Window->State.WindowVerticalScrollBarBox = gs_2dboxf(
@@ -682,7 +461,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
             _Window->Cache.WindowContentBox.width() + m_Style->WindowScrollBarSliderWidth,
             _Window->State.WindowViewportBox.width());
 
-        if(!_Window->needs_horizontal_scroll_bar())
+        if(!needs_horizontal_scroll_bar(_Window))
             _Window->State.HorizontalScrollBar.SliderPosition = 0.f;
 
         _Window->State.WindowHorizontalScrollBarBox = gs_2dboxf(
@@ -756,7 +535,7 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
             _Window->State.WindowInnerClipAreaBox =
                 gs_2dboxf(
                     _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Min,
-                    _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+                    _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Max);
 
             _Window->State.WindowOuterClipAreaBox =
                 gs_2dboxf(
@@ -768,33 +547,244 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
     calculate_window_geometry(_Window->State.Parent);
 }
 
-gs_2dboxf Immedidate2DRendererTestLayer::calculate_widget_geometry(const gs_vec2f& _Size)
+int Immedidate2DRendererTestLayer::calculate_child_depth(ImmedidateUserInterfaceWindow* _Window) const
 {
-    if(m_WindowsHierarchy.empty())
-        return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+    if(_Window == nullptr) return 0;
+    return (_Window->State.Depth + (_Window->State.Thickness++));
+}
 
-    ImmedidateUserInterfaceWindow* window  = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
-    float padding = 16.f; // TODO: this MUST BE a setting !!!
+bool Immedidate2DRendererTestLayer::needs_vertical_scroll_bar(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    if(_Window == nullptr) return false;
+    if (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar) return false;
+    if (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar) return true;
 
-    gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
-    m_NextCursorDirection.reset();
+    return _Window->Cache.WindowContentBox.height() > _Window->Cache.WindowViewportBox.height() &&
+            gs_abs(_Window->Cache.WindowViewportBox.height() - _Window->Cache.WindowContentBox.height()) > _Window->Cache.WindowViewportBox.width() * 0.1f;
+}
 
-    if(window->State.LayoutCursorDirection != cursorDirection)
+bool Immedidate2DRendererTestLayer::needs_horizontal_scroll_bar(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    if(_Window == nullptr) return false;
+    if (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar) return false;
+    if (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar) return true;
+
+    return _Window->Cache.WindowContentBox.width() > _Window->Cache.WindowViewportBox.width() &&
+            gs_abs(_Window->Cache.WindowViewportBox.width() - _Window->Cache.WindowContentBox.width()) > _Window->Cache.WindowViewportBox.width() * 0.1f;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_top_left(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedTopLeft;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_top_right(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedTopRight;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_bottom_left(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedBottomLeft;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_bottom_right(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedBottomRight;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_top(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedTop;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_left(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedLeft;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_right(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedRight;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized_bottom(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingResizedBottom;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_resized(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return is_being_resized_top_left(_Window)      ||
+            is_being_resized_top_right(_Window)    ||
+            is_being_resized_bottom_left(_Window)  ||
+            is_being_resized_bottom_right(_Window) ||
+            is_being_resized_top(_Window)          ||
+            is_being_resized_left(_Window)         ||
+            is_being_resized_right(_Window)        ||
+            is_being_resized_bottom(_Window);
+}
+
+bool Immedidate2DRendererTestLayer::is_being_moved(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingMoved;
+}
+
+bool Immedidate2DRendererTestLayer::is_being_modified(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return is_being_moved(_Window) || is_being_resized(_Window) || is_being_scrolled(_Window);
+}
+
+bool Immedidate2DRendererTestLayer::is_being_focused(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    if (_Window == nullptr) return false;
+
+    auto parent = _Window->State.Parent;
+    auto window = _Window;
+
+    while (parent != nullptr)
     {
-        window->State.LayoutCursorDirection = cursorDirection;
-        window->State.LayoutCursorPositon   = gs_vec2f(0.f, window->State.WindowContentBox.height());
-        window->State.LayoutCursorSize      = gs_vec2f(0.f, 0.f);
+        window = parent;
+        parent = parent->State.Parent;
     }
 
-    window->State.LayoutCursorPositon += window->State.LayoutCursorSize * window->State.LayoutCursorDirection;
+    return window->State.IsFocused;
+}
 
-    gs_vec2f min = window->State.LayoutCursorPositon + gs_vec2f(m_Style->FrameWidth, m_Style->FrameWidth);
+bool Immedidate2DRendererTestLayer::is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingScrolledVertically;
+}
 
-    window->State.LayoutCursorSize = _Size +  gs_vec2f(padding, padding) * window->State.LayoutCursorDirection;
+bool Immedidate2DRendererTestLayer::is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return _Window != nullptr && _Window->State.IsBeingScrolledHorizontally;
+}
 
-    calculate_window_geometry(window);
+bool Immedidate2DRendererTestLayer::is_being_scrolled(const ImmedidateUserInterfaceWindow* _Window) const
+{
+    return is_being_scrolled_vertically(_Window) || is_being_scrolled_horizontally(_Window);
+}
 
-    return gs_2dboxf(min, min + _Size);
+void Immedidate2DRendererTestLayer::begin_resize_top_left(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+
+    _Window->State.IsBeingResizedTopLeft = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_top_right(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedTopRight = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_bottom_left(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedBottomLeft = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_bottom_right(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedBottomRight = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_top(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedTop = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_left(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedLeft = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_right(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedRight = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_resize_bottom(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingResizedBottom = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_move(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+    
+    _Window->State.IsBeingMoved = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_focus(ImmedidateUserInterfaceWindow* _Window)
+{
+    if (_Window == nullptr) return;
+
+    auto parent = _Window->State.Parent;
+    auto window = _Window;
+
+    while (parent != nullptr)
+    {
+        window = parent;
+        parent = parent->State.Parent;
+    }
+
+    window->State.IsFocused = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_scroll_vertically(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window != nullptr) _Window->State.IsBeingScrolledVertically = true;
+}
+
+void Immedidate2DRendererTestLayer::begin_scroll_horizontally(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window != nullptr) _Window->State.IsBeingScrolledHorizontally = true;
+}
+
+void Immedidate2DRendererTestLayer::end_resize(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+
+    _Window->State.IsBeingResizedTopLeft     = false;
+    _Window->State.IsBeingResizedTopRight    = false;
+    _Window->State.IsBeingResizedBottomLeft  = false;
+    _Window->State.IsBeingResizedBottomRight = false;
+    _Window->State.IsBeingResizedTop         = false;
+    _Window->State.IsBeingResizedLeft        = false;
+    _Window->State.IsBeingResizedRight       = false;
+    _Window->State.IsBeingResizedBottom      = false;
+}
+
+void Immedidate2DRendererTestLayer::end_move(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window != nullptr) _Window->State.IsBeingMoved = false;
+}
+
+void Immedidate2DRendererTestLayer::end_focus(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window != nullptr) _Window->State.IsFocused = false;
+}
+
+void Immedidate2DRendererTestLayer::end_scroll(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+
+    _Window->State.IsBeingScrolledVertically   = false;
+    _Window->State.IsBeingScrolledHorizontally = false;
 }
 
 bool Immedidate2DRendererTestLayer::render_window_clipbox(ImmedidateUserInterfaceWindow* _Window)
@@ -824,7 +814,7 @@ bool Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         _Window->State.WindowBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
 
     m_Renderer->push_rectangle_rounded(
         _Window->State.WindowBox.Min,
@@ -832,7 +822,7 @@ bool Immedidate2DRendererTestLayer::render_window_background(ImmedidateUserInter
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
 
     // draw content gizmo
     m_Renderer->push_rectangle(
@@ -865,7 +855,7 @@ bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
         _Window->State.WindowFrameBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
 
     // frame border
     m_Renderer->push_rectangle_rounded(
@@ -874,7 +864,7 @@ bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowDecorationFrameFrameColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
 
     // window title
     // gs_2dboxf clipbox = gs_2dboxf(
@@ -895,7 +885,7 @@ bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
         _Window->Name,
         m_Style->FontSize,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth(), _Window->State.WindowTitleBox.Min));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window), _Window->State.WindowTitleBox.Min));
 
     //if(cipping) m_Renderer->pop_clip_box();
 
@@ -905,7 +895,7 @@ bool Immedidate2DRendererTestLayer::render_window_classic_frame(ImmedidateUserIn
         closeButtonPressed = render_close_button_widget(
             _Window->State.WindowCloseButtonBox,
             _Window->State.WindowOuterClipAreaBox,
-            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     }
 
     return closeButtonPressed;
@@ -921,7 +911,7 @@ bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateU
         _Window->State.WindowVerticalScrollBarBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
 
     // draw slider
     if(_Window->State.WindowVerticalScrollBarSliderBox.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
@@ -933,7 +923,7 @@ bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateU
             application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left) ?
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor] :
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor],
-            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     }
     else
     {
@@ -942,7 +932,7 @@ bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateU
             _Window->State.WindowVerticalScrollBarSliderBox.Max,
             m_Style->FrameRoundingRadius,
             m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor],
-            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     }
 
     // draw frame
@@ -952,7 +942,7 @@ bool Immedidate2DRendererTestLayer::render_window_vertical_scrollbar(ImmedidateU
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     
     return true;
 }
@@ -967,7 +957,7 @@ bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(Immedidat
         _Window->State.WindowHorizontalScrollBarBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
 
     // draw slider
     if(_Window->State.WindowHorizontalScrollBarSliderBox.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
@@ -979,7 +969,7 @@ bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(Immedidat
             application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left) ?
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor] :
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor],
-            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     }
     else
     {
@@ -988,7 +978,7 @@ bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(Immedidat
             _Window->State.WindowHorizontalScrollBarSliderBox.Max,
             m_Style->FrameRoundingRadius,
             m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor],
-            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+            _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     }
 
     // draw frame
@@ -998,7 +988,7 @@ bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(Immedidat
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+        _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
     
     return true;
 }
@@ -1018,7 +1008,7 @@ bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(Immedidat
 
     if((_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
     {
-        if((resizeTopLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_top_left()) && !_Window->is_being_moved())
+        if((resizeTopLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_top_left(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_arc_filled(
                 resizeTopLeft.Center,
@@ -1027,9 +1017,9 @@ bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(Immedidat
                 0.f,
                 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeTopRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_top_right()) && !_Window->is_being_moved())
+        else if((resizeTopRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_top_right(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_arc_filled(
                 resizeTopRight.Center,
@@ -1038,9 +1028,9 @@ bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(Immedidat
                 0.f,
                 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeBottomLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_bottom_left()) && !_Window->is_being_moved())
+        else if((resizeBottomLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_bottom_left(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_arc_filled(
                 resizeBottomLeft.Center,
@@ -1048,9 +1038,9 @@ bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(Immedidat
                 resizeBottomLeft.Radius,
                 0.f, 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeBottomRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_bottom_right()) && !_Window->is_being_moved())
+        else if((resizeBottomRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_bottom_right(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_arc_filled(
                 resizeBottomRight.Center,
@@ -1059,43 +1049,43 @@ bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(Immedidat
                 0.f,
                 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeTop.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_top()) && !_Window->is_being_moved())
+        else if((resizeTop.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_top(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_rectangle_rounded_filled(
                 resizeTop.Min,
                 resizeTop.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_left()) && !_Window->is_being_moved())
+        else if((resizeLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_left(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_rectangle_rounded_filled(
                 resizeLeft.Min,
                 resizeLeft.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_right()) && !_Window->is_being_moved())
+        else if((resizeRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_right(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_rectangle_rounded_filled(
                 resizeRight.Min,
                 resizeRight.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
-        else if((resizeBottom.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_bottom()) && !_Window->is_being_moved())
+        else if((resizeBottom.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || is_being_resized_bottom(_Window)) && !is_being_moved(_Window))
         {
             m_Renderer->push_rectangle_rounded_filled(
                 resizeBottom.Min,
                 resizeBottom.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)_Window->calculate_child_depth()));
+                _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)calculate_child_depth(_Window)));
         }
     }
 
@@ -1122,59 +1112,59 @@ void Immedidate2DRendererTestLayer::poll_window_events()
         // poll window resize events
         if( (next->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable) &&
             application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)             &&
-            !next->is_being_scrolled()                                                                              &&
-            !next->is_being_resized()                                                                               &&
-            !next->is_being_moved())
+            !is_being_scrolled(next)                                                                                &&
+            !is_being_resized(next)                                                                                 &&
+            !is_being_moved(next))
         {
             if(resizeTopLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
-                next->begin_resize_top_left();
+                begin_resize_top_left(next);
             else if(resizeTopRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
-                next->begin_resize_top_right();
+                begin_resize_top_right(next);
             else if(resizeBottomLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
-                next->begin_resize_bottom_left();
+                begin_resize_bottom_left(next);
             else if(resizeBottomRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
-                next->begin_resize_bottom_right();
+                begin_resize_bottom_right(next);
             else if(resizeTop.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
-                next->begin_resize_top();
+                begin_resize_top(next);
             else if(resizeLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-                next->begin_resize_left();
+                begin_resize_left(next);
             else if(resizeRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
-                next->begin_resize_right();
+                begin_resize_right(next);
             else if(resizeBottom.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-                next->begin_resize_bottom();
+                begin_resize_bottom(next);
         }
 
         // poll window move event
         if( (next->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable)        &&
             application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
             next->State.WindowFrameBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-            !next->is_being_resized() &&
-            !next->is_being_scrolled())
+            !is_being_resized(next)                                                                                      &&
+            !is_being_scrolled(next))
         {
-            next->begin_move();
+            begin_move(next);
         }
 
         // poll window vertical scroll event
         if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                    &&
             next->State.WindowVerticalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-            next->needs_vertical_scroll_bar()                                                                                              &&
-            !next->is_being_resized()                                                                                                      &&
-            !next->is_being_moved())
+            needs_vertical_scroll_bar(next)                                                                                                &&
+            !is_being_resized(next)                                                                                                        &&
+            !is_being_moved(next))
         {
-            next->begin_scroll_vertically();
+            begin_scroll_vertically(next);
         }
 
         // poll window horizontal scroll event
         if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                      &&
             next->State.WindowHorizontalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-            next->needs_horizontal_scroll_bar()                                                                                              &&
-            !next->is_being_resized()                                                                                                        &&
-            !next->is_being_moved())
+            needs_horizontal_scroll_bar(next)                                                                                                &&
+            !is_being_resized(next)                                                                                                          &&
+            !is_being_moved(next))
         {
-            next->begin_scroll_horizontally();
+            begin_scroll_horizontally(next);
         }
 
-        if (next->is_being_resized() || next->is_being_moved() || next->is_being_scrolled())
+        if (is_being_resized(next) || is_being_moved(next) || is_being_scrolled(next))
         {
             if(sink == nullptr)
             {
@@ -1182,9 +1172,9 @@ void Immedidate2DRendererTestLayer::poll_window_events()
             }
             else if(next->State.Depth > sink->State.Depth)
             {
-                sink->end_move();
-                sink->end_resize();
-                sink->end_scroll();
+                end_move(next);
+                end_resize(next);
+                end_scroll(next);
                 sink = next;
             }
         }
@@ -1214,9 +1204,9 @@ void Immedidate2DRendererTestLayer::poll_window_events()
 
         if(allMouseButtonsAreReleased)
         {
-            sink->end_move();
-            sink->end_resize();
-            sink->end_scroll();
+            end_move(sink);
+            end_resize(sink);
+            end_scroll(sink);
         }
         
         // if(allMouseButtonsAreReleased || anyWindowIsBeingModified)
@@ -1232,54 +1222,54 @@ void Immedidate2DRendererTestLayer::process_window_events(ImmedidateUserInterfac
 {
     if(_Window == nullptr) return;
 
-    if(_Window->is_being_resized())
+    if(is_being_resized(_Window))
     {
         gs_2dboxf estimatedBox;
         gs_vec2f  cursorDelta = application()->get_window_cursor_dragdelta();
 
-        if(_Window->is_being_resized_top_left())
+        if(is_being_resized_top_left(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min + cursorDelta,
                 _Window->Cache.WindowBox.Max);
         }
-        else if(_Window->is_being_resized_top_right())
+        else if(is_being_resized_top_right(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                 _Window->Cache.WindowBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f));
         }
-        else if(_Window->is_being_resized_bottom_left())
+        else if(is_being_resized_bottom_left(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                 _Window->Cache.WindowBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y));
         }
-        else if(_Window->is_being_resized_bottom_right())
+        else if(is_being_resized_bottom_right(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min,
                 _Window->Cache.WindowBox.Max + application()->get_window_cursor_dragdelta());
         }
-        else if(_Window->is_being_resized_top())
+        else if(is_being_resized_top(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                 _Window->Cache.WindowBox.Max);
         }
-        else if(_Window->is_being_resized_left())
+        else if(is_being_resized_left(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                 _Window->Cache.WindowBox.Max);
         }
-        else if(_Window->is_being_resized_right())
+        else if(is_being_resized_right(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min,
                 _Window->Cache.WindowBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f));
         }
-        else if(_Window->is_being_resized_bottom())
+        else if(is_being_resized_bottom(_Window))
         {
             estimatedBox = gs_2dboxf(
                 _Window->Cache.WindowBox.Min,
@@ -1326,7 +1316,7 @@ void Immedidate2DRendererTestLayer::process_window_events(ImmedidateUserInterfac
             _Window->State.LayoutFillWeight = gs_clamp(_Window->State.LayoutFillWeight, 0.001f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
         }
     }
-    else if(_Window->is_being_moved())
+    else if(is_being_moved(_Window))
     {
         _Window->State.WindowBox = gs_2dboxf(
             _Window->Cache.WindowBox.Min + application()->get_window_cursor_dragdelta(),
@@ -1334,16 +1324,45 @@ void Immedidate2DRendererTestLayer::process_window_events(ImmedidateUserInterfac
 
         // dock space
     }
-    else if(_Window->is_being_scrolled_horizontally())
+    else if(is_being_scrolled_horizontally(_Window))
     {
         _Window->State.HorizontalScrollBar.reposition(
             _Window->Cache.HorizontalScrollBar.SliderPosition + application()->get_window_cursor_dragdelta().x);
     }
-    else if(_Window->is_being_scrolled_vertically())
+    else if(is_being_scrolled_vertically(_Window))
     {
         _Window->State.VerticalScrollBar.reposition(
             _Window->Cache.VerticalScrollBar.SliderPosition + application()->get_window_cursor_dragdelta().y);
     }
+}
+
+gs_2dboxf Immedidate2DRendererTestLayer::calculate_widget_geometry(const gs_vec2f& _Size)
+{
+    if(m_WindowsHierarchy.empty())
+        return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+
+    ImmedidateUserInterfaceWindow* window  = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
+    float padding = 16.f; // TODO: this MUST BE a setting !!!
+
+    gs_vec2f cursorDirection = m_NextCursorDirection.has_value() ? m_NextCursorDirection.value() : gs_vec2f(0.f, 1.f);
+    m_NextCursorDirection.reset();
+
+    if(window->State.LayoutCursorDirection != cursorDirection)
+    {
+        window->State.LayoutCursorDirection = cursorDirection;
+        window->State.LayoutCursorPositon   = gs_vec2f(0.f, window->State.WindowContentBox.height());
+        window->State.LayoutCursorSize      = gs_vec2f(0.f, 0.f);
+    }
+
+    window->State.LayoutCursorPositon += window->State.LayoutCursorSize * window->State.LayoutCursorDirection;
+
+    gs_vec2f min = window->State.LayoutCursorPositon + gs_vec2f(m_Style->FrameWidth, m_Style->FrameWidth);
+
+    window->State.LayoutCursorSize = _Size +  gs_vec2f(padding, padding) * window->State.LayoutCursorDirection;
+
+    calculate_window_geometry(window);
+
+    return gs_2dboxf(min, min + _Size);
 }
 
 bool Immedidate2DRendererTestLayer::render_close_button_widget(
