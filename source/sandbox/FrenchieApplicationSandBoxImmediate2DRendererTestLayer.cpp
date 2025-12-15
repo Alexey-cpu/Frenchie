@@ -156,7 +156,7 @@ void ImmedidateUserInterfaceWindow::begin_resize_bottom()
     State.IsBeingResizedBottom = true;
 }
 
-void ImmedidateUserInterfaceWindow::being_move()
+void ImmedidateUserInterfaceWindow::begin_move()
 {
     State.IsBeingMoved = true;
 }
@@ -252,6 +252,8 @@ void Immedidate2DRendererTestLayer::frame_update()
         if(begin_window("Child-1")) end_window();
         if(begin_window("Child-2")) end_window();
         if(begin_window("Child-3")) end_window();
+        if(begin_window("Child-4")) end_window();
+        if(begin_window("Child-5")) end_window();
 
         // for (int i = 0; i < 10; i++)
         // {
@@ -376,6 +378,9 @@ void Immedidate2DRendererTestLayer::frame_finish()
             break;
         }
     }
+
+    // poll windows events
+    poll_window_events();
 
     // clean up windows hierarchy and layout data
     for (auto& cachedWindow : m_WindowsCache)
@@ -572,14 +577,24 @@ void Immedidate2DRendererTestLayer::end_window()
 
     auto window = m_WindowsHierarchy[m_WindowsHierarchy.size() - 1];
 
-    if(window->needs_vertical_scroll_bar())
+    bool anyChildWindowIsBeingModified = false;
+
+    for (auto child : m_WindowsDrawList)
+    {
+        if (child->State.Parent != window) continue;
+        
+        if(child->is_being_modified()) anyChildWindowIsBeingModified = true;
+    }
+    
+
+    if(window->needs_vertical_scroll_bar() && !anyChildWindowIsBeingModified)
         render_window_vertical_scrollbar(window);
-    if(window->needs_horizontal_scroll_bar())
+    if(window->needs_horizontal_scroll_bar() && !anyChildWindowIsBeingModified)
         render_window_horizontal_scrollbar(window);
 
     render_window_resize_events_gizmos(window);
 
-    sink_window_events(window);
+    process_window_events(window);
 
     m_WindowsHierarchy.pop_back();
 }
@@ -1087,42 +1102,13 @@ bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(Immedidat
     return true;
 }
 
-void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window)
+void Immedidate2DRendererTestLayer::poll_window_events()
 {
-    if(_Window == nullptr) return;
+    if(m_WindowsDrawList.empty()) return;
+    
+    ImmedidateUserInterfaceWindow* sink = nullptr;
 
-    // end poll events
-    bool anyWindowIsBeingModified   = false;
-
-    for (auto& cachedwindow : m_WindowsDrawList)
-    {
-        if(cachedwindow->Name == _Window->Name)
-            continue;
-
-        if(cachedwindow->is_being_modified())
-            anyWindowIsBeingModified = true;
-    }
-
-    bool allMouseButtonsAreReleased = true;
-
-    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-    {
-        allMouseButtonsAreReleased =
-            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-    }
-
-    if(allMouseButtonsAreReleased || anyWindowIsBeingModified)
-    {
-        _Window->end_move();
-        _Window->end_resize();
-        _Window->end_scroll();
-    }
-
-    // poll events of the top most window
-    ImmedidateUserInterfaceWindow* next = _Window;
-
-    while (next && !(allMouseButtonsAreReleased || anyWindowIsBeingModified))
+    for (auto next : m_WindowsDrawList)
     {
         gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(next->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
         gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
@@ -1140,19 +1126,19 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
             !next->is_being_resized()                                                                               &&
             !next->is_being_moved())
         {
-            if(resizeTopLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            if(resizeTopLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 next->begin_resize_top_left();
-            else if(resizeTopRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            else if(resizeTopRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 next->begin_resize_top_right();
-            else if(resizeBottomLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            else if(resizeBottomLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 next->begin_resize_bottom_left();
-            else if(resizeBottomRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            else if(resizeBottomRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 next->begin_resize_bottom_right();
-            else if(resizeTop.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            else if(resizeTop.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 next->begin_resize_top();
             else if(resizeLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
                 next->begin_resize_left();
-            else if(resizeRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+            else if(resizeRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) && next->State.Parent == nullptr)
                 next->begin_resize_right();
             else if(resizeBottom.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
                 next->begin_resize_bottom();
@@ -1165,7 +1151,7 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
             !next->is_being_resized() &&
             !next->is_being_scrolled())
         {
-            next->being_move();
+            next->begin_move();
         }
 
         // poll window vertical scroll event
@@ -1188,20 +1174,64 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
             next->begin_scroll_horizontally();
         }
 
-        // stop poll events of the current window
-        if((next->is_being_resized() || next->is_being_moved() || next->is_being_scrolled()) && _Window != next)
+        if (next->is_being_resized() || next->is_being_moved() || next->is_being_scrolled())
         {
-            _Window->end_move();
-            _Window->end_resize();
-            _Window->end_scroll();
-
-            break;
+            if(sink == nullptr)
+            {
+                sink = next;
+            }
+            else if(next->State.Depth > sink->State.Depth)
+            {
+                sink->end_move();
+                sink->end_resize();
+                sink->end_scroll();
+                sink = next;
+            }
         }
-
-        next = next->State.Parent;
     }
 
-    // process events
+    if(sink != nullptr)
+    {
+        // bool anyWindowIsBeingModified   = false;
+
+        // for (auto& cachedwindow : m_WindowsDrawList)
+        // {
+        //     if(cachedwindow->Name == sink->Name)
+        //         continue;
+
+        //     if(cachedwindow->is_being_modified())
+        //         anyWindowIsBeingModified = true;
+        // }
+
+        bool allMouseButtonsAreReleased = true;
+
+        for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                    button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+        {
+            allMouseButtonsAreReleased =
+                allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+        }
+
+        if(allMouseButtonsAreReleased)
+        {
+            sink->end_move();
+            sink->end_resize();
+            sink->end_scroll();
+        }
+        
+        // if(allMouseButtonsAreReleased || anyWindowIsBeingModified)
+        // {
+        //     sink->end_move();
+        //     sink->end_resize();
+        //     sink->end_scroll();
+        // }
+    }
+}
+
+void Immedidate2DRendererTestLayer::process_window_events(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+
     if(_Window->is_being_resized())
     {
         gs_2dboxf estimatedBox;
@@ -1265,25 +1295,35 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
 
         if(_Window->State.Parent)
         {
+            float fillWeight = 1.f;
+            
             if(_Window->State.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally)
             {
-                //if(_Window->is_being_resized_left())
-                {
-                    _Window->State.LayoutFillWeight =
-                        gs_clamp(
-                            (_Window->State.WindowBox.size() / _Window->State.Parent->Cache.WindowBox.size()).x * _Window->State.Parent->Cache.LayoutTotalWeight,
-                            0.f,
-                            _Window->State.Parent->Cache.LayoutTotalWeight);
-                }
+                fillWeight = gs_clamp(
+                    (_Window->State.WindowBox.size() / _Window->Cache.Parent->Cache.WindowBox.size()).x * _Window->State.Parent->Cache.LayoutTotalWeight,
+                    0.f,
+                    _Window->State.Parent->Cache.LayoutTotalWeight);
             }
-            else if(_Window->State.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically)
+            else if(_Window->Cache.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically)
             {
-                _Window->State.LayoutFillWeight =
-                    gs_clamp(
-                        (_Window->State.WindowBox.size() / _Window->State.Parent->Cache.WindowBox.size()).y * _Window->State.Parent->Cache.LayoutTotalWeight,
-                        0.f,
-                        _Window->State.Parent->Cache.LayoutTotalWeight);
+                fillWeight = gs_clamp(
+                    (_Window->State.WindowBox.size() / _Window->Cache.Parent->Cache.WindowBox.size()).y * _Window->State.Parent->Cache.LayoutTotalWeight,
+                    0.f,
+                    _Window->Cache.Parent->Cache.LayoutTotalWeight);
             }
+
+            float fillWeightDelta = (fillWeight - _Window->State.LayoutFillWeight) / _Window->State.Parent->Cache.LayoutTotalWeight;
+
+            for (auto child : m_WindowsDrawList)
+            {
+                if(child->State.Parent != _Window->State.Parent || child == _Window) continue;
+
+                child->State.LayoutFillWeight -= fillWeightDelta;
+                child->State.LayoutFillWeight = gs_clamp(child->State.LayoutFillWeight, 0.001f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
+            }
+
+            _Window->State.LayoutFillWeight += fillWeightDelta;
+            _Window->State.LayoutFillWeight = gs_clamp(_Window->State.LayoutFillWeight, 0.001f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
         }
     }
     else if(_Window->is_being_moved())
