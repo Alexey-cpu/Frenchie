@@ -236,12 +236,7 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
     }
 
     ImmedidateUserInterfaceWindow* window = m_WindowsCache.find(_Name)->second.get();
-    window->State.Hints            = _Hints;
-
-    if(_Opened == nullptr)
-        window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
-    else
-        window->State.Hints |= ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
+    window->State.Hints                   = _Hints;
 
     if(!m_WindowsHierarchy.empty())
     {
@@ -333,6 +328,11 @@ bool Immedidate2DRendererTestLayer::begin_window(const std::string& _Name, bool*
             window->State.Depth = windowMaximumDepth;
         }
     }
+
+    if(_Opened == nullptr)
+        window->State.Hints &= ~ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
+    else
+        window->State.Hints |= ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable;
 
     calculate_window_geometry(window);
     
@@ -1164,34 +1164,26 @@ void Immedidate2DRendererTestLayer::poll_window_events()
             begin_scroll_horizontally(next);
         }
 
-        if (is_being_resized(next) || is_being_moved(next) || is_being_scrolled(next))
+        if (is_being_modified(next))
         {
             if(sink == nullptr)
-            {
                 sink = next;
-            }
-            else if(next->State.Depth > sink->State.Depth)
-            {
-                end_move(next);
-                end_resize(next);
-                end_scroll(next);
+            else if(next->State.Depth > sink->State.Depth && sink->State.Parent != next)
                 sink = next;
-            }
         }
     }
 
     if(sink != nullptr)
     {
-        // bool anyWindowIsBeingModified   = false;
-
-        // for (auto& cachedwindow : m_WindowsDrawList)
-        // {
-        //     if(cachedwindow->Name == sink->Name)
-        //         continue;
-
-        //     if(cachedwindow->is_being_modified())
-        //         anyWindowIsBeingModified = true;
-        // }
+        for (auto& window : m_WindowsDrawList)
+        {
+            if(window != sink)
+            {
+                end_move(window);
+                end_resize(window);
+                end_scroll(window);
+            }
+        }
 
         bool allMouseButtonsAreReleased = true;
 
@@ -1208,13 +1200,6 @@ void Immedidate2DRendererTestLayer::poll_window_events()
             end_resize(sink);
             end_scroll(sink);
         }
-        
-        // if(allMouseButtonsAreReleased || anyWindowIsBeingModified)
-        // {
-        //     sink->end_move();
-        //     sink->end_resize();
-        //     sink->end_scroll();
-        // }
     }
 }
 
@@ -1285,22 +1270,13 @@ void Immedidate2DRendererTestLayer::process_window_events(ImmedidateUserInterfac
 
         if(_Window->State.Parent)
         {
-            float fillWeight = 1.f;
+            gs_vec2f fillSize   = (estimatedBox.size() / _Window->Cache.Parent->Cache.WindowBox.size()) * _Window->State.Parent->Cache.LayoutTotalWeight;
+            float    fillWeight = 1.f;
             
             if(_Window->State.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally)
-            {
-                fillWeight = gs_clamp(
-                    (_Window->State.WindowBox.size() / _Window->Cache.Parent->Cache.WindowBox.size()).x * _Window->State.Parent->Cache.LayoutTotalWeight,
-                    0.f,
-                    _Window->State.Parent->Cache.LayoutTotalWeight);
-            }
+                fillWeight = gs_clamp(fillSize.x, 0.f, _Window->State.Parent->Cache.LayoutTotalWeight);
             else if(_Window->Cache.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically)
-            {
-                fillWeight = gs_clamp(
-                    (_Window->State.WindowBox.size() / _Window->Cache.Parent->Cache.WindowBox.size()).y * _Window->State.Parent->Cache.LayoutTotalWeight,
-                    0.f,
-                    _Window->Cache.Parent->Cache.LayoutTotalWeight);
-            }
+                fillWeight = gs_clamp(fillSize.y, 0.f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
 
             float fillWeightDelta = (fillWeight - _Window->State.LayoutFillWeight) / _Window->State.Parent->Cache.LayoutTotalWeight;
 
@@ -1309,11 +1285,11 @@ void Immedidate2DRendererTestLayer::process_window_events(ImmedidateUserInterfac
                 if(child->State.Parent != _Window->State.Parent || child == _Window) continue;
 
                 child->State.LayoutFillWeight -= fillWeightDelta;
-                child->State.LayoutFillWeight = gs_clamp(child->State.LayoutFillWeight, 0.001f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
+                child->State.LayoutFillWeight  = gs_clamp(child->State.LayoutFillWeight, 0.1f, 10000.f);
             }
 
             _Window->State.LayoutFillWeight += fillWeightDelta;
-            _Window->State.LayoutFillWeight = gs_clamp(_Window->State.LayoutFillWeight, 0.001f, _Window->Cache.Parent->Cache.LayoutTotalWeight);
+            _Window->State.LayoutFillWeight  = gs_clamp(_Window->State.LayoutFillWeight, 0.1f, 10000.f);
         }
     }
     else if(is_being_moved(_Window))
