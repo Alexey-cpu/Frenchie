@@ -331,6 +331,8 @@ namespace Frenchie
             bool render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
             bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
 
+            bool render_window_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
+
             bool render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
 
             void sink_window_events(ImmedidateUserInterfaceWindow*);

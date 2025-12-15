@@ -251,6 +251,7 @@ void Immedidate2DRendererTestLayer::frame_update()
     {
         if(begin_window("Child-1")) end_window();
         if(begin_window("Child-2")) end_window();
+        if(begin_window("Child-3")) end_window();
 
         // for (int i = 0; i < 10; i++)
         // {
@@ -576,6 +577,8 @@ void Immedidate2DRendererTestLayer::end_window()
     if(window->needs_horizontal_scroll_bar())
         render_window_horizontal_scrollbar(window);
 
+    render_window_resize_events_gizmos(window);
+
     sink_window_events(window);
 
     m_WindowsHierarchy.pop_back();
@@ -602,27 +605,39 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
     if(_Window == nullptr) return;
 
     // frame
-    _Window->State.WindowFrameBox =
-        gs_2dboxf(
-            _Window->State.WindowBox.Min,
-            _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style->FontSize));
+    {
+        // frame bounding box
+        _Window->State.WindowFrameBox =
+            gs_2dboxf(
+                _Window->State.WindowBox.Min,
+                _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style->FontSize));
 
-    // title
-    gs_vec2f titleSize = m_Renderer->calculate_bounding_box(_Window->Name, m_Style->FontSize, m_Style->Font).size();
-    gs_vec2f titleMin  = gs_vec2f(_Window->State.WindowFrameBox.Min.x + m_Style->FrameWidth, _Window->State.WindowFrameBox.center().y - titleSize.y * 0.5f);
-    gs_vec2f titleMax  = titleMin + titleSize;
+        // frame title
+        gs_vec2f titleSize = m_Renderer->calculate_bounding_box(_Window->Name, m_Style->FontSize, m_Style->Font).size();
+        gs_vec2f titleMin  = gs_vec2f(
+            _Window->State.WindowFrameBox.Min.x + m_Style->FrameWidth,
+            _Window->State.WindowFrameBox.center().y - titleSize.y * 0.5f);
+        gs_vec2f titleMax  = titleMin + titleSize;
 
-    _Window->State.WindowTitleBox = gs_2dboxf(titleMin, titleMax);
+        _Window->State.WindowTitleBox = gs_2dboxf(titleMin, titleMax);
 
-    // close button
-    gs_vec2f closeButtonMin = gs_vec2f(_Window->State.WindowFrameBox.Max.x - m_Style->WindowResizeAngleGizmoRadius - titleSize.y, _Window->State.WindowTitleBox.Min.y);
-    gs_vec2f closeButtonMax = closeButtonMin + gs_vec2f(titleSize.y, titleSize.y);
-    _Window->State.WindowCloseButtonBox = gs_2dboxf(closeButtonMin, closeButtonMax);
+        // frame close button
+        gs_vec2f closeButtonMin = gs_vec2f(
+            _Window->State.WindowFrameBox.Max.x - m_Style->WindowResizeAngleGizmoRadius - titleSize.y,
+            _Window->State.WindowTitleBox.Min.y);
+        gs_vec2f closeButtonMax = closeButtonMin + gs_vec2f(titleSize.y, titleSize.y);
+        _Window->State.WindowCloseButtonBox = gs_2dboxf(closeButtonMin, closeButtonMax);
+    }
 
     // viewport
-    _Window->State.WindowViewportBox = gs_2dboxf(
-        _Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowFrameBox.height()),
-        _Window->State.WindowBox.Max - gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+    {
+        float verticalScrollBarPadding   = _Window->needs_vertical_scroll_bar()   ? m_Style->WindowScrollBarSliderWidth : 0.f;
+        float horizontalScrollBarPadding = _Window->needs_horizontal_scroll_bar() ? m_Style->WindowScrollBarSliderWidth : 0.f;
+
+        _Window->State.WindowViewportBox = gs_2dboxf(
+            _Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowFrameBox.height()),
+            _Window->State.WindowBox.Max - gs_vec2f(verticalScrollBarPadding, horizontalScrollBarPadding));
+    }
 
     // vertical scrollbar
     {
@@ -656,8 +671,8 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
             _Window->State.HorizontalScrollBar.SliderPosition = 0.f;
 
         _Window->State.WindowHorizontalScrollBarBox = gs_2dboxf(
-            gs_vec2f(_Window->State.WindowViewportBox.Min.x, _Window->State.WindowViewportBox.Max.y) + gs_vec2f(0.f, -m_Style->WindowScrollBarSliderWidth),
-            gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y));
+            gs_vec2f(_Window->State.WindowViewportBox.Min.x, _Window->State.WindowViewportBox.Max.y),
+            gs_vec2f(_Window->State.WindowViewportBox.Max.x, _Window->State.WindowViewportBox.Max.y) + gs_vec2f(0.f, m_Style->WindowScrollBarSliderWidth));
 
         _Window->State.WindowHorizontalScrollBarSliderBox = gs_2dboxf(
             _Window->State.WindowHorizontalScrollBarBox.Min + gs_vec2f(_Window->State.HorizontalScrollBar.SliderPosition, 0.f),
@@ -665,38 +680,76 @@ void Immedidate2DRendererTestLayer::calculate_window_geometry(ImmedidateUserInte
     }
     
     // scroll area
-    _Window->State.WindowScrollAreaBox  = gs_2dboxf(
-        _Window->State.WindowViewportBox.Min,
-        _Window->State.WindowViewportBox.Max,
-        _Window->State.WindowViewportBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
+    {
+        _Window->State.WindowScrollAreaBox  = gs_2dboxf(
+            _Window->State.WindowViewportBox.Min,
+            _Window->State.WindowViewportBox.Max,
+            _Window->State.WindowViewportBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
 
-    _Window->State.WindowScrollAreaBox.Min += gs_vec2f(
-        -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
-        -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
-    
-    _Window->State.WindowScrollAreaBox.Max += gs_vec2f(
-        -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
-        -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
+        _Window->State.WindowScrollAreaBox.Min += gs_vec2f(
+            -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
+            -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
+        
+        _Window->State.WindowScrollAreaBox.Max += gs_vec2f(
+            -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
+            -_Window->State.VerticalScrollBar.SliderPosition * _Window->State.VerticalScrollBar.SliderScale);
+    }
 
     // content box
-    _Window->State.WindowContentBox  = gs_2dboxf(
-        _Window->State.WindowScrollAreaBox.Min,
-        _Window->State.WindowScrollAreaBox.Min + _Window->State.WindowContentBox.size(),
-        _Window->State.WindowScrollAreaBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
-
-    // recalculate parental content box
-    auto parent = _Window->State.Parent;
-
-    while (parent)
     {
-        parent->State.WindowContentBox = gs_2dboxf(
-            parent->State.WindowScrollAreaBox.Min,
-            parent->State.WindowScrollAreaBox.Min + gs_max(_Window->State.WindowContentBox.size(), parent->State.WindowContentBox.size()),
-            parent->State.WindowScrollAreaBox.Min + parent->State.LayoutCursorPositon + parent->State.LayoutCursorSize);
+        // self content bounding box
+        _Window->State.WindowContentBox  = gs_2dboxf(
+            _Window->State.WindowScrollAreaBox.Min,
+            _Window->State.WindowScrollAreaBox.Min + _Window->State.WindowContentBox.size(),
+            _Window->State.WindowScrollAreaBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
 
-        parent = parent->State.Parent;
+        // recalculate parental content box
+        auto parent = _Window->State.Parent;
+
+        while (parent)
+        {
+            parent->State.WindowContentBox = gs_2dboxf(
+                parent->State.WindowScrollAreaBox.Min,
+                parent->State.WindowScrollAreaBox.Min + gs_max(_Window->State.WindowContentBox.size(), parent->State.WindowContentBox.size()),
+                parent->State.WindowScrollAreaBox.Min + parent->State.LayoutCursorPositon + parent->State.LayoutCursorSize);
+
+            parent = parent->State.Parent;
+        }
     }
     
+    // clipping box
+    {
+        if(_Window->State.Parent != nullptr)
+        {
+            auto next   = _Window;
+            auto parent = _Window->State.Parent;
+
+            while (parent != nullptr)
+            {
+                next   = parent;
+                parent = parent->State.Parent;
+            }
+
+            _Window->State.WindowInnerClipAreaBox = next->State.WindowInnerClipAreaBox;
+            _Window->State.WindowOuterClipAreaBox = next->State.WindowOuterClipAreaBox;
+        }
+        else
+        {
+            gs_vec2f outerBorder =
+                gs_vec2f(m_Style->WindowResizeAngleGizmoRadius, m_Style->WindowResizeAngleGizmoRadius);
+
+            _Window->State.WindowInnerClipAreaBox =
+                gs_2dboxf(
+                    _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Min,
+                    _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
+
+            _Window->State.WindowOuterClipAreaBox =
+                gs_2dboxf(
+                    _Window->State.WindowBox.transform(_Window->State.WindowTransform).Min - outerBorder,
+                    _Window->State.WindowBox.transform(_Window->State.WindowTransform).Max + outerBorder);
+        }
+    }
+
     calculate_window_geometry(_Window->State.Parent);
 }
 
@@ -733,50 +786,16 @@ bool Immedidate2DRendererTestLayer::render_window_clipbox(ImmedidateUserInterfac
 {
     if(_Window == nullptr) return false;
 
-    if(_Window->State.Parent != nullptr)
-    {
-        auto next   = _Window;
-        auto parent = _Window->State.Parent;
-
-        while (parent != nullptr)
-        {
-            next   = parent;
-            parent = parent->State.Parent;
-        }
-
-        _Window->State.WindowInnerClipAreaBox = next->State.WindowInnerClipAreaBox;
-        _Window->State.WindowOuterClipAreaBox = next->State.WindowOuterClipAreaBox;
-
-        // _Window->State.WindowInnerClipAreaBox =
-        //     gs_2dboxf(
-        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Min,
-        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
-
-        // _Window->State.WindowOuterClipAreaBox =
-        //     gs_2dboxf(
-        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Min,
-        //         next->State.WindowViewportBox.transform(next->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
-    }
-    else
-    {
-        gs_vec2f outerBorder =
-            gs_vec2f(m_Style->WindowResizeAngleGizmoRadius, m_Style->WindowResizeAngleGizmoRadius);
-
-        _Window->State.WindowInnerClipAreaBox =
-            gs_2dboxf(
-                _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Min,
-                _Window->State.WindowViewportBox.transform(_Window->State.WindowTransform).Max + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
-
-        _Window->State.WindowOuterClipAreaBox =
-            gs_2dboxf(
-                _Window->State.WindowBox.transform(_Window->State.WindowTransform).Min - outerBorder,
-                _Window->State.WindowBox.transform(_Window->State.WindowTransform).Max + outerBorder);
-    }
-
     m_Renderer->push_clip_box(
         gs_2dboxf(
-            gs_clamp(_Window->State.WindowInnerClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Max),
-            gs_clamp(_Window->State.WindowInnerClipAreaBox.Max, _Window->State.WindowOuterClipAreaBox.Min, _Window->State.WindowOuterClipAreaBox.Max)));
+            gs_clamp(
+                _Window->State.WindowInnerClipAreaBox.Min,
+                _Window->State.WindowOuterClipAreaBox.Min,
+                _Window->State.WindowOuterClipAreaBox.Max),
+            gs_clamp(
+                _Window->State.WindowInnerClipAreaBox.Max,
+                _Window->State.WindowOuterClipAreaBox.Min,
+                _Window->State.WindowOuterClipAreaBox.Max)));
 
     return true;
 }
@@ -969,10 +988,8 @@ bool Immedidate2DRendererTestLayer::render_window_horizontal_scrollbar(Immedidat
     return true;
 }
 
-void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window)
+bool Immedidate2DRendererTestLayer::render_window_resize_events_gizmos(ImmedidateUserInterfaceWindow* _Window)
 {
-    if(_Window == nullptr) return;
-
     // begin poll events
     gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Window->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
     gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
@@ -983,110 +1000,8 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
     gs_2dboxf      resizeRight       = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width() - m_Style->WindowResizeSideGizmoWidth, 0.f), _Window->State.WindowBox.Max + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f));
     gs_2dboxf      resizeBottom      = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowBox.height() - m_Style->WindowResizeSideGizmoWidth), _Window->State.WindowBox.Max + gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth));
 
-    // poll window resize events
-    if( (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable) &&
-        application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)             &&
-        !_Window->is_being_scrolled() &&
-        !_Window->is_being_resized()  &&
-        !_Window->is_being_moved())
-    {
-        if(resizeTopLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_top_left();
-        else if(resizeTopRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_top_right();
-        else if(resizeBottomLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_bottom_left();
-        else if(resizeBottomRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_bottom_right();
-        else if(resizeTop.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_top();
-        else if(resizeLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_left();
-        else if(resizeRight.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_right();
-        else if(resizeBottom.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
-            _Window->begin_resize_bottom();
-    }
 
-    // poll window move event
-    if( (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable)      &&
-        application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                &&
-         _Window->State.WindowFrameBox.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-        !_Window->is_being_resized() &&
-        !_Window->is_being_scrolled())
-    {
-        _Window->being_move();
-    }
-
-    // here we must poll the top most scroll bar
-    auto next = _Window;
-
-    while (next)
-    {
-        // poll window vertical scroll event
-        if( application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                       &&
-            next->State.WindowVerticalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-            next->needs_vertical_scroll_bar()                                                                                              &&
-            !next->is_being_resized()                                                                                                      &&
-            !next->is_being_moved())
-        {
-            if(next != _Window)
-            {
-                _Window->end_scroll();
-                break;
-            }
-
-            next->begin_scroll_vertically();
-        }
-
-        // poll window horizontal scroll event
-        if( application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                         &&
-            next->State.WindowHorizontalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
-            next->needs_horizontal_scroll_bar()                                                                                              &&
-            !next->is_being_resized()                                                                                                        &&
-            !next->is_being_moved())
-        {
-            if(next != _Window)
-            {
-                _Window->end_scroll();
-                break;
-            }
-
-            next->begin_scroll_horizontally();
-        }
-
-        next = next->State.Parent;
-    }
-
-    // end poll events
-    bool anyWindowIsBeingModified   = false;
-    bool allMouseButtonsAreReleased = true;
-
-    for (auto& cachedwindow : m_WindowsCache)
-    {
-        if(cachedwindow.second->Name == _Window->Name)
-            continue;
-
-        if(cachedwindow.second->is_being_modified())
-            anyWindowIsBeingModified = true;
-    }
-
-    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-             button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-    {
-        allMouseButtonsAreReleased =
-            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-    }
-
-    if(allMouseButtonsAreReleased || anyWindowIsBeingModified)
-    {
-        _Window->end_move();
-        _Window->end_resize();
-        _Window->end_scroll();
-    }
-
-    // process events
-    if(!anyWindowIsBeingModified && (_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
+    if((_Window->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable))
     {
         if((resizeTopLeft.transform(_Window->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) || _Window->is_being_resized_top_left()) && !_Window->is_being_moved())
         {
@@ -1169,6 +1084,124 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
         }
     }
 
+    return true;
+}
+
+void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWindow* _Window)
+{
+    if(_Window == nullptr) return;
+
+    // end poll events
+    bool anyWindowIsBeingModified   = false;
+
+    for (auto& cachedwindow : m_WindowsDrawList)
+    {
+        if(cachedwindow->Name == _Window->Name)
+            continue;
+
+        if(cachedwindow->is_being_modified())
+            anyWindowIsBeingModified = true;
+    }
+
+    bool allMouseButtonsAreReleased = true;
+
+    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+    {
+        allMouseButtonsAreReleased =
+            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+    }
+
+    if(allMouseButtonsAreReleased || anyWindowIsBeingModified)
+    {
+        _Window->end_move();
+        _Window->end_resize();
+        _Window->end_scroll();
+    }
+
+    // poll events of the top most window
+    auto next = _Window;
+
+    while (next && !(allMouseButtonsAreReleased || anyWindowIsBeingModified))
+    {
+        gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(next->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
+        gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
+        gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(next->State.WindowBox.Max - gs_vec2f(next->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
+        gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(next->State.WindowBox.Max, m_Style->WindowResizeAngleGizmoRadius);
+        gs_2dboxf      resizeTop         = gs_2dboxf(next->State.WindowBox.Min - gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), m_Style->WindowResizeSideGizmoWidth));
+        gs_2dboxf      resizeLeft        = gs_2dboxf(next->State.WindowBox.Min - gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Min + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, next->State.WindowBox.height()));
+        gs_2dboxf      resizeRight       = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width() - m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Max + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f));
+        gs_2dboxf      resizeBottom      = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(0.f, next->State.WindowBox.height() - m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Max + gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth));
+
+        // poll window resize events
+        if( (next->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Resizable) &&
+            application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)             &&
+            !next->is_being_scrolled()                                                                              &&
+            !next->is_being_resized()                                                                               &&
+            !next->is_being_moved())
+        {
+            if(resizeTopLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_top_left();
+            else if(resizeTopRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_top_right();
+            else if(resizeBottomLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_bottom_left();
+            else if(resizeBottomRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_bottom_right();
+            else if(resizeTop.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_top();
+            else if(resizeLeft.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_left();
+            else if(resizeRight.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_right();
+            else if(resizeBottom.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()))
+                next->begin_resize_bottom();
+        }
+
+        // poll window move event
+        if( (next->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Movable)        &&
+            application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
+            next->State.WindowFrameBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
+            !next->is_being_resized() &&
+            !next->is_being_scrolled())
+        {
+            next->being_move();
+        }
+
+        // poll window vertical scroll event
+        if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                    &&
+            next->State.WindowVerticalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
+            next->needs_vertical_scroll_bar()                                                                                              &&
+            !next->is_being_resized()                                                                                                      &&
+            !next->is_being_moved())
+        {
+            next->begin_scroll_vertically();
+        }
+
+        // poll window horizontal scroll event
+        if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                      &&
+            next->State.WindowHorizontalScrollBarSliderBox.transform(next->State.WindowTransform).contains(m_Renderer->get_cursor_postion()) &&
+            next->needs_horizontal_scroll_bar()                                                                                              &&
+            !next->is_being_resized()                                                                                                        &&
+            !next->is_being_moved())
+        {
+            next->begin_scroll_horizontally();
+        }
+
+        // stop poll events of the current window
+        if((next->is_being_resized() || next->is_being_moved() || next->is_being_scrolled()) && _Window != next)
+        {
+            _Window->end_move();
+            _Window->end_resize();
+            _Window->end_scroll();
+
+            break;
+        }
+
+        next = next->State.Parent;
+    }
+
+    // process events
     if(_Window->is_being_resized())
     {
         gs_2dboxf estimatedBox;
@@ -1176,7 +1209,9 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
 
         if(_Window->is_being_resized_top_left())
         {
-            estimatedBox = gs_2dboxf(_Window->Cache.WindowBox.Min + cursorDelta, _Window->Cache.WindowBox.Max);
+            estimatedBox = gs_2dboxf(
+                _Window->Cache.WindowBox.Min + cursorDelta,
+                _Window->Cache.WindowBox.Max);
         }
         else if(_Window->is_being_resized_top_right())
         {
@@ -1221,8 +1256,8 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
                 _Window->Cache.WindowBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y));
         }
 
-        float minX = estimatedBox.size().x > m_Style->WindowMinimumWidth ? estimatedBox.Min.x : _Window->Cache.WindowBox.Min.x + (_Window->State.WindowBox.Min.x - _Window->Cache.WindowBox.Min.x);
-        float maxX = estimatedBox.size().x > m_Style->WindowMinimumWidth ? estimatedBox.Max.x : _Window->Cache.WindowBox.Max.x + (_Window->State.WindowBox.Max.x - _Window->Cache.WindowBox.Max.x);
+        float minX = estimatedBox.size().x > m_Style->WindowMinimumWidth  ? estimatedBox.Min.x : _Window->Cache.WindowBox.Min.x + (_Window->State.WindowBox.Min.x - _Window->Cache.WindowBox.Min.x);
+        float maxX = estimatedBox.size().x > m_Style->WindowMinimumWidth  ? estimatedBox.Max.x : _Window->Cache.WindowBox.Max.x + (_Window->State.WindowBox.Max.x - _Window->Cache.WindowBox.Max.x);
         float minY = estimatedBox.size().y > m_Style->WindowMinimumHeight ? estimatedBox.Min.y : _Window->Cache.WindowBox.Min.y + (_Window->State.WindowBox.Min.y - _Window->Cache.WindowBox.Min.y);
         float maxY = estimatedBox.size().y > m_Style->WindowMinimumHeight ? estimatedBox.Max.y : _Window->Cache.WindowBox.Max.y + (_Window->State.WindowBox.Max.y - _Window->Cache.WindowBox.Max.y);
         
@@ -1230,13 +1265,25 @@ void Immedidate2DRendererTestLayer::sink_window_events(ImmedidateUserInterfaceWi
 
         if(_Window->State.Parent)
         {
-            _Window->State.LayoutFillWeight =
-                gs_clamp(
-                    gs_min(
-                        (_Window->State.WindowBox.size() / _Window->State.Parent->Cache.WindowBox.size()).x,
-                        (_Window->State.WindowBox.size() / _Window->State.Parent->Cache.WindowBox.size()).y) * _Window->State.Parent->Cache.LayoutTotalWeight,
-                    0.f,
-                    _Window->State.Parent->Cache.LayoutTotalWeight);
+            if(_Window->State.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally)
+            {
+                //if(_Window->is_being_resized_left())
+                {
+                    _Window->State.LayoutFillWeight =
+                        gs_clamp(
+                            (_Window->State.WindowBox.size() / _Window->State.Parent->Cache.WindowBox.size()).x * _Window->State.Parent->Cache.LayoutTotalWeight,
+                            0.f,
+                            _Window->State.Parent->Cache.LayoutTotalWeight);
+                }
+            }
+            else if(_Window->State.Parent->State.Hints & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically)
+            {
+                _Window->State.LayoutFillWeight =
+                    gs_clamp(
+                        (_Window->State.WindowBox.size() / _Window->State.Parent->Cache.WindowBox.size()).y * _Window->State.Parent->Cache.LayoutTotalWeight,
+                        0.f,
+                        _Window->State.Parent->Cache.LayoutTotalWeight);
+            }
         }
     }
     else if(_Window->is_being_moved())
