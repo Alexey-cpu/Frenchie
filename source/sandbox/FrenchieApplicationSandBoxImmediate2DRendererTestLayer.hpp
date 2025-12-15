@@ -237,42 +237,6 @@ namespace Frenchie
             mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
             mutable WindowState State{WindowState()};
             mutable WindowState Cache{WindowState()};
-
-            // API
-            int  calculate_child_depth() const;
-            bool needs_vertical_scroll_bar() const;
-            bool needs_horizontal_scroll_bar() const;
-            bool is_being_resized_top_left() const;
-            bool is_being_resized_top_right() const;
-            bool is_being_resized_bottom_left() const;
-            bool is_being_resized_bottom_right() const;
-            bool is_being_resized_top() const;
-            bool is_being_resized_left() const;
-            bool is_being_resized_right() const;
-            bool is_being_resized_bottom() const;
-            bool is_being_resized() const;
-            bool is_being_moved() const;
-            bool is_being_modified() const;
-            bool is_being_focused() const;
-            bool is_being_scrolled_vertically() const;
-            bool is_being_scrolled_horizontally() const;
-            bool is_being_scrolled() const;
-            void begin_resize_top_left();
-            void begin_resize_top_right();
-            void begin_resize_bottom_left();
-            void begin_resize_bottom_right();
-            void begin_resize_top();
-            void begin_resize_left();
-            void begin_resize_right();
-            void begin_resize_bottom();
-            void begin_move();
-            void begin_focus();
-            void begin_scroll_vertically();
-            void begin_scroll_horizontally();
-            void end_resize();
-            void end_move();
-            void end_focus();
-            void end_scroll();
         };
 
         class Immedidate2DRendererTestLayer : public Layer
@@ -320,11 +284,46 @@ namespace Frenchie
 
             // service methods
 
-            // geometry calculation
-            void      calculate_window_geometry(ImmedidateUserInterfaceWindow*);
-            gs_2dboxf calculate_widget_geometry(const gs_vec2f& _Size);
+            // windows API
+            void calculate_window_geometry(ImmedidateUserInterfaceWindow*);
+            int  calculate_child_depth(ImmedidateUserInterfaceWindow*) const;
+            
+            bool needs_vertical_scroll_bar(const ImmedidateUserInterfaceWindow*) const;
+            bool needs_horizontal_scroll_bar(const ImmedidateUserInterfaceWindow*) const;
+            
+            bool is_being_resized_top_left(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_top_right(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_bottom_left(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_bottom_right(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_top(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_left(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_right(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized_bottom(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_resized(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_moved(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_modified(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_focused(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow*) const;
+            bool is_being_scrolled(const ImmedidateUserInterfaceWindow*) const;
+            
+            void begin_resize_top_left(ImmedidateUserInterfaceWindow*);
+            void begin_resize_top_right(ImmedidateUserInterfaceWindow*);
+            void begin_resize_bottom_left(ImmedidateUserInterfaceWindow*);
+            void begin_resize_bottom_right(ImmedidateUserInterfaceWindow*);
+            void begin_resize_top(ImmedidateUserInterfaceWindow*);
+            void begin_resize_left(ImmedidateUserInterfaceWindow*);
+            void begin_resize_right(ImmedidateUserInterfaceWindow*);
+            void begin_resize_bottom(ImmedidateUserInterfaceWindow*);
+            void begin_move(ImmedidateUserInterfaceWindow*);
+            void begin_focus(ImmedidateUserInterfaceWindow*);
+            void begin_scroll_vertically(ImmedidateUserInterfaceWindow*);
+            void begin_scroll_horizontally(ImmedidateUserInterfaceWindow*);
+            void end_resize(ImmedidateUserInterfaceWindow*);
+            void end_move(ImmedidateUserInterfaceWindow*);
+            void end_focus(ImmedidateUserInterfaceWindow*);
+            void end_scroll(ImmedidateUserInterfaceWindow*);
 
-            // windows rendering API
             bool render_window_clipbox(ImmedidateUserInterfaceWindow*);
             bool render_window_background(ImmedidateUserInterfaceWindow*);
             bool render_window_classic_frame(ImmedidateUserInterfaceWindow*);
@@ -332,7 +331,9 @@ namespace Frenchie
             bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
             bool render_window_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
 
-            // widgets rendering API
+            // widgets API
+            gs_2dboxf calculate_widget_geometry(const gs_vec2f& _Size);
+
             bool render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
 
             void poll_window_events();
