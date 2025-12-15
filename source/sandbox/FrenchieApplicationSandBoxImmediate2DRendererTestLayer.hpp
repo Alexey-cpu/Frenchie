@@ -265,7 +265,7 @@ namespace Frenchie
             void begin_resize_left();
             void begin_resize_right();
             void begin_resize_bottom();
-            void being_move();
+            void begin_move();
             void begin_focus();
             void begin_scroll_vertically();
             void begin_scroll_horizontally();
@@ -324,18 +324,19 @@ namespace Frenchie
             void      calculate_window_geometry(ImmedidateUserInterfaceWindow*);
             gs_2dboxf calculate_widget_geometry(const gs_vec2f& _Size);
 
-            // rendering
+            // windows rendering API
             bool render_window_clipbox(ImmedidateUserInterfaceWindow*);
             bool render_window_background(ImmedidateUserInterfaceWindow*);
             bool render_window_classic_frame(ImmedidateUserInterfaceWindow*);
             bool render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
             bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
-
             bool render_window_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
 
+            // widgets rendering API
             bool render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
 
-            void sink_window_events(ImmedidateUserInterfaceWindow*);
+            void poll_window_events();
+            void process_window_events(ImmedidateUserInterfaceWindow*);
         };
     }
 }
