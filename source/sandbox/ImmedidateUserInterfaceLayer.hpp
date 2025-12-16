@@ -82,7 +82,6 @@ namespace Frenchie
             // child windows layouting
             ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally = 1 << 8,
             ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically   = 1 << 9,
-            ImmedidateUserInterfaceWindowHints_LayoutChildrenFixedSize    = 1 << 10,
 
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
@@ -166,8 +165,6 @@ namespace Frenchie
             float              WindowResizeAngleGizmoRadius      = 32.f;
             float              WindowResizeSideGizmoWidth        = 12.f;
             float              WindowFrameCloseMinimumButtonSize = 32.f;
-            float              WindowMinimumWidth                = 128.f;
-            float              WindowMinimumHeight               = 128.f;
             float              WindowScrollBarSliderWidth        = 32.f;
 
             float              FrameWidth                        = 8.f;
@@ -212,11 +209,15 @@ namespace Frenchie
             mutable int                            LastChild {0};
 
             // layouting
-            mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
+            mutable gs_vec2f LayoutCursorDirection{gs_vec2f(0.f, 1.f)};
             mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
             mutable float    LayoutFillWeight     {1.f};
             mutable float    LayoutTotalWeight    {1.f};
+            mutable float    WindowMinimumWidth   {128.f};
+            mutable float    WindowMinimumHeight  {128.f};
+            mutable float    WindowMaximumWidth   {(float)INT_MAX};
+            mutable float    WindowMaximumHeight  {(float)INT_MAX};
 
             // scrolling
             mutable ImmedidateUserInterfaceWindowScrollbar VerticalScrollBar;
@@ -229,14 +230,16 @@ namespace Frenchie
             mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowFrameBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowTitleBox                    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowCloseButtonBox              {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
+
+            // interactions
+            mutable float ScrollDepth = 0.f;
+            mutable float ResizeDepth = 0.f;
+            mutable float MoveDepth   = 0.f;
         };
 
         struct ImmedidateUserInterfaceWindow
@@ -334,7 +337,7 @@ namespace Frenchie
 
             bool window_render_clipbox(ImmedidateUserInterfaceWindow*);
             bool window_render_background(ImmedidateUserInterfaceWindow*);
-            bool window_render_classic_frame(ImmedidateUserInterfaceWindow*);
+            bool window_render_background_frame(ImmedidateUserInterfaceWindow*);
             bool window_render_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
             bool window_render_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
             bool window_render_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
