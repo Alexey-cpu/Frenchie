@@ -208,6 +208,8 @@ namespace Frenchie
             mutable int                            Depth     {0};
             mutable ImmedidateUserInterfaceWindow* Parent    {nullptr}; // parent is never nullptr as ALL windows are cached...
             mutable int                            Thickness {0};
+            mutable int                            FirstChild{0};
+            mutable int                            LastChild {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection{gs_vec2f(1.f, 1.f)};
@@ -239,7 +241,7 @@ namespace Frenchie
 
         struct ImmedidateUserInterfaceWindow
         {
-            mutable std::string Name {"Default"    }; // TODO: this MUST BE A HASH !!!
+            mutable std::string                        Name {"Default"                           }; // TODO: this MUST BE A HASH !!!
             mutable ImmedidateUserInterfaceWindowState State{ImmedidateUserInterfaceWindowState()};
             mutable ImmedidateUserInterfaceWindowState Cache{ImmedidateUserInterfaceWindowState()};
         };
@@ -271,7 +273,6 @@ namespace Frenchie
             // widgets API
             bool close_button_widget(const gs_vec2f& _Size = gs_vec2f(64.f, 64.f));
 
-
         protected:
 
             std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
@@ -288,60 +289,63 @@ namespace Frenchie
 
             // service methods
 
-            // windows API
-            void calculate_window_geometry(ImmedidateUserInterfaceWindow*);
-            int  calculate_child_depth(ImmedidateUserInterfaceWindow*) const;
+            // window API
+            void window_calculate_geometry(ImmedidateUserInterfaceWindow*) const;
+            int  window_calculate_child_depth(ImmedidateUserInterfaceWindow*) const;
             
-            bool needs_vertical_scroll_bar(const ImmedidateUserInterfaceWindow*) const;
-            bool needs_horizontal_scroll_bar(const ImmedidateUserInterfaceWindow*) const;
+            gs_vec2f window_vertical_cursor_direction() const;
+            gs_vec2f window_horizontal_cursor_direction() const;
             
-            bool is_being_resized_top_left(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_top_right(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_bottom_left(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_bottom_right(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_top(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_left(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_right(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized_bottom(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_resized(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_moved(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_modified(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_focused(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow*) const;
-            bool is_being_scrolled(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
+
+            bool window_is_being_resized_top_left(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_top_right(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_bottom_left(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_bottom_right(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_top(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_left(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_right(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized_bottom(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_resized(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_moved(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_modified(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_focused(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_scrolled(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow*) const;
+            bool window_is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow*) const;
             
-            void begin_resize_top_left(ImmedidateUserInterfaceWindow*);
-            void begin_resize_top_right(ImmedidateUserInterfaceWindow*);
-            void begin_resize_bottom_left(ImmedidateUserInterfaceWindow*);
-            void begin_resize_bottom_right(ImmedidateUserInterfaceWindow*);
-            void begin_resize_top(ImmedidateUserInterfaceWindow*);
-            void begin_resize_left(ImmedidateUserInterfaceWindow*);
-            void begin_resize_right(ImmedidateUserInterfaceWindow*);
-            void begin_resize_bottom(ImmedidateUserInterfaceWindow*);
-            void begin_move(ImmedidateUserInterfaceWindow*);
-            void begin_focus(ImmedidateUserInterfaceWindow*);
-            void begin_scroll_vertically(ImmedidateUserInterfaceWindow*);
-            void begin_scroll_horizontally(ImmedidateUserInterfaceWindow*);
-            void end_resize(ImmedidateUserInterfaceWindow*);
-            void end_move(ImmedidateUserInterfaceWindow*);
-            void end_focus(ImmedidateUserInterfaceWindow*);
-            void end_scroll(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_top_left(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_top_right(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_bottom_left(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_bottom_right(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_top(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_left(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_right(ImmedidateUserInterfaceWindow*);
+            void window_begin_resize_bottom(ImmedidateUserInterfaceWindow*);
+            void window_begin_move(ImmedidateUserInterfaceWindow*);
+            void window_begin_focus(ImmedidateUserInterfaceWindow*);
+            void window_begin_scroll_vertically(ImmedidateUserInterfaceWindow*);
+            void window_begin_scroll_horizontally(ImmedidateUserInterfaceWindow*);
+            void window_end_resize(ImmedidateUserInterfaceWindow*);
+            void window_end_move(ImmedidateUserInterfaceWindow*);
+            void window_end_focus(ImmedidateUserInterfaceWindow*);
+            void window_end_scroll(ImmedidateUserInterfaceWindow*);
 
-            bool render_window_clipbox(ImmedidateUserInterfaceWindow*);
-            bool render_window_background(ImmedidateUserInterfaceWindow*);
-            bool render_window_classic_frame(ImmedidateUserInterfaceWindow*);
-            bool render_window_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
-            bool render_window_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
-            bool render_window_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
+            bool window_render_clipbox(ImmedidateUserInterfaceWindow*);
+            bool window_render_background(ImmedidateUserInterfaceWindow*);
+            bool window_render_classic_frame(ImmedidateUserInterfaceWindow*);
+            bool window_render_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
+            bool window_render_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
+            bool window_render_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
 
-            // widgets API
-            gs_2dboxf calculate_widget_geometry(const gs_vec2f& _Size);
+            void window_receive_events();
+            void window_process_events(ImmedidateUserInterfaceWindow*);
 
-            bool render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
+            // widget API
+            gs_2dboxf widget_calculate_geometry(const gs_vec2f& _Size);
 
-            void receive_window_events();
-            void process_window_events(ImmedidateUserInterfaceWindow*);
+            bool widget_render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
         };
     }
 }
