@@ -3,7 +3,7 @@
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplication.hpp>
 
-#include <FrenchieApplicationSandBoxImmediate2DRendererTestLayer.hpp>
+#include <ImmedidateUserInterfaceLayer.hpp>
 
 int main(int argc, char *argv[])
 {
