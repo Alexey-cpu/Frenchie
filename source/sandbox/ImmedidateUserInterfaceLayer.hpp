@@ -43,21 +43,21 @@ namespace Frenchie
             ImmedidateUserInterfaceColors_TextDisabledColor,
             ImmedidateUserInterfaceColors_TextHoveredColor,
 
-            // // push button background
-            // ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor,
-            // ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor,
-            // ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor,
-            // ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor,
-            // ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor,
-            // ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor,
+            // push button background
+            ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor,
+            ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor,
+            ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor,
+            ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor,
+            ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor,
+            ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor,
 
-            // // push button frame
-            // ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor,
-            // ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor,
-            // ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor,
-            // ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor,
-            // ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor,
-            // ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor,
+            // push button frame
+            ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor,
+            ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor,
+            ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor,
+            ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor,
+            ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor,
+            ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor,
 
             // // radio buton
             // ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor,
@@ -69,19 +69,27 @@ namespace Frenchie
         enum ImmedidateUserInterfaceWindowHints_ : int
         {
             // window common hints
-            ImmedidateUserInterfaceWindowHints_Movable                   = 1 << 1,
-            ImmedidateUserInterfaceWindowHints_Closable                  = 1 << 2,
-            ImmedidateUserInterfaceWindowHints_Resizable                 = 1 << 3,
+            ImmedidateUserInterfaceWindowHints_Movable                   = 1 << 0,
+            ImmedidateUserInterfaceWindowHints_Closable                  = 1 << 1,
+            ImmedidateUserInterfaceWindowHints_Resizable                 = 1 << 2,
 
             // scrollbars
-            ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar = 1 << 4,
-            ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar   = 1 << 5,
-            ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar  = 1 << 6,
-            ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar    = 1 << 7,
+            ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar = 1 << 3,
+            ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar   = 1 << 4,
+            ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar  = 1 << 5,
+            ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar    = 1 << 6,
 
             // child windows layouting
-            ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally = 1 << 8,
-            ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically   = 1 << 9,
+            ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally = 1 << 7,
+            ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically   = 1 << 8,
+
+            // size hints
+            ImmedidateUserInterfaceWindowHints_ResizeToContents = 1 << 9,
+            ImmedidateUserInterfaceWindowHints_NoParent         = 1 << 10,
+            ImmedidateUserInterfaceWindowHints_NoClipping       = 1 << 11,
+
+            // type
+            ImmedidateUserInterfaceWindowHints_TypeMenu = 1 << 12,
 
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
@@ -92,6 +100,7 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceWindowStateChangeHints_ : int
         {
+            ImmedidateUserInterfaceWindowStateChangeHints_None                        = 0,
             ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMoved                = 1 << 0,
             ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTopLeft       = 1 << 1,
             ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTopRight      = 1 << 2,
@@ -103,11 +112,18 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottom        = 1 << 8,
             ImmedidateUserInterfaceWindowStateChangeHints_IsBeingFocused              = 1 << 9,
             ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledHorizontally = 1 << 10,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledVertically   = 1 << 11
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledVertically   = 1 << 11,
+
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered       = 1 << 12,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMousePressed       = 1 << 13,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseDown          = 1 << 14,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseClicked       = 1 << 15,
+            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseDoubleClicked = 1 << 16,
         };
 
         typedef int ImmedidateUserInterfaceWindowHints;
         typedef int ImmedidateUserInterfaceWindowStateChangeHints;
+        typedef int ImmedidateUserInterfaceWindowAttributes;
 
         struct ImmedidateUserInterfaceStyle
         {
@@ -137,19 +153,19 @@ namespace Frenchie
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor                        ] = gs_vec4f(200.f, 200.f, 200.f, 255.f);
                 Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor                         ] = gs_vec4f(255.f, 32.f, 32.f, 255.f);
 
-                // // Push button
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor       ] = gs_vec4f(53, 53, 54, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor] = gs_vec4f(87, 87, 89, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor] = gs_vec4f(117, 117, 120, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor             ] = gs_vec4f(1, 16, 77, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor      ] = gs_vec4f(0, 16, 77, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor      ] = gs_vec4f(1, 32, 77, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor            ] = gs_vec4f(30, 30, 31, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor     ] = gs_vec4f(30, 1, 31, 255);
-                // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor     ] = gs_vec4f(30, 12, 31, 255);
+                // Push button
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor        ] = gs_vec4f(4, 41, 189, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor ] = gs_vec4f(60, 98, 250, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor ] = gs_vec4f(87, 120, 250, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor       ] = gs_vec4f(53, 53, 54, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor] = gs_vec4f(87, 87, 89, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor] = gs_vec4f(117, 117, 120, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor             ] = gs_vec4f(1, 16, 77, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor      ] = gs_vec4f(0, 16, 77, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor      ] = gs_vec4f(1, 32, 77, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor            ] = gs_vec4f(30, 30, 31, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor     ] = gs_vec4f(30, 1, 31, 255);
+                Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor     ] = gs_vec4f(30, 12, 31, 255);
 
                 // // radio button
                 // Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor          ] = gs_vec4f(255, 255, 255, 255);
@@ -198,8 +214,8 @@ namespace Frenchie
         struct ImmedidateUserInterfaceWindowState
         {
             // hints
-            mutable ImmedidateUserInterfaceWindowHints            Settings{ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
-            mutable ImmedidateUserInterfaceWindowStateChangeHints Changes {0};
+            mutable ImmedidateUserInterfaceWindowHints            Settings   {ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
+            mutable ImmedidateUserInterfaceWindowStateChangeHints Changes    {ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_None};
 
             // hierarchy
             mutable int                            Depth     {0};
@@ -236,10 +252,7 @@ namespace Frenchie
             mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
 
-            // interactions
-            mutable float ScrollDepth = 0.f;
-            mutable float ResizeDepth = 0.f;
-            mutable float MoveDepth   = 0.f;
+            std::chrono::high_resolution_clock::time_point WindowHoverStart;
         };
 
         struct ImmedidateUserInterfaceWindow
@@ -266,6 +279,8 @@ namespace Frenchie
             void same_line();
 
             // windows API
+            ImmedidateUserInterfaceWindow* current_window() const;
+
             bool begin_window(
                 const std::string&                 _Name,
                 bool*                              _Opened = nullptr,
@@ -273,8 +288,13 @@ namespace Frenchie
 
             void end_window();
 
+            bool begin_menu(const std::string& _Name);
+            bool menu_item(const std::string& _Name);
+            void end_menu();
+
             // widgets API
             bool close_button_widget(const gs_vec2f& _Size = gs_vec2f(64.f, 64.f));
+            bool default_button_widget(const std::string& _Name);
 
         protected:
 
@@ -286,9 +306,16 @@ namespace Frenchie
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
             std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
 
-            Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowSize;
-            Frenchie::Core::Optional<gs_vec2f>                          m_NextWindowPosition;
-            Frenchie::Core::Optional<gs_vec2f>                          m_NextCursorDirection;
+            Frenchie::Core::Optional<gs_vec2f> m_NextWindowSize;
+            Frenchie::Core::Optional<gs_vec2f> m_NextWindowPosition;
+            Frenchie::Core::Optional<gs_vec2f> m_NextCursorDirection;
+
+            // widgets events
+            Frenchie::Core::Optional<bool>                           m_WidgetMouseHovered;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMousePressed;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseClicked;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseDoubleClicked;
 
             // service methods
 
@@ -301,6 +328,12 @@ namespace Frenchie
             
             bool window_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
             bool window_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
+
+            bool window_is_being_mouse_hover(ImmedidateUserInterfaceWindow* _Window)
+            {
+                return _Window != nullptr &&
+                        (_Window->State.Changes & ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered);
+            }
 
             bool window_is_being_resized_top_left(const ImmedidateUserInterfaceWindow*) const;
             bool window_is_being_resized_top_right(const ImmedidateUserInterfaceWindow*) const;
@@ -318,6 +351,20 @@ namespace Frenchie
             bool window_is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow*) const;
             bool window_is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow*) const;
             
+            void window_begin_mouse_hover(ImmedidateUserInterfaceWindow* _Window)
+            {
+                if(_Window == nullptr) return;
+
+                _Window->State.Changes |=
+                    ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered;
+
+                _Window->State.WindowHoverStart = std::chrono::high_resolution_clock::now();
+            }
+            // void window_begin_mouse_press(ImmedidateUserInterfaceWindow*);
+            // void window_begin_mouse_down(ImmedidateUserInterfaceWindow*);
+            // void window_begin_mouse_click(ImmedidateUserInterfaceWindow*);
+            // void window_begin_mouse_double_click(ImmedidateUserInterfaceWindow*);
+
             void window_begin_resize_top_left(ImmedidateUserInterfaceWindow*);
             void window_begin_resize_top_right(ImmedidateUserInterfaceWindow*);
             void window_begin_resize_bottom_left(ImmedidateUserInterfaceWindow*);
@@ -330,6 +377,14 @@ namespace Frenchie
             void window_begin_focus(ImmedidateUserInterfaceWindow*);
             void window_begin_scroll_vertically(ImmedidateUserInterfaceWindow*);
             void window_begin_scroll_horizontally(ImmedidateUserInterfaceWindow*);
+
+            void window_end_mouse_hover(ImmedidateUserInterfaceWindow* _Window)
+            {
+                if(_Window == nullptr) return;
+
+                _Window->State.Changes &= ~(ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered);
+            }
+            
             void window_end_resize(ImmedidateUserInterfaceWindow*);
             void window_end_move(ImmedidateUserInterfaceWindow*);
             void window_end_focus(ImmedidateUserInterfaceWindow*);
@@ -346,210 +401,25 @@ namespace Frenchie
             void window_process_events(ImmedidateUserInterfaceWindow*);
 
             // widget API
-            gs_2dboxf widget_calculate_geometry(const gs_vec2f& _Size);
+            gs_2dboxf widget_calculate_geometry(const gs_vec2f&);
+            gs_2dboxf widget_calculate_geometry(const std::string&);
 
-            bool widget_render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _CursorClipBox, const gs_mat4f&  _Transform);
+            void widget_begin_receive_events();
+            void widget_end_receive_events(const gs_2dboxf& _Box, const gs_2dboxf& _ClipBox, const gs_mat4f& _Transform);
+
+            bool widget_is_mouse_hovered() const;
+            bool widget_is_mouse_pressed(const ApplicationMouseButton::Button& _Button) const;
+            bool widget_is_mouse_down(const ApplicationMouseButton::Button& _Button) const;
+            bool widget_is_mouse_clicked(const ApplicationMouseButton::Button& _Button) const;
+            bool widget_is_mouse_double_clicked(const ApplicationMouseButton::Button& _Button) const;
+
+            bool widget_render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _ClipBox, const gs_mat4f&  _Transform);
+            
+            bool widget_render_default_button_widget(
+                const std::string&             _Text,
+                const gs_2dboxf&               _Box,
+                const gs_2dboxf&               _ClipBox,
+                ImmedidateUserInterfaceWindow* _Context);
         };
     }
 }
-
-// bool draw_radio_button_widget(
-//     const std::string& _Name,
-//     const float&       _Radius,
-//     bool&              _Pushed,
-//     const bool&        _Enabled,
-//     const float&       _Depth,
-//     const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
-//     const float&       _Rotation = 0.f,
-//     const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
-
-// bool draw_push_button_widget(
-//     const std::string& _Name,
-//     const gs_vec2f&    _Size,
-//     const bool&        _Enabled,
-//     const float&       _Depth,
-//     const gs_vec2f&    _Position = gs_vec2f(0.f, 0.f),
-//     const float&       _Rotation = 0.f,
-//     const gs_vec2f&    _Scale    = gs_vec2f(1.f, 1.f));
-
-// bool bounding_box_contains(const gs_vec2f& _Position, const gs_2dboxf& _Box, const gs_vec2f& _Point)
-// {
-//     return m_Renderer->calculate_bounding_box(
-//             _Position,
-//             0.f,
-//             gs_vec2f(1.f, 1.f),
-//             _Box.Min,
-//             _Box.Max).contains(_Point);
-// }
-
-// gs_2dboxf calculate_text_bounding_box(const std::string& _Text)
-// {
-//     return m_Renderer->calculate_bounding_box(
-//         gs_vec2f(0.f, 0.f),
-//         0.f,
-//         gs_vec2f(1.f, 1.f),
-//         _Text,
-//         m_Style.FontSize,
-//         m_Renderer->m_RenderingQueue->get_default_font());
-// }
-
-// auxiliary lambdas
-// gs_vec4f retreive_push_button_background_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
-// {
-//     if(_Pressed)
-//     {
-//         return _Enabled ?
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedBackgroundColor] :
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedBackgroundColor];
-//     }
-
-//     if(_Hovered)
-//     {
-//         return _Enabled ?
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredBackgroundColor] :
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredBackgroundColor];
-//     }
-
-//     return _Enabled ?
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledBackgroundColor] :
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledBackgroundColor];
-// };
-
-// gs_vec4f retreive_push_frame_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
-// {
-//     if(_Pressed)
-//     {
-//         return _Enabled ?
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledPressedFrameColor] :
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledPressedFrameColor];
-//     }
-
-//     if(_Hovered)
-//     {
-//         return _Enabled ?
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledHoveredFrameColor] :
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledHoveredFrameColor];
-//     }
-
-//     return _Enabled ?
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonEnabledFrameColor] :
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor];
-// };
-
-// gs_vec4f retreive_text_color(const bool& _Enabled, const bool _Hovered, const bool& _Pressed)
-// {
-//     if(_Hovered || _Pressed)
-//     {
-//         return _Enabled ?
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextHoveredColor] :
-//             m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
-//     }
-
-//     return _Enabled ?
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor] :
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextDisabledColor];
-// };
-
-// gs_vec4f retrieve_radio_button_pressed_state_color(const bool& _Enabled, const bool& _Pressed)
-// {
-//     return _Enabled ?
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedEnabledColor] :
-//         m_Style.Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_RadioButtonPressedDisabledColor];
-// }
-
-// template<typename Type> struct Tree;
-
-// template<typename Type>
-// struct Node
-// {
-//     int               Parent{-1};
-//     int               Index {-1};
-//     Type              Data  {Type()};
-//     const Tree<Type>* Tree  {nullptr};
-// };
-
-// template<typename Type>
-// struct Tree
-// {
-//     mutable std::vector<Node<Type>> Nodes  {std::vector<Node<Type>>()};
-//     mutable std::vector<int>        Indexes{std::vector<int>()};
-//     mutable std::vector<int>        Entries{std::vector<int>()};
-//     mutable bool                    Dirty  {true};
-
-//     template<typename ... Args>
-//     Node<Type> construct_node(const Node<Type>& _Parent, Args ... _Args)
-//     {
-//         Node<Type> node;
-//         node.Parent = _Parent.Index;
-//         node.Index  = (int)Nodes.size();
-//         node.Data   = Type(_Args ...);
-//         node.Tree   = this;
-//         Nodes.push_back(node);
-//         Dirty = true;
-//         return node;
-//     }
-
-//     void clear()
-//     {
-//         Nodes.clear();
-//     }
-
-//     void sort() const
-//     {
-//         std::vector<Node<Type>> nodes(Nodes.size());
-//         std::vector<int> workspace(Nodes.size()+1);
-
-//         Indexes.resize(Nodes.size() + 1);
-//         Entries.resize(Nodes.size());
-
-//         for(int i = 0; i < Entries.size(); i++)
-//         {
-//             Entries[i] = 0;
-//             Indexes[i] = 0;
-//         }
-
-//         // count items
-//         for (int i = 0; i < Nodes.size(); i++)
-//         {
-//             if(Nodes[i].Parent < 0) continue;
-//             ++Entries[Nodes[i].Parent];
-//         }
-
-//         // cumulative sum
-//         int sum = 0;
-//         for (int i = 0; i < Nodes.size(); i++)
-//         {
-//             Indexes  [i] = sum;
-//             workspace[i] = sum;
-//             sum += Entries[i];
-//         }
-//         Indexes[Nodes.size()] = sum;
-
-//         for(int i = 0; i < Nodes.size(); i++ )
-//         {
-//             if(Nodes[i].Parent < 0) continue;
-//             nodes[workspace[Nodes[i].Parent]++] = Nodes[i];
-//         }
-
-//         Nodes = nodes;
-//         Dirty = false;
-//     }
-// };
-
-// class ImmedidateUserInterfaceEntry
-// {
-//     ImmedidateUserInterfaceEntry(const gs_rectf& _BoundingBox) :
-//         BoundingBox(_BoundingBox){}
-    
-//     gs_rectf BoundingBox  {gs_rectf(0.f, 0.f, 128.f, 128.f)};
-//     gs_mat4f Transform    {gs_mat4f(1.f)};
-//     bool     Hovered      {false};
-//     bool     Clicked      {false};
-//     bool     DoubleClicked{false};
-
-//     void (*DrawFunction)(
-//         const char*     _Name,
-//         const gs_vec2f& _Position,
-//         const gs_vec2f& _Size,
-//         const gs_mat4f& _Transform) = nullptr;
-// };
