@@ -1392,8 +1392,7 @@ struct gs_2dbox
     {
         return gs_2dbox<Type>(
             _Transform * gs_vector<Type, 4>(Min, 0.f, 1.f),
-            _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f)
-        );
+            _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f));
     }
 
     bool overlaps(const gs_2dbox<Type>& _Other) const
@@ -1402,7 +1401,22 @@ struct gs_2dbox
         const gs_vector<Type, 2> p2 = gs_vector<Type, 2>(_Other.Max.x, _Other.Min.y);
         const gs_vector<Type, 2> p3 = gs_vector<Type, 2>(_Other.Max.x, _Other.Max.y);
         const gs_vector<Type, 2> p4 = gs_vector<Type, 2>(_Other.Min.x, _Other.Max.y);
-        return contains(p1) || contains(p2) || contains(p3) || contains(p4);
+
+        const gs_vector<Type, 2> p5 = gs_vector<Type, 2>(Min.x, Min.y);
+        const gs_vector<Type, 2> p6 = gs_vector<Type, 2>(Max.x, Min.y);
+        const gs_vector<Type, 2> p7 = gs_vector<Type, 2>(Max.x, Max.y);
+        const gs_vector<Type, 2> p8 = gs_vector<Type, 2>(Min.x, Max.y);
+
+
+        return (contains(p1) || contains(p2) || contains(p3) || contains(p4)) ||
+               (_Other.contains(p5) || _Other.contains(p6) || _Other.contains(p7) || _Other.contains(p8));
+    }
+
+    gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const
+    {
+        return gs_2dboxf(
+            gs_clamp(Min, _Clipbox.Min, _Clipbox.Max),
+            gs_clamp(Max, _Clipbox.Min, _Clipbox.Max));
     }
 };
 

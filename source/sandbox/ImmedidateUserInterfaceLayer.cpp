@@ -838,20 +838,10 @@ bool ImmedidateUserInterfaceContextLayer::window_render_clipbox(ImmedidateUserIn
 {
     if(_Window == nullptr) return false;
 
-    auto clipbox = gs_2dboxf(
-            gs_clamp(
-                _Window->State.WindowInnerClipAreaBox.Min,
-                _Window->State.WindowOuterClipAreaBox.Min,
-                _Window->State.WindowOuterClipAreaBox.Max),
-            gs_clamp(
-                _Window->State.WindowInnerClipAreaBox.Max,
-                _Window->State.WindowOuterClipAreaBox.Min,
-                _Window->State.WindowOuterClipAreaBox.Max));
+    m_Renderer->push_clip_box(gs_2dboxf(_Window->State.WindowInnerClipAreaBox.clip_with(_Window->State.WindowOuterClipAreaBox)));
 
-    m_Renderer->push_clip_box(clipbox);
-
-    // // draw content gizmo
-    // if(_Window->Name == "Child4")
+    // TODO: optionally render clipping gizmo
+    //if(_Window->Name == "Child4")
     // {
     //     m_Renderer->push_rectangle(
     //         clipbox.Min,
@@ -926,19 +916,20 @@ bool ImmedidateUserInterfaceContextLayer::window_render_classic_frame(Immedidate
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window_calculate_child_depth(_Window)));
 
     // window title
-    // gs_2dboxf clipbox = gs_2dboxf(
-    //     _Window->State.WindowFrameBox.Min + gs_vec2f(m_Style->FrameWidth, 0.f),
-    //     gs_vec2f(_Window->State.WindowCloseButtonBox.Min.x, _Window->State.WindowCloseButtonBox.Max.y));
+    gs_2dboxf clipbox = gs_2dboxf(
+        _Window->State.WindowFrameBox.Min + gs_vec2f(m_Style->FrameWidth, 0.f),
+        gs_vec2f(_Window->State.WindowCloseButtonBox.Min.x, _Window->State.WindowCloseButtonBox.Max.y))
+        .transform(_Window->State.WindowTransform);
 
-    // if(!(_Window->State.Settings & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable))
-    // {
-    //     clipbox = gs_2dboxf(
-    //         _Window->State.WindowFrameBox.Min,
-    //         _Window->State.WindowFrameBox.Max + gs_vec2f(-m_Style->FrameWidth, 0.f));
-    // }
-
-    // bool cipping = _Window->State.WindowOuterClipAreaBox.overlaps(clipbox);
-    // if(cipping) m_Renderer->push_clip_box(clipbox, _Window->State.WindowTransform);
+    if(!(_Window->State.Settings & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable))
+    {
+        clipbox = gs_2dboxf(
+            _Window->State.WindowFrameBox.Min,
+            _Window->State.WindowFrameBox.Max + gs_vec2f(-m_Style->FrameWidth, 0.f))
+            .transform(_Window->State.WindowTransform);
+    }
+    
+    m_Renderer->push_clip_box(clipbox.clip_with(_Window->State.WindowOuterClipAreaBox));
 
     m_Renderer->push_text(
         _Window->Name,
@@ -946,7 +937,7 @@ bool ImmedidateUserInterfaceContextLayer::window_render_classic_frame(Immedidate
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_TextEnabledColor],
         _Window->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)window_calculate_child_depth(_Window), _Window->State.WindowTitleBox.Min));
 
-    //if(cipping) m_Renderer->pop_clip_box();
+    m_Renderer->pop_clip_box();
 
     // frame close button
     if(_Window->State.Settings & ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Closable)
