@@ -236,6 +236,9 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
         positionX += Immediate2DRenderer::right(gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f)).x;
     }
 
+    min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
+    max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
+
     return gs_2dboxf(min, max);
 }
 
