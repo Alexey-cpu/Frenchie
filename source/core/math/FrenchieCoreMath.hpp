@@ -1422,7 +1422,7 @@ bool operator!=(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B
 }
 
 template<typename Type, int Size>
-gs_vector<Type, Size> operator==(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
+bool operator==(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
     bool value = true;
     gs_vector<Type, Size> _C;
