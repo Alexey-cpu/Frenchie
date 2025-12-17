@@ -230,6 +230,11 @@ namespace Frenchie
                     !m_Clipbox.empty() ? m_Clipbox[m_Clipbox.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
             }
 
+            gs_2dboxf current_clip_box()
+            {
+                return !m_Clipbox.empty() ? m_Clipbox[m_Clipbox.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size());
+            }
+
             void push_clear_color(const gs_vec4f& _Value)
             {
                 m_RenderingQueue->push_renderer_command(_Value);

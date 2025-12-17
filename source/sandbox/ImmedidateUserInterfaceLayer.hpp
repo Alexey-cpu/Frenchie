@@ -8,7 +8,7 @@
 #include <chrono>
 #include <stack>
 #include <map>
-
+#include <set>
 
 namespace Frenchie
 {
@@ -84,12 +84,15 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically   = 1 << 8,
 
             // size hints
-            ImmedidateUserInterfaceWindowHints_ResizeToContents = 1 << 9,
-            ImmedidateUserInterfaceWindowHints_NoParent         = 1 << 10,
-            ImmedidateUserInterfaceWindowHints_NoClipping       = 1 << 11,
+            ImmedidateUserInterfaceWindowHints_ResizeToContentsHorizontally = 1 << 9,
+            ImmedidateUserInterfaceWindowHints_ResizeToContentsVertically   = 1 << 10,
+            ImmedidateUserInterfaceWindowHints_ResizeToContents             = 1 << 11,
+
+            ImmedidateUserInterfaceWindowHints_IgnoreParent         = 1 << 12,
+            ImmedidateUserInterfaceWindowHints_IgnoreClipping       = 1 << 13,
 
             // type
-            ImmedidateUserInterfaceWindowHints_TypeMenu = 1 << 12,
+            ImmedidateUserInterfaceWindowHints_TypeMenu = 1 << 14,
 
             ImmedidateUserInterfaceWindowHints_Default       =
                 ImmedidateUserInterfaceWindowHints_Movable   |
@@ -240,6 +243,7 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceWindowScrollbar HorizontalScrollBar;
 
             // geometry
+            mutable gs_vec2f  ScrollBarOffset                   {gs_vec2f(0.f, 0.f)};
             mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))}; 
             mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
@@ -278,8 +282,9 @@ namespace Frenchie
 
             void same_line();
 
-            // windows API
-            ImmedidateUserInterfaceWindow* current_window() const;
+            // getters
+            ImmedidateUserInterfaceWindow* get_drawn_window() const;
+            ImmedidateUserInterfaceWindow* get_cached_window(const std::string& _Name) const;
 
             bool begin_window(
                 const std::string&                 _Name,
@@ -318,6 +323,8 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseDoubleClicked;
 
             // service methods
+            std::vector<gs_2dboxf> m_Clipping;
+            std::vector<ImmedidateUserInterfaceWindow*> m_HoveredMenus;
 
             // window API
             void window_calculate_geometry(ImmedidateUserInterfaceWindow*) const;
@@ -329,11 +336,7 @@ namespace Frenchie
             bool window_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
             bool window_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
 
-            bool window_is_being_mouse_hover(ImmedidateUserInterfaceWindow* _Window)
-            {
-                return _Window != nullptr &&
-                        (_Window->State.Changes & ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered);
-            }
+            bool window_is_being_mouse_hover(ImmedidateUserInterfaceWindow* _Window);
 
             bool window_is_being_resized_top_left(const ImmedidateUserInterfaceWindow*) const;
             bool window_is_being_resized_top_right(const ImmedidateUserInterfaceWindow*) const;
@@ -351,15 +354,7 @@ namespace Frenchie
             bool window_is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow*) const;
             bool window_is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow*) const;
             
-            void window_begin_mouse_hover(ImmedidateUserInterfaceWindow* _Window)
-            {
-                if(_Window == nullptr) return;
-
-                _Window->State.Changes |=
-                    ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered;
-
-                _Window->State.WindowHoverStart = std::chrono::high_resolution_clock::now();
-            }
+            void window_begin_mouse_hover(ImmedidateUserInterfaceWindow*);
             // void window_begin_mouse_press(ImmedidateUserInterfaceWindow*);
             // void window_begin_mouse_down(ImmedidateUserInterfaceWindow*);
             // void window_begin_mouse_click(ImmedidateUserInterfaceWindow*);
@@ -378,12 +373,7 @@ namespace Frenchie
             void window_begin_scroll_vertically(ImmedidateUserInterfaceWindow*);
             void window_begin_scroll_horizontally(ImmedidateUserInterfaceWindow*);
 
-            void window_end_mouse_hover(ImmedidateUserInterfaceWindow* _Window)
-            {
-                if(_Window == nullptr) return;
-
-                _Window->State.Changes &= ~(ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered);
-            }
+            void window_end_mouse_hover(ImmedidateUserInterfaceWindow* _Window);
             
             void window_end_resize(ImmedidateUserInterfaceWindow*);
             void window_end_move(ImmedidateUserInterfaceWindow*);
