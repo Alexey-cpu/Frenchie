@@ -2,6 +2,7 @@
 
 // Core
 #include <FrenchieCoreMath.hpp>
+#include <FrenchieCoreClock.hpp>
 
 // Application
 #include <FrenchieApplicationLayer.hpp>

@@ -328,7 +328,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         if(m_Input.MouseButtons[mouseButton].Pressed)
         {
             m_Input.MouseButtons[mouseButton].Down      = true;
-            m_Input.MouseButtons[mouseButton].PressTime = std::chrono::high_resolution_clock::now();
+            m_Input.MouseButtons[mouseButton].PressTime = Frenchie::Core::tic();
 
             m_Input.MouseCursor.MousePressPosition = m_Input.MouseCursor.Position;
         }
@@ -339,11 +339,10 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         if(m_Input.MouseButtons[mouseButton].Released)
         {
             m_Input.MouseButtons[mouseButton].Down        = false;
-            m_Input.MouseButtons[mouseButton].ReleaseTime = std::chrono::high_resolution_clock::now();
+            m_Input.MouseButtons[mouseButton].ReleaseTime = Frenchie::Core::tic();
 
             m_Input.MouseButtons[mouseButton].Clicked =
-                std::chrono::duration_cast<std::chrono::microseconds>(
-                    m_Input.MouseButtons[mouseButton].ReleaseTime - m_Input.MouseButtons[mouseButton].PressTime).count() < 0.5 * std::micro().den;
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(m_Input.MouseButtons[mouseButton].ReleaseTime, m_Input.MouseButtons[mouseButton].PressTime) < 0.5 * std::micro().den;
 
             m_Input.MouseButtons[mouseButton].DoubleClicked =
                 m_Input.MouseButtons[mouseButton].Clicked && ++m_Input.MouseButtons[mouseButton].Clicks >= 2;
