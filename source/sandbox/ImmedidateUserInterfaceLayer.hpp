@@ -15,8 +15,8 @@ namespace Frenchie
     namespace Application
     {
         struct ImmedidateUserInterfaceStyle;
-        struct ImmedidateUserInterfaceWindow;
-        struct ImmedidateUserInterfaceWindowState;
+        struct ImmedidateUserInterfaceNode;
+        struct ImmedidateUserInterfaceNodeState;
 
         enum ImmedidateUserInterfaceColors_ : int
         {
@@ -66,67 +66,69 @@ namespace Frenchie
             ImmedidateUserInterfaceColors_ColorEnd,
         };
 
-        enum ImmedidateUserInterfaceWindowHints_ : int
+        enum ImmedidateUserInterfaceNodeType_
+        {
+            ImmedidateUserInterfaceNodeType_Node    = 1 << 0,
+            ImmedidateUserInterfaceNodeType_Window  = 1 << 1,
+            ImmedidateUserInterfaceNodeType_Menubar = 1 << 2,
+            ImmedidateUserInterfaceNodeType_Menu    = 1 << 3,
+        };
+
+        enum ImmedidateUserInterfaceNodeChanges_ : int
+        {
+            ImmedidateUserInterfaceNodeChanges_None                        = 0,
+            ImmedidateUserInterfaceNodeChanges_IsBeingMoved                = 1 << 0,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft       = 1 << 1,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight      = 1 << 2,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft    = 1 << 3,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomRight   = 1 << 4,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedTop           = 1 << 5,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedLeft          = 1 << 6,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight         = 1 << 7,
+            ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom        = 1 << 8,
+            ImmedidateUserInterfaceNodeChanges_IsBeingFocused              = 1 << 9,
+            ImmedidateUserInterfaceNodeChanges_IsBeingScrolledHorizontally = 1 << 10,
+            ImmedidateUserInterfaceNodeChanges_IsBeingScrolledVertically   = 1 << 11,
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered         = 1 << 12,
+        };
+
+        enum ImmedidateUserInterfaceNodeSettings_ : int
         {
             // window common hints
-            ImmedidateUserInterfaceWindowHints_Movable                   = 1 << 0,
-            ImmedidateUserInterfaceWindowHints_Closable                  = 1 << 1,
-            ImmedidateUserInterfaceWindowHints_Resizable                 = 1 << 2,
+            ImmedidateUserInterfaceNodeSettings_Movable                      = 1 << 0,
+            ImmedidateUserInterfaceNodeSettings_Resizable                    = 1 << 1,
 
             // scrollbars
-            ImmedidateUserInterfaceWindowHints_AlwaysHorizontalScrollBar = 1 << 3,
-            ImmedidateUserInterfaceWindowHints_AlwaysVerticalScrollBar   = 1 << 4,
-            ImmedidateUserInterfaceWindowHints_NeverHorizontalScrollBar  = 1 << 5,
-            ImmedidateUserInterfaceWindowHints_NeverVerticalScrollBar    = 1 << 6,
+            ImmedidateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar    = 1 << 2,
+            ImmedidateUserInterfaceNodeSettings_AlwaysVerticalScrollBar      = 1 << 3,
+            ImmedidateUserInterfaceNodeSettings_NeverHorizontalScrollBar     = 1 << 4,
+            ImmedidateUserInterfaceNodeSettings_NeverVerticalScrollBar       = 1 << 5,
 
             // child windows layouting
-            ImmedidateUserInterfaceWindowHints_LayoutChildrenHorizontally = 1 << 7,
-            ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically   = 1 << 8,
+            ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally   = 1 << 6,
+            ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically     = 1 << 7,
 
             // size hints
-            ImmedidateUserInterfaceWindowHints_ResizeToContentsHorizontally = 1 << 9,
-            ImmedidateUserInterfaceWindowHints_ResizeToContentsVertically   = 1 << 10,
-            ImmedidateUserInterfaceWindowHints_ResizeToContents             = 1 << 11,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally        = 1 << 8,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically          = 1 << 9,
 
-            ImmedidateUserInterfaceWindowHints_IgnoreParent         = 1 << 12,
-            ImmedidateUserInterfaceWindowHints_IgnoreClipping       = 1 << 13,
+            // hierarchy & clipping
+            ImmedidateUserInterfaceNodeSettings_IgnoreParent                 = 1 << 10,
+            ImmedidateUserInterfaceNodeSettings_IgnoreClipping               = 1 << 11,
 
-            // type
-            ImmedidateUserInterfaceWindowHints_TypeMenu = 1 << 14,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContents =
+                ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
+                ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally,
 
-            ImmedidateUserInterfaceWindowHints_Default       =
-                ImmedidateUserInterfaceWindowHints_Movable   |
-                ImmedidateUserInterfaceWindowHints_Closable  |
-                ImmedidateUserInterfaceWindowHints_Resizable |
-                ImmedidateUserInterfaceWindowHints_LayoutChildrenVertically
+            ImmedidateUserInterfaceNodeHints_Default       =
+                ImmedidateUserInterfaceNodeSettings_Movable   |
+                ImmedidateUserInterfaceNodeSettings_Resizable |
+                ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically
         };
 
-        enum ImmedidateUserInterfaceWindowStateChangeHints_ : int
-        {
-            ImmedidateUserInterfaceWindowStateChangeHints_None                        = 0,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMoved                = 1 << 0,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTopLeft       = 1 << 1,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTopRight      = 1 << 2,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottomLeft    = 1 << 3,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottomRight   = 1 << 4,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedTop           = 1 << 5,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedLeft          = 1 << 6,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedRight         = 1 << 7,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingResizedBottom        = 1 << 8,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingFocused              = 1 << 9,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledHorizontally = 1 << 10,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingScrolledVertically   = 1 << 11,
-
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseHovered       = 1 << 12,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMousePressed       = 1 << 13,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseDown          = 1 << 14,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseClicked       = 1 << 15,
-            ImmedidateUserInterfaceWindowStateChangeHints_IsBeingMouseDoubleClicked = 1 << 16,
-        };
-
-        typedef int ImmedidateUserInterfaceWindowHints;
-        typedef int ImmedidateUserInterfaceWindowStateChangeHints;
-        typedef int ImmedidateUserInterfaceWindowAttributes;
+        typedef int ImmedidateUserInterfaceNodeType;
+        typedef int ImmedidateUserInterfaceNodeChanges;
+        typedef int ImmedidateUserInterfaceNodeSettings;
 
         struct ImmedidateUserInterfaceStyle
         {
@@ -192,7 +194,7 @@ namespace Frenchie
             gs_vec4f Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_ColorEnd]{};
         };
 
-        struct ImmedidateUserInterfaceWindowScrollbar
+        struct ImmedidateUserInterfaceNodeScroll
         {
             void setup(const float& _Min, const float& _Max, const float  _Total, const float& _Track)
             {
@@ -214,15 +216,16 @@ namespace Frenchie
             float SliderPosition;
         };
 
-        struct ImmedidateUserInterfaceWindowState
+        struct ImmedidateUserInterfaceNodeState
         {
             // hints
-            mutable ImmedidateUserInterfaceWindowHints            Settings   {ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default};
-            mutable ImmedidateUserInterfaceWindowStateChangeHints Changes    {ImmedidateUserInterfaceWindowStateChangeHints_::ImmedidateUserInterfaceWindowStateChangeHints_None};
+            mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node      };
+            mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default};
+            mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
             mutable int                            Depth     {0};
-            mutable ImmedidateUserInterfaceWindow* Parent    {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable ImmedidateUserInterfaceNode*   Parent    {nullptr}; // parent is never nullptr as ALL windows are cached...
             mutable int                            Thickness {0};
             mutable int                            FirstChild{0};
             mutable int                            LastChild {0};
@@ -239,13 +242,13 @@ namespace Frenchie
             mutable float    WindowMaximumHeight  {(float)INT_MAX};
 
             // scrolling
-            mutable ImmedidateUserInterfaceWindowScrollbar VerticalScrollBar;
-            mutable ImmedidateUserInterfaceWindowScrollbar HorizontalScrollBar;
+            mutable ImmedidateUserInterfaceNodeScroll VerticalScrollBar;
+            mutable ImmedidateUserInterfaceNodeScroll HorizontalScrollBar;
 
             // geometry
             mutable gs_vec2f  ScrollBarOffset                   {gs_vec2f(0.f, 0.f)};
             mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))}; 
-            mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
             mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
             mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
@@ -259,11 +262,11 @@ namespace Frenchie
             std::chrono::high_resolution_clock::time_point WindowHoverStart;
         };
 
-        struct ImmedidateUserInterfaceWindow
+        struct ImmedidateUserInterfaceNode
         {
-            mutable std::string                        Name {"Default"                           }; // TODO: this MUST BE A HASH !!!
-            mutable ImmedidateUserInterfaceWindowState State{ImmedidateUserInterfaceWindowState()};
-            mutable ImmedidateUserInterfaceWindowState Cache{ImmedidateUserInterfaceWindowState()};
+            mutable std::string                      Name {"Default"                           }; // TODO: this MUST BE A HASH !!!
+            mutable ImmedidateUserInterfaceNodeState State{ImmedidateUserInterfaceNodeState()};
+            mutable ImmedidateUserInterfaceNodeState Cache{ImmedidateUserInterfaceNodeState()};
         };
 
         class ImmedidateUserInterfaceContextLayer : public Layer
@@ -277,21 +280,28 @@ namespace Frenchie
             virtual void frame_update() override;
             virtual void frame_finish() override;
 
-            void set_next_window_position(const gs_vec2f&);
-            void set_next_window_size(const gs_vec2f&);
+            void set_next_node_maximum_size(const gs_vec2f&);
+            void set_next_node_position(const gs_vec2f&);
+            void set_next_node_size(const gs_vec2f&);
 
             void same_line();
 
-            // getters
-            ImmedidateUserInterfaceWindow* get_drawn_window() const;
-            ImmedidateUserInterfaceWindow* get_cached_window(const std::string& _Name) const;
+            // hierarchy
+            bool                         node_hierarchy_is_empty() const;
+            ImmedidateUserInterfaceNode* node_hierarchy_top()      const;
 
-            bool begin_window(
-                const std::string&                 _Name,
-                bool*                              _Opened = nullptr,
-                ImmedidateUserInterfaceWindowHints _Hints  = ImmedidateUserInterfaceWindowHints_::ImmedidateUserInterfaceWindowHints_Default);
+            // cache
+            bool                         node_cache_is_empty() const;
+            ImmedidateUserInterfaceNode* node_cache_find(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
+            ImmedidateUserInterfaceNode* node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
 
-            void end_window();
+            bool begin_node(
+                const std::string&                  _Name,
+                bool*                               _Rendered = nullptr,
+                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default,
+                ImmedidateUserInterfaceNodeType     _Type     = ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node);
+
+            void end_node();
 
             bool begin_menu(const std::string& _Name);
             bool menu_item(const std::string& _Name);
@@ -307,13 +317,27 @@ namespace Frenchie
             std::shared_ptr<Immediate2DRenderer>          m_Renderer{nullptr};
 
             // info
-            std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>> m_WindowsCache    {std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceWindow>>()};
-            std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsDrawList {std::vector<ImmedidateUserInterfaceWindow*>()};
-            std::vector<ImmedidateUserInterfaceWindow*>                           m_WindowsHierarchy{std::vector<ImmedidateUserInterfaceWindow*>()};
+            mutable std::map<
+                ImmedidateUserInterfaceNodeType,
+                std::map<
+                    std::string,
+                    std::unique_ptr<ImmedidateUserInterfaceNode>>> m_NodesCache
+            {
+                std::map<
+                ImmedidateUserInterfaceNodeType,
+                std::map<
+                    std::string,
+                    std::unique_ptr<ImmedidateUserInterfaceNode>>>()
+            };
+            
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesHierarchy         {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<gs_2dboxf>                    m_NodesClipBoxes         {std::vector<gs_2dboxf>()                   };
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesDrawList          {std::vector<ImmedidateUserInterfaceNode*>()};
 
-            Frenchie::Core::Optional<gs_vec2f> m_NextWindowSize;
-            Frenchie::Core::Optional<gs_vec2f> m_NextWindowPosition;
-            Frenchie::Core::Optional<gs_vec2f> m_NextCursorDirection;
+            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()       };
+            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()       };
+            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()       };
+            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()       };
 
             // widgets events
             Frenchie::Core::Optional<bool>                           m_WidgetMouseHovered;
@@ -323,79 +347,70 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseDoubleClicked;
 
             // service methods
-            std::vector<gs_2dboxf> m_Clipping;
-            std::vector<ImmedidateUserInterfaceWindow*> m_HoveredMenus;
+            std::vector<ImmedidateUserInterfaceNode*> m_HoveredMenus;
 
-            // window API
-            void window_calculate_geometry(ImmedidateUserInterfaceWindow*) const;
-            int  window_calculate_child_depth(ImmedidateUserInterfaceWindow*) const;
+            // node API
+            void node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
+            int  node_calculate_depth(ImmedidateUserInterfaceNode*) const;
             
-            gs_vec2f window_vertical_cursor_direction() const;
-            gs_vec2f window_horizontal_cursor_direction() const;
+            gs_vec2f node_vertical_cursor_direction() const;
+            gs_vec2f node_horizontal_cursor_direction() const;
             
-            bool window_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceWindow*) const;
+            bool node_is_of_type(const ImmedidateUserInterfaceNode*, const ImmedidateUserInterfaceNodeType&) const;
 
-            bool window_is_being_mouse_hover(ImmedidateUserInterfaceWindow* _Window);
+            bool node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
 
-            bool window_is_being_resized_top_left(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_top_right(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_bottom_left(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_bottom_right(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_top(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_left(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_right(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized_bottom(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_resized(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_moved(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_modified(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_focused(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_scrolled(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_scrolled_horizontally(const ImmedidateUserInterfaceWindow*) const;
-            bool window_is_being_scrolled_vertically(const ImmedidateUserInterfaceWindow*) const;
+            bool node_is_being_hovered(const ImmedidateUserInterfaceNode*);
+            bool node_is_being_resized_top_left(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_top_right(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_bottom_left(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_bottom_right(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_top(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_left(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_right(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized_bottom(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_resized(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_moved(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_modified(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_focused(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_scrolled(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_scrolled_horizontally(const ImmedidateUserInterfaceNode*) const;
+            bool node_is_being_scrolled_vertically(const ImmedidateUserInterfaceNode*) const;
             
-            void window_begin_mouse_hover(ImmedidateUserInterfaceWindow*);
-            // void window_begin_mouse_press(ImmedidateUserInterfaceWindow*);
-            // void window_begin_mouse_down(ImmedidateUserInterfaceWindow*);
-            // void window_begin_mouse_click(ImmedidateUserInterfaceWindow*);
-            // void window_begin_mouse_double_click(ImmedidateUserInterfaceWindow*);
+            void node_begin_hover(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_top_left(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_top_right(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_bottom_left(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_bottom_right(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_top(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_left(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_right(ImmedidateUserInterfaceNode*);
+            void node_begin_resize_bottom(ImmedidateUserInterfaceNode*);
+            void node_begin_move(ImmedidateUserInterfaceNode*);
+            void node_begin_focus(ImmedidateUserInterfaceNode*);
+            void node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
+            void node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
 
-            void window_begin_resize_top_left(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_top_right(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_bottom_left(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_bottom_right(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_top(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_left(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_right(ImmedidateUserInterfaceWindow*);
-            void window_begin_resize_bottom(ImmedidateUserInterfaceWindow*);
-            void window_begin_move(ImmedidateUserInterfaceWindow*);
-            void window_begin_focus(ImmedidateUserInterfaceWindow*);
-            void window_begin_scroll_vertically(ImmedidateUserInterfaceWindow*);
-            void window_begin_scroll_horizontally(ImmedidateUserInterfaceWindow*);
+            void node_end_hover(ImmedidateUserInterfaceNode* _Window);
+            void node_end_resize(ImmedidateUserInterfaceNode*);
+            void node_end_move(ImmedidateUserInterfaceNode*);
+            void node_end_focus(ImmedidateUserInterfaceNode*);
+            void node_end_scroll(ImmedidateUserInterfaceNode*);
 
-            void window_end_mouse_hover(ImmedidateUserInterfaceWindow* _Window);
-            
-            void window_end_resize(ImmedidateUserInterfaceWindow*);
-            void window_end_move(ImmedidateUserInterfaceWindow*);
-            void window_end_focus(ImmedidateUserInterfaceWindow*);
-            void window_end_scroll(ImmedidateUserInterfaceWindow*);
+            bool node_render_clipbox(ImmedidateUserInterfaceNode*);
+            bool node_render_background(ImmedidateUserInterfaceNode*);
+            bool node_render_background_frame(ImmedidateUserInterfaceNode*);
+            bool node_render_vertical_scrollbar(ImmedidateUserInterfaceNode*);
+            bool node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
+            bool node_render_resize_events_gizmos(ImmedidateUserInterfaceNode*);
 
-            bool window_render_clipbox(ImmedidateUserInterfaceWindow*);
-            bool window_render_background(ImmedidateUserInterfaceWindow*);
-            bool window_render_background_frame(ImmedidateUserInterfaceWindow*);
-            bool window_render_vertical_scrollbar(ImmedidateUserInterfaceWindow*);
-            bool window_render_horizontal_scrollbar(ImmedidateUserInterfaceWindow*);
-            bool window_render_resize_events_gizmos(ImmedidateUserInterfaceWindow*);
-
-            void window_receive_events();
-            void window_process_events(ImmedidateUserInterfaceWindow*);
+            void node_receive_events();
+            void node_process_events(ImmedidateUserInterfaceNode*);
 
             // widget API
-            gs_2dboxf widget_calculate_geometry(const gs_vec2f&);
-            gs_2dboxf widget_calculate_geometry(const std::string&);
-
-            void widget_begin_receive_events();
-            void widget_end_receive_events(const gs_2dboxf& _Box, const gs_2dboxf& _ClipBox, const gs_mat4f& _Transform);
+            auto widget_for_rendering(const gs_vec2f&);
+            auto widget_for_rendering(const std::string&);
 
             bool widget_is_mouse_hovered() const;
             bool widget_is_mouse_pressed(const ApplicationMouseButton::Button& _Button) const;
@@ -409,7 +424,7 @@ namespace Frenchie
                 const std::string&             _Text,
                 const gs_2dboxf&               _Box,
                 const gs_2dboxf&               _ClipBox,
-                ImmedidateUserInterfaceWindow* _Context);
+                ImmedidateUserInterfaceNode* _Context);
         };
     }
 }
