@@ -185,39 +185,39 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
     //     end_node()();
     // }
 
-    if(begin_window(
-        "Window-1",
-        nullptr,
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable   |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
+    if(begin_node("Node-1", nullptr,
+                    ImmedidateUserInterfaceNodeSettings_Movable   |
+                ImmedidateUserInterfaceNodeSettings_Resizable |
+                ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
     {
-        if(begin_window("Window-2"))
+        if(begin_node("Node-2"))
         {
-            for (int j = 0; j < 5; j++)
-            {
-                widget_push_button("BUTTON");
-                same_line();
-                widget_push_button("BUTTON");
-            }
-
-            end_window();
+            node_hierarchy_top()->State.WindowMaximumHeight = 32.f;
+            end_node();
         }
 
-        if(begin_window("Window-3"))
+        if(begin_node("Node-3"))
         {
-            for (int j = 0; j < 5; j++)
-            {
-                widget_push_button("BUTTON");
-                same_line();
-                widget_push_button("BUTTON");
-            }
-
-            end_window();
+            end_node();
         }
 
-        end_window();
+        if(begin_node("Node-4"))
+        {
+            end_node();
+        }
+
+        end_node();
     }
+
+    // if(begin_window(
+    //     "Window-1",
+    //     nullptr,
+    //     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable   |
+    //     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable |
+    //     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
+    // {
+    //     end_window();
+    // }
 
     // if(begin_menu("MENU"))
     // {
@@ -460,56 +460,57 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     window->State.Settings              = _Settings;
     window->State.FirstChild            = (int)m_NodesDrawList.size() + 1;
 
-    if(!m_NodesHierarchy.empty() && !(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent))
+    if(!node_hierarchy_is_empty() && !(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent))
     {
-        window->State.Parent                           = m_NodesHierarchy[m_NodesHierarchy.size() - 1];
-        window->State.Depth                            = node_calculate_depth(window->State.Parent);
-        window->State.Parent->State.LastChild          = window->State.FirstChild;
-        window->State.Parent->State.LayoutTotalWeight += window->State.LayoutFillWeight;
+        window->State.Parent                           = node_hierarchy_top();
+        window->State.Depth                            = node_calculate_depth(node_hierarchy_top());
+        node_hierarchy_top()->State.LastChild          = window->State.FirstChild;
+        node_hierarchy_top()->State.LayoutTotalWeight += window->State.LayoutFillWeight;
 
         // move cursor
-        window->State.Parent->State.LayoutCursorPositon += window->State.Parent->State.LayoutCursorSize * window->State.Parent->State.LayoutCursorDirection;
+        node_hierarchy_top()->State.LayoutCursorPositon +=
+            node_hierarchy_top()->State.LayoutCursorSize * node_hierarchy_top()->State.LayoutCursorDirection;
 
         // compute parent layout box
         gs_2dboxf parentLayoutBox = gs_2dboxf(
-            window->State.Parent->State.WindowScrollAreaBox.Min,
-            window->State.Parent->State.WindowScrollAreaBox.Min + window->State.Parent->State.WindowViewportBox.size());
+            node_hierarchy_top()->State.WindowScrollAreaBox.Min,
+            node_hierarchy_top()->State.WindowScrollAreaBox.Min + node_hierarchy_top()->State.WindowViewportBox.size());
 
         // compute child layout size
-        if(window->State.Parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally)
+        if(node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally)
         {
-            float width  = (parentLayoutBox.size() * window->State.LayoutFillWeight / window->State.Parent->Cache.LayoutTotalWeight).x;
+            float width  = (parentLayoutBox.size() * window->State.LayoutFillWeight / node_hierarchy_top()->Cache.LayoutTotalWeight).x;
             float height = parentLayoutBox.height();
 
-            window->State.Parent->State.LayoutCursorSize      = gs_vec2f(width, height);
-            window->State.Parent->State.LayoutCursorDirection = node_horizontal_cursor_direction();
+            node_hierarchy_top()->State.LayoutCursorSize      = gs_vec2f(width, height);
+            node_hierarchy_top()->State.LayoutCursorDirection = node_horizontal_cursor_direction();
         }
-        else if(window->State.Parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically)
+        else if(node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically)
         {
             float width  = parentLayoutBox.width();
-            float height = (parentLayoutBox.size() * window->State.LayoutFillWeight / window->State.Parent->Cache.LayoutTotalWeight).y;
+            float height = (parentLayoutBox.size() * window->State.LayoutFillWeight / node_hierarchy_top()->Cache.LayoutTotalWeight).y;
 
-            window->State.Parent->State.LayoutCursorSize      = gs_vec2f(width, height);
-            window->State.Parent->State.LayoutCursorDirection = node_vertical_cursor_direction();
+            node_hierarchy_top()->State.LayoutCursorSize      = gs_vec2f(width, height);
+            node_hierarchy_top()->State.LayoutCursorDirection = node_vertical_cursor_direction();
         }
         else
         {
-            window->State.Parent->State.LayoutCursorSize = window->State.WindowBox.size();
+            node_hierarchy_top()->State.LayoutCursorSize = window->State.WindowBox.size();
         }
 
-        window->State.Parent->State.LayoutCursorSize =
+        node_hierarchy_top()->State.LayoutCursorSize =
             gs_clamp(
-                window->State.Parent->State.LayoutCursorSize,
+                node_hierarchy_top()->State.LayoutCursorSize,
                 gs_vec2f(window->State.WindowMinimumWidth, window->State.WindowMinimumHeight),
                 gs_vec2f(window->State.WindowMaximumWidth, window->State.WindowMaximumHeight));
 
         window->State.WindowBox = gs_2dboxf(
             parentLayoutBox.Min,
-            parentLayoutBox.Min + window->State.Parent->State.LayoutCursorSize);
+            parentLayoutBox.Min + node_hierarchy_top()->State.LayoutCursorSize);
 
-        window->State.WindowTransform = window->State.Parent->State.WindowTransform * m_Renderer->calculate_transform_matrix(
+        window->State.WindowTransform = node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix(
             0.f,
-            window->State.Parent->State.LayoutCursorPositon);
+            node_hierarchy_top()->State.LayoutCursorPositon);
 
         window->State.Settings &= ~ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable;
     }
@@ -597,46 +598,72 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered, ImmedidateUserInterfaceNodeSettings _Settings)
 {
-    if(!begin_node(_Name, _Rendered, _Settings, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
+    if(!begin_node(
+        _Name,
+        _Rendered,
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically,
+        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
+    {
         return false;
-
-    // calculate window frame geometry
-    auto geometryBox = gs_2dboxf(
-        node_hierarchy_top()->State.WindowBox.Min,
-        node_hierarchy_top()->State.WindowBox.Min + gs_vec2f(node_hierarchy_top()->State.WindowBox.width() - m_Style->FrameWidth * 2.f, m_Style->FontSize + m_Style->FrameWidth * 2.f));
-
-    auto renderingData = widget_prepare_for_rendering(geometryBox.size());
-    auto boundingBox   = renderingData.BoundingBox;
+    }
 
     // render frame
-    m_Renderer->push_rectangle_rounded_filled(
-        boundingBox.Min,
-        boundingBox.Max,
-        m_Style->FrameRoundingRadius,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
-        node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)node_calculate_depth(node_hierarchy_top())));
-
-    m_Renderer->push_rectangle_rounded(
-        boundingBox.Min,
-        boundingBox.Max,
-        m_Style->FrameRoundingRadius,
-        m_Style->FrameWidth,
-        gs_vec4f(0.f, 255.f, 0.f, 255.f),
-        node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)node_calculate_depth(node_hierarchy_top())));
-
-    m_Renderer->push_text(
+    if(begin_node(
         _Name,
-        m_Style->FontSize,
-        gs_vec4f(255.f, 255.f, 255.f, 255.f),
-        node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix(
-            (float)node_calculate_depth(node_hierarchy_top()),
-            gs_vec2f(
-                boundingBox.Min.x + m_Style->FrameWidth * 2.f,
-                (boundingBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
-        m_Style->Font);
+        _Rendered,
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar,
+        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
+    {
+        node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
 
-    // render frame expand button
-    // render frame close  button
+        auto geometryBox = gs_2dboxf(
+            node_hierarchy_top()->State.WindowBox.Min,
+            node_hierarchy_top()->State.WindowBox.Min + gs_vec2f(node_hierarchy_top()->State.WindowBox.width() - m_Style->FrameWidth * 2.f, m_Style->FontSize + m_Style->FrameWidth * 2.f));
+
+        auto renderingData = widget_prepare_for_rendering(geometryBox.size());
+        auto boundingBox   = renderingData.BoundingBox;
+
+        // render frame
+        m_Renderer->push_rectangle_rounded_filled(
+            boundingBox.Min,
+            boundingBox.Max,
+            m_Style->FrameRoundingRadius,
+            gs_vec4f(255.f, 0.f, 0.f, 255.f),
+            node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)node_calculate_depth(node_hierarchy_top())));
+
+        m_Renderer->push_rectangle_rounded(
+            boundingBox.Min,
+            boundingBox.Max,
+            m_Style->FrameRoundingRadius,
+            m_Style->FrameWidth,
+            gs_vec4f(0.f, 255.f, 0.f, 255.f),
+            node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix((float)node_calculate_depth(node_hierarchy_top())));
+
+        m_Renderer->push_text(
+            _Name,
+            m_Style->FontSize,
+            gs_vec4f(255.f, 255.f, 255.f, 255.f),
+            node_hierarchy_top()->State.WindowTransform * m_Renderer->calculate_transform_matrix(
+                (float)node_calculate_depth(node_hierarchy_top()),
+                gs_vec2f(
+                    boundingBox.Min.x + m_Style->FrameWidth * 2.f,
+                    (boundingBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
+            m_Style->Font);
+
+        end_node();
+    }
+
+    // render content node    
+    if(begin_node(
+        _Name,
+        _Rendered,
+        _Settings,
+        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowContent))
+    {
+    }
 
     return true;
 }
@@ -644,6 +671,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
 void ImmedidateUserInterfaceContextLayer::end_window()
 {
     end_node(); // window
+    end_node(); // window content
 }
 
 bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
