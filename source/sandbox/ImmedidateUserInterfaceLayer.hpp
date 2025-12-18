@@ -68,10 +68,15 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceNodeType_
         {
-            ImmedidateUserInterfaceNodeType_Node    = 1 << 0,
-            ImmedidateUserInterfaceNodeType_Window  = 1 << 1,
-            ImmedidateUserInterfaceNodeType_Menubar = 1 << 2,
-            ImmedidateUserInterfaceNodeType_Menu    = 1 << 3,
+            ImmedidateUserInterfaceNodeType_Node          = 1 << 0,
+            ImmedidateUserInterfaceNodeType_Window        = 1 << 1,
+            
+            ImmedidateUserInterfaceNodeType_WindowFrame   = 1 << 2,
+            ImmedidateUserInterfaceNodeType_WindowMenubar = 1 << 3,
+            ImmedidateUserInterfaceNodeType_WindowContent = 1 << 4,
+            ImmedidateUserInterfaceNodeType_WindowMain    = 1 << 5,
+
+            ImmedidateUserInterfaceNodeType_Menu          = 1 << 6,
         };
 
         enum ImmedidateUserInterfaceNodeChanges_ : int
@@ -94,6 +99,8 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceNodeSettings_ : int
         {
+            ImmedidateUserInterfaceNodeSettings_None                         = 0,
+
             // window common hints
             ImmedidateUserInterfaceNodeSettings_Movable                      = 1 << 0,
             ImmedidateUserInterfaceNodeSettings_Resizable                    = 1 << 1,
@@ -119,6 +126,14 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeSettings_ResizeToContents =
                 ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
                 ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally,
+
+            ImmedidateUserInterfaceNodeSettings_AlwaysScrollBar =
+                ImmedidateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar |
+                ImmedidateUserInterfaceNodeSettings_AlwaysVerticalScrollBar,
+
+            ImmedidateUserInterfaceNodeSettings_NeverScrollBar =
+                ImmedidateUserInterfaceNodeSettings_NeverHorizontalScrollBar |
+                ImmedidateUserInterfaceNodeSettings_NeverVerticalScrollBar,
 
             ImmedidateUserInterfaceNodeHints_Default       =
                 ImmedidateUserInterfaceNodeSettings_Movable   |
@@ -264,7 +279,7 @@ namespace Frenchie
 
         struct ImmedidateUserInterfaceNode
         {
-            mutable std::string                      Name {"Default"                           }; // TODO: this MUST BE A HASH !!!
+            mutable std::string                      Name {"Default"                         }; // TODO: this MUST BE A HASH !!!
             mutable ImmedidateUserInterfaceNodeState State{ImmedidateUserInterfaceNodeState()};
             mutable ImmedidateUserInterfaceNodeState Cache{ImmedidateUserInterfaceNodeState()};
         };
@@ -292,24 +307,22 @@ namespace Frenchie
 
             // cache
             bool                         node_cache_is_empty() const;
-            ImmedidateUserInterfaceNode* node_cache_find(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
             ImmedidateUserInterfaceNode* node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
 
-            bool begin_node(
+            // hierarchical elements
+            bool begin_window(
                 const std::string&                  _Name,
                 bool*                               _Rendered = nullptr,
-                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default,
-                ImmedidateUserInterfaceNodeType     _Type     = ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node);
+                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default);
 
-            void end_node();
-
+            void end_window();
+            
             bool begin_menu(const std::string& _Name);
-            bool menu_item(const std::string& _Name);
             void end_menu();
 
             // widgets API
-            bool close_button_widget(const gs_vec2f& _Size = gs_vec2f(64.f, 64.f));
-            bool default_button_widget(const std::string& _Name);
+            bool widget_push_button(const std::string& _Name);
+            bool widget_menu_button(const std::string& _Name);
 
         protected:
 
@@ -350,6 +363,14 @@ namespace Frenchie
             std::vector<ImmedidateUserInterfaceNode*> m_HoveredMenus;
 
             // node API
+            bool begin_node(
+                const std::string&                  _Name,
+                bool*                               _Rendered = nullptr,
+                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default,
+                ImmedidateUserInterfaceNodeType     _Type     = ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node);
+
+            void end_node();
+
             void node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
             int  node_calculate_depth(ImmedidateUserInterfaceNode*) const;
             
@@ -409,8 +430,8 @@ namespace Frenchie
             void node_process_events(ImmedidateUserInterfaceNode*);
 
             // widget API
-            auto widget_for_rendering(const gs_vec2f&);
-            auto widget_for_rendering(const std::string&);
+            auto widget_prepare_for_rendering(const gs_vec2f&);
+            auto widget_prepare_for_rendering(const std::string&);
 
             bool widget_is_mouse_hovered() const;
             bool widget_is_mouse_pressed(const ApplicationMouseButton::Button& _Button) const;
@@ -418,7 +439,7 @@ namespace Frenchie
             bool widget_is_mouse_clicked(const ApplicationMouseButton::Button& _Button) const;
             bool widget_is_mouse_double_clicked(const ApplicationMouseButton::Button& _Button) const;
 
-            bool widget_render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _ClipBox, const gs_mat4f&  _Transform);
+            //bool widget_render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _ClipBox, const gs_mat4f&  _Transform);
             
             bool widget_render_default_button_widget(
                 const std::string&             _Text,
