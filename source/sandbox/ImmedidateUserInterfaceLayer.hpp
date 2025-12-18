@@ -239,18 +239,15 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
-            mutable int                            Depth     {0};
-            mutable ImmedidateUserInterfaceNode*   Parent    {nullptr}; // parent is never nullptr as ALL windows are cached...
-            mutable int                            Thickness {0};
-            mutable int                            FirstChild{0};
-            mutable int                            LastChild {0};
+            mutable int                            Depth         {0};
+            mutable ImmedidateUserInterfaceNode*   Parent        {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable int                            Thickness     {0};
 
             // layouting
-            mutable gs_vec2f LayoutCursorDirection{gs_vec2f(0.f, 1.f)};
-            mutable gs_vec2f LayoutCursorPositon  {gs_vec2f(0.f, 0.f)};
-            mutable gs_vec2f LayoutCursorSize     {gs_vec2f(0.f, 0.f)};
-            mutable float    LayoutFillWeight     {1.f};
-            mutable float    LayoutTotalWeight    {1.f};
+            mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
+            mutable gs_vec2f LayoutCursorPositon    {gs_vec2f(0.f, 0.f)};
+            mutable gs_vec2f LayoutCursorSize       {gs_vec2f(0.f, 0.f)};
+            mutable gs_vec2f LayoutTotalChildrenSize{gs_vec2f(0.f, 0.f)};
             mutable float    WindowMinimumWidth   {128.f};
             mutable float    WindowMinimumHeight  {128.f};
             mutable float    WindowMaximumWidth   {(float)INT_MAX};
@@ -372,7 +369,8 @@ namespace Frenchie
             void end_node();
 
             void node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
-            int  node_calculate_depth(ImmedidateUserInterfaceNode*) const;
+            int  node_move_to_next_layer_depth(ImmedidateUserInterfaceNode*) const;
+            int  node_get_current_layer_depth(ImmedidateUserInterfaceNode*) const;
             
             gs_vec2f node_vertical_cursor_direction() const;
             gs_vec2f node_horizontal_cursor_direction() const;
@@ -449,3 +447,82 @@ namespace Frenchie
         };
     }
 }
+
+// template<typename Type> struct Tree;
+
+// template<typename Type>
+// struct Node
+// {
+//     int               Parent{-1};
+//     int               Index {-1};
+//     Type              Data  {Type()};
+//     const Tree<Type>* Tree  {nullptr};
+// };
+
+// template<typename Type>
+// struct Tree
+// {
+//     mutable std::vector<Node<Type>> Nodes  {std::vector<Node<Type>>()};
+//     mutable std::vector<int>        Indexes{std::vector<int>()};
+//     mutable std::vector<int>        Entries{std::vector<int>()};
+//     mutable bool                    Dirty  {true};
+
+//     template<typename ... Args>
+//     Node<Type> construct_node(const Node<Type>& _Parent, Args ... _Args)
+//     {
+//         Node<Type> node;
+//         node.Parent = _Parent.Index;
+//         node.Index  = (int)Nodes.size();
+//         node.Data   = Type(_Args ...);
+//         node.Tree   = this;
+//         Nodes.push_back(node);
+//         Dirty = true;
+//         return node;
+//     }
+
+//     void clear()
+//     {
+//         Nodes.clear();
+//     }
+
+//     void sort() const
+//     {
+//         std::vector<Node<Type>> nodes(Nodes.size());
+//         std::vector<int> workspace(Nodes.size()+1);
+
+//         Indexes.resize(Nodes.size() + 1);
+//         Entries.resize(Nodes.size());
+
+//         for(int i = 0; i < Entries.size(); i++)
+//         {
+//             Entries[i] = 0;
+//             Indexes[i] = 0;
+//         }
+
+//         // count items
+//         for (int i = 0; i < Nodes.size(); i++)
+//         {
+//             if(Nodes[i].Parent < 0) continue;
+//             ++Entries[Nodes[i].Parent];
+//         }
+
+//         // cumulative sum
+//         int sum = 0;
+//         for (int i = 0; i < Nodes.size(); i++)
+//         {
+//             Indexes  [i] = sum;
+//             workspace[i] = sum;
+//             sum += Entries[i];
+//         }
+//         Indexes[Nodes.size()] = sum;
+
+//         for(int i = 0; i < Nodes.size(); i++ )
+//         {
+//             if(Nodes[i].Parent < 0) continue;
+//             nodes[workspace[Nodes[i].Parent]++] = Nodes[i];
+//         }
+
+//         Nodes = nodes;
+//         Dirty = false;
+//     }
+// };
