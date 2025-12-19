@@ -255,38 +255,41 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
                     end_menu();
                 }
 
-                end_menu();
-            }
-
-            if(begin_menu("Menu-3"))
-            {
-                widget_menu_button("Action-1");
-
-                if(begin_menu("Menu-4"))
+                if(begin_menu("Menu-3"))
                 {
-                    widget_menu_button("Action-1");
                     widget_menu_button("Action-2");
                     widget_menu_button("Action-3");
+
+                    if(begin_menu("Menu-4"))
+                    {
+                        widget_menu_button("Action-2");
+                        widget_menu_button("Action-3");
+                        end_menu();
+                    }
 
                     end_menu();
                 }
 
+                end_menu();
+            }
+
+            if(begin_menu("Menu-111"))
+            {
                 widget_menu_button("Action-2");
                 widget_menu_button("Action-3");
-
-                end_menu();
+                end_menubar();
             }
 
             end_menubar();
         }
 
-        // if(begin_menubar("Window-2-Menubar"))
-        // {
-        //     if(begin_menu("Menu-44")) end_menu();
-        //     if(begin_menu("Menu-33")) end_menu();
+        if(begin_menubar("Window-2-Menubar"))
+        {
+            if(begin_menu("Menu-44")) end_menu();
+            if(begin_menu("Menu-33")) end_menu();
 
-        //     end_menubar();
-        // }
+            end_menubar();
+        }
 
         end_window();
     }
@@ -390,8 +393,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     const std::string&                  _Name,
     bool*                               _Rendered,
     ImmedidateUserInterfaceNodeSettings _Settings,
-    ImmedidateUserInterfaceNodeType     _Type
-)
+    ImmedidateUserInterfaceNodeType     _Type)
 {
     ImmedidateUserInterfaceNode* window = ui_node_cache_request(_Name, _Type);
     window->State.Type                  = _Type;
@@ -462,8 +464,14 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     {
         if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent))
         {
-            m_NodesClipBoxes.push_back(m_Renderer->current_clip_box());
-            m_Renderer->pop_clip_box();
+            auto parent = ui_node_hierarchy_top();
+
+            while (parent)
+            {
+                m_NodesClipBoxes.push_back(m_Renderer->current_clip_box());
+                m_Renderer->pop_clip_box();
+                parent = parent->State.Parent;
+            }
         }
 
         ui_node_render_clipbox(window);
@@ -568,15 +576,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
             end_node();
         }
 
-        // // render content node
-        // if(begin_node(
-        //     _Name,
-        //     _Rendered,
-        //     _Settings,
-        //     ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowContent))
-        // {
-        // }
-
         return true;
     }
 
@@ -585,7 +584,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
 
 void ImmedidateUserInterfaceContextLayer::end_window()
 {
-    //end_node();
     end_node();
 }
 
@@ -605,33 +603,35 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
         if(ui_node_is_of_type(ui_node_hierarchy_top(), ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenubar))
             set_next_ui_node_cursor_same_line();
 
-         // TODO: differentiate between menu item and menu...
         widget_push_button(_Name);
-        
+
         auto cachedMenu = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu);
 
         if(widget_is_hovered())
+        {
             ui_node_begin_hover(cachedMenu);
+        }
 
         // check self hover
         bool isHovered =
-            (cachedMenu != nullptr) &&
-            (ui_node_is_being_hovered(cachedMenu) || Frenchie::Core::elapsed<std::chrono::microseconds>(cachedMenu->State.WindowHoverStart, Frenchie::Core::tic()) < 0.1 * std::micro().den);
+            cachedMenu != nullptr &&
+            (widget_is_hovered() ||
+            Frenchie::Core::elapsed<std::chrono::microseconds>(cachedMenu->State.WindowHoverStart, Frenchie::Core::tic()) < 0.05 * std::micro().den);
 
         if(isHovered)
         {
-            m_HoveredMenus.push_back(cachedMenu);
+            m_HoveredMenus.push_back({cachedMenu, ui_node_hierarchy_top()});
         }
         else
         {
             bool anyHovered = false;
             for (auto& window : m_HoveredMenus)
             {
-                if((window->State.Type & ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu))
+                if((window.Self->State.Type & ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu))
                 {
-                    anyHovered = anyHovered || ui_node_is_being_hovered(window);
+                    anyHovered = anyHovered || ui_node_is_being_hovered(window.Self);
 
-                    if(window == cachedMenu)
+                    if(window.Parent == cachedMenu)
                         isHovered = true;
                 }
             }
@@ -642,7 +642,22 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
         
 
         if(!widget_is_hovered() && !isHovered)
+        {
+            for(auto it = m_HoveredMenus.begin(); it != m_HoveredMenus.end(); ++it)
+            {
+                if(it->Self == cachedMenu)
+                {
+                    auto rm = it;
+                    it++;
+                    m_HoveredMenus.erase(rm);
+
+                    if(it == m_HoveredMenus.end())
+                        break;
+                }
+            }
+
             return false;
+        }
 
         if(ui_node_is_of_type(ui_node_hierarchy_top(), ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenubar))
         {
@@ -796,6 +811,21 @@ bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& 
 
 bool ImmedidateUserInterfaceContextLayer::widget_menu_button(const std::string& _Name)
 {
+    // for(auto it = m_HoveredMenus.begin(); it != m_HoveredMenus.end(); it++)
+    // {
+    //     if((*it)->is_closed())
+    //     {
+    //         (*it)->finish();
+    //         auto rm = it;
+    //         it++;
+    //         m_Layers.erase(rm);
+
+    //         if(it == m_Layers.end())
+    //             break;
+    //     }
+    // }
+
+
     return widget_push_button(_Name);
 }
 
