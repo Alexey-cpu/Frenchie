@@ -70,12 +70,10 @@ namespace Frenchie
         {
             ImmedidateUserInterfaceNodeType_Node          = 1 << 0,
             ImmedidateUserInterfaceNodeType_Window        = 1 << 1,
-            
             ImmedidateUserInterfaceNodeType_WindowFrame   = 1 << 2,
             ImmedidateUserInterfaceNodeType_WindowMenubar = 1 << 3,
             ImmedidateUserInterfaceNodeType_WindowContent = 1 << 4,
             ImmedidateUserInterfaceNodeType_WindowMain    = 1 << 5,
-
             ImmedidateUserInterfaceNodeType_Menu          = 1 << 6,
         };
 
@@ -101,7 +99,7 @@ namespace Frenchie
         {
             ImmedidateUserInterfaceNodeSettings_None                         = 0,
 
-            // window common hints
+            // common
             ImmedidateUserInterfaceNodeSettings_Movable                      = 1 << 0,
             ImmedidateUserInterfaceNodeSettings_Resizable                    = 1 << 1,
 
@@ -292,19 +290,19 @@ namespace Frenchie
             virtual void frame_update() override;
             virtual void frame_finish() override;
 
-            void set_next_node_maximum_size(const gs_vec2f&);
-            void set_next_node_position(const gs_vec2f&);
-            void set_next_node_size(const gs_vec2f&);
-
-            void same_line();
+            // setters
+            void set_next_ui_node_maximum_size(const gs_vec2f&);
+            void set_next_ui_node_position(const gs_vec2f&);
+            void set_next_ui_node_size(const gs_vec2f&);
+            void set_next_ui_node_cursor_same_line();
 
             // hierarchy
-            bool                         node_hierarchy_is_empty() const;
-            ImmedidateUserInterfaceNode* node_hierarchy_top()      const;
+            bool                         ui_node_hierarchy_is_empty() const;
+            ImmedidateUserInterfaceNode* ui_node_hierarchy_top()      const;
 
             // cache
-            bool                         node_cache_is_empty() const;
-            ImmedidateUserInterfaceNode* node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
+            bool                         ui_node_cache_is_empty() const;
+            ImmedidateUserInterfaceNode* ui_node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
 
             // hierarchical elements
             bool begin_window(
@@ -323,10 +321,10 @@ namespace Frenchie
 
         protected:
 
-            std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
-            std::shared_ptr<Immediate2DRenderer>          m_Renderer{nullptr};
-
             // info
+            mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
+            mutable std::shared_ptr<Immediate2DRenderer>          m_Renderer{nullptr};
+
             mutable std::map<
                 ImmedidateUserInterfaceNodeType,
                 std::map<
@@ -343,7 +341,6 @@ namespace Frenchie
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesHierarchy         {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<gs_2dboxf>                    m_NodesClipBoxes         {std::vector<gs_2dboxf>()                   };
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesDrawList          {std::vector<ImmedidateUserInterfaceNode*>()};
-
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()       };
@@ -368,82 +365,74 @@ namespace Frenchie
 
             void end_node();
 
-            void node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
-            int  node_move_to_next_layer_depth(ImmedidateUserInterfaceNode*) const;
-            int  node_get_current_layer_depth(ImmedidateUserInterfaceNode*) const;
+            void ui_node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
+            int  ui_node_move_to_next_layer_depth(ImmedidateUserInterfaceNode*) const;
+            int  ui_node_get_current_layer_depth(ImmedidateUserInterfaceNode*) const;
             
-            gs_vec2f node_vertical_cursor_direction() const;
-            gs_vec2f node_horizontal_cursor_direction() const;
+            gs_vec2f ui_node_vertical_cursor_direction() const;
+            gs_vec2f ui_node_horizontal_cursor_direction() const;
             
-            bool node_is_of_type(const ImmedidateUserInterfaceNode*, const ImmedidateUserInterfaceNodeType&) const;
+            bool ui_node_is_of_type(const ImmedidateUserInterfaceNode*, const ImmedidateUserInterfaceNodeType&) const;
+            bool ui_node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*);
+            bool ui_node_is_being_resized_top_left(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_top_right(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_bottom_left(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_bottom_right(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_top(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_left(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_right(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized_bottom(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_resized(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_moved(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_modified(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_focused(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_scrolled(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_scrolled_horizontally(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_scrolled_vertically(const ImmedidateUserInterfaceNode*) const;
+            void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_top_left(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_top_right(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_bottom_left(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_bottom_right(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_top(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_left(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_right(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_bottom(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_move(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_focus(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
 
-            bool node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
+            void ui_node_end_hover(ImmedidateUserInterfaceNode* _Window);
+            void ui_node_end_resize(ImmedidateUserInterfaceNode*);
+            void ui_node_end_move(ImmedidateUserInterfaceNode*);
+            void ui_node_end_focus(ImmedidateUserInterfaceNode*);
+            void ui_node_end_scroll(ImmedidateUserInterfaceNode*);
 
-            bool node_is_being_hovered(const ImmedidateUserInterfaceNode*);
-            bool node_is_being_resized_top_left(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_top_right(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_bottom_left(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_bottom_right(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_top(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_left(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_right(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized_bottom(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_resized(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_moved(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_modified(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_focused(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_scrolled(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_scrolled_horizontally(const ImmedidateUserInterfaceNode*) const;
-            bool node_is_being_scrolled_vertically(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_render_clipbox(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_background(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_background_frame(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_vertical_scrollbar(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode*);
+
+            void ui_node_layout_children();
+            void ui_node_receive_events();
+            void ui_node_process_events();
+            void ui_node_pass_focus();
+            void ui_node_save_state();
             
-            void node_begin_hover(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_top_left(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_top_right(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_bottom_left(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_bottom_right(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_top(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_left(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_right(ImmedidateUserInterfaceNode*);
-            void node_begin_resize_bottom(ImmedidateUserInterfaceNode*);
-            void node_begin_move(ImmedidateUserInterfaceNode*);
-            void node_begin_focus(ImmedidateUserInterfaceNode*);
-            void node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
-            void node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
-
-            void node_end_hover(ImmedidateUserInterfaceNode* _Window);
-            void node_end_resize(ImmedidateUserInterfaceNode*);
-            void node_end_move(ImmedidateUserInterfaceNode*);
-            void node_end_focus(ImmedidateUserInterfaceNode*);
-            void node_end_scroll(ImmedidateUserInterfaceNode*);
-
-            bool node_render_clipbox(ImmedidateUserInterfaceNode*);
-            bool node_render_background(ImmedidateUserInterfaceNode*);
-            bool node_render_background_frame(ImmedidateUserInterfaceNode*);
-            bool node_render_vertical_scrollbar(ImmedidateUserInterfaceNode*);
-            bool node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
-            bool node_render_resize_events_gizmos(ImmedidateUserInterfaceNode*);
-
-            void node_receive_events();
-            void node_process_events(ImmedidateUserInterfaceNode*);
-
             // widget API
             auto widget_prepare_for_rendering(const gs_vec2f&);
             auto widget_prepare_for_rendering(const std::string&);
 
-            bool widget_is_mouse_hovered() const;
-            bool widget_is_mouse_pressed(const ApplicationMouseButton::Button& _Button) const;
-            bool widget_is_mouse_down(const ApplicationMouseButton::Button& _Button) const;
-            bool widget_is_mouse_clicked(const ApplicationMouseButton::Button& _Button) const;
-            bool widget_is_mouse_double_clicked(const ApplicationMouseButton::Button& _Button) const;
-
-            //bool widget_render_close_button_widget(const gs_2dboxf& _ButtonBox, const gs_2dboxf& _ClipBox, const gs_mat4f&  _Transform);
-            
-            bool widget_render_default_button_widget(
-                const std::string&             _Text,
-                const gs_2dboxf&               _Box,
-                const gs_2dboxf&               _ClipBox,
-                ImmedidateUserInterfaceNode* _Context);
+            bool widget_is_hovered() const;
+            bool widget_is_pressed(const ApplicationMouseButton::Button&) const;
+            bool widget_is_clicked(const ApplicationMouseButton::Button&) const;
+            bool widget_is_mouse_down(const ApplicationMouseButton::Button&) const;
+            bool widget_is_double_clicked(const ApplicationMouseButton::Button&) const;
         };
     }
 }
