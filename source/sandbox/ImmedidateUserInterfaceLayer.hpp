@@ -351,7 +351,13 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseClicked;
             Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseDoubleClicked;
 
-            std::vector<ImmedidateUserInterfaceNode*> m_HoveredMenus;
+            struct Menu
+            {
+                ImmedidateUserInterfaceNode* Self  {nullptr};
+                ImmedidateUserInterfaceNode* Parent{nullptr};
+            };
+
+            std::list<Menu> m_HoveredMenus;
 
             // user interface nodes API
             bool begin_node(
