@@ -305,15 +305,14 @@ namespace Frenchie
             ImmedidateUserInterfaceNode* ui_node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
 
             // hierarchical elements
-            bool begin_window(
-                const std::string&                  _Name,
-                bool*                               _Rendered = nullptr,
-                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default);
-
+            bool begin_window(const std::string& _Name, bool* _Rendered = nullptr);
             void end_window();
             
             bool begin_menu(const std::string& _Name);
             void end_menu();
+
+            bool begin_menubar(const std::string& _Name);
+            void end_menubar();
 
             // widgets API
             bool widget_push_button(const std::string& _Name);
@@ -346,17 +345,15 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()       };
 
-            // widgets events
-            Frenchie::Core::Optional<bool>                           m_WidgetMouseHovered;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetMouseDoubleClicked;
+            Frenchie::Core::Optional<bool>                                           m_WidgetMouseHovered;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMousePressed;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseClicked;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseDoubleClicked;
 
-            // service methods
             std::vector<ImmedidateUserInterfaceNode*> m_HoveredMenus;
 
-            // node API
+            // user interface nodes API
             bool begin_node(
                 const std::string&                  _Name,
                 bool*                               _Rendered = nullptr,
@@ -424,7 +421,7 @@ namespace Frenchie
             void ui_node_pass_focus();
             void ui_node_save_state();
             
-            // widget API
+            // user interface widgets API
             auto widget_prepare_for_rendering(const gs_vec2f&);
             auto widget_prepare_for_rendering(const std::string&);
 
