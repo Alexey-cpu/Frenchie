@@ -92,7 +92,10 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeChanges_IsBeingFocused              = 1 << 9,
             ImmedidateUserInterfaceNodeChanges_IsBeingScrolledHorizontally = 1 << 10,
             ImmedidateUserInterfaceNodeChanges_IsBeingScrolledVertically   = 1 << 11,
-            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered         = 1 << 12,
+
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredStarted  = 1 << 12,
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered         = 1 << 13,
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredEnded    = 1 << 14,
         };
 
         enum ImmedidateUserInterfaceNodeSettings_ : int
@@ -114,8 +117,8 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically     = 1 << 7,
 
             // size hints
-            ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally        = 1 << 8,
-            ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically          = 1 << 9,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally = 1 << 8,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically   = 1 << 9,
 
             // hierarchy & clipping
             ImmedidateUserInterfaceNodeSettings_IgnoreParent                 = 1 << 10,
@@ -239,6 +242,7 @@ namespace Frenchie
             // hierarchy
             mutable int                            Depth         {0};
             mutable ImmedidateUserInterfaceNode*   Parent        {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable ImmedidateUserInterfaceNode*   Master        {nullptr}; // this can be nullpre, be carefull...
             mutable int                            Thickness     {0};
 
             // layouting
@@ -246,30 +250,32 @@ namespace Frenchie
             mutable gs_vec2f LayoutCursorPositon    {gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorSize       {gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutTotalChildrenSize{gs_vec2f(0.f, 0.f)};
-            mutable float    WindowMinimumWidth   {128.f};
-            mutable float    WindowMinimumHeight  {128.f};
-            mutable float    WindowMaximumWidth   {(float)INT_MAX};
-            mutable float    WindowMaximumHeight  {(float)INT_MAX};
+            mutable float    WindowMinimumWidth     {128.f};
+            mutable float    WindowMinimumHeight    {128.f};
+            mutable float    WindowMaximumWidth     {(float)INT_MAX};
+            mutable float    WindowMaximumHeight    {(float)INT_MAX};
 
             // scrolling
             mutable ImmedidateUserInterfaceNodeScroll VerticalScrollBar;
             mutable ImmedidateUserInterfaceNodeScroll HorizontalScrollBar;
 
             // geometry
-            mutable gs_vec2f  ScrollBarOffset                   {gs_vec2f(0.f, 0.f)};
-            mutable gs_2dboxf WindowBox                         {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))}; 
-            mutable gs_2dboxf WindowInnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
-            mutable gs_2dboxf WindowOuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowVerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowVerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowHorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_2dboxf WindowHorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
-            mutable gs_mat4f  WindowTransform                   {gs_mat4f(1.f)};
+            mutable gs_vec2f  ScrollBarOffset             {gs_vec2f(0.f, 0.f)};
+            mutable gs_2dboxf WindowBox                   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))}; 
+            mutable gs_2dboxf InnerClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
+            mutable gs_2dboxf OuterClipAreaBox            {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf ViewportBox                 {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf ScrollAreaBox               {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf ContentBox                  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf VerticalScrollBarBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf VerticalScrollBarSliderBox  {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf HorizontalScrollBarBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_2dboxf HorizontalScrollBarSliderBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(128.f, 128.f))};
+            mutable gs_mat4f  Transform                   {gs_mat4f(1.f)};
 
+            // timers
             std::chrono::high_resolution_clock::time_point WindowHoverStart;
+            std::chrono::high_resolution_clock::time_point WindowHoverEnd;
         };
 
         struct ImmedidateUserInterfaceNode
@@ -376,6 +382,7 @@ namespace Frenchie
             gs_vec2f ui_node_horizontal_cursor_direction() const;
             
             bool ui_node_is_of_type(const ImmedidateUserInterfaceNode*, const ImmedidateUserInterfaceNodeType&) const;
+
             bool ui_node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*);
