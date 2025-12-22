@@ -310,7 +310,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     window->State.Settings              = _Settings;
 
     if(!ui_node_hierarchy_is_empty() &&
-        !(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent))
+        !(window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent))
     {
         // setup hierarchy
         window->State.Parent                                 = ui_node_hierarchy_top();
@@ -376,7 +376,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     // memorize current clipping
     if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
     {
-        if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent))
+        if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent))
         {
             auto parent = ui_node_hierarchy_top();
 
@@ -427,7 +427,7 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
     ui_node_render_background_frame(window);
 
-    if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent) && !m_NodesClipBoxes.empty())
+    if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent) && !m_NodesClipBoxes.empty())
     {
         m_Renderer->push_clip_box(m_NodesClipBoxes[m_NodesClipBoxes.size() - 1]);
         m_NodesClipBoxes.pop_back();
@@ -511,7 +511,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
     ImmedidateUserInterfaceNodeSettings settings =
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally |
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus                  |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreParent;
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NullParent;
 
     ImmedidateUserInterfaceNodeType type =
         ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu;
