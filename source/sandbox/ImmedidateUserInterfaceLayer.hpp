@@ -72,9 +72,14 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeType_Window        = 1 << 1,
             ImmedidateUserInterfaceNodeType_WindowFrame   = 1 << 2,
             ImmedidateUserInterfaceNodeType_WindowMenubar = 1 << 3,
-            ImmedidateUserInterfaceNodeType_WindowContent = 1 << 4,
-            ImmedidateUserInterfaceNodeType_WindowMain    = 1 << 5,
-            ImmedidateUserInterfaceNodeType_Menu          = 1 << 6,
+            ImmedidateUserInterfaceNodeType_Menu          = 1 << 4,
+        };
+
+        enum ImmedidateUserInterfaceNodeLayer_
+        {
+            ImmedidateUserInterfaceNodeLayer_Main    = 1 << 0,
+            ImmedidateUserInterfaceNodeLayer_Focus   = 1 << 1,
+            ImmedidateUserInterfaceNodeLayer_Docking = 1 << 2,
         };
 
         enum ImmedidateUserInterfaceNodeChanges_ : int
@@ -123,6 +128,7 @@ namespace Frenchie
             // hierarchy & clipping
             ImmedidateUserInterfaceNodeSettings_IgnoreParent                 = 1 << 10,
             ImmedidateUserInterfaceNodeSettings_IgnoreClipping               = 1 << 11,
+            ImmedidateUserInterfaceNodeSettings_IgnoreFocus                  = 1 << 12,
 
             ImmedidateUserInterfaceNodeSettings_ResizeToContents =
                 ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
@@ -143,6 +149,7 @@ namespace Frenchie
         };
 
         typedef int ImmedidateUserInterfaceNodeType;
+        typedef int ImmedidateUserInterfaceNodeLayer;
         typedef int ImmedidateUserInterfaceNodeChanges;
         typedef int ImmedidateUserInterfaceNodeSettings;
 
@@ -235,15 +242,16 @@ namespace Frenchie
         struct ImmedidateUserInterfaceNodeState
         {
             // hints
-            mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node      };
+            mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node        };
+            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main      };
             mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default};
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
-            mutable int                            Depth         {0};
-            mutable ImmedidateUserInterfaceNode*   Parent        {nullptr}; // parent is never nullptr as ALL windows are cached...
-            mutable ImmedidateUserInterfaceNode*   Master        {nullptr}; // this can be nullpre, be carefull...
-            mutable int                            Thickness     {0};
+            mutable int                            Depth      {0};
+            mutable ImmedidateUserInterfaceNode*   Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable ImmedidateUserInterfaceNode*   Observable {nullptr}; // this can be nullpre, be carefull...
+            mutable int                            Thickness  {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
@@ -302,13 +310,13 @@ namespace Frenchie
             void set_next_ui_node_size(const gs_vec2f&);
             void set_next_ui_node_cursor_same_line();
 
-            // hierarchy
-            bool                         ui_node_hierarchy_is_empty() const;
-            ImmedidateUserInterfaceNode* ui_node_hierarchy_top()      const;
-
             // cache
             bool                         ui_node_cache_is_empty() const;
             ImmedidateUserInterfaceNode* ui_node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
+
+            // hierarchy
+            bool                         ui_node_hierarchy_is_empty() const;
+            ImmedidateUserInterfaceNode* ui_node_hierarchy_top()      const;
 
             // hierarchical elements
             bool begin_window(const std::string& _Name, bool* _Rendered = nullptr);
@@ -342,10 +350,12 @@ namespace Frenchie
                     std::string,
                     std::unique_ptr<ImmedidateUserInterfaceNode>>>()
             };
-            
+
+            // nodes drawing
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesHierarchy         {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<gs_2dboxf>                    m_NodesClipBoxes         {std::vector<gs_2dboxf>()                   };
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesDrawList          {std::vector<ImmedidateUserInterfaceNode*>()};
+
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()       };
@@ -359,8 +369,8 @@ namespace Frenchie
 
             struct Menu
             {
-                ImmedidateUserInterfaceNode* Self  {nullptr};
-                ImmedidateUserInterfaceNode* Parent{nullptr};
+                ImmedidateUserInterfaceNode* Self      {nullptr};
+                ImmedidateUserInterfaceNode* Observable{nullptr};
             };
 
             std::list<Menu> m_HoveredMenus;
@@ -375,16 +385,17 @@ namespace Frenchie
             void end_node();
 
             void ui_node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
-            int  ui_node_move_to_next_layer_depth(ImmedidateUserInterfaceNode*) const;
-            int  ui_node_get_current_layer_depth(ImmedidateUserInterfaceNode*) const;
+            int  ui_node_next_layer_depth(ImmedidateUserInterfaceNode*) const;
+            int  ui_node_last_layer_depth(ImmedidateUserInterfaceNode*) const;
+            int  ui_node_base_layer_depth(const ImmedidateUserInterfaceNodeLayer&) const;
             
             gs_vec2f ui_node_vertical_cursor_direction() const;
             gs_vec2f ui_node_horizontal_cursor_direction() const;
             
             bool ui_node_is_of_type(const ImmedidateUserInterfaceNode*, const ImmedidateUserInterfaceNodeType&) const;
-
             bool ui_node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
+
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*);
             bool ui_node_is_being_resized_top_left(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_resized_top_right(const ImmedidateUserInterfaceNode*) const;
@@ -401,6 +412,7 @@ namespace Frenchie
             bool ui_node_is_being_scrolled(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_scrolled_horizontally(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_scrolled_vertically(const ImmedidateUserInterfaceNode*) const;
+
             void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
             void ui_node_begin_resize_top_left(ImmedidateUserInterfaceNode*);
             void ui_node_begin_resize_top_right(ImmedidateUserInterfaceNode*);
@@ -431,7 +443,6 @@ namespace Frenchie
             void ui_node_layout_children();
             void ui_node_receive_events();
             void ui_node_process_events();
-            void ui_node_pass_focus();
             void ui_node_save_state();
             
             // user interface widgets API
