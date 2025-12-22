@@ -194,12 +194,12 @@ namespace Frenchie
 
             float get_near_plane() const
             {
-                return -1000.f;
+                return -10000.f;
             }
 
             float get_far_plane() const
             {
-                return +1000.f;
+                return +10000.f;
             }
 
             virtual bool awake() override;
