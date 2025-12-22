@@ -203,7 +203,14 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         end_window();
     }
 
-    if(begin_window("Window-2", nullptr)) end_window();
+    if(begin_window("Window-2", nullptr))
+    {
+        if(begin_window("Window-3")) end_window();
+        if(begin_window("Window-4")) end_window();
+        if(begin_window("Window-5")) end_window();
+
+        end_window();
+    }
 
     // render cursor
     m_Renderer->push_text(
@@ -348,13 +355,14 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
             0.f,
             ui_node_hierarchy_top()->State.LayoutCursorPositon);
 
-        window->State.Settings &= ~ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable;
+        // TODO: this MUST BE A SETTING !!!
+        //window->State.Settings &= ~ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable;
     }
     else
     {
         if(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent)
         {
-            window->State.Master = ui_node_hierarchy_top();
+            window->State.Observable = ui_node_hierarchy_top();
 
             // TODO: this MUST BE LAYERS !!!!
             window->State.Depth  = (int)(m_Renderer->get_far_plane() / 2);
@@ -421,12 +429,12 @@ void ImmedidateUserInterfaceContextLayer::end_node()
     auto window = ui_node_hierarchy_top();
 
     // recalcualte parental depth
-    auto parent = window->State.Parent == nullptr ? window->State.Master : window->State.Parent;
+    auto parent = window->State.Parent == nullptr ? window->State.Observable : window->State.Parent;
 
     while (parent)
     {
         parent->State.Depth = ui_node_get_current_layer_depth(parent);
-        parent              = parent->State.Parent == nullptr ? parent->State.Master : parent->State.Parent;
+        parent              = parent->State.Parent == nullptr ? parent->State.Observable : parent->State.Parent;
     }
 
     if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
@@ -451,14 +459,49 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
 {
-    if(begin_node(
-        _Name,
-        _Rendered,
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically,
-        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
+    auto window   = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window);
+
+    auto settings =
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable               |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable                 |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar          |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically;
+
+    if(window != nullptr)
+    {
+        auto observable =
+            window->Cache.Parent == nullptr ? window->Cache.Observable : window->Cache.Parent;
+
+        if(observable != nullptr)
+        {
+            auto parentIsBeingModified = false;
+            auto parent                = observable;
+
+            while (parent)
+            {
+                if(ui_node_is_being_modified(parent))
+                    parentIsBeingModified = true;
+                parent = parent->State.Parent;
+            }
+
+            if(ui_node_is_being_moved(window) ||
+                !(window->Cache.WindowBox.transform(window->Cache.Transform)
+                                         .overlaps(observable->Cache.ScrollAreaBox.transform(observable->Cache.Transform))))
+            {
+                if(!parentIsBeingModified)
+                {
+                    settings |= ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreParent;
+                }
+                else
+                {
+                    if(window->Cache.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreParent)
+                        settings |= ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreParent;
+                }
+            }
+        }
+    }
+
+    if(begin_node(_Name, _Rendered, settings, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
     {
         // render frame
         if(begin_node(
@@ -489,7 +532,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 boundingBox.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->FrameWidth,
-                gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                gs_vec4f(64.f, 64.f, 64.f, 255.f),
                 ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_move_to_next_layer_depth(ui_node_hierarchy_top())));
 
             m_Renderer->push_text(
@@ -1186,13 +1229,13 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_focus(ImmedidateUserInte
         ui_node_end_focus(m_NodesDrawList[i]);
 
     // pass focus to _Window
-    auto parent = _Window->State.Parent == nullptr ? _Window->State.Master : _Window->State.Parent;
+    auto parent = _Window->State.Parent == nullptr ? _Window->State.Observable : _Window->State.Parent;
     auto window = _Window;
 
     while (parent != nullptr)
     {
         window = parent;
-        parent = parent->State.Parent == nullptr ? parent->State.Master : parent->State.Parent;
+        parent = parent->State.Parent == nullptr ? parent->State.Observable : parent->State.Parent;
     }
 
     window->State.Changes |=
@@ -1304,13 +1347,13 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background(ImmedidateUs
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
         _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_move_to_next_layer_depth(_Window)));
 
-    m_Renderer->push_rectangle_rounded(
-        _Window->Cache.ContentBox.Min,
-        _Window->Cache.ContentBox.Max,
-        m_Style->FrameRoundingRadius,
-        m_Style->FrameWidth,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane() * 0.5f));
+    // m_Renderer->push_rectangle_rounded(
+    //     _Window->Cache.ContentBox.Min,
+    //     _Window->Cache.ContentBox.Max,
+    //     m_Style->FrameRoundingRadius,
+    //     m_Style->FrameWidth,
+    //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
+    //     _Window->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane() * 0.5f));
 
     return true;
 }
@@ -1530,7 +1573,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 
         if(parent != nullptr &&
            ((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally) ||
-           (parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically)))
+            (parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically)))
         {
             // compute total children size
             auto size = (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.ViewportBox.size();
@@ -1734,14 +1777,16 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr) return false;
 
             // move
+            ImmedidateUserInterfaceNode* sink = nullptr;
+
             for (auto next : _Context->m_NodesDrawList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
 
-                if( (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)                &&
-                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                               &&
+                if( (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)    &&
+                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                   &&
                     next->State.ViewportBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
-                    !_Context->ui_node_is_being_resized(next)                                                                                 &&
+                    !_Context->ui_node_is_being_resized(next)                                                                     &&
                     !_Context->ui_node_is_being_scrolled(next))
                 {
                     _Context->ui_node_begin_move(next);
@@ -1749,20 +1794,12 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
                 if(_Context->ui_node_is_being_moved(next))
                 {
-                    // parent
-                    if(next->State.Parent == nullptr)
-                    {
-                        receive_finish(_Context, next);
-                        return true;
-                    }
-
-                    // child
-                    receive_finish(_Context,next);
-                    return true;
+                    sink = next;
+                    receive_finish(_Context, next);
                 }
             }
 
-            return false;
+            return sink != nullptr;
         }
 
         static void receive_finish(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Sink)
@@ -1958,7 +1995,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         // hierarchy
         cachedWindow->State.Depth                   = 0;
         cachedWindow->State.Parent                  = nullptr;
-        cachedWindow->State.Master                  = nullptr;
+        cachedWindow->State.Observable                  = nullptr;
         cachedWindow->State.Thickness               = 0;
         cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
     }

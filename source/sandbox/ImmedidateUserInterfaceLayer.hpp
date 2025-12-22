@@ -240,10 +240,10 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
-            mutable int                            Depth         {0};
-            mutable ImmedidateUserInterfaceNode*   Parent        {nullptr}; // parent is never nullptr as ALL windows are cached...
-            mutable ImmedidateUserInterfaceNode*   Master        {nullptr}; // this can be nullpre, be carefull...
-            mutable int                            Thickness     {0};
+            mutable int                            Depth      {0};
+            mutable ImmedidateUserInterfaceNode*   Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable ImmedidateUserInterfaceNode*   Observable {nullptr}; // this can be nullpre, be carefull...
+            mutable int                            Thickness  {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
@@ -320,7 +320,7 @@ namespace Frenchie
             bool begin_menubar(const std::string& _Name);
             void end_menubar();
 
-            // widgets API
+            // widgets
             bool widget_push_button(const std::string& _Name);
             bool widget_menu_button(const std::string& _Name);
 
