@@ -921,9 +921,9 @@ int ImmedidateUserInterfaceContextLayer::ui_node_last_layer_depth(ImmedidateUser
 
 int ImmedidateUserInterfaceContextLayer::ui_node_base_layer_depth(const ImmedidateUserInterfaceNodeLayer& _Layer) const
 {
-    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main)    return 0;
+    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes)    return 0;
     if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus)   return (int)(m_Renderer->get_far_plane() / 4);
-    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Docking) return (int)(m_Renderer->get_far_plane() / 2);
+    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups) return (int)(m_Renderer->get_far_plane() / 2);
     return 0;
 }
 
@@ -1507,23 +1507,22 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
     for (auto& window : m_NodesDrawList)
     {
-        //
+        // layers
         if(ui_node_is_being_focused(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus;
-        else if(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreParent)
-            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Docking;
+        else if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu)
+            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
         else
-            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main;
+            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
 
-        //
-        auto parent = window->State.Parent;
+        // geometry
+        ImmedidateUserInterfaceNode* parent = window->State.Parent;
 
         if(parent != nullptr &&
            ((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally) ||
            (parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically)))
         {
-            // compute total children size
-            auto size = (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.ViewportBox.size();
+            gs_vec2f size = (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.ViewportBox.size();
             
             if((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
                 size = gs_vec2f(size.x, parent->State.WindowBox.height());
@@ -1933,7 +1932,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.Parent                  = nullptr;
         cachedWindow->State.Observable              = nullptr;
         cachedWindow->State.Thickness               = 0;
-        cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main;
+        cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
         cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
     }
 
