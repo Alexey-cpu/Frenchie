@@ -77,9 +77,9 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceNodeLayer_
         {
-            ImmedidateUserInterfaceNodeLayer_Main    = 1 << 0,
-            ImmedidateUserInterfaceNodeLayer_Focus   = 1 << 1,
-            ImmedidateUserInterfaceNodeLayer_Docking = 1 << 2,
+            ImmedidateUserInterfaceNodeLayer_Nodes  = 1 << 0,
+            ImmedidateUserInterfaceNodeLayer_Focus  = 1 << 1,
+            ImmedidateUserInterfaceNodeLayer_Popups = 1 << 2,
         };
 
         enum ImmedidateUserInterfaceNodeChanges_ : int
@@ -243,7 +243,7 @@ namespace Frenchie
         {
             // hints
             mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node        };
-            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main      };
+            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes      };
             mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default};
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
@@ -252,6 +252,7 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNode*   Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
             mutable ImmedidateUserInterfaceNode*   Observable {nullptr}; // this can be nullpre, be carefull...
             mutable int                            Thickness  {0};
+            mutable int                            PopupDepth {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
