@@ -125,10 +125,16 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally = 1 << 8,
             ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically   = 1 << 9,
 
-            // hierarchy & clipping
-            ImmedidateUserInterfaceNodeSettings_IgnoreParent                 = 1 << 10,
-            ImmedidateUserInterfaceNodeSettings_IgnoreClipping               = 1 << 11,
-            ImmedidateUserInterfaceNodeSettings_IgnoreFocus                  = 1 << 12,
+            // clipping
+            ImmedidateUserInterfaceNodeSettings_IgnoreClipping               = 1 << 10,
+            
+            // focus
+            ImmedidateUserInterfaceNodeSettings_IgnoreFocus                  = 1 << 11,
+
+            // parenting
+            ImmedidateUserInterfaceNodeSettings_NullParent                   = 1 << 12,
+            ImmedidateUserInterfaceNodeSettings_DefaultParent                = 1 << 13,
+            ImmedidateUserInterfaceNodeSettings_CustomParent                 = 1 << 14,
 
             ImmedidateUserInterfaceNodeSettings_ResizeToContents =
                 ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
