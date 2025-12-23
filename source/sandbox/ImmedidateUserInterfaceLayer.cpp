@@ -6,7 +6,7 @@ using namespace Frenchie::Application;
 ImmedidateUserInterfaceContextLayer::ImmedidateUserInterfaceContextLayer(){}
 ImmedidateUserInterfaceContextLayer::~ImmedidateUserInterfaceContextLayer(){}
 
-auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_vec2f& _Size)
+auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_vec2f& _Size, bool _CatchEvents)
 {
     struct
     {
@@ -59,52 +59,75 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     WidgetData.Node        = window;
 
     // receive events
-    m_WidgetMouseHovered.reset();
-    m_WidgetMouseDown.reset();
-    m_WidgetMouseClicked.reset();
-    m_WidgetMouseDoubleClicked.reset();
+    m_WidgetIsBeingMouseHovered.reset();
+    m_WidgetIsBeingMouseDown.reset();
+    m_WidgetIsBeingMousePressed.reset();
+    m_WidgetIsBeingMouseClicked.reset();
+    m_WidgetIsBeingMouseDoubleClicked.reset();
 
-    m_WidgetMouseHovered = ui_node_is_being_hovered(window) &&
-                           WidgetData.BoundingBox.transform(window->State.Transform).contains(m_Renderer->get_cursor_postion()) &&
-                           WidgetData.ClippingBox.overlaps(WidgetData.BoundingBox.transform(window->State.Transform));
+    if(!_CatchEvents)
+    {
+        return WidgetData;
+    }
 
-    if(m_WidgetMouseHovered.value())
+    m_WidgetIsBeingMouseHovered =
+        ui_node_is_being_hovered(window) &&
+        WidgetData.BoundingBox.transform(window->State.Transform).contains(m_Renderer->get_cursor_postion()) &&
+        WidgetData.ClippingBox.overlaps(WidgetData.BoundingBox.transform(window->State.Transform));
+
+    if(m_WidgetIsBeingMouseHovered.value())
     {
         if(application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
-            m_WidgetMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
+            m_WidgetIsBeingMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
         else if(application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Right))
-            m_WidgetMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
+            m_WidgetIsBeingMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
         else if(application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
-            m_WidgetMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
+            m_WidgetIsBeingMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
 
         if(application()->is_mouse_button_pressed(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
-            m_WidgetMousePressed = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
+            m_WidgetIsBeingMousePressed = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
         else if(application()->is_mouse_button_pressed(ApplicationMouseButton::Button::ApplicationMouseButton_Right))
-            m_WidgetMousePressed = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
+            m_WidgetIsBeingMousePressed = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
         else if(application()->is_mouse_button_pressed(ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
-            m_WidgetMousePressed = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
+            m_WidgetIsBeingMousePressed = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
 
         if(application()->is_mouse_button_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
-            m_WidgetMouseClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
+            m_WidgetIsBeingMouseClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
         else if(application()->is_mouse_button_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Right))
-            m_WidgetMouseClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
+            m_WidgetIsBeingMouseClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
         else if(application()->is_mouse_button_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
-            m_WidgetMouseClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
+            m_WidgetIsBeingMouseClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
 
         if(application()->is_mouse_button_double_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
-            m_WidgetMouseDoubleClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
+            m_WidgetIsBeingMouseDoubleClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
         else if(application()->is_mouse_button_double_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Right))
-            m_WidgetMouseDoubleClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
+            m_WidgetIsBeingMouseDoubleClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Right;
         else if(application()->is_mouse_button_double_clicked(ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
-            m_WidgetMouseDoubleClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
+            m_WidgetIsBeingMouseDoubleClicked = ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
     }
+
+    if(m_WidgetIsBeingMouseHovered.has_value())
+        m_WidgetHasBeenMouseHovered = m_WidgetIsBeingMouseHovered.value();
+    
+    if(m_WidgetIsBeingMouseDown.has_value())
+        m_WidgetHasBeenMouseDown = m_WidgetIsBeingMouseDown.value();
+
+    if(m_WidgetIsBeingMousePressed.has_value())
+        m_WidgetHasBeenMousePressed = m_WidgetIsBeingMousePressed.value();
+
+    if(m_WidgetIsBeingMouseClicked.has_value())
+        m_WidgetHasBeenMouseClicked = m_WidgetIsBeingMouseClicked.value();
+
+    if(m_WidgetIsBeingMouseDoubleClicked.has_value())
+        m_WidgetHasBeenMouseDoubleClicked = m_WidgetIsBeingMouseDoubleClicked.value();
+
 
     return WidgetData;
 }
 
-auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const std::string& _Text)
+auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const std::string& _Text, bool _CatchEvents)
 {
-    return widget_prepare_for_rendering(m_Renderer->calculate_bounding_box(_Text, m_Style->FontSize, m_Style->Font).size() + gs_vec2f(m_Style->FontSize * 0.5f));
+    return widget_prepare_for_rendering(m_Renderer->calculate_bounding_box(_Text, m_Style->FontSize, m_Style->Font).size() + gs_vec2f(m_Style->FontSize * 0.5f), _CatchEvents);
 }
 
 bool ImmedidateUserInterfaceContextLayer::awake()
@@ -469,7 +492,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 ui_node_hierarchy_top()->State.WindowBox.Min,
                 ui_node_hierarchy_top()->State.WindowBox.Min + gs_vec2f(ui_node_hierarchy_top()->State.WindowBox.width() - m_Style->FrameWidth * 2.f, m_Style->FontSize + m_Style->FrameWidth * 2.f));
 
-            auto renderingData = widget_prepare_for_rendering(geometryBox.size());
+            auto renderingData = widget_prepare_for_rendering(geometryBox.size(), false);
             auto boundingBox   = renderingData.BoundingBox;
 
             // render frame
@@ -534,11 +557,11 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
         ImmedidateUserInterfaceNode* cachedMenu = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu);
 
-        if(widget_is_hovered())
+        if(widget_is_being_hovered())
             ui_node_begin_hover(cachedMenu);
         
         // check self hover
-        bool isHovered = widget_is_hovered() || ui_node_is_being_hovered(cachedMenu);
+        bool isHovered = widget_is_being_hovered() || ui_node_is_being_hovered(cachedMenu);
 
         if(isHovered)
         {
@@ -563,7 +586,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
                 m_HoveredMenus.clear();
         }
 
-        if(!widget_is_hovered() && !isHovered)
+        if(!widget_is_being_hovered() && !isHovered)
         {
             for(auto it = m_HoveredMenus.begin(); it != m_HoveredMenus.end(); ++it)
             {
@@ -682,10 +705,10 @@ bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& 
             m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_PushButtonDisabledFrameColor];
     };
 
-    bool hovered = widget_is_hovered();
-    bool pressed = widget_is_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left)  ||
-                   widget_is_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
-                   widget_is_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Middle);
+    bool hovered = widget_is_being_hovered();
+    bool pressed = widget_is_being_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left)  ||
+                   widget_is_being_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                   widget_is_being_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Middle);
 
     int depth = ui_node_last_layer_depth(context);
 
@@ -1592,14 +1615,17 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                      button < ApplicationMouseButton::ApplicationMouseButton_End;
                      button++)
             {
-                if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                if(!application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                    continue;
+
+                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                    return false;
+
+                for (auto drawnWindow : _Context->m_NodesDrawList)
                 {
-                    for (auto drawnWindow : _Context->m_NodesDrawList)
-                    {
-                        if(!_Context->ui_node_is_being_hovered(drawnWindow)) continue;
-                        _Context->ui_node_begin_focus(drawnWindow);
-                        return true;
-                    }
+                    if(!_Context->ui_node_is_being_hovered(drawnWindow)) continue;
+                    _Context->ui_node_begin_focus(drawnWindow);
+                    return true;
                 }
             }
 
@@ -1682,6 +1708,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                          button < ApplicationMouseButton::ApplicationMouseButton_End;
                          button++)
                 {
+                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                        return false;
+
                     if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
                         next->State.MouseDown = (ApplicationMouseButton::Button)button;
 
@@ -1703,6 +1732,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         {
             if(_Context == nullptr) return false;
             
+            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                        button++)
+            {
+                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                    return false;
+            }
+
             for (auto next : _Context->m_NodesDrawList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
@@ -1765,6 +1802,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         {
             if(_Context == nullptr) return false;
 
+            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                        button++)
+            {
+                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                    return false;
+            }
+
             // scroll
             for (auto next : _Context->m_NodesDrawList)
             {
@@ -1812,6 +1857,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         static bool receive_move_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
         {
             if(_Context == nullptr) return false;
+
+            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                     button < ApplicationMouseButton::ApplicationMouseButton_End;
+                     button++)
+            {
+                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                    return false;
+            }
 
             for (auto next : _Context->m_NodesDrawList)
             {
@@ -2028,39 +2081,77 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
     }
 
+    // reset widgets events
+    m_WidgetHasBeenMouseHovered.reset();
+    m_WidgetHasBeenMouseDown.reset();
+    m_WidgetHasBeenMousePressed.reset();
+    m_WidgetHasBeenMouseClicked.reset();
+    m_WidgetHasBeenMouseDoubleClicked.reset();
+
     // clear hierarchy and draw lists
     GS_ASSERT(m_NodesHierarchy.empty());
     m_NodesDrawList.clear();
     m_NodesHierarchy.clear();
 }
 
-bool ImmedidateUserInterfaceContextLayer::widget_is_hovered() const
+bool ImmedidateUserInterfaceContextLayer::widget_is_being_hovered() const
 {
-    return m_WidgetMouseHovered.has_value() && m_WidgetMouseHovered.value();
+    return m_WidgetIsBeingMouseHovered.has_value() &&
+            m_WidgetIsBeingMouseHovered.value();
 }
 
-bool ImmedidateUserInterfaceContextLayer::widget_is_pressed(const ApplicationMouseButton::Button& _Button) const
+bool ImmedidateUserInterfaceContextLayer::widget_is_being_pressed(const ApplicationMouseButton::Button& _Button) const
 {
-    return m_WidgetMousePressed.has_value() &&
-            m_WidgetMousePressed.value() == _Button;
+    return m_WidgetIsBeingMousePressed.has_value() &&
+            m_WidgetIsBeingMousePressed.value() == _Button;
 }
 
-bool ImmedidateUserInterfaceContextLayer::widget_is_clicked(const ApplicationMouseButton::Button& _Button) const
+bool ImmedidateUserInterfaceContextLayer::widget_is_being_clicked(const ApplicationMouseButton::Button& _Button) const
 {
-    return m_WidgetMouseClicked.has_value() &&
-            m_WidgetMouseClicked.value() == _Button;
+    return m_WidgetIsBeingMouseClicked.has_value() &&
+            m_WidgetIsBeingMouseClicked.value() == _Button;
 }
 
-bool ImmedidateUserInterfaceContextLayer::widget_is_mouse_down(const ApplicationMouseButton::Button& _Button) const
+bool ImmedidateUserInterfaceContextLayer::widget_is_being_mouse_down(const ApplicationMouseButton::Button& _Button) const
 {
-    return m_WidgetMouseDown.has_value() &&
-            m_WidgetMouseDown.value() == _Button;
+    return m_WidgetIsBeingMouseDown.has_value() &&
+            m_WidgetIsBeingMouseDown.value() == _Button;
 }
 
-bool ImmedidateUserInterfaceContextLayer::widget_is_double_clicked(const ApplicationMouseButton::Button& _Button) const
+bool ImmedidateUserInterfaceContextLayer::widget_is_being_double_clicked(const ApplicationMouseButton::Button& _Button) const
 {
-    return m_WidgetMouseDoubleClicked.has_value() &&
-            m_WidgetMouseDoubleClicked.value() == _Button;
+    return m_WidgetIsBeingMouseDoubleClicked.has_value() &&
+            m_WidgetIsBeingMouseDoubleClicked.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::widget_has_been_hovered() const
+{
+    return m_WidgetHasBeenMouseHovered.has_value() &&
+            m_WidgetHasBeenMouseHovered.value();
+}
+
+bool ImmedidateUserInterfaceContextLayer::widget_has_been_pressed(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_WidgetHasBeenMousePressed.has_value() &&
+            m_WidgetHasBeenMousePressed.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::widget_has_been_clicked(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_WidgetHasBeenMouseClicked.has_value() &&
+            m_WidgetHasBeenMouseClicked.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::widget_has_been_mouse_down(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_WidgetHasBeenMouseDown.has_value() &&
+            m_WidgetHasBeenMouseDown.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::widget_has_been_double_clicked(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_WidgetHasBeenMouseDoubleClicked.has_value() &&
+            m_WidgetHasBeenMouseDoubleClicked.value() == _Button;
 }
 
 // bool ImmedidateUserInterfaceContextLayer::widget_render_close_button_widget(

@@ -369,11 +369,17 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()       };
 
-            Frenchie::Core::Optional<bool>                                           m_WidgetMouseHovered;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseDoubleClicked;
+            Frenchie::Core::Optional<bool>                           m_WidgetIsBeingMouseHovered;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMousePressed;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseClicked;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDoubleClicked;
+
+            Frenchie::Core::Optional<bool>                           m_WidgetHasBeenMouseHovered;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMousePressed;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseClicked;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDoubleClicked;
 
             // menus
             struct Menu
@@ -460,14 +466,20 @@ namespace Frenchie
             void ui_node_save_state();
             
             // user interface widgets API
-            auto widget_prepare_for_rendering(const gs_vec2f&);
-            auto widget_prepare_for_rendering(const std::string&);
+            auto widget_prepare_for_rendering(const gs_vec2f&,    bool = true);
+            auto widget_prepare_for_rendering(const std::string&, bool = true);
 
-            bool widget_is_hovered() const;
-            bool widget_is_pressed(const ApplicationMouseButton::Button&) const;
-            bool widget_is_clicked(const ApplicationMouseButton::Button&) const;
-            bool widget_is_mouse_down(const ApplicationMouseButton::Button&) const;
-            bool widget_is_double_clicked(const ApplicationMouseButton::Button&) const;
+            bool widget_is_being_hovered() const;
+            bool widget_is_being_pressed(const ApplicationMouseButton::Button&) const;
+            bool widget_is_being_clicked(const ApplicationMouseButton::Button&) const;
+            bool widget_is_being_mouse_down(const ApplicationMouseButton::Button&) const;
+            bool widget_is_being_double_clicked(const ApplicationMouseButton::Button&) const;
+
+            bool widget_has_been_hovered() const;
+            bool widget_has_been_pressed(const ApplicationMouseButton::Button&) const;
+            bool widget_has_been_clicked(const ApplicationMouseButton::Button&) const;
+            bool widget_has_been_mouse_down(const ApplicationMouseButton::Button&) const;
+            bool widget_has_been_double_clicked(const ApplicationMouseButton::Button&) const;
         };
     }
 }
