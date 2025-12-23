@@ -129,81 +129,87 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
     if(m_Renderer == nullptr)
         return;
 
-    if(begin_window("Window-1", nullptr))
+    // if(begin_window("Window-1", nullptr))
+    // {
+    //     if(begin_menubar("Window-1-Menubar-1"))
+    //     {
+    //         if(begin_menu("Menu-1"))
+    //         {
+    //             widget_menu_button("Action-1");
+    //             widget_menu_button("Action-2");
+    //             widget_menu_button("Action-3");
+    //             widget_menu_button("Action-4");
+    //             widget_menu_button("Action-5");
+    //             widget_menu_button("Action-6");
+    //             widget_menu_button("Action-7");
+    //             widget_menu_button("Action-8");
+    //             widget_menu_button("Action-9");
+    //             widget_menu_button("Action-10");
+    //             widget_menu_button("Action-11");
+    //             widget_menu_button("Action-12");
+
+    //             if(begin_menu("Menu-2"))
+    //             {
+    //                 widget_menu_button("Action-1");
+    //                 widget_menu_button("Action-2");
+    //                 widget_menu_button("Action-3");
+
+    //                 end_menu();
+    //             }
+
+    //             if(begin_menu("Menu-3"))
+    //             {
+    //                 widget_menu_button("Action-2");
+    //                 widget_menu_button("Action-3");
+
+    //                 if(begin_menu("Menu-4"))
+    //                 {
+    //                     widget_menu_button("Action-2");
+    //                     widget_menu_button("Action-3");
+    //                     end_menu();
+    //                 }
+
+    //                 end_menu();
+    //             }
+
+    //             end_menu();
+    //         }
+
+    //         if(begin_menu("Menu-111"))
+    //         {
+    //             widget_menu_button("Action-2");
+    //             widget_menu_button("Action-3");
+    //             end_menubar();
+    //         }
+
+    //         end_menubar();
+    //     }
+
+    //     if(begin_menubar("Window-1-Menubar-2"))
+    //     {
+    //         if(begin_menu("Menu-44")) end_menu();
+    //         if(begin_menu("Menu-33")) end_menu();
+
+    //         end_menubar();
+    //     }
+
+    //     if(begin_node("Content"))
+    //     {
+    //         for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
+
+    //         end_node();
+    //     }
+
+    //     end_window();
+    // }
+
+    if(begin_window("Window-2", nullptr))
     {
-        if(begin_menubar("Window-1-Menubar-1"))
-        {
-            if(begin_menu("Menu-1"))
-            {
-                widget_menu_button("Action-1");
-                widget_menu_button("Action-2");
-                widget_menu_button("Action-3");
-                widget_menu_button("Action-4");
-                widget_menu_button("Action-5");
-                widget_menu_button("Action-6");
-                widget_menu_button("Action-7");
-                widget_menu_button("Action-8");
-                widget_menu_button("Action-9");
-                widget_menu_button("Action-10");
-                widget_menu_button("Action-11");
-                widget_menu_button("Action-12");
-
-                if(begin_menu("Menu-2"))
-                {
-                    widget_menu_button("Action-1");
-                    widget_menu_button("Action-2");
-                    widget_menu_button("Action-3");
-
-                    end_menu();
-                }
-
-                if(begin_menu("Menu-3"))
-                {
-                    widget_menu_button("Action-2");
-                    widget_menu_button("Action-3");
-
-                    if(begin_menu("Menu-4"))
-                    {
-                        widget_menu_button("Action-2");
-                        widget_menu_button("Action-3");
-                        end_menu();
-                    }
-
-                    end_menu();
-                }
-
-                end_menu();
-            }
-
-            if(begin_menu("Menu-111"))
-            {
-                widget_menu_button("Action-2");
-                widget_menu_button("Action-3");
-                end_menubar();
-            }
-
-            end_menubar();
-        }
-
-        if(begin_menubar("Window-1-Menubar-2"))
-        {
-            if(begin_menu("Menu-44")) end_menu();
-            if(begin_menu("Menu-33")) end_menu();
-
-            end_menubar();
-        }
-
-        if(begin_node("Content"))
-        {
-            for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
-
-            end_node();
-        }
+        if(begin_window("Window-3", nullptr))end_window();
+        if(begin_window("Window-4", nullptr))end_window();
 
         end_window();
     }
-
-    if(begin_window("Window-2", nullptr)) end_window();
 
     // render cursor
     m_Renderer->push_text(
@@ -316,7 +322,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
         window->State.Parent                                 = ui_node_hierarchy_top();
         window->State.Depth                                  = ui_node_next_layer_depth(window->State.Parent);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
-        window->State.Settings                              &= ~ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable;
 
         // move cursor
         window->State.Parent->State.LayoutCursorPositon +=
@@ -439,16 +444,19 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
 {
-    if(begin_node(
-        _Name,
-        _Rendered,
+    auto settings =
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically,
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically;
+
+    // TODO: how to identify if to detach child from parent ???
+    if(begin_node(
+        _Name,
+        _Rendered,
+        settings,
         ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
     {
-        // render frame
         if(begin_node(
             _Name,
             _Rendered,
@@ -960,10 +968,30 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_horizontal_scroll_bar_neede
             gs_abs(_Window->Cache.ViewportBox.width() - _Window->Cache.ContentBox.width()) > _Window->Cache.ViewportBox.width() * 0.1f;
 }
 
-bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_hovered(const ImmedidateUserInterfaceNode* _Window)
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_hovered(const ImmedidateUserInterfaceNode* _Window) const
 {
     return _Window != nullptr &&
-            (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered);
+            (_Window->Cache.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered);
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_down(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
+{    
+    return _Window != nullptr && _Window->Cache.MouseDown.has_value() && _Window->Cache.MouseDown.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_pressed(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
+{
+    return _Window != nullptr && _Window->Cache.MousePressed.has_value() && _Window->Cache.MousePressed.value() == _Button; 
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_clicked(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
+{
+    return _Window != nullptr && _Window->Cache.MouseClicked.has_value() && _Window->Cache.MouseClicked.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_double_clicked(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
+{
+    return _Window != nullptr && _Window->Cache.MouseDoubleClicked.has_value() && _Window->Cache.MouseDoubleClicked.value() == _Button;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_resized_top_left(const ImmedidateUserInterfaceNode* _Window) const
@@ -1072,7 +1100,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_hover(ImmedidateUserInte
     if(_Window == nullptr) return;
 
     // launch timer
-    if(!(_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredStarted))
+    if(!(_Window->Cache.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredStarted))
     {
         _Window->State.WindowHoverStart = Frenchie::Core::tic();
 
@@ -1554,8 +1582,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         {
             // pass focus
             for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                    button < ApplicationMouseButton::ApplicationMouseButton_End;
-                    button++)
+                     button < ApplicationMouseButton::ApplicationMouseButton_End;
+                     button++)
             {
                 if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
                 {
@@ -1633,11 +1661,41 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             return hovered != nullptr;
         }
 
+        static bool receive_mouse_events(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+        {
+            if(_Context == nullptr) return false;
+
+            for (auto next : _Context->m_NodesDrawList)
+            {
+                if(_Filter != nullptr && !_Filter(next)) continue;
+
+                if(!_Context->ui_node_is_being_hovered(next)) continue;
+
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                         button < ApplicationMouseButton::ApplicationMouseButton_End;
+                         button++)
+                {
+                    if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+                        next->State.MouseDown = (ApplicationMouseButton::Button)button;
+
+                    if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                        next->State.MousePressed = (ApplicationMouseButton::Button)button;
+
+                    if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+                        next->State.MouseClicked = (ApplicationMouseButton::Button)button;
+
+                    if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+                        next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+                }
+            }
+
+            return true;
+        }
+
         static bool receive_resize_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
         {
             if(_Context == nullptr) return false;
             
-            // resize
             for (auto next : _Context->m_NodesDrawList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
@@ -1748,7 +1806,15 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         {
             if(_Context == nullptr) return false;
 
-            // move
+            for (auto next : _Context->m_NodesDrawList)
+            {
+                if(_Context->ui_node_is_being_moved(next))
+                {
+                    receive_finish(_Context, next);
+                    return true;
+                }
+            }
+            
             for (auto next : _Context->m_NodesDrawList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
@@ -1774,7 +1840,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     }
 
                     // child
-                    receive_finish(_Context,next);
+                    receive_finish(_Context, next);
                     return true;
                 }
             }
@@ -1816,6 +1882,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
     EventsReceiver::receive_focus_event(this);
     EventsReceiver::receive_hover_event(this);
+    EventsReceiver::receive_mouse_events(this);
     if(EventsReceiver::receive_resize_event(this)) return;
     if(EventsReceiver::receive_scroll_event(this)) return;
     if(EventsReceiver::receive_move_event(this)) return;
@@ -1923,7 +1990,22 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
             cachedWindow->Cache = cachedWindow->State;
 
         // layers
-        cachedWindow->Cache.Layer = cachedWindow->State.Layer;
+        cachedWindow->Cache.Layer     = cachedWindow->State.Layer;
+        cachedWindow->Cache.Depth     = cachedWindow->State.Depth;
+        cachedWindow->Cache.Thickness = cachedWindow->State.Thickness;
+
+        // events
+        cachedWindow->Cache.Changes            = cachedWindow->State.Changes;
+        cachedWindow->Cache.MouseDown          = cachedWindow->State.MouseDown;
+        cachedWindow->Cache.MousePressed       = cachedWindow->State.MousePressed;
+        cachedWindow->Cache.MouseClicked       = cachedWindow->State.MouseClicked;
+        cachedWindow->Cache.MouseDoubleClicked = cachedWindow->State.MouseDoubleClicked;
+
+        //cachedWindow->State.Changes            = ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None;
+        cachedWindow->State.MouseDown.reset();
+        cachedWindow->State.MousePressed.reset();
+        cachedWindow->State.MouseClicked.reset();
+        cachedWindow->State.MouseDoubleClicked.reset();
 
         // layout
         cachedWindow->State.LayoutCursorPositon  = gs_vec2f(0.f, 0.f);
