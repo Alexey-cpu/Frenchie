@@ -129,79 +129,79 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
     if(m_Renderer == nullptr)
         return;
 
-    // if(begin_window("Window-1", nullptr))
-    // {
-    //     if(begin_menubar("Window-1-Menubar-1"))
-    //     {
-    //         if(begin_menu("Menu-1"))
-    //         {
-    //             widget_menu_button("Action-1");
-    //             widget_menu_button("Action-2");
-    //             widget_menu_button("Action-3");
-    //             widget_menu_button("Action-4");
-    //             widget_menu_button("Action-5");
-    //             widget_menu_button("Action-6");
-    //             widget_menu_button("Action-7");
-    //             widget_menu_button("Action-8");
-    //             widget_menu_button("Action-9");
-    //             widget_menu_button("Action-10");
-    //             widget_menu_button("Action-11");
-    //             widget_menu_button("Action-12");
+    if(begin_window("Window-1", nullptr))
+    {
+        if(begin_menubar("Window-1-Menubar-1"))
+        {
+            if(begin_menu("Menu-1"))
+            {
+                widget_menu_button("Action-1");
+                widget_menu_button("Action-2");
+                widget_menu_button("Action-3");
+                widget_menu_button("Action-4");
+                widget_menu_button("Action-5");
+                widget_menu_button("Action-6");
+                widget_menu_button("Action-7");
+                widget_menu_button("Action-8");
+                widget_menu_button("Action-9");
+                widget_menu_button("Action-10");
+                widget_menu_button("Action-11");
+                widget_menu_button("Action-12");
 
-    //             if(begin_menu("Menu-2"))
-    //             {
-    //                 widget_menu_button("Action-1");
-    //                 widget_menu_button("Action-2");
-    //                 widget_menu_button("Action-3");
+                if(begin_menu("Menu-2"))
+                {
+                    widget_menu_button("Action-1");
+                    widget_menu_button("Action-2");
+                    widget_menu_button("Action-3");
 
-    //                 end_menu();
-    //             }
+                    end_menu();
+                }
 
-    //             if(begin_menu("Menu-3"))
-    //             {
-    //                 widget_menu_button("Action-2");
-    //                 widget_menu_button("Action-3");
+                if(begin_menu("Menu-3"))
+                {
+                    widget_menu_button("Action-2");
+                    widget_menu_button("Action-3");
 
-    //                 if(begin_menu("Menu-4"))
-    //                 {
-    //                     widget_menu_button("Action-2");
-    //                     widget_menu_button("Action-3");
-    //                     end_menu();
-    //                 }
+                    if(begin_menu("Menu-4"))
+                    {
+                        widget_menu_button("Action-2");
+                        widget_menu_button("Action-3");
+                        end_menu();
+                    }
 
-    //                 end_menu();
-    //             }
+                    end_menu();
+                }
 
-    //             end_menu();
-    //         }
+                end_menu();
+            }
 
-    //         if(begin_menu("Menu-111"))
-    //         {
-    //             widget_menu_button("Action-2");
-    //             widget_menu_button("Action-3");
-    //             end_menubar();
-    //         }
+            if(begin_menu("Menu-111"))
+            {
+                widget_menu_button("Action-2");
+                widget_menu_button("Action-3");
+                end_menubar();
+            }
 
-    //         end_menubar();
-    //     }
+            end_menubar();
+        }
 
-    //     if(begin_menubar("Window-1-Menubar-2"))
-    //     {
-    //         if(begin_menu("Menu-44")) end_menu();
-    //         if(begin_menu("Menu-33")) end_menu();
+        if(begin_menubar("Window-1-Menubar-2"))
+        {
+            if(begin_menu("Menu-44")) end_menu();
+            if(begin_menu("Menu-33")) end_menu();
 
-    //         end_menubar();
-    //     }
+            end_menubar();
+        }
 
-    //     if(begin_node("Content"))
-    //     {
-    //         for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
+        if(begin_node("Content"))
+        {
+            for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
 
-    //         end_node();
-    //     }
+            end_node();
+        }
 
-    //     end_window();
-    // }
+        end_window();
+    }
 
     if(begin_window("Window-2", nullptr))
     {
@@ -1545,6 +1545,13 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
         // geometry
         if(window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent)
         {
+            window->State.WindowBox = gs_2dboxf(
+                window->State.WindowBox.Min,
+                window->State.WindowBox.Min + gs_clamp(
+                    window->State.WindowBox.size(),
+                    gs_vec2f(window->State.WindowMinimumWidth, window->State.WindowMinimumHeight),
+                    gs_vec2f(window->State.WindowMaximumWidth, window->State.WindowMaximumHeight)));
+
             continue;
         }
         
