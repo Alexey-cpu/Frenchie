@@ -133,8 +133,6 @@ namespace Frenchie
 
             // parenting
             ImmedidateUserInterfaceNodeSettings_NullParent                   = 1 << 12,
-            ImmedidateUserInterfaceNodeSettings_DefaultParent                = 1 << 13,
-            ImmedidateUserInterfaceNodeSettings_CustomParent                 = 1 << 14,
 
             ImmedidateUserInterfaceNodeSettings_ResizeToContents =
                 ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |

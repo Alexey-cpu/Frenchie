@@ -1382,10 +1382,10 @@ struct gs_2dbox
 
     bool contains(const gs_2dbox<Type>& _Other) const
     {
-        return _Other.Min.x >= Min.x &&
-               _Other.Min.y >= Min.y &&
-               _Other.Max.x <= Max.x &&
-               _Other.Max.y <= Max.y;
+        return _Other.Min.x > Min.x &&
+               _Other.Min.y > Min.y &&
+               _Other.Max.x < Max.x &&
+               _Other.Max.y < Max.y;
     }
 
     gs_2dbox<Type> transform(const gs_matrix<Type, 4, 4>& _Transform) const
