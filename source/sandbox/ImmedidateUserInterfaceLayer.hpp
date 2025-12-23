@@ -254,11 +254,9 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
-            mutable int                            Depth      {0};
-            mutable ImmedidateUserInterfaceNode*   Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
-            mutable ImmedidateUserInterfaceNode*   Observable {nullptr}; // this can be nullpre, be carefull...
-            mutable int                            Thickness  {0};
-            mutable int                            PopupDepth {0};
+            mutable int                          Depth      {0};
+            mutable ImmedidateUserInterfaceNode* Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable int                          Thickness  {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
@@ -374,6 +372,7 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseClicked;
             Frenchie::Core::Optional<ApplicationMouseButton::Button>                 m_WidgetMouseDoubleClicked;
 
+            // menus
             struct Menu
             {
                 ImmedidateUserInterfaceNode* Self      {nullptr};

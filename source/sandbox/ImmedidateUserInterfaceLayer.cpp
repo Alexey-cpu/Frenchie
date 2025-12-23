@@ -314,7 +314,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     {
         // setup hierarchy
         window->State.Parent                                 = ui_node_hierarchy_top();
-        window->State.Observable                             = nullptr;
         window->State.Depth                                  = ui_node_next_layer_depth(window->State.Parent);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
         window->State.Settings                              &= ~ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable;
@@ -351,7 +350,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
             window->State.Parent->State.LayoutCursorPositon);
     }
     else
-    {        
+    {
         // calculate window initial depth
         int windowMaximumDepth = ui_node_base_layer_depth(window->Cache.Layer);
 
@@ -407,12 +406,12 @@ void ImmedidateUserInterfaceContextLayer::end_node()
     auto window = ui_node_hierarchy_top();
 
     // recalcualte parental depth
-    auto parent = window->State.Parent == nullptr ? window->State.Observable : window->State.Parent;
+    auto parent = window->State.Parent;
 
     while (parent)
     {
         parent->State.Depth = ui_node_last_layer_depth(parent);
-        parent              = parent->State.Parent == nullptr ? parent->State.Observable : parent->State.Parent;
+        parent              = parent->State.Parent;
     }
 
     // render scrollbars
@@ -525,16 +524,13 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
         widget_push_button(_Name);
 
-        ImmedidateUserInterfaceNode* cachedMenu =
-            ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu);
+        ImmedidateUserInterfaceNode* cachedMenu = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu);
 
         if(widget_is_hovered())
             ui_node_begin_hover(cachedMenu);
         
         // check self hover
-        bool isHovered =
-            cachedMenu != nullptr &&
-            (widget_is_hovered() || ui_node_is_being_hovered(cachedMenu));
+        bool isHovered = widget_is_hovered() || ui_node_is_being_hovered(cachedMenu);
 
         if(isHovered)
         {
@@ -972,17 +968,20 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_hovered(const Immedid
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_resized_top_left(const ImmedidateUserInterfaceNode* _Window) const
 {
-    return _Window != nullptr && (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft);
+    return _Window != nullptr &&
+        (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft);
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_resized_top_right(const ImmedidateUserInterfaceNode* _Window) const
 {
-    return _Window != nullptr && (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight);
+    return _Window != nullptr &&
+            (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight);
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_resized_bottom_left(const ImmedidateUserInterfaceNode* _Window) const
 {
-    return _Window != nullptr && (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft);
+    return _Window != nullptr &&
+            (_Window->State.Changes & ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft);
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_resized_bottom_right(const ImmedidateUserInterfaceNode* _Window) const
@@ -1183,13 +1182,13 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_focus(ImmedidateUserInte
         ui_node_end_focus(m_NodesDrawList[i]);
 
     // pass focus to _Window
-    auto parent = _Window->State.Parent == nullptr ? _Window->State.Observable : _Window->State.Parent;
+    auto parent = _Window->State.Parent;
     auto window = _Window;
 
     while (parent != nullptr)
     {
         window = parent;
-        parent = parent->State.Parent == nullptr ? parent->State.Observable : parent->State.Parent;
+        parent = parent->State.Parent;
     }
 
     if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
@@ -1516,6 +1515,11 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
 
         // geometry
+        if(window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent)
+        {
+            continue;
+        }
+        
         ImmedidateUserInterfaceNode* parent = window->State.Parent;
 
         if(parent != nullptr &&
@@ -1930,7 +1934,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         // hierarchy
         cachedWindow->State.Depth                   = 0;
         cachedWindow->State.Parent                  = nullptr;
-        cachedWindow->State.Observable              = nullptr;
         cachedWindow->State.Thickness               = 0;
         cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
         cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
