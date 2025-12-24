@@ -262,7 +262,6 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNode* Creator    {nullptr};
             mutable int                          Thickness  {0};
             mutable int                          LayerDepth {0};
-            mutable int                          TotalDepth {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
@@ -407,7 +406,6 @@ namespace Frenchie
             void ui_node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
             int  ui_node_calculate_layer_depth(const ImmedidateUserInterfaceNodeLayer&) const;
             int  ui_node_calculate_child_depth_placed_in_follow(ImmedidateUserInterfaceNode* _Where, const int& _ChildThickness) const;
-            int  ui_node_calculate_child_depth_placed_in_parallel(ImmedidateUserInterfaceNode* _Where, const int& _ChildThickness) const;
             
             gs_vec2f ui_node_vertical_cursor_direction() const;
             gs_vec2f ui_node_horizontal_cursor_direction() const;
