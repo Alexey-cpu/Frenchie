@@ -379,12 +379,20 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     m_WidgetIsBeingMouseDoubleClicked.reset();
 
     if(!_CatchEvents)
-    {
         return WidgetData;
-    }
 
+    auto next    = window->Cache.Creator;
+    auto creator = next;
+
+    while (next)
+    {
+        creator = next;
+        next    = next->Cache.Creator;
+    }
+    
     m_WidgetIsBeingMouseHovered =
         ui_node_is_being_hovered(window) &&
+        ui_node_is_being_focused(creator) &&
         WidgetData.BoundingBox.transform(window->State.Transform).contains(m_Renderer->get_cursor_postion()) &&
         WidgetData.ClippingBox.overlaps(WidgetData.BoundingBox.transform(window->State.Transform));
 
@@ -666,6 +674,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     {
         // setup hierarchy
         window->State.Parent                                 = ui_node_hierarchy_top();
+        window->State.Creator                                = ui_node_hierarchy_top();
         window->State.LayerDepth                             = ui_node_calculate_child_depth_placed_in_follow(window->State.Parent, 1);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
 
@@ -702,6 +711,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     }
     else
     {
+        window->State.Creator = ui_node_hierarchy_top();
+
         // calculate window initial depth
         window->State.LayerDepth =
             ui_node_calculate_layer_depth(window->Cache.Layer);
@@ -849,17 +860,24 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
         widget_push_button(_Name);
 
-        ImmedidateUserInterfaceNode* cachedMenu = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu);
+        ImmedidateUserInterfaceNode* cachedMenu =
+            ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu);
 
         if(widget_is_being_hovered())
             ui_node_begin_hover(cachedMenu);
         
         // check self hover
-        bool isHovered = widget_is_being_hovered() || ui_node_is_being_hovered(cachedMenu);
+        bool isHovered =
+            widget_is_being_hovered() || ui_node_is_being_hovered(cachedMenu);
 
         if(isHovered)
         {
-            m_HoveredMenus.push_back({cachedMenu, ui_node_hierarchy_top()});
+            m_HoveredMenus.push_back(
+                {
+                    cachedMenu,
+                    ui_node_hierarchy_top()
+                }
+            );
         }
         else
         {
@@ -880,7 +898,23 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
                 m_HoveredMenus.clear();
         }
 
-        if(!widget_is_being_hovered() && !isHovered)
+        // check that creator window has been focused
+        if(cachedMenu != nullptr && isHovered)
+        {
+            auto next    = cachedMenu->Cache.Creator;
+            auto creator = next;
+
+            while (next)
+            {
+                creator = next;
+                next    = next->Cache.Creator;
+            }
+
+            if(creator != nullptr)
+                isHovered = isHovered && ui_node_is_being_focused(creator);
+        }
+
+        if(!isHovered)
         {
             for(auto it = m_HoveredMenus.begin(); it != m_HoveredMenus.end(); ++it)
             {
@@ -2026,8 +2060,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.ContentBox           = gs_2dboxf(cachedWindow->State.ViewportBox.Min, cachedWindow->State.ViewportBox.Min);
 
         // hierarchy
-        cachedWindow->State.LayerDepth                   = 0;
         cachedWindow->State.Parent                  = nullptr;
+        cachedWindow->State.Creator                 = nullptr;
+        cachedWindow->State.LayerDepth              = 0;
         cachedWindow->State.Thickness               = 0;
         cachedWindow->State.TotalDepth              = 0;
         cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
