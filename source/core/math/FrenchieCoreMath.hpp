@@ -173,10 +173,10 @@ public:
         m_data.IMAG = _Imag;
     }
 
-    gs_complex(Type _Complex[2])
+    gs_complex(Type _Number[2])
     {
-        m_data.REAL = _Complex[0];
-        m_data.IMAG = _Complex[1];
+        m_data.REAL = _Number[0];
+        m_data.IMAG = _Number[1];
     }
 
     inline gs_complex<Type> operator+=(const gs_complex<Type>& _Value)
@@ -248,30 +248,30 @@ protected:
     mutable complex_plain m_data;
 
     // service methods
-    static complex_plain complex_add(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static complex_plain complex_add(const complex_plain& _Number1, const complex_plain& _Number2)
     {
         return
         {
-            _Complex1.REAL + _Complex2.REAL,
-            _Complex1.IMAG + _Complex2.IMAG
+            _Number1.REAL + _Number2.REAL,
+            _Number1.IMAG + _Number2.IMAG
         };
     }
 
-    static complex_plain complex_substract(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static complex_plain complex_substract(const complex_plain& _Number1, const complex_plain& _Number2)
     {
         return
         {
-            _Complex1.REAL - _Complex2.REAL,
-            _Complex1.IMAG - _Complex2.IMAG
+            _Number1.REAL - _Number2.REAL,
+            _Number1.IMAG - _Number2.IMAG
         };
     }
 
-    static complex_plain complex_multiply(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static complex_plain complex_multiply(const complex_plain& _Number1, const complex_plain& _Number2)
     {
         return
         {
-            _Complex1.REAL * _Complex2.REAL - _Complex1.IMAG * _Complex2.IMAG,
-            _Complex1.REAL * _Complex2.IMAG + _Complex1.IMAG * _Complex2.REAL
+            _Number1.REAL * _Number2.REAL - _Number1.IMAG * _Number2.IMAG,
+            _Number1.REAL * _Number2.IMAG + _Number1.IMAG * _Number2.REAL
         };
     }
 
@@ -286,39 +286,39 @@ protected:
         };
     }
 
-    static Type complex_abs(const complex_plain& _Complex)
+    static Type complex_abs(const complex_plain& _Number)
     {
-        return _Complex.REAL == 0.0 && _Complex.IMAG == 0.0 ? 0.0 : sqrt(_Complex.REAL * _Complex.REAL + _Complex.IMAG * _Complex.IMAG);
+        return _Number.REAL == 0.0 && _Number.IMAG == 0.0 ? 0.0 : sqrt(_Number.REAL * _Number.REAL + _Number.IMAG * _Number.IMAG);
     }
 
-    static Type complex_argument(const complex_plain& _Complex)
+    static Type complex_argument(const complex_plain& _Number)
     {
-        return atan2(_Complex.IMAG, _Complex.REAL);
+        return atan2(_Number.IMAG, _Number.REAL);
     }
 
-    static bool complex_greater(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static bool complex_greater(const complex_plain& _Number1, const complex_plain& _Number2)
     {
-        return complex_abs(_Complex1) > complex_abs(_Complex2);
+        return complex_abs(_Number1) > complex_abs(_Number2);
     }
 
-    static bool complex_lower(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static bool complex_lower(const complex_plain& _Number1, const complex_plain& _Number2)
     {
-        return complex_abs(_Complex1) < complex_abs(_Complex2);
+        return complex_abs(_Number1) < complex_abs(_Number2);
     }
 
-    static bool complex_equal(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static bool complex_equal(const complex_plain& _Number1, const complex_plain& _Number2)
     {
-        return complex_abs(_Complex1) == complex_abs(_Complex2);
+        return complex_abs(_Number1) == complex_abs(_Number2);
     }
 
-    static bool complex_greater_or_equal(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static bool complex_greater_or_equal(const complex_plain& _Number1, const complex_plain& _Number2)
     {
-        return complex_abs(_Complex1) >= complex_abs(_Complex2);
+        return complex_abs(_Number1) >= complex_abs(_Number2);
     }
 
-    static bool complex_lower_or_equal(const complex_plain& _Complex1, const complex_plain& _Complex2)
+    static bool complex_lower_or_equal(const complex_plain& _Number1, const complex_plain& _Number2)
     {
-        return complex_abs(_Complex1) <= complex_abs(_Complex2);
+        return complex_abs(_Number1) <= complex_abs(_Number2);
     }
 
     // friends
@@ -347,27 +347,27 @@ protected:
 };
 
 template<typename Type> Type
-gs_realf(const gs_complex<Type>& _Complex)
+gs_realf(const gs_complex<Type>& _Number)
 {
-    return _Complex.m_data.REAL;
+    return _Number.m_data.REAL;
 }
 
 template<typename Type> Type
-gs_realf(const Type& _Complex)
+gs_realf(const Type& _Number)
 {
-    return _Complex;
+    return _Number;
 }
 
 template<typename Type> Type
-gs_imagf(const gs_complex<Type>& _Complex)
+gs_imagf(const gs_complex<Type>& _Number)
 {
-    return _Complex.m_data.IMAG;
+    return _Number.m_data.IMAG;
 }
 
 template<typename Type> Type
-gs_imagf(const Type& _Complex)
+gs_imagf(const Type& _Number)
 {
-    (void)_Complex;
+    (void)_Number;
     return 0.0;
 }
 
@@ -378,38 +378,38 @@ inline Type gs_cabsf(const gs_complex<Type>& _complex)
 }
 
 template<typename Type>
-Type gs_cargf(const gs_complex<Type>& _Complex)
+Type gs_cargf(const gs_complex<Type>& _Number)
 {
-    return gs_complex<Type>::complex_argument(_Complex.m_data);
+    return gs_complex<Type>::complex_argument(_Number.m_data);
 }
 
 template<typename Type> gs_complex<Type>
-gs_csqrtf(const gs_complex<Type>& _Complex)
+gs_csqrtf(const gs_complex<Type>& _Number)
 {
-    Type abs = __cabsf__(_Complex);
-    Type arg = gs_cargf(_Complex);
+    Type abs = __cabsf__(_Number);
+    Type arg = gs_cargf(_Number);
     return gs_complex<Type>(cos(arg * 0.5), sin(arg * 0.5)) * sqrt(abs);
 }
 
 template<typename Type> gs_complex<Type>
-gs_cpowf(const gs_complex<Type>& _Complex, const Type& _Power)
+gs_cpowf(const gs_complex<Type>& _Number, const Type& _Power)
 {
-    Type abs = __cabsf__(_Complex);
-    Type arg = gs_cargf(_Complex);
+    Type abs = __cabsf__(_Number);
+    Type arg = gs_cargf(_Number);
     return gs_complex<Type>(cos(arg * _Power), sin(arg * _Power)) * pow(abs, _Power);
 }
 
 template<typename Type> gs_complex<Type>
-gs_conjf(const gs_complex<Type>& _Complex)
+gs_conjf(const gs_complex<Type>& _Number)
 {
-    return gs_complex<Type>(gs_realf(_Complex), -gs_imagf(_Complex));
+    return gs_complex<Type>(gs_realf(_Number), -gs_imagf(_Number));
 }
 
 template<typename Type> gs_complex<Type>
-gs_cnormf(const gs_complex<Type>& _Complex)
+gs_cnormf(const gs_complex<Type>& _Number)
 {
-    Type abs = __cabsf__(_Complex);
-    return gs_complex<Type>(_Complex / (abs < 1e-12 ? 1.0 : abs));
+    Type abs = __cabsf__(_Number);
+    return gs_complex<Type>(_Number / (abs < 1e-12 ? 1.0 : abs));
 }
 
 template<typename Type> gs_complex<Type>
@@ -419,32 +419,32 @@ gs_crotf(const float& _Argument)
 }
 
 template<typename Type> gs_complex<Type>
-gs_sinhf(const gs_complex<Type>& _Complex)
+gs_sinhf(const gs_complex<Type>& _Number)
 {
-    Type re = (exp(gs_realf(_Complex)) * cos(gs_imagf(_Complex)) - exp(-gs_realf(_Complex)) * cos(-gs_imagf(_Complex))) * static_cast<Type>(0.5);
-    Type im = (exp(gs_realf(_Complex)) * sin(gs_imagf(_Complex)) - exp(-gs_realf(_Complex)) * sin(-gs_imagf(_Complex))) * static_cast<Type>(0.5);
+    Type re = (exp(gs_realf(_Number)) * cos(gs_imagf(_Number)) - exp(-gs_realf(_Number)) * cos(-gs_imagf(_Number))) * static_cast<Type>(0.5);
+    Type im = (exp(gs_realf(_Number)) * sin(gs_imagf(_Number)) - exp(-gs_realf(_Number)) * sin(-gs_imagf(_Number))) * static_cast<Type>(0.5);
     return gs_complex<Type>( re , im );
 }
 
 template<typename Type> gs_complex<Type>
-gs_coshf(const gs_complex<Type>& _Complex)
+gs_coshf(const gs_complex<Type>& _Number)
 {
-    float re = (exp(gs_realf(_Complex)) * cos(gs_imagf(_Complex)) + exp(-gs_realf(_Complex)) * cos(-gs_imagf(_Complex))) * static_cast<Type>(0.5);
-    float im = (exp(gs_realf(_Complex)) * sin(gs_imagf(_Complex)) + exp(-gs_realf(_Complex)) * sin(-gs_imagf(_Complex))) * static_cast<Type>(0.5);
+    float re = (exp(gs_realf(_Number)) * cos(gs_imagf(_Number)) + exp(-gs_realf(_Number)) * cos(-gs_imagf(_Number))) * static_cast<Type>(0.5);
+    float im = (exp(gs_realf(_Number)) * sin(gs_imagf(_Number)) + exp(-gs_realf(_Number)) * sin(-gs_imagf(_Number))) * static_cast<Type>(0.5);
     return gs_complex<Type>(re , im);
 }
 
 template<typename Type> gs_complex<Type>
-gs_tanhf(const gs_complex<Type>& _Complex)
+gs_tanhf(const gs_complex<Type>& _Number)
 {
-    return gs_sinhf(_Complex) / gs_coshf(_Complex);
+    return gs_sinhf(_Number) / gs_coshf(_Number);
 }
 
 
 template<typename Type> gs_complex<Type>
-gs_ctnhf(const gs_complex<Type>& _Complex)
+gs_ctnhf(const gs_complex<Type>& _Number)
 {
-    return gs_coshf(_Complex) / gs_sinhf(_Complex);
+    return gs_coshf(_Number) / gs_sinhf(_Number);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1345,8 +1345,8 @@ struct gs_2dbox
     template<typename ... Args>
     gs_2dbox(const gs_vector<Type, 2>& _A, const gs_vector<Type, 2>& _B, Args ... _Args)
     {
-        Min = gs_vec2f(gs_min(_A.x, _B.x, static_cast<gs_vec2f>(_Args).x...), gs_min(_A.y, _B.y, static_cast<gs_vec2f>(_Args).y...));
-        Max = gs_vec2f(gs_max(_A.x, _B.x, static_cast<gs_vec2f>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vec2f>(_Args).y...));
+        Min = gs_vector<Type, 2>(gs_min(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_min(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...));
+        Max = gs_vector<Type, 2>(gs_max(_A.x, _B.x, static_cast<gs_vector<Type, 2>>(_Args).x...), gs_max(_A.y, _B.y, static_cast<gs_vector<Type, 2>>(_Args).y...));
     }
 
     gs_vector<Type, 2> Min{gs_vector<Type, 2>(0.f)};
@@ -1354,7 +1354,7 @@ struct gs_2dbox
 
     gs_vector<Type, 2> size() const
     {
-        return gs_vec2f(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
+        return gs_vector<Type, 2>(gs_abs((Max - Min).x), gs_abs((Max - Min).y));
     }
 
     Type width() const
@@ -1414,7 +1414,7 @@ struct gs_2dbox
 
     gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const
     {
-        return gs_2dboxf(
+        return gs_2dbox<Type>(
             gs_clamp(Min, _Clipbox.Min, _Clipbox.Max),
             gs_clamp(Max, _Clipbox.Min, _Clipbox.Max));
     }
@@ -1609,97 +1609,97 @@ gs_vector<Type, Rows> operator*(const gs_matrix<Type, Rows, Columns>& _A, const 
 
 // [COMPLEX VS COMPLEX]
 template<typename Type>
-gs_complex<Type> operator+(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+gs_complex<Type> operator+(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    gs_complex<Type>::complex_plain _Complex3 = gs_complex<Type>::complex_add(_Complex1.m_data , _Complex2.m_data);
-    return gs_complex<Type>(_Complex3.REAL, _Complex3.IMAG);
+    auto _Number3 = gs_complex<Type>::complex_add(_Number1.m_data , _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
 }
 
 template<typename Type>
-gs_complex<Type> operator-(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+gs_complex<Type> operator-(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    gs_complex<Type>::complex_plain _Complex3 = gs_complex<Type>::complex_substract(_Complex1.m_data, _Complex2.m_data);
-    return gs_complex<Type>(_Complex3.REAL, _Complex3.IMAG);
+    auto _Number3 = gs_complex<Type>::complex_substract(_Number1.m_data, _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
 }
 
 template<typename Type>
-gs_complex<Type> operator*(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+gs_complex<Type> operator*(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    gs_complex<Type>::complex_plain _Complex3 = gs_complex<Type>::complex_multiply(_Complex1.m_data, _Complex2.m_data);
-    return gs_complex<Type>(_Complex3.REAL, _Complex3.IMAG);
+    auto _Number3 = gs_complex<Type>::complex_multiply(_Number1.m_data, _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
 }
 
 template<typename Type>
-gs_complex<Type> operator/(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+gs_complex<Type> operator/(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    gs_complex<Type>::complex_plain _Complex3 = gs_complex<Type>::complex_divide(_Complex1.m_data, _Complex2.m_data);
-    return gs_complex<Type>(_Complex3.REAL, _Complex3.IMAG);
+    auto _Number3 = gs_complex<Type>::complex_divide(_Number1.m_data, _Number2.m_data);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
 }
 
 template<typename Type>
-bool operator>(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+bool operator>(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    return gs_complex<Type>::complex_greater(_Complex1.m_data , _Complex2.m_data);
+    return gs_complex<Type>::complex_greater(_Number1.m_data , _Number2.m_data);
 }
 
 template<typename Type>
-bool operator>=(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+bool operator>=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    return gs_complex<Type>::complex_greater_or_equal(_Complex1.m_data, _Complex2.m_data);
+    return gs_complex<Type>::complex_greater_or_equal(_Number1.m_data, _Number2.m_data);
 }
 
 template<typename Type>
-bool operator<(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+bool operator<(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    return gs_complex<Type>::complex_lower(_Complex1.m_data, _Complex2.m_data);
+    return gs_complex<Type>::complex_lower(_Number1.m_data, _Number2.m_data);
 }
 
 template<typename Type>
-bool operator<=(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+bool operator<=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    return gs_complex<Type>::complex_lower_or_equal(_Complex1.m_data, _Complex2.m_data);
+    return gs_complex<Type>::complex_lower_or_equal(_Number1.m_data, _Number2.m_data);
 }
 
 template<typename Type>
-bool operator==(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+bool operator==(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    return gs_complex<Type>::complex_equal(_Complex1.m_data, _Complex2.m_data);
+    return gs_complex<Type>::complex_equal(_Number1.m_data, _Number2.m_data);
 }
 
 template<typename Type>
-bool operator!=(const gs_complex<Type>& _Complex1, const gs_complex<Type>& _Complex2)
+bool operator!=(const gs_complex<Type>& _Number1, const gs_complex<Type>& _Number2)
 {
-    return !gs_complex<Type>::complex_equal(_Complex1.m_data, _Complex2.m_data);
+    return !gs_complex<Type>::complex_equal(_Number1.m_data, _Number2.m_data);
 }
 
 // [COMPLEX VS SCALAR]
 template<typename Type>
-gs_complex<Type> operator*(const gs_complex<Type>& _Complex, const Type& _Value)
+gs_complex<Type> operator*(const gs_complex<Type>& _Number, const Type& _Value)
 {
-    return gs_complex<Type>(_Complex.m_data.REAL * _Value , _Complex.m_data.IMAG * _Value);
+    return gs_complex<Type>(_Number.m_data.REAL * _Value , _Number.m_data.IMAG * _Value);
 }
 
 template<typename Type>
-gs_complex<Type> operator*(const Type& _Value, const gs_complex<Type>& _Complex)
+gs_complex<Type> operator*(const Type& _Value, const gs_complex<Type>& _Number)
 {
-    return gs_complex<Type>(_Complex.m_data.REAL * _Value , _Complex.m_data.IMAG * _Value);
+    return gs_complex<Type>(_Number.m_data.REAL * _Value , _Number.m_data.IMAG * _Value);
 }
 
 template<typename Type>
-gs_complex<Type> operator/(const gs_complex<Type>& _Complex, const Type& _Value)
+gs_complex<Type> operator/(const gs_complex<Type>& _Number, const Type& _Value)
 {
-    return gs_complex<Type>(_Complex.m_data.REAL / _Value, _Complex.m_data.IMAG / _Value);
+    return gs_complex<Type>(_Number.m_data.REAL / _Value, _Number.m_data.IMAG / _Value);
 }
 
 template<typename Type>
-gs_complex<Type> operator/(const Type& _Value, const gs_complex<Type>& _Complex)
+gs_complex<Type> operator/(const Type& _Value, const gs_complex<Type>& _Number)
 {
-    gs_complex<Type>::complex_plain _Complex3 =
+    auto _Number3 =
         gs_complex<Type>::complex_divide(
             gs_complex<Type>(_Value, static_cast<Type>(0)).m_data,
-            _Complex.m_data);
+            _Number.m_data);
 
-    return gs_complex<Type>(_Complex3.REAL, _Complex3.IMAG);
+    return gs_complex<Type>(_Number3.REAL, _Number3.IMAG);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
