@@ -150,6 +150,11 @@ gs_mat4f RenderingQueue::get_cameraview_matrix() const
     return m_CameraViewMatrix;
 }
 
+double RenderingQueue::get_measured_frame_rate() const
+{
+    return m_FrameRate;
+}
+
 void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
 {
     m_ProjectionMatrix = _Matrix;
@@ -280,6 +285,17 @@ void RenderingQueue::frame_start()
 
 void RenderingQueue::frame_update()
 {
+    // measure
+    if(m_FrameRateMeasurementFramesCount >= m_FrameRateMeasurementFramesInterval)
+    {
+        m_FrameRate                      = m_FrameRateMeasurementFramesInterval * 1e6 / Frenchie::Core::elapsed<std::chrono::microseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
+        m_FrameRateMeasurementFramesCount = 0;
+    }
+
+    if(m_FrameRateMeasurementFramesCount <= 0)
+        m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
+
+    ++m_FrameRateMeasurementFramesCount;
 }
 
 void RenderingQueue::frame_render()
