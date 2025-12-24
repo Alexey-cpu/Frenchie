@@ -252,7 +252,8 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
-            mutable ImmedidateUserInterfaceNode* Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
+            mutable ImmedidateUserInterfaceNode* Parent     {nullptr};
+            mutable ImmedidateUserInterfaceNode* Creator    {nullptr};
             mutable int                          Thickness  {0};
             mutable int                          LayerDepth {0};
             mutable int                          TotalDepth {0};
