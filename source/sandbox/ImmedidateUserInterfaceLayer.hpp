@@ -247,15 +247,15 @@ namespace Frenchie
         {
             // hints
             mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node        };
-            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes      };
+            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes     };
             mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default};
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
-            mutable int                          Depth      {0};
-            mutable int                          TotalDepth {0};
             mutable ImmedidateUserInterfaceNode* Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
             mutable int                          Thickness  {0};
+            mutable int                          LayerDepth {0};
+            mutable int                          TotalDepth {0};
 
             // layouting
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
@@ -361,25 +361,25 @@ namespace Frenchie
             };
 
             // nodes drawing
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList  {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingStack    {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingList     {std::vector<ImmedidateUserInterfaceNode*>()};
 
-            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()       };
-            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()       };
-            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()       };
-            mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()       };
+            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
 
-            Frenchie::Core::Optional<bool>                           m_WidgetIsBeingMouseHovered;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDoubleClicked;
+            mutable Frenchie::Core::Optional<bool>                           m_WidgetIsBeingMouseHovered      {Frenchie::Core::Optional<bool>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDown         {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMousePressed      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseClicked      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDoubleClicked{Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
 
-            Frenchie::Core::Optional<bool>                           m_WidgetHasBeenMouseHovered;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDoubleClicked;
+            mutable Frenchie::Core::Optional<bool>                           m_WidgetHasBeenMouseHovered      {Frenchie::Core::Optional<bool>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDown         {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMousePressed      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseClicked      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
+            mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDoubleClicked{Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
 
             // menus
             struct Menu
