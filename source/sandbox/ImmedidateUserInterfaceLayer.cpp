@@ -390,8 +390,11 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
         next    = next->Cache.Creator;
     }
     
+    if(creator == nullptr)
+        creator = window;
+    
     m_WidgetIsBeingMouseHovered =
-        ui_node_is_being_hovered(window) &&
+        ui_node_is_being_hovered(window)  &&
         ui_node_is_being_focused(creator) &&
         WidgetData.BoundingBox.transform(window->State.Transform).contains(m_Renderer->get_cursor_postion()) &&
         WidgetData.ClippingBox.overlaps(WidgetData.BoundingBox.transform(window->State.Transform));
