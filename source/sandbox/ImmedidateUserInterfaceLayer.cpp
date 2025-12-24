@@ -726,7 +726,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
             if(drawnWindow->Cache.Layer == window->Cache.Layer)
             {
                 window->State.LayerDepth =
-                    gs_max(drawnWindow->State.TotalDepth + 1, window->State.LayerDepth);
+                    gs_max(drawnWindow->State.LayerDepth + drawnWindow->State.Thickness + 1, window->State.LayerDepth);
             }
         }
     }
@@ -737,7 +737,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     if((window->State.Parent != nullptr) &&
        (std::find(m_NodesRenderingList.begin(), m_NodesRenderingList.end(), window->State.Parent) == m_NodesRenderingList.end()) || (_Rendered != nullptr && !(*_Rendered))) return false;
 
-    // memorize current clipping
+    // setup clipping
     if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
         ui_node_render_clipbox(window);
 
@@ -754,6 +754,10 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 {
     if(m_NodesRenderingStack.empty())
         return;
+
+    // update parent thickness
+    if(ui_node_hierarchy_top()->State.Parent != nullptr)
+        ui_node_hierarchy_top()->State.Parent->State.Thickness += ui_node_hierarchy_top()->State.Thickness;
 
     // render scrollbars and background frame
     if(ui_node_is_vertical_scroll_bar_needed(ui_node_hierarchy_top()))
@@ -1048,7 +1052,7 @@ bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& 
         boundingBox.Max,
         m_Style->FrameRoundingRadius,
         retreive_push_button_background_color(true, hovered, pressed),
-        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_parallel(context, 1)));
+        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(context, 1)));
 
     m_Renderer->push_rectangle_rounded(
         boundingBox.Min,
@@ -1056,13 +1060,13 @@ bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& 
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         retreive_push_frame_color(true, hovered, pressed),
-        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_parallel(context, 1)));
+        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(context, 1)));
 
     m_Renderer->push_text(
         _Text,
         m_Style->FontSize,
         gs_vec4f(255.f, 255.f, 255.f, 255.f),
-        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_parallel(context, 1), boundingBox.center() - textBox.size() * 0.5f),
+        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(context, 1), boundingBox.center() - textBox.size() * 0.5f),
         m_Style->Font);
 
     return pressed;
@@ -1139,6 +1143,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
         if(!ui_node_is_vertical_scroll_bar_needed(_Window))
             _Window->State.VerticalScrollBar.SliderPosition = 0.f;
 
+        _Window->State.VerticalScrollBar.reposition(_Window->State.VerticalScrollBar.SliderPosition);
+
         _Window->State.VerticalScrollBarBox = gs_2dboxf(
             gs_vec2f(_Window->State.ViewportBox.Max.x, _Window->State.ViewportBox.Min.y),
             gs_vec2f(_Window->State.ViewportBox.Max.x, _Window->State.ViewportBox.Max.y) + gs_vec2f(m_Style->WindowScrollBarSliderWidth, 0.f));
@@ -1158,6 +1164,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
 
         if(!ui_node_is_horizontal_scroll_bar_needed(_Window))
             _Window->State.HorizontalScrollBar.SliderPosition = 0.f;
+
+        _Window->State.HorizontalScrollBar.reposition(_Window->State.HorizontalScrollBar.SliderPosition);
 
         _Window->State.HorizontalScrollBarBox = gs_2dboxf(
             gs_vec2f(_Window->State.ViewportBox.Min.x, _Window->State.ViewportBox.Max.y),
@@ -1259,21 +1267,7 @@ int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in
     if(_Window == nullptr) return 0;
     
     _Window->State.Thickness += _Thickness;
-    _Window->State.TotalDepth = _Window->State.LayerDepth + _Window->State.Thickness;
-    return  _Window->State.TotalDepth;
-}
-
-int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in_parallel(ImmedidateUserInterfaceNode* _Window, const int& _Thickness) const
-{
-    if(_Window == nullptr) return 0;
-
-    if(_Window->State.TotalDepth + _Thickness > _Window->State.LayerDepth + _Window->State.Thickness)
-    {
-        _Window->State.Thickness += _Thickness;
-        _Window->State.TotalDepth = _Window->State.LayerDepth + _Window->State.Thickness;
-    }
-
-    return _Window->State.TotalDepth;
+    return _Window->State.LayerDepth + _Window->State.Thickness;
 }
 
 gs_vec2f ImmedidateUserInterfaceContextLayer::ui_node_vertical_cursor_direction() const
@@ -2039,10 +2033,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
             cachedWindow->Cache = cachedWindow->State;
 
         // layers
-        cachedWindow->Cache.Layer     = cachedWindow->State.Layer;
-        cachedWindow->Cache.LayerDepth     = cachedWindow->State.LayerDepth;
-        cachedWindow->Cache.Thickness = cachedWindow->State.Thickness;
-        cachedWindow->Cache.TotalDepth= cachedWindow->State.TotalDepth;
+        cachedWindow->Cache.Layer       = cachedWindow->State.Layer;
+        cachedWindow->Cache.LayerDepth  = cachedWindow->State.LayerDepth;
+        cachedWindow->Cache.Thickness   = cachedWindow->State.Thickness;
 
         // events
         cachedWindow->Cache.Changes            = cachedWindow->State.Changes;
@@ -2051,7 +2044,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->Cache.MouseClicked       = cachedWindow->State.MouseClicked;
         cachedWindow->Cache.MouseDoubleClicked = cachedWindow->State.MouseDoubleClicked;
 
-        //cachedWindow->State.Changes            = ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None;
         cachedWindow->State.MouseDown.reset();
         cachedWindow->State.MousePressed.reset();
         cachedWindow->State.MouseClicked.reset();
@@ -2068,7 +2060,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.Creator                 = nullptr;
         cachedWindow->State.LayerDepth              = 0;
         cachedWindow->State.Thickness               = 0;
-        cachedWindow->State.TotalDepth              = 0;
         cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
         cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
     }
