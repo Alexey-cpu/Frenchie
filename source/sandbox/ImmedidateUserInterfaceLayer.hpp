@@ -223,12 +223,18 @@ namespace Frenchie
 
         struct ImmedidateUserInterfaceNodeScroll
         {
-            void setup(const float& _Min, const float& _Max, const float  _Total, const float& _Track)
+            void setup(
+                const float& _Min,
+                const float& _Max,
+                const float  _Total,
+                const float& _Track,
+                const float&  _MinSize = 64.f // TODO: this MUST BE a setting !!!!
+            )
             {
                 Min          = _Min;
                 Max          = _Max;
                 SliderScale  = gs_abs(_Total) / gs_abs(_Max - _Min);
-                SliderLength = gs_abs(_Max - _Min) / gs_abs(_Total) * _Track;
+                SliderLength = gs_max(gs_abs(_Max - _Min) / gs_abs(_Total) * _Track, _MinSize);
             }
 
             void reposition(const float& _Position)

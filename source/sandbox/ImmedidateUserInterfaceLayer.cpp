@@ -369,6 +369,7 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     auto geometryBox = gs_2dboxf(min, min + _Size);
     WidgetData.BoundingBox = gs_2dboxf(geometryBox.Min + window->State.ScrollAreaBox.Min, geometryBox.Max + window->State.ScrollAreaBox.Min);
     WidgetData.ClippingBox = window->State.InnerClipAreaBox.clip_with(window->State.OuterClipAreaBox);
+    WidgetData.ClippingBox = gs_2dboxf(WidgetData.ClippingBox.Min, WidgetData.ClippingBox.Max - window->State.ScrollBarOffset);
     WidgetData.Node        = window;
 
     // receive events
@@ -397,7 +398,7 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
         ui_node_is_being_hovered(window)  &&
         ui_node_is_being_focused(creator) &&
         WidgetData.BoundingBox.transform(window->State.Transform).contains(m_Renderer->get_cursor_postion()) &&
-        WidgetData.ClippingBox.overlaps(WidgetData.BoundingBox.transform(window->State.Transform));
+        WidgetData.ClippingBox.contains(m_Renderer->get_cursor_postion());
 
     if(m_WidgetIsBeingMouseHovered.value())
     {
