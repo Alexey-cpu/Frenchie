@@ -480,6 +480,8 @@ namespace Frenchie
             bool widget_has_been_clicked(const ApplicationMouseButton::Button&) const;
             bool widget_has_been_mouse_down(const ApplicationMouseButton::Button&) const;
             bool widget_has_been_double_clicked(const ApplicationMouseButton::Button&) const;
+
+            friend class ImmedidateUserInterfaceContextEventsReceiver;
         };
     }
 }
