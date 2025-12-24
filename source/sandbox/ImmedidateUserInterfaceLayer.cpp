@@ -431,36 +431,39 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 {
     if(m_NodesHierarchy.empty()) return;
 
-    auto window = ui_node_hierarchy_top();
-
     // recalcualte parental depth
-    auto parent = window->State.Parent;
-
-    while (parent)
     {
-        parent->State.Depth = ui_node_last_layer_depth(parent);
-        parent              = parent->State.Parent;
+        auto current = ui_node_hierarchy_top();
+        auto parent  = current->State.Parent;
+
+        while (parent)
+        {
+            parent->State.Depth = ui_node_last_layer_depth(current);
+
+            current = parent;
+            parent  = parent->State.Parent;
+        }
     }
 
     // render scrollbars
-    if(ui_node_is_vertical_scroll_bar_needed(window))
-        ui_node_render_vertical_scrollbar(window);
-    if(ui_node_is_horizontal_scroll_bar_needed(window))
-        ui_node_render_horizontal_scrollbar(window);
+    if(ui_node_is_vertical_scroll_bar_needed(ui_node_hierarchy_top()))
+        ui_node_render_vertical_scrollbar(ui_node_hierarchy_top());
+    if(ui_node_is_horizontal_scroll_bar_needed(ui_node_hierarchy_top()))
+        ui_node_render_horizontal_scrollbar(ui_node_hierarchy_top());
 
     // remove clipping
-    if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
+    if(!(ui_node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
         m_Renderer->pop_clip_box();
 
-    ui_node_render_background_frame(window);
+    ui_node_render_background_frame(ui_node_hierarchy_top());
 
-    if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent) && !m_NodesClipBoxes.empty())
+    if((ui_node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent) && !m_NodesClipBoxes.empty())
     {
         m_Renderer->push_clip_box(m_NodesClipBoxes[m_NodesClipBoxes.size() - 1]);
         m_NodesClipBoxes.pop_back();
     }
 
-    ui_node_render_resize_events_gizmos(window);
+    ui_node_render_resize_events_gizmos(ui_node_hierarchy_top());
 
     m_NodesHierarchy.pop_back();
 }
