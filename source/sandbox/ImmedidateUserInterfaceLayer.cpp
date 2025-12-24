@@ -568,7 +568,7 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
     // render cursor
     m_Renderer->push_text(
         std::to_string(m_Renderer->get_cursor_postion().x).append(" ").append(
-             std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(-1000))),
+             std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(FPS))),
         m_Style->FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane(), m_Renderer->get_cursor_postion() + gs_vec3f(Immediate2DRenderer::bottom_right(gs_vec2f(12.f, 12.f)))));
@@ -580,6 +580,17 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         8.f,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         0.f);
+
+    if(Frames >= 60)
+    {
+        FPS    = Frames * 1e6 / Frenchie::Core::elapsed<std::chrono::microseconds>(Start, Frenchie::Core::tic());
+        Frames = 0;
+    }
+
+    if(Frames <= 0)
+        Start = Frenchie::Core::tic();
+
+    Frames++;
 }
 
 void ImmedidateUserInterfaceContextLayer::frame_finish()

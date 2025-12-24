@@ -344,6 +344,10 @@ namespace Frenchie
 
         protected:
 
+            std::chrono::high_resolution_clock::time_point Start;
+            int                                            Frames = 0;
+            double                                         FPS    = 0.0;
+
             // info
             mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
             mutable std::shared_ptr<Immediate2DRenderer>          m_Renderer{nullptr};
