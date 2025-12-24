@@ -216,11 +216,11 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
             end_menubar();
         }
 
-        if(begin_node("Content"))
+        //if(begin_node("Content"))
         {
             for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
 
-            end_node();
+            //end_node();
         }
 
         end_window();
@@ -320,12 +320,12 @@ ImmedidateUserInterfaceNode* ImmedidateUserInterfaceContextLayer::ui_node_cache_
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_hierarchy_is_empty() const
 {
-    return m_NodesHierarchy.empty();
+    return m_NodesRenderingStack.empty();
 }
 
 ImmedidateUserInterfaceNode* ImmedidateUserInterfaceContextLayer::ui_node_hierarchy_top() const
 {
-    return !m_NodesHierarchy.empty() ? m_NodesHierarchy[m_NodesHierarchy.size() - 1] : nullptr;
+    return !m_NodesRenderingStack.empty() ? m_NodesRenderingStack[m_NodesRenderingStack.size() - 1] : nullptr;
 }
 
 bool ImmedidateUserInterfaceContextLayer::begin_node(
@@ -343,7 +343,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     {
         // setup hierarchy
         window->State.Parent                                 = ui_node_hierarchy_top();
-        window->State.Depth                                  = ui_node_next_layer_depth(window->State.Parent);
+        window->State.Depth                                  = ui_node_calculate_child_depth_placed_in_follow(window->State.Parent, 1);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
 
         // move cursor
@@ -380,14 +380,14 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     else
     {
         // calculate window initial depth
-        int windowMaximumDepth = ui_node_base_layer_depth(window->Cache.Layer);
+        int windowMaximumDepth = ui_node_calculate_layer_depth(window->Cache.Layer);
 
-        for (auto& drawnWindow : m_NodesDrawList)
+        for (auto& drawnWindow : m_NodesRenderingList)
         {
             if(drawnWindow->Cache.Layer == window->Cache.Layer)
             {
                 windowMaximumDepth =
-                    gs_max(drawnWindow->State.Depth + drawnWindow->State.Thickness, windowMaximumDepth);
+                    gs_max(drawnWindow->State.Depth + drawnWindow->State.Thickness + 1, windowMaximumDepth);
             }
         }
 
@@ -398,7 +398,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     
     // check self
     if((window->State.Parent != nullptr) &&
-       (std::find(m_NodesDrawList.begin(), m_NodesDrawList.end(), window->State.Parent) == m_NodesDrawList.end()) || (_Rendered != nullptr && !(*_Rendered))) return false;
+       (std::find(m_NodesRenderingList.begin(), m_NodesRenderingList.end(), window->State.Parent) == m_NodesRenderingList.end()) || (_Rendered != nullptr && !(*_Rendered))) return false;
 
     // memorize current clipping
     if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
@@ -407,44 +407,33 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     ui_node_render_background(window);
 
     // push window into hierarchy stack and draw list
-    m_NodesDrawList.push_back(window);
-    m_NodesHierarchy.push_back(window);
+    m_NodesRenderingList.push_back(window);
+    m_NodesRenderingStack.push_back(window);
 
     return true;
 }
 
 void ImmedidateUserInterfaceContextLayer::end_node()
 {
-    if(m_NodesHierarchy.empty()) return;
+    if(m_NodesRenderingStack.empty())
+        return;
 
-    // recalcualte parental depth
-    {
-        auto current = ui_node_hierarchy_top();
-        auto parent  = current->State.Parent;
-
-        while (parent)
-        {
-            parent->State.Depth = ui_node_last_layer_depth(current);
-
-            current = parent;
-            parent  = parent->State.Parent;
-        }
-    }
-
-    // render scrollbars
+    // render scrollbars and background frame
     if(ui_node_is_vertical_scroll_bar_needed(ui_node_hierarchy_top()))
         ui_node_render_vertical_scrollbar(ui_node_hierarchy_top());
     if(ui_node_is_horizontal_scroll_bar_needed(ui_node_hierarchy_top()))
         ui_node_render_horizontal_scrollbar(ui_node_hierarchy_top());
-
+    ui_node_render_background_frame(ui_node_hierarchy_top());
+        
     // remove clipping
     if(!(ui_node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
         m_Renderer->pop_clip_box();
 
-    ui_node_render_background_frame(ui_node_hierarchy_top());
+    // render resize events gizmos
     ui_node_render_resize_events_gizmos(ui_node_hierarchy_top());
 
-    m_NodesHierarchy.pop_back();
+    // pop node out-of rendering stack
+    m_NodesRenderingStack.pop_back();
 }
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
@@ -468,6 +457,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
             ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar,
             ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
         {
+            ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
             ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
 
             auto geometryBox = gs_2dboxf(
@@ -483,7 +473,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 boundingBox.Max,
                 m_Style->FrameRoundingRadius,
                 gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(ui_node_hierarchy_top())));
+                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
 
             m_Renderer->push_rectangle_rounded(
                 boundingBox.Min,
@@ -491,14 +481,14 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 m_Style->FrameRoundingRadius,
                 m_Style->FrameWidth,
                 gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(ui_node_hierarchy_top())));
+                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
 
             m_Renderer->push_text(
                 _Name,
                 m_Style->FontSize,
                 gs_vec4f(255.f, 255.f, 255.f, 255.f),
                 ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix(
-                    (float)ui_node_next_layer_depth(ui_node_hierarchy_top()),
+                    (float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1),
                     gs_vec2f(
                         boundingBox.Min.x + m_Style->FrameWidth * 2.f,
                         (boundingBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
@@ -526,10 +516,10 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NullParent;
 
     ImmedidateUserInterfaceNodeType type =
-        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu;
+        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu;
 
     // TODO: identify, that we are trying to add something into a menu
-    if(ui_node_is_of_type(ui_node_hierarchy_top(), ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu) ||
+    if(ui_node_is_of_type(ui_node_hierarchy_top(), ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu) ||
         ui_node_is_of_type(ui_node_hierarchy_top(), ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenubar))
     {
         if(ui_node_is_of_type(ui_node_hierarchy_top(), ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenubar))
@@ -537,7 +527,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
         widget_push_button(_Name);
 
-        ImmedidateUserInterfaceNode* cachedMenu = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu);
+        ImmedidateUserInterfaceNode* cachedMenu = ui_node_cache_request(_Name, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu);
 
         if(widget_is_being_hovered())
             ui_node_begin_hover(cachedMenu);
@@ -555,7 +545,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
             for (auto& window : m_HoveredMenus)
             {
-                if((window.Self->State.Type & ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu))
+                if((window.Self->State.Type & ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu))
                 {
                     anyHovered = anyHovered || ui_node_is_being_hovered(window.Self);
 
@@ -621,7 +611,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_menubar(const std::string& _Name
 
     if(begin_node(_Name, nullptr, settings, type))
     {
-        ui_node_hierarchy_top()->State.WindowMaximumHeight   = m_Style->FontSize + m_Style->FrameWidth * 2.f;
+        ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + m_Style->FrameWidth * 2.f;
+        ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + m_Style->FrameWidth * 2.f;
         return true;
     }
 
@@ -635,7 +626,7 @@ void ImmedidateUserInterfaceContextLayer::end_menubar()
 
 bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& _Text)
 {
-    if(m_NodesHierarchy.empty())
+    if(m_NodesRenderingStack.empty())
         return false;
     
     // prepare for rendering
@@ -692,14 +683,12 @@ bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& 
                    widget_is_being_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
                    widget_is_being_mouse_down(ApplicationMouseButton::Button::ApplicationMouseButton_Middle);
 
-    int depth = ui_node_last_layer_depth(context);
-
     m_Renderer->push_rectangle_rounded_filled(
         boundingBox.Min,
         boundingBox.Max,
         m_Style->FrameRoundingRadius,
         retreive_push_button_background_color(true, hovered, pressed),
-        context->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_parallel(context, 1)));
 
     m_Renderer->push_rectangle_rounded(
         boundingBox.Min,
@@ -707,39 +696,20 @@ bool ImmedidateUserInterfaceContextLayer::widget_push_button(const std::string& 
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         retreive_push_frame_color(true, hovered, pressed),
-        context->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_parallel(context, 1)));
 
     m_Renderer->push_text(
         _Text,
         m_Style->FontSize,
         gs_vec4f(255.f, 255.f, 255.f, 255.f),
-        context->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++, boundingBox.center() - textBox.size() * 0.5f),
+        context->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_parallel(context, 1), boundingBox.center() - textBox.size() * 0.5f),
         m_Style->Font);
-
-    ui_node_next_layer_depth(context);
-    ui_node_next_layer_depth(context);
-    ui_node_next_layer_depth(context);
 
     return pressed;
 }
 
 bool ImmedidateUserInterfaceContextLayer::widget_menu_button(const std::string& _Name)
 {
-    // for(auto it = m_HoveredMenus.begin(); it != m_HoveredMenus.end(); it++)
-    // {
-    //     if((*it)->is_closed())
-    //     {
-    //         (*it)->finish();
-    //         auto rm = it;
-    //         it++;
-    //         m_Layers.erase(rm);
-
-    //         if(it == m_Layers.end())
-    //             break;
-    //     }
-    // }
-
-
     return widget_push_button(_Name);
 }
 
@@ -891,8 +861,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
 
             _Window->State.InnerClipAreaBox =
                 gs_2dboxf(
-                    _Window->State.ViewportBox.transform(_Window->State.Transform).Min,
-                    _Window->State.ViewportBox.transform(_Window->State.Transform).Max + _Window->State.ScrollBarOffset);
+                    _Window->State.ViewportBox.transform(_Window->State.Transform).Min - m_Style->FrameWidth,
+                    _Window->State.ViewportBox.transform(_Window->State.Transform).Max + _Window->State.ScrollBarOffset + m_Style->FrameWidth * 0.5f);
 
             _Window->State.OuterClipAreaBox = next->State.InnerClipAreaBox; // this clipbox is already transformed to parent coordinates
         }
@@ -903,8 +873,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
 
             _Window->State.InnerClipAreaBox =
                 gs_2dboxf(
-                    _Window->State.ViewportBox.transform(_Window->State.Transform).Min,
-                    _Window->State.ViewportBox.transform(_Window->State.Transform).Max + _Window->State.ScrollBarOffset);
+                    _Window->State.ViewportBox.transform(_Window->State.Transform).Min - m_Style->FrameWidth,
+                    _Window->State.ViewportBox.transform(_Window->State.Transform).Max + _Window->State.ScrollBarOffset + m_Style->FrameWidth * 0.5f);
 
             _Window->State.OuterClipAreaBox =
                 gs_2dboxf(
@@ -916,24 +886,34 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
     ui_node_calculate_geometry(_Window->State.Parent);
 }
 
-int ImmedidateUserInterfaceContextLayer::ui_node_next_layer_depth(ImmedidateUserInterfaceNode* _Window) const
-{
-    if(_Window == nullptr) return 0;
-    return (_Window->State.Depth + (_Window->State.Thickness++));
-}
-
-int ImmedidateUserInterfaceContextLayer::ui_node_last_layer_depth(ImmedidateUserInterfaceNode* _Window) const
-{
-    if(_Window == nullptr) return 0;
-    return (_Window->State.Depth + (_Window->State.Thickness));
-}
-
-int ImmedidateUserInterfaceContextLayer::ui_node_base_layer_depth(const ImmedidateUserInterfaceNodeLayer& _Layer) const
+int ImmedidateUserInterfaceContextLayer::ui_node_calculate_layer_depth(const ImmedidateUserInterfaceNodeLayer& _Layer) const
 {
     if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes)    return 0;
     if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus)   return (int)(m_Renderer->get_far_plane() / 4);
     if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups) return (int)(m_Renderer->get_far_plane() / 2);
     return 0;
+}
+
+int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in_follow(ImmedidateUserInterfaceNode* _Window, const int& _Thickness) const
+{
+    if(_Window == nullptr) return 0;
+    
+    _Window->State.Thickness += _Thickness;
+    _Window->State.TotalDepth = _Window->State.Depth + _Window->State.Thickness;
+    return  _Window->State.TotalDepth;
+}
+
+int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in_parallel(ImmedidateUserInterfaceNode* _Window, const int& _Thickness) const
+{
+    if(_Window == nullptr) return 0;
+
+    if(_Window->State.TotalDepth + _Thickness > _Window->State.Depth + _Window->State.Thickness)
+    {
+        _Window->State.Thickness += _Thickness;
+        _Window->State.TotalDepth = _Window->State.Depth + _Window->State.Thickness;
+    }
+
+    return _Window->State.TotalDepth;
 }
 
 gs_vec2f ImmedidateUserInterfaceContextLayer::ui_node_vertical_cursor_direction() const
@@ -1114,7 +1094,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_hover(ImmedidateUserInte
     }
     else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(_Window->State.WindowHoverStart, Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
     {
-        for (auto window : m_NodesDrawList)
+        for (auto window : m_NodesRenderingList)
             ui_node_end_hover(window);
 
         _Window->State.Changes |=
@@ -1211,8 +1191,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_focus(ImmedidateUserInte
     if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus)) return;
 
     // disable focus of other items in drawlist
-    for (int i = 0; i < (int)m_NodesDrawList.size(); i++)
-        ui_node_end_focus(m_NodesDrawList[i]);
+    for (int i = 0; i < (int)m_NodesRenderingList.size(); i++)
+        ui_node_end_focus(m_NodesRenderingList[i]);
 
     // pass focus to _Window
     auto parent = _Window->State.Parent;
@@ -1323,7 +1303,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background(ImmedidateUs
         _Window->State.WindowBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     return true;
 }
@@ -1338,7 +1318,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background_frame(Immedi
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     return true;
 }
@@ -1353,7 +1333,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_vertical_scrollbar(Imme
         _Window->State.VerticalScrollBarBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor],
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     // draw slider
     if(_Window->State.VerticalScrollBarSliderBox.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()))
@@ -1365,7 +1345,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_vertical_scrollbar(Imme
             application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left) ?
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor] :
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
     }
     else
     {
@@ -1374,7 +1354,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_vertical_scrollbar(Imme
             _Window->State.VerticalScrollBarSliderBox.Max,
             m_Style->FrameRoundingRadius,
             m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
     }
     
     // draw frame
@@ -1384,7 +1364,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_vertical_scrollbar(Imme
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
     
     return true;
 }
@@ -1399,7 +1379,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_horizontal_scrollbar(Im
         _Window->State.HorizontalScrollBarBox.Max,
         m_Style->FrameRoundingRadius,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarColor],
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     // draw slider
     if(_Window->State.HorizontalScrollBarSliderBox.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()))
@@ -1411,7 +1391,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_horizontal_scrollbar(Im
             application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left) ?
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderPressedColor] :
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderHoveredColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
     }
     else
     {
@@ -1420,7 +1400,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_horizontal_scrollbar(Im
             _Window->State.HorizontalScrollBarSliderBox.Max,
             m_Style->FrameRoundingRadius,
             m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowScrollBarSliderColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
     }
 
     // draw frame
@@ -1430,7 +1410,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_horizontal_scrollbar(Im
         m_Style->FrameRoundingRadius,
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_next_layer_depth(_Window)));
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
     
     return true;
 }
@@ -1447,8 +1427,6 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
     gs_2dboxf      resizeRight       = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width() - m_Style->WindowResizeSideGizmoWidth, 0.f), _Window->State.WindowBox.Max + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f));
     gs_2dboxf      resizeBottom      = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowBox.height() - m_Style->WindowResizeSideGizmoWidth), _Window->State.WindowBox.Max + gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth));
 
-    auto depth = (float)ui_node_last_layer_depth(_Window);
-
     if((_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable))
     {
         if((resizeTopLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_left(_Window)) && !ui_node_is_being_moved(_Window))
@@ -1460,7 +1438,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 0.f,
                 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeTopRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_right(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1471,7 +1449,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 0.f,
                 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeBottomLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_left(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1481,7 +1459,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 resizeBottomLeft.Radius,
                 0.f, 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeBottomRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_right(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1492,7 +1470,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 0.f,
                 360.f,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeTop.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1501,7 +1479,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 resizeTop.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_left(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1510,7 +1488,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 resizeLeft.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_right(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1519,7 +1497,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 resizeRight.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
         else if((resizeBottom.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom(_Window)) && !ui_node_is_being_moved(_Window))
         {
@@ -1528,7 +1506,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
                 resizeBottom.Max,
                 m_Style->FrameRoundingRadius,
                 m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)depth++));
+                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
         }
     }
 
@@ -1537,12 +1515,12 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
 
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
-    for (auto& window : m_NodesDrawList)
+    for (auto& window : m_NodesRenderingList)
     {
         // layers
         if(ui_node_is_being_focused(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus;
-        else if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Menu)
+        else if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu)
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
         else
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
@@ -1585,7 +1563,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 
 void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 {
-    if(m_NodesDrawList.empty()) return;
+    if(m_NodesRenderingList.empty()) return;
 
     class EventsReceiver
     {
@@ -1603,7 +1581,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
                     return false;
 
-                for (auto drawnWindow : _Context->m_NodesDrawList)
+                for (auto drawnWindow : _Context->m_NodesRenderingList)
                 {
                     if(!_Context->ui_node_is_being_hovered(drawnWindow)) continue;
                     _Context->ui_node_begin_focus(drawnWindow);
@@ -1621,7 +1599,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             ImmedidateUserInterfaceNode* hovered = nullptr;
 
             // find the top most hovered node
-            for (auto next : _Context->m_NodesDrawList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
 
@@ -1630,34 +1608,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     if(hovered == nullptr || hovered->State.Depth < next->State.Depth)
                         hovered = next;
                 }
-            }
-
-            // identify if any child items are being hovered
-            for (auto next : _Context->m_NodesDrawList)
-            {
-                auto parent = next->State.Parent;
-
-                while (parent)
-                {
-                    if(parent == hovered &&
-                        next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                    {
-                        _Context->ui_node_begin_hover(next);
-
-                        _Context->m_Renderer->push_rectangle_rounded(
-                            next->State.WindowBox.Min,
-                            next->State.WindowBox.Max,
-                            0.f,
-                            12.f,
-                            gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                            next->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
-
-                        return true;
-                    }
-
-                    parent = parent->State.Parent;
-                }
-                
             }
 
             if(hovered != nullptr)
@@ -1680,7 +1630,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         {
             if(_Context == nullptr) return false;
 
-            for (auto next : _Context->m_NodesDrawList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
 
@@ -1722,7 +1672,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     return false;
             }
 
-            for (auto next : _Context->m_NodesDrawList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
 
@@ -1793,7 +1743,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             }
 
             // scroll
-            for (auto next : _Context->m_NodesDrawList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
 
@@ -1848,7 +1798,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     return false;
             }
 
-            for (auto next : _Context->m_NodesDrawList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Context->ui_node_is_being_moved(next))
                 {
@@ -1857,7 +1807,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 }
             }
             
-            for (auto next : _Context->m_NodesDrawList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Filter != nullptr && !_Filter(next)) continue;
 
@@ -1894,7 +1844,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         {
             if(_Sink == nullptr) return;
 
-            for (auto& window : _Context->m_NodesDrawList)
+            for (auto& window : _Context->m_NodesRenderingList)
             {
                 if(window == _Sink)
                     continue;
@@ -1932,7 +1882,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
 void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
 {
-    for (auto window : m_NodesDrawList)
+    for (auto window : m_NodesRenderingList)
     {
         if(ui_node_is_being_resized(window))
         {
@@ -2025,7 +1975,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
 
 void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
 {
-    for (auto& cachedWindow : m_NodesDrawList)
+    for (auto& cachedWindow : m_NodesRenderingList)
     {
         // save state
         if(!ui_node_is_being_modified(cachedWindow))
@@ -2035,6 +1985,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->Cache.Layer     = cachedWindow->State.Layer;
         cachedWindow->Cache.Depth     = cachedWindow->State.Depth;
         cachedWindow->Cache.Thickness = cachedWindow->State.Thickness;
+        cachedWindow->Cache.TotalDepth= cachedWindow->State.TotalDepth;
 
         // events
         cachedWindow->Cache.Changes            = cachedWindow->State.Changes;
@@ -2059,6 +2010,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.Depth                   = 0;
         cachedWindow->State.Parent                  = nullptr;
         cachedWindow->State.Thickness               = 0;
+        cachedWindow->State.TotalDepth              = 0;
         cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
         cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
     }
@@ -2071,9 +2023,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
     m_WidgetHasBeenMouseDoubleClicked.reset();
 
     // clear hierarchy and draw lists
-    GS_ASSERT(m_NodesHierarchy.empty());
-    m_NodesDrawList.clear();
-    m_NodesHierarchy.clear();
+    GS_ASSERT(m_NodesRenderingStack.empty());
+    m_NodesRenderingList.clear();
+    m_NodesRenderingStack.clear();
 }
 
 bool ImmedidateUserInterfaceContextLayer::widget_is_being_hovered() const

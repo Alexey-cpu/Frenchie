@@ -72,7 +72,7 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeType_Window        = 1 << 1,
             ImmedidateUserInterfaceNodeType_WindowFrame   = 1 << 2,
             ImmedidateUserInterfaceNodeType_WindowMenubar = 1 << 3,
-            ImmedidateUserInterfaceNodeType_Menu          = 1 << 4,
+            ImmedidateUserInterfaceNodeType_WindowMenu    = 1 << 4,
         };
 
         enum ImmedidateUserInterfaceNodeLayer_
@@ -253,6 +253,7 @@ namespace Frenchie
 
             // hierarchy
             mutable int                          Depth      {0};
+            mutable int                          TotalDepth {0};
             mutable ImmedidateUserInterfaceNode* Parent     {nullptr}; // parent is never nullptr as ALL windows are cached...
             mutable int                          Thickness  {0};
 
@@ -360,8 +361,8 @@ namespace Frenchie
             };
 
             // nodes drawing
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesHierarchy         {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesDrawList          {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList  {std::vector<ImmedidateUserInterfaceNode*>()};
 
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()       };
             mutable Frenchie::Core::Optional<gs_vec2f>        m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()       };
@@ -399,9 +400,9 @@ namespace Frenchie
             void end_node();
 
             void ui_node_calculate_geometry(ImmedidateUserInterfaceNode*) const;
-            int  ui_node_next_layer_depth(ImmedidateUserInterfaceNode*) const;
-            int  ui_node_last_layer_depth(ImmedidateUserInterfaceNode*) const;
-            int  ui_node_base_layer_depth(const ImmedidateUserInterfaceNodeLayer&) const;
+            int  ui_node_calculate_layer_depth(const ImmedidateUserInterfaceNodeLayer&) const;
+            int  ui_node_calculate_child_depth_placed_in_follow(ImmedidateUserInterfaceNode* _Where, const int& _ChildThickness) const;
+            int  ui_node_calculate_child_depth_placed_in_parallel(ImmedidateUserInterfaceNode* _Where, const int& _ChildThickness) const;
             
             gs_vec2f ui_node_vertical_cursor_direction() const;
             gs_vec2f ui_node_horizontal_cursor_direction() const;
