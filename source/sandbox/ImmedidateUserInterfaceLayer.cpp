@@ -22,7 +22,7 @@ namespace Frenchie
 
                     if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
                     {
-                        if(hovered == nullptr || next->State.Depth > hovered->State.Depth)
+                        if(hovered == nullptr || next->State.LayerDepth > hovered->State.LayerDepth)
                             hovered = next;
                     }
                 }
@@ -666,7 +666,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     {
         // setup hierarchy
         window->State.Parent                                 = ui_node_hierarchy_top();
-        window->State.Depth                                  = ui_node_calculate_child_depth_placed_in_follow(window->State.Parent, 1);
+        window->State.LayerDepth                             = ui_node_calculate_child_depth_placed_in_follow(window->State.Parent, 1);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
 
         // move cursor
@@ -703,18 +703,17 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     else
     {
         // calculate window initial depth
-        int windowMaximumDepth = ui_node_calculate_layer_depth(window->Cache.Layer);
+        window->State.LayerDepth =
+            ui_node_calculate_layer_depth(window->Cache.Layer);
 
         for (auto& drawnWindow : m_NodesRenderingList)
         {
             if(drawnWindow->Cache.Layer == window->Cache.Layer)
             {
-                windowMaximumDepth =
-                    gs_max(drawnWindow->State.Depth + drawnWindow->State.Thickness + 1, windowMaximumDepth);
+                window->State.LayerDepth =
+                    gs_max(drawnWindow->State.TotalDepth + 1, window->State.LayerDepth);
             }
         }
-
-        window->State.Depth = windowMaximumDepth;
     }
 
     ui_node_calculate_geometry(window);
@@ -1222,7 +1221,7 @@ int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in
     if(_Window == nullptr) return 0;
     
     _Window->State.Thickness += _Thickness;
-    _Window->State.TotalDepth = _Window->State.Depth + _Window->State.Thickness;
+    _Window->State.TotalDepth = _Window->State.LayerDepth + _Window->State.Thickness;
     return  _Window->State.TotalDepth;
 }
 
@@ -1230,10 +1229,10 @@ int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in
 {
     if(_Window == nullptr) return 0;
 
-    if(_Window->State.TotalDepth + _Thickness > _Window->State.Depth + _Window->State.Thickness)
+    if(_Window->State.TotalDepth + _Thickness > _Window->State.LayerDepth + _Window->State.Thickness)
     {
         _Window->State.Thickness += _Thickness;
-        _Window->State.TotalDepth = _Window->State.Depth + _Window->State.Thickness;
+        _Window->State.TotalDepth = _Window->State.LayerDepth + _Window->State.Thickness;
     }
 
     return _Window->State.TotalDepth;
@@ -1838,17 +1837,20 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
 
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
+    // layering
     for (auto& window : m_NodesRenderingList)
     {
-        // layers
         if(ui_node_is_being_focused(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus;
         else if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu)
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
         else
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
+    }
 
-        // geometry
+    // layouting
+    for (auto& window : m_NodesRenderingList)
+    {
         if(window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent)
         {
             window->State.WindowBox = gs_2dboxf(
@@ -2000,7 +2002,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
 
         // layers
         cachedWindow->Cache.Layer     = cachedWindow->State.Layer;
-        cachedWindow->Cache.Depth     = cachedWindow->State.Depth;
+        cachedWindow->Cache.LayerDepth     = cachedWindow->State.LayerDepth;
         cachedWindow->Cache.Thickness = cachedWindow->State.Thickness;
         cachedWindow->Cache.TotalDepth= cachedWindow->State.TotalDepth;
 
@@ -2024,7 +2026,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.ContentBox           = gs_2dboxf(cachedWindow->State.ViewportBox.Min, cachedWindow->State.ViewportBox.Min);
 
         // hierarchy
-        cachedWindow->State.Depth                   = 0;
+        cachedWindow->State.LayerDepth                   = 0;
         cachedWindow->State.Parent                  = nullptr;
         cachedWindow->State.Thickness               = 0;
         cachedWindow->State.TotalDepth              = 0;
