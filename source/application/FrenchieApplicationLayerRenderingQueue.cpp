@@ -314,9 +314,17 @@ void RenderingQueue::frame_render()
 
         if(rendererCommand.has_value())
         {
+            // clipping box
             if(rendererCommand.value().ClippingBox.has_value())
             {
+                // retrieve clipping rect and display scale
                 auto clippingRect = rendererCommand.value().ClippingBox.value();
+                auto displayScale = application()->get_window_framebuffer_size() / application()->get_window_size();
+
+                // apply clipping rect
+                clippingRect = gs_2dboxf(
+                    clippingRect.Min * displayScale,
+                    clippingRect.Max * displayScale);
 
                 glEnable(GL_SCISSOR_TEST);
 
@@ -327,6 +335,7 @@ void RenderingQueue::frame_render()
                     (int)clippingRect.height());
             }
 
+            // clear color
             if(rendererCommand.value().ClearColor.has_value())
             {
                 gs_vec4f clearColor = rendererCommand.value().ClearColor.value() / 255.f;
