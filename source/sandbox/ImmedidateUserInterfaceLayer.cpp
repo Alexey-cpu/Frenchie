@@ -2,6 +2,319 @@
 
 using namespace Frenchie::Application;
 
+namespace Frenchie
+{
+    namespace Application
+    {
+        class ImmedidateUserInterfaceContextEventsReceiver
+        {
+        public:
+            static bool receive_hover_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                if(_Context == nullptr) return false;
+
+                ImmedidateUserInterfaceNode* hovered = nullptr;
+
+                // find the top most hovered node
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Filter != nullptr && !_Filter(next)) continue;
+
+                    if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                    {
+                        if(hovered == nullptr || next->State.Depth > hovered->State.Depth)
+                            hovered = next;
+                    }
+                }
+
+                if(hovered != nullptr)
+                {
+                    _Context->ui_node_begin_hover(hovered);
+
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        hovered->State.WindowBox.Min,
+                        hovered->State.WindowBox.Max,
+                        0.f,
+                        12.f,
+                        gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                        hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
+                }
+
+                return hovered != nullptr;
+            }
+
+            static bool receive_focus_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                // pass focus
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                        button++)
+                {
+                    if(!application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                        continue;
+
+                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                        return false;
+
+                    for (auto drawnWindow : _Context->m_NodesRenderingList)
+                    {
+                        if(!_Context->ui_node_is_being_hovered(drawnWindow)) continue;
+                        _Context->ui_node_begin_focus(drawnWindow);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static bool receive_mouse_events(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                if(_Context == nullptr) return false;
+
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Filter != nullptr && !_Filter(next)) continue;
+
+                    if(!_Context->ui_node_is_being_hovered(next)) continue;
+
+                    for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                            button < ApplicationMouseButton::ApplicationMouseButton_End;
+                            button++)
+                    {
+                        if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                            return false;
+
+                        if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+                            next->State.MouseDown = (ApplicationMouseButton::Button)button;
+
+                        if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                            next->State.MousePressed = (ApplicationMouseButton::Button)button;
+
+                        if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+                            next->State.MouseClicked = (ApplicationMouseButton::Button)button;
+
+                        if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+                            next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+                    }
+                }
+
+                return true;
+            }
+
+            static bool receive_resize_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                if(_Context == nullptr) return false;
+                
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                            button < ApplicationMouseButton::ApplicationMouseButton_End;
+                            button++)
+                {
+                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                        return false;
+                }
+
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Filter != nullptr && !_Filter(next)) continue;
+
+                    if(!_Context->ui_node_is_being_focused(next)) continue;
+
+                    gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(next->State.WindowBox.Min, _Context->m_Style->WindowResizeAngleGizmoRadius);
+                    gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), 0.f), _Context->m_Style->WindowResizeAngleGizmoRadius);
+                    gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(next->State.WindowBox.Max - gs_vec2f(next->State.WindowBox.width(), 0.f), _Context->m_Style->WindowResizeAngleGizmoRadius);
+                    gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(next->State.WindowBox.Max, _Context->m_Style->WindowResizeAngleGizmoRadius);
+                    gs_2dboxf      resizeTop         = gs_2dboxf(next->State.WindowBox.Min - gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), _Context->m_Style->WindowResizeSideGizmoWidth));
+                    gs_2dboxf      resizeLeft        = gs_2dboxf(next->State.WindowBox.Min - gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Min + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, next->State.WindowBox.height()));
+                    gs_2dboxf      resizeRight       = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width() - _Context->m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Max + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f));
+                    gs_2dboxf      resizeBottom      = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(0.f, next->State.WindowBox.height() - _Context->m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Max + gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth));
+
+                    // resize
+                    if( (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable) &&
+                        application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
+                        !_Context->ui_node_is_being_scrolled(next)                                                                   &&
+                        !_Context->ui_node_is_being_resized(next)                                                                    &&
+                        !_Context->ui_node_is_being_moved(next))
+                    {
+                        if(resizeTopLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_top_left(next);
+                        else if(resizeTopRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_top_right(next);
+                        else if(resizeBottomLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_bottom_left(next);
+                        else if(resizeBottomRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_bottom_right(next);
+                        else if(resizeTop.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_top(next);
+                        else if(resizeLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_left(next);
+                        else if(resizeRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_right(next);
+                        else if(resizeBottom.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                            _Context->ui_node_begin_resize_bottom(next);
+                    }
+
+                    if(_Context->ui_node_is_being_resized(next))
+                    {
+                        // parent
+                        if(next->State.Parent == nullptr)
+                        {
+                            receive_finish(_Context, next);
+                            return true;
+                        }
+
+                        // child
+                        receive_finish(_Context, next);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static bool receive_scroll_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                if(_Context == nullptr) return false;
+
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                            button < ApplicationMouseButton::ApplicationMouseButton_End;
+                            button++)
+                {
+                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                        return false;
+                }
+
+                // scroll
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Filter != nullptr && !_Filter(next)) continue;
+
+                    if(!_Context->ui_node_is_being_focused(next) &&
+                    !_Context->ui_node_is_being_hovered(next)) continue;
+
+                    if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                  &&
+                        next->State.VerticalScrollBarSliderBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
+                        _Context->ui_node_is_vertical_scroll_bar_needed(next)                                                                        &&
+                        !_Context->ui_node_is_being_resized(next)                                                                                    &&
+                        !_Context->ui_node_is_being_moved(next))
+                    {
+                        _Context->ui_node_begin_scroll_vertically(next);
+                    }
+
+                    if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                    &&
+                        next->State.HorizontalScrollBarSliderBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
+                        _Context->ui_node_is_horizontal_scroll_bar_needed(next)                                                                        &&
+                        !_Context->ui_node_is_being_resized(next)                                                                                      &&
+                        !_Context->ui_node_is_being_moved(next))
+                    {
+                        _Context->ui_node_begin_scroll_horizontally(next);
+                    }
+
+                    if(_Context->ui_node_is_being_scrolled(next))
+                    {
+                        // child
+                        if(next->State.Parent != nullptr)
+                        {
+                            receive_finish(_Context, next);
+                            return true;
+                        }
+
+                        // parent
+                        receive_finish(_Context, next);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static bool receive_move_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                if(_Context == nullptr) return false;
+
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                        button++)
+                {
+                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                        return false;
+                }
+
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Context->ui_node_is_being_moved(next))
+                    {
+                        receive_finish(_Context, next);
+                        return true;
+                    }
+                }
+                
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Filter != nullptr && !_Filter(next)) continue;
+
+                    if(!_Context->ui_node_is_being_focused(next)) continue;
+
+                    if( (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)    &&
+                        application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                   &&
+                        next->State.ViewportBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
+                        !_Context->ui_node_is_being_resized(next)                                                                     &&
+                        !_Context->ui_node_is_being_scrolled(next))
+                    {
+                        _Context->ui_node_begin_move(next);
+                    }
+
+                    if(_Context->ui_node_is_being_moved(next))
+                    {
+                        // parent
+                        if(next->State.Parent == nullptr)
+                        {
+                            receive_finish(_Context, next);
+                            return true;
+                        }
+
+                        // child
+                        receive_finish(_Context, next);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static void receive_finish(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Sink)
+            {
+                if(_Sink == nullptr) return;
+
+                for (auto& window : _Context->m_NodesRenderingList)
+                {
+                    if(window == _Sink)
+                        continue;
+
+                    _Context->ui_node_end_move(window);
+                    _Context->ui_node_end_resize(window);
+                    _Context->ui_node_end_scroll(window);
+                }
+
+                bool allMouseButtonsAreReleased = true;
+
+                for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+                {
+                    allMouseButtonsAreReleased =
+                        allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+                }
+
+                if(allMouseButtonsAreReleased)
+                {
+                    _Context->ui_node_end_move(_Sink);
+                    _Context->ui_node_end_resize(_Sink);
+                    _Context->ui_node_end_scroll(_Sink);
+                }
+            };
+        };
+    }
+}
+
 // Immedidate2DRendererTestLayer
 ImmedidateUserInterfaceContextLayer::ImmedidateUserInterfaceContextLayer(){}
 ImmedidateUserInterfaceContextLayer::~ImmedidateUserInterfaceContextLayer(){}
@@ -228,7 +541,17 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
     if(begin_window("Window-2", nullptr))
     {
-        if(begin_window("Window-3", nullptr))end_window();
+        if(begin_window("Window-3", nullptr))
+        {
+            if(begin_node("Window-3-content", nullptr, ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
+            {
+                if(begin_window("Window-33", nullptr))end_window();
+                if(begin_window("Window-44", nullptr))end_window();
+                end_node();
+            }
+
+            end_window();
+        }
         if(begin_window("Window-4", nullptr))end_window();
 
         end_window();
@@ -611,8 +934,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_menubar(const std::string& _Name
 
     if(begin_node(_Name, nullptr, settings, type))
     {
-        ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + m_Style->FrameWidth * 2.f;
-        ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + m_Style->FrameWidth * 2.f;
+        ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + m_Style->FrameWidth * 2.f + ui_node_hierarchy_top()->State.ScrollBarOffset.y;
+        ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + m_Style->FrameWidth * 2.f + ui_node_hierarchy_top()->State.ScrollBarOffset.y;
         return true;
     }
 
@@ -1563,321 +1886,15 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 
 void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 {
-    if(m_NodesRenderingList.empty()) return;
+    if(m_NodesRenderingList.empty())
+        return;
 
-    class EventsReceiver
-    {
-    public:
-        static bool receive_focus_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
-        {
-            // pass focus
-            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                     button < ApplicationMouseButton::ApplicationMouseButton_End;
-                     button++)
-            {
-                if(!application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
-                    continue;
-
-                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
-                    return false;
-
-                for (auto drawnWindow : _Context->m_NodesRenderingList)
-                {
-                    if(!_Context->ui_node_is_being_hovered(drawnWindow)) continue;
-                    _Context->ui_node_begin_focus(drawnWindow);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static bool receive_hover_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
-        {
-            if(_Context == nullptr) return false;
-
-            ImmedidateUserInterfaceNode* hovered = nullptr;
-
-            // find the top most hovered node
-            for (auto next : _Context->m_NodesRenderingList)
-            {
-                if(_Filter != nullptr && !_Filter(next)) continue;
-
-                if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                {
-                    if(hovered == nullptr || hovered->State.Depth < next->State.Depth)
-                        hovered = next;
-                }
-            }
-
-            if(hovered != nullptr)
-            {
-                _Context->ui_node_begin_hover(hovered);
-
-                _Context->m_Renderer->push_rectangle_rounded(
-                    hovered->State.WindowBox.Min,
-                    hovered->State.WindowBox.Max,
-                    0.f,
-                    12.f,
-                    gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                    hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
-            }
-
-            return hovered != nullptr;
-        }
-
-        static bool receive_mouse_events(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
-        {
-            if(_Context == nullptr) return false;
-
-            for (auto next : _Context->m_NodesRenderingList)
-            {
-                if(_Filter != nullptr && !_Filter(next)) continue;
-
-                if(!_Context->ui_node_is_being_hovered(next)) continue;
-
-                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                         button < ApplicationMouseButton::ApplicationMouseButton_End;
-                         button++)
-                {
-                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
-                        return false;
-
-                    if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
-                        next->State.MouseDown = (ApplicationMouseButton::Button)button;
-
-                    if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
-                        next->State.MousePressed = (ApplicationMouseButton::Button)button;
-
-                    if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
-                        next->State.MouseClicked = (ApplicationMouseButton::Button)button;
-
-                    if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
-                        next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
-                }
-            }
-
-            return true;
-        }
-
-        static bool receive_resize_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
-        {
-            if(_Context == nullptr) return false;
-            
-            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::ApplicationMouseButton_End;
-                        button++)
-            {
-                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
-                    return false;
-            }
-
-            for (auto next : _Context->m_NodesRenderingList)
-            {
-                if(_Filter != nullptr && !_Filter(next)) continue;
-
-                if(!_Context->ui_node_is_being_focused(next)) continue;
-
-                gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(next->State.WindowBox.Min, _Context->m_Style->WindowResizeAngleGizmoRadius);
-                gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), 0.f), _Context->m_Style->WindowResizeAngleGizmoRadius);
-                gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(next->State.WindowBox.Max - gs_vec2f(next->State.WindowBox.width(), 0.f), _Context->m_Style->WindowResizeAngleGizmoRadius);
-                gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(next->State.WindowBox.Max, _Context->m_Style->WindowResizeAngleGizmoRadius);
-                gs_2dboxf      resizeTop         = gs_2dboxf(next->State.WindowBox.Min - gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width(), _Context->m_Style->WindowResizeSideGizmoWidth));
-                gs_2dboxf      resizeLeft        = gs_2dboxf(next->State.WindowBox.Min - gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Min + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, next->State.WindowBox.height()));
-                gs_2dboxf      resizeRight       = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width() - _Context->m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Max + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f));
-                gs_2dboxf      resizeBottom      = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(0.f, next->State.WindowBox.height() - _Context->m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Max + gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth));
-
-                // resize
-                if( (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable) &&
-                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
-                    !_Context->ui_node_is_being_scrolled(next)                                                                   &&
-                    !_Context->ui_node_is_being_resized(next)                                                                    &&
-                    !_Context->ui_node_is_being_moved(next))
-                {
-                    if(resizeTopLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_top_left(next);
-                    else if(resizeTopRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_top_right(next);
-                    else if(resizeBottomLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_bottom_left(next);
-                    else if(resizeBottomRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_bottom_right(next);
-                    else if(resizeTop.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_top(next);
-                    else if(resizeLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_left(next);
-                    else if(resizeRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_right(next);
-                    else if(resizeBottom.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_begin_resize_bottom(next);
-                }
-
-                if(_Context->ui_node_is_being_resized(next))
-                {
-                    // parent
-                    if(next->State.Parent == nullptr)
-                    {
-                        receive_finish(_Context, next);
-                        return true;
-                    }
-
-                    // child
-                    receive_finish(_Context, next);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static bool receive_scroll_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
-        {
-            if(_Context == nullptr) return false;
-
-            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::ApplicationMouseButton_End;
-                        button++)
-            {
-                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
-                    return false;
-            }
-
-            // scroll
-            for (auto next : _Context->m_NodesRenderingList)
-            {
-                if(_Filter != nullptr && !_Filter(next)) continue;
-
-                if(!_Context->ui_node_is_being_focused(next) &&
-                   !_Context->ui_node_is_being_hovered(next)) continue;
-
-                if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                  &&
-                    next->State.VerticalScrollBarSliderBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
-                    _Context->ui_node_is_vertical_scroll_bar_needed(next)                                                                        &&
-                    !_Context->ui_node_is_being_resized(next)                                                                                    &&
-                    !_Context->ui_node_is_being_moved(next))
-                {
-                    _Context->ui_node_begin_scroll_vertically(next);
-                }
-
-                if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                    &&
-                    next->State.HorizontalScrollBarSliderBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
-                    _Context->ui_node_is_horizontal_scroll_bar_needed(next)                                                                        &&
-                    !_Context->ui_node_is_being_resized(next)                                                                                      &&
-                    !_Context->ui_node_is_being_moved(next))
-                {
-                    _Context->ui_node_begin_scroll_horizontally(next);
-                }
-
-                if(_Context->ui_node_is_being_scrolled(next))
-                {
-                    // child
-                    if(next->State.Parent != nullptr)
-                    {
-                        receive_finish(_Context, next);
-                        return true;
-                    }
-
-                    // parent
-                    receive_finish(_Context, next);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static bool receive_move_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
-        {
-            if(_Context == nullptr) return false;
-
-            for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                     button < ApplicationMouseButton::ApplicationMouseButton_End;
-                     button++)
-            {
-                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
-                    return false;
-            }
-
-            for (auto next : _Context->m_NodesRenderingList)
-            {
-                if(_Context->ui_node_is_being_moved(next))
-                {
-                    receive_finish(_Context, next);
-                    return true;
-                }
-            }
-            
-            for (auto next : _Context->m_NodesRenderingList)
-            {
-                if(_Filter != nullptr && !_Filter(next)) continue;
-
-                if(!_Context->ui_node_is_being_focused(next)) continue;
-
-                if( (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)    &&
-                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                   &&
-                    next->State.ViewportBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
-                    !_Context->ui_node_is_being_resized(next)                                                                     &&
-                    !_Context->ui_node_is_being_scrolled(next))
-                {
-                    _Context->ui_node_begin_move(next);
-                }
-
-                if(_Context->ui_node_is_being_moved(next))
-                {
-                    // parent
-                    if(next->State.Parent == nullptr)
-                    {
-                        receive_finish(_Context, next);
-                        return true;
-                    }
-
-                    // child
-                    receive_finish(_Context, next);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        static void receive_finish(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Sink)
-        {
-            if(_Sink == nullptr) return;
-
-            for (auto& window : _Context->m_NodesRenderingList)
-            {
-                if(window == _Sink)
-                    continue;
-
-                _Context->ui_node_end_move(window);
-                _Context->ui_node_end_resize(window);
-                _Context->ui_node_end_scroll(window);
-            }
-
-            bool allMouseButtonsAreReleased = true;
-
-            for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                    button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-            {
-                allMouseButtonsAreReleased =
-                    allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-            }
-
-            if(allMouseButtonsAreReleased)
-            {
-                _Context->ui_node_end_move(_Sink);
-                _Context->ui_node_end_resize(_Sink);
-                _Context->ui_node_end_scroll(_Sink);
-            }
-        };
-    };
-
-    EventsReceiver::receive_focus_event(this);
-    EventsReceiver::receive_hover_event(this);
-    EventsReceiver::receive_mouse_events(this);
-    if(EventsReceiver::receive_resize_event(this)) return;
-    if(EventsReceiver::receive_scroll_event(this)) return;
-    if(EventsReceiver::receive_move_event(this)) return;
+    ImmedidateUserInterfaceContextEventsReceiver::receive_focus_event(this);
+    ImmedidateUserInterfaceContextEventsReceiver::receive_hover_event(this);
+    ImmedidateUserInterfaceContextEventsReceiver::receive_mouse_events(this);
+    if(ImmedidateUserInterfaceContextEventsReceiver::receive_resize_event(this)) return;
+    if(ImmedidateUserInterfaceContextEventsReceiver::receive_scroll_event(this)) return;
+    if(ImmedidateUserInterfaceContextEventsReceiver::receive_move_event(this)) return;
 }
 
 void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
