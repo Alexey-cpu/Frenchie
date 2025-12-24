@@ -402,21 +402,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
 
     // memorize current clipping
     if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
-    {
-        if((window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent))
-        {
-            auto parent = ui_node_hierarchy_top();
-
-            while (parent)
-            {
-                m_NodesClipBoxes.push_back(m_Renderer->current_clip_box());
-                m_Renderer->pop_clip_box();
-                parent = parent->State.Parent;
-            }
-        }
-
         ui_node_render_clipbox(window);
-    }
 
     ui_node_render_background(window);
 
@@ -456,13 +442,6 @@ void ImmedidateUserInterfaceContextLayer::end_node()
         m_Renderer->pop_clip_box();
 
     ui_node_render_background_frame(ui_node_hierarchy_top());
-
-    if((ui_node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent) && !m_NodesClipBoxes.empty())
-    {
-        m_Renderer->push_clip_box(m_NodesClipBoxes[m_NodesClipBoxes.size() - 1]);
-        m_NodesClipBoxes.pop_back();
-    }
-
     ui_node_render_resize_events_gizmos(ui_node_hierarchy_top());
 
     m_NodesHierarchy.pop_back();
