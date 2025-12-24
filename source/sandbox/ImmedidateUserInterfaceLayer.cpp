@@ -571,7 +571,7 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
     // render cursor
     m_Renderer->push_text(
         std::to_string(m_Renderer->get_cursor_postion().x).append(" ").append(
-             std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(FPS))),
+             std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(m_Renderer->get_measured_frame_rate()))),
         m_Style->FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane(), m_Renderer->get_cursor_postion() + gs_vec3f(Immediate2DRenderer::bottom_right(gs_vec2f(12.f, 12.f)))));
@@ -583,17 +583,6 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         8.f,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         0.f);
-
-    if(Frames >= 60)
-    {
-        FPS    = Frames * 1e6 / Frenchie::Core::elapsed<std::chrono::microseconds>(Start, Frenchie::Core::tic());
-        Frames = 0;
-    }
-
-    if(Frames <= 0)
-        Start = Frenchie::Core::tic();
-
-    Frames++;
 }
 
 void ImmedidateUserInterfaceContextLayer::frame_finish()
@@ -636,10 +625,10 @@ ImmedidateUserInterfaceNode* ImmedidateUserInterfaceContextLayer::ui_node_cache_
 {
     if(m_NodesCache[_Type].find(_Name) == m_NodesCache[_Type].end())
     {
-        // create window
+        // create node
         std::unique_ptr<ImmedidateUserInterfaceNode> window = std::make_unique<ImmedidateUserInterfaceNode>();
         
-        // move window to cache
+        // setup node and move it into the cache
         window->Name               = _Name;
         m_NodesCache[_Type][_Name] = std::move(window);
     }
@@ -886,7 +875,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
         if(isHovered)
         {
-            m_HoveredMenus.push_back(
+            m_ActiveMenusRenderingList.push_back(
                 {
                     cachedMenu,
                     ui_node_hierarchy_top()
@@ -897,7 +886,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
         {
             bool anyHovered = false;
 
-            for (auto& window : m_HoveredMenus)
+            for (auto& window : m_ActiveMenusRenderingList)
             {
                 if((window.Self->State.Type & ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu))
                 {
@@ -909,7 +898,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
             }
 
             if(!anyHovered)
-                m_HoveredMenus.clear();
+                m_ActiveMenusRenderingList.clear();
         }
 
         // check that creator window has been focused
@@ -930,15 +919,15 @@ bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 
         if(!isHovered)
         {
-            for(auto it = m_HoveredMenus.begin(); it != m_HoveredMenus.end(); ++it)
+            for(auto it = m_ActiveMenusRenderingList.begin(); it != m_ActiveMenusRenderingList.end(); ++it)
             {
                 if(it->Self == cachedMenu)
                 {
                     auto rm = it;
                     it++;
-                    m_HoveredMenus.erase(rm);
+                    m_ActiveMenusRenderingList.erase(rm);
 
-                    if(it == m_HoveredMenus.end())
+                    if(it == m_ActiveMenusRenderingList.end())
                         break;
                 }
             }

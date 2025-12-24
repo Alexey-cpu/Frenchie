@@ -303,6 +303,12 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNodeState Cache{ImmedidateUserInterfaceNodeState()};
         };
 
+        struct ImmedidateUserInterfaceMenu
+        {
+            ImmedidateUserInterfaceNode* Self      {nullptr};
+            ImmedidateUserInterfaceNode* Observable{nullptr};
+        };
+
         class ImmedidateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -344,10 +350,6 @@ namespace Frenchie
 
         protected:
 
-            std::chrono::high_resolution_clock::time_point Start;
-            int                                            Frames = 0;
-            double                                         FPS    = 0.0;
-
             // info
             mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
             mutable std::shared_ptr<Immediate2DRenderer>          m_Renderer{nullptr};
@@ -366,8 +368,9 @@ namespace Frenchie
             };
 
             // nodes drawing
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingStack    {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingList     {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingStack     {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingList      {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
 
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
@@ -385,16 +388,7 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMousePressed      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
             mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseClicked      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
             mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetHasBeenMouseDoubleClicked{Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
-
-            // menus
-            struct Menu
-            {
-                ImmedidateUserInterfaceNode* Self      {nullptr};
-                ImmedidateUserInterfaceNode* Observable{nullptr};
-            };
-
-            std::list<Menu> m_HoveredMenus;
-
+            
             // user interface nodes API
             bool begin_node(
                 const std::string&                  _Name,
