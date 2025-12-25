@@ -264,10 +264,10 @@ namespace Frenchie
             mutable int                          LayerDepth {0};
 
             // layouting
+            mutable gs_vec2f LayoutTotalChildrenSize{gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
             mutable gs_vec2f LayoutCursorPositon    {gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorSize       {gs_vec2f(0.f, 0.f)};
-            mutable gs_vec2f LayoutTotalChildrenSize{gs_vec2f(0.f, 0.f)};
             mutable float    WindowMinimumWidth     {128.f};
             mutable float    WindowMinimumHeight    {128.f};
             mutable float    WindowMaximumWidth     {(float)INT_MAX};
