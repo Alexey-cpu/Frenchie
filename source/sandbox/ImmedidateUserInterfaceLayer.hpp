@@ -273,6 +273,12 @@ namespace Frenchie
             mutable float    WindowMaximumWidth     {(float)INT_MAX};
             mutable float    WindowMaximumHeight    {(float)INT_MAX};
 
+            // docking
+            ImmedidateUserInterfaceNode* Docker       {nullptr};
+            gs_2dboxf                    DockArea     {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
+            gs_2dboxf                    DockFrame    {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
+            gs_vec2f                     DockNodesSize{gs_vec2f(0.f, 0.f)};
+
             // scrolling
             mutable ImmedidateUserInterfaceNodeScroll VerticalScrollBar;
             mutable ImmedidateUserInterfaceNodeScroll HorizontalScrollBar;

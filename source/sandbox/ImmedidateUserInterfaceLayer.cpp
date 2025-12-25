@@ -281,6 +281,66 @@ namespace Frenchie
                 return false;
             }
 
+            static bool receive_dock_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
+            {
+                if(_Context == nullptr) return false;
+
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                        button++)
+                {
+                    if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                        return false;
+                }
+
+                // find currently moved node with missing parent
+                ImmedidateUserInterfaceNode* moved = nullptr;
+                
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Context->ui_node_is_being_moved(next) && next->State.Parent == nullptr)
+                    {
+                        moved               = next;
+                        moved->State.Docker = nullptr;
+                        break;
+                    }
+                }
+                
+                // find the top most hovered node not equal to the moved one
+                ImmedidateUserInterfaceNode* hovered = moved;
+
+                for (auto next : _Context->m_NodesRenderingList)
+                {
+                    if(_Filter != nullptr && !_Filter(next)) continue;
+
+                    if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                    {
+                        if(next != moved && next->State.Parent == nullptr)
+                        {
+                            hovered = next;
+                        }
+                    }
+                }
+
+                // setup docker
+                if(hovered != nullptr && moved != nullptr && hovered != moved)
+                {
+                    std::cout << hovered->Name << "\t" << moved->Name << "\n";
+
+                    moved->State.Docker = hovered;
+
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        hovered->State.WindowBox.Min,
+                        hovered->State.WindowBox.Max,
+                        0.f,
+                        12.f,
+                        gs_vec4f(0.f, 0.f, 255.f, 255.f),
+                        hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
+                }
+
+                return hovered != nullptr && moved != nullptr && hovered != moved;
+            }
+
             static void receive_finish(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Sink)
             {
                 if(_Sink == nullptr) return;
@@ -672,13 +732,13 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     ImmedidateUserInterfaceNode* window = ui_node_cache_request(_Name, _Type);
     window->State.Type                  = _Type;
     window->State.Settings              = _Settings;
+    window->State.Creator               = ui_node_hierarchy_top();
 
     if(!ui_node_hierarchy_is_empty() &&
         !(window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent))
     {
         // setup hierarchy
         window->State.Parent                                 = ui_node_hierarchy_top();
-        window->State.Creator                                = ui_node_hierarchy_top();
         window->State.LayerDepth                             = ui_node_calculate_child_depth_placed_in_follow(window->State.Parent, 1);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
 
@@ -715,18 +775,24 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     }
     else
     {
-        window->State.Creator = ui_node_hierarchy_top();
-
-        // calculate window initial depth
-        window->State.LayerDepth =
-            ui_node_calculate_layer_depth(window->Cache.Layer);
-
-        for (auto& drawnWindow : m_NodesRenderingList)
+        if(window->State.Docker != nullptr)
         {
-            if(drawnWindow->Cache.Layer == window->Cache.Layer)
+            window->State.LayerDepth =
+                window->Cache.LayerDepth;
+        }
+        else
+        {
+            // calculate window initial depth
+            window->State.LayerDepth =
+                ui_node_calculate_layer_depth(window->Cache.Layer);
+
+            for (auto& drawnWindow : m_NodesRenderingList)
             {
-                window->State.LayerDepth =
-                    gs_max(drawnWindow->State.LayerDepth + drawnWindow->State.Thickness + 1, window->State.LayerDepth);
+                if(drawnWindow->Cache.Layer == window->Cache.Layer)
+                {
+                    window->State.LayerDepth =
+                        gs_max(drawnWindow->State.LayerDepth + drawnWindow->State.Thickness + 1, window->State.LayerDepth);
+                }
             }
         }
     }
@@ -1249,6 +1315,19 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
                     _Window->State.WindowBox.transform(_Window->State.Transform).Min - outerBorder,
                     _Window->State.WindowBox.transform(_Window->State.Transform).Max + outerBorder);
         }
+    }
+
+    // dockarea
+    {
+        _Window->State.DockFrame =
+            gs_2dboxf(
+                _Window->State.WindowBox.Min,
+                _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style->FontSize));
+        
+        _Window->State.DockArea =
+            gs_2dboxf(
+                _Window->State.WindowBox.Min + gs_vec2f(0.f, m_Style->FontSize),
+                _Window->State.WindowBox.Max);
     }
 
     ui_node_calculate_geometry(_Window->State.Parent);
@@ -1916,6 +1995,19 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
                     gs_vec2f(window->State.WindowMaximumWidth, window->State.WindowMaximumHeight)));
         }
     }
+
+    // docking
+    for (auto& window : m_NodesRenderingList)
+    {
+        if(window->State.Docker)
+        {
+            window->State.WindowBox =
+                window->State.Docker->State.DockArea;
+
+            window->State.LayerDepth =
+                ui_node_calculate_child_depth_placed_in_follow(window->State.Docker, 1);
+        }
+    }
 }
 
 void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
@@ -1926,6 +2018,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
     ImmedidateUserInterfaceContextEventsReceiver::receive_focus_event(this);
     ImmedidateUserInterfaceContextEventsReceiver::receive_hover_event(this);
     ImmedidateUserInterfaceContextEventsReceiver::receive_mouse_events(this);
+    ImmedidateUserInterfaceContextEventsReceiver::receive_dock_event(this);
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_resize_event(this)) return;
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_scroll_event(this)) return;
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_move_event(this)) return;
