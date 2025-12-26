@@ -1628,11 +1628,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
     {
         if(window->State.Docker)
         {
-            window->State.WindowBox =
-                window->State.Docker->State.DockArea;
-
-            window->State.LayerDepth =
-                ui_node_calculate_child_depth_placed_in_follow(window->State.Docker, 1);
+            window->State.WindowBox = window->State.Docker->State.DockArea;
         }
     }
 }
@@ -1918,8 +1914,12 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                                 allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
                         }
 
-                        if(allMouseButtonsAreReleased && movedNode->State.Docker != hovered)
+                        if(allMouseButtonsAreReleased &&
+                            movedNode->State.Docker != hovered &&
+                            hovered->State.Docker != movedNode)
+                        {
                             movedNode->State.Docker = hovered;
+                        }
                     }
                     else
                     {
