@@ -1974,6 +1974,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(!_Context->ui_node_is_being_moved(movedNode))
                     continue;
 
+                // here we always set to nullptr docker of the moving node
+                movedNode->State.Docker = nullptr;
+
                 // receive docking event here
                 if(movedNode->State.Parent == nullptr)
                 {
@@ -2019,10 +2022,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                         {
                             movedNode->State.Docker = hovered;
                         }
-                    }
-                    else
-                    {
-                        movedNode->State.Docker = nullptr;
                     }
                 }
 
