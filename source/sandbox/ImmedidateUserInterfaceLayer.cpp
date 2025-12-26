@@ -947,12 +947,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
     }
 
     // dockarea
-    {
-        _Window->State.DockFrame =
-            gs_2dboxf(
-                _Window->State.WindowBox.Min,
-                _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style->FontSize));
-        
+    {        
         _Window->State.DockArea =
             gs_2dboxf(
                 _Window->State.WindowBox.Min + gs_vec2f(0.f, m_Style->FontSize),
