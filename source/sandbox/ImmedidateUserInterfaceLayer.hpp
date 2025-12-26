@@ -71,6 +71,7 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeType_Node          = 1 << 0,
             ImmedidateUserInterfaceNodeType_Window        = 1 << 1,
             ImmedidateUserInterfaceNodeType_WindowFrame   = 1 << 2,
+            
             ImmedidateUserInterfaceNodeType_WindowMenubar = 1 << 3,
             ImmedidateUserInterfaceNodeType_WindowMenu    = 1 << 4,
         };
@@ -346,7 +347,7 @@ namespace Frenchie
             // hierarchical elements
             bool begin_window(const std::string& _Name, bool* _Rendered = nullptr);
             void end_window();
-            
+
             bool begin_menu(const std::string& _Name);
             void end_menu();
 
@@ -379,6 +380,10 @@ namespace Frenchie
             // nodes drawing
             mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingStack     {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingList      {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingCache     {std::vector<ImmedidateUserInterfaceNode*>()};
+
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_DockedWindows            {std::vector<ImmedidateUserInterfaceNode*>()};
+
             mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
 
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};

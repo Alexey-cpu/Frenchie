@@ -166,95 +166,113 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
     if(begin_window("Window-1", nullptr))
     {
-        if(begin_menubar("Window-1-Menubar-1"))
-        {
-            if(begin_menu("Menu-1"))
-            {
-                widget_menu_button("Action-1");
-                widget_menu_button("Action-2");
-                widget_menu_button("Action-3");
-                widget_menu_button("Action-4");
-                widget_menu_button("Action-5");
-                widget_menu_button("Action-6");
-                widget_menu_button("Action-7");
-                widget_menu_button("Action-8");
-                widget_menu_button("Action-9");
-                widget_menu_button("Action-10");
-                widget_menu_button("Action-11");
-                widget_menu_button("Action-12");
-
-                if(begin_menu("Menu-2"))
-                {
-                    widget_menu_button("Action-1");
-                    widget_menu_button("Action-2");
-                    widget_menu_button("Action-3");
-
-                    end_menu();
-                }
-
-                if(begin_menu("Menu-3"))
-                {
-                    widget_menu_button("Action-2");
-                    widget_menu_button("Action-3");
-
-                    if(begin_menu("Menu-4"))
-                    {
-                        widget_menu_button("Action-2");
-                        widget_menu_button("Action-3");
-                        end_menu();
-                    }
-
-                    end_menu();
-                }
-
-                end_menu();
-            }
-
-            if(begin_menu("Menu-111"))
-            {
-                widget_menu_button("Action-2");
-                widget_menu_button("Action-3");
-                end_menubar();
-            }
-
-            end_menubar();
-        }
-
-        if(begin_menubar("Window-1-Menubar-2"))
-        {
-            if(begin_menu("Menu-44")) end_menu();
-            if(begin_menu("Menu-33")) end_menu();
-
-            end_menubar();
-        }
-
-        //if(begin_node("Content"))
-        {
-            for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
-
-            //end_node();
-        }
-
+        widget_push_button("Window-1-BUTTON");
         end_window();
     }
 
     if(begin_window("Window-2", nullptr))
     {
-        if(begin_window("Window-3", nullptr))
-        {
-            if(begin_node("Window-3-content", nullptr, ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
-            {
-                if(begin_window("Window-33", nullptr))end_window();
-                if(begin_window("Window-44", nullptr))end_window();
-                end_node();
-            }
-
-            end_window();
-        }
-        if(begin_window("Window-4", nullptr))end_window();
-
+        widget_push_button("Window-2-BUTTON");
         end_window();
     }
+
+    if(begin_window("Window-3", nullptr))
+    {
+        widget_push_button("Window-3-BUTTON");
+        end_window();
+    }
+
+    // if(begin_window("Window-1", nullptr))
+    // {
+    //     if(begin_menubar("Window-1-Menubar-1"))
+    //     {
+    //         if(begin_menu("Menu-1"))
+    //         {
+    //             widget_menu_button("Action-1");
+    //             widget_menu_button("Action-2");
+    //             widget_menu_button("Action-3");
+    //             widget_menu_button("Action-4");
+    //             widget_menu_button("Action-5");
+    //             widget_menu_button("Action-6");
+    //             widget_menu_button("Action-7");
+    //             widget_menu_button("Action-8");
+    //             widget_menu_button("Action-9");
+    //             widget_menu_button("Action-10");
+    //             widget_menu_button("Action-11");
+    //             widget_menu_button("Action-12");
+
+    //             if(begin_menu("Menu-2"))
+    //             {
+    //                 widget_menu_button("Action-1");
+    //                 widget_menu_button("Action-2");
+    //                 widget_menu_button("Action-3");
+
+    //                 end_menu();
+    //             }
+
+    //             if(begin_menu("Menu-3"))
+    //             {
+    //                 widget_menu_button("Action-2");
+    //                 widget_menu_button("Action-3");
+
+    //                 if(begin_menu("Menu-4"))
+    //                 {
+    //                     widget_menu_button("Action-2");
+    //                     widget_menu_button("Action-3");
+    //                     end_menu();
+    //                 }
+
+    //                 end_menu();
+    //             }
+
+    //             end_menu();
+    //         }
+
+    //         if(begin_menu("Menu-111"))
+    //         {
+    //             widget_menu_button("Action-2");
+    //             widget_menu_button("Action-3");
+    //             end_menubar();
+    //         }
+
+    //         end_menubar();
+    //     }
+
+    //     if(begin_menubar("Window-1-Menubar-2"))
+    //     {
+    //         if(begin_menu("Menu-44")) end_menu();
+    //         if(begin_menu("Menu-33")) end_menu();
+
+    //         end_menubar();
+    //     }
+
+    //     //if(begin_node("Content"))
+    //     {
+    //         for(int i = 0; i < 1e1; ++i) widget_push_button("Button");
+
+    //         //end_node();
+    //     }
+
+    //     end_window();
+    // }
+
+    // if(begin_window("Window-2", nullptr))
+    // {
+    //     if(begin_window("Window-3", nullptr))
+    //     {
+    //         if(begin_node("Window-3-content", nullptr, ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
+    //         {
+    //             if(begin_window("Window-33", nullptr))end_window();
+    //             if(begin_window("Window-44", nullptr))end_window();
+    //             end_node();
+    //         }
+
+    //         end_window();
+    //     }
+    //     if(begin_window("Window-4", nullptr))end_window();
+
+    //     end_window();
+    // }
 
     // render cursor
     m_Renderer->push_text(
@@ -399,10 +417,15 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
         window->State.Transform = window->State.Parent->State.Transform * m_Renderer->calculate_transform_matrix(
             0.f,
             window->State.Parent->State.LayoutCursorPositon);
+
+        // don't move children
+        window->State.Settings &= ~ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable;
     }
     else
     {
-        if(window->State.Docker != nullptr)
+        if(window->State.Docker != nullptr    &&
+            !ui_node_is_being_focused(window) &&
+            !ui_node_is_being_focused(window->State.Docker))
         {
             // setup hierarchy
             window->State.LayerDepth = window->Cache.LayerDepth;
@@ -472,25 +495,16 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
 {
-    auto settings =
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically;
-
-    // TODO: how to identify if to detach child from parent ???
-    if(begin_node(
-        _Name,
-        _Rendered,
-        settings,
-        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
+    // auxiliary lambdas
+    auto begin_window_frame = [this](
+        const std::string&                         _Name,
+        bool*                                      _Rendered,
+        const ImmedidateUserInterfaceNodeSettings& _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar)->bool
     {
-        if(ui_node_hierarchy_top()->State.Docker) return true;
-
         if(begin_node(
             _Name,
             _Rendered,
-            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar,
+            _Settings | ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
             ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
         {
             ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
@@ -530,8 +544,85 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         (boundingBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
                 m_Style->Font);
 
-            end_node();
+            return true;
         }
+
+        return false;
+    };
+    
+    auto end_window_frame = [this]()
+    {
+        end_node();
+    };
+
+    auto settings =
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically;
+
+    // TODO: how to identify if to detach child from parent ???
+    if(begin_node(
+        _Name,
+        _Rendered,
+        settings,
+        ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
+    {
+        // if this is a docker window then...
+        m_DockedWindows.clear();
+
+        for (auto renderedWindow : m_NodesRenderingCache)
+        {
+            if(renderedWindow->State.Docker == ui_node_hierarchy_top())
+                m_DockedWindows.push_back(renderedWindow);
+        }
+
+        if(!m_DockedWindows.empty())
+        {
+            if(begin_node(
+                std::string(_Name).append("/Framebox"),
+                _Rendered,
+                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally |
+                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
+                ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
+            {
+                ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
+                ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
+
+                if(begin_window_frame(_Name, _Rendered))
+                    end_window_frame();
+
+                for(auto dockedWindow : m_DockedWindows)
+                {
+                    if(begin_window_frame(
+                        std::string(dockedWindow->Name).append("/DockFrame"),
+                        nullptr,
+                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
+                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
+                    {
+                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left) ||
+                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                        {
+                            ui_node_begin_focus(dockedWindow);
+                        }
+
+                        end_window_frame();
+                    }
+                }
+
+                end_node();
+
+                return true;
+            }
+        }
+
+        // if this is a docked window then we don't render it's frame
+        if(ui_node_hierarchy_top()->State.Docker)
+            return true;
+
+        if(begin_window_frame(_Name, _Rendered))
+            end_window_frame();
 
         return true;
     }
@@ -1245,11 +1336,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_move(ImmedidateUserInter
 
 void ImmedidateUserInterfaceContextLayer::ui_node_begin_focus(ImmedidateUserInterfaceNode* _Window)
 {
-    if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus)) return;
+    if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
+        return;
+
+    std::cout << "passing focus to " << _Window->Name << "\n";
 
     // disable focus of other items in drawlist
-    for (int i = 0; i < (int)m_NodesRenderingList.size(); i++)
-        ui_node_end_focus(m_NodesRenderingList[i]);
+    for (int i = 0; i < (int)m_NodesRenderingCache.size(); i++)
+        ui_node_end_focus(m_NodesRenderingCache[i]);
 
     // pass focus to _Window
     auto parent = _Window->State.Parent;
@@ -1626,7 +1720,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
         if(window->State.Docker)
         {
             window->State.WindowBox  = window->State.Docker->State.DockArea;
-            window->State.LayerDepth = ui_node_calculate_child_depth_placed_in_follow(window->Cache.Docker, 1);
+            
+            if(!ui_node_is_being_focused(window) && !ui_node_is_being_focused(window->State.Docker))
+                window->State.LayerDepth = ui_node_calculate_child_depth_placed_in_follow(window->Cache.Docker, 1);
         }
     }
 }
@@ -1706,7 +1802,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 {
                     if(!_Context->ui_node_is_being_hovered(drawnWindow))
                         continue;
-                    
+
+                    std::cout << "passing focus to " << drawnWindow->Name << "\n";
+
                     _Context->ui_node_begin_focus(drawnWindow);
                     return true;
                 }
@@ -1720,7 +1818,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr)
                 return false;
 
-            for (auto next : _Context->m_NodesRenderingList)
+            for (auto& next : _Context->m_NodesRenderingList)
             {
                 if((_Filter != nullptr && !_Filter(next)) || !_Context->ui_node_is_being_hovered(next))
                     continue;
@@ -1729,17 +1827,21 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                         button < ApplicationMouseButton::ApplicationMouseButton_End;
                         button++)
                 {
-                    if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
-                        next->State.MouseDown = (ApplicationMouseButton::Button)button;
+                    // if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+                    // {
+                    //     next->State.MouseDown = (ApplicationMouseButton::Button)button;
+                    // }
 
                     if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                    {
                         next->State.MousePressed = (ApplicationMouseButton::Button)button;
+                    }
 
-                    if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
-                        next->State.MouseClicked = (ApplicationMouseButton::Button)button;
+                    // if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+                    //     next->State.MouseClicked = (ApplicationMouseButton::Button)button;
 
-                    if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
-                        next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+                    // if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+                    //     next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
                 }
             }
 
@@ -1818,7 +1920,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             for (auto next : _Context->m_NodesRenderingList)
             {
                 if( (_Filter != nullptr && !_Filter(next))   ||
-                    !_Context->ui_node_is_being_focused(next)||
                     !_Context->ui_node_is_being_hovered(next))
                 {
                     continue;
@@ -1996,9 +2097,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
     ImmedidateUserInterfaceContextEventsReceiver::receive_focus_event(this);
     ImmedidateUserInterfaceContextEventsReceiver::receive_hover_event(this);
 
-    if(ImmedidateUserInterfaceContextEventsReceiver::any_widget_has_been_pressed(this)) return;
-
     ImmedidateUserInterfaceContextEventsReceiver::receive_mouse_events(this);
+
+    if(ImmedidateUserInterfaceContextEventsReceiver::any_widget_has_been_pressed(this)) return;
 
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_resize_event(this)) return;
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_scroll_event(this)) return;
@@ -2112,11 +2213,27 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->Cache.Thickness   = cachedWindow->State.Thickness;
 
         // events
-        cachedWindow->Cache.Changes            = cachedWindow->State.Changes;
-        cachedWindow->Cache.MouseDown          = cachedWindow->State.MouseDown;
-        cachedWindow->Cache.MousePressed       = cachedWindow->State.MousePressed;
-        cachedWindow->Cache.MouseClicked       = cachedWindow->State.MouseClicked;
-        cachedWindow->Cache.MouseDoubleClicked = cachedWindow->State.MouseDoubleClicked;
+        cachedWindow->Cache.Changes = cachedWindow->State.Changes;
+
+        if(cachedWindow->State.MouseDown.has_value())
+            cachedWindow->Cache.MouseDown = cachedWindow->State.MouseDown.value();
+        else
+            cachedWindow->Cache.MouseDown.reset();
+        
+        if(cachedWindow->State.MousePressed.has_value())
+            cachedWindow->Cache.MousePressed = cachedWindow->State.MousePressed.value();
+        else
+            cachedWindow->Cache.MousePressed.reset();
+
+        if(cachedWindow->State.MouseClicked.has_value())
+            cachedWindow->Cache.MouseClicked = cachedWindow->State.MouseClicked.value();
+        else
+            cachedWindow->Cache.MouseClicked.reset();
+
+        if(cachedWindow->State.MouseDoubleClicked.has_value())
+            cachedWindow->Cache.MouseDoubleClicked = cachedWindow->State.MouseDoubleClicked.value();
+        else
+            cachedWindow->Cache.MouseDoubleClicked.reset();
 
         cachedWindow->State.MouseDown.reset();
         cachedWindow->State.MousePressed.reset();
@@ -2144,6 +2261,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
     m_WidgetHasBeenMousePressed.reset();
     m_WidgetHasBeenMouseClicked.reset();
     m_WidgetHasBeenMouseDoubleClicked.reset();
+
+    // save rendering list to cache
+    m_NodesRenderingCache = m_NodesRenderingList;
 
     // clear hierarchy and draw lists
     GS_ASSERT(m_NodesRenderingStack.empty());
