@@ -405,7 +405,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
         if(window->State.Docker != nullptr)
         {
             // setup hierarchy
-            window->State.LayerDepth = ui_node_calculate_child_depth_placed_in_follow(window->State.Docker, 1);
+            window->State.LayerDepth = window->Cache.LayerDepth;
         }
         else
         {
@@ -485,6 +485,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
         settings,
         ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
     {
+        if(ui_node_hierarchy_top()->State.Docker) return true;
+
         if(begin_node(
             _Name,
             _Rendered,
@@ -1628,7 +1630,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
     {
         if(window->State.Docker)
         {
-            window->State.WindowBox = window->State.Docker->State.DockArea;
+            window->State.WindowBox  = window->State.Docker->State.DockArea;
+            window->State.LayerDepth = ui_node_calculate_child_depth_placed_in_follow(window->Cache.Docker, 1);
         }
     }
 }
