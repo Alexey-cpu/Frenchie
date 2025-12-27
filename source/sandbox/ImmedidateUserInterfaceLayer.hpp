@@ -66,21 +66,24 @@ namespace Frenchie
             ImmedidateUserInterfaceColors_ColorEnd,
         };
 
-        enum ImmedidateUserInterfaceNodeType_
+        enum ImmedidateUserInterfaceNodeType_ : int
         {
-            ImmedidateUserInterfaceNodeType_Node          = 1 << 0,
-            ImmedidateUserInterfaceNodeType_Window        = 1 << 1,
-            ImmedidateUserInterfaceNodeType_WindowFrame   = 1 << 2,
-            
-            ImmedidateUserInterfaceNodeType_WindowMenubar = 1 << 3,
-            ImmedidateUserInterfaceNodeType_WindowMenu    = 1 << 4,
+            ImmedidateUserInterfaceNodeType_Node            = 1 << 0,
+            ImmedidateUserInterfaceNodeType_Window          = 1 << 1,
+            ImmedidateUserInterfaceNodeType_WindowMenu      = 1 << 2,
+            ImmedidateUserInterfaceNodeType_WindowFrame     = 1 << 3,
+            ImmedidateUserInterfaceNodeType_WindowMenubar   = 1 << 4,
+            ImmedidateUserInterfaceNodeType_WindowDockFrame = 1 << 5
         };
 
-        enum ImmedidateUserInterfaceNodeLayer_
+        enum ImmedidateUserInterfaceNodeLayer_ : int
         {
-            ImmedidateUserInterfaceNodeLayer_Nodes  = 1 << 0,
-            ImmedidateUserInterfaceNodeLayer_Focus  = 1 << 1,
-            ImmedidateUserInterfaceNodeLayer_Popups = 1 << 2,
+            ImmedidateUserInterfaceNodeLayer_Begin = 0,
+            ImmedidateUserInterfaceNodeLayer_Nodes = ImmedidateUserInterfaceNodeLayer_Begin,
+            ImmedidateUserInterfaceNodeLayer_Docing,
+            ImmedidateUserInterfaceNodeLayer_Focus,
+            ImmedidateUserInterfaceNodeLayer_Popups,
+            ImmedidateUserInterfaceNodeLayer_End,
         };
 
         enum ImmedidateUserInterfaceNodeChanges_ : int
@@ -106,34 +109,35 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceNodeSettings_ : int
         {
-            ImmedidateUserInterfaceNodeSettings_None                         = 0,
+            ImmedidateUserInterfaceNodeSettings_None                               = 0,
 
             // common
-            ImmedidateUserInterfaceNodeSettings_Movable                      = 1 << 0,
-            ImmedidateUserInterfaceNodeSettings_Resizable                    = 1 << 1,
+            ImmedidateUserInterfaceNodeSettings_Movable                            = 1 << 0,
+            ImmedidateUserInterfaceNodeSettings_Resizable                          = 1 << 1,
 
             // scrollbars
-            ImmedidateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar    = 1 << 2,
-            ImmedidateUserInterfaceNodeSettings_AlwaysVerticalScrollBar      = 1 << 3,
-            ImmedidateUserInterfaceNodeSettings_NeverHorizontalScrollBar     = 1 << 4,
-            ImmedidateUserInterfaceNodeSettings_NeverVerticalScrollBar       = 1 << 5,
+            ImmedidateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar          = 1 << 2,
+            ImmedidateUserInterfaceNodeSettings_AlwaysVerticalScrollBar            = 1 << 3,
+            ImmedidateUserInterfaceNodeSettings_NeverHorizontalScrollBar           = 1 << 4,
+            ImmedidateUserInterfaceNodeSettings_NeverVerticalScrollBar             = 1 << 5,
 
-            // child windows layouting
-            ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally   = 1 << 6,
-            ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically     = 1 << 7,
+            // layouting
+            ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally         = 1 << 6,
+            ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically           = 1 << 7,
+            ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize       = 1 << 8,
 
             // size hints
-            ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally = 1 << 8,
-            ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically   = 1 << 9,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContentsHorizontally       = 1 << 9,
+            ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically         = 1 << 10,
 
             // clipping
-            ImmedidateUserInterfaceNodeSettings_IgnoreClipping               = 1 << 10,
+            ImmedidateUserInterfaceNodeSettings_IgnoreClipping                     = 1 << 11,
             
             // focus
-            ImmedidateUserInterfaceNodeSettings_IgnoreFocus                  = 1 << 11,
+            ImmedidateUserInterfaceNodeSettings_IgnoreFocus                        = 1 << 12,
 
             // parenting
-            ImmedidateUserInterfaceNodeSettings_NullParent                   = 1 << 12,
+            ImmedidateUserInterfaceNodeSettings_NullParent                         = 1 << 13,
 
             ImmedidateUserInterfaceNodeSettings_ResizeToContents =
                 ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
@@ -263,20 +267,22 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNode* Creator    {nullptr};
             mutable int                          Thickness  {0};
             mutable int                          LayerDepth {0};
+            mutable int                          ChildCount {0};
 
             // layouting
             mutable gs_vec2f LayoutTotalChildrenSize{gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorDirection  {gs_vec2f(0.f, 1.f)};
             mutable gs_vec2f LayoutCursorPositon    {gs_vec2f(0.f, 0.f)};
             mutable gs_vec2f LayoutCursorSize       {gs_vec2f(0.f, 0.f)};
-            mutable float    WindowMinimumWidth     {128.f};
-            mutable float    WindowMinimumHeight    {128.f};
+            mutable float    WindowMinimumWidth     {4.f};
+            mutable float    WindowMinimumHeight    {4.f};
             mutable float    WindowMaximumWidth     {(float)INT_MAX};
             mutable float    WindowMaximumHeight    {(float)INT_MAX};
 
             // docking
-            ImmedidateUserInterfaceNode* Docker   {nullptr};
-            gs_2dboxf                    DockArea {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
+            mutable ImmedidateUserInterfaceNode* Docker        {nullptr};
+            mutable gs_2dboxf                    DockArea      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
+            mutable int                          DockNodesCount{0};
 
             // scrolling
             mutable ImmedidateUserInterfaceNodeScroll VerticalScrollBar;
@@ -348,6 +354,10 @@ namespace Frenchie
             bool begin_window(const std::string& _Name, bool* _Rendered = nullptr);
             void end_window();
 
+            // auxiliary lambdas
+            bool begin_window_frame(const std::string& _Name, bool* _Rendered, const ImmedidateUserInterfaceNodeSettings& _Settings);
+            void end_window_frame();
+
             bool begin_menu(const std::string& _Name);
             void end_menu();
 
@@ -360,10 +370,14 @@ namespace Frenchie
 
         protected:
 
-            // info
+            // style
             mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
-            mutable std::shared_ptr<Immediate2DRenderer>          m_Renderer{nullptr};
+            
+            // rendering
+            mutable std::shared_ptr<Immediate2DRenderer>            m_Renderer      {nullptr};
+            mutable std::map<ImmedidateUserInterfaceNodeLayer, int> m_RendererLayers{std::map<ImmedidateUserInterfaceNodeLayer, int>()};
 
+            // cache
             mutable std::map<
                 ImmedidateUserInterfaceNodeType,
                 std::map<
@@ -376,21 +390,24 @@ namespace Frenchie
                     std::string,
                     std::unique_ptr<ImmedidateUserInterfaceNode>>>()
             };
-
-            // nodes drawing
+            
+            // nodes
             mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingStack     {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingList      {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingCache     {std::vector<ImmedidateUserInterfaceNode*>()};
-
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_DockedWindows            {std::vector<ImmedidateUserInterfaceNode*>()};
-
-            mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
 
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
 
+            // docking
+            mutable std::vector<ImmedidateUserInterfaceNode*>                m_DockedWindows           {std::vector<ImmedidateUserInterfaceNode*>()};
+
+            // popups
+            mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
+
+            // widgets
             mutable Frenchie::Core::Optional<bool>                           m_WidgetIsBeingMouseHovered      {Frenchie::Core::Optional<bool>()};
             mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMouseDown         {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
             mutable Frenchie::Core::Optional<ApplicationMouseButton::Button> m_WidgetIsBeingMousePressed      {Frenchie::Core::Optional<ApplicationMouseButton::Button>()};
@@ -423,6 +440,13 @@ namespace Frenchie
             bool ui_node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
 
+            // docking
+            bool ui_node_begin_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
+            bool ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node);
+            bool ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node);
+            bool ui_node_end_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node);
+
+            // modification
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_mouse_down(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_pressed(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
@@ -465,6 +489,7 @@ namespace Frenchie
             void ui_node_end_focus(ImmedidateUserInterfaceNode*);
             void ui_node_end_scroll(ImmedidateUserInterfaceNode*);
 
+            // rendering
             bool ui_node_render_clipbox(ImmedidateUserInterfaceNode*);
             bool ui_node_render_background(ImmedidateUserInterfaceNode*);
             bool ui_node_render_background_frame(ImmedidateUserInterfaceNode*);
@@ -478,8 +503,8 @@ namespace Frenchie
             void ui_node_save_state();
             
             // user interface widgets API
-            auto widget_prepare_for_rendering(const gs_vec2f&,    bool = true);
-            auto widget_prepare_for_rendering(const std::string&, bool = true);
+            auto widget_prepare_for_rendering(const gs_vec2f&,    bool = true, bool = true);
+            auto widget_prepare_for_rendering(const std::string&, bool = true, bool = true);
 
             bool widget_is_being_hovered() const;
             bool widget_is_being_pressed(const ApplicationMouseButton::Button&) const;
