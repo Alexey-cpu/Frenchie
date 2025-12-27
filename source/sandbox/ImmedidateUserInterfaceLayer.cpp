@@ -541,33 +541,26 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
         auto window = ui_node_hierarchy_top();
 
         if(begin_node(
-            std::string(_Name),
+            _Name,
             _Rendered,
             ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally   |
             ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize |
             ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
             ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDockerFrame))
         {
-            // render self
+            // render docker frame
             if(window->State.Docker == nullptr)
             {
                 if(begin_window_frame(
-                    std::string(_Name).append("/Docker"),
+                    _Name,
                     _Rendered,
                     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
-                {
-                    if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
-                        ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
-                        ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
-                    {
-                        m_NextFocusedNode = window;
-                    }
-                
+                {                
                     end_window_frame();
                 }
             }
 
-            // render children
+            // render docked nodes
             for (auto renderedWindow : m_NodesRenderingCache)
             {
                 if(renderedWindow->State.Docker == nullptr ||
@@ -576,8 +569,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                     continue;
 
                 if(begin_window_frame(
-                    std::string(renderedWindow->Name).append("/Docked"),
-                    nullptr,
+                    renderedWindow->Name,
+                    _Rendered,
                     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
                     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar             |
                     ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
@@ -2060,20 +2053,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                             allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
                     }
 
-                    bool hoveredByAnyMovedNodeChild = false;
-
-                    for (auto dockChild : _Context->m_NodesRenderingCache)
-                    {
-                        if(dockChild->State.Docker == movedNode)
-                        {
-                            if(_Context->ui_node_is_being_docked_by(dockChild, hovered))
-                                hoveredByAnyMovedNodeChild = true;
-                        }
-                    }
-
                     if(!_Context->ui_node_is_being_docked_by(movedNode, hovered)  &&
-                        !_Context->ui_node_is_being_docked_by(hovered, movedNode) &&
-                        !hoveredByAnyMovedNodeChild)
+                        !_Context->ui_node_is_being_docked_by(hovered, movedNode))
                     {
                         // render potential docker gizmo
                         _Context->m_Renderer->push_rectangle_rounded(
@@ -2084,8 +2065,17 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                             gs_vec4f(0.f, 0.f, 255.f, 255.f),
                             hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
 
+                        // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
                         if(allMouseButtonsAreReleased)
+                        {
                             _Context->ui_node_begin_attaching_to_a_docker(movedNode, hovered);
+
+                            for (auto dockChild : _Context->m_NodesRenderingCache)
+                            {
+                                if(dockChild->State.Docker == movedNode)
+                                    _Context->ui_node_begin_attaching_to_a_docker(dockChild, hovered);
+                            }
+                        }
                     }
                 }
 
