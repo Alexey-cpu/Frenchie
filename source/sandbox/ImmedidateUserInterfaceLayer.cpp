@@ -6,7 +6,7 @@ using namespace Frenchie::Application;
 ImmedidateUserInterfaceContextLayer::ImmedidateUserInterfaceContextLayer(){}
 ImmedidateUserInterfaceContextLayer::~ImmedidateUserInterfaceContextLayer(){}
 
-auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_vec2f& _Size, bool _CatchEvents)
+auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_vec2f& _Size, bool _CatchEvents, bool _UsePadding)
 {
     struct
     {
@@ -29,7 +29,7 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     }
 
     ImmedidateUserInterfaceNode* window  = ui_node_hierarchy_top();
-    float padding = 16.f; // TODO: this MUST BE a setting !!!
+    float padding = _UsePadding ? 16.f : 0.f; // TODO: this MUST BE a setting !!!
 
     // move cursor
     gs_vec2f cursorDirection = m_NextNodeCursorDirection.has_value() ? m_NextNodeCursorDirection.value() : ui_node_vertical_cursor_direction();
@@ -137,9 +137,9 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     return WidgetData;
 }
 
-auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const std::string& _Text, bool _CatchEvents)
+auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const std::string& _Text, bool _CatchEvents, bool _UsePadding)
 {
-    return widget_prepare_for_rendering(m_Renderer->calculate_bounding_box(_Text, m_Style->FontSize, m_Style->Font).size() + gs_vec2f(m_Style->FontSize * 0.5f), _CatchEvents);
+    return widget_prepare_for_rendering(m_Renderer->calculate_bounding_box(_Text, m_Style->FontSize, m_Style->Font).size() + gs_vec2f(m_Style->FontSize * 0.5f), _CatchEvents, _UsePadding);
 }
 
 bool ImmedidateUserInterfaceContextLayer::awake()
@@ -166,19 +166,19 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
     if(begin_window("Window-1", nullptr))
     {
-        widget_push_button("Window-1-BUTTON");
+        //widget_push_button("Window-1-BUTTON");
         end_window();
     }
 
     if(begin_window("Window-2", nullptr))
     {
-        widget_push_button("Window-2-BUTTON");
+        ///widget_push_button("Window-2-BUTTON");
         end_window();
     }
 
     if(begin_window("Window-3", nullptr))
     {
-        widget_push_button("Window-3-BUTTON");
+        //widget_push_button("Window-3-BUTTON");
         end_window();
     }
 
@@ -386,6 +386,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
         window->State.Parent                                 = ui_node_hierarchy_top();
         window->State.LayerDepth                             = ui_node_calculate_child_depth_placed_in_follow(window->State.Parent, 1);
         window->State.Parent->State.LayoutTotalChildrenSize += window->State.WindowBox.size();
+        window->State.Parent->State.ChildCount++;
 
         // move cursor
         window->State.Parent->State.LayoutCursorPositon +=
@@ -495,112 +496,61 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
 {
-    // auxiliary lambdas
-    auto begin_window_frame = [this](
-        const std::string&                         _Name,
-        bool*                                      _Rendered,
-        const ImmedidateUserInterfaceNodeSettings& _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar)->bool
-    {
-        if(begin_node(
-            _Name,
-            _Rendered,
-            _Settings | ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
-            ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
-        {
-            ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-            ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-
-            auto geometryBox = gs_2dboxf(
-                ui_node_hierarchy_top()->State.WindowBox.Min,
-                ui_node_hierarchy_top()->State.WindowBox.Min + gs_vec2f(ui_node_hierarchy_top()->State.WindowBox.width() - m_Style->FrameWidth * 2.f, m_Style->FontSize + m_Style->FrameWidth * 2.f));
-
-            auto renderingData = widget_prepare_for_rendering(geometryBox.size(), false);
-            auto boundingBox   = renderingData.BoundingBox;
-
-            // render frame
-            m_Renderer->push_rectangle_rounded_filled(
-                boundingBox.Min,
-                boundingBox.Max,
-                m_Style->FrameRoundingRadius,
-                gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
-
-            m_Renderer->push_rectangle_rounded(
-                boundingBox.Min,
-                boundingBox.Max,
-                m_Style->FrameRoundingRadius,
-                m_Style->FrameWidth,
-                gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
-
-            m_Renderer->push_text(
-                _Name,
-                m_Style->FontSize,
-                gs_vec4f(255.f, 255.f, 255.f, 255.f),
-                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix(
-                    (float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1),
-                    gs_vec2f(
-                        boundingBox.Min.x + m_Style->FrameWidth * 2.f,
-                        (boundingBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
-                m_Style->Font);
-
-            return true;
-        }
-
-        return false;
-    };
-    
-    auto end_window_frame = [this]()
-    {
-        end_node();
-    };
-
     auto settings =
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically;
 
-    // TODO: how to identify if to detach child from parent ???
     if(begin_node(
         _Name,
         _Rendered,
         settings,
         ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
     {
+        auto window = ui_node_hierarchy_top();
+
         // if this is a docker window then...
         m_DockedWindows.clear();
 
         for (auto renderedWindow : m_NodesRenderingCache)
         {
-            if(renderedWindow->State.Docker == ui_node_hierarchy_top())
+            if(renderedWindow->State.Docker == window)
                 m_DockedWindows.push_back(renderedWindow);
         }
 
         if(!m_DockedWindows.empty())
         {
+            // dock frame
             if(begin_node(
-                std::string(_Name).append("/Framebox"),
+                _Name,
                 _Rendered,
-                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally |
+                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally   |
+                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize |
                 ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
-                ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
+                ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDockFrame))
             {
-                ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-                ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-
-                if(begin_window_frame(_Name, _Rendered))
-                    end_window_frame();
+                if(!ui_node_is_being_docked(window))
+                {
+                    if(begin_window_frame(
+                        _Name,
+                        _Rendered,
+                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                    {
+                        end_window_frame();
+                    }
+                }
 
                 for(auto dockedWindow : m_DockedWindows)
                 {
                     if(begin_window_frame(
-                        std::string(dockedWindow->Name).append("/DockFrame"),
+                        dockedWindow->Name,
                         nullptr,
-                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
+                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
+                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar             |
                         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
                     {
-                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left) ||
+                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
@@ -621,8 +571,14 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
         if(ui_node_hierarchy_top()->State.Docker)
             return true;
 
-        if(begin_window_frame(_Name, _Rendered))
+        if(begin_window_frame(
+            _Name,
+            _Rendered,
+            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
+            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar))
+        {
             end_window_frame();
+        }
 
         return true;
     }
@@ -634,6 +590,51 @@ void ImmedidateUserInterfaceContextLayer::end_window()
 {
     end_node();
 }
+
+bool ImmedidateUserInterfaceContextLayer::begin_window_frame(const std::string& _Name, bool* _Rendered, const ImmedidateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node(_Name, _Rendered, _Settings, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
+    {
+        ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
+        ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
+
+        // render frame
+        m_Renderer->push_rectangle_rounded_filled(
+            ui_node_hierarchy_top()->State.WindowBox.Min,
+            ui_node_hierarchy_top()->State.WindowBox.Max,
+            m_Style->FrameRoundingRadius,
+            gs_vec4f(255.f, 0.f, 0.f, 255.f),
+            ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
+
+        m_Renderer->push_rectangle_rounded(
+            ui_node_hierarchy_top()->State.WindowBox.Min,
+            ui_node_hierarchy_top()->State.WindowBox.Max,
+            m_Style->FrameRoundingRadius,
+            m_Style->FrameWidth,
+            gs_vec4f(0.f, 255.f, 0.f, 255.f),
+            ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
+
+        m_Renderer->push_text(
+            _Name,
+            m_Style->FontSize,
+            gs_vec4f(255.f, 255.f, 255.f, 255.f),
+            ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix(
+                (float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1),
+                gs_vec2f(
+                    ui_node_hierarchy_top()->State.WindowBox.Min.x + m_Style->FrameWidth * 2.f,
+                    (ui_node_hierarchy_top()->State.WindowBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
+            m_Style->Font);
+
+        return true;
+    }
+
+    return false;
+};
+
+void ImmedidateUserInterfaceContextLayer::end_window_frame()
+{
+    end_node();
+};
 
 bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 {
@@ -908,7 +909,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
                     gs_vec2f(_Window->State.WindowMinimumWidth, _Window->State.WindowMinimumHeight),
                     gs_vec2f(_Window->State.WindowMaximumWidth, _Window->State.WindowMaximumHeight)));
 
-        _Window->State.VerticalScrollBar.SliderPosition   = 0.f;
+        _Window->State.VerticalScrollBar.SliderPosition = 0.f;
     }
 
     // viewport
@@ -1050,10 +1051,16 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
 
 int ImmedidateUserInterfaceContextLayer::ui_node_calculate_layer_depth(const ImmedidateUserInterfaceNodeLayer& _Layer) const
 {
-    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes)    return 0;
-    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus)   return (int)(m_Renderer->get_far_plane() / 4);
-    if(_Layer == ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups) return (int)(m_Renderer->get_far_plane() / 2);
-    return 0;
+    float depth = 0.f;
+
+    for (int layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Begin;
+             layer < ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_End; ++layer)
+    {
+        m_RendererLayers[(ImmedidateUserInterfaceNodeLayer_)layer] = (int)depth;
+        depth += m_Renderer->get_far_plane() / (ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_End - ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Begin);
+    }
+
+    return m_RendererLayers[_Layer];
 }
 
 int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in_follow(ImmedidateUserInterfaceNode* _Window, const int& _Thickness) const
@@ -1099,6 +1106,38 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_horizontal_scroll_bar_neede
 
     return _Window->Cache.ContentBox.width() > _Window->Cache.ViewportBox.width() &&
             gs_abs(_Window->Cache.ViewportBox.width() - _Window->Cache.ContentBox.width()) > _Window->Cache.ViewportBox.width() * 0.1f;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_begin_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker)
+{
+    if(_Node == nullptr || _Docker == nullptr)
+        return false;
+
+    _Node->State.Docker = _Docker;
+    ++_Docker->State.DockNodesCount;
+
+    return true;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node)
+{
+    return _Node != nullptr && _Node->State.DockNodesCount > 0;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node)
+{
+    return _Node != nullptr && _Node->State.Docker != nullptr;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_end_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node)
+{
+    if(_Node == nullptr || _Node->State.Docker == nullptr)
+        return false;
+
+    _Node->State.Docker->State.DockNodesCount = gs_max(++_Node->State.Docker->State.DockNodesCount - 1, 0);
+    _Node->State.Docker                       = nullptr;
+
+    return true;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_hovered(const ImmedidateUserInterfaceNode* _Window) const
@@ -1338,8 +1377,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_focus(ImmedidateUserInte
 {
     if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
         return;
-
-    std::cout << "passing focus to " << _Window->Name << "\n";
 
     // disable focus of other items in drawlist
     for (int i = 0; i < (int)m_NodesRenderingCache.size(); i++)
@@ -1698,7 +1735,10 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
            ((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally) ||
            (parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically)))
         {
-            gs_vec2f size = (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.ViewportBox.size();
+            gs_vec2f size =
+                (parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize) ?
+                parent->State.ViewportBox.size() / (float)parent->State.ChildCount :
+                (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.ViewportBox.size();
             
             if((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
                 size = gs_vec2f(size.x, parent->State.WindowBox.height());
@@ -1717,9 +1757,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
     // docking
     for (auto& window : m_NodesRenderingList)
     {
-        if(window->State.Docker)
+        if(window->State.Docker != nullptr)
         {
-            window->State.WindowBox  = window->State.Docker->State.DockArea;
+            window->State.WindowBox = window->State.Docker->State.DockArea;
             
             if(!ui_node_is_being_focused(window) && !ui_node_is_being_focused(window->State.Docker))
                 window->State.LayerDepth = ui_node_calculate_child_depth_placed_in_follow(window->Cache.Docker, 1);
@@ -1802,8 +1842,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 {
                     if(!_Context->ui_node_is_being_hovered(drawnWindow))
                         continue;
-
-                    std::cout << "passing focus to " << drawnWindow->Name << "\n";
 
                     _Context->ui_node_begin_focus(drawnWindow);
                     return true;
@@ -1975,7 +2013,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     continue;
 
                 // here we always set to nullptr docker of the moving node
-                movedNode->State.Docker = nullptr;
+                _Context->ui_node_end_attaching_to_a_docker(movedNode);
 
                 // receive docking event here
                 if(movedNode->State.Parent == nullptr)
@@ -2020,7 +2058,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                             movedNode->State.Docker != hovered &&
                             hovered->State.Docker != movedNode)
                         {
-                            movedNode->State.Docker = hovered;
+                            _Context->ui_node_begin_attaching_to_a_docker(movedNode, hovered);
                         }
                     }
                 }
@@ -2240,18 +2278,19 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.MouseDoubleClicked.reset();
 
         // layout
-        cachedWindow->State.LayoutCursorPositon  = gs_vec2f(0.f, 0.f);
-        cachedWindow->State.LayoutCursorSize     = gs_vec2f(0.f, 0.f);
-        cachedWindow->State.ScrollAreaBox        = cachedWindow->State.ViewportBox;
-        cachedWindow->State.ContentBox           = gs_2dboxf(cachedWindow->State.ViewportBox.Min, cachedWindow->State.ViewportBox.Min);
+        cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
+        cachedWindow->State.LayoutCursorPositon     = gs_vec2f(0.f, 0.f);
+        cachedWindow->State.LayoutCursorSize        = gs_vec2f(0.f, 0.f);
+        cachedWindow->State.ScrollAreaBox           = cachedWindow->State.ViewportBox;
+        cachedWindow->State.ContentBox              = gs_2dboxf(cachedWindow->State.ViewportBox.Min, cachedWindow->State.ViewportBox.Min);
 
         // hierarchy
-        cachedWindow->State.Parent                  = nullptr;
-        cachedWindow->State.Creator                 = nullptr;
-        cachedWindow->State.LayerDepth              = 0;
-        cachedWindow->State.Thickness               = 0;
-        cachedWindow->State.Layer                   = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
-        cachedWindow->State.LayoutTotalChildrenSize = gs_vec2f(0.f);
+        cachedWindow->State.LayerDepth = 0;
+        cachedWindow->State.ChildCount = 0;
+        cachedWindow->State.Thickness  = 0;
+        cachedWindow->State.Creator    = nullptr;
+        cachedWindow->State.Parent     = nullptr;
+        cachedWindow->State.Layer      = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
     }
 
     // reset widgets events
