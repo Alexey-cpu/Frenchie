@@ -166,19 +166,19 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
     if(begin_window("Window-1", nullptr))
     {
-        //widget_push_button("Window-1-BUTTON");
+        widget_push_button("Window-1");
         end_window();
     }
 
     if(begin_window("Window-2", nullptr))
     {
-        ///widget_push_button("Window-2-BUTTON");
+        widget_push_button("Window-2");
         end_window();
     }
 
     if(begin_window("Window-3", nullptr))
     {
-        //widget_push_button("Window-3-BUTTON");
+        widget_push_button("Window-3");
         end_window();
     }
 
@@ -276,8 +276,11 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
     // render cursor
     m_Renderer->push_text(
-        std::to_string(m_Renderer->get_cursor_postion().x).append(" ").append(
-             std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(m_Renderer->get_measured_frame_rate()))),
+        std::to_string(m_Renderer->get_cursor_postion().x)
+        //.append(" ")
+        //.append(std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(m_Renderer->get_measured_frame_rate())))
+        .append(" ")
+        .append(HoveredName),
         m_Style->FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane(), m_Renderer->get_cursor_postion() + gs_vec3f(Immediate2DRenderer::bottom_right(gs_vec2f(12.f, 12.f)))));
@@ -399,12 +402,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
 
         window->State.Parent->State.LayoutCursorSize = window->State.WindowBox.size();
 
-        window->State.Parent->State.LayoutCursorSize =
-            gs_clamp(
-                window->State.Parent->State.LayoutCursorSize,
-                gs_vec2f(window->State.WindowMinimumWidth, window->State.WindowMinimumHeight),
-                gs_vec2f(window->State.WindowMaximumWidth, window->State.WindowMaximumHeight));
-
         // compute window box
         gs_2dboxf parentLayoutBox = gs_2dboxf(
             window->State.Parent->State.ScrollAreaBox.Min,
@@ -424,26 +421,16 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     }
     else
     {
-        if(window->State.Docker != nullptr    &&
-            !ui_node_is_being_focused(window) &&
-            !ui_node_is_being_focused(window->State.Docker))
-        {
-            // setup hierarchy
-            window->State.LayerDepth = window->Cache.LayerDepth;
-        }
-        else
-        {
-            // calculate window initial depth
-            window->State.LayerDepth =
-                ui_node_calculate_layer_depth(window->Cache.Layer);
+        // calculate window initial depth
+        window->State.LayerDepth =
+            ui_node_calculate_layer_depth(window->Cache.Layer);
 
-            for (auto& drawnWindow : m_NodesRenderingList)
+        for (auto& drawnWindow : m_NodesRenderingList)
+        {
+            if(drawnWindow->Cache.Layer == window->Cache.Layer)
             {
-                if(drawnWindow->Cache.Layer == window->Cache.Layer)
-                {
-                    window->State.LayerDepth =
-                        gs_max(drawnWindow->State.LayerDepth + drawnWindow->State.Thickness + 1, window->State.LayerDepth);
-                }
+                window->State.LayerDepth =
+                    gs_max(drawnWindow->State.LayerDepth + drawnWindow->State.Thickness + 1, window->State.LayerDepth);
             }
         }
     }
@@ -496,88 +483,117 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
 {
-    auto settings =
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
-        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically;
+    auto begin_window_frame = [this](const std::string& _Name, bool* _Rendered, const ImmedidateUserInterfaceNodeSettings& _Settings)
+    {
+        if(begin_node(_Name, _Rendered, _Settings, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDefaultFrame))
+        {
+            ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
+            ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
 
+            // render frame
+            m_Renderer->push_rectangle_rounded_filled(
+                ui_node_hierarchy_top()->State.WindowBox.Min,
+                ui_node_hierarchy_top()->State.WindowBox.Max,
+                m_Style->FrameRoundingRadius,
+                gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
+
+            m_Renderer->push_rectangle_rounded(
+                ui_node_hierarchy_top()->State.WindowBox.Min,
+                ui_node_hierarchy_top()->State.WindowBox.Max,
+                m_Style->FrameRoundingRadius,
+                m_Style->FrameWidth,
+                gs_vec4f(0.f, 255.f, 0.f, 255.f),
+                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
+
+            m_Renderer->push_text(
+                _Name,
+                m_Style->FontSize,
+                gs_vec4f(255.f, 255.f, 255.f, 255.f),
+                ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix(
+                    (float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1),
+                    gs_vec2f(
+                        ui_node_hierarchy_top()->State.WindowBox.Min.x + m_Style->FrameWidth * 2.f,
+                        (ui_node_hierarchy_top()->State.WindowBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
+                m_Style->Font);
+
+            return true;
+        }
+
+        return false;
+    };
+
+    auto end_window_frame = [this]()
+    {
+        end_node();
+    };
+
+    // main code
     if(begin_node(
         _Name,
         _Rendered,
-        settings,
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable      |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable        |
+        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically,
         ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Window))
     {
         auto window = ui_node_hierarchy_top();
 
-        // if this is a docker window then...
-        m_DockedWindows.clear();
-
-        for (auto renderedWindow : m_NodesRenderingCache)
-        {
-            if(renderedWindow->State.Docker == window)
-                m_DockedWindows.push_back(renderedWindow);
-        }
-
-        if(!m_DockedWindows.empty())
-        {
-            // dock frame
-            if(begin_node(
-                _Name,
-                _Rendered,
-                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally   |
-                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize |
-                ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
-                ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDockFrame))
-            {
-                if(!ui_node_is_being_docked(window))
-                {
-                    if(begin_window_frame(
-                        _Name,
-                        _Rendered,
-                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
-                    {
-                        end_window_frame();
-                    }
-                }
-
-                for(auto dockedWindow : m_DockedWindows)
-                {
-                    if(begin_window_frame(
-                        dockedWindow->Name,
-                        nullptr,
-                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
-                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar             |
-                        ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
-                    {
-                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
-                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
-                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
-                        {
-                            ui_node_begin_focus(dockedWindow);
-                        }
-
-                        end_window_frame();
-                    }
-                }
-
-                end_node();
-
-                return true;
-            }
-        }
-
-        // if this is a docked window then we don't render it's frame
-        if(ui_node_hierarchy_top()->State.Docker)
-            return true;
-
-        if(begin_window_frame(
-            _Name,
+        if(begin_node(
+            std::string(_Name),
             _Rendered,
-            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
-            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar))
+            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally   |
+            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize |
+            ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically,
+            ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDockerFrame))
         {
-            end_window_frame();
+            // render self
+            if(window->State.Docker == nullptr)
+            {
+                if(begin_window_frame(
+                    std::string(_Name).append("/Docker"),
+                    _Rendered,
+                    ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                {
+                    if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                        ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                        ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                    {
+                        m_NextFocusedNode = window;
+                    }
+                
+                    end_window_frame();
+                }
+            }
+
+            // render children
+            for (auto renderedWindow : m_NodesRenderingCache)
+            {
+                if(renderedWindow->State.Docker == nullptr ||
+                    renderedWindow->State.Docker != window ||
+                    renderedWindow == window)
+                    continue;
+
+                if(begin_window_frame(
+                    std::string(renderedWindow->Name).append("/Docked"),
+                    nullptr,
+                    ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically |
+                    ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar             |
+                    ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
+                {
+                    if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                        ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                        ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                    {
+                        m_NextFocusedNode = renderedWindow;
+                    }
+
+                    end_window_frame();
+                }
+            }
+
+            end_node();
         }
 
         return true;
@@ -590,51 +606,6 @@ void ImmedidateUserInterfaceContextLayer::end_window()
 {
     end_node();
 }
-
-bool ImmedidateUserInterfaceContextLayer::begin_window_frame(const std::string& _Name, bool* _Rendered, const ImmedidateUserInterfaceNodeSettings& _Settings)
-{
-    if(begin_node(_Name, _Rendered, _Settings, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowFrame))
-    {
-        ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-        ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-
-        // render frame
-        m_Renderer->push_rectangle_rounded_filled(
-            ui_node_hierarchy_top()->State.WindowBox.Min,
-            ui_node_hierarchy_top()->State.WindowBox.Max,
-            m_Style->FrameRoundingRadius,
-            gs_vec4f(255.f, 0.f, 0.f, 255.f),
-            ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
-
-        m_Renderer->push_rectangle_rounded(
-            ui_node_hierarchy_top()->State.WindowBox.Min,
-            ui_node_hierarchy_top()->State.WindowBox.Max,
-            m_Style->FrameRoundingRadius,
-            m_Style->FrameWidth,
-            gs_vec4f(0.f, 255.f, 0.f, 255.f),
-            ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
-
-        m_Renderer->push_text(
-            _Name,
-            m_Style->FontSize,
-            gs_vec4f(255.f, 255.f, 255.f, 255.f),
-            ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix(
-                (float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1),
-                gs_vec2f(
-                    ui_node_hierarchy_top()->State.WindowBox.Min.x + m_Style->FrameWidth * 2.f,
-                    (ui_node_hierarchy_top()->State.WindowBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
-            m_Style->Font);
-
-        return true;
-    }
-
-    return false;
-};
-
-void ImmedidateUserInterfaceContextLayer::end_window_frame()
-{
-    end_node();
-};
 
 bool ImmedidateUserInterfaceContextLayer::begin_menu(const std::string& _Name)
 {
@@ -1039,7 +1010,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
     }
 
     // dockarea
-    {        
+    {
         _Window->State.DockArea =
             gs_2dboxf(
                 _Window->State.WindowBox.Min + gs_vec2f(0.f, m_Style->FontSize),
@@ -1138,6 +1109,20 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_end_attaching_to_a_docker(cons
     _Node->State.Docker                       = nullptr;
 
     return true;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docked_by(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker)
+{
+    auto docker = _Docker;
+
+    while (docker)
+    {
+        if(docker == _Node->State.Docker)
+            return true;
+        docker = docker->State.Docker;
+    }
+
+    return false;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_hovered(const ImmedidateUserInterfaceNode* _Window) const
@@ -1378,9 +1363,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_focus(ImmedidateUserInte
     if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
         return;
 
-    // disable focus of other items in drawlist
-    for (int i = 0; i < (int)m_NodesRenderingCache.size(); i++)
-        ui_node_end_focus(m_NodesRenderingCache[i]);
+    // // disable focus of other items in drawlist
+    // for (int i = 0; i < (int)m_NodesRenderingCache.size(); i++)
+    //     ui_node_end_focus(m_NodesRenderingCache[i]);
 
     // pass focus to _Window
     auto parent = _Window->State.Parent;
@@ -1507,6 +1492,15 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background_frame(Immedi
         m_Style->FrameWidth,
         m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
         _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+
+    m_Renderer->push_rectangle_rounded(
+        _Window->Cache.ContentBox.Min,
+        _Window->Cache.ContentBox.Max,
+        m_Style->FrameRoundingRadius,
+        m_Style->FrameWidth,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+
 
     return true;
 }
@@ -1708,10 +1702,12 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
     {
         if(ui_node_is_being_focused(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus;
+        else if(ui_node_is_being_docked(window))
+            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Docking;
         else if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu)
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
         else
-            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
+            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main;
     }
 
     // layouting
@@ -1725,6 +1721,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
                     window->State.WindowBox.size(),
                     gs_vec2f(window->State.WindowMinimumWidth, window->State.WindowMinimumHeight),
                     gs_vec2f(window->State.WindowMaximumWidth, window->State.WindowMaximumHeight)));
+
+            ui_node_calculate_geometry(window);
 
             continue;
         }
@@ -1751,6 +1749,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
                     size,
                     gs_vec2f(window->State.WindowMinimumWidth, window->State.WindowMinimumHeight),
                     gs_vec2f(window->State.WindowMaximumWidth, window->State.WindowMaximumHeight)));
+
+            ui_node_calculate_geometry(window);
         }
     }
 
@@ -1760,9 +1760,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
         if(window->State.Docker != nullptr)
         {
             window->State.WindowBox = window->State.Docker->State.DockArea;
-            
-            if(!ui_node_is_being_focused(window) && !ui_node_is_being_focused(window->State.Docker))
-                window->State.LayerDepth = ui_node_calculate_child_depth_placed_in_follow(window->Cache.Docker, 1);
+            ui_node_calculate_geometry(window);
         }
     }
 }
@@ -1781,42 +1779,49 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr)
                 return false;
 
-            ImmedidateUserInterfaceNode* hovered = nullptr;
-
             // find the top most hovered node
+            ImmedidateUserInterfaceNode* hoveredNode = nullptr;
+
             for (auto next : _Context->m_NodesRenderingList)
             {
-                if(_Filter != nullptr && !_Filter(next)) continue;
+                if(_Filter != nullptr && !_Filter(next))
+                    continue;
 
                 if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
                 {
-                    if(hovered == nullptr || next->State.LayerDepth > hovered->State.LayerDepth)
-                        hovered = next;
+                    if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
+                        hoveredNode = next;
                 }
             }
 
-            if(hovered == nullptr)
+            if(hoveredNode == nullptr)
                 return false;
 
-            _Context->ui_node_begin_hover(hovered);
+            _Context->HoveredName = hoveredNode->Name;
 
+            _Context->ui_node_begin_hover(hoveredNode);
+
+            // render node hove gizmo
             _Context->m_Renderer->push_rectangle_rounded(
-                hovered->State.WindowBox.Min,
-                hovered->State.WindowBox.Max,
+                hoveredNode->State.WindowBox.Min,
+                hoveredNode->State.WindowBox.Max,
                 0.f,
                 12.f,
                 gs_vec4f(0.f, 255.f, 0.f, 255.f),
-                hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
+                hoveredNode->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
 
             return true;
         }
 
-        static bool any_widget_has_been_pressed(ImmedidateUserInterfaceContextLayer* _Context)
+        static bool receive_widget_press_event(ImmedidateUserInterfaceContextLayer* _Context)
         {
+            if(_Context == nullptr)
+                return false;
+
             // pass focus
             for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                    button < ApplicationMouseButton::ApplicationMouseButton_End;
-                    button++)
+                     button < ApplicationMouseButton::ApplicationMouseButton_End;
+                     button++)
             {
                 if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
                     return true;
@@ -1830,7 +1835,15 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr)
                 return false;
 
-            // pass focus
+            // check if any node has been queued to be focused
+            if(_Context->m_NextFocusedNode.has_value())
+            {
+                if(_Context->m_NextFocusedNode.value() != nullptr)
+                    _Context->ui_node_begin_focus(_Context->m_NextFocusedNode.value());
+                _Context->m_NextFocusedNode.reset();
+            }
+
+            // pass focus to currently top most pressed and hovered node
             for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
                      button < ApplicationMouseButton::ApplicationMouseButton_End;
                      button++)
@@ -1838,12 +1851,13 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(!application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
                     continue;
 
-                for (auto drawnWindow : _Context->m_NodesRenderingList)
+                for (auto next : _Context->m_NodesRenderingList)
                 {
-                    if(!_Context->ui_node_is_being_hovered(drawnWindow))
+                    if(!_Context->ui_node_is_being_hovered(next))
                         continue;
 
-                    _Context->ui_node_begin_focus(drawnWindow);
+                    _Context->ui_node_begin_focus(next);
+                    receive_finish(_Context, next);
                     return true;
                 }
             }
@@ -1856,30 +1870,27 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr)
                 return false;
 
-            for (auto& next : _Context->m_NodesRenderingList)
+            for (auto next : _Context->m_NodesRenderingList)
             {
-                if((_Filter != nullptr && !_Filter(next)) || !_Context->ui_node_is_being_hovered(next))
+                if((_Filter != nullptr && !_Filter(next)) ||
+                    !_Context->ui_node_is_being_hovered(next))
                     continue;
 
                 for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
                         button < ApplicationMouseButton::ApplicationMouseButton_End;
                         button++)
                 {
-                    // if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
-                    // {
-                    //     next->State.MouseDown = (ApplicationMouseButton::Button)button;
-                    // }
+                    if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+                        next->State.MouseDown = (ApplicationMouseButton::Button)button;
 
                     if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
-                    {
                         next->State.MousePressed = (ApplicationMouseButton::Button)button;
-                    }
 
-                    // if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
-                    //     next->State.MouseClicked = (ApplicationMouseButton::Button)button;
+                    if(application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+                        next->State.MouseClicked = (ApplicationMouseButton::Button)button;
 
-                    // if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
-                    //     next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+                    if(application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+                        next->State.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
                 }
             }
 
@@ -2012,28 +2023,57 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(!_Context->ui_node_is_being_moved(movedNode))
                     continue;
 
-                // here we always set to nullptr docker of the moving node
+                if(movedNode->State.Parent != nullptr)
+                {
+                    receive_finish(_Context, movedNode);
+                    return true;
+                }
+
                 _Context->ui_node_end_attaching_to_a_docker(movedNode);
 
-                // receive docking event here
-                if(movedNode->State.Parent == nullptr)
+                // find the top most hovered node not equal to the moved one
+                ImmedidateUserInterfaceNode* hovered = nullptr;
+
+                for (auto hoveredNode : _Context->m_NodesRenderingList)
                 {
-                    // find the top most hovered node not equal to the moved one
-                    ImmedidateUserInterfaceNode* hovered = nullptr;
-
-                    for (auto hoveredNode : _Context->m_NodesRenderingList)
+                    if(hoveredNode->State.WindowBox.transform(hoveredNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
                     {
-                        if(_Filter != nullptr && !_Filter(hoveredNode))
-                            continue;
-
-                        if(hoveredNode->State.WindowBox.transform(hoveredNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                        if(hovered == nullptr || hoveredNode->State.LayerDepth > hovered->State.LayerDepth)
                         {
-                            if(hoveredNode != movedNode && hoveredNode->State.Parent == nullptr)
+                            if(hoveredNode != movedNode &&
+                                hoveredNode->State.Parent == nullptr)
+                            {
                                 hovered = hoveredNode;
+                            }
+                        }
+                    }
+                }
+
+                if(hovered != nullptr)
+                {
+                    bool allMouseButtonsAreReleased = true;
+
+                    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                             button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+                    {
+                        allMouseButtonsAreReleased =
+                            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+                    }
+
+                    bool hoveredByAnyMovedNodeChild = false;
+
+                    for (auto dockChild : _Context->m_NodesRenderingCache)
+                    {
+                        if(dockChild->State.Docker == movedNode)
+                        {
+                            if(_Context->ui_node_is_being_docked_by(dockChild, hovered))
+                                hoveredByAnyMovedNodeChild = true;
                         }
                     }
 
-                    if(hovered != nullptr)
+                    if(!_Context->ui_node_is_being_docked_by(movedNode, hovered)  &&
+                        !_Context->ui_node_is_being_docked_by(hovered, movedNode) &&
+                        !hoveredByAnyMovedNodeChild)
                     {
                         // render potential docker gizmo
                         _Context->m_Renderer->push_rectangle_rounded(
@@ -2044,22 +2084,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                             gs_vec4f(0.f, 0.f, 255.f, 255.f),
                             hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
 
-                        // if all mouse buttons are released we setup docker for the moved node
-                        bool allMouseButtonsAreReleased = true;
-
-                        for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                                button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-                        {
-                            allMouseButtonsAreReleased =
-                                allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-                        }
-
-                        if(allMouseButtonsAreReleased &&
-                            movedNode->State.Docker != hovered &&
-                            hovered->State.Docker != movedNode)
-                        {
+                        if(allMouseButtonsAreReleased)
                             _Context->ui_node_begin_attaching_to_a_docker(movedNode, hovered);
-                        }
                     }
                 }
 
@@ -2101,8 +2127,10 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
         static void receive_finish(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Sink)
         {
-            if(_Sink == nullptr) return;
+            if(_Sink == nullptr)
+                return;
 
+            // top modifications and focus of all nodes that are not equal to sink
             for (auto& window : _Context->m_NodesRenderingList)
             {
                 if(window == _Sink)
@@ -2111,8 +2139,10 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 _Context->ui_node_end_move(window);
                 _Context->ui_node_end_resize(window);
                 _Context->ui_node_end_scroll(window);
+                _Context->ui_node_end_focus(window);
             }
 
+            // disable all modifications if all mouse buttons have been released
             bool allMouseButtonsAreReleased = true;
 
             for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
@@ -2133,10 +2163,11 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
     ImmedidateUserInterfaceContextEventsReceiver::receive_focus_event(this);
     ImmedidateUserInterfaceContextEventsReceiver::receive_hover_event(this);
-
     ImmedidateUserInterfaceContextEventsReceiver::receive_mouse_events(this);
 
-    if(ImmedidateUserInterfaceContextEventsReceiver::any_widget_has_been_pressed(this)) return;
+    // if any widget has been pressed we don't go further
+    if(ImmedidateUserInterfaceContextEventsReceiver::receive_widget_press_event(this))
+        return;
 
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_resize_event(this)) return;
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_scroll_event(this)) return;
@@ -2290,7 +2321,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.Thickness  = 0;
         cachedWindow->State.Creator    = nullptr;
         cachedWindow->State.Parent     = nullptr;
-        cachedWindow->State.Layer      = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes;
+        cachedWindow->State.Layer      = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main;
     }
 
     // reset widgets events

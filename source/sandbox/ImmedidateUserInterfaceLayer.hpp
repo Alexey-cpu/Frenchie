@@ -68,19 +68,21 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceNodeType_ : int
         {
-            ImmedidateUserInterfaceNodeType_Node            = 1 << 0,
-            ImmedidateUserInterfaceNodeType_Window          = 1 << 1,
-            ImmedidateUserInterfaceNodeType_WindowMenu      = 1 << 2,
-            ImmedidateUserInterfaceNodeType_WindowFrame     = 1 << 3,
-            ImmedidateUserInterfaceNodeType_WindowMenubar   = 1 << 4,
-            ImmedidateUserInterfaceNodeType_WindowDockFrame = 1 << 5
+            ImmedidateUserInterfaceNodeType_Node                 = 0,
+            ImmedidateUserInterfaceNodeType_Window               = 1,
+            ImmedidateUserInterfaceNodeType_WindowMenu           = 2,
+            ImmedidateUserInterfaceNodeType_WindowMenubar        = 3,
+            ImmedidateUserInterfaceNodeType_WindowDefaultFrame   = 4,
+            ImmedidateUserInterfaceNodeType_WindowDockerFrame    = 5,
+            //ImmedidateUserInterfaceNodeType_WindowDockerTabFrame = 6
         };
 
         enum ImmedidateUserInterfaceNodeLayer_ : int
         {
-            ImmedidateUserInterfaceNodeLayer_Begin = 0,
-            ImmedidateUserInterfaceNodeLayer_Nodes = ImmedidateUserInterfaceNodeLayer_Begin,
-            ImmedidateUserInterfaceNodeLayer_Docing,
+            ImmedidateUserInterfaceNodeLayer_Begin   = 0,
+            ImmedidateUserInterfaceNodeLayer_Docking = ImmedidateUserInterfaceNodeLayer_Begin,
+            ImmedidateUserInterfaceNodeLayer_Main,
+            ImmedidateUserInterfaceNodeLayer_DockingActive,
             ImmedidateUserInterfaceNodeLayer_Focus,
             ImmedidateUserInterfaceNodeLayer_Popups,
             ImmedidateUserInterfaceNodeLayer_End,
@@ -89,7 +91,11 @@ namespace Frenchie
         enum ImmedidateUserInterfaceNodeChanges_ : int
         {
             ImmedidateUserInterfaceNodeChanges_None                        = 0,
+            
+            // move
             ImmedidateUserInterfaceNodeChanges_IsBeingMoved                = 1 << 0,
+
+            // resize
             ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft       = 1 << 1,
             ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight      = 1 << 2,
             ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft    = 1 << 3,
@@ -98,13 +104,18 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeChanges_IsBeingResizedLeft          = 1 << 6,
             ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight         = 1 << 7,
             ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom        = 1 << 8,
+
+            // focus
             ImmedidateUserInterfaceNodeChanges_IsBeingFocused              = 1 << 9,
+
+            // scroll
             ImmedidateUserInterfaceNodeChanges_IsBeingScrolledHorizontally = 1 << 10,
             ImmedidateUserInterfaceNodeChanges_IsBeingScrolledVertically   = 1 << 11,
 
-            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredStarted      = 1 << 12,
-            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered             = 1 << 13,
-            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredEnded        = 1 << 14,
+            // mouse hover
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredStarted  = 1 << 12,
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHovered         = 1 << 13,
+            ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredEnded    = 1 << 14,
         };
 
         enum ImmedidateUserInterfaceNodeSettings_ : int
@@ -258,7 +269,7 @@ namespace Frenchie
         {
             // hints
             mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node        };
-            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Nodes     };
+            mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main     };
             mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default};
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
@@ -354,10 +365,6 @@ namespace Frenchie
             bool begin_window(const std::string& _Name, bool* _Rendered = nullptr);
             void end_window();
 
-            // auxiliary lambdas
-            bool begin_window_frame(const std::string& _Name, bool* _Rendered, const ImmedidateUserInterfaceNodeSettings& _Settings);
-            void end_window_frame();
-
             bool begin_menu(const std::string& _Name);
             void end_menu();
 
@@ -373,6 +380,8 @@ namespace Frenchie
             // style
             mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
             
+            std::string HoveredName;
+
             // rendering
             mutable std::shared_ptr<Immediate2DRenderer>            m_Renderer      {nullptr};
             mutable std::map<ImmedidateUserInterfaceNodeLayer, int> m_RendererLayers{std::map<ImmedidateUserInterfaceNodeLayer, int>()};
@@ -401,8 +410,10 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
 
+            mutable Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>   m_NextFocusedNode       {Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>()};
+
             // docking
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_DockedWindows           {std::vector<ImmedidateUserInterfaceNode*>()};
+            //mutable std::vector<ImmedidateUserInterfaceNode*>                m_DockedWindows           {std::vector<ImmedidateUserInterfaceNode*>()};
 
             // popups
             mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
@@ -445,6 +456,8 @@ namespace Frenchie
             bool ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node);
             bool ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node);
             bool ui_node_end_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node);
+
+            bool ui_node_is_being_docked_by(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
 
             // modification
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*) const;
