@@ -72,9 +72,7 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeType_Window               = 1,
             ImmedidateUserInterfaceNodeType_WindowMenu           = 2,
             ImmedidateUserInterfaceNodeType_WindowMenubar        = 3,
-            ImmedidateUserInterfaceNodeType_WindowDefaultFrame   = 4,
-            ImmedidateUserInterfaceNodeType_WindowDockerFrame    = 5,
-            //ImmedidateUserInterfaceNodeType_WindowDockerTabFrame = 6
+            ImmedidateUserInterfaceNodeType_WindowDefaultFrame   = 4
         };
 
         enum ImmedidateUserInterfaceNodeLayer_ : int
@@ -410,10 +408,9 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
 
-            mutable Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>   m_NextFocusedNode       {Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>()};
-
-            // docking
-            //mutable std::vector<ImmedidateUserInterfaceNode*>                m_DockedWindows           {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::map<
+                ImmedidateUserInterfaceNodeChanges_,
+                Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>> m_EventsQueue;
 
             // popups
             mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
@@ -453,11 +450,10 @@ namespace Frenchie
 
             // docking
             bool ui_node_begin_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
+            bool ui_node_is_being_docked_by(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
             bool ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node);
             bool ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node);
             bool ui_node_end_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node);
-
-            bool ui_node_is_being_docked_by(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
 
             // modification
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*) const;
@@ -482,19 +478,52 @@ namespace Frenchie
             bool ui_node_is_being_scrolled_horizontally(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_scrolled_vertically(const ImmedidateUserInterfaceNode*) const;
 
+            //------------------------------------------------------------------------------------------------
+            // events query
+            //------------------------------------------------------------------------------------------------
+            void ui_node_enqueue_focused_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_focused_node();
+
+            void ui_node_enqueue_resize_top_left_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_top_left_node();
+
+            void ui_node_enqueue_resize_top_right_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_top_right_node();
+
+            void ui_node_enqueue_resize_bottom_left_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_bottom_left_node();
+
+            void ui_node_enqueue_resize_bottom_right_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_bottom_right_node();
+
+            void ui_node_enqueue_resize_top_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_top_node();
+
+            void ui_node_enqueue_resize_left_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_left_node();
+
+            void ui_node_enqueue_resize_right_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_right_node();
+
+            void ui_node_enqueue_resize_bottom_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_resize_bottom_node();
+
+            void ui_node_enqueue_moving_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_moving_node();
+
+            void ui_node_enqueue_vertical_scroll_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_vertical_scroll_node();
+
+            void ui_node_enqueue_horizontal_scroll_node(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_horizontal_scroll_node();
+
+            void ui_node_event_dequeue_finish(ImmedidateUserInterfaceNode* _Sink);
+            //------------------------------------------------------------------------------------------------
+
             void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_top_left(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_top_right(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_bottom_left(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_bottom_right(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_top(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_left(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_right(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_resize_bottom(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_move(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_focus(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
-            void ui_node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
+
+            //void ui_node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
+            //void ui_node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
 
             void ui_node_end_hover(ImmedidateUserInterfaceNode* _Window);
             void ui_node_end_resize(ImmedidateUserInterfaceNode*);
