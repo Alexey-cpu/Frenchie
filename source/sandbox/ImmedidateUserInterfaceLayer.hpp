@@ -408,6 +408,7 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
 
+            // events
             mutable std::map<
                 ImmedidateUserInterfaceNodeChanges_,
                 Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>> m_EventsQueue;
@@ -481,6 +482,8 @@ namespace Frenchie
             //------------------------------------------------------------------------------------------------
             // events query
             //------------------------------------------------------------------------------------------------
+            bool ui_node_event_has_been_enqueued(const ImmedidateUserInterfaceNodeChanges&);
+
             void ui_node_enqueue_focused_node(ImmedidateUserInterfaceNode*);
             bool ui_node_dequeue_focused_node();
 
