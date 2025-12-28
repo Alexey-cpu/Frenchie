@@ -525,9 +525,6 @@ namespace Frenchie
 
             void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
 
-            //void ui_node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
-            //void ui_node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
-
             void ui_node_end_hover(ImmedidateUserInterfaceNode* _Window);
             void ui_node_end_resize(ImmedidateUserInterfaceNode*);
             void ui_node_end_move(ImmedidateUserInterfaceNode*);
