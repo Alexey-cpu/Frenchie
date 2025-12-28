@@ -190,8 +190,29 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         // render some arbitary layout
         if(begin_node("Layout-1"))
         {
-            for(int i = 0; i < 1e1; ++i)
-                widget_push_button(std::string("Button-").append(std::to_string(i)));
+            widget_menu_button("Action-1");
+            widget_menu_button("Action-2");
+            widget_menu_button("Action-3");
+            widget_menu_button("Action-4");
+
+            if(begin_node("Layout-2"))
+            {
+                for(int i = 0; i < 1e1; ++i)
+                    widget_push_button(std::string("Button-").append(std::to_string(i)));
+
+                end_node();
+            }
+
+            if(begin_node("Layout-3"))
+            {
+                for(int i = 0; i < 1e1; ++i)
+                {
+                    set_next_ui_node_cursor_same_line();
+                    widget_push_button(std::string("Button-").append(std::to_string(i)));
+                }
+
+                end_node();
+            }
 
             end_node();
         }
@@ -1000,7 +1021,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
         _Window->State.VerticalScrollBar.setup(
             0.f,
             _Window->State.ViewportBox.height(),
-            _Window->Cache.ContentBox.height() + m_Style->WindowScrollBarSliderWidth,
+            _Window->Cache.ContentBox.height(),
             _Window->State.ViewportBox.height());
 
         if(!ui_node_is_vertical_scroll_bar_needed(_Window))
@@ -1022,7 +1043,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
         _Window->State.HorizontalScrollBar.setup(
             0.f,
             _Window->State.ViewportBox.width(),
-            _Window->Cache.ContentBox.width() + m_Style->WindowScrollBarSliderWidth,
+            _Window->Cache.ContentBox.width(),
             _Window->State.ViewportBox.width());
 
         if(!ui_node_is_horizontal_scroll_bar_needed(_Window))
@@ -1044,7 +1065,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
         _Window->State.ScrollAreaBox  = gs_2dboxf(
             _Window->State.ViewportBox.Min,
             _Window->State.ViewportBox.Max,
-            _Window->State.ViewportBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
+            _Window->State.ViewportBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize );
 
         _Window->State.ScrollAreaBox.Min += gs_vec2f(
             -_Window->State.HorizontalScrollBar.SliderPosition * _Window->State.HorizontalScrollBar.SliderScale,
@@ -1062,19 +1083,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_calculate_geometry(ImmedidateU
             _Window->State.ScrollAreaBox.Min,
             _Window->State.ScrollAreaBox.Min + _Window->State.ContentBox.size(),
             _Window->State.ScrollAreaBox.Min + _Window->State.LayoutCursorPositon + _Window->State.LayoutCursorSize);
-
-        // recalculate parental content box
-        auto parent = _Window->State.Parent;
-
-        while (parent)
-        {
-            parent->State.ContentBox = gs_2dboxf(
-                parent->State.ScrollAreaBox.Min,
-                parent->State.ScrollAreaBox.Min + gs_max(_Window->State.ContentBox.size(), parent->State.ContentBox.size()),
-                parent->State.ScrollAreaBox.Min + parent->State.LayoutCursorPositon + parent->State.LayoutCursorSize);
-
-            parent = parent->State.Parent;
-        }
     }
     
     // clipping box
@@ -1880,8 +1888,8 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background_frame(Immedi
         _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     // m_Renderer->push_rectangle_rounded(
-    //     _Window->Cache.ContentBox.Min,
-    //     _Window->Cache.ContentBox.Max,
+    //     _Window->Cache.ViewportBox.Min,
+    //     _Window->Cache.ViewportBox.Max,
     //     m_Style->FrameRoundingRadius,
     //     m_Style->FrameWidth,
     //     gs_vec4f(255.f, 0.f, 0.f, 255.f),
@@ -2121,12 +2129,12 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
             gs_vec2f size =
                 (parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutSetAllChildrenSameSize) ?
                 parent->State.ViewportBox.size() / (float)parent->State.ChildCount :
-                (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.ViewportBox.size();
+                (window->State.WindowBox.size() / parent->State.LayoutTotalChildrenSize) * parent->State.WindowBox.size();
             
             if((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
-                size = gs_vec2f(size.x, parent->State.WindowBox.height());
+                size = gs_vec2f(size.x, parent->State.ViewportBox.height());
             else if((parent->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically))
-                size = gs_vec2f(parent->State.WindowBox.width(), size.y);
+                size = gs_vec2f(parent->State.ViewportBox.width(), size.y);
 
             window->State.WindowBox = gs_2dboxf(
                 window->State.WindowBox.Min,
@@ -2142,11 +2150,11 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
     // docking
     for (auto& window : m_NodesRenderingList)
     {
-        if(window->State.Docker != nullptr)
-        {
-            window->State.WindowBox = window->State.Docker->State.DockArea;
-            ui_node_calculate_geometry(window);
-        }
+        if(window->State.Docker == nullptr)
+            continue;
+
+        window->State.WindowBox = window->State.Docker->State.DockArea;
+        ui_node_calculate_geometry(window);
     }
 }
 
