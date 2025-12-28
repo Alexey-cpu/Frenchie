@@ -80,14 +80,14 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     
     if(creator == nullptr)
         creator = window;
-    
+
     m_WidgetIsBeingMouseHovered =
         ui_node_is_being_hovered(window)  &&
         ui_node_is_being_focused(creator) &&
         WidgetData.BoundingBox.transform(window->State.Transform).contains(m_Renderer->get_cursor_postion()) &&
         WidgetData.ClippingBox.contains(m_Renderer->get_cursor_postion());
 
-    if(m_WidgetIsBeingMouseHovered.value())
+    if(m_WidgetIsBeingMouseHovered.has_value() && m_WidgetIsBeingMouseHovered.value())
     {
         if(application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
             m_WidgetIsBeingMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
@@ -199,17 +199,17 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         end_window();
     }
 
-    if(begin_window("Window-2", nullptr))
-    {
-        widget_push_button("Window-2");
-        end_window();
-    }
+    // if(begin_window("Window-2", nullptr))
+    // {
+    //     widget_push_button("Window-2");
+    //     end_window();
+    // }
 
-    if(begin_window("Window-3", nullptr))
-    {
-        widget_push_button("Window-3");
-        end_window();
-    }
+    // if(begin_window("Window-3", nullptr))
+    // {
+    //     widget_push_button("Window-3");
+    //     end_window();
+    // }
 
     // if(begin_window("Window-1", nullptr))
     // {
@@ -562,7 +562,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
         end_node();
     };
 
-    // main code
+    // render window
     if(begin_node(
         _Name,
         _Rendered,
@@ -599,7 +599,15 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         _Name,
                         _Rendered,
                         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
-                    {                
+                    {
+                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                        {
+                            ui_node_enqueue_focused_node(window);
+                            ui_node_enqueue_moving_node(window);
+                        }
+                        
                         end_window_frame();
                     }
                 }
@@ -624,6 +632,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
                             ui_node_enqueue_focused_node(renderedWindow);
+                            ui_node_enqueue_moving_node(renderedWindow);
                         }
 
                         end_window_frame();
@@ -1351,11 +1360,31 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_scrolled(const Immedi
 //------------------------------------------------------------------------------------------------------------------------
 // event queue
 //------------------------------------------------------------------------------------------------------------------------
+bool ImmedidateUserInterfaceContextLayer::ui_node_event_has_been_enqueued(const ImmedidateUserInterfaceNodeChanges& _Event)
+{
+    bool enqueued = false;
+    for (auto event : m_EventsQueue)
+        enqueued = enqueued || ((event.first & _Event) && event.second.has_value() && event.second.value() != nullptr);
+    return enqueued;
+    
+}
+
 void ImmedidateUserInterfaceContextLayer::ui_node_enqueue_focused_node(ImmedidateUserInterfaceNode* _Window)
 {
-    if(_Window == nullptr) return;
+    if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
+        return;
     
-    m_EventsQueue[ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused] = _Window;
+    // pass focus to _Window
+    auto parent = _Window->State.Parent;
+    auto window = _Window;
+
+    while (parent != nullptr)
+    {
+        window = parent;
+        parent = parent->State.Parent;
+    }
+
+    m_EventsQueue[ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused] = window;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_dequeue_focused_node()
@@ -1365,22 +1394,8 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_dequeue_focused_node()
         if (_Window == nullptr || (_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
             return;
 
-        // pass focus to _Window
-        auto parent = _Window->State.Parent;
-        auto window = _Window;
-
-        while (parent != nullptr)
-        {
-            window = parent;
-            parent = parent->State.Parent;
-        }
-
-        if(!(window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
-        {
-            std::cout << "pass focus to " << window->Name << "\n";
-
-            window->State.Changes |= ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused;
-        }
+        if(!(_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
+            _Window->State.Changes |= ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused;
     };
 
     auto& event = m_EventsQueue[ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused];
@@ -2147,7 +2162,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
         static bool receive_hover_event(ImmedidateUserInterfaceContextLayer* _Context, bool (*_Filter)(ImmedidateUserInterfaceNode*) = nullptr)
         {
             if(_Context == nullptr)
-                return false;
+                return true;
 
             // find the top most hovered node
             ImmedidateUserInterfaceNode* hoveredNode = nullptr;
@@ -2279,14 +2294,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 return true;
             }
 
-            // check if anything already moves
+            // check if anything already is being resized
             for (auto next : _Context->m_NodesRenderingList)
             {
                 if(_Context->ui_node_is_being_resized(next))
                     return true;
             }
 
-            // enqueue
+            // collect event sinks
             for (auto next : _Context->m_NodesRenderingList)
             {
                 if((_Filter != nullptr && !_Filter(next)))
@@ -2325,6 +2340,20 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                         _Context->ui_node_enqueue_resize_right_node(next);
                     else if(resizeBottom.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
                         _Context->ui_node_enqueue_resize_bottom_node(next);
+
+                    if(_Context->ui_node_event_has_been_enqueued(
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft     |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight    |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft  |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomRight |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTop         |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedLeft        |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight       |
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom))
+                    {
+                        if(next->State.Parent == nullptr)
+                            return true;
+                    }
                 }
             }
 
@@ -2471,8 +2500,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     !_Context->ui_node_is_being_resized(movedNode)                                                                      &&
                     !_Context->ui_node_is_being_scrolled(movedNode))
                 {
-                    
-                    std::cout << movedNode->Name << " moved ... \n";
                     _Context->ui_node_enqueue_moving_node(movedNode);
                     return true;
                 }
