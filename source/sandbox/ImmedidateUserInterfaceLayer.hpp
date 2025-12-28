@@ -277,6 +277,8 @@ namespace Frenchie
             mutable int                          Thickness  {0};
             mutable int                          LayerDepth {0};
             mutable int                          ChildCount {0};
+            mutable int                          ChildIndex {0};
+            mutable int                          DrawIndex  {0};
 
             // layouting
             mutable gs_vec2f LayoutTotalChildrenSize{gs_vec2f(0.f, 0.f)};
@@ -562,6 +564,56 @@ namespace Frenchie
             bool widget_has_been_double_clicked(const ApplicationMouseButton::Button&) const;
 
             friend class ImmedidateUserInterfaceContextEventsReceiver;
+
+            struct Hierarchy
+            {
+                std::vector<int>                          Indexes;
+                std::vector<int>                          Entries;
+                std::vector<ImmedidateUserInterfaceNode*> Sorted;
+
+                void build(const std::vector<ImmedidateUserInterfaceNode*>& Nodes)
+                {
+                    std::vector<int> workspace(Nodes.size()+1);
+
+                    Indexes.resize(Nodes.size() + 1);
+                    Entries.resize(Nodes.size());
+                    Sorted.resize(Nodes.size());
+
+                    for(int i = 0; i < (int)Entries.size(); i++)
+                    {
+                        Entries[i] = 0;
+                        Indexes[i] = 0;
+                        Sorted [i] = Nodes[i];
+                    }
+
+                    // count items
+                    for (int i = 0; i < (int)Nodes.size(); i++)
+                    {
+                        if(Nodes[i]->State.Parent == nullptr)
+                            continue;
+
+                        ++Entries[Nodes[i]->State.Parent->State.DrawIndex];
+                    }
+
+                    // cumulative sum
+                    int sum = 0;
+                    for (int i = 0; i < Nodes.size(); i++)
+                    {
+                        Indexes  [i] = sum;
+                        workspace[i] = sum;
+                        sum += Entries[i];
+                    }
+                    Indexes[Nodes.size()] = sum;
+
+                    for(int i = 0; i < Nodes.size(); i++ )
+                    {
+                        if(Nodes[i]->State.Parent == nullptr)
+                            continue;
+
+                        Sorted[workspace[Nodes[i]->State.Parent->State.DrawIndex]++] = Nodes[i];
+                    }
+                }
+            } m_Hierarchy;
         };
     }
 }

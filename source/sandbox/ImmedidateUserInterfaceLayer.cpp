@@ -2102,6 +2102,29 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
 
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
+    // build hierarchy
+    static bool inited = false;
+
+    m_Hierarchy.build(m_NodesRenderingList);
+
+    if(!inited)
+    {
+        for (auto& window : m_NodesRenderingList)
+        {
+            std::cout << window->Name << "\n";
+
+            auto begin = m_Hierarchy.Indexes[window->State.DrawIndex];
+            auto end   = m_Hierarchy.Indexes[window->State.DrawIndex + 1];
+
+            for (int i = begin; i < end; i++)
+            {
+                std::cout << "\t" << m_Hierarchy.Sorted[i]->Name << "\n";
+            }
+        }
+    }
+
+    inited = true;
+    
     // layering
     for (auto& window : m_NodesRenderingList)
     {
