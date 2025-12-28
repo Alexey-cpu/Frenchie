@@ -343,6 +343,7 @@ namespace Frenchie
             virtual bool awake()        override;
             virtual void frame_start()  override;
             virtual void frame_update() override;
+            virtual void frame_render() override;
             virtual void frame_finish() override;
 
             // setters

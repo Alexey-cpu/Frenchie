@@ -220,17 +220,17 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         end_window();
     }
 
-    // if(begin_window("Window-2", nullptr))
-    // {
-    //     widget_push_button("Window-2");
-    //     end_window();
-    // }
+    if(begin_window("Window-2", nullptr))
+    {
+        widget_push_button("Window-2");
+        end_window();
+    }
 
-    // if(begin_window("Window-3", nullptr))
-    // {
-    //     widget_push_button("Window-3");
-    //     end_window();
-    // }
+    if(begin_window("Window-3", nullptr))
+    {
+        widget_push_button("Window-3");
+        end_window();
+    }
 
     // if(begin_window("Window-1", nullptr))
     // {
@@ -344,9 +344,12 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         0.f);
 }
 
+void ImmedidateUserInterfaceContextLayer::frame_render()
+{
+}
+
 void ImmedidateUserInterfaceContextLayer::frame_finish()
 {
-    // events
     ui_node_layout_children();
     ui_node_receive_events();
     ui_node_process_events();
@@ -533,12 +536,54 @@ void ImmedidateUserInterfaceContextLayer::end_node()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name, bool* _Rendered)
 {
-    auto begin_window_frame = [this](
+    auto render_window_close_button = [this](ImmedidateUserInterfaceNode* _Window)
+    {
+        gs_2dboxf _ButtonBox = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(_Window->State.WindowMinimumHeight * 0.5f));
+        
+        gs_vec2f  _ButtonPos = gs_vec2f(
+            _Window->State.WindowBox.Max.x - _ButtonBox.width() - m_Style->FrameWidth,
+            _Window->State.WindowBox.center().y - _ButtonBox.height() * 0.5f);
+        
+        gs_mat4f  _Transform =
+            _Window->State.Transform *
+            m_Renderer->calculate_transform_matrix(
+                ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1),
+                _ButtonPos);
+
+        m_Renderer->push_arc_filled(
+            _ButtonBox.center(),
+            _ButtonBox.width()  * 0.5f,
+            _ButtonBox.height() * 0.5f,
+            0.f,
+            360.f,
+            gs_vec4f(225.f, 0.f, 0.f, 255.f),
+            _Transform);
+
+        m_Renderer->push_line(
+            _ButtonBox.Min + gs_vec2f(_ButtonBox.width(), _ButtonBox.height()) * 0.25f,
+            _ButtonBox.Max - gs_vec2f(_ButtonBox.width(), _ButtonBox.height()) * 0.25f,
+            2.f,
+            gs_vec4f(0, 0, 0, 255.f),
+            _Transform * m_Renderer->calculate_transform_matrix(1.f));
+
+        m_Renderer->push_line(
+            gs_vec2f(_ButtonBox.Max.x, _ButtonBox.Min.y) + gs_vec2f(-_ButtonBox.width(), +_ButtonBox.height()) * 0.25f,
+            gs_vec2f(_ButtonBox.Min.x, _ButtonBox.Max.y) + gs_vec2f(+_ButtonBox.width(), -_ButtonBox.height()) * 0.25f,
+            2.f,
+            gs_vec4f(0, 0, 0, 255.f),
+            _Transform * m_Renderer->calculate_transform_matrix(2.f));
+    };
+
+    auto begin_window_frame = [this, &render_window_close_button](
         const std::string&                         _Name,
         bool*                                      _Rendered,
         const ImmedidateUserInterfaceNodeSettings& _Settings)
     {
-        if(begin_node(_Name, _Rendered, _Settings, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDefaultFrame))
+        if(begin_node(
+            _Name,
+            _Rendered,
+            _Settings,
+            ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowDefaultFrame))
         {
             ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
             ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
@@ -548,7 +593,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 ui_node_hierarchy_top()->State.WindowBox.Min,
                 ui_node_hierarchy_top()->State.WindowBox.Max,
                 m_Style->FrameRoundingRadius,
-                gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                gs_vec4f(128.f, 128.f, 128.f, 255.f),
                 ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1)));
 
             // render frame outline
@@ -571,6 +616,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         ui_node_hierarchy_top()->State.WindowBox.Min.x + m_Style->FrameWidth * 2.f,
                         (ui_node_hierarchy_top()->State.WindowBox.center() - m_Renderer->calculate_bounding_box(_Name, m_Style->FontSize, m_Style->Font).size() * 0.5f).y)),
                 m_Style->Font);
+
+            render_window_close_button(ui_node_hierarchy_top());
 
             return true;
         }
@@ -674,41 +721,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 {
                     ui_node_hierarchy_top()->State.WindowMinimumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
                     ui_node_hierarchy_top()->State.WindowMaximumHeight = m_Style->FontSize + 2.f * m_Style->FrameWidth;
-
-                    // render close button
-                    {
-                        gs_2dboxf _ButtonBox = gs_2dboxf(gs_vec2f(0.f), gs_vec2f(ui_node_hierarchy_top()->State.WindowMinimumHeight * 0.5f));
-                        
-                        gs_vec2f  _ButtonPos = gs_vec2f(
-                            ui_node_hierarchy_top()->State.WindowBox.Max.x - _ButtonBox.width() - m_Style->FrameWidth,
-                            ui_node_hierarchy_top()->State.WindowBox.center().y - _ButtonBox.height() * 0.5f);
-                        
-                        gs_mat4f  _Transform = ui_node_hierarchy_top()->State.Transform * m_Renderer->calculate_transform_matrix(ui_node_calculate_child_depth_placed_in_follow(ui_node_hierarchy_top(), 1), _ButtonPos);
-
-                        m_Renderer->push_arc_filled(
-                            _ButtonBox.center(),
-                            _ButtonBox.width()  * 0.5f,
-                            _ButtonBox.height() * 0.5f,
-                            0.f,
-                            360.f,
-                            gs_vec4f(225.f, 0.f, 0.f, 255.f),
-                            _Transform);
-
-                        m_Renderer->push_line(
-                            _ButtonBox.Min + gs_vec2f(_ButtonBox.width(), _ButtonBox.height()) * 0.25f,
-                            _ButtonBox.Max - gs_vec2f(_ButtonBox.width(), _ButtonBox.height()) * 0.25f,
-                            2.f,
-                            gs_vec4f(0, 0, 0, 255.f),
-                            _Transform * m_Renderer->calculate_transform_matrix(1.f));
-
-                        m_Renderer->push_line(
-                            gs_vec2f(_ButtonBox.Max.x, _ButtonBox.Min.y) + gs_vec2f(-_ButtonBox.width(), +_ButtonBox.height()) * 0.25f,
-                            gs_vec2f(_ButtonBox.Min.x, _ButtonBox.Max.y) + gs_vec2f(+_ButtonBox.width(), -_ButtonBox.height()) * 0.25f,
-                            2.f,
-                            gs_vec4f(0, 0, 0, 255.f),
-                            _Transform * m_Renderer->calculate_transform_matrix(2.f));
-                    }
-
                     end_node();
                 }
             }
@@ -1783,7 +1795,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_hover(ImmedidateUserInte
     }
     else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(_Window->State.WindowHoverStart, Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
     {
-        for (auto window : m_NodesRenderingList)
+        for (auto window : m_NodesRenderingCache)
             ui_node_end_hover(window);
 
         _Window->State.Changes |=
@@ -2177,6 +2189,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
             for (auto next : _Context->m_NodesRenderingList)
             {
+                _Context->ui_node_end_hover(next);
+                
                 if(_Filter != nullptr && !_Filter(next))
                     continue;
 
@@ -2401,7 +2415,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     !_Context->ui_node_is_being_moved(next))
                 {
                     _Context->ui_node_enqueue_vertical_scroll_node(next);
-                    return true;
                 }
 
                 // horizontal scroll
@@ -2412,7 +2425,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     !_Context->ui_node_is_being_moved(next))
                 {
                     _Context->ui_node_enqueue_horizontal_scroll_node(next);
-                    return true;
+                }
+
+                if(_Context->ui_node_event_has_been_enqueued(
+                    ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingScrolledHorizontally |
+                    ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingScrolledVertically))
+                {
+                    if(next->State.Parent == nullptr)
+                        return true;
                 }
             }
 
@@ -2457,39 +2477,39 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     }
                 }
 
-                if(hovered != nullptr)
+                if(hovered == nullptr)
+                    return true;
+
+                bool allMouseButtonsAreReleased = true;
+
+                for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
                 {
-                    bool allMouseButtonsAreReleased = true;
+                    allMouseButtonsAreReleased =
+                        allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+                }
 
-                    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                            button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+                if(!_Context->ui_node_is_being_docked_by(movedNode, hovered)  &&
+                    !_Context->ui_node_is_being_docked_by(hovered, movedNode))
+                {
+                    // render potential docker gizmo
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        hovered->State.WindowBox.Min,
+                        hovered->State.WindowBox.Max,
+                        0.f,
+                        12.f,
+                        gs_vec4f(0.f, 0.f, 255.f, 255.f),
+                        hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
+
+                    // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
+                    if(allMouseButtonsAreReleased)
                     {
-                        allMouseButtonsAreReleased =
-                            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-                    }
+                        _Context->ui_node_begin_attaching_to_a_docker(movedNode, hovered);
 
-                    if(!_Context->ui_node_is_being_docked_by(movedNode, hovered)  &&
-                        !_Context->ui_node_is_being_docked_by(hovered, movedNode))
-                    {
-                        // render potential docker gizmo
-                        _Context->m_Renderer->push_rectangle_rounded(
-                            hovered->State.WindowBox.Min,
-                            hovered->State.WindowBox.Max,
-                            0.f,
-                            12.f,
-                            gs_vec4f(0.f, 0.f, 255.f, 255.f),
-                            hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
-
-                        // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
-                        if(allMouseButtonsAreReleased)
+                        for (auto dockChild : _Context->m_NodesRenderingCache)
                         {
-                            _Context->ui_node_begin_attaching_to_a_docker(movedNode, hovered);
-
-                            for (auto dockChild : _Context->m_NodesRenderingCache)
-                            {
-                                if(dockChild->State.Docker == movedNode)
-                                    _Context->ui_node_begin_attaching_to_a_docker(dockChild, hovered);
-                            }
+                            if(dockChild->State.Docker == movedNode)
+                                _Context->ui_node_begin_attaching_to_a_docker(dockChild, hovered);
                         }
                     }
                 }
@@ -2502,14 +2522,20 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             {
                 if((_Filter != nullptr && !_Filter(movedNode)) || !_Context->ui_node_is_being_focused(movedNode)) continue;
 
-                if( (movedNode->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)     &&
-                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                     &&
+                if( (movedNode->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)         &&
+                    application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
+                    !application()->is_mouse_button_clicked(ApplicationMouseButton::ApplicationMouseButton_Left)                            &&
                     movedNode->State.ViewportBox.transform(movedNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
-                    !_Context->ui_node_is_being_resized(movedNode)                                                                      &&
+                    !_Context->ui_node_is_being_resized(movedNode)                                                                          &&
                     !_Context->ui_node_is_being_scrolled(movedNode))
                 {
                     _Context->ui_node_enqueue_moving_node(movedNode);
-                    return true;
+                }
+
+                if(_Context->ui_node_event_has_been_enqueued(ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMoved))
+                {
+                    if(movedNode->State.Parent == nullptr)
+                        return true;
                 }
             }
 
