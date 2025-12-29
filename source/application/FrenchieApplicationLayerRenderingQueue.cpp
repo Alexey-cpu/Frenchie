@@ -330,7 +330,7 @@ void RenderingQueue::frame_render()
 
                 glScissor(
                     (int)clippingRect.Min.x,
-                    (int)gs_clamp<float>(application()->get_window_framebuffer_size().y - clippingRect.Max.y, 0, application()->get_window_framebuffer_size().y),
+                    (int)application()->get_window_framebuffer_size().y - clippingRect.Max.y,
                     (int)clippingRect.width(),
                     (int)clippingRect.height());
             }
