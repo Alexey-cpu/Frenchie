@@ -318,6 +318,7 @@ namespace Frenchie
             std::chrono::high_resolution_clock::time_point WindowHoverEnd;
 
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
@@ -462,6 +463,7 @@ namespace Frenchie
             // modification
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_mouse_down(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
+            bool ui_node_is_being_mouse_hold(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_pressed(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_clicked(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_double_clicked(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;

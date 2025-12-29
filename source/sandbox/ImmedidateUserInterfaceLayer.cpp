@@ -441,6 +441,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_node(
     window->State.Type                  = _Type;
     window->State.Settings              = _Settings;
     window->State.Creator               = ui_node_hierarchy_top();
+    window->State.DrawIndex             = (int)m_NodesRenderingList.size();
 
     if(!ui_node_hierarchy_is_empty() &&
         !(window->State.Settings & ImmedidateUserInterfaceNodeSettings_NullParent))
@@ -675,11 +676,10 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         _Rendered,
                         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
                     {
-                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
-                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
-                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                        if(ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                            ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                            ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
-                            //ui_node_enqueue_focused_node(window);
                             ui_node_enqueue_moving_node(window);
                         }
                         
@@ -702,12 +702,21 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_NeverScrollBar             |
                         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
                     {
+                        // pass focus
                         if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
                             ui_node_enqueue_focused_node(renderedWindow);
-                            ui_node_enqueue_moving_node(renderedWindow);
+                        }
+
+                        // move
+                        if(ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                            ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                            ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                        {
+                            if(ui_node_is_being_focused(renderedWindow))
+                                ui_node_enqueue_moving_node(renderedWindow);
                         }
 
                         end_window_frame();
@@ -1266,6 +1275,11 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_hovered(const Immedid
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_down(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
 {    
     return _Window != nullptr && _Window->Cache.MouseDown.has_value() && _Window->Cache.MouseDown.value() == _Button;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_hold(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
+{
+    return _Window != nullptr && _Window->Cache.MouseHold.has_value() && _Window->Cache.MouseHold.value() == _Button;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_mouse_pressed(const ImmedidateUserInterfaceNode* _Window, const ApplicationMouseButton::Button& _Button) const
@@ -2315,6 +2329,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
                         next->State.MouseDown = (ApplicationMouseButton::Button)button;
 
+                    if(application()->is_mouse_button_hold((ApplicationMouseButton::Button)button))
+                        next->State.MouseHold = (ApplicationMouseButton::Button)button;
+
                     if(application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
                         next->State.MousePressed = (ApplicationMouseButton::Button)button;
 
@@ -2490,7 +2507,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if((_Filter != nullptr && !_Filter(movedNode)) || !_Context->ui_node_is_being_focused(movedNode)) continue;
 
                 if( (movedNode->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)         &&
-                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
+                    application()->is_mouse_button_hold(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
                     movedNode->State.ViewportBox.transform(movedNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
                     !_Context->ui_node_is_being_resized(movedNode)                                                                          &&
                     !_Context->ui_node_is_being_scrolled(movedNode))
@@ -2716,6 +2733,11 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         else
             cachedWindow->Cache.MouseDown.reset();
         
+        if(cachedWindow->State.MouseHold.has_value())
+            cachedWindow->Cache.MouseHold = cachedWindow->State.MouseHold.value();
+        else
+            cachedWindow->Cache.MouseHold.reset();
+
         if(cachedWindow->State.MousePressed.has_value())
             cachedWindow->Cache.MousePressed = cachedWindow->State.MousePressed.value();
         else
@@ -2732,6 +2754,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
             cachedWindow->Cache.MouseDoubleClicked.reset();
 
         cachedWindow->State.MouseDown.reset();
+        cachedWindow->State.MouseHold.reset();
         cachedWindow->State.MousePressed.reset();
         cachedWindow->State.MouseClicked.reset();
         cachedWindow->State.MouseDoubleClicked.reset();
