@@ -28,6 +28,7 @@ namespace Frenchie
 
             int                                            Clicks       {0    };
             bool                                           Down         {false};
+            bool                                           Hold         {false};
             bool                                           Pressed      {false};
             bool                                           Released     {false};
             bool                                           Clicked      {false};
@@ -87,6 +88,7 @@ namespace Frenchie
             gs_vec2f    get_window_framebuffer_size() const;
 
             bool is_mouse_button_down(const ApplicationMouseButton::Button&) const;
+            bool is_mouse_button_hold(const ApplicationMouseButton::Button&) const;
             bool is_mouse_button_pressed(const ApplicationMouseButton::Button&) const;
             bool is_mouse_button_released(const ApplicationMouseButton::Button&) const;
             bool is_mouse_button_clicked(const ApplicationMouseButton::Button&) const;

@@ -81,6 +81,7 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
     if(creator == nullptr)
         creator = window;
 
+    // receive events
     m_WidgetIsBeingMouseHovered =
         ui_node_is_being_hovered(window)  &&
         ui_node_is_being_focused(creator) &&
@@ -89,6 +90,12 @@ auto ImmedidateUserInterfaceContextLayer::widget_prepare_for_rendering(const gs_
 
     if(m_WidgetIsBeingMouseHovered.has_value() && m_WidgetIsBeingMouseHovered.value())
     {
+        m_WidgetHasBeenMouseHovered.reset();
+        m_WidgetHasBeenMouseDown.reset();
+        m_WidgetHasBeenMousePressed.reset();
+        m_WidgetHasBeenMouseClicked.reset();
+        m_WidgetHasBeenMouseDoubleClicked.reset();
+
         if(application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Left))
             m_WidgetIsBeingMouseDown = ApplicationMouseButton::Button::ApplicationMouseButton_Left;
         else if(application()->is_mouse_button_down(ApplicationMouseButton::Button::ApplicationMouseButton_Right))
@@ -1793,7 +1800,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_hover(ImmedidateUserInte
         _Window->State.Changes |=
             ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMouseHoveredStarted;
     }
-    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(_Window->State.WindowHoverStart, Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(_Window->State.WindowHoverStart, Frenchie::Core::tic()) > 5.0) // TODO: this MUST BE A SETTING !!!
     {
         for (auto window : m_NodesRenderingCache)
             ui_node_end_hover(window);
@@ -2103,37 +2110,37 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
     // build hierarchy
-    static bool inited = false;
+    //static bool inited = false;
 
     m_Hierarchy.build(m_NodesRenderingList);
 
-    if(!inited)
-    {
-        for (auto& window : m_NodesRenderingList)
-        {
-            std::cout << window->Name << "\n";
+    // if(!inited)
+    // {
+    //     for (auto& window : m_NodesRenderingList)
+    //     {
+    //         std::cout << window->Name << "\n";
 
-            auto begin = m_Hierarchy.Indexes[window->State.DrawIndex];
-            auto end   = m_Hierarchy.Indexes[window->State.DrawIndex + 1];
+    //         auto begin = m_Hierarchy.Indexes[window->State.DrawIndex];
+    //         auto end   = m_Hierarchy.Indexes[window->State.DrawIndex + 1];
 
-            for (int i = begin; i < end; i++)
-            {
-                std::cout << "\t" << m_Hierarchy.Sorted[i]->Name << "\n";
-            }
-        }
-    }
+    //         for (int i = begin; i < end; i++)
+    //         {
+    //             std::cout << "\t" << m_Hierarchy.Sorted[i]->Name << "\n";
+    //         }
+    //     }
+    // }
 
-    inited = true;
+    // inited = true;
     
     // layering
     for (auto& window : m_NodesRenderingList)
     {
-        if(ui_node_is_being_focused(window))
+        if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu)
+            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
+        else if(ui_node_is_being_focused(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus;
         else if(ui_node_is_being_docked(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Docking;
-        else if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu)
-            window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
         else
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main;
     }
@@ -2242,18 +2249,22 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             return true;
         }
 
-        static bool receive_widget_press_event(ImmedidateUserInterfaceContextLayer* _Context)
+        static bool receive_widgets_events(ImmedidateUserInterfaceContextLayer* _Context)
         {
             if(_Context == nullptr)
                 return false;
 
-            // pass focus
             for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
                      button < ApplicationMouseButton::ApplicationMouseButton_End;
                      button++)
             {
-                if(_Context->widget_has_been_pressed((ApplicationMouseButton::Button)button))
+                if(_Context->widget_has_been_mouse_down((ApplicationMouseButton::Button)button) ||
+                    _Context->widget_has_been_pressed((ApplicationMouseButton::Button)button) ||
+                    _Context->widget_has_been_clicked((ApplicationMouseButton::Button)button) ||
+                    _Context->widget_has_been_double_clicked((ApplicationMouseButton::Button)button))
+                {
                     return true;
+                }
             }
 
             return false;
@@ -2477,66 +2488,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(!_Context->ui_node_is_being_moved(movedNode))
                     continue;
 
-                if(movedNode->State.Parent != nullptr)
-                    return true;
-
-                _Context->ui_node_end_attaching_to_a_docker(movedNode);
-
-                // find the top most hovered node not equal to the moved one
-                ImmedidateUserInterfaceNode* hovered = nullptr;
-
-                for (auto hoveredNode : _Context->m_NodesRenderingList)
-                {
-                    if(hoveredNode->State.WindowBox.transform(hoveredNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                    {
-                        if(hovered == nullptr || hoveredNode->State.LayerDepth > hovered->State.LayerDepth)
-                        {
-                            if(hoveredNode != movedNode &&
-                                hoveredNode->State.Parent == nullptr)
-                            {
-                                hovered = hoveredNode;
-                            }
-                        }
-                    }
-                }
-
-                if(hovered == nullptr)
-                    return true;
-
-                bool allMouseButtonsAreReleased = true;
-
-                for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-                {
-                    allMouseButtonsAreReleased =
-                        allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-                }
-
-                if(!_Context->ui_node_is_being_docked_by(movedNode, hovered)  &&
-                    !_Context->ui_node_is_being_docked_by(hovered, movedNode))
-                {
-                    // render potential docker gizmo
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        hovered->State.WindowBox.Min,
-                        hovered->State.WindowBox.Max,
-                        0.f,
-                        12.f,
-                        gs_vec4f(0.f, 0.f, 255.f, 255.f),
-                        hovered->State.Transform * _Context->m_Renderer->calculate_transform_matrix(_Context->m_Renderer->get_far_plane()));
-
-                    // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
-                    if(allMouseButtonsAreReleased)
-                    {
-                        _Context->ui_node_begin_attaching_to_a_docker(movedNode, hovered);
-
-                        for (auto dockChild : _Context->m_NodesRenderingCache)
-                        {
-                            if(dockChild->State.Docker == movedNode)
-                                _Context->ui_node_begin_attaching_to_a_docker(dockChild, hovered);
-                        }
-                    }
-                }
-
                 return true;
             }
             
@@ -2546,8 +2497,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if((_Filter != nullptr && !_Filter(movedNode)) || !_Context->ui_node_is_being_focused(movedNode)) continue;
 
                 if( (movedNode->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)         &&
-                    application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
-                    !application()->is_mouse_button_clicked(ApplicationMouseButton::ApplicationMouseButton_Left)                            &&
+                    application()->is_mouse_button_hold(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
                     movedNode->State.ViewportBox.transform(movedNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
                     !_Context->ui_node_is_being_resized(movedNode)                                                                          &&
                     !_Context->ui_node_is_being_scrolled(movedNode))
@@ -2564,61 +2514,23 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
             return false;
         }
-
-        static void receive_finish(ImmedidateUserInterfaceContextLayer* _Context)
-        {
-            if(_Context == nullptr)
-                return;
-
-            // disable all modifications if all mouse buttons have been released
-            bool allMouseButtonsAreReleased = true;
-
-            for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                     button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-            {
-                allMouseButtonsAreReleased =
-                    allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-            }
-
-            if(allMouseButtonsAreReleased)
-            {
-                for (auto& renderedNode : _Context->m_NodesRenderingList)
-                {
-                    _Context->ui_node_end_move(renderedNode);
-                    _Context->ui_node_end_resize(renderedNode);
-                    _Context->ui_node_end_scroll(renderedNode);
-                }
-            }
-        };
     };
-
-    if(ImmedidateUserInterfaceContextEventsReceiver::receive_widget_press_event(this))
-    {
-        ImmedidateUserInterfaceContextEventsReceiver::receive_finish(this);
-        return;
-    }
 
     ImmedidateUserInterfaceContextEventsReceiver::receive_focus_event(this);
     ImmedidateUserInterfaceContextEventsReceiver::receive_hover_event(this);
     ImmedidateUserInterfaceContextEventsReceiver::receive_mouse_events(this);
 
-    if(ImmedidateUserInterfaceContextEventsReceiver::receive_resize_event(this))
-    {
-        ImmedidateUserInterfaceContextEventsReceiver::receive_finish(this);
+    if(ImmedidateUserInterfaceContextEventsReceiver::receive_widgets_events(this))
         return;
-    }
+
+    if(ImmedidateUserInterfaceContextEventsReceiver::receive_resize_event(this))
+        return;
 
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_scroll_event(this))
-    {
-        ImmedidateUserInterfaceContextEventsReceiver::receive_finish(this);
         return;
-    }
     
     if(ImmedidateUserInterfaceContextEventsReceiver::receive_move_event(this))
-    {
-        ImmedidateUserInterfaceContextEventsReceiver::receive_finish(this);
         return;
-    }
 }
 
 void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
@@ -2695,11 +2607,68 @@ void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
         }
         else if(ui_node_is_being_moved(window))
         {
+            // move
             window->State.WindowBox = gs_2dboxf(
                 window->Cache.WindowBox.Min + application()->get_window_cursor_dragdelta(),
                 window->Cache.WindowBox.Max + application()->get_window_cursor_dragdelta());
 
-            // dock space
+            // docking
+            if(window->State.Parent == nullptr && window->State.Creator == nullptr)
+            {
+                ui_node_end_attaching_to_a_docker(window);
+
+                // find the top most hovered node not equal to the moved one
+                ImmedidateUserInterfaceNode* docker = nullptr;
+
+                for (auto node : m_NodesRenderingList)
+                {
+                    if(node->State.WindowBox.transform(node->State.Transform).contains(m_Renderer->get_cursor_postion()))
+                    {
+                        if(docker == nullptr || node->State.LayerDepth > docker->State.LayerDepth)
+                        {
+                            if(node != window && node->State.Parent == nullptr)
+                                docker = node;
+                        }
+                    }
+                }
+
+                if(docker != nullptr)
+                {
+                    bool allMouseButtonsAreReleased = true;
+
+                    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                             button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+                    {
+                        allMouseButtonsAreReleased =
+                            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+                    }
+
+                    if(!ui_node_is_being_docked_by(window, docker)  &&
+                        !ui_node_is_being_docked_by(docker, window))
+                    {
+                        // render potential docker gizmo
+                        m_Renderer->push_rectangle_rounded(
+                            docker->State.WindowBox.Min,
+                            docker->State.WindowBox.Max,
+                            0.f,
+                            12.f,
+                            gs_vec4f(0.f, 0.f, 255.f, 255.f),
+                            docker->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+
+                        // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
+                        if(allMouseButtonsAreReleased)
+                        {
+                            ui_node_begin_attaching_to_a_docker(window, docker);
+
+                            for (auto dockChild : m_NodesRenderingList)
+                            {
+                                if(dockChild->State.Docker == window)
+                                    ui_node_begin_attaching_to_a_docker(dockChild, docker);
+                            }
+                        }
+                    }
+                }
+            }
         }
         else if(ui_node_is_being_scrolled_horizontally(window))
         {
@@ -2710,6 +2679,26 @@ void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
         {
             window->State.VerticalScrollBar.reposition(
                 window->Cache.VerticalScrollBar.SliderPosition + application()->get_window_cursor_dragdelta().y);
+        }
+    }
+
+    // disable all modifications if all mouse buttons have been released
+    bool allMouseButtonsAreReleased = true;
+
+    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+             button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+    {
+        allMouseButtonsAreReleased =
+            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+    }
+
+    if(allMouseButtonsAreReleased)
+    {
+        for (auto& renderedNode : m_NodesRenderingList)
+        {
+            ui_node_end_move(renderedNode);
+            ui_node_end_resize(renderedNode);
+            ui_node_end_scroll(renderedNode);
         }
     }
 }
@@ -2770,13 +2759,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->State.Parent     = nullptr;
         cachedWindow->State.Layer      = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main;
     }
-
-    // reset widgets events
-    m_WidgetHasBeenMouseHovered.reset();
-    m_WidgetHasBeenMouseDown.reset();
-    m_WidgetHasBeenMousePressed.reset();
-    m_WidgetHasBeenMouseClicked.reset();
-    m_WidgetHasBeenMouseDoubleClicked.reset();
 
     // save rendering list to cache
     m_NodesRenderingCache = m_NodesRenderingList;

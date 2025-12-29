@@ -175,6 +175,11 @@ bool ApplicationInstance::is_mouse_button_down(const ApplicationMouseButton::But
     return m_Input.MouseButtons[_Button].Down;
 }
 
+bool ApplicationInstance::is_mouse_button_hold(const ApplicationMouseButton::Button& _Button) const
+{
+    return m_Input.MouseButtons[_Button].Hold;
+}
+
 bool ApplicationInstance::is_mouse_button_pressed(const ApplicationMouseButton::Button& _Button) const
 {
     return m_Input.MouseButtons[_Button].Pressed;
@@ -333,11 +338,20 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         }
         
         if(m_Input.MouseButtons[mouseButton].Down)
-            m_Input.MouseCursor.DragDelta = m_Input.MouseCursor.Position - m_Input.MouseCursor.MousePressPosition;
+        {
+            m_Input.MouseCursor.DragDelta =
+                m_Input.MouseCursor.Position - m_Input.MouseCursor.MousePressPosition;
+
+            m_Input.MouseButtons[mouseButton].Hold =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    m_Input.MouseButtons[mouseButton].PressTime,
+                    Frenchie::Core::tic()) > 100;
+        }
 
         if(m_Input.MouseButtons[mouseButton].Released)
         {
             m_Input.MouseButtons[mouseButton].Down        = false;
+            m_Input.MouseButtons[mouseButton].Hold        = false;
             m_Input.MouseButtons[mouseButton].ReleaseTime = Frenchie::Core::tic();
 
             m_Input.MouseButtons[mouseButton].Clicked =
