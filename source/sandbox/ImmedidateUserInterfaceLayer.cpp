@@ -679,7 +679,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
                             ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
-                            ui_node_enqueue_focused_node(window);
+                            //ui_node_enqueue_focused_node(window);
                             ui_node_enqueue_moving_node(window);
                         }
                         
@@ -1422,7 +1422,20 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_dequeue_focused_node()
             return;
 
         if(!(_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_IgnoreFocus))
+        {
             _Window->State.Changes |= ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused;
+
+            for (auto& window : m_NodesRenderingList)
+            {
+                if(window == _Window)
+                    continue;
+
+                ui_node_end_move(window);
+                ui_node_end_resize(window);
+                ui_node_end_scroll(window);
+                ui_node_end_focus(window);
+            }
+        }
     };
 
     auto& event = m_EventsQueue[ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused];
@@ -1782,7 +1795,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_event_dequeue_finish(Immedidat
         ui_node_end_move(window);
         ui_node_end_resize(window);
         ui_node_end_scroll(window);
-        ui_node_end_focus(window);
     }
 };
 
@@ -2110,27 +2122,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
     // build hierarchy
-    //static bool inited = false;
-
     m_Hierarchy.build(m_NodesRenderingList);
-
-    // if(!inited)
-    // {
-    //     for (auto& window : m_NodesRenderingList)
-    //     {
-    //         std::cout << window->Name << "\n";
-
-    //         auto begin = m_Hierarchy.Indexes[window->State.DrawIndex];
-    //         auto end   = m_Hierarchy.Indexes[window->State.DrawIndex + 1];
-
-    //         for (int i = begin; i < end; i++)
-    //         {
-    //             std::cout << "\t" << m_Hierarchy.Sorted[i]->Name << "\n";
-    //         }
-    //     }
-    // }
-
-    // inited = true;
     
     // layering
     for (auto& window : m_NodesRenderingList)
@@ -2435,8 +2427,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             // scroll
             for (auto next : _Context->m_NodesRenderingList)
             {
-                if( (_Filter != nullptr && !_Filter(next))   ||
-                    !_Context->ui_node_is_being_hovered(next))
+                if( (_Filter != nullptr && !_Filter(next)) || !_Context->ui_node_is_being_hovered(next))
                 {
                     continue;
                 }
