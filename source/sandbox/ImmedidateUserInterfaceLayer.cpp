@@ -1443,7 +1443,6 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_dequeue_focused_node()
     if (event.has_value() && event.value() != nullptr)
     {
         ui_node_begin_focus(event.value());
-        ui_node_event_dequeue_finish(event.value());
         event.reset();
         return true;
     }
@@ -1871,6 +1870,12 @@ void ImmedidateUserInterfaceContextLayer::ui_node_end_focus(ImmedidateUserInterf
     
     _Window->State.Changes &=
         ~ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingFocused;
+
+    m_WidgetHasBeenMouseHovered.reset();
+    m_WidgetHasBeenMouseDown.reset();
+    m_WidgetHasBeenMousePressed.reset();
+    m_WidgetHasBeenMouseClicked.reset();
+    m_WidgetHasBeenMouseDoubleClicked.reset();
 }
 
 void ImmedidateUserInterfaceContextLayer::ui_node_end_scroll(ImmedidateUserInterfaceNode* _Window)
@@ -2127,7 +2132,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
     // layering
     for (auto& window : m_NodesRenderingList)
     {
-        if(window->State.Type == ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu)
+        if(ui_node_is_of_type(window, ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_WindowMenu))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Popups;
         else if(ui_node_is_being_focused(window))
             window->State.Layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Focus;
@@ -2304,8 +2309,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     continue;
 
                 for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::ApplicationMouseButton_End;
-                        button++)
+                         button < ApplicationMouseButton::ApplicationMouseButton_End;
+                         button++)
                 {
                     if(application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
                         next->State.MouseDown = (ApplicationMouseButton::Button)button;
@@ -2352,7 +2357,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             // collect event sinks
             for (auto next : _Context->m_NodesRenderingList)
             {
-                if((_Filter != nullptr && !_Filter(next)))
+                if((_Filter != nullptr && !_Filter(next)) || !_Context->ui_node_is_being_focused(next))
                     continue;
 
                 gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(next->State.WindowBox.Min, _Context->m_Style->WindowResizeAngleGizmoRadius);
@@ -2368,7 +2373,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
                     (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable) &&
                     next->State.Docker == nullptr                                                                                &&
-                    _Context->ui_node_is_being_focused(next)                                                                     &&
                     !_Context->ui_node_is_being_scrolled(next)                                                                   &&
                     !_Context->ui_node_is_being_moved(next))
                 {
@@ -2399,8 +2403,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                         ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight       |
                         ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom))
                     {
-                        if(next->State.Parent == nullptr)
-                            return true;
+                        return true;
                     }
                 }
             }
@@ -2427,13 +2430,13 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             // scroll
             for (auto next : _Context->m_NodesRenderingList)
             {
-                if( (_Filter != nullptr && !_Filter(next)) || !_Context->ui_node_is_being_hovered(next))
+                if( (_Filter != nullptr && !_Filter(next)) || !_Context->ui_node_is_being_hovered(next) || !_Context->ui_node_is_being_focused(next))
                 {
                     continue;
                 }
 
                 // vertical scroll
-                if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                  &&
+                if( application()->is_mouse_button_down(ApplicationMouseButton::ApplicationMouseButton_Left)                                     &&
                     next->State.VerticalScrollBarSliderBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
                     _Context->ui_node_is_vertical_scroll_bar_needed(next)                                                                        &&
                     !_Context->ui_node_is_being_resized(next)                                                                                    &&
@@ -2456,8 +2459,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                     ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingScrolledHorizontally |
                     ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingScrolledVertically))
                 {
-                    if(next->State.Parent == nullptr)
-                        return true;
+                    return true;
                 }
             }
 
@@ -2488,7 +2490,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if((_Filter != nullptr && !_Filter(movedNode)) || !_Context->ui_node_is_being_focused(movedNode)) continue;
 
                 if( (movedNode->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)         &&
-                    application()->is_mouse_button_hold(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
+                    application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
                     movedNode->State.ViewportBox.transform(movedNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
                     !_Context->ui_node_is_being_resized(movedNode)                                                                          &&
                     !_Context->ui_node_is_being_scrolled(movedNode))
@@ -2498,8 +2500,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
                 if(_Context->ui_node_event_has_been_enqueued(ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingMoved))
                 {
-                    if(movedNode->State.Parent == nullptr)
-                        return true;
+                    return true;
                 }
             }
 

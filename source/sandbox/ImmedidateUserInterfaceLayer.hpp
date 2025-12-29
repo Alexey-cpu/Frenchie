@@ -417,7 +417,7 @@ namespace Frenchie
                 Frenchie::Core::Optional<ImmedidateUserInterfaceNode*>> m_EventsQueue;
 
             // popups
-            mutable std::list<ImmedidateUserInterfaceMenu>                   m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
+            mutable std::list<ImmedidateUserInterfaceMenu>              m_ActiveMenusRenderingList{std::list<ImmedidateUserInterfaceMenu>()};
 
             // widgets
             mutable Frenchie::Core::Optional<bool>                           m_WidgetIsBeingMouseHovered      {Frenchie::Core::Optional<bool>()};
