@@ -309,38 +309,36 @@ void RenderingQueue::frame_render()
 
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
-        // execute renderer command
-        auto rendererCommand  = m_Commands[i].RendererCommand;
+        // clipping box
+        auto rendererCommandClippingBox  = m_Commands[i].ClippingBox;
 
-        if(rendererCommand.has_value())
+        if(rendererCommandClippingBox.has_value())
         {
-            // clipping box
-            if(rendererCommand.value().ClippingBox.has_value())
-            {
-                // retrieve clipping rect and display scale
-                auto clippingRect = rendererCommand.value().ClippingBox.value();
-                auto displayScale = application()->get_window_framebuffer_size() / application()->get_window_size();
+            // retrieve clipping rect and display scale
+            auto clippingRect = rendererCommandClippingBox.value().ClippingBox;
+            auto displayScale = application()->get_window_framebuffer_size() / application()->get_window_size();
 
-                // apply clipping rect
-                clippingRect = gs_2dboxf(
-                    clippingRect.Min * displayScale,
-                    clippingRect.Max * displayScale);
+            // apply clipping rect
+            clippingRect = gs_2dboxf(
+                clippingRect.Min * displayScale,
+                clippingRect.Max * displayScale);
 
-                glEnable(GL_SCISSOR_TEST);
+            glEnable(GL_SCISSOR_TEST);
 
-                glScissor(
-                    (int)clippingRect.Min.x,
-                    (int)(application()->get_window_framebuffer_size().y - clippingRect.Max.y),
-                    (int)clippingRect.width(),
-                    (int)clippingRect.height());
-            }
+            glScissor(
+                (int)clippingRect.Min.x,
+                (int)(application()->get_window_framebuffer_size().y - clippingRect.Max.y),
+                (int)clippingRect.width(),
+                (int)clippingRect.height());
+        }
 
-            // clear color
-            if(rendererCommand.value().ClearColor.has_value())
-            {
-                gs_vec4f clearColor = rendererCommand.value().ClearColor.value() / 255.f;
-                glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
-            }
+        // clear color
+        auto rendererCommandClearColor  = m_Commands[i].ClearColor;
+
+        if(rendererCommandClearColor.has_value())
+        {
+            gs_vec4f clearColor = rendererCommandClearColor.value().ClearColor / 255.f;
+            glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
         }
 
         // execute rendering command
@@ -1158,12 +1156,16 @@ void RenderingQueue::push_rendering_command(
 
 void RenderingQueue::push_renderer_command(const gs_2dboxf& _ClippinBox)
 {
-    m_Commands.push_back(RenderingQueueCommand(RenderingQueueRendererCommand(_ClippinBox)));
+    m_Commands.push_back(
+        RenderingQueueCommand(
+            RenderingQueueRendererCommandClippingBox(_ClippinBox)));
 }
 
 void RenderingQueue::push_renderer_command(const gs_vec4f&  _ClearColor)
 {
-    m_Commands.push_back(RenderingQueueCommand(RenderingQueueRendererCommand(_ClearColor)));
+    m_Commands.push_back(
+        RenderingQueueCommand(
+            RenderingQueueRendererCommandClearColor(_ClearColor)));
 }
 
 // Immediate2DRendererDefaultFont
