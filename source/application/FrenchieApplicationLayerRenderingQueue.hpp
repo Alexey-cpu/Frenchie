@@ -249,22 +249,28 @@ namespace Frenchie
             RenderingQueueMeshRenderingHints MeshRendererHints{RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default};
         };
 
-        struct RenderingQueueRendererCommand
+        struct RenderingQueueRendererCommandClearColor
         {
-            RenderingQueueRendererCommand(const Frenchie::Core::Optional<gs_2dboxf>& _ClippinBox) : ClippingBox(_ClippinBox){}
-            RenderingQueueRendererCommand(const Frenchie::Core::Optional<gs_vec4f>&  _ClearColor) : ClearColor(_ClearColor){}
+            RenderingQueueRendererCommandClearColor(const gs_vec4f&  _ClearColor) : ClearColor(_ClearColor){}
+            gs_vec4f ClearColor;
+        };
 
-            Frenchie::Core::Optional<gs_2dboxf> ClippingBox;
-            Frenchie::Core::Optional<gs_vec4f>  ClearColor;
+        struct RenderingQueueRendererCommandClippingBox
+        {
+            RenderingQueueRendererCommandClippingBox(const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
+
+            gs_2dboxf ClippingBox;
         };
 
         struct RenderingQueueCommand
         {
-            RenderingQueueCommand(const RenderingQueueRenderingCommand& _Command) : RenderingCommand(_Command){}
-            RenderingQueueCommand(const RenderingQueueRendererCommand&  _Command) : RendererCommand(_Command){}
+            RenderingQueueCommand(const RenderingQueueRenderingCommand&           _Command) : RenderingCommand(_Command){}
+            RenderingQueueCommand(const RenderingQueueRendererCommandClearColor&  _Command) : ClearColor(_Command){}
+            RenderingQueueCommand(const RenderingQueueRendererCommandClippingBox& _Command) : ClippingBox(_Command){}
 
-            Frenchie::Core::Optional<RenderingQueueRenderingCommand> RenderingCommand;
-            Frenchie::Core::Optional<RenderingQueueRendererCommand>  RendererCommand;
+            Frenchie::Core::Optional<RenderingQueueRenderingCommand>           RenderingCommand;
+            Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>  ClearColor;
+            Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox;
         };
 
         class RenderingQueue : public Layer
