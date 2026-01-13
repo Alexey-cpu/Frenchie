@@ -696,6 +696,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 {
                     auto renderedWindow = *it;
 
+                    //std::cout << renderedWindow->Name << "\t" << renderedWindow->State.DockNodeIndex << "\n";
+
                     if(!ui_node_is_being_docked_by(renderedWindow, window))
                         continue;
 
@@ -1730,8 +1732,8 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_begin_attaching_to_a_docker(Im
     if(_Node == nullptr || _Docker == nullptr || _Node == _Docker)
         return false;
 
-    _Node->State.Docker = _Docker;
-    ++_Docker->State.DockNodesCount;
+    _Node->State.Docker        = _Docker;
+    _Node->State.DockNodeIndex = _Docker->State.DockNodesCount++;
 
     for (auto it = m_Dockers.begin(_Node); it != m_Dockers.end(_Node); ++it)
         ui_node_begin_attaching_to_a_docker(*it, _Docker);
@@ -1962,7 +1964,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docked_by(const Immed
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node)
 {
-    return _Node != nullptr && _Node->State.DockNodesCount > 0;
+    return _Node != nullptr && (m_Dockers.end(_Node) - m_Dockers.begin(_Node)) > 0;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node)
@@ -2240,37 +2242,28 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_docking_events_gizmos(I
     return true;
 }
 
-// void show_hierarchy(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* window, const std::string _Prefix)
-// {
-//     auto begin = _Context->m_Hierarchy.begin(window);
-//     auto end   = _Context->m_Hierarchy.end(window);
-
-//     std::cout << _Prefix << window->Name << "\n";
-
-//     for (auto it = begin; it != end; ++it)
-//     {
-//         std::cout << _Prefix + "\t" << (*it)->Name << "\n";
-
-//         show_hierarchy(_Context, (*it), (_Prefix + "\t"));
-//     }
-// }
-
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
     // build dockers hierarchy
     m_Dockers.build(m_NodesRenderingList);
 
-    // static bool start = false;
+    for (auto& window : m_NodesRenderingList)
+    {
+        // sort docked children according their dock index
+        std::sort(
+            m_Dockers.begin(window),
+            m_Dockers.end(window),
+            [](ImmedidateUserInterfaceNode* _A, ImmedidateUserInterfaceNode* _B)->bool
+            {
+                return _A->State.DockNodeIndex < _B->State.DockNodeIndex;
+            }
+        );
 
-    // if (!start)
-    // {
-    //     for (auto& window : m_NodesRenderingList)
-    //     {
-    //         show_hierarchy(this, window, "");
-    //     }
-    // }
-    
-    // start = true;
+        // renumber docked children
+        int index = 0;
+        for(auto it = m_Dockers.begin(window); it != m_Dockers.end(window); ++it)(
+            *it)->State.DockNodeIndex = index++;
+    }
     
     // layering
     for (auto& window : m_NodesRenderingList)
