@@ -382,43 +382,16 @@ namespace Frenchie
 
         public: // TODO: make this private when finished
 
-            // style
-            mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
-            
-            std::string HoveredName;
-
-            // rendering
-            mutable std::shared_ptr<Immediate2DRenderer>            m_Renderer      {nullptr};
-            mutable std::map<ImmedidateUserInterfaceNodeLayer, int> m_RendererLayers{std::map<ImmedidateUserInterfaceNodeLayer, int>()};
-
-            // cache
-            mutable std::map<
-                ImmedidateUserInterfaceNodeType,
-                std::map<
-                    std::string,
-                    std::unique_ptr<ImmedidateUserInterfaceNode>>> m_NodesCache
+            // nested types
+            struct ImmedidateUserInterfaceNodeHierarchy
             {
-                std::map<
-                ImmedidateUserInterfaceNodeType,
-                std::map<
-                    std::string,
-                    std::unique_ptr<ImmedidateUserInterfaceNode>>>()
-            };
-            
-            // hierarchy
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingCache {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList  {std::vector<ImmedidateUserInterfaceNode*>()};
-
-            struct Hierarchy
-            {
-                Hierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
+                ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
                     [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
                     {
                         return _Node != nullptr ? _Node->State.Parent : nullptr;
                     }) : GetParent(_GetParent){}
 
-                ~Hierarchy(){}
+                ~ImmedidateUserInterfaceNodeHierarchy(){}
 
                 std::vector<int>                                                          Indexes;
                 std::vector<int>                                                          Entries;
@@ -486,21 +459,39 @@ namespace Frenchie
                 }
             };
 
-            // docking
-            mutable Hierarchy m_Dockers = Hierarchy(
-                [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
-                {
-                    return _Node != nullptr ? _Node->State.Docker : nullptr;
-                });
+            // rendering
+            mutable std::shared_ptr<ImmedidateUserInterfaceStyle>   m_Style   {nullptr};
+            mutable std::map<ImmedidateUserInterfaceNodeLayer, int> m_Layers  {std::map<ImmedidateUserInterfaceNodeLayer, int>()};
+            mutable std::shared_ptr<Immediate2DRenderer>            m_Renderer{nullptr};
+
+            // cache
+            mutable std::map<
+                ImmedidateUserInterfaceNodeType,
+                std::map<
+                    std::string,
+                    std::unique_ptr<ImmedidateUserInterfaceNode>>> m_NodesCache
+            {
+                std::map<
+                ImmedidateUserInterfaceNodeType,
+                std::map<
+                    std::string,
+                    std::unique_ptr<ImmedidateUserInterfaceNode>>>()
+            };
+            
+            // hierarchy
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack  {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingCache  {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList   {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable ImmedidateUserInterfaceNodeHierarchy      m_NodeDockersHierarchy {ImmedidateUserInterfaceNodeHierarchy([](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*{return _Node != nullptr ? _Node->State.Docker : nullptr;})};
 
             // event gizmos
-            ImmedidateUserInterfaceNode* m_PotentialDocker   = nullptr;
-            ImmedidateUserInterfaceNode* m_PotentiallyResize = nullptr;
+            // ImmedidateUserInterfaceNode* m_PotentialDocker   = nullptr;
+            // ImmedidateUserInterfaceNode* m_PotentiallyResize = nullptr;
 
-            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
-            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
-            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
-            mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f> m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f> m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f> m_NextNodeMaximumSize    {Frenchie::Core::Optional<gs_vec2f>()};
+            mutable Frenchie::Core::Optional<gs_vec2f> m_NextNodeCursorDirection{Frenchie::Core::Optional<gs_vec2f>()};
 
             // events
             mutable std::map<
@@ -542,6 +533,7 @@ namespace Frenchie
             bool ui_node_is_of_type(const ImmedidateUserInterfaceNode*, const ImmedidateUserInterfaceNodeType&) const;
             bool ui_node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_visible(const ImmedidateUserInterfaceNode*) const;
 
             // events launching
             void ui_node_begin_focus(ImmedidateUserInterfaceNode*);
@@ -626,11 +618,6 @@ namespace Frenchie
             bool ui_node_render_background_frame(ImmedidateUserInterfaceNode*);
             bool ui_node_render_vertical_scrollbar(ImmedidateUserInterfaceNode*);
             bool ui_node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
-
-            // gizmos
-            bool ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode*);
-            bool ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode*);
-            bool ui_node_render_hover_events_gizmos(ImmedidateUserInterfaceNode*);
 
             void ui_node_layout_children();
             void ui_node_receive_events();

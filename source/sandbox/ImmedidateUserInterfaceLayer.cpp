@@ -334,10 +334,8 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
     // render cursor
     m_Renderer->push_text(
         std::to_string(m_Renderer->get_cursor_postion().x)
-        //.append(" ")
-        //.append(std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(m_Renderer->get_measured_frame_rate())))
         .append(" ")
-        .append(HoveredName),
+        .append(std::to_string(m_Renderer->get_cursor_postion().y).append("\t").append(std::to_string(m_Renderer->get_measured_frame_rate()))),
         m_Style->FontSize,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
         m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane(), m_Renderer->get_cursor_postion() + gs_vec3f(Immediate2DRenderer::bottom_right(gs_vec2f(12.f, 12.f)))));
@@ -353,12 +351,17 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
 void ImmedidateUserInterfaceContextLayer::frame_debug()
 {
-    for (auto& window : m_NodesRenderingList)
-    {
-        ui_node_render_docking_events_gizmos(window);
-        ui_node_render_resize_events_gizmos(window);
-        ui_node_render_hover_events_gizmos(window);
-    }
+    ui_node_layout_children();
+    ui_node_receive_events();
+    ui_node_process_events();
+    ui_node_save_state();
+
+    // for (auto& window : m_NodesRenderingList)
+    // {
+    //     ui_node_render_docking_events_gizmos(window);
+    //     ui_node_render_resize_events_gizmos(window);
+    //     ui_node_render_hover_events_gizmos(window);
+    // }
 }
 
 void ImmedidateUserInterfaceContextLayer::frame_render()
@@ -367,10 +370,6 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
 
 void ImmedidateUserInterfaceContextLayer::frame_finish()
 {
-    ui_node_layout_children();
-    ui_node_receive_events();
-    ui_node_process_events();
-    ui_node_save_state();
 }
 
 void ImmedidateUserInterfaceContextLayer::set_next_ui_node_maximum_size(const gs_vec2f& _Value)
@@ -698,7 +697,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 }
 
                 // render docked nodes
-                for(auto it = m_Dockers.begin(window); it != m_Dockers.end(window); ++it)
+                for(auto it = m_NodeDockersHierarchy.begin(window); it != m_NodeDockersHierarchy.end(window); ++it)
                 {
                     auto renderedWindow = *it;
 
@@ -1163,11 +1162,11 @@ int ImmedidateUserInterfaceContextLayer::ui_node_calculate_layer_depth(const Imm
     for (int layer = ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Begin;
              layer < ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_End; ++layer)
     {
-        m_RendererLayers[(ImmedidateUserInterfaceNodeLayer_)layer] = (int)depth;
+        m_Layers[(ImmedidateUserInterfaceNodeLayer_)layer] = (int)depth;
         depth += m_Renderer->get_far_plane() / (ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_End - ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Begin);
     }
 
-    return m_RendererLayers[_Layer];
+    return m_Layers[_Layer];
 }
 
 int ImmedidateUserInterfaceContextLayer::ui_node_calculate_child_depth_placed_in_follow(ImmedidateUserInterfaceNode* _Window, const int& _Thickness) const
@@ -1213,6 +1212,17 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_horizontal_scroll_bar_neede
 
     return _Window->Cache.ContentBox.width() > _Window->Cache.ViewportBox.width() &&
             gs_abs(_Window->Cache.ViewportBox.width() - _Window->Cache.ContentBox.width()) > _Window->Cache.ViewportBox.width() * 0.1f;
+}
+
+bool ImmedidateUserInterfaceContextLayer::ui_node_is_visible(const ImmedidateUserInterfaceNode* _Node) const
+{
+    if(_Node == nullptr)
+        return false;
+
+    if(_Node->State.Parent != nullptr)
+        return _Node->State.Parent->State.InnerClipAreaBox.overlaps(_Node->State.InnerClipAreaBox);
+
+    return true;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_event_has_been_enqueued(const ImmedidateUserInterfaceNodeChanges& _Event)
@@ -1737,9 +1747,9 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_begin_attaching_to_a_docker(Im
         return false;
 
     _Node->State.Docker        = _Docker;
-    _Node->State.DockNodeIndex = (m_Dockers.end(_Docker) - m_Dockers.begin(_Docker)) + _Delta + 1;
+    _Node->State.DockNodeIndex = (m_NodeDockersHierarchy.end(_Docker) - m_NodeDockersHierarchy.begin(_Docker)) + _Delta + 1;
 
-    for (auto it = m_Dockers.begin(_Node); it != m_Dockers.end(_Node); ++it)
+    for (auto it = m_NodeDockersHierarchy.begin(_Node); it != m_NodeDockersHierarchy.end(_Node); ++it)
         ui_node_begin_attaching_to_a_docker(*it, _Docker, _Delta + 1);
 
     return true;
@@ -1967,7 +1977,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docked_by(const Immed
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node)
 {
-    return _Node != nullptr && (m_Dockers.end(_Node) - m_Dockers.begin(_Node)) > 0;
+    return _Node != nullptr && (m_NodeDockersHierarchy.end(_Node) - m_NodeDockersHierarchy.begin(_Node)) > 0;
 }
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node)
@@ -2127,179 +2137,179 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_horizontal_scrollbar(Im
     return true;
 }
 
-bool ImmedidateUserInterfaceContextLayer::ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode* _Window)
-{
-    if(_Window != m_PotentialDocker)
-        return false;
+// bool ImmedidateUserInterfaceContextLayer::ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode* _Window)
+// {
+//     if(_Window != m_PotentialDocker)
+//         return false;
 
-    m_Renderer->push_rectangle_rounded_filled(
-        _Window->State.WindowBox.Min,
-        _Window->State.WindowBox.Max,
-        0.f,
-        gs_vec4f(0.f, 255.f, 0.f, 128.f),
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//     m_Renderer->push_rectangle_rounded_filled(
+//         _Window->State.WindowBox.Min,
+//         _Window->State.WindowBox.Max,
+//         0.f,
+//         gs_vec4f(0.f, 255.f, 0.f, 128.f),
+//         _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
-    return true;
-}
+//     return true;
+// }
 
-bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode* _Window)
-{
-    // if(_Window == nullptr)
-    //     return false;
+// bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode* _Window)
+// {
+//     // if(_Window == nullptr)
+//     //     return false;
 
-    // if(_Window->State.Docker != nullptr && !ui_node_is_being_hovered(_Window->State.Docker) && _Window->State.Docker != m_PotentiallyResize)
-    //     return false;
+//     // if(_Window->State.Docker != nullptr && !ui_node_is_being_hovered(_Window->State.Docker) && _Window->State.Docker != m_PotentiallyResize)
+//     //     return false;
 
-    // if(!ui_node_is_being_hovered(_Window) && _Window != m_PotentiallyResize)
-    //     return false;
+//     // if(!ui_node_is_being_hovered(_Window) && _Window != m_PotentiallyResize)
+//     //     return false;
 
-    // render resize gizmos
-    gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Window->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
-    gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
-    gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(_Window->State.WindowBox.Max - gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
-    gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(_Window->State.WindowBox.Max, m_Style->WindowResizeAngleGizmoRadius);
-    gs_2dboxf      resizeTop         = gs_2dboxf(_Window->State.WindowBox.Min - gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth), _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style->WindowResizeSideGizmoWidth));
-    gs_2dboxf      resizeLeft        = gs_2dboxf(_Window->State.WindowBox.Min - gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f), _Window->State.WindowBox.Min + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, _Window->State.WindowBox.height()));
-    gs_2dboxf      resizeRight       = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width() - m_Style->WindowResizeSideGizmoWidth, 0.f), _Window->State.WindowBox.Max + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f));
-    gs_2dboxf      resizeBottom      = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowBox.height() - m_Style->WindowResizeSideGizmoWidth), _Window->State.WindowBox.Max + gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth));
+//     // render resize gizmos
+//     gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Window->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
+//     gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
+//     gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(_Window->State.WindowBox.Max - gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
+//     gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(_Window->State.WindowBox.Max, m_Style->WindowResizeAngleGizmoRadius);
+//     gs_2dboxf      resizeTop         = gs_2dboxf(_Window->State.WindowBox.Min - gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth), _Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), m_Style->WindowResizeSideGizmoWidth));
+//     gs_2dboxf      resizeLeft        = gs_2dboxf(_Window->State.WindowBox.Min - gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f), _Window->State.WindowBox.Min + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, _Window->State.WindowBox.height()));
+//     gs_2dboxf      resizeRight       = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width() - m_Style->WindowResizeSideGizmoWidth, 0.f), _Window->State.WindowBox.Max + gs_vec2f(m_Style->WindowResizeSideGizmoWidth, 0.f));
+//     gs_2dboxf      resizeBottom      = gs_2dboxf(_Window->State.WindowBox.Min + gs_vec2f(0.f, _Window->State.WindowBox.height() - m_Style->WindowResizeSideGizmoWidth), _Window->State.WindowBox.Max + gs_vec2f(0.f, m_Style->WindowResizeSideGizmoWidth));
 
-    if((_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable))
-    {
-        if((resizeTopLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_left(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_arc_filled(
-                    resizeTopLeft.Center,
-                    resizeTopLeft.Radius,
-                    resizeTopLeft.Radius,
-                    0.f,
-                    360.f,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeTopRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_right(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_arc_filled(
-                    resizeTopRight.Center,
-                    resizeTopRight.Radius,
-                    resizeTopRight.Radius,
-                    0.f,
-                    360.f,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeBottomLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_left(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_arc_filled(
-                    resizeBottomLeft.Center,
-                    resizeBottomLeft.Radius,
-                    resizeBottomLeft.Radius,
-                    0.f, 360.f,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeBottomRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_right(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_arc_filled(
-                    resizeBottomRight.Center,
-                    resizeBottomRight.Radius,
-                    resizeBottomRight.Radius,
-                    0.f,
-                    360.f,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeTop.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_rectangle_rounded_filled(
-                    resizeTop.Min,
-                    resizeTop.Max,
-                    m_Style->FrameRoundingRadius,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_left(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_rectangle_rounded_filled(
-                    resizeLeft.Min,
-                    resizeLeft.Max,
-                    m_Style->FrameRoundingRadius,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_right(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_rectangle_rounded_filled(
-                    resizeRight.Min,
-                    resizeRight.Max,
-                    m_Style->FrameRoundingRadius,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-        else if((resizeBottom.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom(_Window)) && !ui_node_is_being_moved(_Window))
-        {
-            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
-            {
-                m_Renderer->push_rectangle_rounded_filled(
-                    resizeBottom.Min,
-                    resizeBottom.Max,
-                    m_Style->FrameRoundingRadius,
-                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-            }
-        }
-    }
+//     if((_Window->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable))
+//     {
+//         if((resizeTopLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_left(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_arc_filled(
+//                     resizeTopLeft.Center,
+//                     resizeTopLeft.Radius,
+//                     resizeTopLeft.Radius,
+//                     0.f,
+//                     360.f,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeTopRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_right(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_arc_filled(
+//                     resizeTopRight.Center,
+//                     resizeTopRight.Radius,
+//                     resizeTopRight.Radius,
+//                     0.f,
+//                     360.f,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeBottomLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_left(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_arc_filled(
+//                     resizeBottomLeft.Center,
+//                     resizeBottomLeft.Radius,
+//                     resizeBottomLeft.Radius,
+//                     0.f, 360.f,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeBottomRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_right(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_arc_filled(
+//                     resizeBottomRight.Center,
+//                     resizeBottomRight.Radius,
+//                     resizeBottomRight.Radius,
+//                     0.f,
+//                     360.f,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeTop.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_rectangle_rounded_filled(
+//                     resizeTop.Min,
+//                     resizeTop.Max,
+//                     m_Style->FrameRoundingRadius,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_left(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_rectangle_rounded_filled(
+//                     resizeLeft.Min,
+//                     resizeLeft.Max,
+//                     m_Style->FrameRoundingRadius,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_right(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_rectangle_rounded_filled(
+//                     resizeRight.Min,
+//                     resizeRight.Max,
+//                     m_Style->FrameRoundingRadius,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//         else if((resizeBottom.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom(_Window)) && !ui_node_is_being_moved(_Window))
+//         {
+//             if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+//             {
+//                 m_Renderer->push_rectangle_rounded_filled(
+//                     resizeBottom.Min,
+//                     resizeBottom.Max,
+//                     m_Style->FrameRoundingRadius,
+//                     m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+//                     _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+//             }
+//         }
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
-bool ImmedidateUserInterfaceContextLayer::ui_node_render_hover_events_gizmos(ImmedidateUserInterfaceNode* _Window)
-{
-    if(!ui_node_is_being_hovered(_Window))
-        return false;
+// bool ImmedidateUserInterfaceContextLayer::ui_node_render_hover_events_gizmos(ImmedidateUserInterfaceNode* _Window)
+// {
+//     if(!ui_node_is_being_hovered(_Window))
+//         return false;
 
-    m_Renderer->push_rectangle_rounded(
-        _Window->State.WindowBox.Min,
-        _Window->State.WindowBox.Max,
-        0.f,
-        12,
-        gs_vec4f(0.f, 0.f, 255.f, 128.f),
-        _Window->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
+//     m_Renderer->push_rectangle_rounded(
+//         _Window->State.WindowBox.Min,
+//         _Window->State.WindowBox.Max,
+//         0.f,
+//         12,
+//         gs_vec4f(0.f, 0.f, 255.f, 128.f),
+//         _Window->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
 
-    return true;
-}
+//     return true;
+// }
 
 void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 {
     // build dockers hierarchy
-    m_Dockers.build(m_NodesRenderingList);
+    m_NodeDockersHierarchy.build(m_NodesRenderingList);
 
     for (auto& window : m_NodesRenderingList)
     {
         // sort docked children according their dock index
         std::sort(
-            m_Dockers.begin(window),
-            m_Dockers.end(window),
+            m_NodeDockersHierarchy.begin(window),
+            m_NodeDockersHierarchy.end(window),
             [](ImmedidateUserInterfaceNode* _A, ImmedidateUserInterfaceNode* _B)->bool
             {
                 return _A->State.DockNodeIndex < _B->State.DockNodeIndex;
@@ -2308,7 +2318,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_layout_children()
 
         // renumber docked children
         int index = 0;
-        for(auto it = m_Dockers.begin(window); it != m_Dockers.end(window); ++it)(
+        for(auto it = m_NodeDockersHierarchy.begin(window); it != m_NodeDockersHierarchy.end(window); ++it)(
             *it)->State.DockNodeIndex = index++;
     }
     
@@ -2404,30 +2414,25 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(_Filter != nullptr && !_Filter(next))
                     continue;
 
-                // TODO: maybe implement this in a separate function...
-                if(next->State.Parent != nullptr)
+                if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
+                    _Context->ui_node_is_visible(next))
                 {
-                    if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
-                        next->State.Parent->State.InnerClipAreaBox.overlaps(next->State.InnerClipAreaBox))
-                    {
-                        if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
-                            hoveredNode = next;
-                    }
-                }
-                else
-                {
-                    if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                    {
-                        if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
-                            hoveredNode = next;
-                    }
+                    if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
+                        hoveredNode = next;
                 }
             }
 
             if(hoveredNode == nullptr)
                 return false;
 
-            _Context->HoveredName = hoveredNode->Name;
+            _Context->m_Renderer->push_rectangle_rounded(
+                hoveredNode->State.WindowBox.Min,
+                hoveredNode->State.WindowBox.Max,
+                0.f,
+                12,
+                gs_vec4f(0.f, 0.f, 255.f, 128.f),
+                hoveredNode->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(hoveredNode, 1)));
+
             _Context->ui_node_begin_hover(hoveredNode);
             return true;
         }
@@ -2523,7 +2528,127 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr)
                 return false;
 
-            _Context->m_PotentiallyResize = nullptr;
+            auto ui_node_render_resize_gizmo = [](
+                ImmedidateUserInterfaceContextLayer* _Context,
+                ImmedidateUserInterfaceNode*         _Node,
+                ImmedidateUserInterfaceNodeChanges   _Change)
+            {
+                if(!_Context->ui_node_is_visible(_Node))
+                    return;
+
+                gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Node->State.WindowBox.Min, _Context->m_Style->WindowResizeAngleGizmoRadius);
+                gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Node->State.WindowBox.Min + gs_vec2f(_Node->State.WindowBox.width(), 0.f), _Context->m_Style->WindowResizeAngleGizmoRadius);
+                gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(_Node->State.WindowBox.Max - gs_vec2f(_Node->State.WindowBox.width(), 0.f), _Context->m_Style->WindowResizeAngleGizmoRadius);
+                gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(_Node->State.WindowBox.Max, _Context->m_Style->WindowResizeAngleGizmoRadius);
+                gs_2dboxf      resizeTop         = gs_2dboxf(_Node->State.WindowBox.Min - gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth), _Node->State.WindowBox.Min + gs_vec2f(_Node->State.WindowBox.width(), _Context->m_Style->WindowResizeSideGizmoWidth));
+                gs_2dboxf      resizeLeft        = gs_2dboxf(_Node->State.WindowBox.Min - gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f), _Node->State.WindowBox.Min + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, _Node->State.WindowBox.height()));
+                gs_2dboxf      resizeRight       = gs_2dboxf(_Node->State.WindowBox.Min + gs_vec2f(_Node->State.WindowBox.width() - _Context->m_Style->WindowResizeSideGizmoWidth, 0.f), _Node->State.WindowBox.Max + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f));
+                gs_2dboxf      resizeBottom      = gs_2dboxf(_Node->State.WindowBox.Min + gs_vec2f(0.f, _Node->State.WindowBox.height() - _Context->m_Style->WindowResizeSideGizmoWidth), _Node->State.WindowBox.Max + gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth));
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft)
+                {
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeTopLeft.Center,
+                        resizeTopLeft.Radius,
+                        resizeTopLeft.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight)
+                {
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeTopRight.Center,
+                        resizeTopRight.Radius,
+                        resizeTopRight.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft)
+                {
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeBottomLeft.Center,
+                        resizeBottomLeft.Radius,
+                        resizeBottomLeft.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomRight)
+                {
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeBottomRight.Center,
+                        resizeBottomRight.Radius,
+                        resizeBottomRight.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTop)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeTop.Min,
+                        resizeTop.Max,
+                        _Context->m_Style->FrameRoundingRadius,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedLeft)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeLeft.Min,
+                        resizeLeft.Max,
+                        _Context->m_Style->FrameRoundingRadius,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeRight.Min,
+                        resizeRight.Max,
+                        _Context->m_Style->FrameRoundingRadius,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+
+                if(_Change == ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeBottom.Min,
+                        resizeBottom.Max,
+                        _Context->m_Style->FrameRoundingRadius,
+                        _Context->m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                        _Node->State.Transform * _Context->m_Renderer->calculate_transform_matrix((float)_Context->ui_node_calculate_child_depth_placed_in_follow(_Node, 1)));
+
+                    return;
+                }
+            };
 
             // dequeue
             if(_Context->ui_node_dequeue_resize_top_left_event()      ||
@@ -2541,8 +2666,67 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             // check if anything already is being resized
             for (auto next : _Context->m_NodesRenderingList)
             {
-                if(_Context->ui_node_is_being_resized(next))
-                    return true;
+                if(!_Context->ui_node_is_being_resized(next))
+                    continue;
+
+                if(_Context->ui_node_is_being_resized_top_left(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft);
+                }
+                else if(_Context->ui_node_is_being_resized_top_right(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight);
+                }
+                else if(_Context->ui_node_is_being_resized_bottom_left(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft);
+                }
+                else if(_Context->ui_node_is_being_resized_bottom_right(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomRight);
+                }
+                else if(_Context->ui_node_is_being_resized_top(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTop);
+                }
+                else if(_Context->ui_node_is_being_resized_left(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedLeft);
+                }
+                else if(_Context->ui_node_is_being_resized_right(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight);
+                }
+                else if(_Context->ui_node_is_being_resized_bottom(next))
+                {
+                    ui_node_render_resize_gizmo(
+                        _Context,
+                        next,
+                        ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom);
+                }
+
+                return true;
             }
 
             // collect event sinks
@@ -2562,42 +2746,90 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
                 auto resizable = next->State.Docker != nullptr ? next->State.Docker : next;
 
-                if(_Context->m_PotentiallyResize == nullptr)
-                {
-                    if(resizeTopLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion())      ||
-                        resizeTopRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion())    ||
-                        resizeBottomLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion())  ||
-                        resizeBottomRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
-                        resizeTop.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
-                        resizeLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
-                        resizeRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
-                        resizeBottom.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                    {
-                        _Context->m_PotentiallyResize = resizable;
-                    }
-                }
-
-                if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
-                    (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable) &&
-                    !_Context->ui_node_is_being_scrolled(next)                                                                   &&
+                if((next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable) &&
+                    !_Context->ui_node_is_being_scrolled(next)                                                                  &&
                     !_Context->ui_node_is_being_moved(next))
                 {
                     if(resizeTopLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_top_left_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_top_left_event(resizable);
+                    }
                     else if(resizeTopRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_top_right_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopRight);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_top_right_event(resizable);
+                    }
                     else if(resizeBottomLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_bottom_left_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomLeft);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_bottom_left_event(resizable);
+                    }
                     else if(resizeBottomRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_bottom_right_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottomRight);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_bottom_right_event(resizable);
+                    }
                     else if(resizeTop.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_top_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTop);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_top_event(resizable);
+                    }
                     else if(resizeLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_left_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedLeft);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_left_event(resizable);
+                    }
                     else if(resizeRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_right_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedRight);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_right_event(resizable);
+                    }
                     else if(resizeBottom.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
-                        _Context->ui_node_enqueue_resize_bottom_event(resizable);
+                    {
+                        ui_node_render_resize_gizmo(
+                            _Context,
+                            resizable,
+                            ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedBottom);
+
+                        if(application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left))
+                            _Context->ui_node_enqueue_resize_bottom_event(resizable);
+                    }
 
                     if(_Context->ui_node_event_has_been_enqueued(
                         ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_IsBeingResizedTopLeft     |
@@ -2734,8 +2966,6 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
 {
     // reset potential docker
-    m_PotentialDocker = nullptr;
-
     for (auto window : m_NodesRenderingList)
     {
         if(ui_node_is_being_resized(window))
@@ -2839,8 +3069,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
                     if(!ui_node_is_being_docked_by(window, docker) &&
                         !ui_node_is_being_docked_by(docker, window))
                     {
-                        // identify potential docker
-                        m_PotentialDocker = docker;
+                        // render potential docker gizmo
+                        m_Renderer->push_rectangle_rounded_filled(
+                            docker->State.WindowBox.Min,
+                            docker->State.WindowBox.Max,
+                            0.f,
+                            gs_vec4f(0.f, 255.f, 0.f, 128.f),
+                            docker->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(docker, 1)));
+
                         
                         // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
                         bool allMouseButtonsAreReleased = true;

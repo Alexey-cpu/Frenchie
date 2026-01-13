@@ -43,8 +43,7 @@ namespace Frenchie
             // compute transform matrixes, prepare rendering commands queue e.t.c
             virtual void frame_update();
 
-            // this function is needed for layer debugging:
-            // writing logs, rendering gizmos e.t.c
+            // TODO: this is not a debug function !!!
             virtual void frame_debug();
 
             // this function is needed to execute rendering commands
