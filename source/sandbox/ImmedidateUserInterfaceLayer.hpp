@@ -20,8 +20,10 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceColors_ : int
         {
+            ImmedidateUserInterfaceColors_ColorBegin = 0,
+
             // application window
-            ImmedidateUserInterfaceColors_WindowResizeGizmoColor,
+            ImmedidateUserInterfaceColors_WindowResizeGizmoColor = ImmedidateUserInterfaceColors_ColorBegin,
             ImmedidateUserInterfaceColors_WindowContentSpaceColor,
             ImmedidateUserInterfaceColors_WindowDecorationFrameColor,
             ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor,
@@ -377,7 +379,7 @@ namespace Frenchie
             bool widget_push_button(const std::string& _Name);
             bool widget_menu_button(const std::string& _Name);
 
-        protected:
+        public: // TODO: make this private when finished
 
             // style
             mutable std::shared_ptr<ImmedidateUserInterfaceStyle> m_Style   {nullptr};
@@ -403,9 +405,93 @@ namespace Frenchie
             };
             
             // nodes
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingStack     {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingList      {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                m_NodesRenderingCache     {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingCache {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList  {std::vector<ImmedidateUserInterfaceNode*>()};
+
+            struct Hierarchy
+            {
+                Hierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
+                    [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
+                    {
+                        return _Node != nullptr ? _Node->State.Parent : nullptr;
+                    }) : GetParent(_GetParent){}
+
+                ~Hierarchy(){}
+
+                std::vector<int>                                                          Indexes;
+                std::vector<int>                                                          Entries;
+                std::vector<ImmedidateUserInterfaceNode*>                                 Sorted;
+                std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
+
+                std::vector<ImmedidateUserInterfaceNode*>::const_iterator begin(ImmedidateUserInterfaceNode* _Node) const
+                {
+                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex];
+                }
+
+                std::vector<ImmedidateUserInterfaceNode*>::const_iterator end(ImmedidateUserInterfaceNode* _Node) const
+                {
+                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex + 1];
+                }
+
+                void build(const std::vector<ImmedidateUserInterfaceNode*>& _Nodes)
+                {
+                    std::vector<int> workspace(_Nodes.size()+1);
+
+                    Indexes.resize(_Nodes.size() + 1);
+                    Entries.resize(_Nodes.size());
+                    Sorted.resize(_Nodes.size());
+
+                    for(int i = 0; i < (int)Entries.size(); i++)
+                    {
+                        Entries[i] = 0;
+                        Indexes[i] = 0;
+                        Sorted [i] = nullptr;
+                    }
+
+                    // count items
+                    for (int i = 0; i < (int)_Nodes.size(); i++)
+                    {
+                        if(get_parent(_Nodes[i]) == nullptr)
+                            continue;
+
+                        ++Entries[get_parent(_Nodes[i])->State.DrawIndex];
+                    }
+
+                    // cumulative sum
+                    int sum = 0;
+                    for (int i = 0; i < _Nodes.size(); i++)
+                    {
+                        Indexes  [i] = sum;
+                        workspace[i] = sum;
+                        sum += Entries[i];
+                    }
+                    Indexes[_Nodes.size()] = sum;
+
+                    for(int i = 0; i < _Nodes.size(); i++ )
+                    {
+                        if(get_parent(_Nodes[i]) == nullptr)
+                            continue;
+
+                        Sorted[workspace[get_parent(_Nodes[i])->State.DrawIndex]++] = _Nodes[i];
+                    }
+                }
+
+            private:
+
+                ImmedidateUserInterfaceNode* get_parent(ImmedidateUserInterfaceNode* _Node)
+                {
+                    return GetParent != nullptr ? GetParent(_Node) : nullptr;
+                }
+            };
+
+            //mutable Hierarchy m_Hierarchy; // DO WE REALLY NEED THIS ???
+
+            mutable Hierarchy m_Dockers = Hierarchy(
+                [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
+                {
+                    return _Node != nullptr ? _Node->State.Docker : nullptr;
+                });
 
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
@@ -453,21 +539,35 @@ namespace Frenchie
             bool ui_node_is_vertical_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_horizontal_scroll_bar_needed(const ImmedidateUserInterfaceNode*) const;
 
-            // docking
-            bool ui_node_begin_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
-            bool ui_node_is_being_docked_by(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
-            bool ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node);
-            bool ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node);
+            // events launching
+            void ui_node_begin_focus(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_top_left(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_top_right(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_bottom_left(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_bottom_right(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_top(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_left(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_right(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_resize_bottom(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_move(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
+            void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
+            bool ui_node_begin_attaching_to_a_docker(ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
+
+            void ui_node_end_move(ImmedidateUserInterfaceNode*);
+            void ui_node_end_hover(ImmedidateUserInterfaceNode*);
+            void ui_node_end_focus(ImmedidateUserInterfaceNode*);
+            void ui_node_end_resize(ImmedidateUserInterfaceNode*);
+            void ui_node_end_scroll(ImmedidateUserInterfaceNode*);
             bool ui_node_end_attaching_to_a_docker(const ImmedidateUserInterfaceNode* _Node);
 
-            // modification
             bool ui_node_is_being_hovered(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_mouse_down(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_hold(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_pressed(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_clicked(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
             bool ui_node_is_being_mouse_double_clicked(const ImmedidateUserInterfaceNode*, const ApplicationMouseButton::Button&) const;
-
             bool ui_node_is_being_resized_top_left(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_resized_top_right(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_resized_bottom_left(const ImmedidateUserInterfaceNode*) const;
@@ -483,58 +583,38 @@ namespace Frenchie
             bool ui_node_is_being_scrolled(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_scrolled_horizontally(const ImmedidateUserInterfaceNode*) const;
             bool ui_node_is_being_scrolled_vertically(const ImmedidateUserInterfaceNode*) const;
+            bool ui_node_is_being_docked_by(const ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
+            bool ui_node_is_being_docker(const ImmedidateUserInterfaceNode* _Node);
+            bool ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node);
 
-            //------------------------------------------------------------------------------------------------
             // events query
-            //------------------------------------------------------------------------------------------------
             bool ui_node_event_has_been_enqueued(const ImmedidateUserInterfaceNodeChanges&);
 
-            void ui_node_enqueue_focused_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_focused_node();
+            void ui_node_enqueue_focus_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_top_left_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_top_right_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_bottom_left_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_bottom_right_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_top_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_left_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_right_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_resize_bottom_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_moving_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_vertical_scroll_event(ImmedidateUserInterfaceNode*);
+            void ui_node_enqueue_horizontal_scroll_event(ImmedidateUserInterfaceNode*);
 
-            void ui_node_enqueue_resize_top_left_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_top_left_node();
-
-            void ui_node_enqueue_resize_top_right_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_top_right_node();
-
-            void ui_node_enqueue_resize_bottom_left_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_bottom_left_node();
-
-            void ui_node_enqueue_resize_bottom_right_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_bottom_right_node();
-
-            void ui_node_enqueue_resize_top_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_top_node();
-
-            void ui_node_enqueue_resize_left_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_left_node();
-
-            void ui_node_enqueue_resize_right_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_right_node();
-
-            void ui_node_enqueue_resize_bottom_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_resize_bottom_node();
-
-            void ui_node_enqueue_moving_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_moving_node();
-
-            void ui_node_enqueue_vertical_scroll_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_vertical_scroll_node();
-
-            void ui_node_enqueue_horizontal_scroll_node(ImmedidateUserInterfaceNode*);
-            bool ui_node_dequeue_horizontal_scroll_node();
-
-            void ui_node_event_dequeue_finish(ImmedidateUserInterfaceNode* _Sink);
-            //------------------------------------------------------------------------------------------------
-
-            void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
-
-            void ui_node_end_hover(ImmedidateUserInterfaceNode* _Window);
-            void ui_node_end_resize(ImmedidateUserInterfaceNode*);
-            void ui_node_end_move(ImmedidateUserInterfaceNode*);
-            void ui_node_end_focus(ImmedidateUserInterfaceNode*);
-            void ui_node_end_scroll(ImmedidateUserInterfaceNode*);
+            bool ui_node_dequeue_focus_event();
+            bool ui_node_dequeue_resize_top_left_event();
+            bool ui_node_dequeue_resize_top_right_event();
+            bool ui_node_dequeue_resize_bottom_left_event();
+            bool ui_node_dequeue_resize_bottom_right_event();
+            bool ui_node_dequeue_resize_top_event();
+            bool ui_node_dequeue_resize_left_event();
+            bool ui_node_dequeue_resize_right_event();
+            bool ui_node_dequeue_resize_bottom_event();
+            bool ui_node_dequeue_moving_event();
+            bool ui_node_dequeue_vertical_scroll_event();
+            bool ui_node_dequeue_horizontal_scroll_event();
 
             // rendering
             bool ui_node_render_clipbox(ImmedidateUserInterfaceNode*);
@@ -542,7 +622,11 @@ namespace Frenchie
             bool ui_node_render_background_frame(ImmedidateUserInterfaceNode*);
             bool ui_node_render_vertical_scrollbar(ImmedidateUserInterfaceNode*);
             bool ui_node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
+
+            // gizmos
             bool ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_hover_events_gizmos(ImmedidateUserInterfaceNode*);
+            bool ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode*);
 
             void ui_node_layout_children();
             void ui_node_receive_events();
@@ -566,56 +650,6 @@ namespace Frenchie
             bool widget_has_been_double_clicked(const ApplicationMouseButton::Button&) const;
 
             friend class ImmedidateUserInterfaceContextEventsReceiver;
-
-            struct Hierarchy
-            {
-                std::vector<int>                          Indexes;
-                std::vector<int>                          Entries;
-                std::vector<ImmedidateUserInterfaceNode*> Sorted;
-
-                void build(const std::vector<ImmedidateUserInterfaceNode*>& Nodes)
-                {
-                    std::vector<int> workspace(Nodes.size()+1);
-
-                    Indexes.resize(Nodes.size() + 1);
-                    Entries.resize(Nodes.size());
-                    Sorted.resize(Nodes.size());
-
-                    for(int i = 0; i < (int)Entries.size(); i++)
-                    {
-                        Entries[i] = 0;
-                        Indexes[i] = 0;
-                        Sorted [i] = Nodes[i];
-                    }
-
-                    // count items
-                    for (int i = 0; i < (int)Nodes.size(); i++)
-                    {
-                        if(Nodes[i]->State.Parent == nullptr)
-                            continue;
-
-                        ++Entries[Nodes[i]->State.Parent->State.DrawIndex];
-                    }
-
-                    // cumulative sum
-                    int sum = 0;
-                    for (int i = 0; i < Nodes.size(); i++)
-                    {
-                        Indexes  [i] = sum;
-                        workspace[i] = sum;
-                        sum += Entries[i];
-                    }
-                    Indexes[Nodes.size()] = sum;
-
-                    for(int i = 0; i < Nodes.size(); i++ )
-                    {
-                        if(Nodes[i]->State.Parent == nullptr)
-                            continue;
-
-                        Sorted[workspace[Nodes[i]->State.Parent->State.DrawIndex]++] = Nodes[i];
-                    }
-                }
-            } m_Hierarchy;
         };
     }
 }
