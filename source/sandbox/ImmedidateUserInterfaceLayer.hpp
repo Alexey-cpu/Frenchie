@@ -279,7 +279,6 @@ namespace Frenchie
             mutable int                          Thickness  {0};
             mutable int                          LayerDepth {0};
             mutable int                          ChildCount {0};
-            mutable int                          ChildIndex {0};
             mutable int                          DrawIndex  {0};
 
             // layouting
@@ -296,6 +295,7 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNode* Docker        {nullptr};
             mutable gs_2dboxf                    DockArea      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
             mutable int                          DockNodesCount{0};
+            mutable int                          DockNodeIndex {0};
 
             // scrolling
             mutable ImmedidateUserInterfaceNodeScroll VerticalScrollBar;
@@ -424,12 +424,12 @@ namespace Frenchie
                 std::vector<ImmedidateUserInterfaceNode*>                                 Sorted;
                 std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
 
-                std::vector<ImmedidateUserInterfaceNode*>::const_iterator begin(ImmedidateUserInterfaceNode* _Node) const
+                std::vector<ImmedidateUserInterfaceNode*>::iterator begin(const ImmedidateUserInterfaceNode* _Node)
                 {
                     return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex];
                 }
 
-                std::vector<ImmedidateUserInterfaceNode*>::const_iterator end(ImmedidateUserInterfaceNode* _Node) const
+                std::vector<ImmedidateUserInterfaceNode*>::iterator end(const ImmedidateUserInterfaceNode* _Node)
                 {
                     return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex + 1];
                 }
