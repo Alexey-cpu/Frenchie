@@ -294,7 +294,7 @@ namespace Frenchie
             // docking
             mutable ImmedidateUserInterfaceNode* Docker        {nullptr};
             mutable gs_2dboxf                    DockArea      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
-            mutable int                          DockNodesCount{0};
+            //mutable int                          DockNodesCount{0};
             mutable int                          DockNodeIndex {0};
 
             // scrolling
@@ -348,6 +348,7 @@ namespace Frenchie
             virtual bool awake()        override;
             virtual void frame_start()  override;
             virtual void frame_update() override;
+            virtual void frame_debug()  override;
             virtual void frame_render() override;
             virtual void frame_finish() override;
 
@@ -404,7 +405,7 @@ namespace Frenchie
                     std::unique_ptr<ImmedidateUserInterfaceNode>>>()
             };
             
-            // nodes
+            // hierarchy
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingCache {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList  {std::vector<ImmedidateUserInterfaceNode*>()};
@@ -485,13 +486,16 @@ namespace Frenchie
                 }
             };
 
-            //mutable Hierarchy m_Hierarchy; // DO WE REALLY NEED THIS ???
-
+            // docking
             mutable Hierarchy m_Dockers = Hierarchy(
                 [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
                 {
                     return _Node != nullptr ? _Node->State.Docker : nullptr;
                 });
+
+            // event gizmos
+            ImmedidateUserInterfaceNode* m_PotentialDocker   = nullptr;
+            ImmedidateUserInterfaceNode* m_PotentiallyResize = nullptr;
 
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f>                       m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
@@ -553,7 +557,7 @@ namespace Frenchie
             void ui_node_begin_scroll_vertically(ImmedidateUserInterfaceNode*);
             void ui_node_begin_scroll_horizontally(ImmedidateUserInterfaceNode*);
             void ui_node_begin_hover(ImmedidateUserInterfaceNode*);
-            bool ui_node_begin_attaching_to_a_docker(ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker);
+            bool ui_node_begin_attaching_to_a_docker(ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker, const int& _Delta = 0);
 
             void ui_node_end_move(ImmedidateUserInterfaceNode*);
             void ui_node_end_hover(ImmedidateUserInterfaceNode*);
@@ -624,9 +628,9 @@ namespace Frenchie
             bool ui_node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
 
             // gizmos
+            bool ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode*);
             bool ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode*);
             bool ui_node_render_hover_events_gizmos(ImmedidateUserInterfaceNode*);
-            bool ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode*);
 
             void ui_node_layout_children();
             void ui_node_receive_events();

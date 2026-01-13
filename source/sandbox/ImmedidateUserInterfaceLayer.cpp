@@ -351,6 +351,16 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
         0.f);
 }
 
+void ImmedidateUserInterfaceContextLayer::frame_debug()
+{
+    for (auto& window : m_NodesRenderingList)
+    {
+        ui_node_render_docking_events_gizmos(window);
+        ui_node_render_resize_events_gizmos(window);
+        ui_node_render_hover_events_gizmos(window);
+    }
+}
+
 void ImmedidateUserInterfaceContextLayer::frame_render()
 {
 }
@@ -520,10 +530,6 @@ void ImmedidateUserInterfaceContextLayer::end_node()
     if(m_NodesRenderingStack.empty())
         return;
 
-    // update parent thickness
-    if(ui_node_hierarchy_top()->State.Parent != nullptr)
-        ui_node_hierarchy_top()->State.Parent->State.Thickness += ui_node_hierarchy_top()->State.Thickness;
-
     // render scrollbars and background frame
     if(ui_node_is_vertical_scroll_bar_needed(ui_node_hierarchy_top()))
         ui_node_render_vertical_scrollbar(ui_node_hierarchy_top());
@@ -535,9 +541,9 @@ void ImmedidateUserInterfaceContextLayer::end_node()
     if(!(ui_node_hierarchy_top()->State.Settings & ImmedidateUserInterfaceNodeSettings_IgnoreClipping))
         m_Renderer->pop_clip_box();
 
-    // render gizmos
-    ui_node_render_resize_events_gizmos(ui_node_hierarchy_top());
-    ui_node_render_hover_events_gizmos(ui_node_hierarchy_top());
+    // update parent thickness
+    if(ui_node_hierarchy_top()->State.Parent != nullptr)
+        ui_node_hierarchy_top()->State.Parent->State.Thickness += ui_node_hierarchy_top()->State.Thickness;
 
     // pop node out-of rendering stack
     m_NodesRenderingStack.pop_back();
@@ -680,11 +686,11 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         _Rendered,
                         ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_ResizeToContentsVertically))
                     {
-                        if(ui_node_is_being_mouse_clicked(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
-                            ui_node_is_being_mouse_clicked(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
-                            ui_node_is_being_mouse_clicked(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                        if(ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                            ui_node_is_being_mouse_pressed(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
-                            ui_node_enqueue_moving_event(window);
+                            ui_node_enqueue_focus_event(window);
                         }
                         
                         end_window_frame();
@@ -695,8 +701,6 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                 for(auto it = m_Dockers.begin(window); it != m_Dockers.end(window); ++it)
                 {
                     auto renderedWindow = *it;
-
-                    //std::cout << renderedWindow->Name << "\t" << renderedWindow->State.DockNodeIndex << "\n";
 
                     if(!ui_node_is_being_docked_by(renderedWindow, window))
                         continue;
@@ -717,9 +721,9 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _Name,
                         }
 
                         // move
-                        if(ui_node_is_being_mouse_clicked(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
-                            ui_node_is_being_mouse_clicked(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
-                            ui_node_is_being_mouse_clicked(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
+                        if(ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Left)   ||
+                            ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Right) ||
+                            ui_node_is_being_mouse_hold(ui_node_hierarchy_top(), ApplicationMouseButton::Button::ApplicationMouseButton_Middle))
                         {
                             if(ui_node_is_being_focused(renderedWindow))
                                 ui_node_enqueue_moving_event(renderedWindow);
@@ -1727,16 +1731,16 @@ void ImmedidateUserInterfaceContextLayer::ui_node_begin_hover(ImmedidateUserInte
     }
 };
 
-bool ImmedidateUserInterfaceContextLayer::ui_node_begin_attaching_to_a_docker(ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker)
+bool ImmedidateUserInterfaceContextLayer::ui_node_begin_attaching_to_a_docker(ImmedidateUserInterfaceNode* _Node, ImmedidateUserInterfaceNode* _Docker, const int& _Delta)
 {
     if(_Node == nullptr || _Docker == nullptr || _Node == _Docker)
         return false;
 
     _Node->State.Docker        = _Docker;
-    _Node->State.DockNodeIndex = _Docker->State.DockNodesCount++;
+    _Node->State.DockNodeIndex = (m_Dockers.end(_Docker) - m_Dockers.begin(_Docker)) + _Delta + 1;
 
     for (auto it = m_Dockers.begin(_Node); it != m_Dockers.end(_Node); ++it)
-        ui_node_begin_attaching_to_a_docker(*it, _Docker);
+        ui_node_begin_attaching_to_a_docker(*it, _Docker, _Delta + 1);
 
     return true;
 }
@@ -1812,8 +1816,7 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_end_attaching_to_a_docker(cons
     if(_Node == nullptr || _Node->State.Docker == nullptr)
         return false;
 
-    _Node->State.Docker->State.DockNodesCount = gs_max(_Node->State.Docker->State.DockNodesCount - 1, 0);
-    _Node->State.Docker                       = nullptr;
+    _Node->State.Docker = nullptr;
 
     return true;
 }
@@ -2124,8 +2127,32 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_horizontal_scrollbar(Im
     return true;
 }
 
+bool ImmedidateUserInterfaceContextLayer::ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode* _Window)
+{
+    if(_Window != m_PotentialDocker)
+        return false;
+
+    m_Renderer->push_rectangle_rounded_filled(
+        _Window->State.WindowBox.Min,
+        _Window->State.WindowBox.Max,
+        0.f,
+        gs_vec4f(0.f, 255.f, 0.f, 128.f),
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+
+    return true;
+}
+
 bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(ImmedidateUserInterfaceNode* _Window)
 {
+    // if(_Window == nullptr)
+    //     return false;
+
+    // if(_Window->State.Docker != nullptr && !ui_node_is_being_hovered(_Window->State.Docker) && _Window->State.Docker != m_PotentiallyResize)
+    //     return false;
+
+    // if(!ui_node_is_being_hovered(_Window) && _Window != m_PotentiallyResize)
+    //     return false;
+
     // render resize gizmos
     gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Window->State.WindowBox.Min, m_Style->WindowResizeAngleGizmoRadius);
     gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Window->State.WindowBox.Min + gs_vec2f(_Window->State.WindowBox.width(), 0.f), m_Style->WindowResizeAngleGizmoRadius);
@@ -2140,82 +2167,106 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
     {
         if((resizeTopLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_left(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_arc_filled(
-                resizeTopLeft.Center,
-                resizeTopLeft.Radius,
-                resizeTopLeft.Radius,
-                0.f,
-                360.f,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_arc_filled(
+                    resizeTopLeft.Center,
+                    resizeTopLeft.Radius,
+                    resizeTopLeft.Radius,
+                    0.f,
+                    360.f,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeTopRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top_right(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_arc_filled(
-                resizeTopRight.Center,
-                resizeTopRight.Radius,
-                resizeTopRight.Radius,
-                0.f,
-                360.f,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_arc_filled(
+                    resizeTopRight.Center,
+                    resizeTopRight.Radius,
+                    resizeTopRight.Radius,
+                    0.f,
+                    360.f,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeBottomLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_left(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_arc_filled(
-                resizeBottomLeft.Center,
-                resizeBottomLeft.Radius,
-                resizeBottomLeft.Radius,
-                0.f, 360.f,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_arc_filled(
+                    resizeBottomLeft.Center,
+                    resizeBottomLeft.Radius,
+                    resizeBottomLeft.Radius,
+                    0.f, 360.f,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeBottomRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom_right(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_arc_filled(
-                resizeBottomRight.Center,
-                resizeBottomRight.Radius,
-                resizeBottomRight.Radius,
-                0.f,
-                360.f,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_arc_filled(
+                    resizeBottomRight.Center,
+                    resizeBottomRight.Radius,
+                    resizeBottomRight.Radius,
+                    0.f,
+                    360.f,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeTop.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_top(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_rectangle_rounded_filled(
-                resizeTop.Min,
-                resizeTop.Max,
-                m_Style->FrameRoundingRadius,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    resizeTop.Min,
+                    resizeTop.Max,
+                    m_Style->FrameRoundingRadius,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeLeft.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_left(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_rectangle_rounded_filled(
-                resizeLeft.Min,
-                resizeLeft.Max,
-                m_Style->FrameRoundingRadius,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    resizeLeft.Min,
+                    resizeLeft.Max,
+                    m_Style->FrameRoundingRadius,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeRight.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_right(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_rectangle_rounded_filled(
-                resizeRight.Min,
-                resizeRight.Max,
-                m_Style->FrameRoundingRadius,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    resizeRight.Min,
+                    resizeRight.Max,
+                    m_Style->FrameRoundingRadius,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
         else if((resizeBottom.transform(_Window->State.Transform).contains(m_Renderer->get_cursor_postion()) || ui_node_is_being_resized_bottom(_Window)) && !ui_node_is_being_moved(_Window))
         {
-            m_Renderer->push_rectangle_rounded_filled(
-                resizeBottom.Min,
-                resizeBottom.Max,
-                m_Style->FrameRoundingRadius,
-                m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
-                _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            if(ui_node_is_being_resized(_Window) || _Window == m_PotentiallyResize)
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    resizeBottom.Min,
+                    resizeBottom.Max,
+                    m_Style->FrameRoundingRadius,
+                    m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowResizeGizmoColor],
+                    _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
+            }
         }
     }
 
@@ -2224,21 +2275,17 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_resize_events_gizmos(Im
 
 bool ImmedidateUserInterfaceContextLayer::ui_node_render_hover_events_gizmos(ImmedidateUserInterfaceNode* _Window)
 {
-    if(ui_node_is_being_hovered(_Window))
-    {
-        m_Renderer->push_rectangle_rounded_filled(
-            _Window->State.WindowBox.Min,
-            _Window->State.WindowBox.Max,
-            0.f,
-            gs_vec4f(0.f, 0.f, 255.f, 32.f),
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
-    }
+    if(!ui_node_is_being_hovered(_Window))
+        return false;
 
-    return true;
-}
+    m_Renderer->push_rectangle_rounded(
+        _Window->State.WindowBox.Min,
+        _Window->State.WindowBox.Max,
+        0.f,
+        12,
+        gs_vec4f(0.f, 0.f, 255.f, 128.f),
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix(m_Renderer->get_far_plane()));
 
-bool ImmedidateUserInterfaceContextLayer::ui_node_render_docking_events_gizmos(ImmedidateUserInterfaceNode* _Window)
-{
     return true;
 }
 
@@ -2357,10 +2404,23 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if(_Filter != nullptr && !_Filter(next))
                     continue;
 
-                if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                // TODO: maybe implement this in a separate function...
+                if(next->State.Parent != nullptr)
                 {
-                    if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
-                        hoveredNode = next;
+                    if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
+                        next->State.Parent->State.InnerClipAreaBox.overlaps(next->State.InnerClipAreaBox))
+                    {
+                        if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
+                            hoveredNode = next;
+                    }
+                }
+                else
+                {
+                    if(next->State.WindowBox.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                    {
+                        if(hoveredNode == nullptr || next->State.LayerDepth > hoveredNode->State.LayerDepth)
+                            hoveredNode = next;
+                    }
                 }
             }
 
@@ -2463,6 +2523,8 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
             if(_Context == nullptr)
                 return false;
 
+            _Context->m_PotentiallyResize = nullptr;
+
             // dequeue
             if(_Context->ui_node_dequeue_resize_top_left_event()      ||
                 _Context->ui_node_dequeue_resize_top_right_event()    ||
@@ -2498,13 +2560,28 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 gs_2dboxf      resizeRight       = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(next->State.WindowBox.width() - _Context->m_Style->WindowResizeSideGizmoWidth, 0.f), next->State.WindowBox.Max + gs_vec2f(_Context->m_Style->WindowResizeSideGizmoWidth, 0.f));
                 gs_2dboxf      resizeBottom      = gs_2dboxf(next->State.WindowBox.Min + gs_vec2f(0.f, next->State.WindowBox.height() - _Context->m_Style->WindowResizeSideGizmoWidth), next->State.WindowBox.Max + gs_vec2f(0.f, _Context->m_Style->WindowResizeSideGizmoWidth));
 
+                auto resizable = next->State.Docker != nullptr ? next->State.Docker : next;
+
+                if(_Context->m_PotentiallyResize == nullptr)
+                {
+                    if(resizeTopLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion())      ||
+                        resizeTopRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion())    ||
+                        resizeBottomLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion())  ||
+                        resizeBottomRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
+                        resizeTop.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
+                        resizeLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
+                        resizeRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) ||
+                        resizeBottom.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
+                    {
+                        _Context->m_PotentiallyResize = resizable;
+                    }
+                }
+
                 if( application()->is_mouse_button_pressed(ApplicationMouseButton::ApplicationMouseButton_Left)                  &&
                     (next->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Resizable) &&
                     !_Context->ui_node_is_being_scrolled(next)                                                                   &&
                     !_Context->ui_node_is_being_moved(next))
                 {
-                    auto resizable = next->State.Docker != nullptr ? next->State.Docker : next;
-
                     if(resizeTopLeft.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
                         _Context->ui_node_enqueue_resize_top_left_event(resizable);
                     else if(resizeTopRight.transform(next->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()))
@@ -2619,7 +2696,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
                 if((_Filter != nullptr && !_Filter(movedNode)) || !_Context->ui_node_is_being_focused(movedNode)) continue;
 
                 if( (movedNode->State.Settings & ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Movable)         &&
-                    application()->is_mouse_button_hold(ApplicationMouseButton::ApplicationMouseButton_Left)                                &&
+                    application()->is_mouse_button_hold(ApplicationMouseButton::ApplicationMouseButton_Left)                             &&
                     movedNode->State.ViewportBox.transform(movedNode->State.Transform).contains(_Context->m_Renderer->get_cursor_postion()) &&
                     !_Context->ui_node_is_being_resized(movedNode)                                                                          &&
                     !_Context->ui_node_is_being_scrolled(movedNode))
@@ -2656,6 +2733,9 @@ void ImmedidateUserInterfaceContextLayer::ui_node_receive_events()
 
 void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
 {
+    // reset potential docker
+    m_PotentialDocker = nullptr;
+
     for (auto window : m_NodesRenderingList)
     {
         if(ui_node_is_being_resized(window))
@@ -2755,20 +2835,23 @@ void ImmedidateUserInterfaceContextLayer::ui_node_process_events()
 
                 if(docker != nullptr)
                 {
-                    bool allMouseButtonsAreReleased = true;
-
-                    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                             button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
-                    {
-                        allMouseButtonsAreReleased =
-                            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-                    }
-
                     // identify potential docker
                     if(!ui_node_is_being_docked_by(window, docker) &&
                         !ui_node_is_being_docked_by(docker, window))
                     {
+                        // identify potential docker
+                        m_PotentialDocker = docker;
+                        
                         // if all mouse buttons are released we attach a moved node and all it's docked nodes to a hovered node
+                        bool allMouseButtonsAreReleased = true;
+
+                        for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                                button < ApplicationMouseButton::Button::ApplicationMouseButton_End; button++)
+                        {
+                            allMouseButtonsAreReleased =
+                                allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+                        }
+
                         if(allMouseButtonsAreReleased)
                             ui_node_begin_attaching_to_a_docker(window, docker);
                     }
