@@ -101,6 +101,7 @@ namespace Frenchie
             bool awake();
             void frame_start();
             void frame_update();
+            void frame_debug();
             void frame_render();
             void frame_finish();
             void finish();

@@ -28,13 +28,38 @@ namespace Frenchie
             void hide();
             void show();
 
+            // this is layer initialization function
+            // that is called once when the layer is 
+            // pushed into application pipeline
             virtual bool awake();
+
+            // this function is needed to prepare layer
+            // for current frame processing:
+            // compute geometry, compute projection matrixes, detect events e.t.c
             virtual void frame_start();
+
+            // this function is needed to update the layer
+            // within current frame: modify geometry,
+            // compute transform matrixes, prepare rendering commands queue e.t.c
             virtual void frame_update();
+
+            // this function is needed for layer debugging:
+            // writing logs, rendering gizmos e.t.c
+            virtual void frame_debug();
+
+            // this function is needed to execute rendering commands
             virtual void frame_render();
+
+            // this function is needed basically for application events processing
             virtual void frame_finish();
+
+            // this function is needed for safe and reliable layer processing stop
             virtual void finish();
+
+            // this function is needed for application layer resources clean-up
             virtual void quit();
+
+            // 
             virtual bool allows_multiple_instances() const;
 
         protected:

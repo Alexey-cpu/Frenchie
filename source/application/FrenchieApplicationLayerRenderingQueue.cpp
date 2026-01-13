@@ -382,6 +382,7 @@ void RenderingQueue::frame_render()
 
 void RenderingQueue::frame_finish()
 {
+    m_Commands.clear();
 }
 
 void RenderingQueue::finish()

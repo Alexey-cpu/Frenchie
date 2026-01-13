@@ -394,6 +394,15 @@ void ApplicationInstance::ApplicationInstance::frame_render()
     }
 }
 
+void ApplicationInstance::ApplicationInstance::frame_debug()
+{
+    for(auto layer : m_Layers) 
+    {
+        if(!layer->is_hidden())
+            layer->frame_debug();
+    }
+}
+
 void ApplicationInstance::ApplicationInstance::frame_finish()
 {
     // swap buffers
@@ -461,6 +470,7 @@ int ApplicationInstance::execute()
     {
         frame_start();
         frame_update();
+        frame_debug();
         frame_render();
         frame_finish();
     }
