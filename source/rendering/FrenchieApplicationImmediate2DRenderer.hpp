@@ -219,31 +219,14 @@ namespace Frenchie
                 const gs_mat4f&                         _Transform,
                 const RenderingQueueMeshRenderingHints& _MeshRenderingHints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
 
-            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f))
-            {
-                gs_2dboxf clipRect = _Value.transform(_Transform);
-                m_Clipbox.push_back(clipRect);
-                m_RenderingQueue->push_renderer_command(clipRect);
-            }
+            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void pop_clip_box();
 
-            void pop_clip_box()
-            {
-                if(!m_Clipbox.empty())
-                    m_Clipbox.pop_back();
-
-                m_RenderingQueue->push_renderer_command(
-                    !m_Clipbox.empty() ? m_Clipbox[m_Clipbox.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
-            }
-
-            gs_2dboxf current_clip_box()
-            {
-                return !m_Clipbox.empty() ? m_Clipbox[m_Clipbox.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size());
-            }
-
-            void push_clear_color(const gs_vec4f& _Value)
-            {
-                m_RenderingQueue->push_renderer_command(_Value);
-            }
+            void push_clear_color(const gs_vec4f& _Value);
+            void pop_clear_color();
+            
+            gs_2dboxf current_clipping_box() const;
+            gs_vec4f  current_clear_color() const;
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
@@ -468,8 +451,9 @@ namespace Frenchie
             }
 
             // this is a plipeline
-            std::vector<gs_2dboxf>                      m_Clipbox       {std::vector<gs_2dboxf>()};
-            std::vector<Immediate2DRendererPathSegment> m_Segmetns      {std::vector<Immediate2DRendererPathSegment>()};
+            std::vector<gs_vec4f>                       m_ClearColors   {std::vector<gs_vec4f>()};
+            std::vector<gs_2dboxf>                      m_Clippingboxes {std::vector<gs_2dboxf>()};
+            std::vector<Immediate2DRendererPathSegment> m_PathSegments  {std::vector<Immediate2DRendererPathSegment>()};
             std::vector<RenderingQueueVertex>           m_Vertexes      {std::vector<RenderingQueueVertex>()};
             std::vector<int>                            m_Indexes       {std::vector<int>()};
             gs_2dboxf                                   m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};

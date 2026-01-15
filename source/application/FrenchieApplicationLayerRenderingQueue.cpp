@@ -307,6 +307,22 @@ void RenderingQueue::frame_render()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+    // sort rendering commands by depth
+    std::sort(
+        m_Commands.begin(),
+        m_Commands.end(),
+        [this](const RenderingQueueCommand& _A, const RenderingQueueCommand& _B)
+        {
+            auto retrieve_depth_coordinate = [](const RenderingQueueCommand& _Command)->float
+            {
+                return _Command.Command.has_value() ? gs_matrix_retrieve_transform_translation_vector(_Command.Command.value().Transform)[2] : 0.f;
+            };
+
+            return retrieve_depth_coordinate(_A) < retrieve_depth_coordinate(_B);
+        }
+    );
+
+    // execute rendering commands
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
         // clipping box
@@ -342,7 +358,7 @@ void RenderingQueue::frame_render()
         }
 
         // execute rendering command
-        auto renderingCommand = m_Commands[i].RenderingCommand;
+        auto renderingCommand = m_Commands[i].Command;
 
         if(renderingCommand.has_value())
         {
@@ -1143,7 +1159,9 @@ void RenderingQueue::push_rendering_command(
     const RenderingQueueShader&             _Shader,
     const RenderingQueueTexture&            _Texture,
     const gs_mat4f&                         _Transform,
-    const RenderingQueueMeshRenderingHints& _RendererHints)
+    const RenderingQueueMeshRenderingHints& _RendererHints,
+    const gs_vec4f&                         _ClearColor,
+    const gs_2dboxf&                        _ClippinBox)
 {
     m_Commands.push_back(
         RenderingQueueCommand(
@@ -1152,21 +1170,9 @@ void RenderingQueue::push_rendering_command(
                 _Shader,
                 _Texture,
                 _Transform,
-                _RendererHints)));
-}
-
-void RenderingQueue::push_renderer_command(const gs_2dboxf& _ClippinBox)
-{
-    m_Commands.push_back(
-        RenderingQueueCommand(
-            RenderingQueueRendererCommandClippingBox(_ClippinBox)));
-}
-
-void RenderingQueue::push_renderer_command(const gs_vec4f&  _ClearColor)
-{
-    m_Commands.push_back(
-        RenderingQueueCommand(
-            RenderingQueueRendererCommandClearColor(_ClearColor)));
+                _RendererHints),
+        RenderingQueueRendererCommandClearColor(_ClearColor),
+        RenderingQueueRendererCommandClippingBox(_ClippinBox)));
 }
 
 // Immediate2DRendererDefaultFont

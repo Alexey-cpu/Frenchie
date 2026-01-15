@@ -116,8 +116,8 @@ void Immediate2DRenderer::frame_start()
 
 void Immediate2DRenderer::frame_finish()
 {
-    m_Clipbox.clear();
-    m_Segmetns.clear();
+    m_Clippingboxes.clear();
+    m_PathSegments.clear();
     m_Vertexes.clear();
     m_Indexes.clear();
 }
@@ -155,11 +155,46 @@ void Immediate2DRenderer::push_rendering_command(
             _Texture.MinFilter,
             _Texture.MaxFilter),
         _Transform,
-        _MeshRenderingHints);
+        _MeshRenderingHints,
+        current_clear_color(),
+        current_clipping_box());
 
     // clean-up
     m_Indexes.clear();
     m_Vertexes.clear();
+}
+
+void Immediate2DRenderer::push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform)
+{
+    gs_2dboxf clipRect = _Value.transform(_Transform);
+    m_Clippingboxes.push_back(clipRect);
+}
+
+void Immediate2DRenderer::pop_clip_box()
+{
+    if(!m_Clippingboxes.empty())
+        m_Clippingboxes.pop_back();
+}
+
+void Immediate2DRenderer::push_clear_color(const gs_vec4f& _Value)
+{
+    m_ClearColors.push_back(_Value);
+}
+
+void Immediate2DRenderer::pop_clear_color()
+{
+    if(!m_ClearColors.empty())
+        m_ClearColors.pop_back();
+}
+
+gs_2dboxf Immediate2DRenderer::current_clipping_box() const
+{
+    return !m_Clippingboxes.empty() ? m_Clippingboxes[m_Clippingboxes.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size());
+}
+
+gs_vec4f Immediate2DRenderer::current_clear_color() const
+{
+    return !m_ClearColors.empty() ? m_ClearColors[m_ClearColors.size() - 1] : gs_vec4f(255.f, 255.f, 255.f, 255.f);
 }
 
 gs_mat4f Immediate2DRenderer::calculate_transform_matrix(
@@ -571,7 +606,7 @@ void Immediate2DRenderer::push_arc(
         _Width,
         _Color,
         m_RenderingQueue->get_default_texture(),
-        m_Segmetns,
+        m_PathSegments,
         m_Vertexes,
         m_Indexes);
 
@@ -672,10 +707,10 @@ void Immediate2DRenderer::push_rectangle_rounded(
     gs_vec2f BR = gs_vec2f(_Max.x - radius, _Min.y + radius);
 
     // sides
-    build_arc_mesh(TL, radius, radius, 90.f, 180.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
-    build_arc_mesh(BL, radius, radius, 180.f, 270.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
-    build_arc_mesh(TR, radius, radius, 0.f, 90.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
-    build_arc_mesh(BR, radius, radius, 270.f, 360.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Segmetns, m_Vertexes, m_Indexes);
+    build_arc_mesh(TL, radius, radius, 90.f, 180.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
+    build_arc_mesh(BL, radius, radius, 180.f, 270.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
+    build_arc_mesh(TR, radius, radius, 0.f, 90.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
+    build_arc_mesh(BR, radius, radius, 270.f, 360.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
     build_line_mesh(calculate_arc_point(TL, radius, radius, 180), calculate_arc_point(BL, radius, radius, 180), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
     build_line_mesh(calculate_arc_point(TL, radius, radius, 90), calculate_arc_point(TR, radius, radius, 90), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
     build_line_mesh(calculate_arc_point(TR, radius, radius, 0), calculate_arc_point(BR, radius, radius, 0), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);

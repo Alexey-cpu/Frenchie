@@ -70,11 +70,12 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceNodeType_ : int
         {
-            ImmedidateUserInterfaceNodeType_Node                 = 0,
-            ImmedidateUserInterfaceNodeType_Window               = 1,
-            ImmedidateUserInterfaceNodeType_WindowMenu           = 2,
-            ImmedidateUserInterfaceNodeType_WindowMenubar        = 3,
-            ImmedidateUserInterfaceNodeType_WindowDefaultFrame   = 4
+            ImmedidateUserInterfaceNodeType_Node                    = 0,
+            ImmedidateUserInterfaceNodeType_Window                  = 1,
+            ImmedidateUserInterfaceNodeType_WindowMenu              = 2,
+            ImmedidateUserInterfaceNodeType_WindowMenubar           = 3,
+            ImmedidateUserInterfaceNodeType_WindowDefaultFrame      = 4,
+            ImmedidateUserInterfaceNodeType_WindowPotentiallyDockedNode = 5,
         };
 
         enum ImmedidateUserInterfaceNodeLayer_ : int
@@ -82,7 +83,7 @@ namespace Frenchie
             ImmedidateUserInterfaceNodeLayer_Begin   = 0,
             ImmedidateUserInterfaceNodeLayer_Docking = ImmedidateUserInterfaceNodeLayer_Begin,
             ImmedidateUserInterfaceNodeLayer_Main,
-            ImmedidateUserInterfaceNodeLayer_DockingActive,
+            ImmedidateUserInterfaceNodeLayer_ActiveDockedNode,
             ImmedidateUserInterfaceNodeLayer_Focus,
             ImmedidateUserInterfaceNodeLayer_Popups,
             ImmedidateUserInterfaceNodeLayer_End,
@@ -162,7 +163,7 @@ namespace Frenchie
                 ImmedidateUserInterfaceNodeSettings_NeverHorizontalScrollBar |
                 ImmedidateUserInterfaceNodeSettings_NeverVerticalScrollBar,
 
-            ImmedidateUserInterfaceNodeHints_Default       =
+            ImmedidateUserInterfaceNodeSettings_Default       =
                 ImmedidateUserInterfaceNodeSettings_Movable   |
                 ImmedidateUserInterfaceNodeSettings_Resizable |
                 ImmedidateUserInterfaceNodeSettings_LayoutChildrenVertically
@@ -270,7 +271,7 @@ namespace Frenchie
             // hints
             mutable ImmedidateUserInterfaceNodeType     Type     {ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node        };
             mutable ImmedidateUserInterfaceNodeLayer    Layer    {ImmedidateUserInterfaceNodeLayer_::ImmedidateUserInterfaceNodeLayer_Main     };
-            mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default};
+            mutable ImmedidateUserInterfaceNodeSettings Settings {ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Default};
             mutable ImmedidateUserInterfaceNodeChanges  Changes  {ImmedidateUserInterfaceNodeChanges_::ImmedidateUserInterfaceNodeChanges_None  };
 
             // hierarchy
@@ -294,8 +295,8 @@ namespace Frenchie
             // docking
             mutable ImmedidateUserInterfaceNode* Docker        {nullptr};
             mutable gs_2dboxf                    DockArea      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f))};
-            //mutable int                          DockNodesCount{0};
             mutable int                          DockNodeIndex {0};
+            mutable int                          DockNodeCount {0};
 
             // scrolling
             mutable ImmedidateUserInterfaceNodeScroll VerticalScrollBar;
@@ -359,7 +360,6 @@ namespace Frenchie
             void set_next_ui_node_cursor_same_line();
 
             // cache
-            bool                         ui_node_cache_is_empty() const;
             ImmedidateUserInterfaceNode* ui_node_cache_request(const std::string&, const ImmedidateUserInterfaceNodeType&) const;
 
             // hierarchy
@@ -380,84 +380,7 @@ namespace Frenchie
             bool widget_push_button(const std::string& _Name);
             bool widget_menu_button(const std::string& _Name);
 
-        public: // TODO: make this private when finished
-
-            // nested types
-            struct ImmedidateUserInterfaceNodeHierarchy
-            {
-                ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
-                    [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
-                    {
-                        return _Node != nullptr ? _Node->State.Parent : nullptr;
-                    }) : GetParent(_GetParent){}
-
-                ~ImmedidateUserInterfaceNodeHierarchy(){}
-
-                std::vector<int>                                                          Indexes;
-                std::vector<int>                                                          Entries;
-                std::vector<ImmedidateUserInterfaceNode*>                                 Sorted;
-                std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
-
-                std::vector<ImmedidateUserInterfaceNode*>::iterator begin(const ImmedidateUserInterfaceNode* _Node)
-                {
-                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex];
-                }
-
-                std::vector<ImmedidateUserInterfaceNode*>::iterator end(const ImmedidateUserInterfaceNode* _Node)
-                {
-                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex + 1];
-                }
-
-                void build(const std::vector<ImmedidateUserInterfaceNode*>& _Nodes)
-                {
-                    std::vector<int> workspace(_Nodes.size()+1);
-
-                    Indexes.resize(_Nodes.size() + 1);
-                    Entries.resize(_Nodes.size());
-                    Sorted.resize(_Nodes.size());
-
-                    for(int i = 0; i < (int)Entries.size(); i++)
-                    {
-                        Entries[i] = 0;
-                        Indexes[i] = 0;
-                        Sorted [i] = nullptr;
-                    }
-
-                    // count items
-                    for (int i = 0; i < (int)_Nodes.size(); i++)
-                    {
-                        if(get_parent(_Nodes[i]) == nullptr)
-                            continue;
-
-                        ++Entries[get_parent(_Nodes[i])->State.DrawIndex];
-                    }
-
-                    // cumulative sum
-                    int sum = 0;
-                    for (int i = 0; i < _Nodes.size(); i++)
-                    {
-                        Indexes  [i] = sum;
-                        workspace[i] = sum;
-                        sum += Entries[i];
-                    }
-                    Indexes[_Nodes.size()] = sum;
-
-                    for(int i = 0; i < _Nodes.size(); i++ )
-                    {
-                        if(get_parent(_Nodes[i]) == nullptr)
-                            continue;
-
-                        Sorted[workspace[get_parent(_Nodes[i])->State.DrawIndex]++] = _Nodes[i];
-                    }
-                }
-
-            private:
-
-                ImmedidateUserInterfaceNode* get_parent(ImmedidateUserInterfaceNode* _Node)
-                {
-                    return GetParent != nullptr ? GetParent(_Node) : nullptr;
-                }
-            };
+        public:
 
             // rendering
             mutable std::shared_ptr<ImmedidateUserInterfaceStyle>   m_Style   {nullptr};
@@ -477,16 +400,21 @@ namespace Frenchie
                     std::string,
                     std::unique_ptr<ImmedidateUserInterfaceNode>>>()
             };
+
+            mutable std::map<
+                ImmedidateUserInterfaceNodeType,
+                std::multiset<std::string>> m_NodesDuplicatesController
+            {
+                std::map<
+                    ImmedidateUserInterfaceNodeType,
+                    std::multiset<std::string>>()
+            };
             
             // hierarchy
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack  {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingCache  {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList   {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable ImmedidateUserInterfaceNodeHierarchy      m_NodeDockersHierarchy {ImmedidateUserInterfaceNodeHierarchy([](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*{return _Node != nullptr ? _Node->State.Docker : nullptr;})};
-
-            // event gizmos
-            // ImmedidateUserInterfaceNode* m_PotentialDocker   = nullptr;
-            // ImmedidateUserInterfaceNode* m_PotentiallyResize = nullptr;
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingStack{std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingCache{std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesRenderingList {std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*> m_NodesDockingList   {std::vector<ImmedidateUserInterfaceNode*>()};
 
             mutable Frenchie::Core::Optional<gs_vec2f> m_NextNodeSize           {Frenchie::Core::Optional<gs_vec2f>()};
             mutable Frenchie::Core::Optional<gs_vec2f> m_NextNodePosition       {Frenchie::Core::Optional<gs_vec2f>()};
@@ -518,7 +446,7 @@ namespace Frenchie
             bool begin_node(
                 const std::string&                  _Name,
                 bool*                               _Rendered = nullptr,
-                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeHints_Default,
+                ImmedidateUserInterfaceNodeSettings _Settings = ImmedidateUserInterfaceNodeSettings_::ImmedidateUserInterfaceNodeSettings_Default,
                 ImmedidateUserInterfaceNodeType     _Type     = ImmedidateUserInterfaceNodeType_::ImmedidateUserInterfaceNodeType_Node);
 
             void end_node();
@@ -584,8 +512,6 @@ namespace Frenchie
             bool ui_node_is_being_docked(const ImmedidateUserInterfaceNode* _Node);
 
             // events query
-            bool ui_node_event_has_been_enqueued(const ImmedidateUserInterfaceNodeChanges&);
-
             void ui_node_enqueue_focus_event(ImmedidateUserInterfaceNode*);
             void ui_node_enqueue_resize_top_left_event(ImmedidateUserInterfaceNode*);
             void ui_node_enqueue_resize_top_right_event(ImmedidateUserInterfaceNode*);
@@ -612,6 +538,8 @@ namespace Frenchie
             bool ui_node_dequeue_vertical_scroll_event();
             bool ui_node_dequeue_horizontal_scroll_event();
 
+            bool ui_node_event_has_been_enqueued(const ImmedidateUserInterfaceNodeChanges&);
+
             // rendering
             bool ui_node_render_clipbox(ImmedidateUserInterfaceNode*);
             bool ui_node_render_background(ImmedidateUserInterfaceNode*);
@@ -620,8 +548,14 @@ namespace Frenchie
             bool ui_node_render_horizontal_scrollbar(ImmedidateUserInterfaceNode*);
 
             void ui_node_layout_children();
+
+            void ui_node_layout_update_children_layers();
+            void ui_node_layout_update_children_parental_geometry();
+            void ui_node_layout_update_children_docking_geometry();
+
             void ui_node_receive_events();
-            void ui_node_process_events();
+            void ui_node_begin_process_events();
+            void ui_node_end_process_events();
             void ui_node_save_state();
             
             // user interface widgets API
@@ -639,87 +573,6 @@ namespace Frenchie
             bool widget_has_been_clicked(const ApplicationMouseButton::Button&) const;
             bool widget_has_been_mouse_down(const ApplicationMouseButton::Button&) const;
             bool widget_has_been_double_clicked(const ApplicationMouseButton::Button&) const;
-
-            friend class ImmedidateUserInterfaceContextEventsReceiver;
         };
     }
 }
-
-// template<typename Type> struct Tree;
-
-// template<typename Type>
-// struct Node
-// {
-//     int               Parent{-1};
-//     int               Index {-1};
-//     Type              Data  {Type()};
-//     const Tree<Type>* Tree  {nullptr};
-// };
-
-// template<typename Type>
-// struct Tree
-// {
-//     mutable std::vector<Node<Type>> Nodes  {std::vector<Node<Type>>()};
-//     mutable std::vector<int>        Indexes{std::vector<int>()};
-//     mutable std::vector<int>        Entries{std::vector<int>()};
-//     mutable bool                    Dirty  {true};
-
-//     template<typename ... Args>
-//     Node<Type> construct_node(const Node<Type>& _Parent, Args ... _Args)
-//     {
-//         Node<Type> node;
-//         node.Parent = _Parent.Index;
-//         node.Index  = (int)Nodes.size();
-//         node.Data   = Type(_Args ...);
-//         node.Tree   = this;
-//         Nodes.push_back(node);
-//         Dirty = true;
-//         return node;
-//     }
-
-//     void clear()
-//     {
-//         Nodes.clear();
-//     }
-
-//     void sort() const
-//     {
-//         std::vector<Node<Type>> nodes(Nodes.size());
-//         std::vector<int> workspace(Nodes.size()+1);
-
-//         Indexes.resize(Nodes.size() + 1);
-//         Entries.resize(Nodes.size());
-
-//         for(int i = 0; i < Entries.size(); i++)
-//         {
-//             Entries[i] = 0;
-//             Indexes[i] = 0;
-//         }
-
-//         // count items
-//         for (int i = 0; i < Nodes.size(); i++)
-//         {
-//             if(Nodes[i].Parent < 0) continue;
-//             ++Entries[Nodes[i].Parent];
-//         }
-
-//         // cumulative sum
-//         int sum = 0;
-//         for (int i = 0; i < Nodes.size(); i++)
-//         {
-//             Indexes  [i] = sum;
-//             workspace[i] = sum;
-//             sum += Entries[i];
-//         }
-//         Indexes[Nodes.size()] = sum;
-
-//         for(int i = 0; i < Nodes.size(); i++ )
-//         {
-//             if(Nodes[i].Parent < 0) continue;
-//             nodes[workspace[Nodes[i].Parent]++] = Nodes[i];
-//         }
-
-//         Nodes = nodes;
-//         Dirty = false;
-//     }
-// };
