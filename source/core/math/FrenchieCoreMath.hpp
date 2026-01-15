@@ -1136,6 +1136,12 @@ inline gs_matrix<Type, 4, 4> gs_matrix_rotate(const gs_matrix<Type, 4, 4>& _Matr
     return _Matrix * transform;
 }
 
+template<typename Type>
+inline gs_vector<Type, 3> gs_matrix_retrieve_transform_translation_vector(const gs_matrix<Type, 4, 4>& _Matrix)
+{
+    return {_Matrix[3][0], _Matrix[3][1], _Matrix[3][2]};
+}
+
 template<typename T>
 inline gs_matrix<T, 4, 4> gs_matrix_ortho(
     const T& left,

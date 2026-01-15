@@ -264,11 +264,15 @@ namespace Frenchie
 
         struct RenderingQueueCommand
         {
-            RenderingQueueCommand(const RenderingQueueRenderingCommand&           _Command) : RenderingCommand(_Command){}
-            RenderingQueueCommand(const RenderingQueueRendererCommandClearColor&  _Command) : ClearColor(_Command){}
-            RenderingQueueCommand(const RenderingQueueRendererCommandClippingBox& _Command) : ClippingBox(_Command){}
+            RenderingQueueCommand(
+                const RenderingQueueRenderingCommand&           _Command,
+                const RenderingQueueRendererCommandClearColor&  _ClearColor,
+                const RenderingQueueRendererCommandClippingBox& _ClippingBox) :
+                Command(_Command),
+                ClearColor(_ClearColor),
+                ClippingBox(_ClippingBox){}
 
-            Frenchie::Core::Optional<RenderingQueueRenderingCommand>           RenderingCommand;
+            Frenchie::Core::Optional<RenderingQueueRenderingCommand>           Command;
             Frenchie::Core::Optional<RenderingQueueRendererCommandClearColor>  ClearColor;
             Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox;
         };
@@ -368,10 +372,9 @@ namespace Frenchie
                 const RenderingQueueShader&             _Shader,
                 const RenderingQueueTexture&            _Texture,
                 const gs_mat4f&                         _Transform,
-                const RenderingQueueMeshRenderingHints& _RendererHints);
-
-            void push_renderer_command(const gs_2dboxf& _ClippinBox);
-            void push_renderer_command(const gs_vec4f&  _ClearColor);
+                const RenderingQueueMeshRenderingHints& _RendererHints,
+                const gs_vec4f&                         _ClearColor,
+                const gs_2dboxf&                        _ClippinBox);
 
         protected:
 
