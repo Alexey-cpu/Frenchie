@@ -2069,23 +2069,11 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background(ImmedidateUs
     if(_Window == nullptr)
         return false;
 
-    if(!ui_node_is_being_docked(_Window))
-    {
-        m_Renderer->push_rectangle_filled(
-            _Window->State.WindowBox.Min + m_Style->FrameWidth * 0.5f,
-            _Window->State.WindowBox.Max - m_Style->FrameWidth * 0.5f,
-            m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-    }
-    else
-    {
-        m_Renderer->push_rectangle_rounded_filled(
-            _Window->State.WindowBox.Min + m_Style->FrameWidth * 0.5f,
-            _Window->State.WindowBox.Max - m_Style->FrameWidth * 0.5f,
-            m_Style->FrameRoundingRadius,
-            m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-    }
+    m_Renderer->push_rectangle_filled(
+        _Window->State.WindowBox.Min + m_Style->FrameWidth * 0.5f,
+        _Window->State.WindowBox.Max - m_Style->FrameWidth * 0.5f,
+        m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceColor],
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     return true;
 }
@@ -2095,16 +2083,13 @@ bool ImmedidateUserInterfaceContextLayer::ui_node_render_background_frame(Immedi
     if(_Window == nullptr)
         return false;
 
-    if(!ui_node_is_being_docked(_Window))
-    {
-        m_Renderer->push_rectangle_rounded(
-            _Window->State.WindowBox.Min,
-            _Window->State.WindowBox.Max,
-            m_Style->FrameRoundingRadius,
-            m_Style->FrameWidth,
-            m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
-            _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
-    }
+    m_Renderer->push_rectangle_rounded(
+        _Window->State.WindowBox.Min,
+        _Window->State.WindowBox.Max,
+        m_Style->FrameRoundingRadius,
+        m_Style->FrameWidth,
+        m_Style->Colors[ImmedidateUserInterfaceColors_::ImmedidateUserInterfaceColors_WindowContentSpaceFrameColor],
+        _Window->State.Transform * m_Renderer->calculate_transform_matrix((float)ui_node_calculate_child_depth_placed_in_follow(_Window, 1)));
 
     return true;
 }
@@ -3072,14 +3057,14 @@ void ImmedidateUserInterfaceContextLayer::ui_node_end_process_events()
             allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
     }
 
-    if(allMouseButtonsAreReleased)
+    if(!allMouseButtonsAreReleased)
+        return;
+
+    for (auto& renderedNode : m_NodesRenderingList)
     {
-        for (auto& renderedNode : m_NodesRenderingList)
-        {
-            ui_node_end_move(renderedNode);
-            ui_node_end_resize(renderedNode);
-            ui_node_end_scroll(renderedNode);
-        }
+        ui_node_end_move(renderedNode);
+        ui_node_end_resize(renderedNode);
+        ui_node_end_scroll(renderedNode);
     }
 }
 
@@ -3095,9 +3080,7 @@ void ImmedidateUserInterfaceContextLayer::ui_node_save_state()
         cachedWindow->Cache.LayerDepth = cachedWindow->State.LayerDepth;
         cachedWindow->Cache.Thickness  = cachedWindow->State.Thickness;
         cachedWindow->Cache.DrawIndex  = cachedWindow->State.DrawIndex;
-
-        // events
-        cachedWindow->Cache.Changes = cachedWindow->State.Changes;
+        cachedWindow->Cache.Changes    = cachedWindow->State.Changes;
 
         if(cachedWindow->State.MouseDown.has_value())
             cachedWindow->Cache.MouseDown = cachedWindow->State.MouseDown.value();
