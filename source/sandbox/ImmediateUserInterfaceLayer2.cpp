@@ -16,7 +16,7 @@ void UINode::render(Immediate2DRenderer* _Renderer)
         State.BoundingBox.Max,
         32.f,
         gs_vec4f(128.f, 200.f, 128.f, 255.f),
-        _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+        _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Renderer->push_rectangle_rounded(
         State.BoundingBox.Min,
@@ -24,13 +24,13 @@ void UINode::render(Immediate2DRenderer* _Renderer)
         32.f,
         8.f,
         gs_vec4f(12.f, 128.f, 128.f, 255.f),
-        _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+        _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Renderer->push_text(
         Name,
         32.f,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
-        _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++), State.BoundingBox.Min));
+        _Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
 
     if((State.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseHovered))
     {
@@ -40,7 +40,7 @@ void UINode::render(Immediate2DRenderer* _Renderer)
             32.f,
             8.f,
             gs_vec4f(0.f, 255.f, 0.f, 255.f),
-            _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            _Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
     if(State.MouseClicked.has_value())
@@ -50,7 +50,7 @@ void UINode::render(Immediate2DRenderer* _Renderer)
             State.BoundingBox.Max,
             32.f,
             gs_vec4f(255.f, 0.f, 0.f, 255.f),
-            _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            _Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 }
 
@@ -157,14 +157,14 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         if(resizeTopLeft.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopLeft))
         {
-            _Renderer->push_arc_filled(
-                resizeTopLeft.Center,
-                resizeTopLeft.Radius,
-                resizeTopLeft.Radius,
-                0.f,
-                360.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_arc_filled(
+            //     resizeTopLeft.Center,
+            //     resizeTopLeft.Radius,
+            //     resizeTopLeft.Radius,
+            //     0.f,
+            //     360.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -176,14 +176,14 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeTopRight.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopRight))
         {
-            _Renderer->push_arc_filled(
-                resizeTopRight.Center,
-                resizeTopRight.Radius,
-                resizeTopRight.Radius,
-                0.f,
-                360.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_arc_filled(
+            //     resizeTopRight.Center,
+            //     resizeTopRight.Radius,
+            //     resizeTopRight.Radius,
+            //     0.f,
+            //     360.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -197,14 +197,14 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeBottomLeft.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft))
         {
-            _Renderer->push_arc_filled(
-                resizeBottomLeft.Center,
-                resizeBottomLeft.Radius,
-                resizeBottomLeft.Radius,
-                0.f,
-                360.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_arc_filled(
+            //     resizeBottomLeft.Center,
+            //     resizeBottomLeft.Radius,
+            //     resizeBottomLeft.Radius,
+            //     0.f,
+            //     360.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -218,14 +218,14 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeBottomRight.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomRight))
         {
-            _Renderer->push_arc_filled(
-                resizeBottomRight.Center,
-                resizeBottomRight.Radius,
-                resizeBottomRight.Radius,
-                0.f,
-                360.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_arc_filled(
+            //     resizeBottomRight.Center,
+            //     resizeBottomRight.Radius,
+            //     resizeBottomRight.Radius,
+            //     0.f,
+            //     360.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -239,12 +239,12 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeTop.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedTop))
         {
-            _Renderer->push_rectangle_rounded_filled(
-                resizeTop.Min,
-                resizeTop.Max,
-                16.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_rectangle_rounded_filled(
+            //     resizeTop.Min,
+            //     resizeTop.Max,
+            //     16.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -258,12 +258,12 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeLeft.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedLeft))
         {
-            _Renderer->push_rectangle_rounded_filled(
-                resizeLeft.Min,
-                resizeLeft.Max,
-                16.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_rectangle_rounded_filled(
+            //     resizeLeft.Min,
+            //     resizeLeft.Max,
+            //     16.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -277,12 +277,12 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeRight.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedRight))
         {
-            _Renderer->push_rectangle_rounded_filled(
-                resizeRight.Min,
-                resizeRight.Max,
-                16.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_rectangle_rounded_filled(
+            //     resizeRight.Min,
+            //     resizeRight.Max,
+            //     16.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -296,12 +296,12 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         else if(resizeBottom.contains(_Event.CursorPosition) ||
             (State.Events & UINodeEvents_::UINodeEvents_IsResizedBottom))
         {
-            _Renderer->push_rectangle_rounded_filled(
-                resizeBottom.Min,
-                resizeBottom.Max,
-                16.f,
-                gs_vec4f(5, 255, 255, 200.f),
-                _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
+            // _Renderer->push_rectangle_rounded_filled(
+            //     resizeBottom.Min,
+            //     resizeBottom.Max,
+            //     16.f,
+            //     gs_vec4f(5, 255, 255, 200.f),
+            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
 
             if(_Event.MouseDown.has_value())
             {
@@ -383,18 +383,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_start()
 
 void ImmedidateUserInterfaceContextLayer2::frame_update()
 {
-    static bool start = true;
-
     if(begin_node("Root",
         UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
     {
-        // if(start)
-        // {
-        //     std::cout << "START !!! \n";
-        //     m_NodesRenderingStack[m_NodesRenderingStack.size()-1]->State.WindowBox =
-        //         gs_2dboxf(gs_vec2f(12.f, 12.f), gs_vec2f(255.f, 255.f));
-        // }
-
         if(begin_node("Root/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically |UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
         {
             if(begin_node("Root/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
@@ -425,16 +416,8 @@ void ImmedidateUserInterfaceContextLayer2::frame_update()
     if(begin_node("Root-1",
         UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
         UINodeSettings_::UINodeSettings_Resizable |
-        UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize
-    )
-)
+        UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
     {
-        // if(start)
-        // {
-        //     m_NodesRenderingStack[m_NodesRenderingStack.size()-1]->State.WindowBox =
-        //         gs_2dboxf(gs_vec2f(255.f, 255.f) + gs_vec2f(12.f, 12.f), gs_vec2f(512.f, 512.f) + gs_vec2f(12.f, 12.f));
-        // }
-
         if(begin_node("Root-1/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
         {
             if(begin_node("Root-1/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
@@ -457,7 +440,32 @@ void ImmedidateUserInterfaceContextLayer2::frame_update()
         end_node();
     }
 
-    start = false;
+    if(begin_node("Root-2",
+        UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
+        UINodeSettings_::UINodeSettings_Resizable |
+        UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
+    {
+        if(begin_node("Root-2/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        {
+            if(begin_node("Root-2/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+            if(begin_node("Root-2/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+            if(begin_node("Root-2/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+
+            end_node();
+        }
+
+        if(begin_node("Root-2/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        {
+            end_node();
+        }
+
+        if(begin_node("Root-2/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        {
+            end_node();
+        }
+
+        end_node();
+    }
 }
 
 void ImmedidateUserInterfaceContextLayer2::frame_debug()
@@ -497,9 +505,6 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
 
                 if(node == nullptr || parent == nullptr)
                     continue;
-
-                // compute depth
-                node->State.Depth = parent->State.Depth + parent->State.Thickness + 1;
 
                 // compute size
                 //gs_vec2f size = parent->State.WindowBox.size() / (float)childCount;
@@ -688,32 +693,70 @@ void ImmedidateUserInterfaceContextLayer2::frame_render()
     class UINodeRenderer
     {
     public:
-        static void execute(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node)
+        static void execute(ImmedidateUserInterfaceContextLayer2* _Context)
         {
-            auto next   = _Node;
-            auto parent = _Node->State.Parent;
-
-            while (parent != nullptr)
+            // compute initial depth of singletons
+            for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
-                next   = parent;
-                parent = parent->State.Parent;
+                singleton->State.Depth = 0.f;
+                
+                for (auto& renderedNode : _Context->m_NodesRenderingCache)
+                {
+                    singleton->State.Depth =
+                        gs_max(
+                            renderedNode->State.Depth + renderedNode->State.TotalThickness + 1,
+                            singleton->State.Depth);
+                }
+
+                UINodeRenderer::render_node(_Context, singleton);
+
+                _Context->m_NodesRenderingCache.push_back(singleton);
+            }
+        }
+
+    private:
+
+        static void render_node(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node)
+        {
+            // calculate clippingbox
+            {
+                auto next   = _Node;
+                auto parent = _Node->State.Parent;
+
+                while (parent != nullptr)
+                {
+                    next   = parent;
+                    parent = parent->State.Parent;
+                }
+
+                _Context->m_Renderer->push_clip_box(
+                    _Node->State.BoundingBox.clip_with(next->State.BoundingBox));
             }
 
-            _Context->m_Renderer->push_clip_box(
-                _Node->State.BoundingBox.clip_with(next->State.BoundingBox));
+            // setup depth
+            if(_Node->State.Parent != nullptr)
+            {
+                _Node->State.Depth = 
+                    _Node->State.Parent->State.Depth +
+                    _Node->State.Parent->State.SelfThickness + 1;
+            }
 
+            // render self and children
             _Node->render(_Context->m_Renderer.get());
 
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-                execute(_Context, (*it));
+                render_node(_Context, (*it));
 
+            // update parental bandwidth
+            if(_Node->State.Parent)
+                _Node->State.Parent->State.TotalThickness += _Node->State.SelfThickness;
+
+            // remove clipping
             _Context->m_Renderer->pop_clip_box();
         }
     };
 
-    // render
-    for (auto& singleton : m_Hierarchy.Singletons)
-        UINodeRenderer::execute(this, singleton);
+    UINodeRenderer::execute(this);
 }
 
 void ImmedidateUserInterfaceContextLayer2::frame_finish()
@@ -748,13 +791,14 @@ void ImmedidateUserInterfaceContextLayer2::frame_finish()
 
         // clean-up
         node->State.Depth          = 0;
-        node->State.Thickness      = 1;
+        node->State.SelfThickness  = 0;
+        node->State.TotalThickness = 0;
         node->State.RenderingIndex = 0;
         node->State.Parent         = nullptr;
         node->State.Settings       = 0;
     }
 
-    m_NodesRenderingCache = m_NodesRenderingList;
     m_NodesRenderingList.clear();
+    m_NodesRenderingCache.clear();
     m_NodesRenderingStack.clear();
 }
