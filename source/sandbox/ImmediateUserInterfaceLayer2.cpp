@@ -122,17 +122,17 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
         return false;
 
     // auxiliary lambdas
-    auto clamp_size = [this](UINode* window, gs_2dboxf estimatedBox)
+    auto clamp_bounding_box = [this](UINode* window, gs_2dboxf estimatedBox)
     {
         // handle minimum width
-        float minX = estimatedBox.size().x > window->State.MinimumSize.x  ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
-        float maxX = estimatedBox.size().x > window->State.MinimumSize.x  ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
+        float minX = estimatedBox.size().x > window->State.MinimumSize.x ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
+        float maxX = estimatedBox.size().x > window->State.MinimumSize.x ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
         float minY = estimatedBox.size().y > window->State.MinimumSize.y ? estimatedBox.Min.y : window->Cache.BoundingBox.Min.y + (window->State.BoundingBox.Min.y - window->Cache.BoundingBox.Min.y);
         float maxY = estimatedBox.size().y > window->State.MinimumSize.y ? estimatedBox.Max.y : window->Cache.BoundingBox.Max.y + (window->State.BoundingBox.Max.y - window->Cache.BoundingBox.Max.y);
         
         // handle maximum width
-        minX = estimatedBox.size().x < window->State.MaximumSize.x  ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
-        maxX = estimatedBox.size().x < window->State.MaximumSize.x  ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
+        minX = estimatedBox.size().x < window->State.MaximumSize.x ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
+        maxX = estimatedBox.size().x < window->State.MaximumSize.x ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
         minY = estimatedBox.size().y < window->State.MaximumSize.y ? estimatedBox.Min.y : window->Cache.BoundingBox.Min.y + (window->State.BoundingBox.Min.y - window->Cache.BoundingBox.Min.y);
         maxY = estimatedBox.size().y < window->State.MaximumSize.y ? estimatedBox.Max.y : window->Cache.BoundingBox.Max.y + (window->State.BoundingBox.Max.y - window->Cache.BoundingBox.Max.y);
         window->State.BoundingBox = gs_2dboxf(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
@@ -169,7 +169,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopLeft;
-                clamp_size(this, gs_2dboxf(Cache.BoundingBox.Min + _Event.CursorDragDelta, Cache.BoundingBox.Max));
+                clamp_bounding_box(this, gs_2dboxf(Cache.BoundingBox.Min + _Event.CursorDragDelta, Cache.BoundingBox.Max));
                 return true;
             }
         }
@@ -188,7 +188,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopRight;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                     Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
                 return true;
@@ -209,7 +209,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                     Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
                 return true;
@@ -230,7 +230,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopBottomRight;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min,
                     Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
                 return true;
@@ -249,7 +249,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedTop;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                     Cache.BoundingBox.Max));
                 return true;
@@ -268,7 +268,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedLeft;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                     Cache.BoundingBox.Max));
                 return true;
@@ -287,7 +287,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedRight;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min,
                     Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
                 return true;
@@ -306,7 +306,7 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
             if(_Event.MouseDown.has_value())
             {
                 State.Events |= UINodeEvents_::UINodeEvents_IsResizedBottom;
-                clamp_size(this, gs_2dboxf(
+                clamp_bounding_box(this, gs_2dboxf(
                     Cache.BoundingBox.Min,
                     Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
                 return true;
