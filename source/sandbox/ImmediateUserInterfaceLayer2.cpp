@@ -777,14 +777,18 @@ void ImmedidateUserInterfaceContextLayer2::frame_finish()
         // stop all modifications
         if(allMouseButtonsAreReleased)
             node->State.Events = UINodeEvents_::UINodeEvents_None;
-        node->Cache.Events            = node->State.Events;
+        node->Cache.Events             = node->State.Events;
         node->Cache.MouseHover         = node->State.MouseHover;
         node->Cache.MouseDown          = node->State.MouseDown;
         node->Cache.MouseHold          = node->State.MouseHold;
         node->Cache.MousePressed       = node->State.MousePressed;
         node->Cache.MouseClicked       = node->State.MouseClicked;
         node->Cache.MouseDoubleClicked = node->State.MouseDoubleClicked;
-
+        node->Cache.SelfThickness      = node->State.SelfThickness;
+        node->Cache.TotalThickness     = node->State.TotalThickness;
+        node->Cache.Depth              = node->State.Depth;
+        node->Cache.Parent             = node->State.Parent;
+        
         // save cache
         if(node->State.Events == UINodeEvents_::UINodeEvents_None)
             node->Cache = node->State;
