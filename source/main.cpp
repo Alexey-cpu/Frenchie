@@ -2,8 +2,6 @@
 // // Editor
 // //---------------------------------------------------------------------------------------------------
 #include <FrenchieApplication.hpp>
-
-#include <ImmedidateUserInterfaceLayer.hpp>
 #include <ImmediateUserInterfaceLayer2.hpp>
 
 int main(int argc, char *argv[])
