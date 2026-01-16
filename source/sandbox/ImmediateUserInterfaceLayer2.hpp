@@ -14,22 +14,52 @@ namespace Frenchie
 {
     namespace Application
     {
-        enum UINodeSettings_ : int
+        enum UINodeMouseHover_ : int
         {
-            UINodeSettings_Default                    = 0,
-            UINodeSettings_LayoutChildrenVertically   = 1 << 0,
-            UINodeSettings_LayoutChildrenHorizontally = 1 << 1,
+            UINodeMouseHover_None         = 0,
+            UINodeMouseHover_MouseLeft    = 1 << 0,
+            UINodeMouseHover_MouseHovered = 1 << 1,
+            UINodeMouseHover_MouseEntered = 1 << 2,
         };
 
+        enum UINodeSettings_ : int
+        {
+            UINodeSettings_None                       = 0,
+            
+            // modifications
+            UINodeSettings_Movable                    = 1 << 0,
+            UINodeSettings_Resizable                  = 1 << 1,
+
+            // layout
+            UINodeSettings_LayoutChildrenVertically   = 1 << 2,
+            UINodeSettings_LayoutChildrenHorizontally = 1 << 3,
+        };
+
+        enum UINodeEvents_ : int
+        {
+            UINodeEvents_None                    = 0,
+            UINodeEvents_IsMoved                 = 1 << 0,
+            UINodeEvents_IsResizedTop            = 1 << 1,
+            UINodeEvents_IsResizedLeft           = 1 << 2,
+            UINodeEvents_IsResizedRight          = 1 << 3,
+            UINodeEvents_IsResizedBottom         = 1 << 4,
+            UINodeEvents_IsResizedTopLeft        = 1 << 5,
+            UINodeEvents_IsResizedTopRight       = 1 << 6,
+            UINodeEvents_IsResizedTopBottomLeft  = 1 << 7,
+            UINodeEvents_IsResizedTopBottomRight = 1 << 8,
+        };
+
+        typedef int UINodeMouseHover;
         typedef int UINodeSettings;
+        typedef int UINodeEvents;
 
         struct UINode;
         struct UIEvent;
 
         struct UIEvent
         {
-            gs_vec2f CursorPosition{gs_vec2f(0.f, 0.f)};
-            gs_vec2f CursorDragDelta{gs_vec2f(0.f, 0.f)};
+            gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
+            gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
 
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
@@ -38,48 +68,53 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
         
-        struct UINodeState
-        {
-            int Depth    {0};
-            int Thickness{1};
-            int DrawIndex{0};
-            UINode*        Parent        {nullptr};
-            gs_2dboxf      WindowBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(255.f, 255.f))};
-            UINodeSettings Settings      {UINodeSettings_::UINodeSettings_LayoutChildrenVertically};
-        };
-
         struct UINode
         {
-            UINodeState State;
-            UINodeState Cache;
+            UINode(const std::string _Name);
+            virtual ~UINode();
 
-            UINode(const std::string _Name) : Name(_Name){}
-            virtual ~UINode(){}
+            virtual void render(Immediate2DRenderer* _Renderer);
+            virtual bool hover (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+            virtual bool input (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+            virtual bool event (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
 
-            virtual void render(Immediate2DRenderer* _Renderer)
+            struct Data
             {
-                if(_Renderer == nullptr)
-                    return;
+                // rendering
+                int            Depth         {0};
+                int            Thickness     {1};
+                int            RenderingIndex{0};
 
-                _Renderer->push_rectangle_rounded(
-                    State.WindowBox.Min,
-                    State.WindowBox.Max,
-                    32.f,
-                    8.f,
-                    gs_vec4f(0.f, 0.f, 255.f, 255.f),
-                    _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
-            }
+                // geimetry
+                gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(255.f, 255.f))};
+                gs_vec2f       MinimumSize{gs_vec2f(4.f)};
+                gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
 
-            virtual bool event(const UIEvent&)
-            {
-                // resize
-                // TODO: process resize event here
+                // hierarchy
+                UINode*        Parent{nullptr};
 
-                // move
-                // TODO: process move event here
+                // settings
+                UINodeSettings Settings{UINodeSettings_::UINodeSettings_LayoutChildrenVertically};
 
-                return false;
-            }
+                // events
+                UINodeEvents   Events{UINodeEvents_::UINodeEvents_None};
+
+                // mouse hover
+                UINodeMouseHover                               MouseHover{UINodeMouseHover_::UINodeMouseHover_None};
+                std::chrono::high_resolution_clock::time_point MouseEnterTimer;
+                std::chrono::high_resolution_clock::time_point MouseLeaveTimer;
+
+                // mouse and keyboard input
+                // TODO: implement keyboard input !!!
+                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
+                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
+                Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
+                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
+                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
+            };
+
+            Data State;
+            Data Cache;
 
         private:
             std::string Name = "UINode";
@@ -106,18 +141,16 @@ namespace Frenchie
                 UINode* node = m_Cache[_Name].get();
 
                 node->State.Settings  = _Settings;
-                node->State.DrawIndex = m_NodesRenderingList.size();
+                node->State.RenderingIndex = m_NodesRenderingList.size();
 
                 // build nodes hierarchy
                 if(!m_NodesRenderingStack.empty())
                 {
                     node->State.Parent = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
-                    node->State.Depth  = node->State.Parent->State.Depth + (node->State.Parent->State.Thickness++);
                 }
                 else
                 {
-                    node->State.Depth = 0;
-
+                    node->State.Depth = 0; // TODO: here we should have layer
                     for (auto& node : m_NodesRenderingList)
                         node->State.Depth = gs_max(node->State.Depth + node->State.Thickness + 1, node->State.Depth);
                 }
@@ -130,32 +163,21 @@ namespace Frenchie
 
             void end_node()
             {
-                if(m_NodesRenderingStack.empty())
-                    return;
-
-                m_NodesRenderingStack.pop_back();
+                if(!m_NodesRenderingStack.empty())
+                    m_NodesRenderingStack.pop_back();
             }
 
-        protected:
+        private:
 
-            void compute_geometry(UINode* _Node);
-            void render(UINode* _Node);
-
-            mutable std::map<std::string, std::unique_ptr<UINode>> m_Cache;
-            mutable std::vector<UINode*>                           m_NodesRenderingList;
-            mutable std::vector<UINode*>                           m_NodesRenderingCache;
-            mutable std::vector<UINode*>                           m_NodesRenderingStack;
-
-            // nested types
-            struct UINodeHierarchy
+            struct Hierarchy
             {
-                UINodeHierarchy(const std::function<UINode*(UINode*)> _GetParent =
+                Hierarchy(const std::function<UINode*(UINode*)> _GetParent =
                     [](UINode* _Node)->UINode*
                     {
                         return _Node != nullptr ? _Node->State.Parent : nullptr;
                     }) : GetParent(_GetParent){}
 
-                ~UINodeHierarchy(){}
+                ~Hierarchy(){}
 
                 std::vector<int>                Indexes;
                 std::vector<int>                Entries;
@@ -163,14 +185,14 @@ namespace Frenchie
                 std::vector<UINode*>            Sorted;
                 std::function<UINode*(UINode*)> GetParent;
 
-                std::vector<UINode*>::iterator begin(const UINode* _Node)
+                std::vector<UINode*>::const_iterator begin(const UINode* _Node) const
                 {
-                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex];
+                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
                 }
 
-                std::vector<UINode*>::iterator end(const UINode* _Node)
+                std::vector<UINode*>::const_iterator end(const UINode* _Node) const
                 {
-                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.DrawIndex + 1];
+                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
                 }
 
                 void build(const std::vector<UINode*>& _Nodes)
@@ -198,7 +220,7 @@ namespace Frenchie
                         if(get_parent(_Nodes[i]) == nullptr)
                             continue;
 
-                        ++Entries[get_parent(_Nodes[i])->State.DrawIndex];
+                        ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
                     }
 
                     // cumulative sum
@@ -216,7 +238,7 @@ namespace Frenchie
                         if(get_parent(_Nodes[i]) == nullptr)
                             continue;
 
-                        Sorted[workspace[get_parent(_Nodes[i])->State.DrawIndex]++] = _Nodes[i];
+                        Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
                     }
                 }
 
@@ -226,9 +248,14 @@ namespace Frenchie
                 {
                     return GetParent != nullptr ? GetParent(_Node) : nullptr;
                 }
-            } mutable m_Hierarchy;
+            };
 
-            mutable std::shared_ptr<Immediate2DRenderer> m_Renderer{nullptr};
+            mutable std::map<std::string, std::unique_ptr<UINode>> m_Cache;
+            mutable Hierarchy                                      m_Hierarchy;
+            mutable std::shared_ptr<Immediate2DRenderer>           m_Renderer           {nullptr};
+            mutable std::vector<UINode*>                           m_NodesRenderingList {std::vector<UINode*>()};
+            mutable std::vector<UINode*>                           m_NodesRenderingCache{std::vector<UINode*>()};
+            mutable std::vector<UINode*>                           m_NodesRenderingStack{std::vector<UINode*>()};
         };
     };
 }
