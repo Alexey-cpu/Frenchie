@@ -430,13 +430,19 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
     private:
         static void node_geometry(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node)
         {
+            if(_Context == nullptr || _Node == nullptr)
+                return;
+
             gs_vec2f position   = _Node->State.BoundingBox.Min;
             gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
             float    childCount = _Context->m_Hierarchy.end(_Node) - _Context->m_Hierarchy.begin(_Node);
 
             // compute total size and maximum size delta
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-                totalsize += (*it)->State.BoundingBox.size();
+            {
+                if((*it) != nullptr)
+                    totalsize += (*it)->State.BoundingBox.size();
+            }
 
             // layout children
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
@@ -444,6 +450,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
                 // compute self
                 auto node   = *it;
                 auto parent = _Node;
+
+                if(node == nullptr || parent == nullptr)
+                    continue;
 
                 // compute depth
                 node->State.Depth = _Node->State.Depth + _Node->State.Thickness + 1;
@@ -486,6 +495,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
     private:
         static bool node_hover(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
         {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                return false;
+
             if(_Node->hover(_Context->m_Renderer.get(), _Event))
                 return true;
 
@@ -500,11 +512,8 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
 
         static bool node_input(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
         {
-            _Node->State.MouseDown.reset();
-            _Node->State.MouseHold.reset();
-            _Node->State.MousePressed.reset();
-            _Node->State.MouseClicked.reset();
-            _Node->State.MouseDoubleClicked.reset();
+            if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                return false;
 
             if(_Node->input(_Context->m_Renderer.get(), _Event))
                 return true;
@@ -520,6 +529,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
     
         static bool node_event(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
         {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                return false;
+
             if(_Node->event(_Context->m_Renderer.get(), _Event))
                 return true;
 
@@ -534,6 +546,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
 
         static bool catch_hover(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
         {
+            if(_Context == nullptr)
+                return false;
+
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
                 if(UINodeEventsCatcher::node_hover(_Context, singleton, _Event))
@@ -551,6 +566,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
 
         static bool catch_input(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
         {
+            if(_Context == nullptr)
+                return false;
+            
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
                 if(UINodeEventsCatcher::node_input(_Context, singleton, _Event))
@@ -562,6 +580,9 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
 
         static bool catch_event(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
         {
+            if(_Context == nullptr)
+                return false;
+
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
                 if(UINodeEventsCatcher::node_event(_Context, singleton, _Event))
