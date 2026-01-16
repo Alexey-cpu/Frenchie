@@ -72,9 +72,9 @@ namespace Frenchie
             virtual ~UINode();
 
             virtual void render(Immediate2DRenderer* _Renderer);
-            virtual bool hover (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
-            virtual bool input (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
-            virtual bool event (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+            // virtual bool hover (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+            // virtual bool input (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+            // virtual bool event (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
 
             bool is_visible() const;
             bool is_partially_visible() const;
@@ -94,7 +94,7 @@ namespace Frenchie
                 int            RenderingIndex{0};
 
                 // geimetry
-                gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(255.f, 255.f))};
+                gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(1024.f, 512.f))};
                 gs_vec2f       MinimumSize{gs_vec2f(4.f)};
                 gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
 

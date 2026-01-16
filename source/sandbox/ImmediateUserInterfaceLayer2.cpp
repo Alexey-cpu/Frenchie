@@ -54,291 +54,6 @@ void UINode::render(Immediate2DRenderer* _Renderer)
     }
 }
 
-bool UINode::hover(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
-{
-    if(!is_partially_visible())
-        return false;
-
-    // catch hover
-    if(State.BoundingBox.contains(_Event.CursorPosition))
-    {
-        if(!(Cache.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseEntered))
-        {
-            State.MouseEnterTimer = Frenchie::Core::tic();
-            State.MouseHover |= UINodeMouseHover_::UINodeMouseHover_MouseEntered;
-        }
-        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-            State.MouseEnterTimer,
-            Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
-        {
-            State.MouseHover |= UINodeMouseHover_::UINodeMouseHover_MouseHovered;
-
-            UINode* parent = State.Parent;
-
-            while (parent)
-            {
-                parent->State.MouseHover = UINodeMouseHover_::UINodeMouseHover_None;
-                parent = parent->State.Parent;
-            }
-        }
-    }
-    else
-    {
-        if(!(Cache.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseLeft))
-        {
-            State.MouseLeaveTimer = Frenchie::Core::tic();
-            State.MouseHover |= UINodeMouseHover_::UINodeMouseHover_MouseLeft;
-        }
-        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-            State.MouseLeaveTimer,Frenchie::Core::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
-        {
-            State.MouseHover = UINodeMouseHover_::UINodeMouseHover_None;
-        }
-    }
-
-    return false;
-}
-
-bool UINode::input(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
-{
-    if(!(State.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseHovered))
-        return false;
-
-    State.MouseDown          = _Event.MouseDown;
-    State.MouseHold          = _Event.MouseHold;
-    State.MousePressed       = _Event.MousePressed;
-    State.MouseClicked       = _Event.MouseClicked;
-    State.MouseDoubleClicked = _Event.MouseDoubleClicked;
-
-    return
-            State.MousePressed.has_value() ||
-            State.MouseClicked.has_value() ||
-            State.MouseDoubleClicked.has_value();
-}
-
-bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
-{
-    if(!is_visible())
-        return false;
-
-    // auxiliary lambdas
-    auto clamp_bounding_box = [this](UINode* window, gs_2dboxf estimatedBox)
-    {
-        // handle minimum width
-        float minX = estimatedBox.size().x > window->State.MinimumSize.x ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
-        float maxX = estimatedBox.size().x > window->State.MinimumSize.x ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
-        float minY = estimatedBox.size().y > window->State.MinimumSize.y ? estimatedBox.Min.y : window->Cache.BoundingBox.Min.y + (window->State.BoundingBox.Min.y - window->Cache.BoundingBox.Min.y);
-        float maxY = estimatedBox.size().y > window->State.MinimumSize.y ? estimatedBox.Max.y : window->Cache.BoundingBox.Max.y + (window->State.BoundingBox.Max.y - window->Cache.BoundingBox.Max.y);
-        
-        // handle maximum width
-        minX = estimatedBox.size().x < window->State.MaximumSize.x ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
-        maxX = estimatedBox.size().x < window->State.MaximumSize.x ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
-        minY = estimatedBox.size().y < window->State.MaximumSize.y ? estimatedBox.Min.y : window->Cache.BoundingBox.Min.y + (window->State.BoundingBox.Min.y - window->Cache.BoundingBox.Min.y);
-        maxY = estimatedBox.size().y < window->State.MaximumSize.y ? estimatedBox.Max.y : window->Cache.BoundingBox.Max.y + (window->State.BoundingBox.Max.y - window->Cache.BoundingBox.Max.y);
-        window->State.BoundingBox = gs_2dboxf(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
-    };
-
-    // resize
-    if((State.Settings & UINodeSettings_::UINodeSettings_Resizable) &&
-        !(State.Events & UINodeEvents_::UINodeEvents_IsMoved))
-    {
-        float WindowResizeAngleGizmoRadius = 32.f;
-        float WindowResizeSideGizmoWidth   = 8.f;
-
-        gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(State.BoundingBox.Min, WindowResizeAngleGizmoRadius);
-        gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
-        gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(State.BoundingBox.Max - gs_vec2f(State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
-        gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(State.BoundingBox.Max, WindowResizeAngleGizmoRadius);
-        gs_2dboxf      resizeTop         = gs_2dboxf(State.BoundingBox.Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth), State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), WindowResizeSideGizmoWidth));
-        gs_2dboxf      resizeLeft        = gs_2dboxf(State.BoundingBox.Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f), State.BoundingBox.Min + gs_vec2f(WindowResizeSideGizmoWidth, State.BoundingBox.height()));
-        gs_2dboxf      resizeRight       = gs_2dboxf(State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() - WindowResizeSideGizmoWidth, 0.f), State.BoundingBox.Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
-        gs_2dboxf      resizeBottom      = gs_2dboxf(State.BoundingBox.Min + gs_vec2f(0.f, State.BoundingBox.height() - WindowResizeSideGizmoWidth), State.BoundingBox.Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
-
-        if(resizeTopLeft.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopLeft))
-        {
-            // _Renderer->push_arc_filled(
-            //     resizeTopLeft.Center,
-            //     resizeTopLeft.Radius,
-            //     resizeTopLeft.Radius,
-            //     0.f,
-            //     360.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopLeft;
-                clamp_bounding_box(this, gs_2dboxf(Cache.BoundingBox.Min + _Event.CursorDragDelta, Cache.BoundingBox.Max));
-                return true;
-            }
-        }
-        else if(resizeTopRight.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopRight))
-        {
-            // _Renderer->push_arc_filled(
-            //     resizeTopRight.Center,
-            //     resizeTopRight.Radius,
-            //     resizeTopRight.Radius,
-            //     0.f,
-            //     360.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopRight;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                    Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
-                return true;
-            }
-        }
-        else if(resizeBottomLeft.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft))
-        {
-            // _Renderer->push_arc_filled(
-            //     resizeBottomLeft.Center,
-            //     resizeBottomLeft.Radius,
-            //     resizeBottomLeft.Radius,
-            //     0.f,
-            //     360.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                    Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
-                return true;
-            }
-        }
-        else if(resizeBottomRight.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomRight))
-        {
-            // _Renderer->push_arc_filled(
-            //     resizeBottomRight.Center,
-            //     resizeBottomRight.Radius,
-            //     resizeBottomRight.Radius,
-            //     0.f,
-            //     360.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopBottomRight;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min,
-                    Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
-                return true;
-            }
-        }
-        else if(resizeTop.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedTop))
-        {
-            // _Renderer->push_rectangle_rounded_filled(
-            //     resizeTop.Min,
-            //     resizeTop.Max,
-            //     16.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedTop;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                    Cache.BoundingBox.Max));
-                return true;
-            }
-        }
-        else if(resizeLeft.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedLeft))
-        {
-            // _Renderer->push_rectangle_rounded_filled(
-            //     resizeLeft.Min,
-            //     resizeLeft.Max,
-            //     16.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedLeft;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                    Cache.BoundingBox.Max));
-                return true;
-            }
-        }
-        else if(resizeRight.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedRight))
-        {
-            // _Renderer->push_rectangle_rounded_filled(
-            //     resizeRight.Min,
-            //     resizeRight.Max,
-            //     16.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedRight;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min,
-                    Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
-                return true;
-            }
-        }
-        else if(resizeBottom.contains(_Event.CursorPosition) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsResizedBottom))
-        {
-            // _Renderer->push_rectangle_rounded_filled(
-            //     resizeBottom.Min,
-            //     resizeBottom.Max,
-            //     16.f,
-            //     gs_vec4f(5, 255, 255, 200.f),
-            //     _Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            if(_Event.MouseDown.has_value())
-            {
-                State.Events |= UINodeEvents_::UINodeEvents_IsResizedBottom;
-                clamp_bounding_box(this, gs_2dboxf(
-                    Cache.BoundingBox.Min,
-                    Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
-                return true;
-            }
-        }
-    }
-
-    // move
-    if((State.Settings & UINodeSettings_::UINodeSettings_Movable) &&
-        !((State.Events & UINodeEvents_::UINodeEvents_IsResizedTop)          ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedLeft)           ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedRight)          ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedBottom)         ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft)  ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomRight) ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopLeft)        ||
-        (State.Events & UINodeEvents_::UINodeEvents_IsResizedTopRight)))
-    {
-        if((_Event.MouseDown.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
-            (State.Events & UINodeEvents_::UINodeEvents_IsMoved))
-        {
-            State.Events |= UINodeEvents_::UINodeEvents_IsMoved;
-            State.BoundingBox = gs_2dboxf(
-                Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
-                Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool UINode::is_visible() const
 {
     if(State.Parent == nullptr)
@@ -413,59 +128,59 @@ void ImmedidateUserInterfaceContextLayer2::frame_update()
         end_node();
     }
 
-    if(begin_node("Root-1",
-        UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
-        UINodeSettings_::UINodeSettings_Resizable |
-        UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
-    {
-        if(begin_node("Root-1/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
-        {
-            if(begin_node("Root-1/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
-            if(begin_node("Root-1/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
-            if(begin_node("Root-1/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+    // if(begin_node("Root-1",
+    //     UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
+    //     UINodeSettings_::UINodeSettings_Resizable |
+    //     UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
+    // {
+    //     if(begin_node("Root-1/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+    //     {
+    //         if(begin_node("Root-1/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+    //         if(begin_node("Root-1/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+    //         if(begin_node("Root-1/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
 
-            end_node();
-        }
+    //         end_node();
+    //     }
 
-        if(begin_node("Root-1/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
-        {
-            end_node();
-        }
+    //     if(begin_node("Root-1/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+    //     {
+    //         end_node();
+    //     }
 
-        if(begin_node("Root-1/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
-        {
-            end_node();
-        }
+    //     if(begin_node("Root-1/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+    //     {
+    //         end_node();
+    //     }
 
-        end_node();
-    }
+    //     end_node();
+    // }
 
-    if(begin_node("Root-2",
-        UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
-        UINodeSettings_::UINodeSettings_Resizable |
-        UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
-    {
-        if(begin_node("Root-2/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
-        {
-            if(begin_node("Root-2/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
-            if(begin_node("Root-2/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
-            if(begin_node("Root-2/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+    // if(begin_node("Root-2",
+    //     UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
+    //     UINodeSettings_::UINodeSettings_Resizable |
+    //     UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
+    // {
+    //     if(begin_node("Root-2/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+    //     {
+    //         if(begin_node("Root-2/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+    //         if(begin_node("Root-2/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+    //         if(begin_node("Root-2/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
 
-            end_node();
-        }
+    //         end_node();
+    //     }
 
-        if(begin_node("Root-2/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
-        {
-            end_node();
-        }
+    //     if(begin_node("Root-2/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+    //     {
+    //         end_node();
+    //     }
 
-        if(begin_node("Root-2/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
-        {
-            end_node();
-        }
+    //     if(begin_node("Root-2/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+    //     {
+    //         end_node();
+    //     }
 
-        end_node();
-    }
+    //     end_node();
+    // }
 }
 
 void ImmedidateUserInterfaceContextLayer2::frame_debug()
@@ -541,116 +256,408 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
     public:
         static void execute(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
         {
-            if(catch_hover(_Context, _Event) &&
-                catch_input(_Context, _Event)) return;
+            catch_hover(_Context, _Event);
+            catch_input(_Context, _Event);
             catch_event(_Context, _Event);
         }
 
     private:
-        static bool node_hover(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                return false;
+        // static bool node_hover(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
+        // {
+        //     if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        //         return false;
 
-            if(_Node->hover(_Context->m_Renderer.get(), _Event))
-                return true;
+        //     if(_Node->hover(_Context->m_Renderer.get(), _Event))
+        //         return true;
 
-            for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                if(node_hover(_Context, *it, _Event))
-                    return true;
-            }
+        //     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        //     {
+        //         if(node_hover(_Context, *it, _Event))
+        //             return true;
+        //     }
 
-            return false;
-        }
+        //     return false;
+        // }
 
-        static bool node_input(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                return false;
+        // static bool node_input(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
+        // {
+        //     if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        //         return false;
 
-            if(_Node->input(_Context->m_Renderer.get(), _Event))
-                return true;
+        //     if(_Node->input(_Context->m_Renderer.get(), _Event))
+        //         return true;
 
-            for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                if(node_input(_Context, *it, _Event))
-                    return true;
-            }
+        //     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        //     {
+        //         if(node_input(_Context, *it, _Event))
+        //             return true;
+        //     }
 
-            return false;
-        }
+        //     return false;
+        // }
     
-        static bool node_event(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
-        {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                return false;
+        // static bool node_event(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
+        // {
+        //     if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        //         return false;
 
-            for (auto node : _Context->m_NodesRenderingList)
+        //     for (auto node : _Context->m_NodesRenderingList)
+        //     {
+        //         if(node->State.Events == UINodeEvents_::UINodeEvents_None)
+        //             continue;
+
+        //         node->event(_Context->m_Renderer.get(), _Event);
+        //         return true;
+        //     }
+
+        //     if(_Node->event(_Context->m_Renderer.get(), _Event))
+        //         return true;
+
+        //     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        //     {
+        //         if(node_event(_Context, *it, _Event))
+        //             return true;
+        //     }
+
+        //     return false;
+        // }
+
+        static void catch_hover(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
+        {
+            if(_Context == nullptr)
+                return;
+
+            // find the top most node catching the mouse cursor
+            UINode* hoveredNode  = nullptr;
+            float   maximumDepth = INT_MIN;
+
+            for (auto& node : _Context->m_NodesRenderingList)
+            {
+                if(!node->is_partially_visible())
+                {
+                    node->State.MouseHover = UINodeMouseHover_::UINodeMouseHover_None;
+                    continue;
+                }
+
+                // hover end logic
+                if(!node->State.BoundingBox.contains(_Event.CursorPosition))
+                {
+                    if(!(node->Cache.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseLeft))
+                    {
+                        node->State.MouseLeaveTimer = Frenchie::Core::tic();
+                        node->State.MouseHover |= UINodeMouseHover_::UINodeMouseHover_MouseLeft;
+                    }
+                    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                        node->State.MouseLeaveTimer,Frenchie::Core::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
+                    {
+                        node->State.MouseHover = UINodeMouseHover_::UINodeMouseHover_None;
+                    }
+
+                    continue;
+                }
+
+                if(node->Cache.Depth > maximumDepth)
+                {
+                    maximumDepth = node->Cache.Depth;
+                    hoveredNode  = node;
+                }
+            }
+
+            // hover start logic
+            if(hoveredNode)
+            {
+                if(!(hoveredNode->Cache.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseEntered))
+                {
+                    hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
+                    hoveredNode->State.MouseHover |= UINodeMouseHover_::UINodeMouseHover_MouseEntered;
+                }
+                else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    hoveredNode->State.MouseEnterTimer,
+                    Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+                {
+                    hoveredNode->State.MouseHover |= UINodeMouseHover_::UINodeMouseHover_MouseHovered;
+                }
+            }
+        }
+
+        static void catch_input(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
+        {
+            if(_Context == nullptr)
+                return;
+            
+            for (auto& node : _Context->m_NodesRenderingList)
+            {
+                if(!(node->State.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseHovered))
+                {
+                    node->State.MouseDown.reset();
+                    node->State.MouseHold.reset();
+                    node->State.MousePressed.reset();
+                    node->State.MouseClicked.reset();
+                    node->State.MouseDoubleClicked.reset();
+                    continue;
+                }
+
+                node->State.MouseDown          = _Event.MouseDown;
+                node->State.MouseHold          = _Event.MouseHold;
+                node->State.MousePressed       = _Event.MousePressed;
+                node->State.MouseClicked       = _Event.MouseClicked;
+                node->State.MouseDoubleClicked = _Event.MouseDoubleClicked;
+            }
+        }
+
+        static void catch_event(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
+        {
+            if(_Context == nullptr)
+                return;
+
+            // check if anything is already catchint event
+            for (auto& node : _Context->m_NodesRenderingList)
             {
                 if(node->State.Events == UINodeEvents_::UINodeEvents_None)
                     continue;
 
-                node->event(_Context->m_Renderer.get(), _Event);
-                return true;
+                UINodeEventsCatcher::event(_Context->m_Renderer.get(), node, _Event);
+                return;
             }
 
-            if(_Node->event(_Context->m_Renderer.get(), _Event))
-                return true;
-
-            for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                if(node_event(_Context, *it, _Event))
-                    return true;
-            }
-
-            return false;
-        }
-
-        static bool catch_hover(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
-        {
-            if(_Context == nullptr)
-                return false;
-
-            for (auto& singleton : _Context->m_Hierarchy.Singletons)
-            {
-                if(UINodeEventsCatcher::node_hover(_Context, singleton, _Event))
-                    return true;
-            }
+            // find the top most hovered node with null parent
+            UINode* hoveredNode  = nullptr;
+            float   maximumDepth = INT_MIN;
 
             for (auto& node : _Context->m_NodesRenderingList)
             {
-                if((node->State.MouseHover & UINodeMouseHover_::UINodeMouseHover_MouseHovered))
-                    return true;
+                if(!node->is_visible() || !node->State.BoundingBox.contains(_Event.CursorPosition) || node->State.Parent != nullptr)
+                    continue;
+
+                if(node->Cache.Depth > maximumDepth)
+                {
+                    maximumDepth = node->Cache.Depth;
+                    hoveredNode  = node;
+                }
             }
 
-            return false;
+            if (hoveredNode == nullptr)
+                return;
+
+            UINodeEventsCatcher::event(_Context->m_Renderer.get(), hoveredNode, _Event);
         }
 
-        static bool catch_input(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
+        static bool event(Immediate2DRenderer* _Renderer, UINode* _Node, const UIEvent& _Event)
         {
-            if(_Context == nullptr)
-                return false;
-            
-            for (auto& singleton : _Context->m_Hierarchy.Singletons)
+            // auxiliary lambdas
+            auto clamp_bounding_box = [](UINode* window, gs_2dboxf estimatedBox)
             {
-                if(UINodeEventsCatcher::node_input(_Context, singleton, _Event))
-                    return true;
+                // handle minimum width
+                float minX = estimatedBox.size().x > window->State.MinimumSize.x ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
+                float maxX = estimatedBox.size().x > window->State.MinimumSize.x ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
+                float minY = estimatedBox.size().y > window->State.MinimumSize.y ? estimatedBox.Min.y : window->Cache.BoundingBox.Min.y + (window->State.BoundingBox.Min.y - window->Cache.BoundingBox.Min.y);
+                float maxY = estimatedBox.size().y > window->State.MinimumSize.y ? estimatedBox.Max.y : window->Cache.BoundingBox.Max.y + (window->State.BoundingBox.Max.y - window->Cache.BoundingBox.Max.y);
+                
+                // handle maximum width
+                minX = estimatedBox.size().x < window->State.MaximumSize.x ? estimatedBox.Min.x : window->Cache.BoundingBox.Min.x + (window->State.BoundingBox.Min.x - window->Cache.BoundingBox.Min.x);
+                maxX = estimatedBox.size().x < window->State.MaximumSize.x ? estimatedBox.Max.x : window->Cache.BoundingBox.Max.x + (window->State.BoundingBox.Max.x - window->Cache.BoundingBox.Max.x);
+                minY = estimatedBox.size().y < window->State.MaximumSize.y ? estimatedBox.Min.y : window->Cache.BoundingBox.Min.y + (window->State.BoundingBox.Min.y - window->Cache.BoundingBox.Min.y);
+                maxY = estimatedBox.size().y < window->State.MaximumSize.y ? estimatedBox.Max.y : window->Cache.BoundingBox.Max.y + (window->State.BoundingBox.Max.y - window->Cache.BoundingBox.Max.y);
+                window->State.BoundingBox = gs_2dboxf(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
+            };
+
+            // resize
+            if((_Node->State.Settings & UINodeSettings_::UINodeSettings_Resizable) &&
+                !(_Node->State.Events & UINodeEvents_::UINodeEvents_IsMoved))
+            {
+                float WindowResizeAngleGizmoRadius = 32.f;
+                float WindowResizeSideGizmoWidth   = 8.f;
+
+                gs_2d_ellipsef resizeTopLeft     = gs_2d_ellipsef(_Node->State.BoundingBox.Min, WindowResizeAngleGizmoRadius);
+                gs_2d_ellipsef resizeTopRight    = gs_2d_ellipsef(_Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
+                gs_2d_ellipsef resizeBottomLeft  = gs_2d_ellipsef(_Node->State.BoundingBox.Max - gs_vec2f(_Node->State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
+                gs_2d_ellipsef resizeBottomRight = gs_2d_ellipsef(_Node->State.BoundingBox.Max, WindowResizeAngleGizmoRadius);
+                gs_2dboxf      resizeTop         = gs_2dboxf(_Node->State.BoundingBox.Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth), _Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), WindowResizeSideGizmoWidth));
+                gs_2dboxf      resizeLeft        = gs_2dboxf(_Node->State.BoundingBox.Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f), _Node->State.BoundingBox.Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->State.BoundingBox.height()));
+                gs_2dboxf      resizeRight       = gs_2dboxf(_Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width() - WindowResizeSideGizmoWidth, 0.f), _Node->State.BoundingBox.Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
+                gs_2dboxf      resizeBottom      = gs_2dboxf(_Node->State.BoundingBox.Min + gs_vec2f(0.f, _Node->State.BoundingBox.height() - WindowResizeSideGizmoWidth), _Node->State.BoundingBox.Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
+
+                if(resizeTopLeft.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopLeft))
+                {
+                    _Renderer->push_arc_filled(
+                        resizeTopLeft.Center,
+                        resizeTopLeft.Radius,
+                        resizeTopLeft.Radius,
+                        0.f,
+                        360.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopLeft;
+                        clamp_bounding_box(_Node, gs_2dboxf(_Node->Cache.BoundingBox.Min + _Event.CursorDragDelta, _Node->Cache.BoundingBox.Max));
+                        return true;
+                    }
+                }
+                else if(resizeTopRight.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopRight))
+                {
+                    _Renderer->push_arc_filled(
+                        resizeTopRight.Center,
+                        resizeTopRight.Radius,
+                        resizeTopRight.Radius,
+                        0.f,
+                        360.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopRight;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                            _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                        return true;
+                    }
+                }
+                else if(resizeBottomLeft.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft))
+                {
+                    _Renderer->push_arc_filled(
+                        resizeBottomLeft.Center,
+                        resizeBottomLeft.Radius,
+                        resizeBottomLeft.Radius,
+                        0.f,
+                        360.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                            _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                        return true;
+                    }
+                }
+                else if(resizeBottomRight.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomRight))
+                {
+                    _Renderer->push_arc_filled(
+                        resizeBottomRight.Center,
+                        resizeBottomRight.Radius,
+                        resizeBottomRight.Radius,
+                        0.f,
+                        360.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedTopBottomRight;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min,
+                            _Node->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
+                        return true;
+                    }
+                }
+                else if(resizeTop.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTop))
+                {
+                    _Renderer->push_rectangle_rounded_filled(
+                        resizeTop.Min,
+                        resizeTop.Max,
+                        16.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedTop;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                            _Node->Cache.BoundingBox.Max));
+                        return true;
+                    }
+                }
+                else if(resizeLeft.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedLeft))
+                {
+                    _Renderer->push_rectangle_rounded_filled(
+                        resizeLeft.Min,
+                        resizeLeft.Max,
+                        16.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedLeft;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                            _Node->Cache.BoundingBox.Max));
+                        return true;
+                    }
+                }
+                else if(resizeRight.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedRight))
+                {
+                    _Renderer->push_rectangle_rounded_filled(
+                        resizeRight.Min,
+                        resizeRight.Max,
+                        16.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedRight;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min,
+                            _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                        return true;
+                    }
+                }
+                else if(resizeBottom.contains(_Event.CursorPosition) ||
+                    (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedBottom))
+                {
+                    _Renderer->push_rectangle_rounded_filled(
+                        resizeBottom.Min,
+                        resizeBottom.Max,
+                        16.f,
+                        gs_vec4f(5, 255, 255, 200.f),
+                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                    if(_Event.MouseDown.has_value())
+                    {
+                        _Node->State.Events |= UINodeEvents_::UINodeEvents_IsResizedBottom;
+                        clamp_bounding_box(_Node, gs_2dboxf(
+                            _Node->Cache.BoundingBox.Min,
+                            _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                        return true;
+                    }
+                }
             }
 
-            return false;
-        }
-
-        static bool catch_event(ImmedidateUserInterfaceContextLayer2* _Context, const UIEvent& _Event)
-        {
-            if(_Context == nullptr)
-                return false;
-
-            for (auto& singleton : _Context->m_Hierarchy.Singletons)
-            {
-                if(UINodeEventsCatcher::node_event(_Context, singleton, _Event))
-                    return true;
-            }
+            // // move
+            // if((_Node->State.Settings & UINodeSettings_::UINodeSettings_Movable) &&
+            //     !((_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTop)          ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedLeft)           ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedRight)          ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedBottom)         ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft)  ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomRight) ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopLeft)        ||
+            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopRight)))
+            // {
+            //     if((_Event.MouseDown.has_value() && _Node->State.BoundingBox.contains(_Event.CursorPosition)) ||
+            //         (_Node->State.Events & UINodeEvents_::UINodeEvents_IsMoved))
+            //     {
+            //         _Node->State.Events |= UINodeEvents_::UINodeEvents_IsMoved;
+            //         _Node->State.BoundingBox = gs_2dboxf(
+            //             _Node->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
+            //             _Node->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
+            //         return true;
+            //     }
+            // }
 
             return false;
         }
