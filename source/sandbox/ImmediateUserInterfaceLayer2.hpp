@@ -24,15 +24,13 @@ namespace Frenchie
 
         enum UINodeSettings_ : int
         {
-            UINodeSettings_None                       = 0,
-            
-            // modifications
-            UINodeSettings_Movable                    = 1 << 0,
-            UINodeSettings_Resizable                  = 1 << 1,
-
-            // layout
-            UINodeSettings_LayoutChildrenVertically   = 1 << 2,
-            UINodeSettings_LayoutChildrenHorizontally = 1 << 3,
+            // sentinel
+            UINodeSettings_None                         = 0,
+            UINodeSettings_Movable                      = 1 << 0,
+            UINodeSettings_Resizable                    = 1 << 1,
+            UINodeSettings_LayoutChildrenVertically     = 1 << 2,
+            UINodeSettings_LayoutChildrenHorizontally   = 1 << 3,
+            UINodeSettings_LayoutChildrenWithNativeSize = 1 << 4
         };
 
         enum UINodeEvents_ : int
@@ -77,6 +75,9 @@ namespace Frenchie
             virtual bool hover (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
             virtual bool input (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
             virtual bool event (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+
+            bool is_visible() const;
+            bool is_partially_visible() const;
 
             struct Data
             {
@@ -150,9 +151,19 @@ namespace Frenchie
                 }
                 else
                 {
+                    // compute node initial depth
                     node->State.Depth = 0; // TODO: here we should have layer
-                    for (auto& node : m_NodesRenderingList)
-                        node->State.Depth = gs_max(node->State.Depth + node->State.Thickness + 1, node->State.Depth);
+                    
+                    for (auto& renderedNode : m_NodesRenderingList)
+                    {
+                        if(renderedNode->State.Parent == nullptr)
+                        {
+                            node->State.Depth =
+                                gs_max(
+                                    renderedNode->State.Depth + renderedNode->State.Thickness + 1,
+                                    node->State.Depth);
+                        }
+                    }
                 }
 
                 m_NodesRenderingList.push_back(node);

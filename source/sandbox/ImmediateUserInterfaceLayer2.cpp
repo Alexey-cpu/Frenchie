@@ -8,8 +8,15 @@ UINode::~UINode(){}
 
 void UINode::render(Immediate2DRenderer* _Renderer)
 {
-    if(_Renderer == nullptr)
+    if(_Renderer == nullptr || !is_partially_visible())
         return;
+
+    _Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        32.f,
+        gs_vec4f(128.f, 200.f, 128.f, 255.f),
+        _Renderer->calculate_transform_matrix((float)State.Depth + (State.Thickness++)));
 
     _Renderer->push_rectangle_rounded(
         State.BoundingBox.Min,
@@ -49,6 +56,9 @@ void UINode::render(Immediate2DRenderer* _Renderer)
 
 bool UINode::hover(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
 {
+    if(!is_partially_visible())
+        return false;
+
     // catch hover
     if(State.BoundingBox.contains(_Event.CursorPosition))
     {
@@ -108,6 +118,9 @@ bool UINode::input(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
 
 bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
 {
+    if(!is_visible())
+        return false;
+
     // auxiliary lambdas
     auto clamp_size = [this](UINode* window, gs_2dboxf estimatedBox)
     {
@@ -326,6 +339,32 @@ bool UINode::event(Immediate2DRenderer* _Renderer, const UIEvent& _Event)
     return false;
 }
 
+bool UINode::is_visible() const
+{
+    if(State.Parent == nullptr)
+        return true;
+
+    gs_2dboxf box = gs_2dboxf(
+        State.Parent->State.BoundingBox.Min - gs_vec2f(12.f),
+        State.Parent->State.BoundingBox.Max + gs_vec2f(12.f)
+    );
+
+    return box.contains(State.BoundingBox);
+}
+
+bool UINode::is_partially_visible() const
+{
+    if(State.Parent == nullptr)
+        return true;
+
+    gs_2dboxf box = gs_2dboxf(
+        State.Parent->State.BoundingBox.Min - gs_vec2f(12.f),
+        State.Parent->State.BoundingBox.Max + gs_vec2f(12.f)
+    );
+
+    return box.overlaps(State.BoundingBox);
+}
+
 // ImmedidateUserInterfaceContextLayer2
 ImmedidateUserInterfaceContextLayer2::ImmedidateUserInterfaceContextLayer2(){}
 ImmedidateUserInterfaceContextLayer2::~ImmedidateUserInterfaceContextLayer2(){}
@@ -347,7 +386,7 @@ void ImmedidateUserInterfaceContextLayer2::frame_update()
     static bool start = true;
 
     if(begin_node("Root",
-        UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
     {
         // if(start)
         // {
@@ -383,35 +422,40 @@ void ImmedidateUserInterfaceContextLayer2::frame_update()
         end_node();
     }
 
-    // if(begin_node("Root-1", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally))
-    // {
-    //     if(start)
-    //     {
-    //         m_NodesRenderingStack[m_NodesRenderingStack.size()-1]->State.WindowBox =
-    //             gs_2dboxf(gs_vec2f(255.f, 255.f) + gs_vec2f(12.f, 12.f), gs_vec2f(512.f, 512.f) + gs_vec2f(12.f, 12.f));
-    //     }
+    if(begin_node("Root-1",
+        UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally |
+        UINodeSettings_::UINodeSettings_Resizable |
+        UINodeSettings_::UINodeSettings_Movable | UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize
+    )
+)
+    {
+        // if(start)
+        // {
+        //     m_NodesRenderingStack[m_NodesRenderingStack.size()-1]->State.WindowBox =
+        //         gs_2dboxf(gs_vec2f(255.f, 255.f) + gs_vec2f(12.f, 12.f), gs_vec2f(512.f, 512.f) + gs_vec2f(12.f, 12.f));
+        // }
 
-    //     if(begin_node("Root-1/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically))
-    //     {
-    //         if(begin_node("Root-1/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically)) end_node();
-    //         if(begin_node("Root-1/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically)) end_node();
-    //         if(begin_node("Root-1/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically)) end_node();
+        if(begin_node("Root-1/Child-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        {
+            if(begin_node("Root-1/Child-1/Child-1-1", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+            if(begin_node("Root-1/Child-1/Child-1-2", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
+            if(begin_node("Root-1/Child-1/Child-1-3", UINodeSettings_::UINodeSettings_LayoutChildrenVertically | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable)) end_node();
 
-    //         end_node();
-    //     }
+            end_node();
+        }
 
-    //     if(begin_node("Root-1/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally))
-    //     {
-    //         end_node();
-    //     }
+        if(begin_node("Root-1/Child-2", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        {
+            end_node();
+        }
 
-    //     if(begin_node("Root-1/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally))
-    //     {
-    //         end_node();
-    //     }
+        if(begin_node("Root-1/Child-3", UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally | UINodeSettings_::UINodeSettings_Resizable | UINodeSettings_::UINodeSettings_Movable))
+        {
+            end_node();
+        }
 
-    //     end_node();
-    // }
+        end_node();
+    }
 
     start = false;
 }
@@ -455,16 +499,21 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
                     continue;
 
                 // compute depth
-                node->State.Depth = _Node->State.Depth + _Node->State.Thickness + 1;
+                node->State.Depth = parent->State.Depth + parent->State.Thickness + 1;
 
                 // compute size
                 //gs_vec2f size = parent->State.WindowBox.size() / (float)childCount;
-                gs_vec2f size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
+                gs_vec2f size = node->State.BoundingBox.size();
 
-                if((parent->State.Settings & UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally))
-                    size = gs_vec2f(size.x, parent->State.BoundingBox.height());
-                else if((parent->State.Settings & UINodeSettings_::UINodeSettings_LayoutChildrenVertically))
-                    size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
+                if(!(parent->State.Settings & UINodeSettings_::UINodeSettings_LayoutChildrenWithNativeSize))
+                {
+                    size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
+
+                    if((parent->State.Settings & UINodeSettings_::UINodeSettings_LayoutChildrenHorizontally))
+                        size = gs_vec2f(size.x, parent->State.BoundingBox.height());
+                    else if((parent->State.Settings & UINodeSettings_::UINodeSettings_LayoutChildrenVertically))
+                        size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
+                }
 
                 size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
 
@@ -531,6 +580,15 @@ void ImmedidateUserInterfaceContextLayer2::frame_debug()
         {
             if(_Context == nullptr || _Context->m_Renderer == nullptr)
                 return false;
+
+            for (auto node : _Context->m_NodesRenderingList)
+            {
+                if(node->State.Events == UINodeEvents_::UINodeEvents_None)
+                    continue;
+
+                node->event(_Context->m_Renderer.get(), _Event);
+                return true;
+            }
 
             if(_Node->event(_Context->m_Renderer.get(), _Event))
                 return true;
@@ -632,16 +690,22 @@ void ImmedidateUserInterfaceContextLayer2::frame_render()
     public:
         static void execute(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node)
         {
-            _Context->m_Renderer->push_clip_box(_Node->State.BoundingBox);
+            auto next   = _Node;
+            auto parent = _Node->State.Parent;
+
+            while (parent != nullptr)
+            {
+                next   = parent;
+                parent = parent->State.Parent;
+            }
+
+            _Context->m_Renderer->push_clip_box(
+                _Node->State.BoundingBox.clip_with(next->State.BoundingBox));
+
             _Node->render(_Context->m_Renderer.get());
 
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                _Context->m_Renderer->push_clip_box((*it)->State.BoundingBox);
-                (*it)->render(_Context->m_Renderer.get());
                 execute(_Context, (*it));
-                _Context->m_Renderer->pop_clip_box();
-            }
 
             _Context->m_Renderer->pop_clip_box();
         }
@@ -683,11 +747,11 @@ void ImmedidateUserInterfaceContextLayer2::frame_finish()
             node->Cache = node->State;
 
         // clean-up
-        node->State.Depth         = 0;
-        node->State.Thickness     = 1;
-        node->State.RenderingIndex     = 0;
-        node->State.Parent        = nullptr;
-        node->State.Settings      = 0;
+        node->State.Depth          = 0;
+        node->State.Thickness      = 1;
+        node->State.RenderingIndex = 0;
+        node->State.Parent         = nullptr;
+        node->State.Settings       = 0;
     }
 
     m_NodesRenderingCache = m_NodesRenderingList;
