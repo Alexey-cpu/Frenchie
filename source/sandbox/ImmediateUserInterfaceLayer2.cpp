@@ -748,7 +748,7 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
             // compute initial depth of singletons
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
-                singleton->State.Depth = 0.f;
+                singleton->State.Depth = singleton->State.InitialDepth;
                 
                 for (auto& renderedNode : _Context->m_NodesRenderingCache)
                 {
