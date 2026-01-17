@@ -50,6 +50,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceNodeEvents;
 
+        class ImmedidateUserInterfaceContextLayer;
         struct ImmedidateUserInterfaceNode;
         struct ImmedidateUserInterfaceEvent;
 
@@ -70,7 +71,8 @@ namespace Frenchie
             ImmedidateUserInterfaceNode(const std::string _Name);
             virtual ~ImmedidateUserInterfaceNode();
 
-            virtual void render(Immediate2DRenderer* _Renderer);
+            virtual void render(ImmedidateUserInterfaceContextLayer*);
+            virtual void layout(ImmedidateUserInterfaceContextLayer*);
             // virtual bool hover (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
             // virtual bool input (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
             // virtual bool event (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
@@ -166,7 +168,7 @@ namespace Frenchie
                     m_NodesRenderingStack.pop_back();
             }
 
-        private:
+        //private:
 
             struct Hierarchy
             {
