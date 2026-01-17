@@ -87,6 +87,96 @@ namespace Frenchie
                     _Node->State.BoundingBox.Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
             };
         };
+    
+        struct ImmedidateUserInterfaceVerticalStack : public ImmedidateUserInterfaceNode
+        {
+        public:
+            ImmedidateUserInterfaceVerticalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
+            virtual ~ImmedidateUserInterfaceVerticalStack(){}
+
+            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr)
+                    return;
+
+                gs_vec2f position   = State.BoundingBox.Min;
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+
+                // compute total size and maximum size delta
+                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                {
+                    if((*it) != nullptr)
+                        totalsize += (*it)->State.BoundingBox.size();
+                }
+
+                // layout children
+                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                {
+                    // compute self
+                    auto node   = *it;
+                    auto parent = this;
+
+                    if(node == nullptr || parent == nullptr)
+                        continue;
+
+                    // compute size
+                    gs_vec2f size = node->State.BoundingBox.size();
+                    size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
+                    size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
+                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+
+                    node->State.BoundingBox = gs_2dboxf(position, position + size);
+
+                    // next
+                    position += gs_vec2f(0.f, size.y);
+    }
+            }
+        };
+
+        struct ImmedidateUserInterfaceHorizontalStack : public ImmedidateUserInterfaceNode
+        {
+        public:
+            ImmedidateUserInterfaceHorizontalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
+            virtual ~ImmedidateUserInterfaceHorizontalStack(){}
+
+            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr)
+                    return;
+
+                gs_vec2f position   = State.BoundingBox.Min;
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+
+                // compute total size and maximum size delta
+                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                {
+                    if((*it) != nullptr)
+                        totalsize += (*it)->State.BoundingBox.size();
+                }
+
+                // layout children
+                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                {
+                    // compute self
+                    auto node   = *it;
+                    auto parent = this;
+
+                    if(node == nullptr || parent == nullptr)
+                        continue;
+
+                    // compute size
+                    gs_vec2f size = node->State.BoundingBox.size();
+                    size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
+                    size = gs_vec2f(size.x, parent->State.BoundingBox.height());
+                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+
+                    node->State.BoundingBox = gs_2dboxf(position, position + size);
+
+                    // next
+                    position += gs_vec2f(size.x, 0.f);
+                }
+            }
+        };
     }
 }
 
@@ -411,6 +501,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
         }
     }
 }
+
 bool ImmedidateUserInterfaceNode::is_visible() const
 {
     if(State.Parent == nullptr)
@@ -441,90 +532,6 @@ int ImmedidateUserInterfaceNode::place_in_follow()
 {
     State.TotalThickness += (++State.SelfThickness);
     return State.Depth + State.SelfThickness;
-}
-
-// ImmedidateUserInterfaceVerticalStack
-ImmedidateUserInterfaceVerticalStack::ImmedidateUserInterfaceVerticalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
-ImmedidateUserInterfaceVerticalStack::~ImmedidateUserInterfaceVerticalStack(){}
-
-void ImmedidateUserInterfaceVerticalStack::layout(ImmedidateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr)
-        return;
-
-    gs_vec2f position   = State.BoundingBox.Min;
-    gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-
-    // compute total size and maximum size delta
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-    {
-        if((*it) != nullptr)
-            totalsize += (*it)->State.BoundingBox.size();
-    }
-
-    // layout children
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-    {
-        // compute self
-        auto node   = *it;
-        auto parent = this;
-
-        if(node == nullptr || parent == nullptr)
-            continue;
-
-        // compute size
-        gs_vec2f size = node->State.BoundingBox.size();
-        size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
-        size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
-        size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-
-        node->State.BoundingBox = gs_2dboxf(position, position + size);
-
-        // next
-        position += gs_vec2f(0.f, size.y);
-    }
-}
-
-// ImmedidateUserInterfaceHorizontalStack
-ImmedidateUserInterfaceHorizontalStack::ImmedidateUserInterfaceHorizontalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
-ImmedidateUserInterfaceHorizontalStack::~ImmedidateUserInterfaceHorizontalStack(){}
-
-void ImmedidateUserInterfaceHorizontalStack::layout(ImmedidateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr)
-        return;
-
-    gs_vec2f position   = State.BoundingBox.Min;
-    gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-
-    // compute total size and maximum size delta
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-    {
-        if((*it) != nullptr)
-            totalsize += (*it)->State.BoundingBox.size();
-    }
-
-    // layout children
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-    {
-        // compute self
-        auto node   = *it;
-        auto parent = this;
-
-        if(node == nullptr || parent == nullptr)
-            continue;
-
-        // compute size
-        gs_vec2f size = node->State.BoundingBox.size();
-        size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
-        size = gs_vec2f(size.x, parent->State.BoundingBox.height());
-        size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-
-        node->State.BoundingBox = gs_2dboxf(position, position + size);
-
-        // next
-        position += gs_vec2f(size.x, 0.f);
-    }
 }
 
 // ImmedidateUserInterfaceContextLayer2

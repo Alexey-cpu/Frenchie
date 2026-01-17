@@ -122,22 +122,6 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
-        struct ImmedidateUserInterfaceVerticalStack : public ImmedidateUserInterfaceNode
-        {
-        public:
-            ImmedidateUserInterfaceVerticalStack(const std::string& _Name);
-            virtual ~ImmedidateUserInterfaceVerticalStack();
-            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override;
-        };
-
-        struct ImmedidateUserInterfaceHorizontalStack : public ImmedidateUserInterfaceNode
-        {
-        public:
-            ImmedidateUserInterfaceHorizontalStack(const std::string& _Name) ;
-            virtual ~ImmedidateUserInterfaceHorizontalStack();
-            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override;
-        };
-
         class ImmedidateUserInterfaceContextLayer : public Layer
         {
         public:
