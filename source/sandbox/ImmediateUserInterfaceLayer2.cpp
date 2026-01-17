@@ -496,7 +496,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         0.f,
                         360.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
@@ -526,7 +526,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         0.f,
                         360.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
@@ -539,7 +539,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     }
                 }
                 else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(_Node).contains(_Event.CursorPosition) ||
-                    (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopBottomLeft))
+                    (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
                 {
                     auto resizable = _Node;
                     while (resizable->State.Parent &&
@@ -557,11 +557,11 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         0.f,
                         360.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopBottomLeft;
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
                         ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                             resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                             resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
@@ -569,7 +569,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     }
                 }
                 else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.CursorPosition) ||
-                    (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopBottomRight))
+                    (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
                 {
                     auto resizable = _Node;
                     while (resizable->State.Parent &&
@@ -587,11 +587,11 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         0.f,
                         360.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopBottomRight;
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
                         ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                             resizable->Cache.BoundingBox.Min,
                             resizable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
@@ -615,7 +615,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         resizeTop.Max,
                         16.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
@@ -643,7 +643,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         resizeLeft.Max,
                         16.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
@@ -671,7 +671,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         resizeRight.Max,
                         16.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
@@ -699,7 +699,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         resizeBottom.Max,
                         16.f,
                         gs_vec4f(5, 255, 255, 200.f),
-                        _Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+                        _Renderer->calculate_transform_matrix((float)_Renderer->get_far_plane()));
 
                     if(_Event.MouseDown.has_value())
                     {
