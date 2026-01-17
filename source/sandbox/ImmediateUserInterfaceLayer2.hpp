@@ -14,24 +14,6 @@ namespace Frenchie
 {
     namespace Application
     {
-        enum ImmediateUserInterfaceMouseHover_ : int
-        {
-            ImmediateUserInterfaceMouseHover_None         = 0,
-            ImmediateUserInterfaceMouseHover_MouseLeft    = 1 << 0,
-            ImmediateUserInterfaceMouseHover_MouseHovered = 1 << 1,
-            ImmediateUserInterfaceMouseHover_MouseEntered = 1 << 2,
-        };
-
-        enum ImmediateUserInterfaceNodeSettings_ : int
-        {
-            ImmediateUserInterfaceNodeSettings_None                         = 0,
-            ImmediateUserInterfaceNodeSettings_Movable                      = 1 << 0,
-            ImmediateUserInterfaceNodeSettings_Resizable                    = 1 << 1,
-            ImmediateUserInterfaceNodeSettings_LayoutChildrenVertically     = 1 << 2,
-            ImmediateUserInterfaceNodeSettings_LayoutChildrenHorizontally   = 1 << 3,
-            ImmediateUserInterfaceNodeSettings_LayoutChildrenWithNativeSize = 1 << 4
-        };
-
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             ImmediateUserInterfaceNodeEvents_None                 = 0,
@@ -46,36 +28,39 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
         };
 
-        typedef int ImmediateUserInterfaceNodeMouseHover;
-        typedef int ImmediateUserInterfaceNodeSettings;
-        typedef int ImmediateUserInterfaceNodeEvents;
-
-        class ImmedidateUserInterfaceContextLayer;
-        struct ImmedidateUserInterfaceNode;
-        struct ImmedidateUserInterfaceEvent;
-
-        struct ImmedidateUserInterfaceEvent
+        enum ImmediateUserInterfaceNodeSettings_ : int
         {
-            gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
-            gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
-
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
+            ImmediateUserInterfaceNodeSettings_None      = 0,
+            ImmediateUserInterfaceNodeSettings_Movable   = 1 << 0,
+            ImmediateUserInterfaceNodeSettings_Resizable = 1 << 1
         };
-        
+
+        enum ImmediateUserInterfaceNodeMouseHover_ : int
+        {
+            ImmediateUserInterfaceNodeMouseHover_None         = 0,
+            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0,
+            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1,
+            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2,
+        };
+
+        typedef int ImmediateUserInterfaceNodeEvents;
+        typedef int ImmediateUserInterfaceNodeSettings;
+        typedef int ImmediateUserInterfaceNodeMouseHover;
+
+        struct ImmedidateUserInterfaceNode;
+        struct ImmedidateUserInterfaceNodeEvent;
+        struct ImmedidateUserInterfaceVerticalStack;
+        struct ImmedidateUserInterfaceHorizontalStack;
+        class  ImmedidateUserInterfaceContextLayer;
+
         struct ImmedidateUserInterfaceNode
         {
             ImmedidateUserInterfaceNode(const std::string _Name);
             virtual ~ImmedidateUserInterfaceNode();
 
-            virtual void render(ImmedidateUserInterfaceContextLayer*);
-            virtual void layout(ImmedidateUserInterfaceContextLayer*);
-            // virtual bool hover (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
-            // virtual bool input (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
-            // virtual bool event (Immediate2DRenderer* _Renderer, const UIEvent& _Event);
+            virtual void render(ImmedidateUserInterfaceContextLayer* _Context);
+            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context);
+            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event);
 
             bool is_visible() const;
             bool is_partially_visible() const;
@@ -103,13 +88,13 @@ namespace Frenchie
                 ImmedidateUserInterfaceNode*        Parent{nullptr};
 
                 // settings
-                ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenVertically};
+                ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
                 // events
                 ImmediateUserInterfaceNodeEvents   Events{ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
 
                 // mouse hover
-                ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceMouseHover_::ImmediateUserInterfaceMouseHover_None};
+                ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
                 std::chrono::high_resolution_clock::time_point MouseEnterTimer;
                 std::chrono::high_resolution_clock::time_point MouseLeaveTimer;
 
@@ -129,6 +114,34 @@ namespace Frenchie
             std::string Name = "UINode";
         };
 
+        struct ImmedidateUserInterfaceNodeEvent
+        {
+            gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
+            gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
+
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
+        };
+
+        struct ImmedidateUserInterfaceVerticalStack : public ImmedidateUserInterfaceNode
+        {
+        public:
+            ImmedidateUserInterfaceVerticalStack(const std::string& _Name);
+            virtual ~ImmedidateUserInterfaceVerticalStack();
+            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmedidateUserInterfaceHorizontalStack : public ImmedidateUserInterfaceNode
+        {
+        public:
+            ImmedidateUserInterfaceHorizontalStack(const std::string& _Name) ;
+            virtual ~ImmedidateUserInterfaceHorizontalStack();
+            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override;
+        };
+
         class ImmedidateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -141,13 +154,24 @@ namespace Frenchie
             virtual void frame_debug()  override;
             virtual void frame_render() override;
             virtual void frame_finish() override;
+            virtual void finish() override;
 
-            bool begin_node(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+            // API
+            bool begin_vertial_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
+            void end_vertical_stack();
+
+            bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
+            void end_horizontal_stack();
+
+        // private: // TODO: make this private when finished
+
+            template<typename Type>
+            bool begin_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
             {
                 // create node
-                if(m_Cache.find(_Name) == m_Cache.end())
-                    m_Cache[_Name] = std::make_unique<ImmedidateUserInterfaceNode>(_Name);
-                ImmedidateUserInterfaceNode* node = m_Cache[_Name].get();
+                if(m_Cache.find(_ID) == m_Cache.end())
+                    m_Cache[_ID] = std::make_unique<Type>(_ID);
+                ImmedidateUserInterfaceNode* node = m_Cache[_ID].get();
 
                 node->State.Settings  = _Settings;
                 node->State.RenderingIndex = m_NodesRenderingList.size();
@@ -162,23 +186,26 @@ namespace Frenchie
                 return true;
             }
 
+            template<typename Type>
             void end_node()
             {
-                if(!m_NodesRenderingStack.empty())
-                    m_NodesRenderingStack.pop_back();
+                if(m_NodesRenderingStack.empty())
+                    return;
+
+                GS_ASSERT((dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) != nullptr));
+
+                m_NodesRenderingStack.pop_back();
             }
 
-        //private:
-
-            struct Hierarchy
+            struct ImmedidateUserInterfaceNodeHierarchy
             {
-                Hierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
+                ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
                     [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
                     {
                         return _Node != nullptr ? _Node->State.Parent : nullptr;
                     }) : GetParent(_GetParent){}
 
-                ~Hierarchy(){}
+                ~ImmedidateUserInterfaceNodeHierarchy(){}
 
                 std::vector<int>                                     Indexes;
                 std::vector<int>                                     Entries;
@@ -252,8 +279,8 @@ namespace Frenchie
             };
 
             mutable std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceNode>> m_Cache;
-            mutable Hierarchy                                      m_Hierarchy;
-            mutable std::shared_ptr<Immediate2DRenderer>           m_Renderer           {nullptr};
+            mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
+            mutable std::shared_ptr<Immediate2DRenderer>                                m_Renderer{nullptr};
             mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingList {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingCache{std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingStack{std::vector<ImmedidateUserInterfaceNode*>()};
