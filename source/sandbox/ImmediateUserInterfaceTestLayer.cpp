@@ -15,44 +15,60 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    auto create_layout = [this](const std::string& _Name)
-    {
-        ImmediateUserInterfaceNodeSettings settins =
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+    // auto create_layout = [this](const std::string& _Name)
+    // {
+    //     ImmediateUserInterfaceNodeSettings settins =
+    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
         
-        if(m_ImmediateUserInterface->begin_horizontal_stack(_Name, settins))
-        {
-            if(m_ImmediateUserInterface->begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
-            {
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
+    //     if(m_ImmediateUserInterface->begin_horizontal_stack(_Name, settins))
+    //     {
+    //         if(m_ImmediateUserInterface->begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
+    //         {
+    //             if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
+    //                 m_ImmediateUserInterface->end_horizontal_stack();
 
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
+    //             if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
+    //                 m_ImmediateUserInterface->end_horizontal_stack();
 
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-3"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
+    //             if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-3"), settins))
+    //                 m_ImmediateUserInterface->end_horizontal_stack();
 
-                m_ImmediateUserInterface->end_vertical_stack();
-            }
+    //             m_ImmediateUserInterface->end_vertical_stack();
+    //         }
 
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-2"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
+    //         if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-2"), settins))
+    //             m_ImmediateUserInterface->end_horizontal_stack();
 
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-3"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
+    //         if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-3"), settins))
+    //             m_ImmediateUserInterface->end_horizontal_stack();
 
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-4"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
+    //         if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-4"), settins))
+    //             m_ImmediateUserInterface->end_horizontal_stack();
 
-            m_ImmediateUserInterface->end_horizontal_stack();
-        }
-    };
+    //         m_ImmediateUserInterface->end_horizontal_stack();
+    //     }
+    // };
 
-    create_layout("Root-1");
-    create_layout("Root-2");
-    create_layout("Root-3");
+    // create_layout("Root-1");
+    // create_layout("Root-2");
+    // create_layout("Root-3");
+
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-1",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
+
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-2",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
 }
 
 void ImmediateUserInterfaceTestLayer::finish()
