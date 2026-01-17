@@ -350,65 +350,6 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
         }
 
     private:
-        // static bool node_hover(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
-        // {
-        //     if(_Context == nullptr || _Context->m_Renderer == nullptr)
-        //         return false;
-
-        //     if(_Node->hover(_Context->m_Renderer.get(), _Event))
-        //         return true;
-
-        //     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        //     {
-        //         if(node_hover(_Context, *it, _Event))
-        //             return true;
-        //     }
-
-        //     return false;
-        // }
-
-        // static bool node_input(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
-        // {
-        //     if(_Context == nullptr || _Context->m_Renderer == nullptr)
-        //         return false;
-
-        //     if(_Node->input(_Context->m_Renderer.get(), _Event))
-        //         return true;
-
-        //     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        //     {
-        //         if(node_input(_Context, *it, _Event))
-        //             return true;
-        //     }
-
-        //     return false;
-        // }
-    
-        // static bool node_event(ImmedidateUserInterfaceContextLayer2* _Context, UINode* _Node, const UIEvent& _Event)
-        // {
-        //     if(_Context == nullptr || _Context->m_Renderer == nullptr)
-        //         return false;
-
-        //     for (auto node : _Context->m_NodesRenderingList)
-        //     {
-        //         if(node->State.Events == UINodeEvents_::UINodeEvents_None)
-        //             continue;
-
-        //         node->event(_Context->m_Renderer.get(), _Event);
-        //         return true;
-        //     }
-
-        //     if(_Node->event(_Context->m_Renderer.get(), _Event))
-        //         return true;
-
-        //     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-        //     {
-        //         if(node_event(_Context, *it, _Event))
-        //             return true;
-        //     }
-
-        //     return false;
-        // }
 
         static void catch_hover(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
