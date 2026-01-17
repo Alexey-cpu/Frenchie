@@ -94,51 +94,104 @@ namespace Frenchie
 ImmedidateUserInterfaceNode::ImmedidateUserInterfaceNode(const std::string _Name) : Name(_Name){}
 ImmedidateUserInterfaceNode::~ImmedidateUserInterfaceNode(){}
 
-void ImmedidateUserInterfaceNode::render(Immediate2DRenderer* _Renderer)
+void ImmedidateUserInterfaceNode::render(ImmedidateUserInterfaceContextLayer* _Context)
 {
-    if(_Renderer == nullptr || !is_partially_visible())
+    if(_Context == nullptr || _Context->m_Renderer == nullptr || !is_partially_visible())
         return;
 
-    _Renderer->push_rectangle_rounded_filled(
+    _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         32.f,
         gs_vec4f(128.f, 200.f, 128.f, 255.f),
-        _Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-    _Renderer->push_rectangle_rounded(
+    _Context->m_Renderer->push_rectangle_rounded(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         32.f,
         8.f,
         gs_vec4f(12.f, 128.f, 128.f, 255.f),
-        _Renderer->calculate_transform_matrix((float)place_in_follow()));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-    _Renderer->push_text(
+    _Context->m_Renderer->push_text(
         Name,
         32.f,
         gs_vec4f(255.f, 0.f, 0.f, 255.f),
-        _Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
 
     if((State.MouseHover & ImmediateUserInterfaceMouseHover_::ImmediateUserInterfaceMouseHover_MouseHovered))
     {
-        _Renderer->push_rectangle_rounded(
+        _Context->m_Renderer->push_rectangle_rounded(
             State.BoundingBox.Min,
             State.BoundingBox.Max,
             32.f,
             8.f,
             gs_vec4f(0.f, 255.f, 0.f, 255.f),
-            _Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
     if(State.MouseClicked.has_value())
     {
-        _Renderer->push_rectangle_rounded_filled(
+        _Context->m_Renderer->push_rectangle_rounded_filled(
             State.BoundingBox.Min,
             State.BoundingBox.Max,
             32.f,
             gs_vec4f(255.f, 0.f, 0.f, 255.f),
-            _Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+}
+
+void ImmedidateUserInterfaceNode::layout(ImmedidateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr)
+        return;
+
+    gs_vec2f position   = State.BoundingBox.Min;
+    gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+
+    // compute total size and maximum size delta
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+    {
+        if((*it) != nullptr)
+            totalsize += (*it)->State.BoundingBox.size();
+    }
+
+    // layout children
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+    {
+        // compute self
+        auto node   = *it;
+        auto parent = this;
+
+        if(node == nullptr || parent == nullptr)
+            continue;
+
+        // compute size
+        gs_vec2f size = node->State.BoundingBox.size();
+
+        if(!(parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenWithNativeSize))
+        {
+            size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
+
+            if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
+                size = gs_vec2f(size.x, parent->State.BoundingBox.height());
+            else if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenVertically))
+                size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
+        }
+
+        size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+
+        node->State.BoundingBox = gs_2dboxf(position, position + size);
+
+        // // compute child
+        // node->layout(_Context);
+
+        // next
+        if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
+            position += gs_vec2f(size.x, 0.f);
+        else if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenVertically))
+            position += gs_vec2f(0.f, size.y);
     }
 }
 
@@ -288,54 +341,9 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             if(_Context == nullptr || _Node == nullptr)
                 return;
 
-            gs_vec2f position   = _Node->State.BoundingBox.Min;
-            gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-            float    childCount = _Context->m_Hierarchy.end(_Node) - _Context->m_Hierarchy.begin(_Node);
-
-            // compute total size and maximum size delta
+            _Node->layout(_Context);
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                if((*it) != nullptr)
-                    totalsize += (*it)->State.BoundingBox.size();
-            }
-
-            // layout children
-            for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                // compute self
-                auto node   = *it;
-                auto parent = _Node;
-
-                if(node == nullptr || parent == nullptr)
-                    continue;
-
-                // compute size
-                //gs_vec2f size = parent->State.WindowBox.size() / (float)childCount;
-                gs_vec2f size = node->State.BoundingBox.size();
-
-                if(!(parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenWithNativeSize))
-                {
-                    size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
-
-                    if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
-                        size = gs_vec2f(size.x, parent->State.BoundingBox.height());
-                    else if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenVertically))
-                        size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
-                }
-
-                size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-
-                node->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                // compute child
-                node_geometry(_Context, node);
-
-                // next
-                if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenHorizontally))
-                    position += gs_vec2f(size.x, 0.f);
-                else if((parent->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_LayoutChildrenVertically))
-                    position += gs_vec2f(0.f, size.y);
-            }
+                (*it)->layout(_Context);
         }
     };
 
@@ -828,7 +836,7 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
             }
 
             // render self and children
-            _Node->render(_Context->m_Renderer.get());
+            _Node->render(_Context);
 
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
                 render_node(_Context, (*it));
