@@ -49,8 +49,10 @@ namespace Frenchie
 
         struct ImmedidateUserInterfaceNode;
         struct ImmedidateUserInterfaceNodeEvent;
+        struct ImmedidateUserInterfaceNodeHierarchy;
         struct ImmedidateUserInterfaceVerticalStack;
         struct ImmedidateUserInterfaceHorizontalStack;
+
         class  ImmedidateUserInterfaceContextLayer;
 
         struct ImmedidateUserInterfaceNode
@@ -123,6 +125,87 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
+        struct ImmedidateUserInterfaceNodeHierarchy
+        {
+            ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
+                [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
+                {
+                    return _Node != nullptr ? _Node->State.Parent : nullptr;
+                }) : GetParent(_GetParent){}
+
+            ~ImmedidateUserInterfaceNodeHierarchy(){}
+
+            std::vector<int>                                     Indexes;
+            std::vector<int>                                     Entries;
+            std::vector<ImmedidateUserInterfaceNode*>            Singletons;
+            std::vector<ImmedidateUserInterfaceNode*>            Sorted;
+            std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
+
+            std::vector<ImmedidateUserInterfaceNode*>::const_iterator begin(const ImmedidateUserInterfaceNode* _Node) const
+            {
+                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
+            }
+
+            std::vector<ImmedidateUserInterfaceNode*>::const_iterator end(const ImmedidateUserInterfaceNode* _Node) const
+            {
+                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
+            }
+
+            void build(const std::vector<ImmedidateUserInterfaceNode*>& _Nodes)
+            {
+                std::vector<int> workspace(_Nodes.size()+1);
+
+                Indexes.resize(_Nodes.size() + 1);
+                Entries.resize(_Nodes.size());
+                Sorted.resize(_Nodes.size());
+                Singletons.clear();
+
+                for(int i = 0; i < (int)Entries.size(); i++)
+                {
+                    Entries[i] = 0;
+                    Indexes[i] = 0;
+                    Sorted [i] = nullptr;
+
+                    if(_Nodes[i]->State.Parent == nullptr)
+                        Singletons.push_back(_Nodes[i]);
+                }
+
+                // count items
+                for (int i = 0; i < (int)_Nodes.size(); i++)
+                {
+                    if(get_parent(_Nodes[i]) == nullptr)
+                        continue;
+
+                    ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
+                }
+
+                // cumulative sum
+                int sum = 0;
+                for (int i = 0; i < _Nodes.size(); i++)
+                {
+                    Indexes  [i] = sum;
+                    workspace[i] = sum;
+                    sum += Entries[i];
+                }
+                Indexes[_Nodes.size()] = sum;
+
+                for(int i = 0; i < _Nodes.size(); i++ )
+                {
+                    if(get_parent(_Nodes[i]) == nullptr)
+                        continue;
+
+                    Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
+                }
+            }
+
+        private:
+
+            ImmedidateUserInterfaceNode* get_parent(ImmedidateUserInterfaceNode* _Node)
+            {
+                return GetParent != nullptr ? GetParent(_Node) : nullptr;
+            }
+        };
+
         class ImmedidateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -177,87 +260,6 @@ namespace Frenchie
 
                 m_NodesRenderingStack.pop_back();
             }
-
-            struct ImmedidateUserInterfaceNodeHierarchy
-            {
-                ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
-                    [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
-                    {
-                        return _Node != nullptr ? _Node->State.Parent : nullptr;
-                    }) : GetParent(_GetParent){}
-
-                ~ImmedidateUserInterfaceNodeHierarchy(){}
-
-                std::vector<int>                                     Indexes;
-                std::vector<int>                                     Entries;
-                std::vector<ImmedidateUserInterfaceNode*>            Singletons;
-                std::vector<ImmedidateUserInterfaceNode*>            Sorted;
-                std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
-
-                std::vector<ImmedidateUserInterfaceNode*>::const_iterator begin(const ImmedidateUserInterfaceNode* _Node) const
-                {
-                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
-                }
-
-                std::vector<ImmedidateUserInterfaceNode*>::const_iterator end(const ImmedidateUserInterfaceNode* _Node) const
-                {
-                    return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
-                }
-
-                void build(const std::vector<ImmedidateUserInterfaceNode*>& _Nodes)
-                {
-                    std::vector<int> workspace(_Nodes.size()+1);
-
-                    Indexes.resize(_Nodes.size() + 1);
-                    Entries.resize(_Nodes.size());
-                    Sorted.resize(_Nodes.size());
-                    Singletons.clear();
-
-                    for(int i = 0; i < (int)Entries.size(); i++)
-                    {
-                        Entries[i] = 0;
-                        Indexes[i] = 0;
-                        Sorted [i] = nullptr;
-
-                        if(_Nodes[i]->State.Parent == nullptr)
-                            Singletons.push_back(_Nodes[i]);
-                    }
-
-                    // count items
-                    for (int i = 0; i < (int)_Nodes.size(); i++)
-                    {
-                        if(get_parent(_Nodes[i]) == nullptr)
-                            continue;
-
-                        ++Entries[get_parent(_Nodes[i])->State.RenderingIndex];
-                    }
-
-                    // cumulative sum
-                    int sum = 0;
-                    for (int i = 0; i < _Nodes.size(); i++)
-                    {
-                        Indexes  [i] = sum;
-                        workspace[i] = sum;
-                        sum += Entries[i];
-                    }
-                    Indexes[_Nodes.size()] = sum;
-
-                    for(int i = 0; i < _Nodes.size(); i++ )
-                    {
-                        if(get_parent(_Nodes[i]) == nullptr)
-                            continue;
-
-                        Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
-                    }
-                }
-
-            private:
-
-                ImmedidateUserInterfaceNode* get_parent(ImmedidateUserInterfaceNode* _Node)
-                {
-                    return GetParent != nullptr ? GetParent(_Node) : nullptr;
-                }
-            };
 
             mutable std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceNode>> m_Cache;
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
