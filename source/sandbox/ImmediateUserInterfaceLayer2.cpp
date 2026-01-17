@@ -238,6 +238,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
 {
     // resize
     if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
+        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
         !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
     {
         if(ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition) ||
@@ -477,7 +478,8 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
 
     // move
     if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
-        !((State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)         ||
+        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        !((State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
@@ -486,7 +488,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
     {
-        if((_Event.MouseDown.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
+        if((_Event.MousePressed.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {
             auto movable = this;
