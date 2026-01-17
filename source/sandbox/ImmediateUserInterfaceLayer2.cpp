@@ -712,27 +712,31 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 }
             }
 
-            // // move
-            // if((_Node->State.Settings & UINodeSettings_::UINodeSettings_Movable) &&
-            //     !((_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTop)          ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedLeft)           ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedRight)          ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedBottom)         ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomLeft)  ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopBottomRight) ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopLeft)        ||
-            //     (_Node->State.Events & UINodeEvents_::UINodeEvents_IsResizedTopRight)))
-            // {
-            //     if((_Event.MouseDown.has_value() && _Node->State.BoundingBox.contains(_Event.CursorPosition)) ||
-            //         (_Node->State.Events & UINodeEvents_::UINodeEvents_IsMoved))
-            //     {
-            //         _Node->State.Events |= UINodeEvents_::UINodeEvents_IsMoved;
-            //         _Node->State.BoundingBox = gs_2dboxf(
-            //             _Node->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
-            //             _Node->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
-            //         return true;
-            //     }
-            // }
+            // move
+            if((_Node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+                !((_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)         ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+                  (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+            {
+                if((_Event.MouseDown.has_value() && _Node->State.BoundingBox.contains(_Event.CursorPosition)) ||
+                    (_Node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                {
+                    auto movable = _Node;
+                    while (movable->State.Parent)
+                        movable = movable->State.Parent;
+
+                    movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+                    movable->State.BoundingBox = gs_2dboxf(
+                        movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
+                        movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
+                    return true;
+                }
+            }
 
             return false;
         }
