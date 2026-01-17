@@ -34,16 +34,16 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
-            ImmediateUserInterfaceNodeEvents_None                    = 0,
-            ImmediateUserInterfaceNodeEvents_IsMoved                 = 1 << 0,
-            ImmediateUserInterfaceNodeEvents_IsResizedTop            = 1 << 1,
-            ImmediateUserInterfaceNodeEvents_IsResizedLeft           = 1 << 2,
-            ImmediateUserInterfaceNodeEvents_IsResizedRight          = 1 << 3,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottom         = 1 << 4,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft        = 1 << 5,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopRight       = 1 << 6,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopBottomLeft  = 1 << 7,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopBottomRight = 1 << 8,
+            ImmediateUserInterfaceNodeEvents_None                 = 0,
+            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0,
+            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1,
+            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2,
+            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4,
+            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5,
+            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
         };
 
         typedef int ImmediateUserInterfaceNodeMouseHover;
