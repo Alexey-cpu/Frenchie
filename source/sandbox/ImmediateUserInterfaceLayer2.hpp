@@ -65,11 +65,7 @@ namespace Frenchie
             bool is_visible() const;
             bool is_partially_visible() const;
 
-            int place_in_follow()
-            {
-                State.TotalThickness += (++State.SelfThickness);
-                return State.Depth + State.SelfThickness;
-            }
+            int place_in_follow();
 
             struct Data
             {
@@ -85,7 +81,7 @@ namespace Frenchie
                 gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
 
                 // hierarchy
-                ImmedidateUserInterfaceNode*        Parent{nullptr};
+                ImmedidateUserInterfaceNode*       Parent{nullptr};
 
                 // settings
                 ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
