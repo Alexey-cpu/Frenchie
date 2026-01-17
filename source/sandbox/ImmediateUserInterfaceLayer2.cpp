@@ -709,7 +709,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     // build hierarchy
     m_Hierarchy.build(m_NodesRenderingList);
 
-    // process events
+    // construct events
     ImmedidateUserInterfaceNodeEvent event;
     event.CursorPosition  = m_Renderer->get_cursor_postion();
     event.CursorDragDelta = Frenchie::Application::application()->get_window_cursor_dragdelta();
