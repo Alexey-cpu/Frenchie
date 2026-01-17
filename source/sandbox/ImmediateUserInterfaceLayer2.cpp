@@ -437,6 +437,12 @@ bool ImmedidateUserInterfaceNode::is_partially_visible() const
     return box.overlaps(State.BoundingBox);
 }
 
+int ImmedidateUserInterfaceNode::place_in_follow()
+{
+    State.TotalThickness += (++State.SelfThickness);
+    return State.Depth + State.SelfThickness;
+}
+
 // ImmedidateUserInterfaceVerticalStack
 ImmedidateUserInterfaceVerticalStack::ImmedidateUserInterfaceVerticalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
 ImmedidateUserInterfaceVerticalStack::~ImmedidateUserInterfaceVerticalStack(){}
@@ -537,38 +543,44 @@ void ImmedidateUserInterfaceContextLayer::frame_start(){}
 
 void ImmedidateUserInterfaceContextLayer::frame_update()
 {
-    ImmediateUserInterfaceNodeSettings settins =
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-    
-    if(begin_horizontal_stack("Root", settins))
+    auto create_layout = [this](const std::string& _Name)
     {
-        if(begin_vertial_stack("Root/Child-1", settins))
+        ImmediateUserInterfaceNodeSettings settins =
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+        
+        if(begin_horizontal_stack(_Name, settins))
         {
-            if(begin_horizontal_stack("Root/Child-1/Child-1-1", settins)) end_horizontal_stack();
-            if(begin_horizontal_stack("Root/Child-1/Child-1-2", settins)) end_horizontal_stack();
-            if(begin_horizontal_stack("Root/Child-1/Child-1-3", settins)) end_horizontal_stack();
+            if(begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
+            {
+                if(begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
+                    end_horizontal_stack();
 
-            end_vertical_stack();
-        }
+                if(begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
+                    end_horizontal_stack();
 
-        if(begin_horizontal_stack("Root/Child-2", settins))
-        {
+                if(begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-3"), settins))
+                    end_horizontal_stack();
+
+                end_vertical_stack();
+            }
+
+            if(begin_horizontal_stack(std::string(_Name).append("/Child-2"), settins))
+                end_horizontal_stack();
+
+            if(begin_horizontal_stack(std::string(_Name).append("/Child-3"), settins))
+                end_horizontal_stack();
+
+            if(begin_horizontal_stack(std::string(_Name).append("/Child-4"), settins))
+                end_horizontal_stack();
+
             end_horizontal_stack();
         }
+    };
 
-        if(begin_horizontal_stack("Root/Child-3", settins))
-        {
-            end_horizontal_stack();
-        }
-
-        if(begin_horizontal_stack("Root/Child-4", settins))
-        {
-            end_horizontal_stack();
-        }
-
-        end_horizontal_stack();
-    }
+    create_layout("Root-1");
+    create_layout("Root-2");
+    create_layout("Root-3");
 }
 
 void ImmedidateUserInterfaceContextLayer::frame_debug()
@@ -846,6 +858,7 @@ void ImmedidateUserInterfaceContextLayer::frame_finish()
         // stop all modifications
         if(allMouseButtonsAreReleased)
             node->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+
         node->Cache.Events             = node->State.Events;
         node->Cache.MouseHover         = node->State.MouseHover;
         node->Cache.MouseDown          = node->State.MouseDown;
