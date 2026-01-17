@@ -7,6 +7,6 @@
 int main(int argc, char *argv[])
 {
     //Frenchie::Application::application()->push_layer<Frenchie::Application::ImmedidateUserInterfaceContextLayer>();
-    Frenchie::Application::application()->push_layer<Frenchie::Application::ImmedidateUserInterfaceContextLayer2>();
+    Frenchie::Application::application()->push_layer<Frenchie::Application::ImmedidateUserInterfaceContextLayer>();
     return Frenchie::Application::application()->execute();
 }
