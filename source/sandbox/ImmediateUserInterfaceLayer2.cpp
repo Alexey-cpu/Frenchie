@@ -543,44 +543,6 @@ void ImmedidateUserInterfaceContextLayer::frame_start(){}
 
 void ImmedidateUserInterfaceContextLayer::frame_update()
 {
-    auto create_layout = [this](const std::string& _Name)
-    {
-        ImmediateUserInterfaceNodeSettings settins =
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-        
-        if(begin_horizontal_stack(_Name, settins))
-        {
-            if(begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
-            {
-                if(begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
-                    end_horizontal_stack();
-
-                if(begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
-                    end_horizontal_stack();
-
-                if(begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-3"), settins))
-                    end_horizontal_stack();
-
-                end_vertical_stack();
-            }
-
-            if(begin_horizontal_stack(std::string(_Name).append("/Child-2"), settins))
-                end_horizontal_stack();
-
-            if(begin_horizontal_stack(std::string(_Name).append("/Child-3"), settins))
-                end_horizontal_stack();
-
-            if(begin_horizontal_stack(std::string(_Name).append("/Child-4"), settins))
-                end_horizontal_stack();
-
-            end_horizontal_stack();
-        }
-    };
-
-    create_layout("Root-1");
-    create_layout("Root-2");
-    create_layout("Root-3");
 }
 
 void ImmedidateUserInterfaceContextLayer::frame_debug()
