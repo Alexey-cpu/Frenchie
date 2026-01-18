@@ -277,7 +277,7 @@ namespace Frenchie
 
             ImmedidateUserInterfaceWindow* Docker{nullptr};
             gs_2dboxf                      DockingBox;
-            int                            DockingIndex  {0};
+            int                            DockingIndex  {-1};
             bool                           DockingActive {false};
             bool                           DockingFocused{false};
         };
@@ -353,29 +353,31 @@ namespace Frenchie
                         ImmedidateUserInterfaceWindow* window =
                             dynamic_cast<ImmedidateUserInterfaceWindow*>(node);
 
-                        if(window == nullptr)
-                            continue;
-                        
-                        window->DockingFocused = false;
+                        if(window != nullptr)
+                            window->DockingFocused = false;
                     }
 
                     Window->DockingFocused = true;
 
-                    // enable activity of a pressed window
-                    for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
-                             it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
-                             it++)
+                    // enable activity of a pressed window which is being docked or which is a docker
+                    if(Window->Docker != nullptr ||
+                        (_Context->m_DockAreas.end(Window) - _Context->m_DockAreas.end(Window)) > 0)
                     {
-                        ImmedidateUserInterfaceWindow* window =
-                            dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+                        for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
+                                 it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
+                                 it++)
+                        {
+                            ImmedidateUserInterfaceWindow* window =
+                                dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
 
-                        if(window != nullptr)
-                            window->DockingActive = false;
+                            if(window != nullptr)
+                                window->DockingActive = false;
+                        }
+
+                        if(Window->Docker != nullptr)
+                            Window->Docker->DockingActive = false;
+                        Window->DockingActive = true;
                     }
-
-                    if(Window->Docker != nullptr)
-                        Window->Docker->DockingActive = false;
-                    Window->DockingActive = true;
                 }
 
                 // pass event to the window
@@ -830,13 +832,13 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 
 void ImmedidateUserInterfaceContextLayer::frame_debug()
 {
-    class UINodeGeometryComputer
+    class ImmedidateUserInterfaceGeometryComputer
     {
     public:
         static void execute(ImmedidateUserInterfaceContextLayer* _Context)
         {
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
-                UINodeGeometryComputer::node_geometry(_Context, singleton);
+                ImmedidateUserInterfaceGeometryComputer::node_geometry(_Context, singleton);
         }
 
     private:
@@ -852,7 +854,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
         }
     };
 
-    class UINodeEventsCatcher
+    class ImmedidateUserInterfaceEventsCatcher
     {
     public:
         static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -983,7 +985,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
         }
     };
 
-    class UIWindowsController
+    class ImmedidateUserInterfaceWindowsController
     {
     public:
         static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -1029,28 +1031,32 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 {
                     moved = dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton);
 
+                    // reindex docked nodes of the docker of the moved node
                     if(moved->Docker != nullptr)
                     {
                         int dockindex = 0;
-                        for (auto it = _Context->m_DockAreas.begin(moved->Docker);
-                                  it != _Context->m_DockAreas.end(moved->Docker);
-                                  it++)
+
+                        for(auto found  = _Context->m_DockAreas.begin(moved->Docker);
+                                 found != _Context->m_DockAreas.end(moved->Docker);
+                                 found++)
                         {
                             ImmedidateUserInterfaceWindow* window =
-                                dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+                                dynamic_cast<ImmedidateUserInterfaceWindow*>(*found);
 
-                            if(window != nullptr)
+                            if(window != nullptr && window != moved)
                                 window->DockingIndex = ++dockindex;
                         }
                     }
 
                     moved->Docker       = nullptr;
-                    moved->DockingIndex = 0;
+                    moved->DockingIndex = -1;
+
                     break;
                 }
             }
 
             // find hovered singleton window not equal to the moved one
+            // or find it's frame
             ImmedidateUserInterfaceWindow* hovered = nullptr;
 
             for(auto singleton : _Context->m_Hierarchy.Singletons)
@@ -1080,8 +1086,8 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             bool allMouseButtonsAreReleased = true;
 
             for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                    button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
-                    button++)
+                     button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+                     button++)
             {
                 allMouseButtonsAreReleased =
                     allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
@@ -1093,20 +1099,53 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 (moved->Docker != nullptr && moved->Docker == hovered->Docker))
                 return;
 
-            int dockingIndex    = _Context->m_DockAreas.end(hovered) - _Context->m_DockAreas.begin(hovered);
-            moved->Docker       = hovered;
-            moved->DockingIndex = ++dockingIndex;
+            // setup docker of the moved node
+            moved->Docker = hovered;
 
+            // if the moved node has docked windows we move this windows to the new docker
             for(auto it = _Context->m_DockAreas.begin(moved); it != _Context->m_DockAreas.end(moved); ++it)
             {
                 ImmedidateUserInterfaceWindow* dockable =
                     dynamic_cast<ImmedidateUserInterfaceWindow*>((*it));
 
                 if(dockable != nullptr)
+                    dockable->Docker = hovered;
+            }
+
+            // move the newly docked node to the end
+            _Context->m_DockAreas.build(_Context->m_NodesRenderingList);
+
+            for(int i = _Context->m_DockAreas.Indexes[hovered->State.RenderingIndex];
+                    i < _Context->m_DockAreas.Indexes[hovered->State.RenderingIndex + 1] - 1;
+                    i++)
+            {
+                if(_Context->m_DockAreas.Sorted[i] != moved)
+                    continue;
+
+                for(int j = i;
+                        j < _Context->m_DockAreas.Indexes[hovered->State.RenderingIndex + 1] - 1;
+                        j++)
                 {
-                    dockable->Docker       = hovered;
-                    dockable->DockingIndex = ++dockingIndex;
+                    std::swap(
+                        _Context->m_DockAreas.Sorted[j],
+                        _Context->m_DockAreas.Sorted[j + 1]);
                 }
+            }
+
+            //
+
+            // reindex docked nodex
+            int dockindex = 0;
+
+            for(auto found  = _Context->m_DockAreas.begin(hovered);
+                     found != _Context->m_DockAreas.end(hovered);
+                     found++)
+            {
+                ImmedidateUserInterfaceWindow* window =
+                    dynamic_cast<ImmedidateUserInterfaceWindow*>(*found);
+
+                if(window != nullptr)
+                    window->DockingIndex = ++dockindex;
             }
         }
     };
@@ -1142,9 +1181,9 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
     }
 
-    UINodeEventsCatcher::execute(this, event);
-    UIWindowsController::execute(this, event);
-    UINodeGeometryComputer::execute(this);
+    ImmedidateUserInterfaceEventsCatcher::execute(this, event);
+    ImmedidateUserInterfaceWindowsController::execute(this, event);
+    ImmedidateUserInterfaceGeometryComputer::execute(this);
 }
 
 void ImmedidateUserInterfaceContextLayer::frame_render()
@@ -1171,6 +1210,8 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
                 }
 
                 UINodeRenderer::render_node(_Context, singleton);
+
+                std::cout << singleton->Name << "\t" << singleton->State.Depth << "\n";
 
                 _Context->m_NodesRenderingCache.push_back(singleton);
             }
