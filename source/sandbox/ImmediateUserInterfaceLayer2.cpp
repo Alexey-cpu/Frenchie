@@ -987,7 +987,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     public:
         static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
         {
-            // pass focus
+            // layering
             for(auto singleton : _Context->m_Hierarchy.Singletons)
             {
                 ImmedidateUserInterfaceWindow* window =
@@ -1015,66 +1015,6 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
                 }
             }
-
-            // for (auto node : _Context->m_NodesRenderingList)
-            // {
-            //     bool modified = (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved)  || 
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)         ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
-            //         (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-
-            //     if(!node->State.MousePressed.has_value() && !modified)
-            //         continue;
-
-            //     // setup focus to this node
-            //     ImmedidateUserInterfaceNode* focused = node;
-            //     ImmedidateUserInterfaceNode* parent  = focused->State.Parent;
-
-            //     while(parent)
-            //     {
-            //         ImmedidateUserInterfaceWindow* window =
-            //             dynamic_cast<ImmedidateUserInterfaceWindow*>(node);
-
-            //         focused = parent;
-            //         parent  = focused->State.Parent;
-            //     }
-
-            //     if(focused == nullptr)
-            //         continue;
-
-            //     for (auto node : _Context->m_NodesRenderingList)
-            //     {
-            //         node->State.InitialDepth =
-            //             ImmedidateUserInterfaceWindow::calculate_layer_depth(
-            //                 _Context,
-            //                 ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Main);
-            //     }
-
-            //     // for(auto it = _Context->m_DockAreas.begin(focused); it != _Context->m_DockAreas.end(focused); ++it)
-            //     // {
-            //     //     ImmedidateUserInterfaceWindow* dockable =
-            //     //         dynamic_cast<ImmedidateUserInterfaceWindow*>((*it));
-
-            //     //     if(dockable != nullptr && dockable->DockActive)
-            //     //     {
-            //     //         focused = dockable;
-            //     //         std::cout << dockable->Name << "\n";
-            //     //         break;
-            //     //     }
-            //     // }
-
-            //     focused->State.InitialDepth =
-            //         ImmedidateUserInterfaceWindow::calculate_layer_depth(
-            //             _Context,
-            //             ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Focused);
-
-            //     break;
-            // }
 
             // docking
 
