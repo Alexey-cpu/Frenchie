@@ -103,6 +103,15 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         create_horizontal_layout("Window-2/Layout");
         m_ImmediateUserInterface->end_window();
     }
+
+    // if(m_ImmediateUserInterface->begin_window(
+    //     "Window-3",
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    // {
+    //     create_horizontal_layout("Window-3/Layout");
+    //     m_ImmediateUserInterface->end_window();
+    // }
 }
 
 void ImmediateUserInterfaceTestLayer::finish()

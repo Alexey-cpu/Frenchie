@@ -135,10 +135,10 @@ namespace Frenchie
 
             ~ImmedidateUserInterfaceNodeHierarchy(){}
 
-            std::vector<int>                                     Indexes;
-            std::vector<int>                                     Entries;
-            std::vector<ImmedidateUserInterfaceNode*>            Singletons;
-            std::vector<ImmedidateUserInterfaceNode*>            Sorted;
+            std::vector<int>                                                          Indexes;
+            std::vector<int>                                                          Entries;
+            std::vector<ImmedidateUserInterfaceNode*>                                 Singletons;
+            std::vector<ImmedidateUserInterfaceNode*>                                 Sorted;
             std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
 
             std::vector<ImmedidateUserInterfaceNode*>::const_iterator begin(const ImmedidateUserInterfaceNode* _Node) const
@@ -237,7 +237,11 @@ namespace Frenchie
             {
                 // create node
                 if(m_Cache.find(_ID) == m_Cache.end())
+                {
+                    m_Duplicates.insert(_ID);
+                    GS_ASSERT(m_Duplicates.count(_ID) <= 1);
                     m_Cache[_ID] = std::make_unique<Type>(_ID);
+                }
                 ImmedidateUserInterfaceNode* node = m_Cache[_ID].get();
 
                 node->State.Settings       = _Settings;
@@ -265,11 +269,10 @@ namespace Frenchie
             }
 
             mutable std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceNode>> m_Cache;
-
-            mutable ImmedidateUserInterfaceNodeHierarchy m_Hierarchy;
-            mutable ImmedidateUserInterfaceNodeHierarchy m_DockAreas;
-            
-            mutable std::shared_ptr<Immediate2DRenderer>                                m_Renderer{nullptr};
+            mutable std::multiset<std::string>                                          m_Duplicates;
+            mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
+            mutable ImmedidateUserInterfaceNodeHierarchy                                m_DockAreas;
+            mutable std::shared_ptr<Immediate2DRenderer>                                m_Renderer           {nullptr};
             mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingList {std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingCache{std::vector<ImmedidateUserInterfaceNode*>()};
             mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingStack{std::vector<ImmedidateUserInterfaceNode*>()};
