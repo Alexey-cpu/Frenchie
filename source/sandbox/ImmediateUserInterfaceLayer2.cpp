@@ -186,6 +186,7 @@ namespace Frenchie
             {
                 ImmedidateUserInterfaceWindowLayer_Begin   = 0,
                 ImmedidateUserInterfaceWindowLayer_Main    = ImmedidateUserInterfaceWindowLayer_Begin,
+                ImmedidateUserInterfaceWindowLayer_Active,
                 ImmedidateUserInterfaceWindowLayer_Focused,
                 ImmedidateUserInterfaceWindowLayer_End,
             };
@@ -194,7 +195,7 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceWindow(){}
 
             void render_frame(
-                ImmedidateUserInterfaceNode*         _Node,
+                ImmedidateUserInterfaceWindow*       _Node,
                 ImmedidateUserInterfaceContextLayer* _Context,
                 const gs_2dboxf&                     _Box)
             {
@@ -211,8 +212,24 @@ namespace Frenchie
 
                     if(State.MouseClicked.has_value())
                     {
-                        _Node->State.InitialDepth =
-                            calculate_layer_depth(_Context, ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Focused);
+                        // deactivate docked nodes
+                        for(auto it = _Context->m_DockAreas.begin((_Node->Docker != nullptr ? _Node->Docker : _Node));
+                                 it != _Context->m_DockAreas.end((_Node->Docker != nullptr ? _Node->Docker : _Node));
+                                 it++)
+                        {
+                            ImmedidateUserInterfaceWindow* window =
+                                dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+
+                            if(window != nullptr)
+                                window->DockActive = false;
+                        }
+
+                        // deactivate docker
+                        if(_Node->Docker != nullptr)
+                            _Node->Docker->DockActive = false;
+
+                        // activate self
+                        _Node->DockActive = true;
                     }
                 }
                 else
@@ -281,8 +298,7 @@ namespace Frenchie
                     // render docked children frames
                     for(auto it = _Context->m_DockAreas.begin(this); it != _Context->m_DockAreas.end(this); ++it)
                     {
-                        render_frame((*it), _Context, gs_2dboxf(position, position + gs_vec2f(size.x, 32.f)));
-
+                        render_frame(dynamic_cast<ImmedidateUserInterfaceWindow*>((*it)), _Context, gs_2dboxf(position, position + gs_vec2f(size.x, 32.f)));
                         position += gs_vec2f(size.x, 0.f);
                     }
                 }
@@ -351,8 +367,9 @@ namespace Frenchie
                 return _Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin);
             }
 
-            ImmedidateUserInterfaceNode* Docker{nullptr};
-            gs_2dboxf DockingBox;
+            ImmedidateUserInterfaceWindow* Docker{nullptr};
+            gs_2dboxf                      DockingBox;
+            bool                           DockActive{false};
         };
     }
 }
@@ -436,7 +453,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 0.f,
                 360.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -466,7 +483,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 0.f,
                 360.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -497,7 +514,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 0.f,
                 360.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -527,7 +544,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 0.f,
                 360.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -555,7 +572,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeTop.Max,
                 16.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -583,7 +600,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeLeft.Max,
                 16.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -611,7 +628,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeRight.Max,
                 16.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -639,7 +656,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeBottom.Max,
                 16.f,
                 gs_vec4f(5, 255, 255, 200.f),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
             {
@@ -954,6 +971,25 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                             ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Main);
                 }
 
+                std::cout << "focus checks docked windows of " << focused->Name << "\n";
+
+                for(auto it = _Context->m_DockAreas.begin(focused); it != _Context->m_DockAreas.end(focused); ++it)
+                {
+                    ImmedidateUserInterfaceWindow* dockable =
+                        dynamic_cast<ImmedidateUserInterfaceWindow*>((*it));
+
+                    //std::cout << dockable->Name << "\t" << dockable->DockActive << "\n";
+
+                    if(dockable != nullptr && dockable->DockActive)
+                    {
+                        focused = dockable;
+                        std::cout << dockable->Name << "\n";
+                        break;
+                    }
+                }
+
+                std::cout << "passing focus to " << focused->Name << "\n";
+
                 focused->State.InitialDepth =
                     ImmedidateUserInterfaceWindow::calculate_layer_depth(
                         _Context,
@@ -996,12 +1032,15 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             if(hovered == nullptr || moved == nullptr)
                 return;
 
-            // _Context->m_Renderer->push_rectangle_rounded_filled(
-            //     hovered->DockingBox.Min,
-            //     hovered->DockingBox.Max,
-            //     32.f,
-            //     gs_vec4f(255.f, 0.f, 0.f, 128.f),
-            //     _Context->m_Renderer->calculate_transform_matrix((float)hovered->place_in_follow()));
+            // render potential docker gizmo
+            int depth = _Context->m_Renderer->get_far_plane();
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                hovered->DockingBox.Min,
+                hovered->DockingBox.Max,
+                32.f,
+                gs_vec4f(255.f, 0.f, 0.f, 32.f),
+                _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
             bool allMouseButtonsAreReleased = true;
 
