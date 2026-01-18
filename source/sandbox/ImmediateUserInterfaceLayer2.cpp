@@ -243,36 +243,6 @@ namespace Frenchie
                 {
                     ImmedidateUserInterfaceVerticalStack::layout(_Context);
                 }
-
-                // // self layouting
-                // {
-                //     gs_vec2f position   = DockingBox.Min;
-                //     gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-
-                //     // compute total size
-                //     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                //     {
-                //         if((*it) != nullptr)
-                //             totalsize += (*it)->State.BoundingBox.size();
-                //     }
-
-                //     // layout children
-                //     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                //     {
-                //         if((*it) == nullptr)
-                //             continue;
-
-                //         // compute size
-                //         gs_vec2f size = gs_clamp(
-                //             gs_vec2f(DockingBox.width(), (((*it)->State.BoundingBox.size() / totalsize) * DockingBox.size()).y),
-                //             (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-
-                //         (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                //         // next
-                //         position += gs_vec2f(0.f, size.y);
-                //     }
-                // }
             }
 
             virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event) override
@@ -305,6 +275,7 @@ namespace Frenchie
 
             ImmedidateUserInterfaceWindow* Docker{nullptr};
             gs_2dboxf                      DockingBox;
+            int                            DockingIndex  {0};
             bool                           DockingActive {false};
             bool                           DockingFocused{false};
         };
@@ -422,9 +393,36 @@ namespace Frenchie
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
             {
+                if(_Context == nullptr)
+                    return;
+
                 State.MinimumSize = gs_vec2f(4.f, 32.f);
                 State.MaximumSize = gs_vec2f((float)INT_MAX, 32.f);
-                ImmedidateUserInterfaceHorizontalStack::layout(_Context);
+
+                {
+                    gs_vec2f position = State.BoundingBox.Min;
+
+                    // layout children
+                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                    {
+                        // compute self
+                        auto node   = *it;
+                        auto parent = this;
+
+                        if(node == nullptr || parent == nullptr)
+                            continue;
+
+                        // compute size
+                        gs_vec2f size = gs_vec2f(
+                            (parent->State.BoundingBox.size() / (float)(_Context->m_Hierarchy.end(parent) - _Context->m_Hierarchy.begin(parent))).x,
+                            parent->State.BoundingBox.height());
+                        size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+
+                        node->State.BoundingBox = gs_2dboxf(position, position + size);
+
+                        position += gs_vec2f(size.x, 0.f);
+                    }
+                }
             }
         };
     }
@@ -817,15 +815,15 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 {
 }
 
-void showHierarchy(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node, const std::string& _Delimiter)
-{
-    std::cout << _Delimiter << _Node->Name << "\n";
+// void showHierarchy(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node, const std::string& _Delimiter)
+// {
+//     std::cout << _Delimiter << _Node->Name << "\n";
 
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-    {
-        showHierarchy(_Context, (*it), _Delimiter + "\t");
-    }
-}
+//     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+//     {
+//         showHierarchy(_Context, (*it), _Delimiter + "\t");
+//     }
+// }
 
 void ImmedidateUserInterfaceContextLayer::frame_debug()
 {
@@ -1026,8 +1024,25 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 if(dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton) &&
                     (singleton->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                 {
-                    moved         = dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton);
-                    moved->Docker = nullptr;
+                    moved = dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton);
+
+                    if(moved->Docker != nullptr)
+                    {
+                        int dockindex = 0;
+                        for (auto it = _Context->m_DockAreas.begin(moved->Docker);
+                                  it != _Context->m_DockAreas.end(moved->Docker);
+                                  it++)
+                        {
+                            ImmedidateUserInterfaceWindow* window =
+                                dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+
+                            if(window != nullptr)
+                                window->DockingIndex = ++dockindex;
+                        }
+                    }
+
+                    moved->Docker       = nullptr;
+                    moved->DockingIndex = 0;
                     break;
                 }
             }
@@ -1070,12 +1085,14 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             }
 
             if(!allMouseButtonsAreReleased ||
-                moved->Docker == hovered   ||
+                moved->Docker   == hovered ||
                 hovered->Docker == moved   ||
                 (moved->Docker != nullptr && moved->Docker == hovered->Docker))
                 return;
 
-            moved->Docker = hovered;
+            int dockingIndex    = _Context->m_DockAreas.end(hovered) - _Context->m_DockAreas.begin(hovered);
+            moved->Docker       = hovered;
+            moved->DockingIndex = ++dockingIndex;
 
             for(auto it = _Context->m_DockAreas.begin(moved); it != _Context->m_DockAreas.end(moved); ++it)
             {
@@ -1083,24 +1100,19 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     dynamic_cast<ImmedidateUserInterfaceWindow*>((*it));
 
                 if(dockable != nullptr)
-                    dockable->Docker = hovered;
+                {
+                    dockable->Docker       = hovered;
+                    dockable->DockingIndex = ++dockingIndex;
+                }
             }
         }
     };
 
     // build hierarchy
     m_Hierarchy.build(m_NodesRenderingList);
+
+    // build dockareas
     m_DockAreas.build(m_NodesRenderingList);
-
-    // static bool start = true;
-
-    // if(start)
-    // {
-    //     for (auto& singleton : m_Hierarchy.Singletons)
-    //         showHierarchy(this, singleton, "");
-    // }
-
-    // start = false;
 
     // construct events
     ImmedidateUserInterfaceNodeEvent event;
@@ -1285,8 +1297,20 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
                 end_node<ImmedidateUserInterfaceWindowFrame>();
             }
 
+            std::sort(
+                m_DockAreas.begin(window),
+                m_DockAreas.end(window),
+                [](const ImmedidateUserInterfaceNode* _A, const ImmedidateUserInterfaceNode* _B)
+                {
+                    return dynamic_cast<const ImmedidateUserInterfaceWindow*>(_A)->DockingIndex <
+                            dynamic_cast<const ImmedidateUserInterfaceWindow*>(_B)->DockingIndex;
+                }
+            );
+
             for (auto it = m_DockAreas.begin(window); it != m_DockAreas.end(window); it++)
             {
+                std::cout << (*it)->Name << "\t" << dynamic_cast<ImmedidateUserInterfaceWindow*>(*it)->DockingIndex << "\n";
+
                 if(begin_node<ImmedidateUserInterfaceWindowFrame>(std::string((*it)->Name).append("/Frame"), _Settings))
                 {
                     dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
