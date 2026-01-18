@@ -57,6 +57,29 @@ namespace Frenchie
 
         class  ImmedidateUserInterfaceContextLayer;
 
+        struct ImmedidateUserInterfaceStyle
+        {
+            // font
+            RenderingQueueFont Font;
+            float              FontSize = 64.f;
+
+            // frames of windows, buttons, child windows e.t.c
+            float FramesRadius = 32.f;
+            float FramesWidth  = 8.f;
+        };
+
+        struct ImmedidateUserInterfaceEvent
+        {
+            gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
+            gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
+
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
+            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
+        };
+
         struct ImmedidateUserInterfaceNode
         {
             ImmedidateUserInterfaceNode(const std::string _Name);
@@ -113,18 +136,6 @@ namespace Frenchie
 
         //private:
             std::string Name = "UINode";
-        };
-
-        struct ImmedidateUserInterfaceEvent
-        {
-            gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
-            gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
-
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
         struct ImmedidateUserInterfaceNodeHierarchy
