@@ -87,6 +87,7 @@ namespace Frenchie
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context);
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context);
+            virtual void measure(ImmedidateUserInterfaceContextLayer* _Context);
             virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
 
             bool is_visible() const;
@@ -105,6 +106,7 @@ namespace Frenchie
 
                 // geimetry
                 gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
+                gs_vec2f       ContentSize{gs_vec2f(0.f)};
                 gs_vec2f       MinimumSize{gs_vec2f(4.f)};
                 gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
 

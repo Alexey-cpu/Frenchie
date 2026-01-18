@@ -103,7 +103,7 @@ namespace Frenchie
                 gs_vec2f position   = State.BoundingBox.Min;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
-                // compute total size and maximum size delta
+                // compute total size
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
                     if((*it) != nullptr)
@@ -113,22 +113,17 @@ namespace Frenchie
                 // layout children
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
-                    // compute self
-                    auto node   = *it;
-                    auto parent = this;
+                    auto node = *it;
 
-                    if(node == nullptr || parent == nullptr)
+                    if(node == nullptr)
                         continue;
 
-                    // compute size
-                    gs_vec2f size = node->State.BoundingBox.size();
-                    size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
-                    size = gs_vec2f(parent->State.BoundingBox.width(), size.y);
+                    gs_vec2f size = gs_vec2f(
+                        State.BoundingBox.width(),
+                        ((node->State.BoundingBox.size() / totalsize) * State.BoundingBox.size()).y);
                     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
 
                     node->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                    // next
                     position += gs_vec2f(0.f, size.y);
                 }
             }
@@ -148,7 +143,7 @@ namespace Frenchie
                 gs_vec2f position   = State.BoundingBox.Min;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
-                // compute total size and maximum size delta
+                // compute total size
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
                     if((*it) != nullptr)
@@ -158,22 +153,16 @@ namespace Frenchie
                 // layout children
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
-                    // compute self
-                    auto node   = *it;
-                    auto parent = this;
+                    auto node = *it;
 
-                    if(node == nullptr || parent == nullptr)
+                    if(node == nullptr)
                         continue;
 
-                    // compute size
-                    gs_vec2f size = node->State.BoundingBox.size();
-                    size = (node->State.BoundingBox.size() / totalsize) * parent->State.BoundingBox.size();
-                    size = gs_vec2f(size.x, parent->State.BoundingBox.height());
+                    gs_vec2f size = gs_vec2f(
+                        ((node->State.BoundingBox.size() / totalsize) * State.BoundingBox.size()).x,
+                        State.BoundingBox.height());
                     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-
                     node->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                    // next
                     position += gs_vec2f(size.x, 0.f);
                 }
             }
@@ -228,30 +217,29 @@ namespace Frenchie
                     return;
 
                 // docking
+                gs_2dboxf frameBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + 32.f));
+
+                DockingBox = gs_2dboxf(
+                    (Docker == nullptr ? gs_vec2f(frameBox.Min.x, frameBox.Max.y) : State.BoundingBox.Min),
+                    State.BoundingBox.Max);
+
+                for(auto it = _Context->m_DockAreas.begin(this); it != _Context->m_DockAreas.end(this); ++it)
                 {
-                    gs_2dboxf frameBox = gs_2dboxf(
-                        State.BoundingBox.Min,
-                        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + 32.f));
-
-                    DockingBox = gs_2dboxf(
-                        (Docker == nullptr ? gs_vec2f(frameBox.Min.x, frameBox.Max.y) : State.BoundingBox.Min),
-                        State.BoundingBox.Max);
-
-                    for(auto it = _Context->m_DockAreas.begin(this); it != _Context->m_DockAreas.end(this); ++it)
-                    {
-                        if((*it) != nullptr)
-                            (*it)->State.BoundingBox = DockingBox;
-                    }
+                    if((*it) != nullptr)
+                        (*it)->State.BoundingBox = DockingBox;
                 }
 
                 // self layouting
-                {
-                    ImmedidateUserInterfaceNodeVerticalStack::layout(_Context);
-                }
+                ImmedidateUserInterfaceNodeVerticalStack::layout(_Context);
             }
 
             virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
+                if(_Context == nullptr)
+                    return;
+
                 // reveive focus
                 if(State.MousePressed.has_value())
                 {
@@ -293,6 +281,9 @@ namespace Frenchie
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context) override
             {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr || !is_partially_visible())
+                    return;
+
                 // background
                 if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
                     State.BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
@@ -345,7 +336,7 @@ namespace Frenchie
 
             virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
-                if(Window == nullptr) 
+                if(_Context == nullptr || Window == nullptr) 
                     return;
 
                 if(State.MousePressed.has_value())
@@ -400,32 +391,29 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
+                // setup min/max sizes
                 State.MinimumSize = gs_vec2f(4.f, 32.f);
                 State.MaximumSize = gs_vec2f((float)INT_MAX, 32.f);
 
+                // layout children
+                gs_vec2f position = State.BoundingBox.Min;
+
+                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
-                    gs_vec2f position = State.BoundingBox.Min;
+                    auto node = *it;
 
-                    // layout children
-                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                    {
-                        // compute self
-                        auto node   = *it;
-                        auto parent = this;
+                    if(node == nullptr)
+                        continue;
 
-                        if(node == nullptr || parent == nullptr)
-                            continue;
+                    // compute size
+                    gs_vec2f size = gs_vec2f(
+                        (State.BoundingBox.size() / (float)(_Context->m_Hierarchy.end(this) - _Context->m_Hierarchy.begin(this))).x,
+                        State.BoundingBox.height());
+                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
 
-                        // compute size
-                        gs_vec2f size = gs_vec2f(
-                            (parent->State.BoundingBox.size() / (float)(_Context->m_Hierarchy.end(parent) - _Context->m_Hierarchy.begin(parent))).x,
-                            parent->State.BoundingBox.height());
-                        size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                    node->State.BoundingBox = gs_2dboxf(position, position + size);
 
-                        node->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                        position += gs_vec2f(size.x, 0.f);
-                    }
+                    position += gs_vec2f(size.x, 0.f);
                 }
             }
         };
@@ -485,6 +473,21 @@ void ImmedidateUserInterfaceNode::render(ImmedidateUserInterfaceContextLayer* _C
 }
 
 void ImmedidateUserInterfaceNode::layout(ImmedidateUserInterfaceContextLayer* _Context){}
+
+void ImmedidateUserInterfaceNode::measure(ImmedidateUserInterfaceContextLayer* _Context)
+{
+    gs_2dboxf box = State.BoundingBox;
+    for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        box = gs_2dboxf(
+            box.Min,
+            (*it)->State.BoundingBox.Min,
+            box.Max,
+            (*it)->State.BoundingBox.Max);
+    }
+
+    State.ContentSize = box.size();
+}
 
 void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
@@ -837,19 +840,22 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
         static void execute(ImmedidateUserInterfaceContextLayer* _Context)
         {
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
-                ImmedidateUserInterfaceGeometryComputer::node_geometry(_Context, singleton);
+            {
+                ImmedidateUserInterfaceGeometryComputer::node_layout(_Context, singleton);
+            }
         }
 
     private:
-        static void node_geometry(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node)
+        static void node_layout(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node)
         {
             if(_Context == nullptr || _Node == nullptr)
                 return;
 
             _Node->layout(_Context);
+            _Node->measure(_Context);
 
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-                node_geometry(_Context, (*it));
+                node_layout(_Context, (*it));
         }
     };
 
