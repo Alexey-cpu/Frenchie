@@ -129,7 +129,7 @@ namespace Frenchie
 
                     // next
                     position += gs_vec2f(0.f, size.y);
-    }
+                }
             }
         };
 
@@ -181,8 +181,68 @@ namespace Frenchie
         struct ImmedidateUserInterfaceWindow : public ImmedidateUserInterfaceVerticalStack
         {
         public:
+
+            enum ImmedidateUserInterfaceWindowLayer_ : int
+            {
+                ImmedidateUserInterfaceWindowLayer_Begin   = 0,
+                ImmedidateUserInterfaceWindowLayer_Main    = ImmedidateUserInterfaceWindowLayer_Begin,
+                ImmedidateUserInterfaceWindowLayer_Focused,
+                ImmedidateUserInterfaceWindowLayer_End,
+            };
+
             ImmedidateUserInterfaceWindow(const std::string& _Name) : ImmedidateUserInterfaceVerticalStack(_Name){}
             virtual ~ImmedidateUserInterfaceWindow(){}
+
+            void render_frame(
+                ImmedidateUserInterfaceNode*         _Node,
+                ImmedidateUserInterfaceContextLayer* _Context,
+                const gs_2dboxf&                     _Box)
+            {
+                // background
+                if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+                    _Box.contains(_Context->m_Renderer->get_cursor_postion()))
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Box.Min,
+                        _Box.Max,
+                        32.f,
+                        gs_vec4f(128.f, 200.f, 200.f, 255.f),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    if(State.MouseClicked.has_value())
+                    {
+                        _Node->State.InitialDepth =
+                            calculate_layer_depth(_Context, ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Focused);
+                    }
+                }
+                else
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Box.Min,
+                        _Box.Max,
+                        32.f,
+                        gs_vec4f(128.f, 200.f, 128.f, 255.f),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+
+                // frame
+                _Context->m_Renderer->push_rectangle_rounded(
+                    _Box.Min,
+                    _Box.Max,
+                    32.f,
+                    8.f,
+                    gs_vec4f(12.f, 128.f, 128.f, 255.f),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+
+                // title
+                _Context->m_Renderer->push_text(
+                    _Node->Name,
+                    32.f,
+                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), _Box.Min));
+
+            }
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context) override
             {
@@ -211,91 +271,89 @@ namespace Frenchie
 
                 if(dockedWindowsCount > 0)
                 {
-
                     gs_vec2f position = State.BoundingBox.Min;
                     gs_vec2f size     = State.BoundingBox.size() / (float)(dockedWindowsCount + 1);
 
-                    // render self
-                    _Context->m_Renderer->push_text(
-                        Name,
-                        32.f,
-                        gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), position));
-
+                    // render self frame
+                    render_frame(this, _Context, gs_2dboxf(position, position + gs_vec2f(size.x, 32.f)));
                     position += gs_vec2f(size.x, 0.f);
 
-                    // render docked children
+                    // render docked children frames
                     for(auto it = _Context->m_DockAreas.begin(this); it != _Context->m_DockAreas.end(this); ++it)
                     {
-                        _Context->m_Renderer->push_text(
-                            (*it)->Name,
-                            32.f,
-                            gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), position));
+                        render_frame((*it), _Context, gs_2dboxf(position, position + gs_vec2f(size.x, 32.f)));
 
                         position += gs_vec2f(size.x, 0.f);
                     }
                 }
                 else
                 {
-                    _Context->m_Renderer->push_text(
-                        Name,
-                        32.f,
-                        gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
-                }
-
-                if(PotentialDocker)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        DockingBox.Min,
-                        DockingBox.Max,
-                        32.f,
-                        gs_vec4f(255.f, 0.f, 0.f, 128.f),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    if(Docker == nullptr)
+                        render_frame(this, _Context, gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), 32.f)));
                 }
             }
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
             {
-                ImmedidateUserInterfaceVerticalStack::layout(_Context);
+                if(_Context == nullptr)
+                    return;
 
-                FrameBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + 32.f));
-
-                DockingBox = gs_2dboxf(
-                    gs_vec2f(FrameBox.Min.x, FrameBox.Max.y),
-                    State.BoundingBox.Max);
-
-                for(auto it = _Context->m_DockAreas.begin(this); it != _Context->m_DockAreas.end(this); ++it)
+                // docking
                 {
-                    if((*it) != nullptr)
-                        (*it)->State.BoundingBox = DockingBox;
+                    gs_2dboxf frameBox = gs_2dboxf(
+                        State.BoundingBox.Min,
+                        gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + 32.f));
+
+                    DockingBox = gs_2dboxf(
+                        (Docker == nullptr ? gs_vec2f(frameBox.Min.x, frameBox.Max.y) : State.BoundingBox.Min),
+                        State.BoundingBox.Max);
+
+                    for(auto it = _Context->m_DockAreas.begin(this); it != _Context->m_DockAreas.end(this); ++it)
+                    {
+                        if((*it) != nullptr)
+                            (*it)->State.BoundingBox = DockingBox;
+                    }
+                }
+
+                // self layouting
+                {
+                    gs_vec2f position   = DockingBox.Min;
+                    gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+
+                    // compute total size
+                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                    {
+                        if((*it) != nullptr)
+                            totalsize += (*it)->State.BoundingBox.size();
+                    }
+
+                    // layout children
+                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                    {
+                        if((*it) == nullptr)
+                            continue;
+
+                        // compute size
+                        gs_vec2f size = gs_clamp(
+                            gs_vec2f(DockingBox.width(), (((*it)->State.BoundingBox.size() / totalsize) * DockingBox.size()).y),
+                            (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+
+                        (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+
+                        // next
+                        position += gs_vec2f(0.f, size.y);
+                    }
                 }
             }
 
+            static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
+            {
+                return _Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin);
+            }
+
             ImmedidateUserInterfaceNode* Docker{nullptr};
-
-            gs_2dboxf FrameBox;
             gs_2dboxf DockingBox;
-            bool      PotentialDocker{false};
         };
-    
-        // struct ImmedidateUserInterfaceWindowFrame : public ImmedidateUserInterfaceNode
-        // {
-        // public:
-        //     ImmedidateUserInterfaceWindowFrame(const std::string& _ID) : ImmedidateUserInterfaceNode(_ID){}
-        //     virtual ~ImmedidateUserInterfaceWindowFrame(){}
-
-        //     virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
-        //     {
-        //         ImmedidateUserInterfaceNode::layout(_Context);
-
-        //         State.MinimumSize = gs_vec2f(State.Parent->State.BoundingBox.width(), 32.f);
-        //         State.MaximumSize = State.MinimumSize;
-        //     }
-        // };
     }
 }
 
@@ -686,6 +744,16 @@ void ImmedidateUserInterfaceContextLayer::frame_update()
 {
 }
 
+void showHierarchy(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node, const std::string& _Delimiter)
+{
+    std::cout << _Delimiter << _Node->Name << "\n";
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+    {
+        showHierarchy(_Context, (*it), _Delimiter + "\t");
+    }
+}
+
 void ImmedidateUserInterfaceContextLayer::frame_debug()
 {
     class UINodeGeometryComputer
@@ -704,8 +772,9 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 return;
 
             _Node->layout(_Context);
+
             for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-                (*it)->layout(_Context);
+                node_geometry(_Context, (*it));
         }
     };
 
@@ -848,7 +917,17 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             // pass focus
             for (auto node : _Context->m_NodesRenderingList)
             {
-                if(!node->State.MousePressed.has_value())
+                bool modified = (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved)  || 
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)         ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+                    (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
+
+                if(!node->State.MousePressed.has_value() && !modified)
                     continue;
 
                 // setup focus to this node
@@ -870,23 +949,20 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 for (auto node : _Context->m_NodesRenderingList)
                 {
                     node->State.InitialDepth =
-                        UIWindowsController::calculate_layer_depth(
+                        ImmedidateUserInterfaceWindow::calculate_layer_depth(
                             _Context,
-                            ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Main);
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Main);
                 }
 
                 focused->State.InitialDepth =
-                    UIWindowsController::calculate_layer_depth(_Context, ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Focused);
+                    ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                        _Context,
+                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Focused);
 
                 break;
             }
 
             // docking
-            for(auto singleton : _Context->m_Hierarchy.Singletons) 
-            {
-                if(dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton))
-                    dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton)->PotentialDocker = false;
-            }
 
             // find moving singleton window
             ImmedidateUserInterfaceWindow* moved = nullptr;
@@ -920,7 +996,12 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             if(hovered == nullptr || moved == nullptr)
                 return;
 
-            hovered->PotentialDocker = true;
+            // _Context->m_Renderer->push_rectangle_rounded_filled(
+            //     hovered->DockingBox.Min,
+            //     hovered->DockingBox.Max,
+            //     32.f,
+            //     gs_vec4f(255.f, 0.f, 0.f, 128.f),
+            //     _Context->m_Renderer->calculate_transform_matrix((float)hovered->place_in_follow()));
 
             bool allMouseButtonsAreReleased = true;
 
@@ -946,26 +1027,21 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     dockable->Docker = hovered;
             }
         }
-
-    private:
-
-        static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
-        {
-            return _Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin);
-        }
-
-        enum ImmedidateUserInterfaceWindowLayer_ : int
-        {
-            ImmedidateUserInterfaceWindowLayer_Begin   = 0,
-            ImmedidateUserInterfaceWindowLayer_Main    = ImmedidateUserInterfaceWindowLayer_Begin,
-            ImmedidateUserInterfaceWindowLayer_Focused = 1,
-            ImmedidateUserInterfaceWindowLayer_End,
-        };
     };
 
     // build hierarchy
     m_Hierarchy.build(m_NodesRenderingList);
     m_DockAreas.build(m_NodesRenderingList);
+
+    // static bool start = true;
+
+    // if(start)
+    // {
+    //     for (auto& singleton : m_Hierarchy.Singletons)
+    //         showHierarchy(this, singleton, "");
+    // }
+
+    // start = false;
 
     // construct events
     ImmedidateUserInterfaceNodeEvent event;
@@ -1115,6 +1191,8 @@ void ImmedidateUserInterfaceContextLayer::frame_finish()
         node->State.Settings       = 0;
     }
 
+    GS_ASSERT(m_NodesRenderingStack.empty());
+
     m_NodesRenderingList.clear();
     m_NodesRenderingCache.clear();
     m_NodesRenderingStack.clear();
@@ -1128,18 +1206,6 @@ void ImmedidateUserInterfaceContextLayer::finish()
 
 bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    // if(begin_node<ImmedidateUserInterfaceWindow>(_ID, _Settings))
-    // {
-    //     if(begin_node<ImmedidateUserInterfaceWindowFrame>(
-    //         std::string(_ID).append("/Frame"),
-    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    //     {
-    //         end_node<ImmedidateUserInterfaceWindowFrame>();
-    //     }
-
-    //     return true;
-    // }
-
     return begin_node<ImmedidateUserInterfaceWindow>(_ID, _Settings);
 }
 
