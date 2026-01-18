@@ -1211,7 +1211,7 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
 
             // update parental bandwidth
             if(_Node->State.Parent)
-                _Node->State.Parent->State.TotalThickness += _Node->State.SelfThickness;
+                _Node->State.Parent->State.TotalThickness += _Node->State.TotalThickness;
 
             // remove clipping
             _Context->m_Renderer->pop_clip_box();
