@@ -141,12 +141,12 @@ namespace Frenchie
             std::vector<ImmedidateUserInterfaceNode*>                                 Sorted;
             std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
 
-            std::vector<ImmedidateUserInterfaceNode*>::const_iterator begin(const ImmedidateUserInterfaceNode* _Node) const
+            std::vector<ImmedidateUserInterfaceNode*>::iterator begin(const ImmedidateUserInterfaceNode* _Node)
             {
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
             }
 
-            std::vector<ImmedidateUserInterfaceNode*>::const_iterator end(const ImmedidateUserInterfaceNode* _Node) const
+            std::vector<ImmedidateUserInterfaceNode*>::iterator end(const ImmedidateUserInterfaceNode* _Node)
             {
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
             }
