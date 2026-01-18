@@ -47,11 +47,13 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceNodeMouseHover;
 
+        struct ImmedidateUserInterfaceEvent;
+        struct ImmedidateUserInterfaceStyle;
+
         struct ImmedidateUserInterfaceNode;
-        struct ImmedidateUserInterfaceNodeEvent;
         struct ImmedidateUserInterfaceNodeHierarchy;
-        struct ImmedidateUserInterfaceVerticalStack;
-        struct ImmedidateUserInterfaceHorizontalStack;
+        struct ImmedidateUserInterfaceNodeVerticalStack;
+        struct ImmedidateUserInterfaceNodeHorizontalStack;
 
         class  ImmedidateUserInterfaceContextLayer;
 
@@ -62,7 +64,7 @@ namespace Frenchie
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context);
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context);
-            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event);
+            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
 
             bool is_visible() const;
             bool is_partially_visible() const;
@@ -113,7 +115,7 @@ namespace Frenchie
             std::string Name = "UINode";
         };
 
-        struct ImmedidateUserInterfaceNodeEvent
+        struct ImmedidateUserInterfaceEvent
         {
             gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
             gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};

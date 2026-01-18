@@ -88,11 +88,12 @@ namespace Frenchie
             };
         };
     
-        struct ImmedidateUserInterfaceVerticalStack : public ImmedidateUserInterfaceNode
+        // layout
+        struct ImmedidateUserInterfaceNodeVerticalStack : public ImmedidateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceVerticalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
-            virtual ~ImmedidateUserInterfaceVerticalStack(){}
+            ImmedidateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
+            virtual ~ImmedidateUserInterfaceNodeVerticalStack(){}
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
             {
@@ -133,11 +134,11 @@ namespace Frenchie
             }
         };
 
-        struct ImmedidateUserInterfaceHorizontalStack : public ImmedidateUserInterfaceNode
+        struct ImmedidateUserInterfaceNodeHorizontalStack : public ImmedidateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceHorizontalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
-            virtual ~ImmedidateUserInterfaceHorizontalStack(){}
+            ImmedidateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
+            virtual ~ImmedidateUserInterfaceNodeHorizontalStack(){}
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
             {
@@ -178,7 +179,8 @@ namespace Frenchie
             }
         };
     
-        struct ImmedidateUserInterfaceWindow : public ImmedidateUserInterfaceVerticalStack
+        // windows
+        struct ImmedidateUserInterfaceWindow : public ImmedidateUserInterfaceNodeVerticalStack
         {
         public:
 
@@ -191,7 +193,7 @@ namespace Frenchie
                 ImmedidateUserInterfaceWindowLayer_End,
             };
 
-            ImmedidateUserInterfaceWindow(const std::string& _Name) : ImmedidateUserInterfaceVerticalStack(_Name){}
+            ImmedidateUserInterfaceWindow(const std::string& _Name) : ImmedidateUserInterfaceNodeVerticalStack(_Name){}
             virtual ~ImmedidateUserInterfaceWindow(){}
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context) override
@@ -241,11 +243,11 @@ namespace Frenchie
 
                 // self layouting
                 {
-                    ImmedidateUserInterfaceVerticalStack::layout(_Context);
+                    ImmedidateUserInterfaceNodeVerticalStack::layout(_Context);
                 }
             }
 
-            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event) override
+            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
                 // reveive focus
                 if(State.MousePressed.has_value())
@@ -265,7 +267,7 @@ namespace Frenchie
                 }
 
                 // receive event
-                ImmedidateUserInterfaceVerticalStack::events(_Context, _Event);
+                ImmedidateUserInterfaceNodeVerticalStack::events(_Context, _Event);
             }
 
             static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
@@ -323,7 +325,6 @@ namespace Frenchie
                     gs_vec4f(12.f, 128.f, 128.f, 255.f),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-
                 // title
                 _Context->m_Renderer->push_text(
                     Title,
@@ -339,7 +340,7 @@ namespace Frenchie
                 State.MaximumSize = gs_vec2f((float)INT_MAX, 32.f);
             }
 
-            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event) override
+            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
                 if(Window == nullptr) 
                     return;
@@ -385,11 +386,13 @@ namespace Frenchie
             ImmedidateUserInterfaceWindow* Window{nullptr};
         };
         
-        struct ImmedidateUserInterfaceWindowFrameBox : public ImmedidateUserInterfaceHorizontalStack
+        struct ImmedidateUserInterfaceWindowFrameBox : public ImmedidateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceWindowFrameBox(const std::string& _ID) : ImmedidateUserInterfaceHorizontalStack(_ID){}
+            ImmedidateUserInterfaceWindowFrameBox(const std::string& _ID) : ImmedidateUserInterfaceNode(_ID){}
             virtual ~ImmedidateUserInterfaceWindowFrameBox(){}
+
+            virtual void render(ImmedidateUserInterfaceContextLayer*) override{}
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
             {
@@ -482,7 +485,7 @@ void ImmedidateUserInterfaceNode::render(ImmedidateUserInterfaceContextLayer* _C
 
 void ImmedidateUserInterfaceNode::layout(ImmedidateUserInterfaceContextLayer* _Context){}
 
-void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
+void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     // resize
     if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
@@ -852,7 +855,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     class UINodeEventsCatcher
     {
     public:
-        static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
+        static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
             catch_hover(_Context, _Event);
             catch_input(_Context, _Event);
@@ -861,7 +864,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
     private:
 
-        static void catch_hover(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
+        static void catch_hover(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
             if(_Context == nullptr)
                 return;
@@ -919,7 +922,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             }
         }
 
-        static void catch_input(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
+        static void catch_input(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
             if(_Context == nullptr)
                 return;
@@ -944,7 +947,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             }
         }
 
-        static void catch_event(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
+        static void catch_event(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
             if(_Context == nullptr)
                 return;
@@ -983,7 +986,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     class UIWindowsController
     {
     public:
-        static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
+        static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
             // layering
             for(auto singleton : _Context->m_Hierarchy.Singletons)
@@ -1115,7 +1118,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     m_DockAreas.build(m_NodesRenderingList);
 
     // construct events
-    ImmedidateUserInterfaceNodeEvent event;
+    ImmedidateUserInterfaceEvent event;
     event.CursorPosition  = m_Renderer->get_cursor_postion();
     event.CursorDragDelta = Frenchie::Application::application()->get_window_cursor_dragdelta();
 
@@ -1304,13 +1307,10 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
                 {
                     return dynamic_cast<const ImmedidateUserInterfaceWindow*>(_A)->DockingIndex <
                             dynamic_cast<const ImmedidateUserInterfaceWindow*>(_B)->DockingIndex;
-                }
-            );
+                });
 
             for (auto it = m_DockAreas.begin(window); it != m_DockAreas.end(window); it++)
             {
-                std::cout << (*it)->Name << "\t" << dynamic_cast<ImmedidateUserInterfaceWindow*>(*it)->DockingIndex << "\n";
-
                 if(begin_node<ImmedidateUserInterfaceWindowFrame>(std::string((*it)->Name).append("/Frame"), _Settings))
                 {
                     dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
@@ -1335,20 +1335,20 @@ void ImmedidateUserInterfaceContextLayer::end_window()
 
 bool ImmedidateUserInterfaceContextLayer::begin_vertial_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    return begin_node<ImmedidateUserInterfaceVerticalStack>(_Name, _Settings);
+    return begin_node<ImmedidateUserInterfaceNodeVerticalStack>(_Name, _Settings);
 }
 
 void ImmedidateUserInterfaceContextLayer::end_vertical_stack()
 {
-    end_node<ImmedidateUserInterfaceVerticalStack>();
+    end_node<ImmedidateUserInterfaceNodeVerticalStack>();
 }
 
 bool ImmedidateUserInterfaceContextLayer::begin_horizontal_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    return begin_node<ImmedidateUserInterfaceHorizontalStack>(_Name, _Settings);
+    return begin_node<ImmedidateUserInterfaceNodeHorizontalStack>(_Name, _Settings);
 }
 
 void ImmedidateUserInterfaceContextLayer::end_horizontal_stack()
 {
-    end_node<ImmedidateUserInterfaceHorizontalStack>();
+    end_node<ImmedidateUserInterfaceNodeHorizontalStack>();
 }
