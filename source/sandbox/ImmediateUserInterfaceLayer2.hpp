@@ -28,6 +28,21 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
         };
 
+        enum ImmediateUserInterfaceNodeColors_ : int
+        {
+            ImmediateUserInterfaceNodeColors_Begin         = 0,
+            ImmediateUserInterfaceNodeColors_WindowOutline = ImmediateUserInterfaceNodeColors_Begin,
+            // ImmediateUserInterfaceNodeColors_WindowOutlineFocused,
+            // ImmediateUserInterfaceNodeColors_WindowOutlineDockingActive,
+
+            ImmediateUserInterfaceNodeColors_WindowBackground,
+            ImmediateUserInterfaceNodeColors_WindowFrameBackground,
+            ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive,
+            ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered,
+            
+            ImmediateUserInterfaceNodeColors_End
+        };
+
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             ImmediateUserInterfaceNodeSettings_None      = 0,
@@ -59,6 +74,26 @@ namespace Frenchie
 
         struct ImmedidateUserInterfaceStyle
         {
+            ImmedidateUserInterfaceStyle()
+            {
+                Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
+
+                // window
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline]                      = gs_vec4f(12.f, 64.f, 128.f, 255.f);
+                // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutlineFocused]               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutlineDockingActive]         = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground]                   = gs_vec4f(12.f, 128.f, 200.f, 255.f);
+                
+                // window frame
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]                = gs_vec4f(12.f, 128.f, 200.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]          = gs_vec4f(32.f, 175.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]         = gs_vec4f(32.f, 175.f, 255.f, 255.f);
+                //Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameDockingActiveBackground] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+            }
+            ~ImmedidateUserInterfaceStyle(){}
+
+            std::vector<gs_vec4f> Colors;
+
             // font
             RenderingQueueFont Font;
             float              FontSize = 64.f;
@@ -164,6 +199,11 @@ namespace Frenchie
             std::vector<ImmedidateUserInterfaceNode*>::iterator end(const ImmedidateUserInterfaceNode* _Node)
             {
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
+            }
+
+            int size(const ImmedidateUserInterfaceNode* _Node)
+            {
+                return (int)(end(_Node) - begin(_Node));
             }
 
             void build(const std::vector<ImmedidateUserInterfaceNode*>& _Nodes)
@@ -284,6 +324,7 @@ namespace Frenchie
             }
 
             mutable std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceNode>> m_Cache;
+            mutable ImmedidateUserInterfaceStyle                                        m_Style;
             mutable std::multiset<std::string>                                          m_Duplicates;
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_DockAreas;
