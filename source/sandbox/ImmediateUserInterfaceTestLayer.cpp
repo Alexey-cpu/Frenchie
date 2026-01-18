@@ -86,23 +86,23 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     };
 
 
-    if(m_ImmediateUserInterface->begin_window(
-        "Window-1",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    {
-        create_horizontal_layout("Window-1/Layout");
-        m_ImmediateUserInterface->end_window();
-    }
+    // if(m_ImmediateUserInterface->begin_window(
+    //     "Window-1",
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    // {
+    //     create_horizontal_layout("Window-1/Layout");
+    //     m_ImmediateUserInterface->end_window();
+    // }
 
-    if(m_ImmediateUserInterface->begin_window(
-        "Window-2",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    {
-        create_horizontal_layout("Window-2/Layout");
-        m_ImmediateUserInterface->end_window();
-    }
+    // if(m_ImmediateUserInterface->begin_window(
+    //     "Window-2",
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    // {
+    //     create_horizontal_layout("Window-2/Layout");
+    //     m_ImmediateUserInterface->end_window();
+    // }
 
     if(m_ImmediateUserInterface->begin_window(
         "Window-3",
@@ -118,21 +118,21 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
-        if(m_ImmediateUserInterface->begin_window(
-            "Window-5",
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-        {
-            m_ImmediateUserInterface->end_window();
-        }
+        // if(m_ImmediateUserInterface->begin_window(
+        //     "Window-5",
+        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+        // {
+        //     m_ImmediateUserInterface->end_window();
+        // }
 
-        if(m_ImmediateUserInterface->begin_window(
-            "Window-6",
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-        {
-            m_ImmediateUserInterface->end_window();
-        }
+        // if(m_ImmediateUserInterface->begin_window(
+        //     "Window-6",
+        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+        // {
+        //     m_ImmediateUserInterface->end_window();
+        // }
         
         m_ImmediateUserInterface->end_window();
     }

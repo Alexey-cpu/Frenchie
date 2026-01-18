@@ -198,7 +198,7 @@ namespace Frenchie
                     State.BoundingBox.Min,
                     State.BoundingBox.Max,
                     32.f,
-                    gs_vec4f(128.f, 200.f, 128.f, 255.f),
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // background frame
@@ -207,7 +207,7 @@ namespace Frenchie
                     State.BoundingBox.Max,
                     32.f,
                     8.f,
-                    gs_vec4f(12.f, 128.f, 128.f, 255.f),
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -292,7 +292,7 @@ namespace Frenchie
                         State.BoundingBox.Min,
                         State.BoundingBox.Max,
                         32.f,
-                        gs_vec4f(128.f, 200.f, 200.f, 255.f),
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                     if(State.MouseClicked.has_value())
@@ -302,12 +302,24 @@ namespace Frenchie
                 }
                 else
                 {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min,
-                        State.BoundingBox.Max,
-                        32.f,
-                        gs_vec4f(128.f, 200.f, 128.f, 255.f),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    if(Window != nullptr && Window->DockingActive)
+                    {
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            State.BoundingBox.Min,
+                            State.BoundingBox.Max,
+                            32.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive],
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    }
+                    else
+                    {
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            State.BoundingBox.Min,
+                            State.BoundingBox.Max,
+                            32.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    }
                 }
 
                 // frame
@@ -316,7 +328,7 @@ namespace Frenchie
                     State.BoundingBox.Max,
                     32.f,
                     8.f,
-                    gs_vec4f(12.f, 128.f, 128.f, 255.f),
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // title
@@ -355,8 +367,8 @@ namespace Frenchie
 
                     // enable activity of a pressed window which is being docked or which is a docker
                     for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
-                                it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
-                                it++)
+                             it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
+                             it++)
                     {
                         ImmedidateUserInterfaceWindow* window =
                             dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
@@ -367,7 +379,9 @@ namespace Frenchie
 
                     if(Window->Docker != nullptr)
                         Window->Docker->DockingActive = false;
-                    Window->DockingActive = true;
+                    
+                    if(Window->Docker != nullptr || _Context->m_DockAreas.size(Window) > 0)
+                        Window->DockingActive = true;
                 }
 
                 // pass event to the window
@@ -741,7 +755,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
     {
-        if((_Event.MousePressed.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
+        if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {
             auto movable = this;
@@ -1074,8 +1088,9 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         }
                     }
 
-                    moved->Docker       = nullptr;
-                    moved->DockingIndex = -1;
+                    moved->Docker        = nullptr;
+                    moved->DockingActive = false;
+                    moved->DockingIndex  = -1;
 
                     break;
                 }
@@ -1170,9 +1185,15 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 ImmedidateUserInterfaceWindow* window =
                     dynamic_cast<ImmedidateUserInterfaceWindow*>(*found);
 
-                if(window != nullptr)
-                    window->DockingIndex = ++dockindex;
+                if(window == nullptr)
+                    continue;
+                    
+                window->DockingActive = false;
+                window->DockingIndex  = ++dockindex;
             }
+
+            // setup newly docked node as active
+            moved->DockingActive = true;
         }
     };
 
