@@ -275,6 +275,29 @@ namespace Frenchie
                 // }
             }
 
+            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event) override
+            {
+                // reveive focus
+                if(State.MousePressed.has_value())
+                {
+                    for (auto node : _Context->m_NodesRenderingList)
+                    {
+                        node->State.InitialDepth =
+                            ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                                _Context,
+                                ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
+                    }
+                    
+                    State.InitialDepth =
+                        ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                            _Context,
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
+                }
+
+                // receive event
+                ImmedidateUserInterfaceVerticalStack::events(_Context, _Event);
+            }
+
             static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
             {
                 return _Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin);
@@ -282,6 +305,8 @@ namespace Frenchie
 
             ImmedidateUserInterfaceWindow* Docker{nullptr};
             gs_2dboxf                      DockingBox;
+            bool                           DockingActive {false};
+            bool                           DockingFocused{false};
         };
     
         struct ImmedidateUserInterfaceWindowFrame : public ImmedidateUserInterfaceNode
@@ -330,7 +355,7 @@ namespace Frenchie
 
                 // title
                 _Context->m_Renderer->push_text(
-                    Name,
+                    Title,
                     32.f,
                     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
@@ -342,6 +367,51 @@ namespace Frenchie
                 State.MinimumSize = gs_vec2f(4.f, 32.f);
                 State.MaximumSize = gs_vec2f((float)INT_MAX, 32.f);
             }
+
+            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event) override
+            {
+                if(Window == nullptr) 
+                    return;
+
+                if(State.MousePressed.has_value())
+                {
+                    // enable focus of pressed window
+                    for (auto node : _Context->m_NodesRenderingList)
+                    {
+                        ImmedidateUserInterfaceWindow* window =
+                            dynamic_cast<ImmedidateUserInterfaceWindow*>(node);
+
+                        if(window == nullptr)
+                            continue;
+                        
+                        window->DockingFocused = false;
+                    }
+
+                    Window->DockingFocused = true;
+
+                    // enable activity of a pressed window
+                    for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
+                             it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
+                             it++)
+                    {
+                        ImmedidateUserInterfaceWindow* window =
+                            dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+
+                        if(window != nullptr)
+                            window->DockingActive = false;
+                    }
+
+                    if(Window->Docker != nullptr)
+                        Window->Docker->DockingActive = false;
+                    Window->DockingActive = true;
+                }
+
+                // pass event to the window
+                Window->events(_Context, _Event);
+            }
+
+            std::string                    Title {std::string()};
+            ImmedidateUserInterfaceWindow* Window{nullptr};
         };
         
         struct ImmedidateUserInterfaceWindowFrameBox : public ImmedidateUserInterfaceHorizontalStack
@@ -917,7 +987,35 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     public:
         static void execute(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceNodeEvent& _Event)
         {
-            // // pass focus
+            // pass focus
+            for(auto singleton : _Context->m_Hierarchy.Singletons)
+            {
+                ImmedidateUserInterfaceWindow* window =
+                    dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton);
+
+                if(window == nullptr)
+                    continue;
+
+                if(window->DockingFocused)
+                {
+                    window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                        _Context,
+                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
+                }
+                else if(window->DockingActive)
+                {
+                    window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                        _Context,
+                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Active);
+                }
+                else
+                {
+                    window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                        _Context,
+                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
+                }
+            }
+
             // for (auto node : _Context->m_NodesRenderingList)
             // {
             //     bool modified = (node->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved)  || 
@@ -1240,12 +1338,21 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
         {
             if(begin_node<ImmedidateUserInterfaceWindowFrame>(std::string(_ID).append("/Frame"), _Settings))
+            {
+                dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = window->Name;
+                dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = window;
+
                 end_node<ImmedidateUserInterfaceWindowFrame>();
+            }
 
             for (auto it = m_DockAreas.begin(window); it != m_DockAreas.end(window); it++)
             {
                 if(begin_node<ImmedidateUserInterfaceWindowFrame>(std::string((*it)->Name).append("/Frame"), _Settings))
+                {
+                    dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
+                    dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
                     end_node<ImmedidateUserInterfaceWindowFrame>();
+                }
             }
 
             end_node<ImmedidateUserInterfaceWindowFrameBox>();
