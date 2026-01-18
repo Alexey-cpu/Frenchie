@@ -201,6 +201,9 @@ namespace Frenchie
                 if(_Context == nullptr || _Context->m_Renderer == nullptr || !is_partially_visible())
                     return;
 
+                if(Docker != nullptr && !DockingActive)
+                    return;
+
                 // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     State.BoundingBox.Min,
@@ -360,24 +363,20 @@ namespace Frenchie
                     Window->DockingFocused = true;
 
                     // enable activity of a pressed window which is being docked or which is a docker
-                    if(Window->Docker != nullptr ||
-                        (_Context->m_DockAreas.end(Window) - _Context->m_DockAreas.end(Window)) > 0)
+                    for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
+                                it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
+                                it++)
                     {
-                        for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
-                                 it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
-                                 it++)
-                        {
-                            ImmedidateUserInterfaceWindow* window =
-                                dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+                        ImmedidateUserInterfaceWindow* window =
+                            dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
 
-                            if(window != nullptr)
-                                window->DockingActive = false;
-                        }
-
-                        if(Window->Docker != nullptr)
-                            Window->Docker->DockingActive = false;
-                        Window->DockingActive = true;
+                        if(window != nullptr)
+                            window->DockingActive = false;
                     }
+
+                    if(Window->Docker != nullptr)
+                        Window->Docker->DockingActive = false;
+                    Window->DockingActive = true;
                 }
 
                 // pass event to the window
@@ -999,23 +998,44 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 if(window == nullptr)
                     continue;
 
-                if(window->DockingFocused)
+                // if the window is not being docked and is not a docker then we check only focus
+                // otherwise we check both focus and activity
+                if(window->Docker == nullptr &&
+                    (_Context->m_DockAreas.end(window) - _Context->m_DockAreas.begin(window) <= 0))
                 {
-                    window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
-                        _Context,
-                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
-                }
-                else if(window->DockingActive)
-                {
-                    window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
-                        _Context,
-                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Active);
+                    if(window->DockingFocused)
+                    {
+                        window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                            _Context,
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
+                    }
+                    else
+                    {
+                        window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                            _Context,
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
+                    }
                 }
                 else
                 {
-                    window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
-                        _Context,
-                        ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
+                    if(window->DockingFocused)
+                    {
+                        window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                            _Context,
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
+                    }
+                    else if(window->DockingActive)
+                    {
+                        window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                            _Context,
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Active);
+                    }
+                    else
+                    {
+                        window->State.InitialDepth = ImmedidateUserInterfaceWindow::calculate_layer_depth(
+                            _Context,
+                            ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
+                    }
                 }
             }
 
@@ -1055,18 +1075,20 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 }
             }
 
-            // find hovered singleton window not equal to the moved one
-            // or find it's frame
-            ImmedidateUserInterfaceWindow* hovered = nullptr;
+            // find top most hovered singleton window not equal to the moved one
+            ImmedidateUserInterfaceWindow* hovered  = nullptr;
 
             for(auto singleton : _Context->m_Hierarchy.Singletons)
             {
-                if(dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton)       &&
-                    singleton->State.BoundingBox.contains(_Event.CursorPosition) &&
-                    singleton != moved)
+                ImmedidateUserInterfaceWindow* window =
+                    dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton);
+
+                if( window != nullptr                                         &&
+                    window->State.BoundingBox.contains(_Event.CursorPosition) &&
+                    window != moved)
                 {
-                    hovered = dynamic_cast<ImmedidateUserInterfaceWindow*>(singleton);
-                    break;
+                    if(hovered == nullptr || window->Cache.Depth > hovered->Cache.Depth)
+                        hovered  = window;
                 }
             }
 
@@ -1075,7 +1097,8 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 return;
 
             // render potential docker gizmo
-            int depth = _Context->m_Renderer->get_far_plane();
+            int depth = hovered->Cache.Depth + hovered->Cache.TotalThickness + 1;
+
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 hovered->DockingBox.Min,
                 hovered->DockingBox.Max,
@@ -1095,12 +1118,11 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
             if(!allMouseButtonsAreReleased ||
                 moved->Docker   == hovered ||
-                hovered->Docker == moved   ||
-                (moved->Docker != nullptr && moved->Docker == hovered->Docker))
+                hovered->Docker == moved)
                 return;
 
             // setup docker of the moved node
-            moved->Docker = hovered;
+            moved->Docker = hovered->Docker ? hovered->Docker : hovered;
 
             // if the moved node has docked windows we move this windows to the new docker
             for(auto it = _Context->m_DockAreas.begin(moved); it != _Context->m_DockAreas.end(moved); ++it)
@@ -1131,8 +1153,6 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         _Context->m_DockAreas.Sorted[j + 1]);
                 }
             }
-
-            //
 
             // reindex docked nodex
             int dockindex = 0;
@@ -1326,7 +1346,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
         ImmedidateUserInterfaceWindow* window =
             dynamic_cast<ImmedidateUserInterfaceWindow*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
 
-        if(window->Docker != nullptr)
+        if(window->Docker != nullptr || window->State.Parent != nullptr)
             return true;
 
         if(begin_node<ImmedidateUserInterfaceWindowFrameBox>(
