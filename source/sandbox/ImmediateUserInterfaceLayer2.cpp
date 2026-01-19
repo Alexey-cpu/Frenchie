@@ -755,9 +755,9 @@ namespace Frenchie
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                     {
                         if(Window->Docker != nullptr &&
-                            !(Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_HasBegunMove))
+                            !(Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoveStarted))
                         {
-                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_HasBegunMove;
+                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoveStarted;
                             Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
 
                             float delta = State.BoundingBox.Min.y - Window->Cache.BoundingBox.Min.y; 
@@ -768,8 +768,8 @@ namespace Frenchie
                         }
                         else
                         {
-                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_HasBegunMove;
-                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoveStarted;
+                            Window->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
 
                             Window->State.BoundingBox = gs_2dboxf(
                                 Window->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
