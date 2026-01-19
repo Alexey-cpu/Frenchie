@@ -451,11 +451,11 @@ namespace Frenchie
             }
 
             // this is a plipeline
-            std::vector<gs_vec4f>                       m_ClearColors   {std::vector<gs_vec4f>()};
-            std::vector<gs_2dboxf>                      m_Clippingboxes {std::vector<gs_2dboxf>()};
-            std::vector<Immediate2DRendererPathSegment> m_PathSegments  {std::vector<Immediate2DRendererPathSegment>()};
-            std::vector<RenderingQueueVertex>           m_Vertexes      {std::vector<RenderingQueueVertex>()};
-            std::vector<int>                            m_Indexes       {std::vector<int>()};
+            std::vector<gs_vec4f>                       m_ClearColors;
+            std::vector<gs_2dboxf>                      m_Clippingboxes;
+            std::vector<Immediate2DRendererPathSegment> m_PathSegments;
+            std::vector<RenderingQueueVertex>           m_Vertexes;
+            std::vector<int>                            m_Indexes;
             gs_2dboxf                                   m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
             std::shared_ptr<RenderingQueue>             m_RenderingQueue{nullptr};
         };
