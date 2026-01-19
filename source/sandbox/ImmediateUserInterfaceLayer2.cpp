@@ -1,5 +1,8 @@
 #include <ImmediateUserInterfaceLayer2.hpp>
 
+// STL
+#include <algorithm>
+
 using namespace Frenchie::Application;
 
 namespace Frenchie
@@ -263,7 +266,7 @@ namespace Frenchie
 
             static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
             {
-                return _Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin);
+                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin));
             }
 
             ImmedidateUserInterfaceWindow* Docker{nullptr};
@@ -892,7 +895,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
             // find the top most node catching the mouse cursor
             ImmedidateUserInterfaceNode* hoveredNode  = nullptr;
-            float   maximumDepth = INT_MIN;
+            int                          maximumDepth = INT_MIN;
 
             for (auto& node : _Context->m_NodesRenderingList)
             {
@@ -985,7 +988,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
             // find the top most hovered node
             ImmedidateUserInterfaceNode* hoveredNode  = nullptr;
-            float                        maximumDepth = INT_MIN;
+            int                          maximumDepth = INT_MIN;
 
             for (auto& node : _Context->m_NodesRenderingList)
             {
@@ -1257,9 +1260,6 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
                 }
 
                 UINodeRenderer::render_node(_Context, singleton);
-
-                std::cout << singleton->Name << "\t" << singleton->State.Depth << "\n";
-
                 _Context->m_NodesRenderingCache.push_back(singleton);
             }
         }

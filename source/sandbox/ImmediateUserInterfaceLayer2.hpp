@@ -4,6 +4,7 @@
 
 // STL
 #include <type_traits>
+#include <functional>
 #include <memory>
 #include <chrono>
 #include <stack>
@@ -300,7 +301,7 @@ namespace Frenchie
                 ImmedidateUserInterfaceNode* node = m_Cache[_ID].get();
 
                 node->State.Settings       = _Settings;
-                node->State.RenderingIndex = m_NodesRenderingList.size();
+                node->State.RenderingIndex = (int)m_NodesRenderingList.size();
 
                 // build nodes hierarchy
                 if(!m_NodesRenderingStack.empty())
@@ -329,9 +330,9 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_DockAreas;
             mutable std::shared_ptr<Immediate2DRenderer>                                m_Renderer           {nullptr};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingList {std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingCache{std::vector<ImmedidateUserInterfaceNode*>()};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingStack{std::vector<ImmedidateUserInterfaceNode*>()};
+            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingList;
+            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingCache;
+            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingStack;
         };
     };
 }

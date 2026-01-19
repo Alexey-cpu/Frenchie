@@ -13,6 +13,9 @@ using namespace Frenchie::Application;
 #include <stb_truetype.h>
 #include <stb_image_write.h>
 
+// STL
+#include <algorithm>
+
 namespace Frenchie
 {
     namespace Application

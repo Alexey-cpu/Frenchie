@@ -162,9 +162,9 @@ namespace Frenchie
 
             friend class ApplicationInputHandler;
 
-            ApplicationInput                  m_Input  {ApplicationInput()};
-            std::list<std::shared_ptr<Layer>> m_Layers {std::list<std::shared_ptr<Layer>>()};
-            std::list<std::shared_ptr<Layer>> m_Awakes {std::list<std::shared_ptr<Layer>>()};
+            ApplicationInput                  m_Input;
+            std::list<std::shared_ptr<Layer>> m_Layers;
+            std::list<std::shared_ptr<Layer>> m_Awakes;
             void*                             m_Context{nullptr};
         };
 
