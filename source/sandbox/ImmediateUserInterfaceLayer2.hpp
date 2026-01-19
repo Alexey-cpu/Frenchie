@@ -17,9 +17,14 @@ namespace Frenchie
     {
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
+            // sentinel
             ImmediateUserInterfaceNodeEvents_None                 = 0,
+            
+            // move
             ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0,
-            ImmediateUserInterfaceNodeEvents_HasBegunMove         = 1 << 1,
+            ImmediateUserInterfaceNodeEvents_IsMoveStarted        = 1 << 1,
+            
+            // resize
             ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 2,
             ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 3,
             ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 4,
