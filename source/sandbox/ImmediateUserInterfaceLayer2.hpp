@@ -19,27 +19,32 @@ namespace Frenchie
         {
             ImmediateUserInterfaceNodeEvents_None                 = 0,
             ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0,
-            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1,
-            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2,
-            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
+            ImmediateUserInterfaceNodeEvents_HasBegunMove         = 1 << 1,
+            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 2,
+            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 3,
+            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 4,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 5,
+            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 6,
+            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 7,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 8,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 9,
         };
 
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin         = 0,
-            ImmediateUserInterfaceNodeColors_WindowOutline = ImmediateUserInterfaceNodeColors_Begin,
-            // ImmediateUserInterfaceNodeColors_WindowOutlineFocused,
-            // ImmediateUserInterfaceNodeColors_WindowOutlineDockingActive,
 
+            // window background
+            ImmediateUserInterfaceNodeColors_WindowOutline = ImmediateUserInterfaceNodeColors_Begin,
             ImmediateUserInterfaceNodeColors_WindowBackground,
+            
+            // window frame
             ImmediateUserInterfaceNodeColors_WindowFrameBackground,
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive,
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered,
+
+            // gizmos
+            ImmediateUserInterfaceNodeColors_Gizmos,
             
             ImmediateUserInterfaceNodeColors_End
         };
@@ -81,15 +86,16 @@ namespace Frenchie
 
                 // window
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline]                      = gs_vec4f(12.f, 64.f, 128.f, 255.f);
-                // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutlineFocused]               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
-                // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutlineDockingActive]         = gs_vec4f(255.f, 255.f, 255.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground]                   = gs_vec4f(12.f, 128.f, 200.f, 255.f);
                 
                 // window frame
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]                = gs_vec4f(12.f, 128.f, 200.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]          = gs_vec4f(32.f, 175.f, 255.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]         = gs_vec4f(32.f, 175.f, 255.f, 255.f);
-                //Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameDockingActiveBackground] = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]              = gs_vec4f(12.f, 128.f, 200.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]        = gs_vec4f(32.f, 175.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]       = gs_vec4f(32.f, 175.f, 255.f, 255.f);
+                
+                // gizmos
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 200.f);
+
             }
             ~ImmedidateUserInterfaceStyle(){}
 
