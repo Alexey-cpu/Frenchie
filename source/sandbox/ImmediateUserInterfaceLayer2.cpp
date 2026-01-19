@@ -198,18 +198,18 @@ namespace Frenchie
 
                 // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    32.f,
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    _Context->m_Style.FramesRadius,
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // background frame
                 _Context->m_Renderer->push_rectangle_rounded(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    32.f,
-                    8.f,
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.FramesWidth,
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
@@ -221,8 +221,10 @@ namespace Frenchie
 
                 // docking
                 gs_2dboxf frameBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Min.y + 32.f));
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                    gs_vec2f(
+                        State.BoundingBox.Max.x,
+                        State.BoundingBox.Min.y + _Context->m_Style.FontSize) - _Context->m_Style.FramesWidth * 0.5f);
 
                 DockingBox = gs_2dboxf(
                     (Docker == nullptr ? gs_vec2f(frameBox.Min.x, frameBox.Max.y) : State.BoundingBox.Min),
@@ -260,8 +262,294 @@ namespace Frenchie
                             ImmedidateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
                 }
 
-                // receive event
-                ImmedidateUserInterfaceNodeVerticalStack::events(_Context, _Event);
+                // resize
+                if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
+                    !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                {
+                    if(ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable);
+
+                        _Context->m_Renderer->push_arc_filled(
+                            resizeTopLeft.Center,
+                            resizeTopLeft.Radius,
+                            resizeTopLeft.Radius,
+                            0.f,
+                            360.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
+                                resizable->Cache.BoundingBox.Max));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable);
+
+                        _Context->m_Renderer->push_arc_filled(
+                            resizeTopRight.Center,
+                            resizeTopRight.Radius,
+                            resizeTopRight.Radius,
+                            0.f,
+                            360.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
+                            
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                                resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeBottomLeft = ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable);
+
+                        _Context->m_Renderer->push_arc_filled(
+                            resizeBottomLeft.Center,
+                            resizeBottomLeft.Radius,
+                            resizeBottomLeft.Radius,
+                            0.f,
+                            360.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                                resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeBottomRight = ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable);
+
+                        _Context->m_Renderer->push_arc_filled(
+                            resizeBottomRight.Center,
+                            resizeBottomRight.Radius,
+                            resizeBottomRight.Radius,
+                            0.f,
+                            360.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min,
+                                resizable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_top_box(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeTop = ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable);
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            resizeTop.Min,
+                            resizeTop.Max,
+                            16.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                                resizable->Cache.BoundingBox.Max));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_left_box(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeLeft = ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable);
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            resizeLeft.Min,
+                            resizeLeft.Max,
+                            16.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                                resizable->Cache.BoundingBox.Max));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_right_box(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeRight = ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable);
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            resizeRight.Min,
+                            resizeRight.Max,
+                            16.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min,
+                                resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                            return;
+                        }
+                    }
+                    else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_box(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+                    {
+                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (resizable->State.Parent &&
+                                ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable->State.Parent).contains(_Event.CursorPosition))
+                        {
+                            resizable = resizable->State.Parent;
+                        }
+
+                        if(Docker != nullptr)
+                            resizable = Docker;
+
+                        auto resizeBottom = ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable);
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            resizeBottom.Min,
+                            resizeBottom.Max,
+                            16.f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
+                                resizable->Cache.BoundingBox.Min,
+                                resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                            return;
+                        }
+                    }
+                }
+                    
+                // move
+                if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+                    !((State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+                {
+                    if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                    {
+                        auto movable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        while (movable->State.Parent)
+                            movable = movable->State.Parent;
+
+                        movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+                        movable->State.BoundingBox = gs_2dboxf(
+                            movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
+                            movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
+                        return;
+                    }
+                }
             }
 
             static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
@@ -292,9 +580,9 @@ namespace Frenchie
                     State.BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min,
-                        State.BoundingBox.Max,
-                        32.f,
+                        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                        State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                        _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
@@ -308,18 +596,18 @@ namespace Frenchie
                     if(Window != nullptr && Window->DockingActive)
                     {
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            State.BoundingBox.Min,
-                            State.BoundingBox.Max,
-                            32.f,
+                            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                            _Context->m_Style.FramesRadius,
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive],
                             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                     }
                     else
                     {
                         _Context->m_Renderer->push_rectangle_rounded_filled(
-                            State.BoundingBox.Min,
-                            State.BoundingBox.Max,
-                            32.f,
+                            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                            _Context->m_Style.FramesRadius,
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
                             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                     }
@@ -327,26 +615,29 @@ namespace Frenchie
 
                 // frame
                 _Context->m_Renderer->push_rectangle_rounded(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    32.f,
-                    8.f,
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.FramesWidth,
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // title
                 _Context->m_Renderer->push_text(
                     Title,
-                    32.f,
+                    _Context->m_Style.FontSize,
                     gs_vec4f(255.f, 0.f, 0.f, 255.f),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
             }
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
             {
+                if(_Context == nullptr)
+                    return;
+
                 ImmedidateUserInterfaceNode::layout(_Context);
-                State.MinimumSize = gs_vec2f(4.f, 32.f);
-                State.MaximumSize = gs_vec2f((float)INT_MAX, 32.f);
+                State.MinimumSize = gs_vec2f(4.f, _Context->m_Style.FontSize);
+                State.MaximumSize = gs_vec2f((float)INT_MAX, _Context->m_Style.FontSize);
             }
 
             virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
@@ -388,7 +679,106 @@ namespace Frenchie
                 }
 
                 // pass event to the window
-                Window->events(_Context, _Event);
+                if(Window->Docker == nullptr)
+                {
+                    Window->events(_Context, _Event);
+                    return;
+                }
+
+                // resize
+                if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
+                    !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                {
+                    if((ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition)    ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)) &&
+                        ((*_Context->m_DockAreas.begin(Window->Docker)) == Window))
+                    {
+                        auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this);
+
+                        _Context->m_Renderer->push_arc_filled(
+                            resizeTopLeft.Center,
+                            resizeTopLeft.Radius,
+                            resizeTopLeft.Radius,
+                            0.f,
+                            360.f,
+                            gs_vec4f(5, 255, 255, 200.f),
+                            _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
+                                Window->Docker->Cache.BoundingBox.Min + _Event.CursorDragDelta,
+                                Window->Docker->Cache.BoundingBox.Max));
+                            return;
+                        }
+                    }
+                    else if((ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))   &&
+                        ((*_Context->m_DockAreas.begin(Window->Docker)) == Window))
+                    {
+                        auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this);
+
+                        _Context->m_Renderer->push_arc_filled(
+                            resizeTopRight.Center,
+                            resizeTopRight.Radius,
+                            resizeTopRight.Radius,
+                            0.f,
+                            360.f,
+                            gs_vec4f(5, 255, 255, 200.f),
+                            _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
+
+                        if(_Event.MouseDown.has_value())
+                        {
+                            Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
+                            
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window->Docker, gs_2dboxf(
+                                Window->Docker->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                                Window->Docker->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                            return;
+                        }
+                    }
+                }
+
+                // move
+                if((Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+                    !((Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+                        (Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+                {
+                    if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                    {
+                        if(Window->Docker != nullptr &&
+                            !(Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_HasBegunMove))
+                        {
+                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_HasBegunMove;
+                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+
+                            float delta = State.BoundingBox.Min.y - Window->Cache.BoundingBox.Min.y; 
+
+                            Window->Cache.BoundingBox = gs_2dboxf(
+                                Window->Cache.BoundingBox.Min + gs_vec2f(0.f, delta),
+                                Window->Cache.BoundingBox.Max + gs_vec2f(0.f, delta));
+                        }
+                        else
+                        {
+                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_HasBegunMove;
+                            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+
+                            Window->State.BoundingBox = gs_2dboxf(
+                                Window->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
+                                Window->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
+                        }
+
+                        return;
+                    }
+                }
             }
 
             std::string                    Title {std::string()};
@@ -409,8 +799,8 @@ namespace Frenchie
                     return;
 
                 // setup min/max sizes
-                State.MinimumSize = gs_vec2f(4.f, 32.f);
-                State.MaximumSize = gs_vec2f((float)INT_MAX, 32.f);
+                State.MinimumSize = gs_vec2f(4.f, _Context->m_Style.FontSize);
+                State.MaximumSize = gs_vec2f((float)INT_MAX, _Context->m_Style.FontSize);
 
                 // layout children
                 gs_vec2f position = State.BoundingBox.Min;
@@ -530,7 +920,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeTopLeft.Radius,
                 0.f,
                 360.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -560,7 +950,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeTopRight.Radius,
                 0.f,
                 360.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -591,7 +981,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeBottomLeft.Radius,
                 0.f,
                 360.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -621,7 +1011,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeBottomRight.Radius,
                 0.f,
                 360.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -649,7 +1039,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeTop.Min,
                 resizeTop.Max,
                 16.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -677,7 +1067,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeLeft.Min,
                 resizeLeft.Max,
                 16.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -705,7 +1095,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeRight.Min,
                 resizeRight.Max,
                 16.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -733,7 +1123,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 resizeBottom.Min,
                 resizeBottom.Max,
                 16.f,
-                gs_vec4f(5, 255, 255, 200.f),
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
             if(_Event.MouseDown.has_value())
@@ -1094,7 +1484,6 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     moved->Docker        = nullptr;
                     moved->DockingActive = false;
                     moved->DockingIndex  = -1;
-
                     break;
                 }
             }
@@ -1126,8 +1515,8 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 hovered->DockingBox.Min,
                 hovered->DockingBox.Max,
-                32.f,
-                gs_vec4f(255.f, 0.f, 0.f, 32.f),
+                _Context->m_Style.FramesRadius,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
             bool allMouseButtonsAreReleased = true;
@@ -1378,9 +1767,11 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
 
         if(begin_node<ImmedidateUserInterfaceWindowFrameBox>(
             std::string(_ID).append("/FrameBox"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+            _Settings))
         {
-            if(begin_node<ImmedidateUserInterfaceWindowFrame>(std::string(_ID).append("/Frame"), _Settings))
+            if(begin_node<ImmedidateUserInterfaceWindowFrame>(
+                std::string(_ID).append("/Frame"),
+                _Settings))
             {
                 dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = window->Name;
                 dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = window;
@@ -1399,7 +1790,9 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
 
             for (auto it = m_DockAreas.begin(window); it != m_DockAreas.end(window); it++)
             {
-                if(begin_node<ImmedidateUserInterfaceWindowFrame>(std::string((*it)->Name).append("/Frame"), _Settings))
+                if(begin_node<ImmedidateUserInterfaceWindowFrame>(
+                    std::string((*it)->Name).append("/Frame"),
+                    _Settings))
                 {
                     dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
                     dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
