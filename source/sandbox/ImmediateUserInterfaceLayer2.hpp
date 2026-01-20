@@ -83,9 +83,6 @@ namespace Frenchie
         struct ImmedidateUserInterfaceStyle;
 
         struct ImmediateUserInterfaceNode;
-        struct ImmedidateUserInterfaceNodeHierarchy;
-        struct ImmedidateUserInterfaceNodeVerticalStack;
-        struct ImmedidateUserInterfaceNodeHorizontalStack;
 
         class  ImmedidateUserInterfaceContextLayer;
 
