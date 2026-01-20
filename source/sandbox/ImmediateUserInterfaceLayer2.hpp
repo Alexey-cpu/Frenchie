@@ -59,7 +59,10 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
+            // sentinel
             ImmediateUserInterfaceNodeSettings_None      = 0,
+
+            // settings
             ImmediateUserInterfaceNodeSettings_Movable   = 1 << 0,
             ImmediateUserInterfaceNodeSettings_Resizable = 1 << 1
         };
@@ -261,13 +264,18 @@ namespace Frenchie
                 }
                 Indexes[_Nodes.size()] = sum;
 
+                bool allIsNull = true;
+
                 for(int i = 0; i < _Nodes.size(); i++ )
                 {
                     if(get_parent(_Nodes[i]) == nullptr)
                         continue;
 
                     Sorted[workspace[get_parent(_Nodes[i])->State.RenderingIndex]++] = _Nodes[i];
+                    allIsNull = false;
                 }
+
+                if(allIsNull) Sorted.clear();
             }
 
         private:

@@ -846,6 +846,56 @@ namespace Frenchie
                 }
             }
         };
+    
+        // docking window gizmos
+        struct ImmedaiateUserInterfaceDockingWindowGizmo : public ImmedidateUserInterfaceWindow
+        {
+        public:
+            ImmedaiateUserInterfaceDockingWindowGizmo(const std::string& _ID) : ImmedidateUserInterfaceWindow(_ID){}
+            virtual ~ImmedaiateUserInterfaceDockingWindowGizmo(){}
+
+            virtual void render(ImmedidateUserInterfaceContextLayer*) override{}
+            virtual void layout(ImmedidateUserInterfaceContextLayer*) override{}
+            virtual void events(ImmedidateUserInterfaceContextLayer*, const ImmedidateUserInterfaceEvent&) override{}
+        };
+
+        struct ImmedaiateUserInterfaceDockingWindowFrameGizmo : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmedaiateUserInterfaceDockingWindowFrameGizmo(const std::string& _ID) : ImmediateUserInterfaceNode(_ID){}
+            virtual ~ImmedaiateUserInterfaceDockingWindowFrameGizmo(){}
+
+            virtual void render(ImmedidateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr || !is_partially_visible())
+                    return;
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // frame
+                _Context->m_Renderer->push_rectangle_rounded(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            virtual void layout(ImmedidateUserInterfaceContextLayer*) override
+            {
+            }
+
+            virtual void events(ImmedidateUserInterfaceContextLayer*, const ImmedidateUserInterfaceEvent&) override
+            {
+            }
+        };
     }
 }
 
@@ -1531,16 +1581,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             if(hovered == nullptr || moved == nullptr)
                 return;
 
-            // render potential docker gizmo
-            int depth = hovered->Cache.Depth + hovered->Cache.TotalThickness + 1;
-
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                hovered->DockingBox.Min,
-                hovered->DockingBox.Max,
-                _Context->m_Style.FramesRadius,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)depth));
-
+            // dock the moved window to the hovered one
             bool allMouseButtonsAreReleased = true;
 
             for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
@@ -1553,6 +1594,33 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
             if(allMouseButtonsAreReleased)
                 ImmedidateUserInterfaceWindowsController::attach_to_docker(_Context, hovered, moved);
+            else if(moved != hovered && moved->Docker != hovered && hovered->Docker != moved)
+            {
+
+                // render potential docking window gizmo
+                int depth = hovered->Cache.Depth + hovered->Cache.TotalThickness + 1;
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    hovered->DockingBox.Min,
+                    hovered->DockingBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
+
+                // dock potentially docking window to a docker
+                if(_Context->begin_node<ImmedaiateUserInterfaceDockingWindowGizmo>(
+                    "DockingWindowGizmo", // this is not a bug as docked window gizmos have the only instance in UI
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    _Context->m_DockAreas.build(_Context->m_NodesRenderingList);
+
+                    ImmedidateUserInterfaceWindowsController::attach_to_docker(
+                        _Context,
+                        hovered,
+                        dynamic_cast<ImmedidateUserInterfaceWindow*>(_Context->m_NodesRenderingStack[_Context->m_NodesRenderingStack.size() - 1]));
+                    _Context->end_node<ImmedaiateUserInterfaceDockingWindowGizmo>();
+                }
+            }
         }
 
     private:
@@ -1820,13 +1888,25 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
 
             for (auto it = m_DockAreas.begin(window); it != m_DockAreas.end(window); it++)
             {
-                if(begin_node<ImmedidateUserInterfaceWindowFrame>(
-                    std::string((*it)->Name).append("/Frame"),
-                    _Settings))
+                if(dynamic_cast<ImmedaiateUserInterfaceDockingWindowGizmo*>(*it))
                 {
-                    dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
-                    dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
-                    end_node<ImmedidateUserInterfaceWindowFrame>();
+                    if(begin_node<ImmedaiateUserInterfaceDockingWindowFrameGizmo>(
+                        "DockingWindowFrameGizmo", // this is not a bug as docked window gizmos have the only instance in UI
+                        _Settings))
+                    {
+                        end_node<ImmedaiateUserInterfaceDockingWindowFrameGizmo>();
+                    }
+                }
+                else
+                {
+                    if(begin_node<ImmedidateUserInterfaceWindowFrame>(
+                        std::string((*it)->Name).append("/Frame"),
+                        _Settings))
+                    {
+                        dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
+                        dynamic_cast<ImmedidateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
+                        end_node<ImmedidateUserInterfaceWindowFrame>();
+                    }
                 }
             }
 
