@@ -50,6 +50,9 @@ namespace Frenchie
 
             // gizmos
             ImmediateUserInterfaceNodeColors_Gizmos,
+
+            // text
+            ImmediateUserInterfaceNodeColors_Text,
             
             ImmediateUserInterfaceNodeColors_End
         };
@@ -76,7 +79,7 @@ namespace Frenchie
         struct ImmedidateUserInterfaceEvent;
         struct ImmedidateUserInterfaceStyle;
 
-        struct ImmedidateUserInterfaceNode;
+        struct ImmediateUserInterfaceNode;
         struct ImmedidateUserInterfaceNodeHierarchy;
         struct ImmedidateUserInterfaceNodeVerticalStack;
         struct ImmedidateUserInterfaceNodeHorizontalStack;
@@ -101,6 +104,8 @@ namespace Frenchie
                 // gizmos
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 200.f);
 
+                // gizmos
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
             }
             ~ImmedidateUserInterfaceStyle(){}
 
@@ -127,10 +132,10 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
-        struct ImmedidateUserInterfaceNode
+        struct ImmediateUserInterfaceNode
         {
-            ImmedidateUserInterfaceNode(const std::string _Name);
-            virtual ~ImmedidateUserInterfaceNode();
+            ImmediateUserInterfaceNode(const std::string _Name);
+            virtual ~ImmediateUserInterfaceNode();
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context);
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context);
@@ -158,7 +163,7 @@ namespace Frenchie
                 gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
 
                 // hierarchy
-                ImmedidateUserInterfaceNode*       Parent{nullptr};
+                ImmediateUserInterfaceNode*       Parent{nullptr};
 
                 // settings
                 ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
@@ -189,8 +194,8 @@ namespace Frenchie
 
         struct ImmedidateUserInterfaceNodeHierarchy
         {
-            ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> _GetParent =
-                [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
+            ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> _GetParent =
+                [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
                     return _Node != nullptr ? _Node->State.Parent : nullptr;
                 }) : GetParent(_GetParent){}
@@ -199,26 +204,26 @@ namespace Frenchie
 
             std::vector<int>                                                          Indexes;
             std::vector<int>                                                          Entries;
-            std::vector<ImmedidateUserInterfaceNode*>                                 Singletons;
-            std::vector<ImmedidateUserInterfaceNode*>                                 Sorted;
-            std::function<ImmedidateUserInterfaceNode*(ImmedidateUserInterfaceNode*)> GetParent;
+            std::vector<ImmediateUserInterfaceNode*>                                 Singletons;
+            std::vector<ImmediateUserInterfaceNode*>                                 Sorted;
+            std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> GetParent;
 
-            std::vector<ImmedidateUserInterfaceNode*>::iterator begin(const ImmedidateUserInterfaceNode* _Node)
+            std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node)
             {
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
             }
 
-            std::vector<ImmedidateUserInterfaceNode*>::iterator end(const ImmedidateUserInterfaceNode* _Node)
+            std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node)
             {
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
             }
 
-            int size(const ImmedidateUserInterfaceNode* _Node)
+            int size(const ImmediateUserInterfaceNode* _Node)
             {
                 return (int)(end(_Node) - begin(_Node));
             }
 
-            void build(const std::vector<ImmedidateUserInterfaceNode*>& _Nodes)
+            void build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
             {
                 std::vector<int> workspace(_Nodes.size()+1);
 
@@ -267,7 +272,7 @@ namespace Frenchie
 
         private:
 
-            ImmedidateUserInterfaceNode* get_parent(ImmedidateUserInterfaceNode* _Node)
+            ImmediateUserInterfaceNode* get_parent(ImmediateUserInterfaceNode* _Node)
             {
                 return GetParent != nullptr ? GetParent(_Node) : nullptr;
             }
@@ -309,7 +314,7 @@ namespace Frenchie
                     GS_ASSERT(m_Duplicates.count(_ID) <= 1);
                     m_Cache[_ID] = std::make_unique<Type>(_ID);
                 }
-                ImmedidateUserInterfaceNode* node = m_Cache[_ID].get();
+                ImmediateUserInterfaceNode* node = m_Cache[_ID].get();
 
                 node->State.Settings       = _Settings;
                 node->State.RenderingIndex = (int)m_NodesRenderingList.size();
@@ -335,15 +340,15 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
-            mutable std::map<std::string, std::unique_ptr<ImmedidateUserInterfaceNode>> m_Cache;
+            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
             mutable ImmedidateUserInterfaceStyle                                        m_Style;
             mutable std::multiset<std::string>                                          m_Duplicates;
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
             mutable ImmedidateUserInterfaceNodeHierarchy                                m_DockAreas;
             mutable std::shared_ptr<Immediate2DRenderer>                                m_Renderer           {nullptr};
-            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingList;
-            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingCache;
-            mutable std::vector<ImmedidateUserInterfaceNode*>                           m_NodesRenderingStack;
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
         };
     };
 }

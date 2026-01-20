@@ -345,7 +345,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
             m_Input.MouseButtons[mouseButton].Hold =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
                     m_Input.MouseButtons[mouseButton].PressTime,
-                    Frenchie::Core::tic()) > 100;
+                    Frenchie::Core::tic()) > 50; // TODO: MUST BE A SETTING
         }
 
         if(m_Input.MouseButtons[mouseButton].Released)
