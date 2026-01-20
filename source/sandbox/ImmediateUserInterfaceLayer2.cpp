@@ -1862,9 +1862,9 @@ void ImmedidateUserInterfaceContextLayer::finish()
         m_Renderer->close();
 }
 
-bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
-    if(begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings))
+    if(begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened))
     {
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
