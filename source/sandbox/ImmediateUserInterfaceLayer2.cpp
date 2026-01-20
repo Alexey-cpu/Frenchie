@@ -290,9 +290,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
                                 resizable->Cache.BoundingBox.Max));
@@ -323,10 +331,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                            
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                                 resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
@@ -357,9 +372,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                                 resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
@@ -390,9 +413,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min,
                                 resizable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
@@ -421,9 +452,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                                 resizable->Cache.BoundingBox.Max));
@@ -452,9 +491,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                                 resizable->Cache.BoundingBox.Max));
@@ -483,9 +530,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min,
                                 resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
@@ -514,9 +569,17 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value() &&
+                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                                 resizable->Cache.BoundingBox.Min,
                                 resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
@@ -995,9 +1058,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
                     resizable->Cache.BoundingBox.Max));
@@ -1025,10 +1096,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                     resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
@@ -1056,9 +1134,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                     resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
@@ -1086,9 +1172,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min,
                     resizable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
@@ -1114,9 +1208,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                     resizable->Cache.BoundingBox.Max));
@@ -1142,9 +1244,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                     resizable->Cache.BoundingBox.Max));
@@ -1170,9 +1280,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min,
                     resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
@@ -1198,9 +1316,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseHold.has_value())
+            // trigger event
+            if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
+                return;
+            }
+
+            // execute event
+            if(_Event.MouseDown.has_value() &&
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+            {
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
                     resizable->Cache.BoundingBox.Min,
                     resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
