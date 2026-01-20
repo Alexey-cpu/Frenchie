@@ -85,6 +85,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         }
     };
 
+    create_horizontal_layout("Layout-1");
 
     // if(m_ImmediateUserInterface->begin_window(
     //     "Window-1",
