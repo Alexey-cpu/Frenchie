@@ -1689,10 +1689,18 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                         window->DockingIndex = ++dockindex;
                 }
             }
-
-            _Docked->Docker        = nullptr;
-            _Docked->DockingActive = false;
-            _Docked->DockingIndex  = -1;
+            
+            if(_Context->m_DockAreas.size(_Docked) > 0)
+            {
+                _Docked->Docker        = nullptr;
+                _Docked->DockingIndex  = -1;
+            }
+            else
+            {
+                _Docked->Docker        = nullptr;
+                _Docked->DockingActive = false;
+                _Docked->DockingIndex  = -1;
+            }
         }
     };
 
@@ -1869,6 +1877,11 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
 
+        if(m_DockAreas.size(window) > 0 || window->Docker != nullptr)
+            window->State.RenderChildren = window->DockingActive;
+        else
+            window->State.RenderChildren = true;
+            
         if(window->Docker != nullptr || window->State.Parent != nullptr)
             return true;
 
@@ -1876,12 +1889,15 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
             std::string(_ID).append("/FrameBox"),
             _Settings))
         {
+            dynamic_cast<ImmediateUserInterfaceWindowFrameBox*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
+
             if(begin_node<ImmediateUserInterfaceWindowFrame>(
                 std::string(_ID).append("/Frame"),
                 _Settings))
             {
-                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = window->Name;
-                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = window;
+                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title                = window->Name;
+                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window               = window;
+                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
 
                 end_node<ImmediateUserInterfaceWindowFrame>();
             }
@@ -1903,6 +1919,8 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
                         "DockingWindowFrameGizmo", // this is not a bug as docked window gizmos have the only instance in UI
                         _Settings))
                     {
+                        dynamic_cast<ImmedaiateUserInterfaceDockingWindowFrameGizmo*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
+
                         end_node<ImmedaiateUserInterfaceDockingWindowFrameGizmo>();
                     }
                 }
@@ -1912,8 +1930,9 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
                         std::string((*it)->Name).append("/Frame"),
                         _Settings))
                     {
-                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title  = (*it)->Name;
-                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title                = (*it)->Name;
+                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window               = dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
                         end_node<ImmediateUserInterfaceWindowFrame>();
                     }
                 }
