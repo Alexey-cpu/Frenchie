@@ -298,7 +298,7 @@ namespace Frenchie
             virtual void finish() override;
 
             // API
-            bool begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
+            bool begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened = nullptr);
             void end_window();
             
             bool begin_vertial_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
@@ -310,8 +310,15 @@ namespace Frenchie
         // private: // TODO: make this private when finished
 
             template<typename Type>
-            bool begin_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+            bool begin_node(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr)
             {
+                // check if we need to render the node
+                if(_Render != nullptr && !(*_Render))
+                    return false;
+
                 // create node
                 if(m_Cache.find(_ID) == m_Cache.end())
                 {
