@@ -14,7 +14,7 @@ namespace Frenchie
         public:
 
             // auxiliary lambdas
-            static void clamp_bounding_box(ImmedidateUserInterfaceNode* _Node, gs_2dboxf _BoundingBox)
+            static void clamp_bounding_box(ImmediateUserInterfaceNode* _Node, gs_2dboxf _BoundingBox)
             {
                 // handle minimum width
                 float minX = _BoundingBox.size().x > _Node->State.MinimumSize.x ? _BoundingBox.Min.x : _Node->Cache.BoundingBox.Min.x + (_Node->State.BoundingBox.Min.x - _Node->Cache.BoundingBox.Min.x);
@@ -30,31 +30,31 @@ namespace Frenchie
                 _Node->State.BoundingBox = gs_2dboxf(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
             }
 
-            static gs_2d_ellipsef build_resize_top_left_ellipse(ImmedidateUserInterfaceNode* _Node)
+            static gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Min, WindowResizeAngleGizmoRadius);
             }
 
-            static gs_2d_ellipsef build_resize_top_right_ellipse(ImmedidateUserInterfaceNode* _Node)
+            static gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
             }
 
-            static gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmedidateUserInterfaceNode* _Node)
+            static gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Max - gs_vec2f(_Node->State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
             };
 
-            static gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmedidateUserInterfaceNode* _Node)
+            static gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Max, WindowResizeAngleGizmoRadius);
             };
 
-            static gs_2dboxf build_resize_top_box(ImmedidateUserInterfaceNode* _Node)
+            static gs_2dboxf build_resize_top_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -63,7 +63,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), WindowResizeSideGizmoWidth));
             };
 
-            static gs_2dboxf build_resize_left_box(ImmedidateUserInterfaceNode* _Node)
+            static gs_2dboxf build_resize_left_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -72,7 +72,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->State.BoundingBox.height()));
             };
 
-            static gs_2dboxf build_resize_right_box(ImmedidateUserInterfaceNode* _Node)
+            static gs_2dboxf build_resize_right_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -81,7 +81,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
             };
 
-            static gs_2dboxf build_resize_bottom_box(ImmedidateUserInterfaceNode* _Node)
+            static gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -92,10 +92,10 @@ namespace Frenchie
         };
     
         // layout
-        struct ImmedidateUserInterfaceNodeVerticalStack : public ImmedidateUserInterfaceNode
+        struct ImmedidateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
+            ImmedidateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
             virtual ~ImmedidateUserInterfaceNodeVerticalStack(){}
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
@@ -132,10 +132,10 @@ namespace Frenchie
             }
         };
 
-        struct ImmedidateUserInterfaceNodeHorizontalStack : public ImmedidateUserInterfaceNode
+        struct ImmedidateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmedidateUserInterfaceNode(_Name){}
+            ImmedidateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
             virtual ~ImmedidateUserInterfaceNodeHorizontalStack(){}
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
@@ -269,7 +269,7 @@ namespace Frenchie
                     if(ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -290,7 +290,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -302,7 +302,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -323,7 +323,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
                             
@@ -336,7 +336,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -357,7 +357,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -369,7 +369,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -390,7 +390,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -402,7 +402,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_top_box(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -421,7 +421,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -433,7 +433,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_left_box(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -452,7 +452,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -464,7 +464,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_right_box(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -483,7 +483,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -495,7 +495,7 @@ namespace Frenchie
                     else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_box(this).contains(_Event.CursorPosition) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
                     {
-                        auto resizable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (resizable->State.Parent &&
                                 ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable->State.Parent).contains(_Event.CursorPosition))
                         {
@@ -514,7 +514,7 @@ namespace Frenchie
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                             _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -539,7 +539,7 @@ namespace Frenchie
                     if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
                         (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                     {
-                        auto movable = dynamic_cast<ImmedidateUserInterfaceNode*>(this);
+                        auto movable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
                         while (movable->State.Parent)
                             movable = movable->State.Parent;
 
@@ -557,6 +557,50 @@ namespace Frenchie
                 return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_End - ImmedidateUserInterfaceWindowLayer_::ImmedidateUserInterfaceWindowLayer_Begin));
             }
 
+            static void setup_as_active_docking_window(
+                ImmedidateUserInterfaceContextLayer* _Context,
+                ImmedidateUserInterfaceWindow*       _Docked)
+            {
+                if(_Context == nullptr || _Docked == nullptr)
+                    return;
+
+                for(auto it = _Context->m_DockAreas.begin(_Docked->Docker ? _Docked->Docker : _Docked);
+                         it != _Context->m_DockAreas.end(_Docked->Docker ? _Docked->Docker : _Docked);
+                         it++)
+                {
+                    ImmedidateUserInterfaceWindow* dockable =
+                        dynamic_cast<ImmedidateUserInterfaceWindow*>((*it));
+
+                    if(dockable != nullptr)
+                        dockable->DockingActive = false;
+                }
+
+                if(_Docked->Docker != nullptr)
+                    _Docked->Docker->DockingActive = false;
+
+                _Docked->DockingActive =
+                    _Docked->Docker != nullptr || _Context->m_DockAreas.size(_Docked) > 0;
+            }
+
+            static void setup_as_active_focused_window(
+                ImmedidateUserInterfaceContextLayer* _Context,
+                ImmedidateUserInterfaceWindow*       _Docked)
+            {
+                if(_Context == nullptr || _Docked == nullptr)
+                    return;
+
+                for (auto node : _Context->m_Hierarchy.Singletons)
+                {
+                    ImmedidateUserInterfaceWindow* window =
+                        dynamic_cast<ImmedidateUserInterfaceWindow*>(node);
+
+                    if(window != nullptr)
+                        window->DockingFocused = false;
+                }
+
+                _Docked->DockingFocused = true;
+            }
+
             ImmedidateUserInterfaceWindow* Docker{nullptr};
             gs_2dboxf                      DockingBox;
             int                            DockingIndex  {-1};
@@ -564,10 +608,10 @@ namespace Frenchie
             bool                           DockingFocused{false};
         };
     
-        struct ImmedidateUserInterfaceWindowFrame : public ImmedidateUserInterfaceNode
+        struct ImmedidateUserInterfaceWindowFrame : public ImmediateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceWindowFrame(const std::string& _ID) : ImmedidateUserInterfaceNode(_ID){}
+            ImmedidateUserInterfaceWindowFrame(const std::string& _ID) : ImmediateUserInterfaceNode(_ID){}
             virtual ~ImmedidateUserInterfaceWindowFrame(){}
 
             virtual void render(ImmedidateUserInterfaceContextLayer* _Context) override
@@ -626,8 +670,13 @@ namespace Frenchie
                 _Context->m_Renderer->push_text(
                     Title,
                     _Context->m_Style.FontSize,
-                    gs_vec4f(255.f, 0.f, 0.f, 255.f),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
+                    _Context->m_Renderer->calculate_transform_matrix(
+                        (float)place_in_follow(),
+                        gs_vec2f(
+                            State.BoundingBox.Min.x + gs_max(_Context->m_Style.FramesWidth * 2.f, 16.f),
+                            State.BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(Title, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.5f)),
+                    _Context->m_Style.Font);
             }
 
             virtual void layout(ImmedidateUserInterfaceContextLayer* _Context) override
@@ -635,7 +684,7 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
-                ImmedidateUserInterfaceNode::layout(_Context);
+                ImmediateUserInterfaceNode::layout(_Context);
                 State.MinimumSize = gs_vec2f(4.f, _Context->m_Style.FontSize);
                 State.MaximumSize = gs_vec2f((float)INT_MAX, _Context->m_Style.FontSize);
             }
@@ -647,35 +696,8 @@ namespace Frenchie
 
                 if(State.MousePressed.has_value())
                 {
-                    // enable focus of pressed window
-                    for (auto node : _Context->m_NodesRenderingList)
-                    {
-                        ImmedidateUserInterfaceWindow* window =
-                            dynamic_cast<ImmedidateUserInterfaceWindow*>(node);
-
-                        if(window != nullptr)
-                            window->DockingFocused = false;
-                    }
-
-                    Window->DockingFocused = true;
-
-                    // enable activity of a pressed window which is being docked or which is a docker
-                    for(auto it = _Context->m_DockAreas.begin((Window->Docker != nullptr ? Window->Docker : Window));
-                             it != _Context->m_DockAreas.end((Window->Docker != nullptr ? Window->Docker : Window));
-                             it++)
-                    {
-                        ImmedidateUserInterfaceWindow* window =
-                            dynamic_cast<ImmedidateUserInterfaceWindow*>(*it);
-
-                        if(window != nullptr)
-                            window->DockingActive = false;
-                    }
-
-                    if(Window->Docker != nullptr)
-                        Window->Docker->DockingActive = false;
-                    
-                    if(Window->Docker != nullptr || _Context->m_DockAreas.size(Window) > 0)
-                        Window->DockingActive = true;
+                    ImmedidateUserInterfaceWindow::setup_as_active_focused_window(_Context, Window);
+                    ImmedidateUserInterfaceWindow::setup_as_active_docking_window(_Context, Window);
                 }
 
                 // pass event to the window
@@ -704,7 +726,7 @@ namespace Frenchie
                             gs_vec4f(5, 255, 255, 200.f),
                             _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
@@ -728,7 +750,7 @@ namespace Frenchie
                             gs_vec4f(5, 255, 255, 200.f),
                             _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
 
-                        if(_Event.MouseDown.has_value())
+                        if(_Event.MouseHold.has_value())
                         {
                             Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
                             
@@ -785,10 +807,10 @@ namespace Frenchie
             ImmedidateUserInterfaceWindow* Window{nullptr};
         };
         
-        struct ImmedidateUserInterfaceWindowFrameBox : public ImmedidateUserInterfaceNode
+        struct ImmedidateUserInterfaceWindowFrameBox : public ImmediateUserInterfaceNode
         {
         public:
-            ImmedidateUserInterfaceWindowFrameBox(const std::string& _ID) : ImmedidateUserInterfaceNode(_ID){}
+            ImmedidateUserInterfaceWindowFrameBox(const std::string& _ID) : ImmediateUserInterfaceNode(_ID){}
             virtual ~ImmedidateUserInterfaceWindowFrameBox(){}
 
             virtual void render(ImmedidateUserInterfaceContextLayer*) override{}
@@ -828,10 +850,10 @@ namespace Frenchie
 }
 
 // ImmedidateUserInterfaceNode
-ImmedidateUserInterfaceNode::ImmedidateUserInterfaceNode(const std::string _Name) : Name(_Name){}
-ImmedidateUserInterfaceNode::~ImmedidateUserInterfaceNode(){}
+ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string _Name) : Name(_Name){}
+ImmediateUserInterfaceNode::~ImmediateUserInterfaceNode(){}
 
-void ImmedidateUserInterfaceNode::render(ImmedidateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceNode::render(ImmedidateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr || !is_partially_visible())
         return;
@@ -879,9 +901,9 @@ void ImmedidateUserInterfaceNode::render(ImmedidateUserInterfaceContextLayer* _C
     }
 }
 
-void ImmedidateUserInterfaceNode::layout(ImmedidateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfaceNode::layout(ImmedidateUserInterfaceContextLayer* _Context){}
 
-void ImmedidateUserInterfaceNode::measure(ImmedidateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceNode::measure(ImmedidateUserInterfaceContextLayer* _Context)
 {
     gs_2dboxf box = State.BoundingBox;
     for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -896,7 +918,7 @@ void ImmedidateUserInterfaceNode::measure(ImmedidateUserInterfaceContextLayer* _
     State.ContentSize = box.size();
 }
 
-void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     // resize
     if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
@@ -923,7 +945,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -953,7 +975,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
                 
@@ -984,7 +1006,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -1014,7 +1036,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -1042,7 +1064,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -1070,7 +1092,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -1098,7 +1120,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -1126,7 +1148,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                 _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
 
-            if(_Event.MouseDown.has_value())
+            if(_Event.MouseHold.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
                 ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
@@ -1164,7 +1186,7 @@ void ImmedidateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _C
     }
 }
 
-bool ImmedidateUserInterfaceNode::is_visible() const
+bool ImmediateUserInterfaceNode::is_visible() const
 {
     if(State.Parent == nullptr)
         return true;
@@ -1177,7 +1199,7 @@ bool ImmedidateUserInterfaceNode::is_visible() const
     return box.contains(State.BoundingBox);
 }
 
-bool ImmedidateUserInterfaceNode::is_partially_visible() const
+bool ImmediateUserInterfaceNode::is_partially_visible() const
 {
     if(State.Parent == nullptr)
         return true;
@@ -1190,7 +1212,7 @@ bool ImmedidateUserInterfaceNode::is_partially_visible() const
     return box.overlaps(State.BoundingBox);
 }
 
-int ImmedidateUserInterfaceNode::place_in_follow()
+int ImmediateUserInterfaceNode::place_in_follow()
 {
     State.TotalThickness += (++State.SelfThickness);
     return State.Depth + State.SelfThickness;
@@ -1206,13 +1228,13 @@ bool ImmedidateUserInterfaceContextLayer::awake()
         m_Renderer = Frenchie::Application::application()->push_layer<Immediate2DRenderer>();
 
     m_Hierarchy = ImmedidateUserInterfaceNodeHierarchy(
-        [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
+        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
             return _Node != nullptr ? _Node->State.Parent : nullptr;
         });
 
     m_DockAreas = ImmedidateUserInterfaceNodeHierarchy(
-        [](ImmedidateUserInterfaceNode* _Node)->ImmedidateUserInterfaceNode*
+        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
             ImmedidateUserInterfaceWindow* window =
                 dynamic_cast<ImmedidateUserInterfaceWindow*>(_Node);
@@ -1253,7 +1275,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
         }
 
     private:
-        static void node_layout(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node)
+        static void node_layout(ImmedidateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
         {
             if(_Context == nullptr || _Node == nullptr)
                 return;
@@ -1284,7 +1306,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 return;
 
             // find the top most node catching the mouse cursor
-            ImmedidateUserInterfaceNode* hoveredNode  = nullptr;
+            ImmediateUserInterfaceNode* hoveredNode  = nullptr;
             int                          maximumDepth = INT_MIN;
 
             for (auto& node : _Context->m_NodesRenderingList)
@@ -1377,7 +1399,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             }
 
             // find the top most hovered node
-            ImmedidateUserInterfaceNode* hoveredNode  = nullptr;
+            ImmediateUserInterfaceNode* hoveredNode  = nullptr;
             int                          maximumDepth = INT_MIN;
 
             for (auto& node : _Context->m_NodesRenderingList)
@@ -1529,36 +1551,44 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
             }
 
-            if(!allMouseButtonsAreReleased ||
-                moved->Docker   == hovered ||
-                hovered->Docker == moved)
+            if(allMouseButtonsAreReleased)
+                ImmedidateUserInterfaceWindowsController::attach_to_docker(_Context, hovered, moved);
+        }
+
+    private:
+        static void attach_to_docker(
+            ImmedidateUserInterfaceContextLayer* _Context,
+            ImmedidateUserInterfaceWindow*       _Docker,
+            ImmedidateUserInterfaceWindow*       _Docked)
+        {
+            if(_Context == nullptr || _Docker == nullptr || _Docked == nullptr || _Docked->Docker == _Docker || _Docker->Docker == _Docked)
                 return;
 
             // setup docker of the moved node
-            moved->Docker = hovered->Docker ? hovered->Docker : hovered;
+            _Docked->Docker = _Docker->Docker ? _Docker->Docker : _Docker;
 
             // if the moved node has docked windows we move this windows to the new docker
-            for(auto it = _Context->m_DockAreas.begin(moved); it != _Context->m_DockAreas.end(moved); ++it)
+            for(auto it = _Context->m_DockAreas.begin(_Docked); it != _Context->m_DockAreas.end(_Docked); ++it)
             {
                 ImmedidateUserInterfaceWindow* dockable =
                     dynamic_cast<ImmedidateUserInterfaceWindow*>((*it));
 
                 if(dockable != nullptr)
-                    dockable->Docker = hovered;
+                    dockable->Docker = _Docker;
             }
 
             // move the newly docked node to the end
             _Context->m_DockAreas.build(_Context->m_NodesRenderingList);
 
-            for(int i = _Context->m_DockAreas.Indexes[hovered->State.RenderingIndex];
-                    i < _Context->m_DockAreas.Indexes[hovered->State.RenderingIndex + 1] - 1;
+            for(int i = _Context->m_DockAreas.Indexes[_Docked->Docker->State.RenderingIndex];
+                    i < _Context->m_DockAreas.Indexes[_Docked->Docker->State.RenderingIndex + 1] - 1;
                     i++)
             {
-                if(_Context->m_DockAreas.Sorted[i] != moved)
+                if(_Context->m_DockAreas.Sorted[i] != _Docked)
                     continue;
 
                 for(int j = i;
-                        j < _Context->m_DockAreas.Indexes[hovered->State.RenderingIndex + 1] - 1;
+                        j < _Context->m_DockAreas.Indexes[_Docked->Docker->State.RenderingIndex + 1] - 1;
                         j++)
                 {
                     std::swap(
@@ -1570,8 +1600,8 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             // reindex docked nodex
             int dockindex = 0;
 
-            for(auto found  = _Context->m_DockAreas.begin(hovered);
-                     found != _Context->m_DockAreas.end(hovered);
+            for(auto found  = _Context->m_DockAreas.begin(_Docked->Docker);
+                     found != _Context->m_DockAreas.end(_Docked->Docker);
                      found++)
             {
                 ImmedidateUserInterfaceWindow* window =
@@ -1579,13 +1609,13 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
                 if(window == nullptr)
                     continue;
-                    
+
                 window->DockingActive = false;
                 window->DockingIndex  = ++dockindex;
             }
 
             // setup newly docked node as active
-            moved->DockingActive = true;
+            ImmedidateUserInterfaceWindow::setup_as_active_docking_window(_Context, _Docked);
         }
     };
 
@@ -1655,7 +1685,7 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
 
     private:
 
-        static void render_node(ImmedidateUserInterfaceContextLayer* _Context, ImmedidateUserInterfaceNode* _Node)
+        static void render_node(ImmedidateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
         {
             // calculate clippingbox
             {
@@ -1782,7 +1812,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
             std::sort(
                 m_DockAreas.begin(window),
                 m_DockAreas.end(window),
-                [](const ImmedidateUserInterfaceNode* _A, const ImmedidateUserInterfaceNode* _B)
+                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
                 {
                     return dynamic_cast<const ImmedidateUserInterfaceWindow*>(_A)->DockingIndex <
                             dynamic_cast<const ImmedidateUserInterfaceWindow*>(_B)->DockingIndex;
