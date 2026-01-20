@@ -210,11 +210,25 @@ namespace Frenchie
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node)
             {
+                if(_Node == nullptr                                             ||
+                    _Node->State.RenderingIndex          >= (int)Indexes.size() ||
+                    Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
+                {
+                    return Sorted.end();
+                }
+
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
             }
 
             std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node)
             {
+                if(_Node == nullptr                                                 ||
+                    _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
+                    Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
+                {
+                    return Sorted.end();
+                }
+
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
             }
 
