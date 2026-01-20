@@ -1535,27 +1535,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     (singleton->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                 {
                     moved = dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
-
-                    // reindex docked nodes of the docker of the moved node
-                    if(moved->Docker != nullptr)
-                    {
-                        int dockindex = 0;
-
-                        for(auto found  = _Context->m_DockAreas.begin(moved->Docker);
-                                 found != _Context->m_DockAreas.end(moved->Docker);
-                                 found++)
-                        {
-                            ImmediateUserInterfaceWindow* window =
-                                dynamic_cast<ImmediateUserInterfaceWindow*>(*found);
-
-                            if(window != nullptr && window != moved)
-                                window->DockingIndex = ++dockindex;
-                        }
-                    }
-
-                    moved->Docker        = nullptr;
-                    moved->DockingActive = false;
-                    moved->DockingIndex  = -1;
+                    ImmedidateUserInterfaceWindowsController::detach_from_docker(_Context, moved);
                     break;
                 }
             }
@@ -1626,8 +1606,8 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
     private:
         static void attach_to_docker(
             ImmedidateUserInterfaceContextLayer* _Context,
-            ImmediateUserInterfaceWindow*       _Docker,
-            ImmediateUserInterfaceWindow*       _Docked)
+            ImmediateUserInterfaceWindow*        _Docker,
+            ImmediateUserInterfaceWindow*        _Docked)
         {
             if(_Context == nullptr || _Docker == nullptr || _Docked == nullptr || _Docked->Docker == _Docker || _Docker->Docker == _Docked)
                 return;
@@ -1684,6 +1664,35 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
 
             // setup newly docked node as active
             ImmediateUserInterfaceWindow::setup_as_active_docking_window(_Context, _Docked);
+        }
+    
+        static void detach_from_docker(
+            ImmedidateUserInterfaceContextLayer* _Context,
+            ImmediateUserInterfaceWindow*        _Docked)
+        {
+            if(_Docked == nullptr)
+                return;
+
+            // reindex docked nodes of the docker of the moved node
+            if(_Docked->Docker != nullptr)
+            {
+                int dockindex = 0;
+
+                for(auto found  = _Context->m_DockAreas.begin(_Docked->Docker);
+                            found != _Context->m_DockAreas.end(_Docked->Docker);
+                            found++)
+                {
+                    ImmediateUserInterfaceWindow* window =
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(*found);
+
+                    if(window != nullptr && window != _Docked)
+                        window->DockingIndex = ++dockindex;
+                }
+            }
+
+            _Docked->Docker        = nullptr;
+            _Docked->DockingActive = false;
+            _Docked->DockingIndex  = -1;
         }
     };
 
