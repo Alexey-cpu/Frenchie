@@ -204,10 +204,10 @@ namespace Frenchie
 
             ~ImmedidateUserInterfaceNodeHierarchy(){}
 
-            std::vector<int>                                                          Indexes;
-            std::vector<int>                                                          Entries;
-            std::vector<ImmediateUserInterfaceNode*>                                 Singletons;
-            std::vector<ImmediateUserInterfaceNode*>                                 Sorted;
+            std::vector<int>                                                        Indexes;
+            std::vector<int>                                                        Entries;
+            std::vector<ImmediateUserInterfaceNode*>                                Singletons;
+            std::vector<ImmediateUserInterfaceNode*>                                Sorted;
             std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> GetParent;
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node)
