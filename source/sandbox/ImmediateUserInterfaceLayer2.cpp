@@ -398,10 +398,43 @@ namespace Frenchie
                 if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
                     !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                 {
-                    if((ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition)    ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)) &&
-                        ((*_Context->m_DockAreas.begin(Window->Docker)) == Window))
+                    if((ImmedidateUserInterfaceHelpers::build_resize_top_box(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)))
                     {
+                        // render resize gizmo
+                        auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_box(this);
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            resizeTopLeft.Min,
+                            resizeTopLeft.Max,
+                            16.f,
+                            gs_vec4f(5, 255, 255, 200.f),
+                            _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
+
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
+                        {
+                            Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value())
+                        {
+                            // ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
+                            //     Window->Docker->Cache.BoundingBox.Min + _Event.CursorDragDelta,
+                            //     Window->Docker->Cache.BoundingBox.Max));
+                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
+                                Window->Docker->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                                Window->Docker->Cache.BoundingBox.Max));
+                            return;
+                        }
+                    }
+
+                    if((ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)))
+                    {
+                        // render resize gizmo
                         auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this);
 
                         _Context->m_Renderer->push_arc_filled(
@@ -413,19 +446,27 @@ namespace Frenchie
                             gs_vec4f(5, 255, 255, 200.f),
                             _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value())
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
                                 Window->Docker->Cache.BoundingBox.Min + _Event.CursorDragDelta,
                                 Window->Docker->Cache.BoundingBox.Max));
                             return;
                         }
                     }
-                    else if((ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))   &&
-                        ((*_Context->m_DockAreas.begin(Window->Docker)) == Window))
+                    
+                    if((ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
                     {
+                        // render resize gizmo
                         auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this);
 
                         _Context->m_Renderer->push_arc_filled(
@@ -437,10 +478,16 @@ namespace Frenchie
                             gs_vec4f(5, 255, 255, 200.f),
                             _Context->m_Renderer->calculate_transform_matrix((float)(Cache.Depth + Cache.TotalThickness)));
 
-                        if(_Event.MouseHold.has_value())
+                        // trigger event
+                        if(_Event.MousePressed.has_value())
                         {
                             Window->Docker->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                            
+                            return;
+                        }
+
+                        // execute event
+                        if(_Event.MouseDown.has_value())
+                        {
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window->Docker, gs_2dboxf(
                                 Window->Docker->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                                 Window->Docker->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
@@ -1802,7 +1849,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
     if(begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened))
     {
         ImmediateUserInterfaceWindow* window =
-            dynamic_cast<ImmediateUserInterfaceWindow*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
+            get_rendering_stack_top<ImmediateUserInterfaceWindow>();
 
         if(m_DockAreas.size(window) > 0 || window->Docker != nullptr)
             window->State.RenderChildren = window->DockingActive;
@@ -1816,16 +1863,15 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
             std::string(_ID).append("/FrameBox"),
             _Settings))
         {
-            dynamic_cast<ImmediateUserInterfaceWindowFrameBox*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
+            get_rendering_stack_top<ImmediateUserInterfaceWindowFrameBox>()->State.RenderedAlways = true;
 
             if(begin_node<ImmediateUserInterfaceWindowFrame>(
                 std::string(_ID).append("/Frame"),
                 _Settings))
             {
-                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title                = window->Name;
-                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window               = window;
-                dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
-
+                get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->Title                = window->Name;
+                get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->Window               = window;
+                get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.RenderedAlways = true;
                 end_node<ImmediateUserInterfaceWindowFrame>();
             }
 
@@ -1846,7 +1892,7 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
                         "DockingWindowFrameGizmo", // this is not a bug as docked window gizmos have the only instance in UI
                         _Settings))
                     {
-                        dynamic_cast<ImmedaiateUserInterfaceDockingWindowFrameGizmo*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
+                        get_rendering_stack_top<ImmedaiateUserInterfaceDockingWindowFrameGizmo>()->State.RenderedAlways = true;
 
                         end_node<ImmedaiateUserInterfaceDockingWindowFrameGizmo>();
                     }
@@ -1857,9 +1903,9 @@ bool ImmedidateUserInterfaceContextLayer::begin_window(const std::string& _ID, c
                         std::string((*it)->Name).append("/Frame"),
                         _Settings))
                     {
-                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Title                = (*it)->Name;
-                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->Window               = dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-                        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1])->State.RenderedAlways = true;
+                        get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->Title                = (*it)->Name;
+                        get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->Window               = dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                        get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.RenderedAlways = true;
                         end_node<ImmediateUserInterfaceWindowFrame>();
                     }
                 }

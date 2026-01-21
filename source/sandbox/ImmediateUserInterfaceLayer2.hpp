@@ -323,6 +323,15 @@ namespace Frenchie
             bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
             void end_horizontal_stack();
 
+            // hierarchy
+            template<typename Type> Type* get_rendering_stack_top() const
+            {
+                if(m_NodesRenderingStack.empty())
+                    return nullptr;
+
+                return dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
+            }
+
         // private: // TODO: make this private when finished
 
             template<typename Type>
