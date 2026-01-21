@@ -421,9 +421,6 @@ namespace Frenchie
                         // execute event
                         if(_Event.MouseDown.has_value())
                         {
-                            // ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
-                            //     Window->Docker->Cache.BoundingBox.Min + _Event.CursorDragDelta,
-                            //     Window->Docker->Cache.BoundingBox.Max));
                             ImmedidateUserInterfaceHelpers::clamp_bounding_box(Window, gs_2dboxf(
                                 Window->Docker->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                                 Window->Docker->Cache.BoundingBox.Max));
@@ -1547,7 +1544,20 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             }
 
             if(allMouseButtonsAreReleased)
+            {
+                // detach all gizmos from docker
+                for(auto singleton : _Context->m_Hierarchy.Singletons)
+                {
+                    ImmedaiateUserInterfaceDockingWindowGizmo* gizmo =
+                        dynamic_cast<ImmedaiateUserInterfaceDockingWindowGizmo*>(singleton);
+
+                    if(gizmo != nullptr)
+                        ImmedidateUserInterfaceWindowsController::detach_from_docker(_Context, gizmo);
+                }
+
+                // attach node
                 ImmedidateUserInterfaceWindowsController::attach_to_docker(_Context, hovered, moved);
+            }
             else if(moved != hovered && moved->Docker != hovered && hovered->Docker != moved)
             {
 
@@ -1561,7 +1571,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
                     _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
-                // dock potentially docking window to a docker
+                // attach docking window gizmo to a docker
                 if(_Context->begin_node<ImmedaiateUserInterfaceDockingWindowGizmo>(
                     "DockingWindowGizmo", // this is not a bug as docked window gizmos have the only instance in UI
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -1571,110 +1581,125 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     ImmedidateUserInterfaceWindowsController::attach_to_docker(
                         _Context,
                         hovered,
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(_Context->m_NodesRenderingStack[_Context->m_NodesRenderingStack.size() - 1]));
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>());
+
                     _Context->end_node<ImmedaiateUserInterfaceDockingWindowGizmo>();
                 }
             }
         }
 
     private:
+
         static void attach_to_docker(
             ImmedidateUserInterfaceContextLayer* _Context,
             ImmediateUserInterfaceWindow*        _Docker,
             ImmediateUserInterfaceWindow*        _Docked)
         {
+            // auxiliary lambdas
+            auto move_to_cache = [](
+                ImmedidateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceWindow*        _Docker)
+            {
+                if(_Context == nullptr || _Docker == nullptr)
+                    return;
+
+                 _Context->m_WindowsDockingCache.push_back(_Docker);
+            };
+
+            auto move_child_docked_windows_to_cache = [](
+                ImmedidateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceWindow*        _Docker)
+            {
+                if(_Context == nullptr || _Docker == nullptr)
+                    return;
+
+                std::sort(
+                    _Context->m_DockAreas.begin(_Docker),
+                    _Context->m_DockAreas.end(_Docker),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                    });
+
+                for(auto it  = _Context->m_DockAreas.begin(_Docker);
+                         it != _Context->m_DockAreas.end(_Docker);
+                         it++)
+                {
+                    _Context->m_WindowsDockingCache.push_back(*it);
+                }
+            };
+
             if(_Context == nullptr || _Docker == nullptr || _Docked == nullptr || _Docked->Docker == _Docker || _Docker->Docker == _Docked)
                 return;
 
-            // setup docker of the moved node
-            _Docked->Docker = _Docker->Docker ? _Docker->Docker : _Docker;
+            // get ready
+            _Context->m_WindowsDockingCache.clear();
 
-            // if the moved node has docked windows we move this windows to the new docker
-            for(auto it = _Context->m_DockAreas.begin(_Docked); it != _Context->m_DockAreas.end(_Docked); ++it)
-            {
-                ImmediateUserInterfaceWindow* dockable =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>((*it));
+            // move child docked windows and self to windows docking cache
+            move_child_docked_windows_to_cache(_Context, _Docker);
+            move_to_cache(_Context, _Docked);
+            move_child_docked_windows_to_cache(_Context, _Docked);
 
-                if(dockable != nullptr)
-                    dockable->Docker = _Docker;
-            }
-
-            // move the newly docked node to the end
-            _Context->m_DockAreas.build(_Context->m_NodesRenderingList);
-
-            for(int i = _Context->m_DockAreas.Indexes[_Docked->Docker->State.RenderingIndex];
-                    i < _Context->m_DockAreas.Indexes[_Docked->Docker->State.RenderingIndex + 1] - 1;
-                    i++)
-            {
-                if(_Context->m_DockAreas.Sorted[i] != _Docked)
-                    continue;
-
-                for(int j = i;
-                        j < _Context->m_DockAreas.Indexes[_Docked->Docker->State.RenderingIndex + 1] - 1;
-                        j++)
-                {
-                    std::swap(
-                        _Context->m_DockAreas.Sorted[j],
-                        _Context->m_DockAreas.Sorted[j + 1]);
-                }
-            }
-
-            // reindex docked nodex
+            // reindex docked nodes and setup their docker
             int dockindex = 0;
 
-            for(auto found  = _Context->m_DockAreas.begin(_Docked->Docker);
-                     found != _Context->m_DockAreas.end(_Docked->Docker);
-                     found++)
+            for(auto it  = _Context->m_WindowsDockingCache.begin();
+                     it != _Context->m_WindowsDockingCache.end();
+                     it++)
             {
                 ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(*found);
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
                 if(window == nullptr)
                     continue;
-
-                window->DockingActive = false;
-                window->DockingIndex  = ++dockindex;
+                
+                window->Docker       = _Docker->Docker ? _Docker->Docker : _Docker;
+                window->DockingIndex = dockindex++;
             }
 
-            // setup newly docked node as active
+            // clear cache
+            _Context->m_WindowsDockingCache.clear();
+
+            // setup self as active
             ImmediateUserInterfaceWindow::setup_as_active_docking_window(_Context, _Docked);
         }
     
         static void detach_from_docker(
             ImmedidateUserInterfaceContextLayer* _Context,
-            ImmediateUserInterfaceWindow*        _Docked)
+            ImmediateUserInterfaceWindow*        _Detached)
         {
-            if(_Docked == nullptr)
+            if(_Detached == nullptr)
                 return;
 
             // reindex docked nodes of the docker of the moved node
-            if(_Docked->Docker != nullptr)
+            if(_Detached->Docker != nullptr)
             {
                 int dockindex = 0;
 
-                for(auto found  = _Context->m_DockAreas.begin(_Docked->Docker);
-                            found != _Context->m_DockAreas.end(_Docked->Docker);
-                            found++)
+                for(auto it  = _Context->m_DockAreas.begin(_Detached->Docker);
+                         it != _Context->m_DockAreas.end(_Detached->Docker);
+                         it++)
                 {
                     ImmediateUserInterfaceWindow* window =
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(*found);
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
-                    if(window != nullptr && window != _Docked)
-                        window->DockingIndex = ++dockindex;
+                    if(window != nullptr && window != _Detached)
+                        window->DockingIndex = dockindex++;
                 }
+
+                _Detached->Docker        = nullptr;
+                _Detached->DockingActive = false;
+                _Detached->DockingIndex  = -1;
+                return;
             }
             
-            if(_Context->m_DockAreas.size(_Docked) > 0)
-            {
-                _Docked->Docker        = nullptr;
-                _Docked->DockingIndex  = -1;
-            }
-            else
-            {
-                _Docked->Docker        = nullptr;
-                _Docked->DockingActive = false;
-                _Docked->DockingIndex  = -1;
-            }
+            if(_Context->m_DockAreas.size(_Detached) <= 0)
+                return;
+
+            // reattach children to the first child
+            _Detached->Docker        = nullptr;
+            _Detached->DockingIndex  = -1;
         }
     };
 
@@ -1836,6 +1861,7 @@ void ImmedidateUserInterfaceContextLayer::frame_finish()
     m_NodesRenderingList.clear();
     m_NodesRenderingCache.clear();
     m_NodesRenderingStack.clear();
+    m_WindowsDockingCache.clear();
 }
 
 void ImmedidateUserInterfaceContextLayer::finish()
