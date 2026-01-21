@@ -383,14 +383,15 @@ namespace Frenchie
             }
 
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmedidateUserInterfaceStyle                                        m_Style;
-            mutable std::multiset<std::string>                                          m_Duplicates;
-            mutable ImmedidateUserInterfaceNodeHierarchy                                m_Hierarchy;
-            mutable ImmedidateUserInterfaceNodeHierarchy                                m_DockAreas;
-            mutable std::shared_ptr<Immediate2DRenderer>                                m_Renderer           {nullptr};
+            mutable ImmedidateUserInterfaceStyle                                       m_Style;
+            mutable std::multiset<std::string>                                         m_Duplicates;
+            mutable ImmedidateUserInterfaceNodeHierarchy                               m_Hierarchy;
+            mutable ImmedidateUserInterfaceNodeHierarchy                               m_DockAreas;
+            mutable std::shared_ptr<Immediate2DRenderer>                               m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_WindowsDockingCache;
         };
     };
 }

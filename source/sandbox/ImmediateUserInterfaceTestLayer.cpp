@@ -118,23 +118,15 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         "Window-4",
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    {
-        // if(m_ImmediateUserInterface->begin_window(
-        //     "Window-5",
-        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-        // {
-        //     m_ImmediateUserInterface->end_window();
-        // }
+    {        
+        m_ImmediateUserInterface->end_window();
+    }
 
-        // if(m_ImmediateUserInterface->begin_window(
-        //     "Window-6",
-        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-        // {
-        //     m_ImmediateUserInterface->end_window();
-        // }
-        
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-5",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {        
         m_ImmediateUserInterface->end_window();
     }
 }
