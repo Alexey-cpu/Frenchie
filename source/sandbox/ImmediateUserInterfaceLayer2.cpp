@@ -1748,6 +1748,9 @@ void ImmedidateUserInterfaceContextLayer::frame_render()
     public:
         static void execute(ImmedidateUserInterfaceContextLayer* _Context)
         {
+            // get ready
+            _Context->m_NodesRenderingCache.clear();
+
             // compute initial depth of singletons
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
