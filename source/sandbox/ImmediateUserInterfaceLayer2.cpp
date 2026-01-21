@@ -1546,6 +1546,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
             if(allMouseButtonsAreReleased)
             {
                 // detach all gizmos from docker
+                // TODO: this MUST BE done on end of drawing of gizmo
                 for(auto singleton : _Context->m_Hierarchy.Singletons)
                 {
                     ImmedaiateUserInterfaceDockingWindowGizmo* gizmo =
@@ -1576,6 +1577,7 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                     "DockingWindowGizmo", // this is not a bug as docked window gizmos have the only instance in UI
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
+                    // rebuild docking hierarchy
                     _Context->m_DockAreas.build(_Context->m_NodesRenderingList);
 
                     ImmedidateUserInterfaceWindowsController::attach_to_docker(
