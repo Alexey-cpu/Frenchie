@@ -52,11 +52,11 @@ namespace Frenchie
             }
 
             void build_mesh(
-                const gs_vec4f&                    _Color,
-                const RenderingQueueTexture&       _Texture,
-                std::vector<Immediate2DRendererPathSegment>&          _Segments,
-                std::vector<RenderingQueueVertex>& _Vertexes,
-                std::vector<int>&                  _Indexes)
+                const gs_vec4f&                              _Color,
+                const RenderingQueueTexture&                 _Texture,
+                std::vector<Immediate2DRendererPathSegment>& _Segments,
+                std::vector<RenderingQueueVertex>&           _Vertexes,
+                std::vector<int>&                            _Indexes)
             {
                 if(_Segments.empty())
                     return;
@@ -94,43 +94,48 @@ namespace Frenchie
                     return index;
                 };
 
-                for (int i = 1; i < (int)_Segments.size(); i++)
+                const bool pathIsClosed = gs_vector_length(_Segments[0].P1 - _Segments[_Segments.size() - 1].P2) < gs_epsilon<float>();
+
+                for (int i = 0; i < (int)_Segments.size(); i++)
                 {
                     build_triangle_filled_mesh(
-                        _Segments[i].P1min,
-                        _Segments[i].P2min,
-                        _Segments[i].P1max,
+                        _Segments[get_element(i, (int)_Segments.size())].P1min,
+                        _Segments[get_element(i, (int)_Segments.size())].P2min,
+                        _Segments[get_element(i, (int)_Segments.size())].P1max,
                         _Color,
                         _Texture,
                         _Vertexes,
                         _Indexes);
 
                     build_triangle_filled_mesh(
-                        _Segments[i].P1max,
-                        _Segments[i].P2min,
-                        _Segments[i].P2max,
+                        _Segments[get_element(i, (int)_Segments.size())].P1max,
+                        _Segments[get_element(i, (int)_Segments.size())].P2min,
+                        _Segments[get_element(i, (int)_Segments.size())].P2max,
                         _Color,
                         _Texture,
                         _Vertexes,
                         _Indexes);
 
-                    build_triangle_filled_mesh(
-                        _Segments[i].P1max,
-                        _Segments[get_element(i-1, (int)_Segments.size())].P2max,
-                        _Segments[get_element(i-1, (int)_Segments.size())].P2,
-                        _Color,
-                        _Texture,
-                        _Vertexes,
-                        _Indexes);
+                    if(i-1 >= 0 || pathIsClosed)
+                    {
+                        build_triangle_filled_mesh(
+                            _Segments[i].P1max,
+                            _Segments[get_element(i-1, (int)_Segments.size())].P2max,
+                            _Segments[get_element(i-1, (int)_Segments.size())].P2,
+                            _Color,
+                            _Texture,
+                            _Vertexes,
+                            _Indexes);
 
-                    build_triangle_filled_mesh(
-                        _Segments[i].P1min,
-                        _Segments[get_element(i-1, (int)_Segments.size())].P2min,
-                        _Segments[get_element(i-1, (int)_Segments.size())].P2,
-                        _Color,
-                        _Texture,
-                        _Vertexes,
-                        _Indexes);
+                        build_triangle_filled_mesh(
+                            _Segments[i].P1min,
+                            _Segments[get_element(i-1, (int)_Segments.size())].P2min,
+                            _Segments[get_element(i-1, (int)_Segments.size())].P2,
+                            _Color,
+                            _Texture,
+                            _Vertexes,
+                            _Indexes);
+                    }
                 }
                 
                 _Segments.clear();

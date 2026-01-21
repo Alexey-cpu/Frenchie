@@ -659,11 +659,13 @@ void Immediate2DRenderer::push_rectangle(
     const gs_vec2f _P2 = gs_vec2f(_Max.x, _Min.y);
     const gs_vec2f _P3 = gs_vec2f(_Max.x, _Max.y);
     const gs_vec2f _P4 = gs_vec2f(_Min.x, _Max.y);
-    build_line_mesh(_P1, _P2, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(_P1, _P2, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(_P2, _P3, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(_P3, _P4, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(_P4, _P1, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
+
+    Immediate2DRendererPathBuilder pathBuilder;
+    pathBuilder.push_segment(_P1, _P2, _Width, m_PathSegments);
+    pathBuilder.push_segment(_P2, _P3, _Width, m_PathSegments);
+    pathBuilder.push_segment(_P3, _P4, _Width, m_PathSegments);
+    pathBuilder.push_segment(_P4, _P1, _Width, m_PathSegments);
+    pathBuilder.build_mesh(_Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
 
     // push rendering command
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
