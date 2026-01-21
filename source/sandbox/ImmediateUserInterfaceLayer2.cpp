@@ -103,15 +103,17 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
-                gs_vec2f position   = State.BoundingBox.Min;
-                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                gs_vec2f position  = State.BoundingBox.Min;
+                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
-                // compute total size
+                // compute total size and children size scale
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
                     if((*it) != nullptr)
                         totalsize += (*it)->State.BoundingBox.size();
                 }
+
+                gs_vec2f scale = State.BoundingBox.size() / totalsize;
 
                 // layout children
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
@@ -121,11 +123,8 @@ namespace Frenchie
                     if(node == nullptr)
                         continue;
 
-                    gs_vec2f size = gs_vec2f(
-                        State.BoundingBox.width(),
-                        ((node->State.BoundingBox.size() / totalsize) * State.BoundingBox.size()).y);
+                    gs_vec2f size = gs_vec2f(State.BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
                     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-
                     node->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(0.f, size.y);
                 }
@@ -146,12 +145,14 @@ namespace Frenchie
                 gs_vec2f position   = State.BoundingBox.Min;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
-                // compute total size
+                // compute total size and children size scale
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
                 {
                     if((*it) != nullptr)
                         totalsize += (*it)->State.BoundingBox.size();
                 }
+
+                gs_vec2f scale = State.BoundingBox.size() / totalsize;
 
                 // layout children
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
@@ -161,9 +162,7 @@ namespace Frenchie
                     if(node == nullptr)
                         continue;
 
-                    gs_vec2f size = gs_vec2f(
-                        ((node->State.BoundingBox.size() / totalsize) * State.BoundingBox.size()).x,
-                        State.BoundingBox.height());
+                    gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, State.BoundingBox.height());
                     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
                     node->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(size.x, 0.f);
@@ -238,381 +237,6 @@ namespace Frenchie
 
                 // self layouting
                 ImmediateUserInterfaceNodeVerticalStack::layout(_Context);
-            }
-
-            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
-            {
-                if(_Context == nullptr)
-                    return;
-
-                // reveive focus
-                if(State.MousePressed.has_value())
-                {
-                    for (auto node : _Context->m_NodesRenderingList)
-                    {
-                        node->State.InitialDepth =
-                            ImmediateUserInterfaceWindow::calculate_layer_depth(
-                                _Context,
-                                ImmediateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Main);
-                    }
-                    
-                    State.InitialDepth =
-                        ImmediateUserInterfaceWindow::calculate_layer_depth(
-                            _Context,
-                            ImmediateUserInterfaceWindow::ImmedidateUserInterfaceWindowLayer_Focused);
-                }
-
-                // resize
-                if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
-                    !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-                {
-                    if(ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable);
-
-                        _Context->m_Renderer->push_arc_filled(
-                            resizeTopLeft.Center,
-                            resizeTopLeft.Radius,
-                            resizeTopLeft.Radius,
-                            0.f,
-                            360.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
-                                resizable->Cache.BoundingBox.Max));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable);
-
-                        _Context->m_Renderer->push_arc_filled(
-                            resizeTopRight.Center,
-                            resizeTopRight.Radius,
-                            resizeTopRight.Radius,
-                            0.f,
-                            360.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                                resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeBottomLeft = ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable);
-
-                        _Context->m_Renderer->push_arc_filled(
-                            resizeBottomLeft.Center,
-                            resizeBottomLeft.Radius,
-                            resizeBottomLeft.Radius,
-                            0.f,
-                            360.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                                resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeBottomRight = ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable);
-
-                        _Context->m_Renderer->push_arc_filled(
-                            resizeBottomRight.Center,
-                            resizeBottomRight.Radius,
-                            resizeBottomRight.Radius,
-                            0.f,
-                            360.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min,
-                                resizable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_top_box(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeTop = ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable);
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            resizeTop.Min,
-                            resizeTop.Max,
-                            16.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                                resizable->Cache.BoundingBox.Max));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_left_box(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeLeft = ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable);
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            resizeLeft.Min,
-                            resizeLeft.Max,
-                            16.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                                resizable->Cache.BoundingBox.Max));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_right_box(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeRight = ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable);
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            resizeRight.Min,
-                            resizeRight.Max,
-                            16.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min,
-                                resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
-                            return;
-                        }
-                    }
-                    else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_box(this).contains(_Event.CursorPosition) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
-                    {
-                        auto resizable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (resizable->State.Parent &&
-                                ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable->State.Parent).contains(_Event.CursorPosition))
-                        {
-                            resizable = resizable->State.Parent;
-                        }
-
-                        if(Docker != nullptr)
-                            resizable = Docker;
-
-                        auto resizeBottom = ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable);
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            resizeBottom.Min,
-                            resizeBottom.Max,
-                            16.f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
-
-                        // trigger event
-                        if(_Event.MousePressed.has_value())
-                        {
-                            resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
-                            return;
-                        }
-
-                        // execute event
-                        if(_Event.MouseDown.has_value() &&
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
-                        {
-                            ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                                resizable->Cache.BoundingBox.Min,
-                                resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
-                            return;
-                        }
-                    }
-                }
-                    
-                // move
-                if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
-                    !((State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
-                {
-                    if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-                    {
-                        auto movable = dynamic_cast<ImmediateUserInterfaceNode*>(this);
-                        while (movable->State.Parent)
-                            movable = movable->State.Parent;
-
-                        movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-                        movable->State.BoundingBox = gs_2dboxf(
-                            movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
-                            movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
-                        return;
-                    }
-                }
             }
 
             static int calculate_layer_depth(ImmedidateUserInterfaceContextLayer* _Context, int _Layer)
@@ -1033,21 +657,15 @@ void ImmediateUserInterfaceNode::measure(ImmedidateUserInterfaceContextLayer* _C
 
 void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
-    // resize
-    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
-        !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+    // auxiliary lambdas
+    auto render_resize_gizmo = [](
+        ImmedidateUserInterfaceContextLayer*    _Context,
+        ImmediateUserInterfaceNode*             _Node,
+        const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
     {
-        if(ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(this).contains(_Event.CursorPosition) ||
-            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
-
-            auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(resizable);
+            auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(_Node);
 
             _Context->m_Renderer->push_arc_filled(
                 resizeTopLeft.Center,
@@ -1056,7 +674,267 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
                 0.f,
                 360.f,
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+        {
+            auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(_Node);
+
+            _Context->m_Renderer->push_arc_filled(
+                resizeTopRight.Center,
+                resizeTopRight.Radius,
+                resizeTopRight.Radius,
+                0.f,
+                360.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+        {
+            auto resizeBottomLeft = ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(_Node);
+
+            _Context->m_Renderer->push_arc_filled(
+                resizeBottomLeft.Center,
+                resizeBottomLeft.Radius,
+                resizeBottomLeft.Radius,
+                0.f,
+                360.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+        {
+            auto resizeBottomRight = ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(_Node);
+
+            _Context->m_Renderer->push_arc_filled(
+                resizeBottomRight.Center,
+                resizeBottomRight.Radius,
+                resizeBottomRight.Radius,
+                0.f,
+                360.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+        {
+            auto resizeTop = ImmedidateUserInterfaceHelpers::build_resize_top_box(_Node);
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                resizeTop.Min,
+                resizeTop.Max,
+                16.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+        {
+            auto resizeLeft = ImmedidateUserInterfaceHelpers::build_resize_left_box(_Node);
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                resizeLeft.Min,
+                resizeLeft.Max,
+                16.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+        {
+            auto resizeRight = ImmedidateUserInterfaceHelpers::build_resize_right_box(_Node);
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                resizeRight.Min,
+                resizeRight.Max,
+                16.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+        {
+            auto resizeBottom = ImmedidateUserInterfaceHelpers::build_resize_bottom_box(_Node);
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                resizeBottom.Min,
+                resizeBottom.Max,
+                16.f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)(_Node->Cache.Depth + _Node->Cache.TotalThickness)));
+            return;
+        }
+    };
+
+    auto check_cursor_intersection_with_resize_gizmo = [](
+        ImmediateUserInterfaceNode*             _Node,
+        const ImmedidateUserInterfaceEvent&     _Event,
+        const ImmediateUserInterfaceNodeEvents& _ResizeEventType)->bool
+    {
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+            return ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(_Node).contains(_Event.CursorPosition);
+
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+            return ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(_Node).contains(_Event.CursorPosition);
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+            return ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(_Node).contains(_Event.CursorPosition);
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+            return ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.CursorPosition);
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+            return ImmedidateUserInterfaceHelpers::build_resize_top_box(_Node).contains(_Event.CursorPosition);
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+            return ImmedidateUserInterfaceHelpers::build_resize_left_box(_Node).contains(_Event.CursorPosition);
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+            return ImmedidateUserInterfaceHelpers::build_resize_right_box(_Node).contains(_Event.CursorPosition);
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+            return ImmedidateUserInterfaceHelpers::build_resize_bottom_box(_Node).contains(_Event.CursorPosition);
+        
+        return false;
+    };
+
+    auto find_resizable_node = [&check_cursor_intersection_with_resize_gizmo](
+        ImmedidateUserInterfaceContextLayer*    _Context,
+        ImmediateUserInterfaceNode*             _Node,
+        const ImmediateUserInterfaceNodeEvents& _ResizeEventType,
+        const ImmedidateUserInterfaceEvent&     _Event)
+    {
+        // find resizable node
+        ImmediateUserInterfaceNode* resizable = _Node;
+        
+        if(resizable->State.Parent != nullptr)
+        {
+            // pass event to a parent
+            while (resizable->State.Parent &&
+                    check_cursor_intersection_with_resize_gizmo(resizable->State.Parent, _Event, _ResizeEventType))
+                resizable = resizable->State.Parent;
+        }
+
+        // if this is a window then we pass event to a docker
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(resizable);
+
+        if(window != nullptr && window->Docker != nullptr)
+            resizable = window->Docker;
+
+        return resizable;
+    };
+
+    auto resize_node = [](
+        ImmediateUserInterfaceNode*             _Node,
+        const ImmediateUserInterfaceNodeEvents& _ResizeEventType,
+        const ImmedidateUserInterfaceEvent&     _Event)
+    {
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min + _Event.CursorDragDelta,
+                _Node->Cache.BoundingBox.Max));
+            return;
+        }
+
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min,
+                _Node->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                _Node->Cache.BoundingBox.Max));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                _Node->Cache.BoundingBox.Max));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min,
+                _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+            return;
+        }
+    
+        if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+        {
+            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+                _Node->Cache.BoundingBox.Min,
+                _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+            return;
+        }
+    };
+
+    // focus
+    if(State.MousePressed.has_value())
+    {
+        ImmediateUserInterfaceNode* focused = nullptr;
+        ImmediateUserInterfaceNode* parent  = State.Parent;
+
+        while (parent)
+        {
+            focused = parent;
+            parent  = parent->State.Parent;
+        }
+        
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(focused))
+        {
+            ImmediateUserInterfaceWindow::setup_as_active_focused_window(_Context, dynamic_cast<ImmediateUserInterfaceWindow*>(focused));
+            ImmediateUserInterfaceWindow::setup_as_active_docking_window(_Context, dynamic_cast<ImmediateUserInterfaceWindow*>(focused));
+        }
+    }
+
+    // resize
+    if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) &&
+        !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+    {
+        if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft) ||
+            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
+        {
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft, _Event);
+
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1069,32 +947,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
-                    resizable->Cache.BoundingBox.Max));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight, _Event);
 
-            auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(resizable);
-
-            _Context->m_Renderer->push_arc_filled(
-                resizeTopRight.Center,
-                resizeTopRight.Radius,
-                resizeTopRight.Radius,
-                0.f,
-                360.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1107,32 +970,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                    resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft, _Event);
 
-            auto resizeBottomLeft = ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(resizable);
-
-            _Context->m_Renderer->push_arc_filled(
-                resizeBottomLeft.Center,
-                resizeBottomLeft.Radius,
-                resizeBottomLeft.Radius,
-                0.f,
-                360.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1145,32 +993,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                    resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight, _Event);
 
-            auto resizeBottomRight = ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(resizable);
-
-            _Context->m_Renderer->push_arc_filled(
-                resizeBottomRight.Center,
-                resizeBottomRight.Radius,
-                resizeBottomRight.Radius,
-                0.f,
-                360.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1183,30 +1016,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min,
-                    resizable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_top_box(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop, _Event);
 
-            auto resizeTop = ImmedidateUserInterfaceHelpers::build_resize_top_box(resizable);
-
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                resizeTop.Min,
-                resizeTop.Max,
-                16.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1219,30 +1039,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                    resizable->Cache.BoundingBox.Max));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_left_box(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft, _Event);
 
-            auto resizeLeft = ImmedidateUserInterfaceHelpers::build_resize_left_box(resizable);
-
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                resizeLeft.Min,
-                resizeLeft.Max,
-                16.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1255,30 +1062,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                    resizable->Cache.BoundingBox.Max));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_right_box(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight, _Event);
 
-            auto resizeRight = ImmedidateUserInterfaceHelpers::build_resize_right_box(resizable);
-
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                resizeRight.Min,
-                resizeRight.Max,
-                16.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1291,30 +1085,17 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min,
-                    resizable->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight, _Event);
                 return;
             }
         }
-        else if(ImmedidateUserInterfaceHelpers::build_resize_bottom_box(this).contains(_Event.CursorPosition) ||
+        else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
         {
-            auto resizable = this;
-            while (resizable->State.Parent &&
-                    ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable->State.Parent).contains(_Event.CursorPosition))
-            {
-                resizable = resizable->State.Parent;
-            }
+            ImmediateUserInterfaceNode* resizable =
+                find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom, _Event);
 
-            auto resizeBottom = ImmedidateUserInterfaceHelpers::build_resize_bottom_box(resizable);
-
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                resizeBottom.Min,
-                resizeBottom.Max,
-                16.f,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                _Context->m_Renderer->calculate_transform_matrix((float)(resizable->Cache.Depth + resizable->Cache.TotalThickness)));
+            render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
 
             // trigger event
             if(_Event.MousePressed.has_value())
@@ -1327,9 +1108,7 @@ void ImmediateUserInterfaceNode::events(ImmedidateUserInterfaceContextLayer* _Co
             if(_Event.MouseDown.has_value() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
             {
-                ImmedidateUserInterfaceHelpers::clamp_bounding_box(resizable, gs_2dboxf(
-                    resizable->Cache.BoundingBox.Min,
-                    resizable->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom, _Event);
                 return;
             }
         }
@@ -1565,18 +1344,21 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 return;
 
             // check if anything is already catching event
+            bool anythingIsAlreadyProcessing = false;
             for (auto& node : _Context->m_NodesRenderingList)
             {
                 if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
                     continue;
 
+                anythingIsAlreadyProcessing = true;
                 node->events(_Context, _Event);
-                return;
             }
+
+            if(anythingIsAlreadyProcessing) return;
 
             // find the top most hovered node
             ImmediateUserInterfaceNode* hoveredNode  = nullptr;
-            int                          maximumDepth = INT_MIN;
+            int                         maximumDepth = INT_MIN;
 
             for (auto& node : _Context->m_NodesRenderingList)
             {
@@ -1590,8 +1372,27 @@ void ImmedidateUserInterfaceContextLayer::frame_debug()
                 }
             }
 
-            if (hoveredNode != nullptr)
-                hoveredNode->events(_Context, _Event);
+            if (hoveredNode == nullptr)
+                return;
+            
+            // process hovered node events
+            hoveredNode->events(_Context, _Event);
+
+            // check in-parent intersection and process events of intersected nodes
+            for (auto it = _Context->m_Hierarchy.begin(hoveredNode->State.Parent);
+                      it != _Context->m_Hierarchy.end(hoveredNode->State.Parent);
+                      it++)
+            {
+                if((*it) == hoveredNode)
+                    continue;
+
+                if(gs_2dboxf(
+                    (*it)->State.BoundingBox.Min - gs_vec2f(16.f), // TODO: may be, this should be a setting ???
+                    (*it)->State.BoundingBox.Max + gs_vec2f(16.f)).contains(_Event.CursorPosition))
+                {
+                    (*it)->events(_Context, _Event);
+                }
+            }
         }
     };
 
