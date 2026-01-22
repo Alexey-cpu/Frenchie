@@ -33,9 +33,6 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 7,
             ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 8,
             ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 9,
-
-            // events interception
-            ImmediateUserInterfaceNodeEvents_InterceptsEvent      = 1 << 10,
         };
 
         enum ImmediateUserInterfaceNodeColors_ : int

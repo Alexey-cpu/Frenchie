@@ -183,8 +183,8 @@ namespace Frenchie
                 if(Docker != nullptr)
                     return;
 
-                gs_vec2f position = State.BoundingBox.Min;
-                gs_vec2f size     = gs_vec2f((State.BoundingBox.size() / (float)(_Context->m_WindowsDockingHierarchy.size(this) + 1)).x, _Context->m_Style.FontSize);
+                gs_vec2f position = FrameBox.Min;
+                gs_vec2f size     = gs_vec2f((FrameBox.size() / (float)(_Context->m_WindowsDockingHierarchy.size(this) + 1)).x, FrameBox.size().y);
 
                 ImmedidateUserInterfaceEvent event;
                 event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
@@ -216,16 +216,16 @@ namespace Frenchie
 
                     // background
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        boundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                     // outline
                     _Context->m_Renderer->push_rectangle_rounded(
-                        boundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        boundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.FramesWidth,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
@@ -241,8 +241,8 @@ namespace Frenchie
                     if(boundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
                     {
                         _Context->m_Renderer->push_rectangle_rounded(
-                            boundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                            boundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.FramesRadius,
                             _Context->m_Style.FramesWidth,
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
@@ -268,16 +268,16 @@ namespace Frenchie
 
                     // background
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        boundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                     // outline
                     _Context->m_Renderer->push_rectangle_rounded(
-                        boundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        boundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                        boundingBox.Min,
+                        boundingBox.Max,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.FramesWidth,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
@@ -295,8 +295,8 @@ namespace Frenchie
                     {
                         // outline
                         _Context->m_Renderer->push_rectangle_rounded(
-                            boundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                            boundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                            boundingBox.Min,
+                            boundingBox.Max,
                             _Context->m_Style.FramesRadius,
                             _Context->m_Style.FramesWidth,
                             _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
@@ -331,7 +331,6 @@ namespace Frenchie
                                 {
                                     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoveStarted;
                                     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-                                    movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_InterceptsEvent;
 
                                     float delta = State.BoundingBox.Min.y - movable->Cache.BoundingBox.Min.y;
 
@@ -339,11 +338,6 @@ namespace Frenchie
                                         movable->Cache.BoundingBox.Min + gs_vec2f(0.f, delta),
                                         movable->Cache.BoundingBox.Max + gs_vec2f(0.f, delta));
                                 }
-                                // else
-                                // {
-                                //     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-                                //     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_InterceptsEvent;
-                                // }
 
                                 State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
                             }
@@ -494,9 +488,10 @@ namespace Frenchie
             gs_2dboxf                     FrameBox;
             gs_2dboxf                     ContentBox;
 
-            int                           DockingIndex  {-1};
-            bool                          DockingActive {false};
-            bool                          DockingFocused{false};
+            int                           DockingIndex         {-1};
+            bool                          DockingActive        {false};
+            bool                          DockingFocused       {false};
+            bool                          ReattachDockedWindows{false};
         };
     }
 }
@@ -1257,14 +1252,19 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 return;
 
             // check if anything is already catching event
+            bool catchingEvent = false;
+
             for (auto& node : _Context->m_NodesRenderingList)
             {
                 if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
                     continue;
 
                 node->events(_Context, _Event);
-                return;
+                catchingEvent = true;
             }
+
+            if(catchingEvent)
+                return;
 
             // find the top most hovered node
             ImmediateUserInterfaceNode* hoveredNode  = nullptr;
@@ -1289,7 +1289,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             hoveredNode->events(_Context, _Event);
 
             // check in-parent intersection and process events of intersected nodes
-            for (auto it = _Context->m_Hierarchy.begin(hoveredNode->State.Parent);
+            for (auto it  = _Context->m_Hierarchy.begin(hoveredNode->State.Parent);
                       it != _Context->m_Hierarchy.end(hoveredNode->State.Parent);
                       it++)
             {
@@ -1556,8 +1556,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             move_child_docked_windows_to_cache(_Context, _Docked);
 
             // reindex docked nodes and setup their docker
-            std::cout << "\nDocker " << docker->Name << "\n";
-
             int dockindex = 0;
 
             for(auto it  = _Context->m_WindowsDockingCache.begin();
@@ -1569,8 +1567,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
                 if(window == nullptr)
                     continue;
-                
-                std::cout << window->Name << "\n";
 
                 window->Docker       = docker;
                 window->DockingIndex = dockindex++;
