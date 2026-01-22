@@ -97,8 +97,8 @@ namespace Frenchie
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]       = gs_vec4f(32.f, 175.f, 255.f, 255.f);
                 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 200.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = gs_vec4f(32.f, 230.f, 200.f, 200.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = gs_vec4f(32.f, 230.f, 200.f, 255.f);
 
                 // gizmos
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
@@ -151,7 +151,6 @@ namespace Frenchie
                 int            SelfThickness {0}; // thickness of self rendered content
                 int            TotalThickness{0}; // thickness of self rendered content plus contented rendered by children
                 int            RenderingIndex{0}; // index of the node within context rendering list
-                int            RenderingOrder{0};
                 bool           RenderChildren{1}; // defines if the children of this node are drawn
                 bool           RenderedAlways{0}; // defines if this node is always drawn ignoring 'RenderChildren' setting
 
@@ -162,7 +161,7 @@ namespace Frenchie
                 gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
 
                 // hierarchy
-                ImmediateUserInterfaceNode*       Parent{nullptr};
+                ImmediateUserInterfaceNode*        Parent{nullptr};
 
                 // settings
                 ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
@@ -201,13 +200,13 @@ namespace Frenchie
 
             ~ImmedidateUserInterfaceNodeHierarchy(){}
 
-            std::vector<int>                                                        Indexes;
-            std::vector<int>                                                        Entries;
-            std::vector<ImmediateUserInterfaceNode*>                                Singletons;
-            std::vector<ImmediateUserInterfaceNode*>                                Sorted;
-            std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> GetParent;
+            mutable std::vector<int>                                                        Indexes;
+            mutable std::vector<int>                                                        Entries;
+            mutable std::vector<ImmediateUserInterfaceNode*>                                Singletons;
+            mutable std::vector<ImmediateUserInterfaceNode*>                                Sorted;
+            mutable std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> GetParent;
 
-            std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node)
+            std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const
             {
                 if(_Node == nullptr                                             ||
                     _Node->State.RenderingIndex          >= (int)Indexes.size() ||
@@ -219,7 +218,7 @@ namespace Frenchie
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
             }
 
-            std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node)
+            std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node) const
             {
                 if(_Node == nullptr                                                 ||
                     _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
@@ -231,9 +230,23 @@ namespace Frenchie
                 return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
             }
 
-            int size(const ImmediateUserInterfaceNode* _Node)
+            int size(const ImmediateUserInterfaceNode* _Node) const
             {
                 return (int)(end(_Node) - begin(_Node));
+            }
+
+            template<typename Filter>
+            int count(const ImmediateUserInterfaceNode* _Node, const Filter& _Filter) const
+            {
+                int counter = 0;
+
+                for(auto it = begin(_Node); it != end(_Node); it++)
+                {
+                    if(_Filter(*it))
+                        counter++;
+                }
+
+                return counter;
             }
 
             void build(const std::vector<ImmediateUserInterfaceNode*>& _Nodes)
@@ -251,7 +264,7 @@ namespace Frenchie
                     Indexes[i] = 0;
                     Sorted [i] = nullptr;
 
-                    if(_Nodes[i]->State.Parent == nullptr)
+                    if(get_parent(_Nodes[i]) == nullptr)
                         Singletons.push_back(_Nodes[i]);
                 }
 
@@ -288,7 +301,7 @@ namespace Frenchie
                 if(allIsNull) Sorted.clear();
             }
 
-        private:
+        //private:
 
             ImmediateUserInterfaceNode* get_parent(ImmediateUserInterfaceNode* _Node)
             {
@@ -392,12 +405,6 @@ namespace Frenchie
 
             // docking and snapping
             mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsDockingHierarchy;
-
-            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsTopSnappingHierarchy;
-            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsLeftSnappingHierarchy;
-            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsRightSnappingHierarchy;
-            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsBottomSnappingHierarchy;
-
             mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingList;
         };
