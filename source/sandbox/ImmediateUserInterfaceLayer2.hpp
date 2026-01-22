@@ -50,6 +50,7 @@ namespace Frenchie
 
             // gizmos
             ImmediateUserInterfaceNodeColors_Gizmos,
+            ImmediateUserInterfaceNodeColors_GizmosHovered,
 
             // text
             ImmediateUserInterfaceNodeColors_Text,
@@ -97,6 +98,7 @@ namespace Frenchie
                 
                 // gizmos
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 200.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = gs_vec4f(32.f, 230.f, 200.f, 200.f);
 
                 // gizmos
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
@@ -149,6 +151,7 @@ namespace Frenchie
                 int            SelfThickness {0}; // thickness of self rendered content
                 int            TotalThickness{0}; // thickness of self rendered content plus contented rendered by children
                 int            RenderingIndex{0}; // index of the node within context rendering list
+                int            RenderingOrder{0};
                 bool           RenderChildren{1}; // defines if the children of this node are drawn
                 bool           RenderedAlways{0}; // defines if this node is always drawn ignoring 'RenderChildren' setting
 
@@ -387,8 +390,14 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
 
-            // docking
+            // docking and snapping
             mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsDockingHierarchy;
+
+            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsTopSnappingHierarchy;
+            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsLeftSnappingHierarchy;
+            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsRightSnappingHierarchy;
+            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsBottomSnappingHierarchy;
+
             mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingList;
         };
