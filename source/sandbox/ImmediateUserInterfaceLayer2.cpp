@@ -9,6 +9,68 @@ namespace Frenchie
 {
     namespace Application
     {
+        template<typename Type>
+        static void layout_nodes_vertically(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox)
+        {
+            gs_vec2f position  = _Position;
+            gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+
+            // compute total size
+            for(auto it = _Begin; it != _End; ++it)
+            {
+                if((*it) != nullptr)
+                    totalsize += (*it)->State.BoundingBox.size();
+            }
+
+            // compute children size scale
+            gs_vec2f scale = _BoundingBox.size() / totalsize;
+
+            // compute layout
+            for(auto it = _Begin; it != _End; ++it)
+            {
+                auto node = *it;
+
+                if(node == nullptr)
+                    continue;
+
+                gs_vec2f size = gs_vec2f(_BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
+                size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                node->State.BoundingBox = gs_2dboxf(position, position + size);
+                position += gs_vec2f(0.f, size.y);
+            }
+        }
+
+        template<typename Type>
+        static void layout_nodes_horizontally(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox)
+        {
+            gs_vec2f position   = _Position;
+            gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+
+            // compute total size
+            for(auto it = _Begin; it != _End; ++it)
+            {
+                if((*it) != nullptr)
+                    totalsize += (*it)->State.BoundingBox.size();
+            }
+
+            // compute children scale
+            gs_vec2f scale = _BoundingBox.size() / totalsize;
+
+            // compute layout
+            for(auto it = _Begin; it != _End; ++it)
+            {
+                auto node = *it;
+
+                if(node == nullptr)
+                    continue;
+
+                gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, _BoundingBox.height());
+                size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                node->State.BoundingBox = gs_2dboxf(position, position + size);
+                position += gs_vec2f(size.x, 0.f);
+            }
+        }
+
         class ImmedidateUserInterfaceHelpers
         {
         public:
@@ -103,31 +165,33 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
-                gs_vec2f position  = State.BoundingBox.Min;
-                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+                layout_nodes_vertically(_Context->m_Hierarchy.begin(this), _Context->m_Hierarchy.end(this), State.BoundingBox.Min, State.BoundingBox);
 
-                // compute total size and children size scale
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                {
-                    if((*it) != nullptr)
-                        totalsize += (*it)->State.BoundingBox.size();
-                }
+                // gs_vec2f position  = State.BoundingBox.Min;
+                // gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
-                gs_vec2f scale = State.BoundingBox.size() / totalsize;
+                // // compute total size and children size scale
+                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                // {
+                //     if((*it) != nullptr)
+                //         totalsize += (*it)->State.BoundingBox.size();
+                // }
 
-                // layout children
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                {
-                    auto node = *it;
+                // gs_vec2f scale = State.BoundingBox.size() / totalsize;
 
-                    if(node == nullptr)
-                        continue;
+                // // layout children
+                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                // {
+                //     auto node = *it;
 
-                    gs_vec2f size = gs_vec2f(State.BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
-                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                    node->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y);
-                }
+                //     if(node == nullptr)
+                //         continue;
+
+                //     gs_vec2f size = gs_vec2f(State.BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
+                //     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                //     node->State.BoundingBox = gs_2dboxf(position, position + size);
+                //     position += gs_vec2f(0.f, size.y);
+                // }
             }
         };
 
@@ -142,31 +206,33 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
-                gs_vec2f position   = State.BoundingBox.Min;
-                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                layout_nodes_horizontally(_Context->m_Hierarchy.begin(this), _Context->m_Hierarchy.end(this), State.BoundingBox.Min, State.BoundingBox);
 
-                // compute total size and children size scale
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                {
-                    if((*it) != nullptr)
-                        totalsize += (*it)->State.BoundingBox.size();
-                }
+                // gs_vec2f position   = State.BoundingBox.Min;
+                // gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
-                gs_vec2f scale = State.BoundingBox.size() / totalsize;
+                // // compute total size and children size scale
+                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                // {
+                //     if((*it) != nullptr)
+                //         totalsize += (*it)->State.BoundingBox.size();
+                // }
 
-                // layout children
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                {
-                    auto node = *it;
+                // gs_vec2f scale = State.BoundingBox.size() / totalsize;
 
-                    if(node == nullptr)
-                        continue;
+                // // layout children
+                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
+                // {
+                //     auto node = *it;
 
-                    gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, State.BoundingBox.height());
-                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                    node->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x, 0.f);
-                }
+                //     if(node == nullptr)
+                //         continue;
+
+                //     gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, State.BoundingBox.height());
+                //     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                //     node->State.BoundingBox = gs_2dboxf(position, position + size);
+                //     position += gs_vec2f(size.x, 0.f);
+                // }
             }
         };
     
@@ -357,6 +423,34 @@ namespace Frenchie
 
                 // frame
                 render_frame(_Context);
+
+                // // render vertical boxes
+                // for(int i = ImmediateUserInterfaceWindowVerticalSnappingBoxes_::ImmediateUserInterfaceWindowVerticalSnappingBoxes_Begin;
+                //         i < ImmediateUserInterfaceWindowVerticalSnappingBoxes_::ImmediateUserInterfaceWindowVerticalSnappingBoxes_End;
+                //         i++)
+                // {
+                //     _Context->m_Renderer->push_rectangle_rounded(
+                //         VerticalBoxes[i].Min + _Context->m_Style.FramesWidth * 0.5f,
+                //         VerticalBoxes[i].Max - _Context->m_Style.FramesWidth * 0.5f,
+                //         _Context->m_Style.FramesRadius,
+                //         _Context->m_Style.FramesWidth,
+                //         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                //         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                // }
+
+                // render horizontal boxes
+                for(int i = ImmediateUserInterfaceWindowHorizontalSnappingBoxes_::ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Begin;
+                        i < ImmediateUserInterfaceWindowHorizontalSnappingBoxes_::ImmediateUserInterfaceWindowHorizontalSnappingBoxes_End;
+                        i++)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        HorizontalBoxes[i].Min + _Context->m_Style.FramesWidth * 0.5f,
+                        HorizontalBoxes[i].Max - _Context->m_Style.FramesWidth * 0.5f,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
             }
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
@@ -366,6 +460,34 @@ namespace Frenchie
 
                 // compute self geometry
                 {
+                    // compute gizmo
+                    gs_2dboxf gizmoBox = gs_2dboxf(
+                        State.BoundingBox.center() - gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.25f,
+                        State.BoundingBox.center() + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.25f);
+
+                    gs_vec2f gizmoSize = gizmoBox.size() / 3.f;
+
+                    TopGizmo = gs_2dboxf(
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x, 0.f),
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y));
+
+                    LeftGizmo = gs_2dboxf(
+                        gizmoBox.Min + gs_vec2f(0.f, gizmoSize.y),
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f));
+
+                    RightGizmo = gs_2dboxf(
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y),
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x * 3.f, gizmoSize.y * 2.f));
+
+                    BottomGizmo = gs_2dboxf(
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f),
+                        gizmoBox.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y * 3.f));
+
+                    CentralGizmo = gs_2dboxf(
+                        gizmoBox.center() - gizmoSize * 0.5f,
+                        gizmoBox.center() + gizmoSize * 0.5f);
+
+                    // compute frame and content boxes
                     FrameBox = gs_2dboxf(
                         State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
                         gs_vec2f(
@@ -375,6 +497,126 @@ namespace Frenchie
                     ContentBox = gs_2dboxf(
                         (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
                         State.BoundingBox.Max);
+
+                    // compute vertical snap boxes
+                    {
+                        bool isTopSnapper    = _Context->m_WindowsTopSnappingHierarchy.size(this) > 0;
+                        bool isBottomSnapper = _Context->m_WindowsBottomSnappingHierarchy.size(this) > 0;
+
+                        // top
+                        if(isTopSnapper)
+                        {
+                            if(gs_min(
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].size().x,
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].size().y) <= 0.f)
+                            {
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top] =
+                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
+                            }
+                        }
+                        else
+                        {
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top] =
+                                    gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                        }
+
+                        // center
+                        if(gs_min(
+                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center].size().x,
+                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center].size().y) <= 0.f)
+                        {
+                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center] =
+                                gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
+                        }
+
+                        // bottom
+                        if(isBottomSnapper)
+                        {
+                            if(gs_min(
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].size().x,
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].size().y) <= 0.f)
+                            {
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom] =
+                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
+                            }
+                        }
+                        else
+                        {
+                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom] =
+                                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                        }
+
+                        layout_boxes_vertically(VerticalBoxes, ContentBox, ContentBox.Min);
+                    }
+
+                    // compute horizontal snap boxes
+                    {
+                        bool isLeftSnapper  = _Context->m_WindowsLeftSnappingHierarchy.size(this) > 0;
+                        bool isRightSnapper = _Context->m_WindowsRightSnappingHierarchy.size(this) > 0;
+
+                        // left
+                        if(isLeftSnapper)
+                        {
+                            if(gs_min(
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].size().x,
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].size().y) <= 0.f)
+                            {
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left] =
+                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
+                            }
+                            else
+                            {
+                            }
+                        }
+                        else
+                        {
+                            HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left] =
+                                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                        }
+
+                        // center
+                        if(gs_min(
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center].size().x,
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center].size().y) <= 0.f)
+                        {
+                            HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center] =
+                                gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
+                        }
+
+                        // right
+                        if(isRightSnapper)
+                        {
+                            if(gs_min(
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].size().x,
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].size().y) <= 0.f)
+                            {
+                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right] =
+                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
+                            }
+                        }
+                        else
+                        {
+                            HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right] =
+                                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                        }
+
+                        gs_vec2f min = gs_vec2f(
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min.x,
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Max.y);
+
+                        gs_vec2f max = min + gs_vec2f(
+                            ContentBox.size().x,
+                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].Min.y - VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Max.y
+                        );
+
+                        layout_boxes_horizontally(
+                            HorizontalBoxes,
+                            ContentBox,
+                            gs_vec2f(
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min.x,
+                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Max.y)
+                            );
+                    }
                 }
 
                 // layout docked windows
@@ -388,33 +630,40 @@ namespace Frenchie
                     }
                 }
 
-                // layout children vertically
+                // layout snapped windows
                 {
-                    gs_vec2f position  = ContentBox.Min;
-                    gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+                    // vertical snappers
+                    layout_nodes_horizontally(
+                        _Context->m_WindowsTopSnappingHierarchy.begin(this),
+                        _Context->m_WindowsTopSnappingHierarchy.end(this),
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min,
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top]);
 
-                    // compute total size and children size scale
-                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                    {
-                        if((*it) != nullptr)
-                            totalsize += (*it)->State.BoundingBox.size();
-                    }
+                    layout_nodes_horizontally(
+                        _Context->m_WindowsBottomSnappingHierarchy.begin(this),
+                        _Context->m_WindowsBottomSnappingHierarchy.end(this),
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].Min,
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom]);
 
-                    gs_vec2f scale = ContentBox.size() / totalsize;
+                    // horizontal snappers
+                    layout_nodes_horizontally(
+                        _Context->m_WindowsLeftSnappingHierarchy.begin(this),
+                        _Context->m_WindowsLeftSnappingHierarchy.end(this),
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].Min,
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left]);
 
-                    // layout children
-                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                    {
-                        auto node = *it;
+                    layout_nodes_horizontally(
+                        _Context->m_WindowsRightSnappingHierarchy.begin(this),
+                        _Context->m_WindowsRightSnappingHierarchy.end(this),
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].Min,
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right]);
 
-                        if(node == nullptr)
-                            continue;
-
-                        gs_vec2f size = gs_vec2f(ContentBox.width(), (node->State.BoundingBox.size() * scale).y);
-                        size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                        node->State.BoundingBox = gs_2dboxf(position, position + size);
-                        position += gs_vec2f(0.f, size.y);
-                    }
+                    // self
+                    layout_nodes_vertically(
+                        _Context->m_Hierarchy.begin(this),
+                        _Context->m_Hierarchy.end(this),
+                        ContentBox.Min,
+                        ContentBox);
                 }
             }
 
@@ -462,10 +711,109 @@ namespace Frenchie
                 _Docked->DockingFocused = true;
             }
 
-            ImmediateUserInterfaceWindow* Docker{nullptr};
+            void layout_boxes_vertically(gs_2dboxf _Boxes[3], const gs_2dboxf& _Parent, const gs_vec2f& _Position)
+            {
+                // compute total size
+                gs_vec2f totalSize = gs_vec2f(0.f, 0.f);
+                gs_vec2f position  = _Position;
+                
+                for (int i = 0; i < 3; i++)
+                    totalSize += _Boxes[i].size();
+                gs_vec2f scale = _Parent.size() / totalSize;
+
+                // layout
+                for (int i = 0; i < 3; i++)
+                {
+                    _Boxes[i] = gs_2dboxf(position, position + gs_vec2f(_Parent.size().x, (_Boxes[i].size() * scale).y));
+                    position += gs_vec2f(0.f, _Boxes[i].size().y);
+                }
+            }
+
+            void layout_boxes_horizontally(gs_2dboxf _Boxes[3], const gs_2dboxf& _Parent, const gs_vec2f& _Position)
+            {
+                // compute total size
+                gs_vec2f totalSize = gs_vec2f(0.f, 0.f);
+                gs_vec2f position  = _Position;
+                
+                for (int i = 0; i < 3; i++)
+                {
+                    if(Name == "Window-5")
+                    {
+                        std::cout << _Boxes[i].size().x << "\t" << _Boxes[i].size().y << "\n";
+                    }
+
+                    totalSize += _Boxes[i].size();
+                }
+                gs_vec2f scale = _Parent.size() / totalSize;
+
+                if(Name == "Window-5")
+                {
+                    std::cout << "totalSize " << totalSize.x << "\t" << totalSize.y << "\n";
+                }
+
+                // layout
+                for (int i = 0; i < 3; i++)
+                {
+                    _Boxes[i] = gs_2dboxf(
+                        position,
+                        position + gs_vec2f((_Boxes[i].size() * scale).x, _Parent.size().y));
+                    
+                    position += gs_vec2f(_Boxes[i].size().x, 0.f);
+                }
+            }
+
+            ImmediateUserInterfaceWindow* Docker       {nullptr};
+            ImmediateUserInterfaceWindow* TopSnapper   {nullptr};
+            ImmediateUserInterfaceWindow* LeftSnapper  {nullptr};
+            ImmediateUserInterfaceWindow* RightSnapper {nullptr};
+            ImmediateUserInterfaceWindow* BottomSnapper{nullptr};
             
             gs_2dboxf                     FrameBox;
             gs_2dboxf                     ContentBox;
+
+            gs_2dboxf                     TopGizmo;
+            gs_2dboxf                     LeftGizmo;
+            gs_2dboxf                     RightGizmo;
+            gs_2dboxf                     BottomGizmo;
+            gs_2dboxf                     CentralGizmo;
+
+            enum ImmediateUserInterfaceWindowVerticalSnappingBoxes_ : int
+            {
+                ImmediateUserInterfaceWindowVerticalSnappingBoxes_Begin = 0,
+                ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top   = ImmediateUserInterfaceWindowVerticalSnappingBoxes_Begin,
+                ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center,
+                ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom,
+                ImmediateUserInterfaceWindowVerticalSnappingBoxes_End,
+            };
+
+            enum ImmediateUserInterfaceWindowHorizontalSnappingBoxes_ : int
+            {
+                ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Begin = 0,
+                ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left  = ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Begin,
+                ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center,
+                ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right,
+                ImmediateUserInterfaceWindowHorizontalSnappingBoxes_End
+            };
+
+            gs_2dboxf VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_::ImmediateUserInterfaceWindowVerticalSnappingBoxes_End] =
+            {
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)),
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)),
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))
+            };
+
+            gs_2dboxf HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_::ImmediateUserInterfaceWindowHorizontalSnappingBoxes_End] =
+            {
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)),
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f)),
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))
+            };
+
+            // gs_2dboxf                     TopSnappingBox;
+            // gs_2dboxf                     LeftSnappingBox;
+            // gs_2dboxf                     RightSnappingBox;
+            // gs_2dboxf                     BottomSnappingBox;
+            // gs_2dboxf                     CentralSnappingBox;
 
             int                           DockingIndex         {-1};
             bool                          DockingActive        {false};
@@ -1071,12 +1419,14 @@ bool ImmediateUserInterfaceContextLayer::awake()
     if(m_Renderer == nullptr)
         m_Renderer = Frenchie::Application::application()->push_layer<Immediate2DRenderer>();
 
+    // hierarchy
     m_Hierarchy = ImmedidateUserInterfaceNodeHierarchy(
         [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
             return _Node != nullptr ? _Node->State.Parent : nullptr;
         });
 
+    // docking
     m_WindowsDockingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
         [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
@@ -1084,6 +1434,43 @@ bool ImmediateUserInterfaceContextLayer::awake()
                 dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
 
             return window != nullptr ? window->Docker : nullptr;
+        });
+
+    // snapping
+    m_WindowsTopSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
+        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
+
+            return window != nullptr ? window->TopSnapper : nullptr;
+        });
+
+    m_WindowsLeftSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
+        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
+
+            return window != nullptr ? window->LeftSnapper : nullptr;
+        });
+
+    m_WindowsRightSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
+        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
+
+            return window != nullptr ? window->RightSnapper : nullptr;
+        });
+
+    m_WindowsBottomSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
+        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
+
+            return window != nullptr ? window->BottomSnapper : nullptr;
         });
 
     return m_Renderer != nullptr;
@@ -1294,6 +1681,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             place_on_dockers(_Context, _Event);
             place_on_layers(_Context, _Event);
             build_docking_hierarchy(_Context);
+            build_snapping_hierarchy(_Context);
         }
 
     private:
@@ -1305,6 +1693,16 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             ImmedidateUserInterfaceWindowLayer_Active,
             ImmedidateUserInterfaceWindowLayer_Focused,
             ImmedidateUserInterfaceWindowLayer_End,
+        };
+
+        enum ImmedidateUserInterfaceWindowSnapperOrientation_ : int
+        {
+            ImmedidateUserInterfaceWindowSnapperOrientation_Begin = 0,
+            ImmedidateUserInterfaceWindowSnapperOrientation_Top   = ImmedidateUserInterfaceWindowSnapperOrientation_Begin,
+            ImmedidateUserInterfaceWindowSnapperOrientation_Left,
+            ImmedidateUserInterfaceWindowSnapperOrientation_Right,
+            ImmedidateUserInterfaceWindowSnapperOrientation_Bottom,
+            ImmedidateUserInterfaceWindowSnapperOrientation_End
         };
 
         static void place_on_layers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
@@ -1324,8 +1722,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 if(window == nullptr)
                     continue;
 
-                // if the window is not being docked and is not a docker then we check only focus
-                // otherwise we check both focus and activity
                 if(window->Docker == nullptr &&
                     (retrieve_docked_windows(_Context, window).empty()))
                 {
@@ -1364,6 +1760,47 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     }
                 }
             }
+
+            for(auto singleton : _Context->m_Hierarchy.Singletons)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
+
+                if(window == nullptr)
+                    continue;
+
+                if(window->TopSnapper)
+                {
+                    window->State.InitialDepth = window->TopSnapper->State.InitialDepth;
+                }
+                else if(window->LeftSnapper)
+                {
+                    window->State.InitialDepth = window->LeftSnapper->State.InitialDepth;
+                }
+                else if(window->RightSnapper)
+                {
+                    window->State.InitialDepth = window->RightSnapper->State.InitialDepth;
+                }
+                else if(window->BottomSnapper)
+                {
+                    window->State.InitialDepth = window->BottomSnapper->State.InitialDepth;
+                }
+            }
+
+            for (auto& singleton : _Context->m_Hierarchy.Singletons)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
+
+                if(window != nullptr && window->TopSnapper == nullptr && window->LeftSnapper == nullptr && window->RightSnapper == nullptr && window->BottomSnapper == nullptr)
+                {
+                    singleton->State.RenderingOrder = 0;
+                }
+                else
+                {
+                    singleton->State.RenderingOrder = INT_MAX;
+                }
+            }
         }
 
         static void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -1378,6 +1815,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 {
                     moved = dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
                     ImmedidateUserInterfaceWindowController::detach_from_docker(_Context, moved);
+                    ImmedidateUserInterfaceWindowController::detach_from_snapper(_Context, moved);
                     break;
                 }
             }
@@ -1415,7 +1853,40 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
             if(allMouseButtonsAreReleased)
             {
-                ImmedidateUserInterfaceWindowController::attach_to_docker(_Context, hovered, moved);
+                if(hovered->CentralGizmo.contains(_Event.CursorPosition))
+                    ImmedidateUserInterfaceWindowController::attach_to_docker(_Context, hovered, moved);
+                if(hovered->TopGizmo.contains(_Event.CursorPosition))
+                {
+                    ImmedidateUserInterfaceWindowController::attach_to_snapper(
+                        _Context,
+                        hovered,
+                        moved,
+                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top);
+                }
+                if(hovered->LeftGizmo.contains(_Event.CursorPosition))
+                {
+                    ImmedidateUserInterfaceWindowController::attach_to_snapper(
+                        _Context,
+                        hovered,
+                        moved,
+                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left);
+                }
+                if(hovered->RightGizmo.contains(_Event.CursorPosition))
+                {
+                    ImmedidateUserInterfaceWindowController::attach_to_snapper(
+                        _Context,
+                        hovered,
+                        moved,
+                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right);
+                }
+                if(hovered->BottomGizmo.contains(_Event.CursorPosition))
+                {
+                    ImmedidateUserInterfaceWindowController::attach_to_snapper(
+                        _Context,
+                        hovered,
+                        moved,
+                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Bottom);
+                }
             }
             else if(moved != hovered && moved->Docker != hovered && hovered->Docker != moved)
             {
@@ -1423,11 +1894,56 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 int depth = hovered->Cache.Depth + hovered->Cache.TotalThickness + 1;
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    hovered->ContentBox.Min,
-                    hovered->ContentBox.Max,
+                    hovered->TopGizmo.Min,
+                    hovered->TopGizmo.Max,
                     _Context->m_Style.FramesRadius,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
+                    hovered->TopGizmo.contains(_Event.CursorPosition) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    hovered->LeftGizmo.Min,
+                    hovered->LeftGizmo.Max,
+                    _Context->m_Style.FramesRadius,
+                    hovered->LeftGizmo.contains(_Event.CursorPosition) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    hovered->RightGizmo.Min,
+                    hovered->RightGizmo.Max,
+                    _Context->m_Style.FramesRadius,
+                    hovered->RightGizmo.contains(_Event.CursorPosition) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    hovered->BottomGizmo.Min,
+                    hovered->BottomGizmo.Max,
+                    _Context->m_Style.FramesRadius,
+                    hovered->BottomGizmo.contains(_Event.CursorPosition) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    hovered->CentralGizmo.Min,
+                    hovered->CentralGizmo.Max,
+                    _Context->m_Style.FramesRadius,
+                    hovered->CentralGizmo.contains(_Event.CursorPosition) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+
+                // _Context->m_Renderer->push_rectangle_rounded_filled(
+                //     hovered->ContentBox.Min,
+                //     hovered->ContentBox.Max,
+                //     _Context->m_Style.FramesRadius,
+                //     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                //     _Context->m_Renderer->calculate_transform_matrix((float)depth));
             }
         }
 
@@ -1456,40 +1972,65 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             }
         }
 
-        static std::vector<ImmediateUserInterfaceNode*>& retrieve_docked_windows(
-            ImmediateUserInterfaceContextLayer* _Context,
-            ImmediateUserInterfaceWindow*        _Docker)
+        static void build_snapping_hierarchy(ImmediateUserInterfaceContextLayer* _Context)
         {
-            // get ready
-            _Context->m_WindowsDockingList.clear();
+            // build hierarchy
+            _Context->m_WindowsTopSnappingHierarchy.build(_Context->m_NodesRenderingList);
+            _Context->m_WindowsLeftSnappingHierarchy.build(_Context->m_NodesRenderingList);
+            _Context->m_WindowsRightSnappingHierarchy.build(_Context->m_NodesRenderingList);
+            _Context->m_WindowsBottomSnappingHierarchy.build(_Context->m_NodesRenderingList);
 
-            // retrieve windows docked by a docker
-            for(auto node : _Context->m_Hierarchy.Singletons)
+            // sort docked windows by their docking index within hierarchy
+            for(auto singleton : _Context->m_Hierarchy.Singletons)
             {
                 ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
 
-                if(window != nullptr && window->Docker == _Docker)
-                    _Context->m_WindowsDockingList.push_back(window);
+                if(window == nullptr)
+                    continue;
+
+                std::sort(
+                    _Context->m_WindowsTopSnappingHierarchy.begin(window),
+                    _Context->m_WindowsTopSnappingHierarchy.end(window),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                    });
+
+                std::sort(
+                    _Context->m_WindowsLeftSnappingHierarchy.begin(window),
+                    _Context->m_WindowsLeftSnappingHierarchy.end(window),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                    });
+
+                std::sort(
+                    _Context->m_WindowsRightSnappingHierarchy.begin(window),
+                    _Context->m_WindowsRightSnappingHierarchy.end(window),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                    });
+
+                std::sort(
+                    _Context->m_WindowsBottomSnappingHierarchy.begin(window),
+                    _Context->m_WindowsBottomSnappingHierarchy.end(window),
+                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                    {
+                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                    });
             }
-
-            // sort windows docked by a docker by their docking indexes
-            std::sort(
-                _Context->m_WindowsDockingList.begin(),
-                _Context->m_WindowsDockingList.end(),
-                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                {
-                    return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                });
-
-            return _Context->m_WindowsDockingList;
         }
 
         static void attach_to_docker(
             ImmediateUserInterfaceContextLayer* _Context,
-            ImmediateUserInterfaceWindow*        _Docker,
-            ImmediateUserInterfaceWindow*        _Docked)
+            ImmediateUserInterfaceWindow*       _Docker,
+            ImmediateUserInterfaceWindow*       _Docked)
         {
             // auxiliary lambdas
             auto move_to_cache = [](
@@ -1504,7 +2045,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
             auto move_child_docked_windows_to_cache = [](
                 ImmediateUserInterfaceContextLayer* _Context,
-                ImmediateUserInterfaceWindow*        _Docker)
+                ImmediateUserInterfaceWindow*       _Docker)
             {
                 if(_Context == nullptr || _Docker == nullptr)
                     return;
@@ -1561,7 +2102,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
     
         static void detach_from_docker(
             ImmediateUserInterfaceContextLayer* _Context,
-            ImmediateUserInterfaceWindow*        _Detached)
+            ImmediateUserInterfaceWindow*       _Detached)
         {
             if(_Detached == nullptr)
                 return;
@@ -1593,6 +2134,235 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             // TODO: reattach children to the first child
             _Detached->Docker        = nullptr;
             _Detached->DockingIndex  = -1;
+        }
+    
+        static void attach_to_snapper(
+            ImmediateUserInterfaceContextLayer*                     _Context,
+            ImmediateUserInterfaceWindow*                           _Snapper,
+            ImmediateUserInterfaceWindow*                           _Snapped,
+            const ImmedidateUserInterfaceWindowSnapperOrientation_& _Orientation)
+        {
+            // auxiliary lambdas
+            auto move_to_cache = [](
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceWindow*       _Snapper)
+            {
+                if(_Context == nullptr || _Snapper == nullptr)
+                    return;
+
+                 _Context->m_WindowsDockingCache.push_back(_Snapper);
+            };
+
+            auto move_child_docked_windows_to_cache = [](
+                ImmediateUserInterfaceContextLayer*                     _Context,
+                ImmediateUserInterfaceWindow*                           _Snapper,
+                const ImmedidateUserInterfaceWindowSnapperOrientation_& _Orientation)
+            {
+                if(_Context == nullptr || _Snapper == nullptr)
+                    return;
+
+                // retrieve docked windows
+                auto& snappedWindows = retrieve_snapped_windows(_Context, _Snapper, _Orientation);
+
+                // move to cache
+                for(auto it  = snappedWindows.begin();
+                         it != snappedWindows.end();
+                         it++)
+                {
+                    _Context->m_WindowsDockingCache.push_back(*it);
+                }
+            };
+
+            if(_Context == nullptr  ||
+                _Snapper == nullptr ||
+                _Snapped == nullptr ||
+                (_Snapped->TopSnapper == _Snapper || _Snapped->LeftSnapper == _Snapper || _Snapped->RightSnapper == _Snapper || _Snapped->BottomSnapper == _Snapper) ||
+                (_Snapper->TopSnapper == _Snapped || _Snapper->LeftSnapper == _Snapped || _Snapper->RightSnapper == _Snapped || _Snapper->BottomSnapper == _Snapped))
+            {
+                return;
+            }
+
+            // get ready
+            _Context->m_WindowsDockingCache.clear();
+
+            auto snapper = _Snapper;
+
+            // move child docked windows and self to windows docking cache
+            move_child_docked_windows_to_cache(_Context, snapper, _Orientation);
+            move_to_cache(_Context, _Snapped);
+
+            // reindex docked nodes and setup their docker
+            int dockindex = 0;
+
+            for(auto it  = _Context->m_WindowsDockingCache.begin();
+                     it != _Context->m_WindowsDockingCache.end();
+                     it++)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                if(window == nullptr)
+                    continue;
+
+                switch (_Orientation)
+                {
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top:
+                    window->TopSnapper = snapper;
+                        break;
+                    
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left:
+                    window->LeftSnapper = snapper;
+                        break;
+
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right:
+                    window->RightSnapper = snapper;
+                        break;
+
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Bottom:
+                    window->BottomSnapper = snapper;
+                        break;
+                }
+
+                window->DockingIndex = dockindex++;
+            }
+
+            // setup self as active
+            //ImmediateUserInterfaceWindow::setup_as_active_docking_window(_Context, _Docked);
+
+            // clear
+            _Context->m_WindowsDockingCache.clear();
+            _Context->m_WindowsDockingList.clear();
+        }
+
+        static void detach_from_snapper(
+            ImmediateUserInterfaceContextLayer* _Context,
+            ImmediateUserInterfaceWindow*       _Detached)
+        {
+            if(_Detached == nullptr)
+                return;
+
+            // reindex docked nodes of the docker of the moved node
+            if(_Detached->Docker != nullptr)
+            {
+                for (int orientation = ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Begin;
+                         orientation < ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_End;
+                         orientation++)
+                {
+                    auto& dockedWindows = retrieve_snapped_windows(_Context, _Detached->Docker, (ImmedidateUserInterfaceWindowSnapperOrientation_)orientation);
+
+                    int dockindex = 0;
+
+                    for(auto it  = dockedWindows.begin();
+                            it != dockedWindows.end();
+                            it++)
+                    {
+                        ImmediateUserInterfaceWindow* window =
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                        if(window != nullptr && window != _Detached)
+                            window->DockingIndex = dockindex++;
+                    }
+                }
+
+                _Detached->TopSnapper    = nullptr;
+                _Detached->LeftSnapper   = nullptr;
+                _Detached->RightSnapper  = nullptr;
+                _Detached->BottomSnapper = nullptr;
+                _Detached->DockingActive = false;
+                _Detached->DockingIndex  = -1;
+                return;
+            }
+
+            // TODO: reattach children to the first child
+            _Detached->TopSnapper    = nullptr;
+            _Detached->LeftSnapper   = nullptr;
+            _Detached->RightSnapper  = nullptr;
+            _Detached->BottomSnapper = nullptr;
+            _Detached->DockingIndex  = -1;
+        }
+
+        static std::vector<ImmediateUserInterfaceNode*>& retrieve_docked_windows(
+            ImmediateUserInterfaceContextLayer* _Context,
+            ImmediateUserInterfaceWindow*       _Docker)
+        {
+            // get ready
+            _Context->m_WindowsDockingList.clear();
+
+            // retrieve windows docked by a docker
+            for(auto node : _Context->m_Hierarchy.Singletons)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+                if(window != nullptr && window->Docker == _Docker)
+                    _Context->m_WindowsDockingList.push_back(window);
+            }
+
+            // sort windows docked by a docker by their docking indexes
+            std::sort(
+                _Context->m_WindowsDockingList.begin(),
+                _Context->m_WindowsDockingList.end(),
+                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                {
+                    return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                });
+
+            return _Context->m_WindowsDockingList;
+        }
+
+        static std::vector<ImmediateUserInterfaceNode*>& retrieve_snapped_windows(
+            ImmediateUserInterfaceContextLayer*                     _Context,
+            ImmediateUserInterfaceWindow*                           _Snapper,
+            const ImmedidateUserInterfaceWindowSnapperOrientation_& _Orientation)
+        {
+            // get ready
+            _Context->m_WindowsDockingList.clear();
+
+            // retrieve windows docked by a docker
+            for(auto node : _Context->m_Hierarchy.Singletons)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+                if(window == nullptr)
+                    continue;
+
+                switch (_Orientation)
+                {
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top:
+                    if(window->TopSnapper == _Snapper)
+                        _Context->m_WindowsDockingList.push_back(window);
+                        break;
+                    
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left:
+                    if(window->LeftSnapper == _Snapper)
+                        _Context->m_WindowsDockingList.push_back(window);
+                        break;
+
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right:
+                    if(window->RightSnapper == _Snapper)
+                        _Context->m_WindowsDockingList.push_back(window);
+                        break;
+
+                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Bottom:
+                    if(window->BottomSnapper == _Snapper)
+                        _Context->m_WindowsDockingList.push_back(window);
+                        break;
+                }
+            }
+
+            // sort windows docked by a docker by their docking indexes
+            std::sort(
+                _Context->m_WindowsDockingList.begin(),
+                _Context->m_WindowsDockingList.end(),
+                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                {
+                    return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+                });
+
+            return _Context->m_WindowsDockingList;
         }
     
     };
@@ -1641,6 +2411,14 @@ void ImmediateUserInterfaceContextLayer::frame_render()
             _Context->m_NodesRenderingCache.clear();
 
             // compute initial depth of singletons
+            std::sort(
+                _Context->m_Hierarchy.Singletons.begin(),
+                _Context->m_Hierarchy.Singletons.end(),
+                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                {
+                    return _A->State.RenderingOrder < _B->State.RenderingOrder;
+                });
+
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
                 singleton->State.Depth = singleton->State.InitialDepth;
