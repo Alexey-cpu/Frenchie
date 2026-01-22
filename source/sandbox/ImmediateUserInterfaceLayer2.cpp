@@ -178,13 +178,48 @@ namespace Frenchie
             ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNodeVerticalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindow(){}
 
+            void render_frame(ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, const std::string& _Title)
+            {
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    _BoundingBox.Min,
+                    _BoundingBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded(
+                    _BoundingBox.Min,
+                    _BoundingBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // title
+                _Context->m_Renderer->push_text(
+                    _Title,
+                    _Context->m_Style.FontSize,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), _BoundingBox.Min));
+
+                if(_BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
+                {
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        _BoundingBox.Min,
+                        _BoundingBox.Max,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+            }
+
             void render_frame(ImmediateUserInterfaceContextLayer* _Context)
             {
                 if(Docker != nullptr)
                     return;
-
-                gs_vec2f position = FrameBox.Min;
-                gs_vec2f size     = gs_vec2f((FrameBox.size() / (float)(_Context->m_WindowsDockingHierarchy.size(this) + 1)).x, FrameBox.size().y);
 
                 ImmedidateUserInterfaceEvent event;
                 event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
@@ -210,45 +245,19 @@ namespace Frenchie
                         event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
                 }
 
+                gs_vec2f position = FrameBox.Min;
+                gs_vec2f size     = gs_vec2f((FrameBox.size() / (float)(_Context->m_WindowsDockingHierarchy.size(this) + 1)).x, FrameBox.size().y);
+
                 // render self frame
                 {
                     gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
 
-                    // background
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    // render frame
+                    render_frame(_Context, boundingBox, Name);
 
-                    // outline
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    // title
-                    _Context->m_Renderer->push_text(
-                        Name,
-                        32.f,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), boundingBox.Min));
-
+                    // pass focus and activity
                     if(boundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
                     {
-                        _Context->m_Renderer->push_rectangle_rounded(
-                            boundingBox.Min,
-                            boundingBox.Max,
-                            _Context->m_Style.FramesRadius,
-                            _Context->m_Style.FramesWidth,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                        // pass focus and activity
                         if(event.MousePressed.has_value())
                         {
                             setup_as_active_docking_window(_Context, this);
@@ -266,42 +275,12 @@ namespace Frenchie
                 {
                     gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
 
-                    // background
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    // outline
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    // title
-                    _Context->m_Renderer->push_text(
-                        (*it)->Name,
-                        32.f,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), boundingBox.Min));
+                    // render frame
+                    render_frame(_Context, boundingBox, (*it)->Name);
 
                     // some simple event processing
                     if(boundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
                     {
-                        // outline
-                        _Context->m_Renderer->push_rectangle_rounded(
-                            boundingBox.Min,
-                            boundingBox.Max,
-                            _Context->m_Style.FramesRadius,
-                            _Context->m_Style.FramesWidth,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
                         // pass focus and activity
                         if(event.MousePressed.has_value())
                         {
