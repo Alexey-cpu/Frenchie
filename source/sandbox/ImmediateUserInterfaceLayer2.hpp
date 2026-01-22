@@ -33,6 +33,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 7,
             ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 8,
             ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 9,
+
+            // events interception
+            ImmediateUserInterfaceNodeEvents_InterceptsEvent      = 1 << 10,
         };
 
         enum ImmediateUserInterfaceNodeColors_ : int
@@ -78,13 +81,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceNodeEvents;
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceNodeMouseHover;
-
-        struct ImmedidateUserInterfaceEvent;
-        struct ImmedidateUserInterfaceStyle;
-
-        struct ImmediateUserInterfaceNode;
-
-        class  ImmedidateUserInterfaceContextLayer;
+        class ImmediateUserInterfaceContextLayer;
 
         struct ImmedidateUserInterfaceStyle
         {
@@ -137,10 +134,10 @@ namespace Frenchie
             ImmediateUserInterfaceNode(const std::string _Name);
             virtual ~ImmediateUserInterfaceNode();
 
-            virtual void render(ImmedidateUserInterfaceContextLayer* _Context);
-            virtual void layout(ImmedidateUserInterfaceContextLayer* _Context);
-            virtual void measure(ImmedidateUserInterfaceContextLayer* _Context);
-            virtual void events(ImmedidateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
+            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
 
             bool is_visible() const;
             bool is_partially_visible() const;
@@ -299,11 +296,11 @@ namespace Frenchie
             }
         };
 
-        class ImmedidateUserInterfaceContextLayer : public Layer
+        class ImmediateUserInterfaceContextLayer : public Layer
         {
         public:
-            ImmedidateUserInterfaceContextLayer();
-            virtual ~ImmedidateUserInterfaceContextLayer();
+            ImmediateUserInterfaceContextLayer();
+            virtual ~ImmediateUserInterfaceContextLayer();
 
             virtual bool awake()        override;
             virtual void frame_start()  override;
@@ -386,12 +383,17 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceStyle                                       m_Style;
             mutable std::multiset<std::string>                                         m_Duplicates;
             mutable ImmedidateUserInterfaceNodeHierarchy                               m_Hierarchy;
-            mutable ImmedidateUserInterfaceNodeHierarchy                               m_DockAreas;
+
+            // rendering
             mutable std::shared_ptr<Immediate2DRenderer>                               m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_WindowsDockingCache;
+
+            // docking
+            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsDockingHierarchy;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingCache;
+            mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingList;
         };
     };
 }

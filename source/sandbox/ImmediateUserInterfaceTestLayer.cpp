@@ -8,7 +8,7 @@ ImmediateUserInterfaceTestLayer::~ImmediateUserInterfaceTestLayer(){}
 bool ImmediateUserInterfaceTestLayer::awake()
 {
     if(m_ImmediateUserInterface == nullptr)
-        m_ImmediateUserInterface = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmedidateUserInterfaceContextLayer>();
+        m_ImmediateUserInterface = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
     return true;
 }

@@ -16,7 +16,7 @@ namespace Frenchie
             virtual void frame_update() override;
             virtual void finish() override;
         protected:
-            std::shared_ptr<ImmedidateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};
+            std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};
         };
     }
 }
