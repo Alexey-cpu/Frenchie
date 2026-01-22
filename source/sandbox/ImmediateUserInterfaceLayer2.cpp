@@ -9,73 +9,70 @@ namespace Frenchie
 {
     namespace Application
     {
-        template<typename Type>
-        static void layout_nodes_vertically(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox)
+        namespace ImmediateUserInterfaceContextLayerHelpers
         {
-            gs_vec2f position  = _Position;
-            gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
-
-            // compute total size
-            for(auto it = _Begin; it != _End; ++it)
+            template<typename Type, typename Filter>
+            static void layout_nodes_vertically(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
             {
-                if((*it) != nullptr)
-                    totalsize += (*it)->State.BoundingBox.size();
+                gs_vec2f position  = _Position;
+                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+
+                // compute total size
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) != nullptr && _Filter(*it))
+                        totalsize += (*it)->State.BoundingBox.size();
+                }
+
+                // compute children size scale
+                gs_vec2f scale = _BoundingBox.size() / totalsize;
+
+                // compute layout
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    auto node = *it;
+
+                    if(node == nullptr || !_Filter(node))
+                        continue;
+
+                    gs_vec2f size = gs_vec2f(_BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
+                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                    node->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(0.f, size.y);
+                }
             }
 
-            // compute children size scale
-            gs_vec2f scale = _BoundingBox.size() / totalsize;
-
-            // compute layout
-            for(auto it = _Begin; it != _End; ++it)
+            template<typename Type, typename Filter>
+            static void layout_nodes_horizontally(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
             {
-                auto node = *it;
+                gs_vec2f position   = _Position;
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
-                if(node == nullptr)
-                    continue;
+                // compute total size
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) != nullptr && _Filter(*it))
+                        totalsize += (*it)->State.BoundingBox.size();
+                }
 
-                gs_vec2f size = gs_vec2f(_BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
-                size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                node->State.BoundingBox = gs_2dboxf(position, position + size);
-                position += gs_vec2f(0.f, size.y);
+                // compute children scale
+                gs_vec2f scale = _BoundingBox.size() / totalsize;
+
+                // compute layout
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    auto node = *it;
+
+                    if(node == nullptr || !_Filter(node))
+                        continue;
+
+                    gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, _BoundingBox.height());
+                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
+                    node->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(size.x, 0.f);
+                }
             }
-        }
-
-        template<typename Type>
-        static void layout_nodes_horizontally(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox)
-        {
-            gs_vec2f position   = _Position;
-            gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-
-            // compute total size
-            for(auto it = _Begin; it != _End; ++it)
-            {
-                if((*it) != nullptr)
-                    totalsize += (*it)->State.BoundingBox.size();
-            }
-
-            // compute children scale
-            gs_vec2f scale = _BoundingBox.size() / totalsize;
-
-            // compute layout
-            for(auto it = _Begin; it != _End; ++it)
-            {
-                auto node = *it;
-
-                if(node == nullptr)
-                    continue;
-
-                gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, _BoundingBox.height());
-                size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                node->State.BoundingBox = gs_2dboxf(position, position + size);
-                position += gs_vec2f(size.x, 0.f);
-            }
-        }
-
-        class ImmedidateUserInterfaceHelpers
-        {
-        public:
-
-            // auxiliary lambdas
+        
             static void clamp_bounding_box(ImmediateUserInterfaceNode* _Node, gs_2dboxf _BoundingBox)
             {
                 // handle minimum width
@@ -151,7 +148,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Min + gs_vec2f(0.f, _Node->State.BoundingBox.height() - WindowResizeSideGizmoWidth),
                     _Node->State.BoundingBox.Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
             };
-        };
+        }
     
         // layout
         struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNode
@@ -165,33 +162,11 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
-                layout_nodes_vertically(_Context->m_Hierarchy.begin(this), _Context->m_Hierarchy.end(this), State.BoundingBox.Min, State.BoundingBox);
-
-                // gs_vec2f position  = State.BoundingBox.Min;
-                // gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
-
-                // // compute total size and children size scale
-                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                // {
-                //     if((*it) != nullptr)
-                //         totalsize += (*it)->State.BoundingBox.size();
-                // }
-
-                // gs_vec2f scale = State.BoundingBox.size() / totalsize;
-
-                // // layout children
-                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                // {
-                //     auto node = *it;
-
-                //     if(node == nullptr)
-                //         continue;
-
-                //     gs_vec2f size = gs_vec2f(State.BoundingBox.width(), (node->State.BoundingBox.size() * scale).y);
-                //     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                //     node->State.BoundingBox = gs_2dboxf(position, position + size);
-                //     position += gs_vec2f(0.f, size.y);
-                // }
+                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_vertically(
+                    _Context->m_Hierarchy.begin(this),
+                    _Context->m_Hierarchy.end(this),
+                    State.BoundingBox.Min, State.BoundingBox,
+                    [](const ImmediateUserInterfaceNode*){return true;});
             }
         };
 
@@ -206,33 +181,12 @@ namespace Frenchie
                 if(_Context == nullptr)
                     return;
 
-                layout_nodes_horizontally(_Context->m_Hierarchy.begin(this), _Context->m_Hierarchy.end(this), State.BoundingBox.Min, State.BoundingBox);
-
-                // gs_vec2f position   = State.BoundingBox.Min;
-                // gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-
-                // // compute total size and children size scale
-                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                // {
-                //     if((*it) != nullptr)
-                //         totalsize += (*it)->State.BoundingBox.size();
-                // }
-
-                // gs_vec2f scale = State.BoundingBox.size() / totalsize;
-
-                // // layout children
-                // for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); ++it)
-                // {
-                //     auto node = *it;
-
-                //     if(node == nullptr)
-                //         continue;
-
-                //     gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, State.BoundingBox.height());
-                //     size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                //     node->State.BoundingBox = gs_2dboxf(position, position + size);
-                //     position += gs_vec2f(size.x, 0.f);
-                // }
+                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_horizontally(
+                    _Context->m_Hierarchy.begin(this),
+                    _Context->m_Hierarchy.end(this),
+                    State.BoundingBox.Min,
+                    State.BoundingBox,
+                    [](const ImmediateUserInterfaceNode*){return true;});
             }
         };
     
@@ -371,7 +325,7 @@ namespace Frenchie
                                 ImmediateUserInterfaceWindow* movable =
                                     dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
-                                if(movable->Docker != nullptr &&
+                                if((movable->Docker != nullptr) &&
                                     !(movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoveStarted))
                                 {
                                     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoveStarted;
@@ -423,34 +377,6 @@ namespace Frenchie
 
                 // frame
                 render_frame(_Context);
-
-                // // render vertical boxes
-                // for(int i = ImmediateUserInterfaceWindowVerticalSnappingBoxes_::ImmediateUserInterfaceWindowVerticalSnappingBoxes_Begin;
-                //         i < ImmediateUserInterfaceWindowVerticalSnappingBoxes_::ImmediateUserInterfaceWindowVerticalSnappingBoxes_End;
-                //         i++)
-                // {
-                //     _Context->m_Renderer->push_rectangle_rounded(
-                //         VerticalBoxes[i].Min + _Context->m_Style.FramesWidth * 0.5f,
-                //         VerticalBoxes[i].Max - _Context->m_Style.FramesWidth * 0.5f,
-                //         _Context->m_Style.FramesRadius,
-                //         _Context->m_Style.FramesWidth,
-                //         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                //         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                // }
-
-                // render horizontal boxes
-                for(int i = ImmediateUserInterfaceWindowHorizontalSnappingBoxes_::ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Begin;
-                        i < ImmediateUserInterfaceWindowHorizontalSnappingBoxes_::ImmediateUserInterfaceWindowHorizontalSnappingBoxes_End;
-                        i++)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        HorizontalBoxes[i].Min + _Context->m_Style.FramesWidth * 0.5f,
-                        HorizontalBoxes[i].Max - _Context->m_Style.FramesWidth * 0.5f,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
             }
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
@@ -460,7 +386,7 @@ namespace Frenchie
 
                 // compute self geometry
                 {
-                    // compute gizmo
+                    // compute gizmos
                     gs_2dboxf gizmoBox = gs_2dboxf(
                         State.BoundingBox.center() - gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.25f,
                         State.BoundingBox.center() + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.25f);
@@ -499,106 +425,71 @@ namespace Frenchie
                         State.BoundingBox.Max);
 
                     // compute vertical snap boxes
-                    {
-                        bool isTopSnapper    = _Context->m_WindowsTopSnappingHierarchy.size(this) > 0;
-                        bool isBottomSnapper = _Context->m_WindowsBottomSnappingHierarchy.size(this) > 0;
+                    bool isTopSnapper = _Context->m_Hierarchy.count(
+                        this,
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->TopSnapper != nullptr;
+                        }) > 0;
 
+                    bool isLeftSnapper = _Context->m_Hierarchy.count(
+                        this,
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->LeftSnapper != nullptr;
+                        }) > 0;
+
+                    bool isRightSnapper = _Context->m_Hierarchy.count(
+                        this,
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->RightSnapper != nullptr;
+                        }) > 0;
+
+                    bool isBottomSnapper = _Context->m_Hierarchy.count(
+                        this,
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->BottomSnapper != nullptr;
+                        }) > 0;
+
+                    {
                         // top
-                        if(isTopSnapper)
-                        {
-                            if(gs_min(
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].size().x,
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].size().y) <= 0.f)
-                            {
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top] =
-                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
-                            }
-                        }
-                        else
-                        {
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top] =
-                                    gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-                        }
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top] =
+                            isTopSnapper ? gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size()) : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
                         // center
-                        if(gs_min(
-                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center].size().x,
-                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center].size().y) <= 0.f)
-                        {
-                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center] =
-                                gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
-                        }
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Center] =
+                            gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
 
                         // bottom
-                        if(isBottomSnapper)
-                        {
-                            if(gs_min(
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].size().x,
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].size().y) <= 0.f)
-                            {
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom] =
-                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
-                            }
-                        }
-                        else
-                        {
-                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom] =
-                                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-                        }
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom] =
+                            isBottomSnapper ? gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size()) : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
                         layout_boxes_vertically(VerticalBoxes, ContentBox, ContentBox.Min);
                     }
 
                     // compute horizontal snap boxes
                     {
-                        bool isLeftSnapper  = _Context->m_WindowsLeftSnappingHierarchy.size(this) > 0;
-                        bool isRightSnapper = _Context->m_WindowsRightSnappingHierarchy.size(this) > 0;
-
                         // left
-                        if(isLeftSnapper)
-                        {
-                            if(gs_min(
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].size().x,
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].size().y) <= 0.f)
-                            {
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left] =
-                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
-                            }
-                            else
-                            {
-                            }
-                        }
-                        else
-                        {
-                            HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left] =
-                                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-                        }
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left] =
+                            isLeftSnapper ? gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size()) : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
                         // center
-                        if(gs_min(
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center].size().x,
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center].size().y) <= 0.f)
-                        {
-                            HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center] =
-                                gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
-                        }
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center] =
+                            gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
 
                         // right
-                        if(isRightSnapper)
-                        {
-                            if(gs_min(
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].size().x,
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].size().y) <= 0.f)
-                            {
-                                HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right] =
-                                    gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size());
-                            }
-                        }
-                        else
-                        {
-                            HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right] =
-                                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-                        }
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right] =
+                            isRightSnapper ? gs_2dboxf(gs_vec2f(0.f, 0.f), ContentBox.size()) : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
                         gs_vec2f min = gs_vec2f(
                                 VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min.x,
@@ -606,16 +497,9 @@ namespace Frenchie
 
                         gs_vec2f max = min + gs_vec2f(
                             ContentBox.size().x,
-                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].Min.y - VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Max.y
-                        );
+                            VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].Min.y - VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Max.y);
 
-                        layout_boxes_horizontally(
-                            HorizontalBoxes,
-                            ContentBox,
-                            gs_vec2f(
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min.x,
-                                VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Max.y)
-                            );
+                        layout_boxes_horizontally(HorizontalBoxes, gs_2dboxf(min, max), min);
                     }
                 }
 
@@ -633,37 +517,73 @@ namespace Frenchie
                 // layout snapped windows
                 {
                     // vertical snappers
-                    layout_nodes_horizontally(
-                        _Context->m_WindowsTopSnappingHierarchy.begin(this),
-                        _Context->m_WindowsTopSnappingHierarchy.end(this),
-                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min,
-                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top]);
-
-                    layout_nodes_horizontally(
-                        _Context->m_WindowsBottomSnappingHierarchy.begin(this),
-                        _Context->m_WindowsBottomSnappingHierarchy.end(this),
-                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].Min,
-                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom]);
-
-                    // horizontal snappers
-                    layout_nodes_horizontally(
-                        _Context->m_WindowsLeftSnappingHierarchy.begin(this),
-                        _Context->m_WindowsLeftSnappingHierarchy.end(this),
-                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].Min,
-                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left]);
-
-                    layout_nodes_horizontally(
-                        _Context->m_WindowsRightSnappingHierarchy.begin(this),
-                        _Context->m_WindowsRightSnappingHierarchy.end(this),
-                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].Min,
-                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right]);
-
-                    // self
-                    layout_nodes_vertically(
+                    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_horizontally(
                         _Context->m_Hierarchy.begin(this),
                         _Context->m_Hierarchy.end(this),
-                        ContentBox.Min,
-                        ContentBox);
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top].Min,
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Top],
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->TopSnapper != nullptr;
+                        });
+
+                    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_horizontally(
+                        _Context->m_Hierarchy.begin(this),
+                        _Context->m_Hierarchy.end(this),
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom].Min,
+                        VerticalBoxes[ImmediateUserInterfaceWindowVerticalSnappingBoxes_Bottom],
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->BottomSnapper != nullptr;
+                        });
+
+                    // horizontal snappers
+                    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_horizontally(
+                        _Context->m_Hierarchy.begin(this),
+                        _Context->m_Hierarchy.end(this),
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left].Min,
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Left],
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->LeftSnapper != nullptr;
+                        });
+
+                    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_horizontally(
+                        _Context->m_Hierarchy.begin(this),
+                        _Context->m_Hierarchy.end(this),
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right].Min,
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Right],
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+                            return window != nullptr && window->RightSnapper != nullptr;
+                        });
+
+                    // self
+                    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_vertically(
+                        _Context->m_Hierarchy.begin(this),
+                        _Context->m_Hierarchy.end(this),
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center].Min,
+                        HorizontalBoxes[ImmediateUserInterfaceWindowHorizontalSnappingBoxes_Center],
+                        [](const ImmediateUserInterfaceNode* _Node)
+                        {
+                            const ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
+
+                            return window                == nullptr ||
+                                   (window->TopSnapper   == nullptr &&
+                                   window->LeftSnapper   == nullptr &&
+                                   window->RightSnapper  == nullptr &&
+                                   window->BottomSnapper == nullptr);
+                        }
+                    );
                 }
             }
 
@@ -736,20 +656,8 @@ namespace Frenchie
                 gs_vec2f position  = _Position;
                 
                 for (int i = 0; i < 3; i++)
-                {
-                    if(Name == "Window-5")
-                    {
-                        std::cout << _Boxes[i].size().x << "\t" << _Boxes[i].size().y << "\n";
-                    }
-
                     totalSize += _Boxes[i].size();
-                }
                 gs_vec2f scale = _Parent.size() / totalSize;
-
-                if(Name == "Window-5")
-                {
-                    std::cout << "totalSize " << totalSize.x << "\t" << totalSize.y << "\n";
-                }
 
                 // layout
                 for (int i = 0; i < 3; i++)
@@ -896,13 +804,13 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 {
     // auxiliary lambdas
     auto render_resize_gizmo = [](
-        ImmediateUserInterfaceContextLayer*    _Context,
+        ImmediateUserInterfaceContextLayer*     _Context,
         ImmediateUserInterfaceNode*             _Node,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
     {
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
         {
-            auto resizeTopLeft = ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(_Node);
+            auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Node);
 
             _Context->m_Renderer->push_arc_filled(
                 resizeTopLeft.Center,
@@ -917,7 +825,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
         {
-            auto resizeTopRight = ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(_Node);
+            auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Node);
 
             _Context->m_Renderer->push_arc_filled(
                 resizeTopRight.Center,
@@ -932,7 +840,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
         {
-            auto resizeBottomLeft = ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(_Node);
+            auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Node);
 
             _Context->m_Renderer->push_arc_filled(
                 resizeBottomLeft.Center,
@@ -947,7 +855,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
         {
-            auto resizeBottomRight = ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(_Node);
+            auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Node);
 
             _Context->m_Renderer->push_arc_filled(
                 resizeBottomRight.Center,
@@ -962,7 +870,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
         {
-            auto resizeTop = ImmedidateUserInterfaceHelpers::build_resize_top_box(_Node);
+            auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeTop.Min,
@@ -975,7 +883,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
         {
-            auto resizeLeft = ImmedidateUserInterfaceHelpers::build_resize_left_box(_Node);
+            auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeLeft.Min,
@@ -988,7 +896,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
         {
-            auto resizeRight = ImmedidateUserInterfaceHelpers::build_resize_right_box(_Node);
+            auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeRight.Min,
@@ -1001,7 +909,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
         {
-            auto resizeBottom = ImmedidateUserInterfaceHelpers::build_resize_bottom_box(_Node);
+            auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeBottom.Min,
@@ -1019,47 +927,47 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType)->bool
     {
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-            return ImmedidateUserInterfaceHelpers::build_resize_top_left_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Node).contains(_Event.CursorPosition);
 
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-            return ImmedidateUserInterfaceHelpers::build_resize_top_right_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-            return ImmedidateUserInterfaceHelpers::build_resize_bottom_left_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-            return ImmedidateUserInterfaceHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-            return ImmedidateUserInterfaceHelpers::build_resize_top_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-            return ImmedidateUserInterfaceHelpers::build_resize_left_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-            return ImmedidateUserInterfaceHelpers::build_resize_right_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-            return ImmedidateUserInterfaceHelpers::build_resize_bottom_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Node).contains(_Event.CursorPosition);
         
         return false;
     };
 
     auto find_resizable_node = [&check_cursor_intersection_with_resize_gizmo](
-        ImmediateUserInterfaceContextLayer*    _Context,
+        ImmediateUserInterfaceContextLayer*     _Context,
         ImmediateUserInterfaceNode*             _Node,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType,
         const ImmedidateUserInterfaceEvent&     _Event)
     {
         // find resizable node
         ImmediateUserInterfaceNode* resizable = _Node;
-        
-        if(resizable->State.Parent != nullptr)
+
+        if(_Context->m_Hierarchy.get_parent(resizable) != nullptr)
         {
             // pass event to a parent
-            while (resizable->State.Parent &&
-                    check_cursor_intersection_with_resize_gizmo(resizable->State.Parent, _Event, _ResizeEventType))
-                resizable = resizable->State.Parent;
+            while (_Context->m_Hierarchy.get_parent(resizable) &&
+                    check_cursor_intersection_with_resize_gizmo(_Context->m_Hierarchy.get_parent(resizable), _Event, _ResizeEventType))
+                resizable = _Context->m_Hierarchy.get_parent(resizable);
         }
 
         // if this is a window then we pass event to a docker
@@ -1079,7 +987,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     {
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min + _Event.CursorDragDelta,
                 _Node->Cache.BoundingBox.Max));
             return;
@@ -1087,7 +995,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                 _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
             return;
@@ -1095,7 +1003,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                 _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
             return;
@@ -1103,7 +1011,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min,
                 _Node->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
             return;
@@ -1111,7 +1019,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
                 _Node->Cache.BoundingBox.Max));
             return;
@@ -1119,7 +1027,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
                 _Node->Cache.BoundingBox.Max));
             return;
@@ -1127,7 +1035,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min,
                 _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
             return;
@@ -1135,7 +1043,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
         {
-            ImmedidateUserInterfaceHelpers::clamp_bounding_box(_Node, gs_2dboxf(
+            ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min,
                 _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
             return;
@@ -1146,12 +1054,12 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     if(State.MousePressed.has_value())
     {
         ImmediateUserInterfaceNode* focused = nullptr;
-        ImmediateUserInterfaceNode* parent  = State.Parent;
+        ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(this);
 
         while (parent)
         {
             focused = parent;
-            parent  = parent->State.Parent;
+            parent  = _Context->m_Hierarchy.get_parent(parent);
         }
         
         if(dynamic_cast<ImmediateUserInterfaceWindow*>(focused))
@@ -1365,9 +1273,25 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {
+            // TODO: refactor this !!!
             auto movable = this;
-            while (movable->State.Parent)
-                movable = movable->State.Parent;
+
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable) != nullptr &&
+                (dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->TopSnapper   != nullptr||
+                dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->LeftSnapper   != nullptr ||
+                dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->RightSnapper  != nullptr ||
+                dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->BottomSnapper != nullptr))
+            {
+
+            }
+            else
+            {
+                while (_Context->m_Hierarchy.get_parent(movable))
+                    movable = _Context->m_Hierarchy.get_parent(movable);
+            }
+
+            // while (_Context->m_Hierarchy.get_parent(movable))
+            //     movable = _Context->m_Hierarchy.get_parent(movable);
 
             movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
             movable->State.BoundingBox = gs_2dboxf(
@@ -1423,7 +1347,28 @@ bool ImmediateUserInterfaceContextLayer::awake()
     m_Hierarchy = ImmedidateUserInterfaceNodeHierarchy(
         [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
-            return _Node != nullptr ? _Node->State.Parent : nullptr;
+            if(_Node == nullptr)
+                return nullptr;
+
+            if(_Node->State.Parent != nullptr)
+                return _Node->State.Parent;
+
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
+
+            if(window != nullptr && window->TopSnapper != nullptr)
+                return window->TopSnapper;
+
+            if(window != nullptr && window->LeftSnapper != nullptr)
+                return window->LeftSnapper;
+
+            if(window != nullptr && window->RightSnapper != nullptr)
+                return window->RightSnapper;
+
+            if(window != nullptr && window->BottomSnapper != nullptr)
+                return window->BottomSnapper;
+
+            return nullptr;
         });
 
     // docking
@@ -1434,43 +1379,6 @@ bool ImmediateUserInterfaceContextLayer::awake()
                 dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
 
             return window != nullptr ? window->Docker : nullptr;
-        });
-
-    // snapping
-    m_WindowsTopSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
-        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
-        {
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
-
-            return window != nullptr ? window->TopSnapper : nullptr;
-        });
-
-    m_WindowsLeftSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
-        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
-        {
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
-
-            return window != nullptr ? window->LeftSnapper : nullptr;
-        });
-
-    m_WindowsRightSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
-        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
-        {
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
-
-            return window != nullptr ? window->RightSnapper : nullptr;
-        });
-
-    m_WindowsBottomSnappingHierarchy = ImmedidateUserInterfaceNodeHierarchy(
-        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
-        {
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
-
-            return window != nullptr ? window->BottomSnapper : nullptr;
         });
 
     return m_Renderer != nullptr;
@@ -1655,8 +1563,8 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             hoveredNode->events(_Context, _Event);
 
             // check in-parent intersection and process events of intersected nodes
-            for (auto it  = _Context->m_Hierarchy.begin(hoveredNode->State.Parent);
-                      it != _Context->m_Hierarchy.end(hoveredNode->State.Parent);
+            for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(hoveredNode));
+                      it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(hoveredNode));
                       it++)
             {
                 if((*it) == hoveredNode)
@@ -1681,7 +1589,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             place_on_dockers(_Context, _Event);
             place_on_layers(_Context, _Event);
             build_docking_hierarchy(_Context);
-            build_snapping_hierarchy(_Context);
         }
 
     private:
@@ -1760,47 +1667,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     }
                 }
             }
-
-            for(auto singleton : _Context->m_Hierarchy.Singletons)
-            {
-                ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
-
-                if(window == nullptr)
-                    continue;
-
-                if(window->TopSnapper)
-                {
-                    window->State.InitialDepth = window->TopSnapper->State.InitialDepth;
-                }
-                else if(window->LeftSnapper)
-                {
-                    window->State.InitialDepth = window->LeftSnapper->State.InitialDepth;
-                }
-                else if(window->RightSnapper)
-                {
-                    window->State.InitialDepth = window->RightSnapper->State.InitialDepth;
-                }
-                else if(window->BottomSnapper)
-                {
-                    window->State.InitialDepth = window->BottomSnapper->State.InitialDepth;
-                }
-            }
-
-            for (auto& singleton : _Context->m_Hierarchy.Singletons)
-            {
-                ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
-
-                if(window != nullptr && window->TopSnapper == nullptr && window->LeftSnapper == nullptr && window->RightSnapper == nullptr && window->BottomSnapper == nullptr)
-                {
-                    singleton->State.RenderingOrder = 0;
-                }
-                else
-                {
-                    singleton->State.RenderingOrder = INT_MAX;
-                }
-            }
         }
 
         static void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -1810,14 +1676,41 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
             for(auto singleton : _Context->m_Hierarchy.Singletons)
             {
-                if(dynamic_cast<ImmediateUserInterfaceWindow*>(singleton) &&
-                    (singleton->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                if(dynamic_cast<ImmediateUserInterfaceWindow*>(singleton) == nullptr)
+                    continue;
+
+                if((singleton->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                 {
                     moved = dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
                     ImmedidateUserInterfaceWindowController::detach_from_docker(_Context, moved);
                     ImmedidateUserInterfaceWindowController::detach_from_snapper(_Context, moved);
                     break;
                 }
+
+                // check snappers
+                bool stop = false;
+
+                for (int i = ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Begin;
+                         i < ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_End;
+                         i++)
+                {
+                    auto& snappedWindows = ImmedidateUserInterfaceWindowController::retrieve_snapped_windows(
+                        _Context,
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(singleton),
+                        (ImmedidateUserInterfaceWindowSnapperOrientation_)i);
+
+                    for(auto snapped : snappedWindows)
+                    {
+                        if((snapped->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                        {
+                            moved = dynamic_cast<ImmediateUserInterfaceWindow*>(snapped);
+                            ImmedidateUserInterfaceWindowController::detach_from_snapper(_Context, moved);
+                            stop = true;
+                        }
+                    }
+                }
+
+                if(stop) break;
             }
 
             // find top most hovered singleton window not equal to the moved one
@@ -1854,7 +1747,9 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             if(allMouseButtonsAreReleased)
             {
                 if(hovered->CentralGizmo.contains(_Event.CursorPosition))
+                {
                     ImmedidateUserInterfaceWindowController::attach_to_docker(_Context, hovered, moved);
+                }
                 if(hovered->TopGizmo.contains(_Event.CursorPosition))
                 {
                     ImmedidateUserInterfaceWindowController::attach_to_snapper(
@@ -1863,7 +1758,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         moved,
                         ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top);
                 }
-                if(hovered->LeftGizmo.contains(_Event.CursorPosition))
+                else if(hovered->LeftGizmo.contains(_Event.CursorPosition))
                 {
                     ImmedidateUserInterfaceWindowController::attach_to_snapper(
                         _Context,
@@ -1871,7 +1766,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         moved,
                         ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left);
                 }
-                if(hovered->RightGizmo.contains(_Event.CursorPosition))
+                else if(hovered->RightGizmo.contains(_Event.CursorPosition))
                 {
                     ImmedidateUserInterfaceWindowController::attach_to_snapper(
                         _Context,
@@ -1879,7 +1774,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         moved,
                         ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right);
                 }
-                if(hovered->BottomGizmo.contains(_Event.CursorPosition))
+                else if(hovered->BottomGizmo.contains(_Event.CursorPosition))
                 {
                     ImmedidateUserInterfaceWindowController::attach_to_snapper(
                         _Context,
@@ -1891,7 +1786,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             else if(moved != hovered && moved->Docker != hovered && hovered->Docker != moved)
             {
                 // render potential docking window gizmo
-                int depth = hovered->Cache.Depth + hovered->Cache.TotalThickness + 1;
+                int depth = (int)_Context->m_Renderer->get_far_plane();
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     hovered->TopGizmo.Min,
@@ -1900,7 +1795,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     hovered->TopGizmo.contains(_Event.CursorPosition) ?
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     hovered->LeftGizmo.Min,
@@ -1909,7 +1804,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     hovered->LeftGizmo.contains(_Event.CursorPosition) ?
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     hovered->RightGizmo.Min,
@@ -1918,7 +1813,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     hovered->RightGizmo.contains(_Event.CursorPosition) ?
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     hovered->BottomGizmo.Min,
@@ -1927,7 +1822,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     hovered->BottomGizmo.contains(_Event.CursorPosition) ?
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
+                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     hovered->CentralGizmo.Min,
@@ -1936,14 +1831,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     hovered->CentralGizmo.contains(_Event.CursorPosition) ?
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
-
-                // _Context->m_Renderer->push_rectangle_rounded_filled(
-                //     hovered->ContentBox.Min,
-                //     hovered->ContentBox.Max,
-                //     _Context->m_Style.FramesRadius,
-                //     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                //     _Context->m_Renderer->calculate_transform_matrix((float)depth));
+                    _Context->m_Renderer->calculate_transform_matrix((float)depth));
             }
         }
 
@@ -1964,61 +1852,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 std::sort(
                     _Context->m_WindowsDockingHierarchy.begin(window),
                     _Context->m_WindowsDockingHierarchy.end(window),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                    });
-            }
-        }
-
-        static void build_snapping_hierarchy(ImmediateUserInterfaceContextLayer* _Context)
-        {
-            // build hierarchy
-            _Context->m_WindowsTopSnappingHierarchy.build(_Context->m_NodesRenderingList);
-            _Context->m_WindowsLeftSnappingHierarchy.build(_Context->m_NodesRenderingList);
-            _Context->m_WindowsRightSnappingHierarchy.build(_Context->m_NodesRenderingList);
-            _Context->m_WindowsBottomSnappingHierarchy.build(_Context->m_NodesRenderingList);
-
-            // sort docked windows by their docking index within hierarchy
-            for(auto singleton : _Context->m_Hierarchy.Singletons)
-            {
-                ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
-
-                if(window == nullptr)
-                    continue;
-
-                std::sort(
-                    _Context->m_WindowsTopSnappingHierarchy.begin(window),
-                    _Context->m_WindowsTopSnappingHierarchy.end(window),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                    });
-
-                std::sort(
-                    _Context->m_WindowsLeftSnappingHierarchy.begin(window),
-                    _Context->m_WindowsLeftSnappingHierarchy.end(window),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                    });
-
-                std::sort(
-                    _Context->m_WindowsRightSnappingHierarchy.begin(window),
-                    _Context->m_WindowsRightSnappingHierarchy.end(window),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                    });
-
-                std::sort(
-                    _Context->m_WindowsBottomSnappingHierarchy.begin(window),
-                    _Context->m_WindowsBottomSnappingHierarchy.end(window),
                     [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
                     {
                         return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
@@ -2242,8 +2075,13 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 return;
 
             // reindex docked nodes of the docker of the moved node
-            if(_Detached->Docker != nullptr)
+            if(_Detached->TopSnapper != nullptr    ||
+                _Detached->LeftSnapper != nullptr  ||
+                _Detached->RightSnapper != nullptr ||
+                _Detached->BottomSnapper)
             {
+                std::cout << "detaching " << _Detached->Name << "\n";
+                
                 for (int orientation = ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Begin;
                          orientation < ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_End;
                          orientation++)
@@ -2253,8 +2091,8 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     int dockindex = 0;
 
                     for(auto it  = dockedWindows.begin();
-                            it != dockedWindows.end();
-                            it++)
+                             it != dockedWindows.end();
+                             it++)
                     {
                         ImmediateUserInterfaceWindow* window =
                             dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
@@ -2320,10 +2158,10 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             _Context->m_WindowsDockingList.clear();
 
             // retrieve windows docked by a docker
-            for(auto node : _Context->m_Hierarchy.Singletons)
+            for(auto it = _Context->m_Hierarchy.begin(_Snapper); it != _Context->m_Hierarchy.end(_Snapper); it++)
             {
                 ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
                 if(window == nullptr)
                     continue;
@@ -2411,14 +2249,6 @@ void ImmediateUserInterfaceContextLayer::frame_render()
             _Context->m_NodesRenderingCache.clear();
 
             // compute initial depth of singletons
-            std::sort(
-                _Context->m_Hierarchy.Singletons.begin(),
-                _Context->m_Hierarchy.Singletons.end(),
-                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                {
-                    return _A->State.RenderingOrder < _B->State.RenderingOrder;
-                });
-
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
                 singleton->State.Depth = singleton->State.InitialDepth;
@@ -2446,12 +2276,12 @@ void ImmediateUserInterfaceContextLayer::frame_render()
             // calculate clippingbox
             {
                 auto next   = _Node;
-                auto parent = _Node->State.Parent;
+                auto parent = _Context->m_Hierarchy.get_parent(_Node);
 
                 while (parent != nullptr)
                 {
                     next   = parent;
-                    parent = parent->State.Parent;
+                    parent = _Context->m_Hierarchy.get_parent(parent);
                 }
 
                 _Context->m_Renderer->push_clip_box(
@@ -2459,11 +2289,11 @@ void ImmediateUserInterfaceContextLayer::frame_render()
             }
 
             // setup depth
-            if(_Node->State.Parent != nullptr)
+            if(_Context->m_Hierarchy.get_parent(_Node) != nullptr)
             {
                 _Node->State.Depth = 
-                    _Node->State.Parent->State.Depth +
-                    _Node->State.Parent->State.SelfThickness + 1;
+                    _Context->m_Hierarchy.get_parent(_Node)->State.Depth +
+                    _Context->m_Hierarchy.get_parent(_Node)->State.SelfThickness + 1;
             }
 
             // render self and children
@@ -2473,8 +2303,8 @@ void ImmediateUserInterfaceContextLayer::frame_render()
                 render_node(_Context, (*it));
 
             // update parental bandwidth
-            if(_Node->State.Parent)
-                _Node->State.Parent->State.TotalThickness += _Node->State.TotalThickness;
+            if(_Context->m_Hierarchy.get_parent(_Node))
+                _Context->m_Hierarchy.get_parent(_Node)->State.TotalThickness += _Node->State.TotalThickness;
 
             // remove clipping
             _Context->m_Renderer->pop_clip_box();
