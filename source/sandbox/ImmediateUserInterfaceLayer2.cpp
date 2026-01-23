@@ -32,7 +32,7 @@ namespace Frenchie
         namespace ImmediateUserInterfaceContextLayerHelpers
         {
             template<typename Type, typename Filter>
-            static void layout_nodes_vertically(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
+            void layout_nodes_vertically(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
             {
                 gs_vec2f position  = _Position;
                 gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
@@ -63,7 +63,7 @@ namespace Frenchie
             }
 
             template<typename Type, typename Filter>
-            static void layout_nodes_horizontally(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
+            void layout_nodes_horizontally(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
             {
                 gs_vec2f position   = _Position;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
@@ -93,6 +93,18 @@ namespace Frenchie
                 }
             }
         
+            template<typename Type, typename Filter>
+            void collect_children(const Type& _Begin, const Type& _End, const Filter& _Filter, std::vector<ImmediateUserInterfaceNode*>& _Buffer)
+            {
+                _Buffer.clear();
+
+                for(auto it = _Begin; it != _End; it++)
+                {
+                    if(_Filter(*it))
+                        _Buffer.push_back(*it);
+                }
+            }
+
             void layout_boxes_vertically(gs_2dboxf* _Boxes, int _Count, const gs_2dboxf& _Parent, const gs_vec2f& _Position)
             {
                 // compute total size
@@ -132,7 +144,7 @@ namespace Frenchie
                 }
             }
 
-            static void clamp_bounding_box(ImmediateUserInterfaceNode* _Node, gs_2dboxf _BoundingBox)
+            void clamp_bounding_box(ImmediateUserInterfaceNode* _Node, gs_2dboxf _BoundingBox)
             {
                 // handle minimum width
                 float minX = _BoundingBox.size().x > _Node->State.MinimumSize.x ? _BoundingBox.Min.x : _Node->Cache.BoundingBox.Min.x + (_Node->State.BoundingBox.Min.x - _Node->Cache.BoundingBox.Min.x);
@@ -148,31 +160,31 @@ namespace Frenchie
                 _Node->State.BoundingBox = gs_2dboxf(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
             }
 
-            static gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Min, WindowResizeAngleGizmoRadius);
             }
 
-            static gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
             }
 
-            static gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Max - gs_vec2f(_Node->State.BoundingBox.width(), 0.f), WindowResizeAngleGizmoRadius);
             };
 
-            static gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceNode* _Node)
+            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Max, WindowResizeAngleGizmoRadius);
             };
 
-            static gs_2dboxf build_resize_top_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -181,7 +193,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), WindowResizeSideGizmoWidth));
             };
 
-            static gs_2dboxf build_resize_left_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -190,7 +202,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->State.BoundingBox.height()));
             };
 
-            static gs_2dboxf build_resize_right_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -199,7 +211,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
             };
 
-            static gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeSideGizmoWidth = 8.f;
 
@@ -208,7 +220,7 @@ namespace Frenchie
                     _Node->State.BoundingBox.Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
             };
         
-            static int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
+            int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
             {
                 return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_End - ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Begin));
             };
