@@ -21,15 +21,15 @@ namespace Frenchie
             ImmedidateUserInterfaceLayer_End,
         };
 
-        enum ImmedidateUserInterfaceWindowSnapperOrientation_ : int
+        enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
-            ImmedidateUserInterfaceWindowSnapperOrientation_Begin = 0,
-            ImmedidateUserInterfaceWindowSnapperOrientation_Top   = ImmedidateUserInterfaceWindowSnapperOrientation_Begin,
-            ImmedidateUserInterfaceWindowSnapperOrientation_Left,
-            ImmedidateUserInterfaceWindowSnapperOrientation_Right,
-            ImmedidateUserInterfaceWindowSnapperOrientation_Bottom,
-            ImmedidateUserInterfaceWindowSnapperOrientation_Center,
-            ImmedidateUserInterfaceWindowSnapperOrientation_End
+            ImmedidateUserInterfaceDockingAnchor_Begin = 0,
+            ImmedidateUserInterfaceDockingAnchor_Top   = ImmedidateUserInterfaceDockingAnchor_Begin,
+            ImmedidateUserInterfaceDockingAnchor_Left,
+            ImmedidateUserInterfaceDockingAnchor_Right,
+            ImmedidateUserInterfaceDockingAnchor_Bottom,
+            ImmedidateUserInterfaceDockingAnchor_Center,
+            ImmedidateUserInterfaceDockingAnchor_End
         };
 
         namespace ImmediateUserInterfaceContextLayerHelpers
@@ -1888,7 +1888,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         _Context,
                         hovered,
                         moved,
-                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Center);
+                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
                 }
                 if(topDockingGizmo.contains(_Event.CursorPosition))
                 {
@@ -1896,7 +1896,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         _Context,
                         hovered,
                         moved,
-                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top);
+                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
                 }
                 else if(leftDockingGizmo.contains(_Event.CursorPosition))
                 {
@@ -1904,7 +1904,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         _Context,
                         hovered,
                         moved,
-                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left);
+                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
                 }
                 else if(rightDockingGizmo.contains(_Event.CursorPosition))
                 {
@@ -1912,7 +1912,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         _Context,
                         hovered,
                         moved,
-                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right);
+                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
                 }
                 else if(bottomDockingGizmo.contains(_Event.CursorPosition))
                 {
@@ -1920,7 +1920,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                         _Context,
                         hovered,
                         moved,
-                        ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Bottom);
+                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
                 }
             }
             else if(moved != hovered && moved->CentralDocker != hovered && hovered->CentralDocker != moved)
@@ -1995,7 +1995,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             ImmediateUserInterfaceContextLayer*                     _Context,
             ImmediateUserInterfaceWindow*                           _Docker,
             ImmediateUserInterfaceWindow*                           _Docked,
-            const ImmedidateUserInterfaceWindowSnapperOrientation_& _Orientation)
+            const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
         {
             // auxiliary lambdas
             auto move_to_cache = [](
@@ -2011,7 +2011,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             auto move_child_docked_windows_to_cache = [](
                 ImmediateUserInterfaceContextLayer*                     _Context,
                 ImmediateUserInterfaceWindow*                           _Docker,
-                const ImmedidateUserInterfaceWindowSnapperOrientation_& _Orientation)
+                const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
             {
                 if(_Context == nullptr || _Docker == nullptr)
                     return;
@@ -2030,7 +2030,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             _Context->m_WindowsDockingCache.clear();
 
             // attach to a central part as a tab
-            if(_Orientation == ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Center)
+            if(_Orientation == ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center)
             {
                 if(_Context == nullptr || _Docker == nullptr || _Docked == nullptr || _Docked->CentralDocker == _Docker || _Docker->CentralDocker == _Docked)
                     return;
@@ -2098,19 +2098,19 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
                 switch (_Orientation)
                 {
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top:
                     window->TopDocker = snapper;
                         break;
                     
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left:
                     window->LeftDocker = snapper;
                         break;
 
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right:
                     window->RightDocker = snapper;
                         break;
 
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Bottom:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom:
                     window->BottomDocker = snapper;
                         break;
                 }
@@ -2132,11 +2132,11 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 _Detached->RightDocker != nullptr ||
                 _Detached->BottomDocker)
             {                
-                for (int orientation = ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Begin;
-                         orientation < ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_End;
+                for (int orientation = ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Begin;
+                         orientation < ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_End;
                          orientation++)
                 {
-                    auto& dockedWindows = retrieve_docked_windows(_Context, _Detached->CentralDocker, (ImmedidateUserInterfaceWindowSnapperOrientation_)orientation);
+                    auto& dockedWindows = retrieve_docked_windows(_Context, _Detached->CentralDocker, (ImmedidateUserInterfaceDockingAnchor_)orientation);
 
                     int dockindex = 0;
 
@@ -2171,7 +2171,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
         static std::vector<ImmediateUserInterfaceNode*>& retrieve_docked_windows(
             ImmediateUserInterfaceContextLayer*                     _Context,
             ImmediateUserInterfaceWindow*                           _Snapper,
-            const ImmedidateUserInterfaceWindowSnapperOrientation_& _Orientation)
+            const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
         {
             // get ready
             _Context->m_WindowsDockingList.clear();
@@ -2187,27 +2187,27 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
                 switch (_Orientation)
                 {
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Top:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top:
                     if(window->TopDocker == _Snapper)
                         _Context->m_WindowsDockingList.push_back(window);
                         break;
                     
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Left:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left:
                     if(window->LeftDocker == _Snapper)
                         _Context->m_WindowsDockingList.push_back(window);
                         break;
 
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Right:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right:
                     if(window->RightDocker == _Snapper)
                         _Context->m_WindowsDockingList.push_back(window);
                         break;
 
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Bottom:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom:
                     if(window->BottomDocker == _Snapper)
                         _Context->m_WindowsDockingList.push_back(window);
                         break;
 
-                    case ImmedidateUserInterfaceWindowSnapperOrientation_::ImmedidateUserInterfaceWindowSnapperOrientation_Center:
+                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center:
                     if(window->CentralDocker == _Snapper)
                         _Context->m_WindowsDockingList.push_back(window);
                         break;
