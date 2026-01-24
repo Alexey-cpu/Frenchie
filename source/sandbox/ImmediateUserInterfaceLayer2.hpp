@@ -151,6 +151,7 @@ namespace Frenchie
                 int            SelfThickness {0}; // thickness of self rendered content
                 int            TotalThickness{0}; // thickness of self rendered content plus contented rendered by children
                 int            RenderingIndex{0}; // index of the node within context rendering list
+                int            RenderingOrder{0};
                 bool           Hidden        {false};
 
                 // geimetry
