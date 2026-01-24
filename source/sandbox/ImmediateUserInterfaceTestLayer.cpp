@@ -85,7 +85,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         }
     };
 
-    create_horizontal_layout("Layout-1");
+    //create_horizontal_layout("Layout-1");
 
     // if(m_ImmediateUserInterface->begin_window(
     //     "Window-1",
@@ -96,10 +96,12 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     //     m_ImmediateUserInterface->end_window();
     // }
 
+    static bool opened = true;
+
     if(m_ImmediateUserInterface->begin_window(
         "Window-2",
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable, &opened))
     {
         create_horizontal_layout("Window-2/Layout");
         m_ImmediateUserInterface->end_window();
