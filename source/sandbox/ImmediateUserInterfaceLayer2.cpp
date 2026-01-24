@@ -11,16 +11,6 @@ namespace Frenchie
 {
     namespace Application
     {
-        enum ImmedidateUserInterfaceLayer_ : int
-        {
-            ImmedidateUserInterfaceLayer_Begin   = 0,
-            ImmedidateUserInterfaceLayer_Main    = ImmedidateUserInterfaceLayer_Begin,
-            ImmedidateUserInterfaceLayer_Active,
-            ImmedidateUserInterfaceLayer_Focused,
-            ImmedidateUserInterfaceLayer_Gizmos,
-            ImmedidateUserInterfaceLayer_End,
-        };
-
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
             ImmedidateUserInterfaceDockingAnchor_Begin = 0,
@@ -30,6 +20,23 @@ namespace Frenchie
             ImmedidateUserInterfaceDockingAnchor_Bottom,
             ImmedidateUserInterfaceDockingAnchor_Center,
             ImmedidateUserInterfaceDockingAnchor_End
+        };
+
+        enum ImmedidateUserInterfaceRenderingOrder_ : int
+        {
+            ImmedidateUserInterfaceRenderingOrder_Begin   = 0,
+            ImmedidateUserInterfaceRenderingOrder_Main    = ImmedidateUserInterfaceRenderingOrder_Begin,
+            ImmedidateUserInterfaceRenderingOrder_Focus,
+            ImmedidateUserInterfaceRenderingOrder_Modal,
+            ImmedidateUserInterfaceRenderingOrder_End,
+        };
+
+        enum ImmedidateUserInterfaceRenderingLayer_ : int
+        {
+            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
+            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
+            ImmedidateUserInterfaceRenderingLayer_Gizmos,
+            ImmedidateUserInterfaceRenderingLayer_End,
         };
 
         namespace ImmediateUserInterfaceContextLayerHelpers
@@ -225,7 +232,7 @@ namespace Frenchie
         
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
             {
-                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_End - ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Begin));
+                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
             };
         }
 
@@ -273,6 +280,47 @@ namespace Frenchie
         struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNodeVerticalStack
         {
         public:
+
+            class ImmediateUserInterfaceWindowActivator
+            {
+            public:
+            
+                template<typename Filter>
+                void setup_as_active_docking_window(
+                    ImmediateUserInterfaceContextLayer* _Context,
+                    ImmediateUserInterfaceWindow*       _Docked,
+                    const Filter&                       _Filter)
+                {
+                    if(_Context == nullptr || _Docked == nullptr)
+                        return;
+
+                    if(_Docked->CentralDocker != nullptr)
+                    {
+                        for(auto it  = _Context->m_Hierarchy.begin(_Docked->CentralDocker);
+                                it != _Context->m_Hierarchy.end(_Docked->CentralDocker);
+                                it++)
+                        {
+                            if(!_Filter(*it)) continue;
+
+                            (*it)->State.Hidden = _Docked != (*it);
+                        }
+                    }
+                    else
+                    {
+                        for(auto it  = _Context->m_Hierarchy.begin(_Docked);
+                                it != _Context->m_Hierarchy.end(_Docked);
+                                it++)
+                        {
+                            if(!_Filter(*it)) continue;
+
+                            ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                            (*it)->State.Hidden = window != nullptr && window->CentralDocker != nullptr;
+                        }
+                    }
+                }
+            };
 
             ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNodeVerticalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindow(){}
@@ -426,8 +474,10 @@ namespace Frenchie
                     {
                         if(event.MousePressed.has_value())
                         {
-                            setup_as_active_docking_window(_Context, this);
-                            setup_as_active_focused_window(_Context, this);
+                            ImmediateUserInterfaceWindowActivator().setup_as_active_docking_window(
+                                _Context,
+                                this,
+                                [](const ImmediateUserInterfaceNode*)->bool{return true;});
                         }
                     }
 
@@ -456,8 +506,19 @@ namespace Frenchie
                         // pass focus and activity
                         if(event.MousePressed.has_value())
                         {
-                            setup_as_active_docking_window(_Context, dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
-                            setup_as_active_focused_window(_Context, dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+                            ImmediateUserInterfaceWindowActivator().setup_as_active_docking_window(
+                                _Context,
+                                dynamic_cast<ImmediateUserInterfaceWindow*>(*it),
+                                [](const ImmediateUserInterfaceNode*)->bool{return true;});
+
+                            for (auto node : _Context->m_Hierarchy.Singletons)
+                            {
+                                node->State.RenderingOrder =
+                                    ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+                            }
+
+                            (*it)->State.RenderingOrder =
+                                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
                         }
 
                         // move
@@ -715,62 +776,13 @@ namespace Frenchie
                             dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
 
                         return window                  == nullptr ||
-                                (window->CentralDocker        == nullptr &&
-                                 window->TopDocker    == nullptr &&
-                                 window->LeftDocker   == nullptr &&
-                                 window->RightDocker  == nullptr &&
-                                 window->BottomDocker == nullptr);
+                                (window->CentralDocker == nullptr &&
+                                 window->TopDocker     == nullptr &&
+                                 window->LeftDocker    == nullptr &&
+                                 window->RightDocker   == nullptr &&
+                                 window->BottomDocker  == nullptr);
                     }
                 );
-            }
-
-            static void setup_as_active_docking_window(
-                ImmediateUserInterfaceContextLayer* _Context,
-                ImmediateUserInterfaceWindow*       _Docked)
-            {
-                if(_Context == nullptr || _Docked == nullptr)
-                    return;
-
-                if(_Docked->CentralDocker != nullptr)
-                {
-                    for(auto it  = _Context->m_Hierarchy.begin(_Docked->CentralDocker);
-                             it != _Context->m_Hierarchy.end(_Docked->CentralDocker);
-                             it++)
-                    {
-                        (*it)->State.Hidden = _Docked != (*it);
-                    }
-                }
-                else
-                {
-                    for(auto it  = _Context->m_Hierarchy.begin(_Docked);
-                             it != _Context->m_Hierarchy.end(_Docked);
-                             it++)
-                    {
-                        ImmediateUserInterfaceWindow* window =
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                        (*it)->State.Hidden = window != nullptr && window->CentralDocker != nullptr;
-                    }
-                }
-            }
-
-            static void setup_as_active_focused_window(
-                ImmediateUserInterfaceContextLayer* _Context,
-                ImmediateUserInterfaceWindow*       _Docked)
-            {
-                if(_Context == nullptr || _Docked == nullptr)
-                    return;
-
-                for (auto node : _Context->m_Hierarchy.Singletons)
-                {
-                    ImmediateUserInterfaceWindow* window =
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(node);
-
-                    if(window != nullptr)
-                        window->DockingFocused = false;
-                }
-
-                _Docked->DockingFocused = true;
             }
 
             ImmediateUserInterfaceWindow* TopDocker    {nullptr};
@@ -785,7 +797,6 @@ namespace Frenchie
             bool*                         Opened        {nullptr};
 
             int                           DockingIndex  {-1};
-            bool                          DockingFocused{false};
 
         protected:
 
@@ -1146,7 +1157,13 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     // focus
     if(State.MousePressed.has_value())
     {
-        ImmediateUserInterfaceNode* focused = nullptr;
+        for (auto node : _Context->m_Hierarchy.Singletons)
+        {
+            node->State.RenderingOrder =
+                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+        }
+
+        ImmediateUserInterfaceNode* focused = this;
         ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(this);
 
         while (parent)
@@ -1155,10 +1172,8 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             parent  = _Context->m_Hierarchy.get_parent(parent);
         }
         
-        if(dynamic_cast<ImmediateUserInterfaceWindow*>(focused))
-        {
-            ImmediateUserInterfaceWindow::setup_as_active_focused_window(_Context, dynamic_cast<ImmediateUserInterfaceWindow*>(focused));
-        }
+        if(focused != nullptr)
+            focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
     }
 
     // resize
@@ -1810,28 +1825,28 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
         static void place_on_layers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
         {
-            // main code
-            for(auto singleton : _Context->m_Hierarchy.Singletons)
-            {
-                ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
+            // // main code
+            // for(auto singleton : _Context->m_Hierarchy.Singletons)
+            // {
+            //     ImmediateUserInterfaceWindow* window =
+            //         dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
 
-                if(window == nullptr)
-                    continue;
+            //     if(window == nullptr)
+            //         continue;
 
-                if(window->DockingFocused)
-                {
-                    window->State.InitialDepth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
-                        _Context,
-                        ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Focused);
-                }
-                else
-                {
-                    window->State.InitialDepth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
-                        _Context,
-                        ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Main);
-                }
-            }
+            //     if(window->DockingFocused)
+            //     {
+            //         window->State.InitialDepth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
+            //             _Context,
+            //             ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Focused);
+            //     }
+            //     else
+            //     {
+            //         window->State.InitialDepth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
+            //             _Context,
+            //             ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Main);
+            //     }
+            // }
         }
 
         static void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -1928,7 +1943,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 // render potential docking window gizmo
                 int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
                     _Context,
-                    ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Gizmos);
+                    ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos);
 
                 if(dockingGizmo.contains(_Event.CursorPosition))
                 {
@@ -2058,7 +2073,10 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 }
 
                 // setup self as active
-                ImmediateUserInterfaceWindow::setup_as_active_docking_window(_Context, _Docked);
+                ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowActivator().setup_as_active_docking_window(
+                    _Context,
+                    _Docked,
+                    [](const ImmediateUserInterfaceNode*)->bool{return true;});
 
                 // clear
                 _Context->m_WindowsDockingCache.clear();
@@ -2127,16 +2145,24 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 return;
 
             // reindex docked nodes of the docker of the moved node
-            if(_Detached->TopDocker != nullptr    ||
-                _Detached->LeftDocker != nullptr  ||
-                _Detached->RightDocker != nullptr ||
-                _Detached->BottomDocker)
-            {                
+            if( _Detached->TopDocker     != nullptr ||
+                _Detached->LeftDocker    != nullptr ||
+                _Detached->RightDocker   != nullptr ||
+                _Detached->BottomDocker  != nullptr ||
+                _Detached->CentralDocker != nullptr)
+            {
+                ImmediateUserInterfaceWindow* active = nullptr;
+                
                 for (int orientation = ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Begin;
                          orientation < ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_End;
                          orientation++)
                 {
-                    auto& dockedWindows = retrieve_docked_windows(_Context, _Detached->CentralDocker, (ImmedidateUserInterfaceDockingAnchor_)orientation);
+                    active = dynamic_cast<ImmediateUserInterfaceWindow*>(_Context->m_Hierarchy.get_parent(_Detached));
+
+                    auto& dockedWindows = retrieve_docked_windows(
+                        _Context,
+                        active,
+                        (ImmedidateUserInterfaceDockingAnchor_)orientation);
 
                     int dockindex = 0;
 
@@ -2146,9 +2172,20 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                             dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
                         if(window != nullptr && window != _Detached)
+                        {
                             window->DockingIndex = dockindex++;
+
+                            // find docked window with the larges docking index
+                            if(window->DockingIndex > active->DockingIndex)
+                                active = window;
+                        }
                     }
                 }
+
+                ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowActivator().setup_as_active_docking_window(
+                    _Context,
+                    active,
+                    [_Detached](const ImmediateUserInterfaceNode* _Node)->bool{return _Node != _Detached;});
 
                 _Detached->TopDocker     = nullptr;
                 _Detached->LeftDocker    = nullptr;
@@ -2263,6 +2300,15 @@ void ImmediateUserInterfaceContextLayer::frame_render()
             _Context->m_NodesRenderingCache.clear();
 
             // compute initial depth of singletons
+            std::sort(
+                _Context->m_Hierarchy.Singletons.begin(),
+                _Context->m_Hierarchy.Singletons.end(),
+                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+                {
+                    return _A->State.RenderingOrder < _B->State.RenderingOrder;
+                }
+            );
+
             for (auto& singleton : _Context->m_Hierarchy.Singletons)
             {
                 singleton->State.Depth = singleton->State.InitialDepth;
