@@ -1278,30 +1278,32 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
     {
-        if((_Event.MouseHold.has_value() && State.BoundingBox.contains(_Event.CursorPosition)) ||
+        // TODO: refactor this !!!
+        auto movable = this;
+
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable) != nullptr &&
+            (dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->TopSnapper    != nullptr ||
+             dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->LeftSnapper   != nullptr ||
+             dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->RightSnapper  != nullptr ||
+             dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->BottomSnapper != nullptr))
+        {
+
+        }
+        else
+        {
+            while (_Context->m_Hierarchy.get_parent(movable))
+                movable = _Context->m_Hierarchy.get_parent(movable);
+        }
+
+        if(_Event.MousePressed.has_value())
+        {
+            movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+            return;
+        }
+
+        if(_Event.MouseDown.has_value() &&
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {
-            // TODO: refactor this !!!
-            auto movable = this;
-
-            if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable) != nullptr &&
-                (dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->TopSnapper    != nullptr ||
-                 dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->LeftSnapper   != nullptr ||
-                 dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->RightSnapper  != nullptr ||
-                 dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->BottomSnapper != nullptr))
-            {
-
-            }
-            else
-            {
-                while (_Context->m_Hierarchy.get_parent(movable))
-                    movable = _Context->m_Hierarchy.get_parent(movable);
-            }
-
-            // while (_Context->m_Hierarchy.get_parent(movable))
-            //     movable = _Context->m_Hierarchy.get_parent(movable);
-
-            movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
             movable->State.BoundingBox = gs_2dboxf(
                 movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
                 movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
