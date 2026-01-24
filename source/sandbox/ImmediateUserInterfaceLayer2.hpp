@@ -151,8 +151,7 @@ namespace Frenchie
                 int            SelfThickness {0}; // thickness of self rendered content
                 int            TotalThickness{0}; // thickness of self rendered content plus contented rendered by children
                 int            RenderingIndex{0}; // index of the node within context rendering list
-                bool           RenderChildren{1}; // defines if the children of this node are drawn
-                bool           RenderedAlways{0}; // defines if this node is always drawn ignoring 'RenderChildren' setting
+                bool           Hidden        {false};
 
                 // geimetry
                 gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
@@ -363,11 +362,6 @@ namespace Frenchie
                 }
                 ImmediateUserInterfaceNode* node = m_Cache[_ID].get();
 
-                if(node->Cache.Parent != nullptr              &&
-                    !node->Cache.Parent->Cache.RenderChildren &&
-                    !node->Cache.RenderedAlways)
-                    return false;
-
                 node->State.Settings       = _Settings;
                 node->State.RenderingIndex = (int)m_NodesRenderingList.size();
 
@@ -404,7 +398,6 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
 
             // docking and snapping
-            mutable ImmedidateUserInterfaceNodeHierarchy     m_WindowsDockingHierarchy;
             mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingList;
         };
