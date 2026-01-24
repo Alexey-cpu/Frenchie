@@ -2,6 +2,8 @@
 
 // STL
 #include <algorithm>
+#include <typeinfo>
+#include <typeindex>
 
 using namespace Frenchie::Application;
 
@@ -274,7 +276,11 @@ namespace Frenchie
             ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNodeVerticalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindow(){}
 
-            void render_frame(ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, const std::string& _Title)
+            void render_frame(
+                ImmediateUserInterfaceContextLayer* _Context,
+                const gs_2dboxf&                    _BoundingBox,
+                ImmediateUserInterfaceWindow*       _Node,
+                const ImmedidateUserInterfaceEvent& _Event)
             {
                 // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -295,10 +301,72 @@ namespace Frenchie
 
                 // title
                 _Context->m_Renderer->push_text(
-                    _Title,
+                    _Node->Name,
                     _Context->m_Style.FontSize,
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), _BoundingBox.Min));
+                    _Context->m_Renderer->calculate_transform_matrix(
+                        (float)place_in_follow(),
+                        gs_vec2f(_BoundingBox.Min.x + 16.f,
+                            _BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(_Node->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.5f)));
+
+                // close button
+                if(_Node->Opened != nullptr)
+                {
+                    gs_2dboxf closeButtonBox = gs_2dboxf(
+                        gs_vec2f(_BoundingBox.Max.x - _Node->FrameBox.height() / 2.f, _BoundingBox.center().y) - gs_vec2f(_Node->FrameBox.height() / 4.f),
+                        gs_vec2f(_BoundingBox.Max.x - _Node->FrameBox.height() / 2.f, _BoundingBox.center().y) + gs_vec2f(_Node->FrameBox.height() / 4.f));
+
+                    gs_vec4f closeButtonСolor = gs_vec4f(255.f, 0.f, 0.f, 255.f); // TODO: this MUST BE a setting
+
+                    if(closeButtonBox.contains(_Context->m_Renderer->get_cursor_postion()))
+                    {
+                        closeButtonСolor = _Event.MouseDown.has_value() ?
+                            gs_vec4f(255.f, 230.f, 0.f, 255.f) : // TODO: this MUST BE a setting
+                            gs_vec4f(255.f, 128.f, 0.f, 255.f);  // TODO: this MUST BE a setting
+
+                        *_Node->Opened = !_Event.MouseClicked.has_value();
+
+                        // undock and unspan all windows
+                        if(!(*_Node->Opened))
+                        {
+                            for(auto it  = _Context->m_WindowsDockingHierarchy.begin(_Node);
+                                     it != _Context->m_WindowsDockingHierarchy.end(_Node);
+                                     it++)
+                            {
+                                ImmediateUserInterfaceWindow* window =
+                                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                                if(window != nullptr)
+                                    window->Docker = nullptr;
+                            }
+
+                            for(auto it  = _Context->m_Hierarchy.begin(_Node);
+                                     it != _Context->m_Hierarchy.end(_Node);
+                                     it++)
+                            {
+                                ImmediateUserInterfaceWindow* window =
+                                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                                if(window != nullptr)
+                                {
+                                    window->TopSnapper = nullptr;
+                                    window->LeftSnapper = nullptr;
+                                    window->RightSnapper = nullptr;
+                                    window->BottomSnapper = nullptr;
+                                }
+                            }
+                        }
+                    }
+
+                    _Context->m_Renderer->push_arc_filled(
+                        gs_vec2f(_BoundingBox.Max.x - _Node->FrameBox.height() / 2.f, _BoundingBox.center().y),
+                        _Node->FrameBox.height() / 4.f,
+                        _Node->FrameBox.height() / 4.f,
+                        0.f,
+                        360.f,
+                        closeButtonСolor,
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));   
+                }
 
                 if(_BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
                 {
@@ -349,7 +417,7 @@ namespace Frenchie
                     gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
 
                     // render frame
-                    render_frame(_Context, boundingBox, Name);
+                    render_frame(_Context, boundingBox, this, event);
 
                     // pass focus and activity
                     if(boundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
@@ -372,7 +440,7 @@ namespace Frenchie
                     gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
 
                     // render frame
-                    render_frame(_Context, boundingBox, (*it)->Name);
+                    render_frame(_Context, boundingBox, dynamic_cast<ImmediateUserInterfaceWindow*>(*it), event);
 
                     // some simple event processing
                     if(boundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
@@ -467,7 +535,7 @@ namespace Frenchie
                         State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
                         gs_vec2f(
                             State.BoundingBox.Max.x,
-                            State.BoundingBox.Min.y + _Context->m_Style.FontSize) - _Context->m_Style.FramesWidth * 0.5f);
+                            State.BoundingBox.Min.y + gs_max(_Context->m_Style.FontSize, 64.f)) - _Context->m_Style.FramesWidth * 0.5f);
 
                     ContentBox = gs_2dboxf(
                         (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
@@ -697,6 +765,8 @@ namespace Frenchie
 
             gs_2dboxf                     FrameBox;
             gs_2dboxf                     ContentBox;
+
+            bool*                         Opened        {nullptr};
 
             int                           DockingIndex  {-1};
             bool                          DockingActive {false};
@@ -1906,25 +1976,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
         {
             // build hierarchy
             _Context->m_WindowsDockingHierarchy.build(_Context->m_NodesRenderingList);
-
-            // sort docked windows by their docking index within hierarchy
-            for(auto singleton : _Context->m_Hierarchy.Singletons)
-            {
-                ImmediateUserInterfaceWindow* window =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
-
-                if(window == nullptr)
-                    continue;
-
-                std::sort(
-                    _Context->m_WindowsDockingHierarchy.begin(window),
-                    _Context->m_WindowsDockingHierarchy.end(window),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                    });
-            }
         }
 
         static void attach_to_docker(
@@ -2126,9 +2177,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 window->DockingIndex = dockindex++;
             }
 
-            // setup self as active
-            //ImmediateUserInterfaceWindow::setup_as_active_docking_window(_Context, _Docked);
-
             // clear
             _Context->m_WindowsDockingCache.clear();
             _Context->m_WindowsDockingList.clear();
@@ -2201,16 +2249,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                     _Context->m_WindowsDockingList.push_back(window);
             }
 
-            // sort windows docked by a docker by their docking indexes
-            std::sort(
-                _Context->m_WindowsDockingList.begin(),
-                _Context->m_WindowsDockingList.end(),
-                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                {
-                    return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                });
-
             return _Context->m_WindowsDockingList;
         }
 
@@ -2255,20 +2293,38 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
                 }
             }
 
-            // sort windows docked by a docker by their docking indexes
-            std::sort(
-                _Context->m_WindowsDockingList.begin(),
-                _Context->m_WindowsDockingList.end(),
-                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                {
-                    return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                });
-
             return _Context->m_WindowsDockingList;
         }
     
     };
+
+    // order windows by their docking index
+    std::sort(
+        m_NodesRenderingList.begin(),
+        m_NodesRenderingList.end(),
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+        {
+            return std::type_index(typeid(*_A)) < std::type_index(typeid(*_B));
+        });
+
+    int windowsCount = +0;
+    int windowsStart = -1;
+    int nodesCount   = +0;
+    for(auto node : m_NodesRenderingList)
+    {
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node) && windowsStart < 0) windowsStart = nodesCount;
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node)) windowsCount++;
+        nodesCount++;
+    }
+
+    std::sort(
+        m_NodesRenderingList.begin() + windowsStart,
+        m_NodesRenderingList.begin() + windowsStart + windowsCount,
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+        {
+            return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                   dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+        });
 
     // build hierarchy
     m_Hierarchy.build(m_NodesRenderingList);
@@ -2398,6 +2454,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         if(allMouseButtonsAreReleased)
             node->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
 
+        // save cache
         node->Cache.Events             = node->State.Events;
         node->Cache.MouseHover         = node->State.MouseHover;
         node->Cache.MouseDown          = node->State.MouseDown;
@@ -2410,11 +2467,9 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->Cache.Depth              = node->State.Depth;
         node->Cache.Parent             = node->State.Parent;
         
-        // save cache
         if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             node->Cache = node->State;
 
-        // clean-up
         node->State.Depth          = 0;
         node->State.SelfThickness  = 0;
         node->State.TotalThickness = 0;
@@ -2425,6 +2480,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
 
     GS_ASSERT(m_NodesRenderingStack.empty());
 
+    // rendering
     m_NodesRenderingList.clear();
     m_NodesRenderingCache.clear();
     m_NodesRenderingStack.clear();
@@ -2442,7 +2498,13 @@ void ImmediateUserInterfaceContextLayer::finish()
 
 bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
-    return begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened);
+    if(begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened))
+    {
+        get_rendering_stack_top<ImmediateUserInterfaceWindow>()->Opened = _Opened;
+        return true;
+    }
+
+    return false;
 }
 
 void ImmediateUserInterfaceContextLayer::end_window()
