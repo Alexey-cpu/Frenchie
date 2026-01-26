@@ -308,15 +308,15 @@ namespace Frenchie
                     else
                     {
                         for(auto it  = _Context->m_Hierarchy.begin(_Docked);
-                                it != _Context->m_Hierarchy.end(_Docked);
-                                it++)
+                                 it != _Context->m_Hierarchy.end(_Docked);
+                                 it++)
                         {
                             if(!_Filter(*it)) continue;
 
                             ImmediateUserInterfaceWindow* window =
                                 dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
-                            (*it)->State.Hidden = window != nullptr && window->CentralDocker != nullptr;
+                            (*it)->State.Hidden = window != nullptr && window->CentralDocker == _Docked;
                         }
                     }
                 }
@@ -395,6 +395,8 @@ namespace Frenchie
                                 window->CentralDocker = nullptr;
                                 window->State.Hidden  = false;
                             }
+
+                            _Node->State.Hidden = false; // don't hide self !!!
                         }
                     }
 
