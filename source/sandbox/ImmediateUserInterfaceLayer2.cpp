@@ -1726,7 +1726,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             _Context->m_Hierarchy.build(_Context->m_NodesRenderingList);
 
             place_on_dockers(_Context, _Event);
-            place_on_layers(_Context, _Event);
         }
 
     private:
@@ -1825,31 +1824,6 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             }
         };
 
-        static void place_on_layers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
-        {
-            // // main code
-            // for(auto singleton : _Context->m_Hierarchy.Singletons)
-            // {
-            //     ImmediateUserInterfaceWindow* window =
-            //         dynamic_cast<ImmediateUserInterfaceWindow*>(singleton);
-
-            //     if(window == nullptr)
-            //         continue;
-
-            //     if(window->DockingFocused)
-            //     {
-            //         window->State.InitialDepth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
-            //             _Context,
-            //             ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Focused);
-            //     }
-            //     else
-            //     {
-            //         window->State.InitialDepth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
-            //             _Context,
-            //             ImmedidateUserInterfaceLayer_::ImmedidateUserInterfaceLayer_Main);
-            //     }
-            // }
-        }
 
         static void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
         {
