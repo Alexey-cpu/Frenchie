@@ -138,6 +138,8 @@ namespace Frenchie
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
 
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child);
+
             bool is_visible() const;
             bool is_partially_visible() const;
 
@@ -204,30 +206,46 @@ namespace Frenchie
             mutable std::vector<int>                                                        Entries;
             mutable std::vector<ImmediateUserInterfaceNode*>                                Singletons;
             mutable std::vector<ImmediateUserInterfaceNode*>                                Sorted;
+            mutable std::map<const ImmediateUserInterfaceNode*, int>                        RenderingIndexesCache;
             mutable std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> GetParent;
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const
             {
-                if(_Node == nullptr                                             ||
-                    _Node->State.RenderingIndex          >= (int)Indexes.size() ||
-                    Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
+                if(_Node == nullptr || RenderingIndexesCache.empty())
+                    return Sorted.end();
+
+                auto iterator = RenderingIndexesCache.find(_Node);
+
+                if(iterator == RenderingIndexesCache.end())
+                    return Sorted.end();
+
+                if( iterator->second          >= (int)Indexes.size() ||
+                    Indexes[iterator->second] >= (int)Sorted.size())
                 {
                     return Sorted.end();
                 }
 
-                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
+                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[iterator->second];
             }
 
             std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node) const
             {
-                if(_Node == nullptr                                                 ||
-                    _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
-                    Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
+                if(_Node == nullptr || RenderingIndexesCache.empty())
+                    return Sorted.end();
+
+                auto iterator = RenderingIndexesCache.find(_Node);
+
+                if(iterator == RenderingIndexesCache.end())
+                    return Sorted.end();
+
+                if(_Node == nullptr                                      ||
+                    iterator->second + 1          >= (int)Indexes.size() ||
+                    Indexes[iterator->second + 1] >= (int)Sorted.size())
                 {
                     return Sorted.end();
                 }
 
-                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
+                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[iterator->second + 1];
             }
 
             int size(const ImmediateUserInterfaceNode* _Node) const
@@ -263,6 +281,8 @@ namespace Frenchie
                     Entries[i] = 0;
                     Indexes[i] = 0;
                     Sorted [i] = nullptr;
+
+                    RenderingIndexesCache[_Nodes[i]] = _Nodes[i]->State.RenderingIndex;
 
                     if(get_parent(_Nodes[i]) == nullptr)
                         Singletons.push_back(_Nodes[i]);
@@ -368,7 +388,7 @@ namespace Frenchie
 
                 // build nodes hierarchy
                 if(!m_NodesRenderingStack.empty())
-                    node->State.Parent = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+                    m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
 
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
