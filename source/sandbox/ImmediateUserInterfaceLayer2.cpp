@@ -141,6 +141,39 @@ namespace Frenchie
                 }
             };
 
+            ImmedidateUserInterfaceEvent construct_event(ImmediateUserInterfaceContextLayer* _Context)
+            {
+                if(_Context == nullptr)
+                    return ImmedidateUserInterfaceEvent();
+
+                // construct events
+                ImmedidateUserInterfaceEvent event;
+                event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
+                event.CursorDragDelta = Frenchie::Application::application()->get_window_cursor_dragdelta();
+
+                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
+                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                        button++)
+                {
+                    if(Frenchie::Application::application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+                        event.MouseDown = (ApplicationMouseButton::Button)button;
+
+                    if(Frenchie::Application::application()->is_mouse_button_hold((ApplicationMouseButton::Button)button))
+                        event.MouseHold = (ApplicationMouseButton::Button)button;
+
+                    if(Frenchie::Application::application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                        event.MousePressed = (ApplicationMouseButton::Button)button;
+
+                    if(Frenchie::Application::application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+                        event.MouseClicked = (ApplicationMouseButton::Button)button;
+
+                    if(Frenchie::Application::application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+                        event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+                }
+
+                return event;
+            }
+
             template<typename Type, typename Filter>
             void layout_nodes_vertically(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_2dboxf& _BoundingBox, const Filter& _Filter)
             {
