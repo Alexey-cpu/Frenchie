@@ -538,7 +538,7 @@ namespace Frenchie
                         gs_vec2f(_BoundingBox.Min.x + 16.f,
                             _BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(_Node->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.5f)));
 
-                // TODO: how to render close button here ???
+                // TODO: window frame MUST BE a separate UI object with it's own rendering and event loop...
                 // close button
                 if(_Node->Opened != nullptr)
                 {
