@@ -520,29 +520,7 @@ namespace Frenchie
             void render_frame(ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
             {
                 // construct events
-                ImmedidateUserInterfaceEvent event;
-                event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
-                event.CursorDragDelta = Frenchie::Application::application()->get_window_cursor_dragdelta();
-
-                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::ApplicationMouseButton_End;
-                        button++)
-                {
-                    if(Frenchie::Application::application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
-                        event.MouseDown = (ApplicationMouseButton::Button)button;
-
-                    if(Frenchie::Application::application()->is_mouse_button_hold((ApplicationMouseButton::Button)button))
-                        event.MouseHold = (ApplicationMouseButton::Button)button;
-
-                    if(Frenchie::Application::application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
-                        event.MousePressed = (ApplicationMouseButton::Button)button;
-
-                    if(Frenchie::Application::application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
-                        event.MouseClicked = (ApplicationMouseButton::Button)button;
-
-                    if(Frenchie::Application::application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
-                        event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
-                }
+                ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
 
                 // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -792,10 +770,6 @@ namespace Frenchie
                     (CentralDocker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
                     State.BoundingBox.Max);
 
-                // CloseButtonBox = gs_2dboxf(
-                //     gs_vec2f(State.BoundingBox.Max.x - FrameBox.height() / 2.f, State.BoundingBox.center().y) - gs_vec2f(FrameBox.height() / 4.f),
-                //     gs_vec2f(State.BoundingBox.Max.x - FrameBox.height() / 2.f, State.BoundingBox.center().y) + gs_vec2f(FrameBox.height() / 4.f));
-
                 // layout
                 ImmediateUserInterfaceContextLayerHelpers::layout_nodes_to_resize_to_box(
                     _Context->m_Hierarchy.begin(this),
@@ -835,7 +809,6 @@ namespace Frenchie
             ImmediateUserInterfaceNode* CentralDocker{nullptr};
 
             gs_2dboxf                     FrameBox;
-            //gs_2dboxf                     CloseButtonBox;
             gs_2dboxf                     ContentBox;
 
             bool*                         Opened        {nullptr};
