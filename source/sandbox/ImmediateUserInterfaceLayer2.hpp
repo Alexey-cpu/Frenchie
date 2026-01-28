@@ -151,10 +151,12 @@ namespace Frenchie
                 int            Depth         {0};
                 int            InitialDepth  {0};
                 int            SelfThickness {0}; // thickness of self rendered content
-                int            TotalThickness{0}; // thickness of self rendered content plus contented rendered by children
                 int            RenderingIndex{0}; // index of the node within context rendering list
                 int            RenderingOrder{0};
-                bool           Hidden        {false};
+                int            MaximumChildDepth{0};
+                int            MaximumChildThickness{0};
+                bool           PlaceInFollow{false};
+                bool           OrderChildrenWhileRendering{false};
 
                 // geimetry
                 gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
