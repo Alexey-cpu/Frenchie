@@ -153,9 +153,9 @@ gs_mat4f RenderingQueue::get_cameraview_matrix() const
     return m_CameraViewMatrix;
 }
 
-double RenderingQueue::get_measured_frame_rate() const
+RenderingQueueMetrics RenderingQueue::get_rendering_queue_metrics() const
 {
-    return m_FrameRate;
+    return m_Metrics;
 }
 
 void RenderingQueue::set_projection_matrix(const gs_mat4f& _Matrix)
@@ -288,17 +288,6 @@ void RenderingQueue::frame_start()
 
 void RenderingQueue::frame_update()
 {
-    // measure
-    if(m_FrameRateMeasurementFramesCount >= m_FrameRateMeasurementFramesInterval)
-    {
-        m_FrameRate                      = m_FrameRateMeasurementFramesInterval * 1e6 / Frenchie::Core::elapsed<std::chrono::microseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
-        m_FrameRateMeasurementFramesCount = 0;
-    }
-
-    if(m_FrameRateMeasurementFramesCount <= 0)
-        m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
-
-    ++m_FrameRateMeasurementFramesCount;
 }
 
 void RenderingQueue::frame_render()
@@ -390,6 +379,9 @@ void RenderingQueue::frame_render()
         }
     }
 
+    // save metrics
+    m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
+
     // clear commands queue
     m_Commands.clear();
 
@@ -401,7 +393,27 @@ void RenderingQueue::frame_render()
 
 void RenderingQueue::frame_finish()
 {
-    m_Commands.clear();
+    // save metrics
+    {
+        // measure frame rate
+        {
+            if(m_FrameRateMeasurementFramesCount >= m_FrameRateMeasurementFramesInterval)
+            {
+                m_Metrics.FrameRate               = m_FrameRateMeasurementFramesInterval * 1e6 / Frenchie::Core::elapsed<std::chrono::microseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
+                m_FrameRateMeasurementFramesCount = 0;
+            }
+
+            if(m_FrameRateMeasurementFramesCount <= 0)
+                m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
+
+            ++m_FrameRateMeasurementFramesCount;
+        }
+
+        // estimate rendering command count
+        m_Metrics.RenderedTrianglesCount = m_ApproximateRenderedTrianglesCount;
+    }
+
+    m_ApproximateRenderedTrianglesCount = 0;
 }
 
 void RenderingQueue::finish()
@@ -1088,6 +1100,9 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
     const int*                  _Indexes,
     const int&                  _IndexesCount)
 {
+    // save metrics
+    m_ApproximateRenderedTrianglesCount += _VertexesCount;
+
     // create mesh
     unsigned int m_VBO = 0;
     unsigned int m_VAO = 0;

@@ -197,9 +197,9 @@ namespace Frenchie
                 return matrix * gs_vec4f(gs_vector_convert_to_NDC(cursor, size), -1.f, 1.f);
             }
 
-            double get_measured_frame_rate() const
+            RenderingQueueMetrics get_rendering_queue_metrics() const
             {
-                return m_RenderingQueue != nullptr ? m_RenderingQueue->get_measured_frame_rate() : 0.0;
+                return m_RenderingQueue != nullptr ? m_RenderingQueue->get_rendering_queue_metrics() : RenderingQueueMetrics();
             }
 
             float get_near_plane() const
