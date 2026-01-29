@@ -514,8 +514,9 @@ namespace Frenchie
                     if(_Context == nullptr || _Docked == nullptr)
                         return;
 
-                    if(_Docked->Docker)
+                    if(_Docked->Docker != nullptr)
                     {
+                        // setup maximum rendering order for docked window within it's hierarchy
                         int renderingOrder = 0;
 
                         for(auto it  = _Context->m_Hierarchy.begin(_Docked->Docker);
@@ -525,18 +526,22 @@ namespace Frenchie
                             if(_Filter(*it))
                                 (*it)->State.RenderingOrder = renderingOrder++;
                         }
+                        _Docked->State.RenderingOrder = renderingOrder++;
 
-                        ImmediateUserInterfaceWindow* docker = ImmediateUserInterfaceWindow::get_docker_by_view(_Context, _Docked->Docker);
-
-                        docker->DockerView->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal;
-                        docker->SnapperView->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-                        _Docked->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal;
+                        return;
                     }
-                    else
+
+                    // setup maximum rendering order for docker snapper view
+                    int renderingOrder = 0;
+
+                    for(auto it  = _Context->m_Hierarchy.begin(_Docked->DockerView);
+                             it != _Context->m_Hierarchy.end(_Docked->DockerView);
+                             it++)
                     {
-                        _Docked->DockerView->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-                        _Docked->SnapperView->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal;
+                        if(_Filter(*it))
+                            (*it)->State.RenderingOrder = renderingOrder++;
                     }
+                    _Docked->SnapperView->State.RenderingOrder = renderingOrder++;
                 }
             };
 
@@ -915,17 +920,17 @@ namespace Frenchie
             }
 
             // snapping
-            ImmediateUserInterfaceWindowVerticalDocker*   SnapperView       {nullptr};
-            ImmediateUserInterfaceWindowHorizontalDocker* TopSnapperView    {nullptr};
-            ImmediateUserInterfaceWindowHorizontalDocker* LeftSnapperView   {nullptr};
-            ImmediateUserInterfaceWindowHorizontalDocker* RightSnapperView  {nullptr};
-            ImmediateUserInterfaceWindowHorizontalDocker* BottomSnapperView {nullptr};
+            ImmediateUserInterfaceNode* SnapperView       {nullptr};
+            ImmediateUserInterfaceNode* TopSnapperView    {nullptr};
+            ImmediateUserInterfaceNode* LeftSnapperView   {nullptr};
+            ImmediateUserInterfaceNode* RightSnapperView  {nullptr};
+            ImmediateUserInterfaceNode* BottomSnapperView {nullptr};
 
             // docking
-            ImmediateUserInterfaceWindowCentralDocker*    DockerView        {nullptr};
+            ImmediateUserInterfaceNode* DockerView        {nullptr};
 
             // content
-            ImmediateUserInterfaceWindowVerticalDocker*   ContentView       {nullptr};
+            ImmediateUserInterfaceNode* ContentView       {nullptr};
         };
     
         // controllers
@@ -2492,67 +2497,8 @@ bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, co
     {
         ImmediateUserInterfaceWindow* window = get_rendering_stack_top<ImmediateUserInterfaceWindow>();
         window->Opened                            = _Opened;
-        window->State.PlaceInFollow               = true;
-        window->State.OrderChildrenWhileRendering = true;
-
-        if(begin_node<ImmediateUserInterfaceWindowVerticalDocker>(
-            std::string(_ID).append("/SnapperView"),
-            _Settings))
-        {
-            window->SnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalDocker>();
-
-            // top
-            if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
-                std::string(_ID).append("/SnapperView/TopSnapperView"),
-                _Settings))
-            {
-                window->TopSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
-                end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
-            }
-
-            // center
-            if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
-                std::string(_ID).append("/SnapperView/CentralSnapperView"),
-                _Settings))
-            {
-                if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
-                    _Settings))
-                {
-                    window->LeftSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
-                    end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
-                }
-
-                if(begin_node<ImmediateUserInterfaceWindowVerticalDocker>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView/ContentView"),
-                    _Settings))
-                {
-                    window->ContentView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalDocker>();
-                    end_node<ImmediateUserInterfaceWindowVerticalDocker>();
-                }
-
-                if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView/RightSnapperView"),
-                    _Settings))
-                {
-                    window->RightSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
-                    end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
-                }
-
-                end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
-            }
-
-            // bottom
-            if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
-                std::string(_ID).append("/SnapperView/BottomSnapperView"),
-                _Settings))
-            {
-                window->BottomSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
-                end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
-            }
-
-            end_node<ImmediateUserInterfaceWindowVerticalDocker>();
-        }
+        // window->State.PlaceInFollow               = true;
+        // window->State.OrderChildrenWhileRendering = true;
 
         if(begin_node<ImmediateUserInterfaceWindowCentralDocker>(
             std::string(_ID).append("/CentralDockerView"),
@@ -2561,6 +2507,66 @@ bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, co
             window->DockerView = get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
             window->DockerView->State.PlaceInFollow               = true;
             window->DockerView->State.OrderChildrenWhileRendering = true;
+
+            if(begin_node<ImmediateUserInterfaceWindowVerticalDocker>(
+                std::string(_ID).append("/SnapperView"),
+                _Settings))
+            {
+                window->SnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalDocker>();
+
+                // top
+                if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
+                    std::string(_ID).append("/SnapperView/TopSnapperView"),
+                    _Settings))
+                {
+                    window->TopSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
+                    end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
+                }
+
+                // center
+                if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
+                    std::string(_ID).append("/SnapperView/CentralSnapperView"),
+                    _Settings))
+                {
+                    if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
+                        std::string(_ID).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
+                        _Settings))
+                    {
+                        window->LeftSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
+                        end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
+                    }
+
+                    if(begin_node<ImmediateUserInterfaceWindowVerticalDocker>(
+                        std::string(_ID).append("/SnapperView/CentralSnapperView/ContentView"),
+                        _Settings))
+                    {
+                        window->ContentView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalDocker>();
+                        end_node<ImmediateUserInterfaceWindowVerticalDocker>();
+                    }
+
+                    if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
+                        std::string(_ID).append("/SnapperView/CentralSnapperView/RightSnapperView"),
+                        _Settings))
+                    {
+                        window->RightSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
+                        end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
+                    }
+
+                    end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
+                }
+
+                // bottom
+                if(begin_node<ImmediateUserInterfaceWindowHorizontalDocker>(
+                    std::string(_ID).append("/SnapperView/BottomSnapperView"),
+                    _Settings))
+                {
+                    window->BottomSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalDocker>();
+                    end_node<ImmediateUserInterfaceWindowHorizontalDocker>();
+                }
+
+                end_node<ImmediateUserInterfaceWindowVerticalDocker>();
+            }
+
             end_node<ImmediateUserInterfaceWindowCentralDocker>();
         }
 
