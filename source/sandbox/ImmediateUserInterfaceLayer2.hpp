@@ -22,17 +22,16 @@ namespace Frenchie
             
             // move
             ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0,
-            ImmediateUserInterfaceNodeEvents_IsMoveStarted        = 1 << 1,
             
             // resize
-            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 2,
-            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 3,
-            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 4,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 5,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 6,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 7,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 8,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 9,
+            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1,
+            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2,
+            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4,
+            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5,
+            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7,
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
         };
 
         enum ImmediateUserInterfaceNodeColors_ : int
@@ -141,6 +140,8 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+
+            virtual void restore();
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
