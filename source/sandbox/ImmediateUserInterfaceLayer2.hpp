@@ -363,7 +363,18 @@ namespace Frenchie
             bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
             void end_horizontal_stack();
 
-            // hierarchy
+            // auxiliary API
+            template<typename Type> Type* get_controller() const
+            {
+                for(auto controller : m_Controllers)
+                {
+                    if(dynamic_cast<Type*>(controller.get()))
+                        return dynamic_cast<Type*>(controller.get());
+                }
+
+                return nullptr;
+            }
+
             template<typename Type> Type* get_rendering_stack_top() const
             {
                 if(m_NodesRenderingStack.empty())
@@ -428,7 +439,8 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
 
-            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_EventProcessors;
+            // controllers
+            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
         };
     };
 }
