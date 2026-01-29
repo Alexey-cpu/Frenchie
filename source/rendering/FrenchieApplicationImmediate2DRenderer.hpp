@@ -402,18 +402,18 @@ namespace Frenchie
                 std::vector<int>&                  _Indexes);
 
             static void build_arc_mesh(
-                const gs_vec2f&                           _Center,
-                const float&                              _MinorRadius,
-                const float&                              _MajorRadius,
-                const float&                              _SourceAngle,
-                const float&                              _TargetAngle,
-                const float&                              _LineWidth,
-                const gs_vec4f&                           _Color,
-                const RenderingQueueTexture&              _Texture,
+                const gs_vec2f&                              _Center,
+                const float&                                 _MinorRadius,
+                const float&                                 _MajorRadius,
+                const float&                                 _SourceAngle,
+                const float&                                 _TargetAngle,
+                const float&                                 _LineWidth,
+                const gs_vec4f&                              _Color,
+                const RenderingQueueTexture&                 _Texture,
                 std::vector<Immediate2DRendererPathSegment>& _Segments,
-                std::vector<RenderingQueueVertex>&        _Vertexes,
-                std::vector<int>&                         _Indexes,
-                const int&                                _SegmentsCount = 36);
+                std::vector<RenderingQueueVertex>&           _Vertexes,
+                std::vector<int>&                            _Indexes,
+                const int&                                   _SegmentsCount = 36);
 
             static gs_vec2f left(const gs_vec2f& _Vector)
             {

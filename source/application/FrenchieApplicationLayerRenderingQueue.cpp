@@ -1101,7 +1101,7 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
     const int&                  _IndexesCount)
 {
     // save metrics
-    m_ApproximateRenderedTrianglesCount += _VertexesCount;
+    m_ApproximateRenderedTrianglesCount += (_VertexesCount / 3);
 
     // create mesh
     unsigned int m_VBO = 0;

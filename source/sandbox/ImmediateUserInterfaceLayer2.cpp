@@ -943,12 +943,14 @@ namespace Frenchie
 
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
+                bool frameCaughtEvent = false;
+
                 ImmediateUserInterfaceWindowUtility().process_window_frame(
                     _Context,
                     this,
 
                     // catch frame events
-                    [this, _Event](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
+                    [this, _Event, &frameCaughtEvent](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
                     {
                         // if mouse pressed here we setup this dock window as active
                         if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
@@ -959,11 +961,55 @@ namespace Frenchie
                                 [](const ImmediateUserInterfaceNode*)->bool{return true;});
                         }
 
-                        // TODO: implement move and detach logic here
+                        // move
+                        if((_Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+                            !((_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+                        {
+                            ImmediateUserInterfaceNode* movable = _Window;
+
+                            while (_Context->m_Hierarchy.get_parent(movable))
+                            {
+                                ImmediateUserInterfaceWindow* window =
+                                    dynamic_cast<ImmediateUserInterfaceWindow*>(movable);
+
+                                if(window != nullptr && (window->TopSnapper || window->LeftSnapper || window->RightSnapper || window->BottomSnapper || window->BottomSnapper || window->Docker))
+                                    break;
+
+                                movable = _Context->m_Hierarchy.get_parent(movable);
+                            }
+
+                            if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
+                            {
+                                movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+                                
+                                ImmediateUserInterfaceWindow* window =
+                                    dynamic_cast<ImmediateUserInterfaceWindow*>(movable);
+
+                                if(window != nullptr)
+                                    window->DockingReattach = true;
+                                return;
+                            }
+
+                            if(_Event.MouseDown.has_value() &&
+                                (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                            {            
+                                movable->State.BoundingBox = gs_2dboxf(
+                                    movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
+                                    movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
+                                return;
+                            }
+                        }
                     },
   
                     // catch frame backgeround events
-                    [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window){},
+                    [this, &frameCaughtEvent](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window){},
 
                     // catch frame dragging pane events
                     [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
@@ -972,7 +1018,26 @@ namespace Frenchie
                     });
 
                 // default event pipeline
-                ImmediateUserInterfaceNodeVerticalStack::events(_Context, _Event);
+                if(!frameCaughtEvent)
+                    ImmediateUserInterfaceNodeVerticalStack::events(_Context, _Event);
+            }
+
+            virtual void restore() override
+            {
+                ImmediateUserInterfaceNodeVerticalStack::restore();
+
+                bool allMouseButtonsAreReleased = true;
+
+                for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+                         button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+                         button++)
+                {
+                    allMouseButtonsAreReleased =
+                        allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+                }
+
+                if(allMouseButtonsAreReleased)
+                    DockingReattach = false;
             }
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
@@ -1002,7 +1067,8 @@ namespace Frenchie
 
             bool*                         Opened        {nullptr};
 
-            int                           DockingIndex  {-1};
+            int                           DockingIndex   {-1};
+            bool                          DockingReattach{false};
 
             // snapping
             ImmediateUserInterfaceNode* SnapperView       {nullptr};
@@ -1405,13 +1471,13 @@ namespace Frenchie
                     _Detached->LeftSnapper    != nullptr ||
                     _Detached->RightSnapper   != nullptr ||
                     _Detached->BottomSnapper  != nullptr ||
-                    _Detached->Docker != nullptr)
+                    _Detached->Docker         != nullptr)
                 {
                     ImmediateUserInterfaceWindow* active = nullptr;
                     
                     for (int orientation = ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Begin;
-                            orientation < ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_End;
-                            orientation++)
+                             orientation < ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_End;
+                             orientation++)
                     {
                         active = dynamic_cast<ImmediateUserInterfaceWindow*>(_Context->m_Hierarchy.get_parent(_Detached));
 
@@ -1447,18 +1513,67 @@ namespace Frenchie
                     _Detached->LeftSnapper    = nullptr;
                     _Detached->RightSnapper   = nullptr;
                     _Detached->BottomSnapper  = nullptr;
-                    _Detached->Docker = nullptr;
-                    _Detached->DockingIndex  = -1;
+                    _Detached->Docker         = nullptr;
+                    _Detached->DockingIndex   = -1;
                     return;
                 }
 
                 // TODO: reattach children to the first child
+                if(_Detached->DockingReattach)
+                {
+                    auto& dockedWindows = retrieve_docked_windows(
+                        _Context,
+                        _Detached,
+                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+                    ImmediateUserInterfaceWindow* newDocker = nullptr;
+                        
+                    for(auto dockedWindow : dockedWindows)
+                    {
+                        ImmediateUserInterfaceWindow* window =
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
+
+                        if(window != nullptr)
+                        {
+                            newDocker = window;
+                            break;
+                        }
+                    }
+
+                    // reindex docked nodes and setup their docker
+                    int dockindex = 0;
+
+                    for(auto dockedWindow : dockedWindows)
+                    {
+                        ImmediateUserInterfaceWindow* window =
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
+
+                        if(window == nullptr || window == newDocker)
+                            continue;
+
+                        window->Docker        = newDocker->DockerView;
+                        window->DockingIndex  = dockindex++;
+                    }
+
+                    // detach new docker
+                    if(newDocker != nullptr)
+                    {
+                        newDocker->TopSnapper     = nullptr;
+                        newDocker->LeftSnapper    = nullptr;
+                        newDocker->RightSnapper   = nullptr;
+                        newDocker->BottomSnapper  = nullptr;
+                        newDocker->Docker         = nullptr;
+                        newDocker->DockingIndex   = -1;
+                    }
+                }
+
+                // detach
                 _Detached->TopSnapper     = nullptr;
                 _Detached->LeftSnapper    = nullptr;
                 _Detached->RightSnapper   = nullptr;
                 _Detached->BottomSnapper  = nullptr;
-                _Detached->Docker = nullptr;
-                _Detached->DockingIndex  = -1;
+                _Detached->Docker         = nullptr;
+                _Detached->DockingIndex   = -1;
             }
 
             std::vector<ImmediateUserInterfaceNode*>& retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
@@ -2266,6 +2381,17 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     }
 }
 
+void ImmediateUserInterfaceNode::restore()
+{
+    State.Depth                 = 0;
+    State.SelfThickness         = 0;
+    State.RenderingIndex        = 0;
+    State.MaximumChildDepth     = 0;
+    State.MaximumChildThickness = 0;
+    State.Parent                = nullptr;
+    State.Settings              = 0;
+}
+
 void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child)
 {
     if(_Child != nullptr)
@@ -2559,16 +2685,15 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
             node->Cache = node->State;
 
-        node->State.Depth          = 0;
-        node->State.SelfThickness  = 0;
-        node->State.RenderingIndex = 0;
-
-
-        node->State.MaximumChildDepth = 0;
-        node->State.MaximumChildThickness = 0;
-
-        node->State.Parent         = nullptr;
-        node->State.Settings       = 0;
+        // restore
+        node->restore();
+        // node->State.Depth                 = 0;
+        // node->State.SelfThickness         = 0;
+        // node->State.RenderingIndex        = 0;
+        // node->State.MaximumChildDepth     = 0;
+        // node->State.MaximumChildThickness = 0;
+        // node->State.Parent                = nullptr;
+        // node->State.Settings              = 0;
     }
 
     GS_ASSERT(m_NodesRenderingStack.empty());
