@@ -44,6 +44,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_WindowBackground,
             
             // window frame
+            ImmediateUserInterfaceNodeColors_WindowFrameBox,
+            ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered,
             ImmediateUserInterfaceNodeColors_WindowFrameBackground,
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive,
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered,
@@ -92,6 +94,8 @@ namespace Frenchie
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground]                   = gs_vec4f(12.f, 128.f, 200.f, 255.f);
                 
                 // window frame
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBox]                     = gs_vec4f(128.f, 128.f, 128.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered]              = gs_vec4f(200.f, 200.f, 200.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]              = gs_vec4f(12.f, 128.f, 200.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]        = gs_vec4f(32.f, 175.f, 255.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]       = gs_vec4f(32.f, 175.f, 255.f, 255.f);
@@ -255,8 +259,8 @@ namespace Frenchie
                 return (int)(end(_Node) - begin(_Node));
             }
 
-            template<typename Filter>
-            int count(const ImmediateUserInterfaceNode* _Node, const Filter& _Filter) const
+            template<typename FrameProcessor>
+            int count(const ImmediateUserInterfaceNode* _Node, const FrameProcessor& _Filter) const
             {
                 int counter = 0;
 

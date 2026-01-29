@@ -277,6 +277,13 @@ namespace Frenchie
             Frenchie::Core::Optional<RenderingQueueRendererCommandClippingBox> ClippingBox;
         };
 
+        struct RenderingQueueMetrics
+        {
+            double FrameRate              = 0.0;
+            int    RenderedTrianglesCount = 0;
+            int    RenderingCommandsCount = 0;
+        };
+
         class RenderingQueue : public Layer
         {
         public:
@@ -284,9 +291,9 @@ namespace Frenchie
             virtual ~RenderingQueue();
 
             // getters
-            gs_mat4f get_projection_matrix() const;
-            gs_mat4f get_cameraview_matrix() const;
-            double   get_measured_frame_rate() const;
+            gs_mat4f              get_projection_matrix() const;
+            gs_mat4f              get_cameraview_matrix() const;
+            RenderingQueueMetrics get_rendering_queue_metrics() const;
 
             RenderingQueueFont    get_default_font() const;
             RenderingQueueShader  get_default_shader() const;
@@ -378,16 +385,20 @@ namespace Frenchie
 
         protected:
 
+            // rendering
             gs_mat4f                                       m_ProjectionMatrix                   {gs_mat4f(1)};
             gs_mat4f                                       m_CameraViewMatrix                   {gs_mat4f(1)};
             std::vector<RenderingQueueCommand>             m_Commands                           {std::vector<RenderingQueueCommand>()};
             RenderingQueueShader                           m_DefaultShader                      {RenderingQueueShader()};
             RenderingQueueTexture                          m_DefaultTexture                     {RenderingQueueTexture()};
             RenderingQueueFont                             m_DefaultFont                        {RenderingQueueFont()};
+
+            // metrics measurement
             std::chrono::high_resolution_clock::time_point m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};
             int                                            m_FrameRateMeasurementFramesInterval {60};
             int                                            m_FrameRateMeasurementFramesCount    {0 };
-            double                                         m_FrameRate                          {0.0};
+            int                                            m_ApproximateRenderedTrianglesCount  {0 };
+            RenderingQueueMetrics                          m_Metrics                            {RenderingQueueMetrics()};
         };
     }
 }

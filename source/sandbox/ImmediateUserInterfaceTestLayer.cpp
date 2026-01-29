@@ -26,7 +26,18 @@ void ImmediateUserInterfaceTestLayer::frame_update()
             if(m_ImmediateUserInterface->begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
             {
                 if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
+                {
+                    if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1/Child-1"), settins))
+                        m_ImmediateUserInterface->end_horizontal_stack();
+
+                    if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1/Child-2"), settins))
+                        m_ImmediateUserInterface->end_horizontal_stack();
+
+                    if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1/Child-3"), settins))
+                        m_ImmediateUserInterface->end_horizontal_stack();
+
                     m_ImmediateUserInterface->end_horizontal_stack();
+                }
 
                 if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
                     m_ImmediateUserInterface->end_horizontal_stack();
@@ -85,7 +96,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         }
     };
 
-    //create_horizontal_layout("Layout-1");
+    //create_horizontal_layout("SOMELAYOUT");
 
     // if(m_ImmediateUserInterface->begin_window(
     //     "Window-1",
@@ -120,17 +131,47 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         "Window-4",
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    {        
+    {
+        //create_horizontal_layout("Window-4/Layout");
         m_ImmediateUserInterface->end_window();
     }
 
-    if(m_ImmediateUserInterface->begin_window(
-        "Window-5",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    {        
-        m_ImmediateUserInterface->end_window();
-    }
+    // if(m_ImmediateUserInterface->begin_window(
+    //     "Window-5",
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    // {        
+    //     m_ImmediateUserInterface->end_window();
+    // }
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
+        64.f,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane()
+        )
+    );
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("CMD ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
+        64.f,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
+            gs_vec2f(0.f, 64.f)
+        )
+    );
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
+        64.f,
+        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
+            gs_vec2f(0.f, 128.f)
+        )
+    );
 }
 
 void ImmediateUserInterfaceTestLayer::finish()

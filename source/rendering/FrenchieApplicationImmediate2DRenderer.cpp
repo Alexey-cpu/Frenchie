@@ -985,18 +985,18 @@ void Immediate2DRenderer::build_line_mesh(
 }
 
 void Immediate2DRenderer::build_arc_mesh(
-    const gs_vec2f&                           _Center,
-    const float&                              _MinorRadius,
-    const float&                              _MajorRadius,
-    const float&                              _SourceAngle,
-    const float&                              _TargetAngle,
-    const float&                              _LineWidth,
-    const gs_vec4f&                           _Color,
-    const RenderingQueueTexture&              _Texture,
+    const gs_vec2f&                              _Center,
+    const float&                                 _MinorRadius,
+    const float&                                 _MajorRadius,
+    const float&                                 _SourceAngle,
+    const float&                                 _TargetAngle,
+    const float&                                 _LineWidth,
+    const gs_vec4f&                              _Color,
+    const RenderingQueueTexture&                 _Texture,
     std::vector<Immediate2DRendererPathSegment>& _Segments,
-    std::vector<RenderingQueueVertex>&        _Vertexes,
-    std::vector<int>&                         _Indexes,
-    const int&                                _SegmentsCount)
+    std::vector<RenderingQueueVertex>&           _Vertexes,
+    std::vector<int>&                            _Indexes,
+    const int&                                   _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
