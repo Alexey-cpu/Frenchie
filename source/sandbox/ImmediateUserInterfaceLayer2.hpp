@@ -331,6 +331,14 @@ namespace Frenchie
             }
         };
 
+        class ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceContextController(){}
+            virtual ~ImmediateUserInterfaceContextController(){}
+            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) = 0;
+        };
+
         class ImmediateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -420,9 +428,7 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
 
-            // docking and snapping
-            mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingCache;
-            mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingList;
+            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_EventProcessors;
         };
     };
 }
