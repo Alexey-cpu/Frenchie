@@ -49,6 +49,12 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive,
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered,
 
+            // push button
+            ImmediateUserInterfaceNodeColors_PushButtonOutline,
+            ImmediateUserInterfaceNodeColors_PushButtonBackground,
+            ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered,
+            ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed,
+
             // gizmos
             ImmediateUserInterfaceNodeColors_Gizmos,
             ImmediateUserInterfaceNodeColors_GizmosHovered,
@@ -66,7 +72,9 @@ namespace Frenchie
 
             // settings
             ImmediateUserInterfaceNodeSettings_Movable   = 1 << 0,
-            ImmediateUserInterfaceNodeSettings_Resizable = 1 << 1
+            ImmediateUserInterfaceNodeSettings_Resizable = 1 << 1,
+
+            ImmediateUserInterfaceNodeSettings_Defaults  = ImmediateUserInterfaceNodeSettings_Movable | ImmediateUserInterfaceNodeSettings_Resizable
         };
 
         enum ImmediateUserInterfaceNodeMouseHover_ : int
@@ -96,9 +104,15 @@ namespace Frenchie
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBox]                     = gs_vec4f(128.f, 128.f, 128.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered]              = gs_vec4f(200.f, 200.f, 200.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]              = gs_vec4f(12.f, 128.f, 200.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]        = gs_vec4f(32.f, 175.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]        = gs_vec4f(32.f, 0.f, 0.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]       = gs_vec4f(32.f, 175.f, 255.f, 255.f);
                 
+                // push button
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonOutline]                  = gs_vec4f(12.f, 64.f, 128.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackground]               = gs_vec4f(200.f, 200.f, 200.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered]        = gs_vec4f(32.f, 175.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed]        = gs_vec4f(0.f, 120.f, 255.f, 255.f);
+
                 // gizmos
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 255.f);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = gs_vec4f(32.f, 230.f, 200.f, 255.f);
@@ -115,7 +129,7 @@ namespace Frenchie
             float              FontSize = 64.f;
 
             // frames of windows, buttons, child windows e.t.c
-            float FramesRadius = 32.f;
+            float FramesRadius = 0.f;
             float FramesWidth  = 8.f;
         };
 
@@ -358,15 +372,19 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
 
-            // API
+            // windows
             bool begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened = nullptr);
             void end_window();
             
-            bool begin_vertial_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
+            // layout
+            bool begin_vertial_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
 
-            bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings);
+            bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
+
+            // widgets
+            bool push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             // auxiliary API
             template<typename Type> Type* get_controller() const
@@ -402,11 +420,7 @@ namespace Frenchie
 
                 // create node
                 if(m_Cache.find(_ID) == m_Cache.end())
-                {
-                    m_Duplicates.insert(_ID);
-                    GS_ASSERT(m_Duplicates.count(_ID) <= 1);
                     m_Cache[_ID] = std::make_unique<Type>(_ID);
-                }
                 ImmediateUserInterfaceNode* node = m_Cache[_ID].get();
 
                 node->State.Settings       = _Settings;
@@ -435,8 +449,8 @@ namespace Frenchie
 
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
             mutable ImmedidateUserInterfaceStyle                                       m_Style;
-            mutable std::multiset<std::string>                                         m_Duplicates;
             mutable ImmedidateUserInterfaceNodeHierarchy                               m_Hierarchy;
+            mutable std::map<std::string, int>                                         m_Duplicates;
 
             // rendering
             mutable std::shared_ptr<Immediate2DRenderer>                               m_Renderer{nullptr};

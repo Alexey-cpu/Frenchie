@@ -4,6 +4,7 @@
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreClock.hpp>
 #include <FrenchieCoreOptional.hpp>
+#include <FrenchieCoreRingBuffer.hpp>
 
 // Application
 #include <FrenchieApplicationLayer.hpp>
@@ -394,10 +395,9 @@ namespace Frenchie
             RenderingQueueFont                             m_DefaultFont                        {RenderingQueueFont()};
 
             // metrics measurement
-            std::chrono::high_resolution_clock::time_point m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};
-            int                                            m_FrameRateMeasurementFramesInterval {60};
-            int                                            m_FrameRateMeasurementFramesCount    {0 };
-            int                                            m_ApproximateRenderedTrianglesCount  {0 };
+            std::chrono::high_resolution_clock::time_point m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};            
+            Frenchie::Core::RingBuffer<double, 64>         m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
+            int                                            m_RenderedTrianglesCount             {0};
             RenderingQueueMetrics                          m_Metrics                            {RenderingQueueMetrics()};
         };
     }
