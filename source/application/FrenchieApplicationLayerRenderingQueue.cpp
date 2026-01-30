@@ -284,6 +284,7 @@ void main()
 
 void RenderingQueue::frame_start()
 {
+    m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
 }
 
 void RenderingQueue::frame_update()
@@ -393,27 +394,12 @@ void RenderingQueue::frame_render()
 
 void RenderingQueue::frame_finish()
 {
-    // save metrics
-    {
-        // measure frame rate
-        {
-            if(m_FrameRateMeasurementFramesCount >= m_FrameRateMeasurementFramesInterval)
-            {
-                m_Metrics.FrameRate               = m_FrameRateMeasurementFramesInterval * 1e6 / Frenchie::Core::elapsed<std::chrono::microseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
-                m_FrameRateMeasurementFramesCount = 0;
-            }
-
-            if(m_FrameRateMeasurementFramesCount <= 0)
-                m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
-
-            ++m_FrameRateMeasurementFramesCount;
-        }
-
-        // estimate rendering command count
-        m_Metrics.RenderedTrianglesCount = m_ApproximateRenderedTrianglesCount;
-    }
-
-    m_ApproximateRenderedTrianglesCount = 0;
+    // calculate frame rate and save metrics
+    double current = (double)1e9 / Frenchie::Core::elapsed<std::chrono::nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
+    m_FrameRateMeasurementFilterBuffer.push(current);
+    m_Metrics.FrameRate              += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
+    m_Metrics.RenderedTrianglesCount = m_RenderedTrianglesCount;
+    m_RenderedTrianglesCount = 0;
 }
 
 void RenderingQueue::finish()
@@ -1101,7 +1087,7 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
     const int&                  _IndexesCount)
 {
     // save metrics
-    m_ApproximateRenderedTrianglesCount += (_VertexesCount / 3);
+    m_RenderedTrianglesCount += (_VertexesCount / 3);
 
     // create mesh
     unsigned int m_VBO = 0;

@@ -114,7 +114,16 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable, &opened))
     {
-        create_horizontal_layout("Window-2/Layout");
+        if(m_ImmediateUserInterface->begin_horizontal_stack("Window-2/Stack"))
+        {
+            m_ImmediateUserInterface->push_button("Button-1");
+            m_ImmediateUserInterface->push_button("Button-2");
+            m_ImmediateUserInterface->push_button("Button-3");
+
+            m_ImmediateUserInterface->end_horizontal_stack();
+        }
+        
+
         m_ImmediateUserInterface->end_window();
     }
 
@@ -123,7 +132,15 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
-        create_horizontal_layout("Window-3/Layout");
+        if(m_ImmediateUserInterface->begin_vertial_stack("Window-3/Stack"))
+        {
+            m_ImmediateUserInterface->push_button("Button-4");
+            m_ImmediateUserInterface->push_button("Button-5");
+            m_ImmediateUserInterface->push_button("Button-6");
+
+            m_ImmediateUserInterface->end_vertical_stack();
+        }
+
         m_ImmediateUserInterface->end_window();
     }
 
@@ -132,17 +149,16 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
-        //create_horizontal_layout("Window-4/Layout");
         m_ImmediateUserInterface->end_window();
     }
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-5",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {        
-    //     m_ImmediateUserInterface->end_window();
-    // }
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-5",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {        
+        m_ImmediateUserInterface->end_window();
+    }
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
