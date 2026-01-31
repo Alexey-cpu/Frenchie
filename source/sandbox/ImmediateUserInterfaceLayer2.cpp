@@ -13,36 +13,162 @@ namespace Frenchie
 {
     namespace Application
     {
-        enum ImmedidateUserInterfaceDockingAnchor_ : int
-        {
-            ImmedidateUserInterfaceDockingAnchor_Begin = 0,
-            ImmedidateUserInterfaceDockingAnchor_Top   = ImmedidateUserInterfaceDockingAnchor_Begin,
-            ImmedidateUserInterfaceDockingAnchor_Left,
-            ImmedidateUserInterfaceDockingAnchor_Right,
-            ImmedidateUserInterfaceDockingAnchor_Bottom,
-            ImmedidateUserInterfaceDockingAnchor_Center,
-            ImmedidateUserInterfaceDockingAnchor_End
-        };
-
-        enum ImmedidateUserInterfaceRenderingOrder_ : int
-        {
-            ImmedidateUserInterfaceRenderingOrder_Begin   = 0,
-            ImmedidateUserInterfaceRenderingOrder_Main    = ImmedidateUserInterfaceRenderingOrder_Begin,
-            ImmedidateUserInterfaceRenderingOrder_Focus,
-            ImmedidateUserInterfaceRenderingOrder_Modal,
-            ImmedidateUserInterfaceRenderingOrder_End,
-        };
-
-        enum ImmedidateUserInterfaceRenderingLayer_ : int
-        {
-            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
-            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
-            ImmedidateUserInterfaceRenderingLayer_Gizmos,
-            ImmedidateUserInterfaceRenderingLayer_End,
-        };
-
         namespace ImmediateUserInterfaceContextLayerHelpers
         {
+            class ImmediateUserInterfaceWindowUtility
+            {
+            public:
+
+                template<typename FrameProcessor, typename FrameBackgroundProcessor, typename DraggingPaneProcessor>
+                void process_window_frame(
+                    ImmediateUserInterfaceContextLayer* _Context,
+                    ImmediateUserInterfaceWindow*       _Window,
+                    const FrameProcessor&               _FrameProcessor,
+                    const FrameBackgroundProcessor&     _FrameBackgroundProcessor,
+                    const DraggingPaneProcessor&        _DraggingPaneProcessor)
+                {
+                    if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
+                        return;
+
+                    // calculate total windows frames size and frames count
+                    gs_vec2f totalFramesSize  = gs_vec2f(0.f, 0.f);
+                    int      totalFramesCount = 0;
+
+                    for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+                             it != _Context->m_Hierarchy.end(_Window->DockerView);
+                             it++)
+                    {
+                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
+
+                        totalFramesSize += gs_vec2f(
+                            _Context->m_Renderer->calculate_bounding_box((*it)->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).width(),
+                            0.f);
+                        totalFramesCount++;
+                    }
+
+                    totalFramesSize += gs_vec2f(
+                        _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).width(),
+                        0.f);
+                    totalFramesCount++;
+
+                    totalFramesSize = gs_vec2f(
+                        gs_min(totalFramesSize.x, _Window->FrameBox.width() * 0.8f), // TODO: 0.8f MUST BE A SETTING !!!
+                        _Window->FrameBox.height());
+
+                    // calculate frame unlocking and dragging panes
+                    gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
+                    gs_2dboxf frameBoxDraggingPane  = gs_2dboxf(_Window->FrameBox.Min + gs_vec2f(totalFramesSize.x, 0.f), _Window->FrameBox.Max);
+
+                    // process dragging pane
+                    _FrameBackgroundProcessor(_Context, _Window->FrameBox, _Window);
+                    _DraggingPaneProcessor(_Context, frameBoxDraggingPane, _Window);
+
+                    // process frameboxes
+                    gs_vec2f position = frameBoxUnlockingPane.Min;
+                    gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
+
+                    // process self frame
+                    gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
+                    _FrameProcessor(_Context, boundingBox, _Window);
+                    position += gs_vec2f(size.x, 0.f);
+
+                    // process docked windows frames
+                    for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+                             it != _Context->m_Hierarchy.end(_Window->DockerView);
+                             it++)
+                    {
+                        ImmediateUserInterfaceWindow* window =
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                        if(window == nullptr || window->Docker == nullptr)
+                            continue;
+
+                        gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
+                        _FrameProcessor(_Context, boundingBox, dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+                        position += gs_vec2f(size.x, 0.f);
+                    }
+                }
+
+                template<typename FrameProcessor>
+                void setup_as_active_docking_window(
+                    ImmediateUserInterfaceContextLayer* _Context,
+                    ImmediateUserInterfaceWindow*       _Docked,
+                    const FrameProcessor&               _Filter)
+                {
+                    if(_Context == nullptr || _Docked == nullptr)
+                        return;
+
+                    if(_Docked->Docker != nullptr)
+                    {
+                        // setup maximum rendering order for docked window within it's hierarchy
+                        int renderingOrder = 0;
+
+                        for(auto it  = _Context->m_Hierarchy.begin(_Docked->Docker);
+                                 it != _Context->m_Hierarchy.end(_Docked->Docker);
+                                 it++)
+                        {
+                            if(!_Filter(*it)) continue;
+                                
+                            (*it)->State.RenderingOrder = renderingOrder++;
+
+                            ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                            if(window != nullptr)
+                                window->DockingActive = false;
+                        }
+
+                        _Docked->State.RenderingOrder = renderingOrder++;
+                        _Docked->DockingActive        = true;
+
+                        auto docker = retrieve_docker_by_view(_Context, _Docked->Docker);
+                        if(docker != nullptr)
+                            docker->DockingActive = false;
+
+                        return;
+                    }
+
+                    // setup maximum rendering order for docker snapper view
+                    int renderingOrder = 0;
+
+                    for(auto it  = _Context->m_Hierarchy.begin(_Docked->DockerView);
+                             it != _Context->m_Hierarchy.end(_Docked->DockerView);
+                             it++)
+                    {
+                        if(!_Filter(*it)) continue;
+                            
+                        (*it)->State.RenderingOrder = renderingOrder++;
+
+                        ImmediateUserInterfaceWindow* window =
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                        if(window != nullptr)
+                            window->DockingActive = false;
+                    }
+                    _Docked->SnapperView->State.RenderingOrder = renderingOrder++;
+                    
+                    _Docked->DockingActive =
+                        _Context->m_Hierarchy.count(
+                            _Docked->DockerView,
+                            [](ImmediateUserInterfaceNode* _Node){return dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);}) > 0;
+                }
+
+                ImmediateUserInterfaceWindow*
+                retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
+                {
+                    ImmediateUserInterfaceNode* parent = _DockerView;
+
+                    while (parent)
+                    {
+                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(parent))
+                            return dynamic_cast<ImmediateUserInterfaceWindow*>(parent);
+                        parent = _Context->m_Hierarchy.get_parent(parent);
+                    }
+                    
+                    return nullptr;
+                }
+            };
+
             class ImmedidateUserInterfaceMovedNodeSearcher
             {
             public:
@@ -335,152 +461,13 @@ namespace Frenchie
             };
         }
 
-        // layout
-        struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceNodePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceNodePanel(){}
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr)
-                    return;
-
-                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-                    _Context->m_Hierarchy.begin(this),
-                    _Context->m_Hierarchy.end(this),
-                    State.BoundingBox.Min,
-                    State.BoundingBox,
-                    [](const ImmediateUserInterfaceNode*){return true;});
-            }
-            
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override{}
-        };
-
-        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceNodeVerticalStack(){}
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr)
-                    return;
-
-                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
-                    _Context->m_Hierarchy.begin(this),
-                    _Context->m_Hierarchy.end(this),
-                    State.BoundingBox.Min,
-                    State.BoundingBox,
-                    [](const ImmediateUserInterfaceNode*){return true;});
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override{}
-        };
-
-        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceNodeHorizontalStack(){}
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr)
-                    return;
-
-                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
-                    _Context->m_Hierarchy.begin(this),
-                    _Context->m_Hierarchy.end(this),
-                    State.BoundingBox.Min,
-                    State.BoundingBox,
-                    [](const ImmediateUserInterfaceNode*){return true;});
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override{}
-        };
-    
-        // widgets
-        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
-        {
-            ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfacePushButton(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                if(Cache.MouseDown.has_value())
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                        _Context->m_Style.FramesRadius,
-                        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered] :
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                // outline frame
-                _Context->m_Renderer->push_rectangle_rounded(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.FramesWidth,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonOutline],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // title
-                _Context->m_Renderer->push_text(
-                    Name,
-                    _Context->m_Style.FontSize,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
-                    _Context->m_Renderer->calculate_transform_matrix(
-                        (float)place_in_follow(),
-                        gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.FontSize, _Context->m_Style.Font).size() * 0.5f)));
-            }
-        };
-
         // windows
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfaceNodePanel
         {
             ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
             virtual ~ImmediateUserInterfaceWindowCentralDocker(){}
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // background frame
-                _Context->m_Renderer->push_rectangle_rounded(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.FramesWidth,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override{}
 
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {                
@@ -497,21 +484,11 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-                // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
                     _Context->m_Style.FramesRadius,
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // background frame
-                _Context->m_Renderer->push_rectangle_rounded(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.FramesWidth,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -542,21 +519,11 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-                // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
                     _Context->m_Style.FramesRadius,
                     _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // background frame
-                _Context->m_Renderer->push_rectangle_rounded(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.FramesWidth,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -566,1360 +533,6 @@ namespace Frenchie
                     return;
                 
                 ImmediateUserInterfaceNodeHorizontalStack::events(_Context, _Event);
-            }
-        };
-
-        struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNodeVerticalStack
-        {
-        public:
-
-            class ImmediateUserInterfaceWindowUtility
-            {
-            public:
-
-                template<typename FrameProcessor, typename FrameBackgroundProcessor, typename DraggingPaneProcessor>
-                void process_window_frame(
-                    ImmediateUserInterfaceContextLayer* _Context,
-                    ImmediateUserInterfaceWindow*       _Window,
-                    const FrameProcessor&               _FrameProcessor,
-                    const FrameBackgroundProcessor&     _FrameBackgroundProcessor,
-                    const DraggingPaneProcessor&        _DraggingPaneProcessor)
-                {
-                    if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
-                        return;
-
-                    // calculate total windows frames size and frames count
-                    gs_vec2f totalFramesSize  = gs_vec2f(0.f, 0.f);
-                    int      totalFramesCount = 0;
-
-                    for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                             it != _Context->m_Hierarchy.end(_Window->DockerView);
-                             it++)
-                    {
-                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
-
-                        totalFramesSize += gs_vec2f(
-                            _Context->m_Renderer->calculate_bounding_box((*it)->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).width(),
-                            0.f);
-                        totalFramesCount++;
-                    }
-
-                    totalFramesSize += gs_vec2f(
-                        _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).width(),
-                        0.f);
-                    totalFramesCount++;
-
-                    totalFramesSize = gs_vec2f(
-                        gs_min(totalFramesSize.x, _Window->FrameBox.width() * 0.8f), // TODO: 0.8f MUST BE A SETTING !!!
-                        _Window->FrameBox.height());
-
-                    // calculate frame unlocking and dragging panes
-                    gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
-                    gs_2dboxf frameBoxDraggingPane  = gs_2dboxf(_Window->FrameBox.Min + gs_vec2f(totalFramesSize.x, 0.f), _Window->FrameBox.Max);
-
-                    // process dragging pane
-                    _FrameBackgroundProcessor(_Context, _Window->FrameBox, _Window);
-                    _DraggingPaneProcessor(_Context, frameBoxDraggingPane, _Window);
-
-                    // process frameboxes
-                    gs_vec2f position = frameBoxUnlockingPane.Min;
-                    gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
-
-                    // process self frame
-                    gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
-                    _FrameProcessor(_Context, boundingBox, _Window);
-                    position += gs_vec2f(size.x, 0.f);
-
-                    // process docked windows frames
-                    for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                             it != _Context->m_Hierarchy.end(_Window->DockerView);
-                             it++)
-                    {
-                        ImmediateUserInterfaceWindow* window =
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                        if(window == nullptr || window->Docker == nullptr)
-                            continue;
-
-                        gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
-                        _FrameProcessor(_Context, boundingBox, dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
-                        position += gs_vec2f(size.x, 0.f);
-                    }
-                }
-
-                template<typename FrameProcessor>
-                void setup_as_active_docking_window(
-                    ImmediateUserInterfaceContextLayer* _Context,
-                    ImmediateUserInterfaceWindow*       _Docked,
-                    const FrameProcessor&               _Filter)
-                {
-                    if(_Context == nullptr || _Docked == nullptr)
-                        return;
-
-                    if(_Docked->Docker != nullptr)
-                    {
-                        // setup maximum rendering order for docked window within it's hierarchy
-                        int renderingOrder = 0;
-
-                        for(auto it  = _Context->m_Hierarchy.begin(_Docked->Docker);
-                                 it != _Context->m_Hierarchy.end(_Docked->Docker);
-                                 it++)
-                        {
-                            if(!_Filter(*it)) continue;
-                                
-                            (*it)->State.RenderingOrder = renderingOrder++;
-
-                            ImmediateUserInterfaceWindow* window =
-                                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                            if(window != nullptr)
-                                window->DockingActive = false;
-                        }
-
-                        _Docked->State.RenderingOrder = renderingOrder++;
-                        _Docked->DockingActive        = true;
-
-                        auto docker = retrieve_docker_by_view(_Context, _Docked->Docker);
-                        if(docker != nullptr)
-                            docker->DockingActive = false;
-
-                        return;
-                    }
-
-                    // setup maximum rendering order for docker snapper view
-                    int renderingOrder = 0;
-
-                    for(auto it  = _Context->m_Hierarchy.begin(_Docked->DockerView);
-                             it != _Context->m_Hierarchy.end(_Docked->DockerView);
-                             it++)
-                    {
-                        if(!_Filter(*it)) continue;
-                            
-                        (*it)->State.RenderingOrder = renderingOrder++;
-
-                        ImmediateUserInterfaceWindow* window =
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                        if(window != nullptr)
-                            window->DockingActive = false;
-                    }
-                    _Docked->SnapperView->State.RenderingOrder = renderingOrder++;
-                    
-                    _Docked->DockingActive =
-                        _Context->m_Hierarchy.count(
-                            _Docked->DockerView,
-                            [](ImmediateUserInterfaceNode* _Node){return dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);}) > 0;
-                }
-
-                ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
-                {
-                    ImmediateUserInterfaceNode* parent = _DockerView;
-
-                    while (parent)
-                    {
-                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(parent))
-                            return dynamic_cast<ImmediateUserInterfaceWindow*>(parent);
-                        parent = _Context->m_Hierarchy.get_parent(parent);
-                    }
-                    
-                    return nullptr;
-                }
-            };
-
-            ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNodeVerticalStack(_Name){}
-            virtual ~ImmediateUserInterfaceWindow(){}
-
-            void render_frame(ImmediateUserInterfaceContextLayer* _Context)
-            {
-                if(Docker != nullptr)
-                    return;
-
-                ImmediateUserInterfaceWindowUtility().process_window_frame(
-                    _Context,
-                    this,
-
-                    // render self and child frames
-                    [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
-                    {
-                        // construct events
-                        ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
-
-                        // background
-                        if(!_Window->DockingActive)
-                        {
-                            _Context->m_Renderer->push_rectangle_rounded_filled(
-                                _BoundingBox.Min,
-                                _BoundingBox.Max,
-                                _Context->m_Style.FramesRadius,
-                                _BoundingBox.contains(event.CursorPosition) ?
-                                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered] :
-                                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
-                                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                        }
-                        else
-                        {
-                            _Context->m_Renderer->push_rectangle_rounded_filled(
-                                _BoundingBox.Min,
-                                _BoundingBox.Max,
-                                _Context->m_Style.FramesRadius,
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive],
-                                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                        }
-
-                        // outline
-                        _Context->m_Renderer->push_rectangle_rounded(
-                            _BoundingBox.Min,
-                            _BoundingBox.Max,
-                            _Context->m_Style.FramesRadius,
-                            _Context->m_Style.FramesWidth,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                        // title
-                        _Context->m_Renderer->push_text(
-                            _Window->Name,
-                            _Context->m_Style.FontSize * 0.7f,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
-                            _Context->m_Renderer->calculate_transform_matrix(
-                                (float)place_in_follow(),
-                                gs_vec2f(_BoundingBox.Min.x + 16.f,
-                                    _BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.7f * 0.5f)));
-
-                        // TODO: refactor this code
-                        if(_Window->Opened != nullptr)
-                        {
-                            gs_vec4f closeButtonСolor = gs_vec4f(255.f, 0.f, 0.f, 255.f); // TODO: this MUST BE a setting
-
-                            gs_2dboxf closeButtonBox  = gs_2dboxf(
-                                gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y) - _Window->FrameBox.height() / 4.f,
-                                gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y) + _Window->FrameBox.height() / 4.f);
-
-                            _Context->m_Renderer->push_rectangle_rounded_filled(
-                                closeButtonBox.Min,
-                                closeButtonBox.Max,
-                                _Context->m_Style.FramesRadius,
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                            if(closeButtonBox.contains(event.CursorPosition))
-                            {
-                                closeButtonСolor = event.MouseDown.has_value() ?
-                                    gs_vec4f(255.f, 230.f, 0.f, 255.f) : // TODO: this MUST BE a setting
-                                    gs_vec4f(255.f, 128.f, 0.f, 255.f);  // TODO: this MUST BE a setting
-
-                                *_Window->Opened = !event.MouseClicked.has_value();
-
-                                // undock all windows
-                                if(!(*_Window->Opened))
-                                {
-                                    for(auto it = _Context->m_Hierarchy.begin(_Window->DockerView);
-                                            it != _Context->m_Hierarchy.end(_Window->DockerView);
-                                            it++)
-                                    {
-                                        ImmediateUserInterfaceWindow* window =
-                                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                                        if(window == nullptr)
-                                            continue;
-
-                                        window->TopSnapper     = nullptr;
-                                        window->LeftSnapper    = nullptr;
-                                        window->RightSnapper   = nullptr;
-                                        window->BottomSnapper  = nullptr;
-                                        window->Docker         = nullptr;
-                                    }
-
-                                    for(auto it = _Context->m_Hierarchy.begin(_Window);
-                                            it != _Context->m_Hierarchy.end(_Window);
-                                            it++)
-                                    {
-                                        ImmediateUserInterfaceWindow* window =
-                                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                                        if(window == nullptr)
-                                            continue;
-
-                                        window->TopSnapper     = nullptr;
-                                        window->LeftSnapper    = nullptr;
-                                        window->RightSnapper   = nullptr;
-                                        window->BottomSnapper  = nullptr;
-                                        window->Docker         = nullptr;
-                                    }
-
-                                    for(auto it = _Context->m_Hierarchy.begin(_Window->TopSnapperView);
-                                            it != _Context->m_Hierarchy.end(_Window->TopSnapperView);
-                                            it++)
-                                    {
-                                        ImmediateUserInterfaceWindow* window =
-                                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                                        if(window == nullptr)
-                                            continue;
-
-                                        window->TopSnapper     = nullptr;
-                                        window->LeftSnapper    = nullptr;
-                                        window->RightSnapper   = nullptr;
-                                        window->BottomSnapper  = nullptr;
-                                        window->Docker         = nullptr;
-                                    }
-
-                                    for(auto it = _Context->m_Hierarchy.begin(_Window->LeftSnapperView);
-                                            it != _Context->m_Hierarchy.end(_Window->LeftSnapperView);
-                                            it++)
-                                    {
-                                        ImmediateUserInterfaceWindow* window =
-                                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                                        if(window == nullptr)
-                                            continue;
-
-                                        window->TopSnapper     = nullptr;
-                                        window->LeftSnapper    = nullptr;
-                                        window->RightSnapper   = nullptr;
-                                        window->BottomSnapper  = nullptr;
-                                        window->Docker         = nullptr;
-                                    }
-
-                                    for(auto it = _Context->m_Hierarchy.begin(_Window->RightSnapperView);
-                                            it != _Context->m_Hierarchy.end(_Window->RightSnapperView);
-                                            it++)
-                                    {
-                                        ImmediateUserInterfaceWindow* window =
-                                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                                        if(window == nullptr)
-                                            continue;
-
-                                        window->TopSnapper     = nullptr;
-                                        window->LeftSnapper    = nullptr;
-                                        window->RightSnapper   = nullptr;
-                                        window->BottomSnapper  = nullptr;
-                                        window->Docker         = nullptr;
-                                    }
-
-                                    for(auto it = _Context->m_Hierarchy.begin(_Window->BottomSnapperView);
-                                            it != _Context->m_Hierarchy.end(_Window->BottomSnapperView);
-                                            it++)
-                                    {
-                                        ImmediateUserInterfaceWindow* window =
-                                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                                        if(window == nullptr)
-                                            continue;
-
-                                        window->TopSnapper     = nullptr;
-                                        window->LeftSnapper    = nullptr;
-                                        window->RightSnapper   = nullptr;
-                                        window->BottomSnapper  = nullptr;
-                                        window->Docker         = nullptr;
-                                    }
-                                }
-                            }
-
-                            _Context->m_Renderer->push_arc_filled(
-                                gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y),
-                                _Window->FrameBox.height() / 4.f,
-                                _Window->FrameBox.height() / 4.f,
-                                0.f,
-                                360.f,
-                                closeButtonСolor,
-                                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                        }
-
-                        if(_BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
-                        {
-                            _Context->m_Renderer->push_rectangle_rounded(
-                                _BoundingBox.Min,
-                                _BoundingBox.Max,
-                                _Context->m_Style.FramesRadius,
-                                _Context->m_Style.FramesWidth,
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                        }
-                    },
-
-                    // render background
-                    [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
-                    {
-                        // construct events
-                        ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
-
-                        // background
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            _BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                            _BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                            _Context->m_Style.FramesRadius,
-                            _BoundingBox.contains(event.CursorPosition) ?
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered] :
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBox],
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                        // outline
-                        _Context->m_Renderer->push_rectangle_rounded(
-                            _BoundingBox.Min,
-                            _BoundingBox.Max,
-                            _Context->m_Style.FramesRadius,
-                            _Context->m_Style.FramesWidth,
-                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                    },
-
-                    // render dragging pane
-                    [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
-                    {
-                    }
-                );
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
-
-                // content background and outline frame
-                {
-                    // background
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    // background frame
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                        State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                // frame
-                render_frame(_Context);
-            }
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr)
-                    return;
-
-                // compute self geometry
-                FrameBox = gs_2dboxf(
-                    State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                    gs_vec2f(
-                        State.BoundingBox.Max.x,
-                        State.BoundingBox.Min.y + gs_max(_Context->m_Style.FontSize, 64.f)) - _Context->m_Style.FramesWidth * 0.5f);
-
-                ContentBox = gs_2dboxf(
-                    (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
-                    State.BoundingBox.Max);
-
-                ContentBox = gs_2dboxf(ContentBox.Min + 2.f * _Context->m_Style.FramesWidth, ContentBox.Max - 2.f * _Context->m_Style.FramesWidth);
-
-                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-                    _Context->m_Hierarchy.begin(this),
-                    _Context->m_Hierarchy.end(this),
-                    ContentBox.Min,
-                    ContentBox,
-                    [this](const ImmediateUserInterfaceNode* _Node){return _Node == DockerView;}
-                );
-
-                // layout
-                ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-                    _Context->m_Hierarchy.begin(this),
-                    _Context->m_Hierarchy.end(this),
-                    ContentBox.Min,
-                    ContentBox,
-                    [this](const ImmediateUserInterfaceNode* _Node){return _Node == SnapperView;}
-                );
-            }
-
-            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
-            {
-                bool frameHasCaughtEvent = false;
-
-                ImmediateUserInterfaceWindowUtility().process_window_frame(
-                    _Context,
-                    this,
-
-                    // catch frame events
-                    [this, _Event, &frameHasCaughtEvent](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
-                    {
-                        // focus and activity
-                        if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
-                        {
-                            // make active
-                            ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
-                                _Context,
-                                _Window,
-                                [](const ImmediateUserInterfaceNode*)->bool{return true;});
-                        }
-
-                        // move
-                        if((_Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
-                            !((_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
-                                (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
-                        {
-                            ImmediateUserInterfaceNode* movable = _Window;
-
-                            if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
-                            {
-                                movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-                                frameHasCaughtEvent = true;
-                                return;
-                            }
-
-                            if(_Event.MouseDown.has_value() &&
-                                _BoundingBox.contains(_Event.CursorPosition) &&
-                                gs_vector_length(_Event.CursorDragDelta) > 8.f &&
-                                (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-                            {
-                                movable->State.BoundingBox = gs_2dboxf(
-                                    movable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
-                                    movable->Cache.BoundingBox.Max + _Event.CursorDragDelta);
-
-                                if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable))
-                                    dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->WantReattachWindows = true;
-                                frameHasCaughtEvent = true;
-                                return;
-                            }
-                        }
-                    },
-  
-                    // catch frame backgeround events
-                    [this, _Event](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window){},
-
-                    // catch frame dragging pane events
-                    [this, _Event, &frameHasCaughtEvent](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
-                    {
-                    });
-
-                // default event pipeline
-                if(!frameHasCaughtEvent)
-                    ImmediateUserInterfaceNodeVerticalStack::events(_Context, _Event);
-            }
-
-            virtual void restore() override
-            {
-                ImmediateUserInterfaceNodeVerticalStack::restore();
-
-                bool allMouseButtonsAreReleased = true;
-
-                for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                         button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
-                         button++)
-                {
-                    allMouseButtonsAreReleased =
-                        allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-                }
-
-                if(allMouseButtonsAreReleased)
-                {
-                    WantReattachWindows  = false;
-                }
-            }
-
-            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
-            {
-                if(_Child == nullptr)
-                    return;
-
-                if( dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)    ||
-                    dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
-                    dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child))
-                {
-                    _Child->State.Parent = this;
-                }
-                else
-                    _Child->State.Parent = ContentView;
-            }
-
-            ImmediateUserInterfaceNode* TopSnapper    {nullptr};
-            ImmediateUserInterfaceNode* LeftSnapper   {nullptr};
-            ImmediateUserInterfaceNode* RightSnapper  {nullptr};
-            ImmediateUserInterfaceNode* BottomSnapper {nullptr};
-            ImmediateUserInterfaceNode* Docker        {nullptr};
-
-            gs_2dboxf                     FrameBox;
-
-            gs_2dboxf                     ContentBox;
-
-            bool*                         Opened              {nullptr};
-
-            int                           DockingIndex        {-1};
-            int                           DockingActive       {false};
-            bool                          WantReattachWindows {false};
-
-            // snapping
-            ImmediateUserInterfaceNode* SnapperView       {nullptr};
-            ImmediateUserInterfaceNode* TopSnapperView    {nullptr};
-            ImmediateUserInterfaceNode* LeftSnapperView   {nullptr};
-            ImmediateUserInterfaceNode* RightSnapperView  {nullptr};
-            ImmediateUserInterfaceNode* BottomSnapperView {nullptr};
-
-            // docking
-            ImmediateUserInterfaceNode* DockerView        {nullptr};
-
-            // content
-            ImmediateUserInterfaceNode* ContentView       {nullptr};
-        };
-    
-        // controllers
-        class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
-        {
-        public:
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
-            {
-                place_on_dockers(_Context, _Event);
-
-                // rebuild hierarchy
-                m_WindowsDockingList.clear();
-                m_WindowsDockingCache.clear();
-                
-                for(auto node : _Context->m_NodesRenderingList)
-                {
-                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
-                        m_WindowsDockingList.push_back(node);
-                    else
-                        m_WindowsDockingCache.push_back(node);
-                }
-
-                std::sort(
-                    m_WindowsDockingList.begin(),
-                    m_WindowsDockingList.end(),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
-                    {
-                        return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
-                            dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
-                    });
-
-                _Context->m_NodesRenderingList.clear();
-
-                for(auto node : m_WindowsDockingList)
-                    _Context->m_NodesRenderingList.push_back(node);
-
-                for(auto node : m_WindowsDockingCache)
-                    _Context->m_NodesRenderingList.push_back(node);
-
-                _Context->m_Hierarchy.build(_Context->m_NodesRenderingList);
-            }
-
-        private:
-
-            void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
-            {
-                if(gs_vector_length(_Event.CursorDragDelta) < 8.f) return;
-
-                // find moved node and detach it from a docker
-                ImmediateUserInterfaceWindow* moved = dynamic_cast<ImmediateUserInterfaceWindow*>(
-                    ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(
-                        _Context,
-                        [](const ImmediateUserInterfaceNode*)->bool{return true;}));
-
-                // pass focus to the moved node
-                if(moved != nullptr)
-                {
-                    for (auto node : _Context->m_Hierarchy.Singletons)
-                    {
-                        node->State.RenderingOrder =
-                            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-                    }
-
-                    moved->State.RenderingOrder =
-                        ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
-                }
-
-                detach_from_docker(_Context, moved);
-
-                // find top most hovered node not equal to the moved one
-                ImmediateUserInterfaceNode* hoveredNode =
-                    ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
-                        _Context,
-                        _Event,
-                        [moved](const ImmediateUserInterfaceNode* _Node)->bool{return _Node != moved;});
-
-                // detect hovered window
-                ImmediateUserInterfaceWindow* hovered = nullptr;
-
-                if(hoveredNode != nullptr)
-                {
-                    auto next = hoveredNode;
-
-                    while (next)
-                    {
-                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(next))
-                        {
-                            hovered = dynamic_cast<ImmediateUserInterfaceWindow*>(next);
-                            break;
-                        }
-
-                        next = next->State.Parent;
-                    }
-                }
-
-                if(hovered == nullptr || moved == nullptr)
-                    return;
-
-                // dock the moved window to the hovered one if all mouse buttons are released
-                bool allMouseButtonsAreReleased = true;
-
-                for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
-                        button++)
-                {
-                    allMouseButtonsAreReleased =
-                        allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
-                }
-
-                // compute gizmos
-                gs_2dboxf dockingGizmo = gs_2dboxf(
-                    hovered->ContentBox.center() - gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f,
-                    hovered->ContentBox.center() + gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f);
-
-                gs_vec2f gizmoSize = dockingGizmo.size() * 0.333f;
-
-                gs_2dboxf topDockingGizmo = gs_2dboxf(
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x, 0.f),
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y));
-
-                gs_2dboxf leftDockingGizmo = gs_2dboxf(
-                    dockingGizmo.Min + gs_vec2f(0.f, gizmoSize.y),
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f));
-
-                gs_2dboxf rightDockingGizmo = gs_2dboxf(
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y),
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x * 3.f, gizmoSize.y * 2.f));
-
-                gs_2dboxf bottomDockingGizmo = gs_2dboxf(
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f),
-                    dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y * 3.f));
-
-                gs_2dboxf centralDockingGizmo = gs_2dboxf(
-                    dockingGizmo.center() - gizmoSize * 0.5f,
-                    dockingGizmo.center() + gizmoSize * 0.5f);
-
-                if(allMouseButtonsAreReleased)
-                {
-                    if(centralDockingGizmo.contains(_Event.CursorPosition))
-                    {
-                        attach_to_docker(
-                            _Context,
-                            hovered,
-                            moved,
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
-                    }
-                    if(topDockingGizmo.contains(_Event.CursorPosition))
-                    {
-                        attach_to_docker(
-                            _Context,
-                            hovered,
-                            moved,
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
-                    }
-                    else if(leftDockingGizmo.contains(_Event.CursorPosition))
-                    {
-                        attach_to_docker(
-                            _Context,
-                            hovered,
-                            moved,
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
-                    }
-                    else if(rightDockingGizmo.contains(_Event.CursorPosition))
-                    {
-                        attach_to_docker(
-                            _Context,
-                            hovered,
-                            moved,
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
-                    }
-                    else if(bottomDockingGizmo.contains(_Event.CursorPosition))
-                    {
-                        attach_to_docker(
-                            _Context,
-                            hovered,
-                            moved,
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
-                    }
-                }
-                else if(can_be_docked(moved, hovered))
-                {
-                    // render potential docking window gizmo
-                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
-                        _Context,
-                        ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos);
-
-                    if(dockingGizmo.contains(_Event.CursorPosition))
-                    {
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            dockingGizmo.Min,
-                            dockingGizmo.Max,
-                            _Context->m_Style.FramesRadius,
-                            gs_vec4f(
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].x,
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].y,
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].z,
-                                128.f),
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            topDockingGizmo.Min,
-                            topDockingGizmo.Max,
-                            _Context->m_Style.FramesRadius,
-                            topDockingGizmo.contains(_Event.CursorPosition) ?
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            leftDockingGizmo.Min,
-                            leftDockingGizmo.Max,
-                            _Context->m_Style.FramesRadius,
-                            leftDockingGizmo.contains(_Event.CursorPosition) ?
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            rightDockingGizmo.Min,
-                            rightDockingGizmo.Max,
-                            _Context->m_Style.FramesRadius,
-                            rightDockingGizmo.contains(_Event.CursorPosition) ?
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            bottomDockingGizmo.Min,
-                            bottomDockingGizmo.Max,
-                            _Context->m_Style.FramesRadius,
-                            bottomDockingGizmo.contains(_Event.CursorPosition) ?
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            centralDockingGizmo.Min,
-                            centralDockingGizmo.Max,
-                            _Context->m_Style.FramesRadius,
-                            centralDockingGizmo.contains(_Event.CursorPosition) ?
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
-                                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-                    }
-                }
-            }
-
-            bool can_be_docked(ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
-            {
-                if( // general checks
-                    _Docker  == nullptr ||
-                    _Docked  == nullptr ||
-
-                    // check that we are not attaching to self
-                    (_Docked->Docker == _Docker->DockerView  ||
-                    _Docker->Docker  == _Docked->DockerView) ||
-
-                    (_Docked->TopSnapper   == _Docker->TopSnapperView       ||
-                    _Docked->LeftSnapper   == _Docker->LeftSnapperView      ||
-                    _Docked->RightSnapper  == _Docker->RightSnapperView     ||
-                    _Docked->BottomSnapper == _Docker->BottomSnapperView)   ||
-
-                    (_Docker->TopSnapper    == _Docked->TopSnapperView      ||
-                    _Docker->LeftSnapper   == _Docked->LeftSnapperView      ||
-                    _Docker->RightSnapper  == _Docked->RightSnapperView     ||
-                    _Docker->BottomSnapper == _Docked->BottomSnapperView))
-                {
-                    return false;
-                }
-
-                return true;
-            }
-
-            void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
-            {
-                // auxiliary lambdas
-                auto move_to_cache = [this](
-                    ImmediateUserInterfaceContextLayer* _Context,
-                    ImmediateUserInterfaceWindow*       _Docker)
-                {
-                    if(_Context == nullptr || _Docker == nullptr)
-                        return;
-
-                    m_WindowsDockingCache.push_back(_Docker);
-                };
-
-                auto move_child_docked_windows_to_cache = [this](
-                    ImmediateUserInterfaceContextLayer*          _Context,
-                    ImmediateUserInterfaceNode*                  _Docker,
-                    const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
-                {
-                    if(_Context == nullptr || _Docker == nullptr)
-                        return;
-
-                    auto& dockedWindows = retrieve_docked_windows(_Context, _Docker, _Orientation);
-                    for(auto it  = dockedWindows.begin(); it != dockedWindows.end(); it++)
-                        m_WindowsDockingCache.push_back(*it);
-                };
-
-                if( // general checks 
-                    _Context == nullptr ||
-                    _Docker  == nullptr ||
-                    _Docked  == nullptr ||
-
-                    // check that we are not attaching to self
-                    (_Docked->Docker == _Docker->DockerView  ||
-                    _Docker->Docker  == _Docked->DockerView) ||
-
-                    (_Docked->TopSnapper    == _Docker->TopSnapperView      ||
-                    _Docked->LeftSnapper   == _Docker->LeftSnapperView      ||
-                    _Docked->RightSnapper  == _Docker->RightSnapperView     ||
-                    _Docked->BottomSnapper == _Docker->BottomSnapperView)   ||
-
-                    (_Docker->TopSnapper    == _Docked->TopSnapperView      ||
-                    _Docker->LeftSnapper   == _Docked->LeftSnapperView      ||
-                    _Docker->RightSnapper  == _Docked->RightSnapperView     ||
-                    _Docker->BottomSnapper == _Docked->BottomSnapperView))
-                {
-                    return;
-                }
-
-                // get ready
-                m_WindowsDockingCache.clear();
-                m_WindowsDockingList.clear();
-
-                // attach to a central part as a tab
-                if(_Orientation == ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center)
-                {
-                    ImmediateUserInterfaceWindow * docker =
-                        _Docker->Docker ?
-                            ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Docker->Docker) :
-                                _Docker;
-
-                    // move child docked windows and self to windows docking cache
-                    move_child_docked_windows_to_cache(_Context, docker, _Orientation);
-                    move_to_cache(_Context, _Docked);
-                    move_child_docked_windows_to_cache(_Context, _Docked, _Orientation);
-
-                    // reindex docked nodes and setup their docker
-                    int dockindex = 0;
-
-                    for(auto it = m_WindowsDockingCache.begin(); it != m_WindowsDockingCache.end(); it++)
-                    {
-                        ImmediateUserInterfaceWindow* window =
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                        if(window == nullptr)
-                            continue;
-
-                        window->Docker = docker->DockerView;
-                        window->DockingIndex  = dockindex++;
-                    }
-
-                    // setup self as active
-                    ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
-                        _Context,
-                        _Docked,
-                        [](const ImmediateUserInterfaceNode*)->bool{return true;});
-
-                    // clear
-                    m_WindowsDockingCache.clear();
-                    m_WindowsDockingList.clear();
-                    return;
-                }
-
-                // attach to top/left/right/bottom parts
-                ImmediateUserInterfaceWindow* docker = _Docker;
-
-                // move child docked windows and self to windows docking cache
-                move_child_docked_windows_to_cache(_Context, docker, _Orientation);
-                move_to_cache(_Context, _Docked);
-
-                // reindex docked nodes and setup their docker
-                int dockindex = 0;
-
-                for(auto it = m_WindowsDockingCache.begin(); it != m_WindowsDockingCache.end(); it++)
-                {
-                    ImmediateUserInterfaceWindow* window =
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                    if(window == nullptr)
-                        continue;
-
-                    switch (_Orientation)
-                    {
-                        case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top:
-                        window->TopSnapper = docker->TopSnapperView;
-                            break;
-                        
-                        case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left:
-                        window->LeftSnapper = docker->LeftSnapperView;
-                            break;
-
-                        case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right:
-                        window->RightSnapper = docker->RightSnapperView;
-                            break;
-
-                        case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom:
-                        window->BottomSnapper = docker->BottomSnapperView;
-                            break;
-                    }
-
-                    window->DockingIndex = dockindex++;
-                }
-
-                // clear
-                m_WindowsDockingCache.clear();
-                m_WindowsDockingList.clear();
-            }
-        
-            void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
-            {
-                if(_Detached == nullptr) return;
-
-                // detach self from docker
-                if( _Detached->TopSnapper    != nullptr ||
-                    _Detached->LeftSnapper   != nullptr ||
-                    _Detached->RightSnapper  != nullptr ||
-                    _Detached->BottomSnapper != nullptr ||
-                    _Detached->Docker        != nullptr)
-                {
-                    // reindex nodes of the docker that owns detached window
-                    ImmediateUserInterfaceWindow* active = nullptr;
-                    
-                    for (int orientation = ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Begin;
-                             orientation < ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_End;
-                             orientation++)
-                    {
-                        active = dynamic_cast<ImmediateUserInterfaceWindow*>(_Context->m_Hierarchy.get_parent(_Detached));
-                        auto& dockedWindows = retrieve_docked_windows(_Context, active, (ImmedidateUserInterfaceDockingAnchor_)orientation);
-                        int dockindex = 0;
-
-                        for(auto it = dockedWindows.begin(); it != dockedWindows.end(); it++)
-                        {
-                            ImmediateUserInterfaceWindow* window =
-                                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                            if(window != nullptr && window != _Detached)
-                            {
-                                window->DockingIndex = dockindex++;
-
-                                // find docked window with the larges docking index
-                                if(window->DockingIndex > active->DockingIndex)
-                                    active = window;
-                            }
-                        }
-                    }
-
-                    // reattach docked windows of detached nodes
-                    auto& dockedWindows = retrieve_docked_windows(
-                        _Context,
-                        _Detached,
-                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
-
-                    if(!dockedWindows.empty() && (_Detached->TopSnapper || _Detached->LeftSnapper || _Detached->RightSnapper || _Detached->BottomSnapper))
-                    {
-                        ImmediateUserInterfaceWindow* newDocker = nullptr;
-
-                        for(auto it = dockedWindows.begin(); it != dockedWindows.end(); it++)
-                        {
-                            newDocker = dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-                            if(newDocker != nullptr)
-                                break;
-                        }
-
-                        if(newDocker != nullptr)
-                        {
-                            int dockIndex = 0;
-                            for(auto it = dockedWindows.begin(); it != dockedWindows.end(); it++)
-                            {
-                                ImmediateUserInterfaceWindow* window =
-                                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-                                
-                                if(window == nullptr || window == newDocker)
-                                    continue;
-                                    
-                                window->Docker       = newDocker->DockerView;
-                                window->DockingIndex = dockIndex++;
-                            }
-
-                            newDocker->Docker        = nullptr;
-                            newDocker->TopSnapper    = nullptr;
-                            newDocker->LeftSnapper   = nullptr;
-                            newDocker->RightSnapper  = nullptr;
-                            newDocker->BottomSnapper = nullptr;
-                            newDocker->DockingIndex  = -1;
-                            newDocker->DockingActive = true;
-
-                            if(_Detached->TopSnapper)
-                                newDocker->TopSnapper = _Detached->TopSnapper;
-                            else if(_Detached->LeftSnapper)
-                                newDocker->LeftSnapper = _Detached->LeftSnapper;
-                            else if(_Detached->RightSnapper)
-                                newDocker->RightSnapper = _Detached->RightSnapper;
-                            else if(_Detached->BottomSnapper)
-                                newDocker->BottomSnapper = _Detached->BottomSnapper;
-
-                            ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
-                                _Context,
-                                _Detached,
-                                [_Detached, newDocker](const ImmediateUserInterfaceNode* _Node)->bool{return _Node != _Detached && _Node != newDocker;});
-                        }
-                    }
-                    else
-                    {
-                        ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
-                            _Context,
-                            ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Detached->Docker),
-                            [_Detached](const ImmediateUserInterfaceNode* _Node)->bool{return _Node != _Detached;});
-                    }
-                    
-                    // detach self
-                    _Detached->TopSnapper     = nullptr;
-                    _Detached->LeftSnapper    = nullptr;
-                    _Detached->RightSnapper   = nullptr;
-                    _Detached->BottomSnapper  = nullptr;
-                    _Detached->Docker         = nullptr;
-                    _Detached->DockingIndex   = -1;
-                    _Detached->DockingActive  = 
-                        _Context->m_Hierarchy.count(
-                            _Detached->DockerView,
-                            [](ImmediateUserInterfaceNode* _Node){return dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);}) > 0;
-                    return;
-                }
-
-                // TODO:
-            }
-
-            std::vector<ImmediateUserInterfaceNode*>& retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor_& _Orientation)
-            {
-                // get ready
-                m_WindowsDockingList.clear();
-
-                ImmediateUserInterfaceWindow* docker =
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(_Docker);
-
-                if(docker == nullptr)
-                    return m_WindowsDockingList;
-
-                switch (_Orientation)
-                {
-                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top:
-                    for(auto it = _Context->m_Hierarchy.begin(docker->TopSnapperView); it != _Context->m_Hierarchy.end(docker->TopSnapperView); it++)
-                        m_WindowsDockingList.push_back(*it);
-                        break;
-                    
-                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left:
-                    for(auto it = _Context->m_Hierarchy.begin(docker->LeftSnapperView); it != _Context->m_Hierarchy.end(docker->LeftSnapperView); it++)
-                        m_WindowsDockingList.push_back(*it);
-                        break;
-
-                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right:
-                    for(auto it = _Context->m_Hierarchy.begin(docker->RightSnapperView); it != _Context->m_Hierarchy.end(docker->RightSnapperView); it++)
-                        m_WindowsDockingList.push_back(*it);
-                        break;
-
-                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom:
-                    for(auto it = _Context->m_Hierarchy.begin(docker->BottomSnapperView); it != _Context->m_Hierarchy.end(docker->BottomSnapperView); it++)
-                        m_WindowsDockingList.push_back(*it);
-                        break;
-
-                    case ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center:
-                    for(auto it = _Context->m_Hierarchy.begin(docker->DockerView); it != _Context->m_Hierarchy.end(docker->DockerView); it++)
-                        m_WindowsDockingList.push_back(*it);
-                        break;
-                }
-
-                return m_WindowsDockingList;
-            }
-        
-            // docking and snapping
-            mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingCache;
-            mutable std::vector<ImmediateUserInterfaceNode*> m_WindowsDockingList;
-        };
-    
-        class ImmedidateUserInterfaceEventsController : public ImmediateUserInterfaceContextController
-        {
-        public:
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
-            {
-                catch_hover(_Context, _Event);
-                catch_input(_Context, _Event);
-                catch_event(_Context, _Event);
-            }
-
-        private:
-
-            void catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
-            {
-                if(_Context == nullptr)
-                    return;
-
-                // find the top most node catching the mouse cursor
-                ImmediateUserInterfaceNode* hoveredNode  = nullptr;
-                int                         maximumDepth = INT_MIN;
-
-                for (auto& node : _Context->m_NodesRenderingList)
-                {
-                    if(!node->is_partially_visible() || (node->State.Settings == ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
-                        continue;
-                    }
-
-                    // hover end logic
-                    if(!node->State.BoundingBox.contains(_Event.CursorPosition))
-                    {
-                        if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
-                        {
-                            node->State.MouseLeaveTimer = Frenchie::Core::tic();
-                            node->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
-                        }
-                        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                            node->State.MouseLeaveTimer,Frenchie::Core::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
-                        {
-                            node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
-                        }
-
-                        continue;
-                    }
-
-                    if(node->Cache.Depth > maximumDepth)
-                    {
-                        maximumDepth = node->Cache.Depth;
-                        hoveredNode  = node;
-                    }
-                }
-
-                // hover start logic
-                if(hoveredNode)
-                {
-                    if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
-                    {
-                        hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
-                        hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
-                    }
-                    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                        hoveredNode->State.MouseEnterTimer,
-                        Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
-                    {
-                        hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
-                    }
-                }
-            }
-
-            void catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
-            {
-                if(_Context == nullptr)
-                    return;
-                
-                for (auto& node : _Context->m_NodesRenderingList)
-                {
-                    if(!(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                    {
-                        node->State.MouseDown.reset();
-                        node->State.MouseHold.reset();
-                        node->State.MousePressed.reset();
-                        node->State.MouseClicked.reset();
-                        node->State.MouseDoubleClicked.reset();
-                        continue;
-                    }
-
-                    node->State.MouseDown          = _Event.MouseDown;
-                    node->State.MouseHold          = _Event.MouseHold;
-                    node->State.MousePressed       = _Event.MousePressed;
-                    node->State.MouseClicked       = _Event.MouseClicked;
-                    node->State.MouseDoubleClicked = _Event.MouseDoubleClicked;
-                }
-            }
-
-            void catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
-            {
-                if(_Context == nullptr)
-                    return;
-
-                // check if anything is already catching event
-                bool catchingEvent = false;
-
-                for (auto& node : _Context->m_NodesRenderingList)
-                {
-                    if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
-                        continue;
-
-                    node->events(_Context, _Event);
-                    catchingEvent = true;
-                }
-
-                if(catchingEvent)
-                    return;
-
-                // find the top most hovered node
-                ImmediateUserInterfaceNode* hoveredNode  = nullptr;
-                int                         maximumDepth = INT_MIN;
-
-                for (auto& node : _Context->m_NodesRenderingList)
-                {
-                    if(!node->is_partially_visible() || !node->State.BoundingBox.contains(_Event.CursorPosition))
-                        continue;
-
-                    if(node->Cache.Depth > maximumDepth)
-                    {
-                        maximumDepth = node->Cache.Depth;
-                        hoveredNode  = node;
-                    }
-                }
-
-                if (hoveredNode == nullptr)
-                    return;
-
-                // process hovered node events
-                hoveredNode->events(_Context, _Event);
-
-                // check in-parent intersection and process events of intersected nodes
-                for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(hoveredNode));
-                        it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(hoveredNode));
-                        it++)
-                {
-                    if((*it) == hoveredNode)
-                        continue;
-
-                    if(gs_2dboxf(
-                        (*it)->State.BoundingBox.Min - gs_vec2f(16.f), // TODO: may be, this should be a setting ???
-                        (*it)->State.BoundingBox.Max + gs_vec2f(16.f)).contains(_Event.CursorPosition))
-                    {
-                        (*it)->events(_Context, _Event);
-                    }
-                }
-            }
-        };
-    
-        class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
-        {
-        public:
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&) override
-            {
-                for (auto& singleton : _Context->m_Hierarchy.Singletons)
-                    ImmedidateUserInterfaceLayoutController::node_layout(_Context, singleton);
-            }
-
-        private:
-            static void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr)
-                    return;
-
-                _Node->layout(_Context);
-                _Node->measure(_Context);
-
-                for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-                    node_layout(_Context, (*it));
             }
         };
     }
@@ -2492,17 +1105,6 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     }
 }
 
-void ImmediateUserInterfaceNode::restore()
-{
-    State.Depth                 = 0;
-    State.SelfThickness         = 0;
-    State.RenderingIndex        = 0;
-    State.MaximumChildDepth     = 0;
-    State.MaximumChildThickness = 0;
-    State.Parent                = nullptr;
-    State.Settings              = 0;
-}
-
 void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child)
 {
     if(_Child != nullptr)
@@ -2540,6 +1142,1196 @@ int ImmediateUserInterfaceNode::place_in_follow()
     return State.Depth + (++State.SelfThickness);
 }
 
+// ImmediateUserInterfaceWindow
+ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceWindow::~ImmediateUserInterfaceWindow(){}
+
+void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // content background and outline frame
+    {
+        // background
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+            _Context->m_Style.FramesRadius,
+            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // background frame
+        _Context->m_Renderer->push_rectangle_rounded(
+            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+            _Context->m_Style.FramesRadius,
+            _Context->m_Style.FramesWidth,
+            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // frame
+    if(Docker != nullptr)
+        return;
+
+    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
+        _Context,
+        this,
+
+        // render self and child frames
+        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
+        {
+            // construct events
+            ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
+
+            // background
+            if(!_Window->DockingActive)
+            {
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    _BoundingBox.Min,
+                    _BoundingBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _BoundingBox.contains(event.CursorPosition) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+            else
+            {
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    _BoundingBox.Min,
+                    _BoundingBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            // outline
+            _Context->m_Renderer->push_rectangle_rounded(
+                _BoundingBox.Min,
+                _BoundingBox.Max,
+                _Context->m_Style.FramesRadius,
+                _Context->m_Style.FramesWidth,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+            // title
+            _Context->m_Renderer->push_text(
+                _Window->Name,
+                _Context->m_Style.FontSize * 0.7f,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
+                _Context->m_Renderer->calculate_transform_matrix(
+                    (float)place_in_follow(),
+                    gs_vec2f(_BoundingBox.Min.x + 16.f,
+                        _BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.7f * 0.5f)));
+
+            // TODO: refactor this code
+            if(_Window->Opened != nullptr)
+            {
+                gs_vec4f closeButtonСolor = gs_vec4f(255.f, 0.f, 0.f, 255.f); // TODO: this MUST BE a setting
+
+                gs_2dboxf closeButtonBox  = gs_2dboxf(
+                    gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y) - _Window->FrameBox.height() / 4.f,
+                    gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y) + _Window->FrameBox.height() / 4.f);
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    closeButtonBox.Min,
+                    closeButtonBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                if(closeButtonBox.contains(event.CursorPosition))
+                {
+                    closeButtonСolor = event.MouseDown.has_value() ?
+                        gs_vec4f(255.f, 230.f, 0.f, 255.f) : // TODO: this MUST BE a setting
+                        gs_vec4f(255.f, 128.f, 0.f, 255.f);  // TODO: this MUST BE a setting
+
+                    *_Window->Opened = !event.MouseClicked.has_value();
+
+                    // detach all docked windows
+                    if(!(*_Window->Opened))
+                    {
+                        auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+                            _Context,
+                            _Window,
+                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top    |
+                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left   |
+                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right  |
+                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom |
+                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+                        for(auto dockedWindow : dockedWindows)
+                        {
+                            ImmediateUserInterfaceWindow* window =
+                                dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
+
+                            if(window == nullptr)
+                                continue;
+
+                            window->TopSnapper     = nullptr;
+                            window->LeftSnapper    = nullptr;
+                            window->RightSnapper   = nullptr;
+                            window->BottomSnapper  = nullptr;
+                            window->Docker         = nullptr;
+                        }
+                    }
+                }
+
+                _Context->m_Renderer->push_arc_filled(
+                    gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y),
+                    _Window->FrameBox.height() / 4.f,
+                    _Window->FrameBox.height() / 4.f,
+                    0.f,
+                    360.f,
+                    closeButtonСolor,
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            if(_BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
+            {
+                _Context->m_Renderer->push_rectangle_rounded(
+                    _BoundingBox.Min,
+                    _BoundingBox.Max,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+        },
+
+        // render background
+        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
+        {
+            // construct events
+            ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
+
+            // background
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                _BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+                _BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+                _Context->m_Style.FramesRadius,
+                _BoundingBox.contains(event.CursorPosition) ?
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered] :
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBox],
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+            // outline
+            _Context->m_Renderer->push_rectangle_rounded(
+                _BoundingBox.Min,
+                _BoundingBox.Max,
+                _Context->m_Style.FramesRadius,
+                _Context->m_Style.FramesWidth,
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        },
+
+        // render dragging pane
+        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
+        {
+        }
+    );
+}
+
+void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr)
+        return;
+
+    // compute self geometry
+    FrameBox = gs_2dboxf(
+        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+        gs_vec2f(
+            State.BoundingBox.Max.x,
+            State.BoundingBox.Min.y + gs_max(_Context->m_Style.FontSize, 64.f)) - _Context->m_Style.FramesWidth * 0.5f);
+
+    ContentBox = gs_2dboxf(
+        (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
+        State.BoundingBox.Max);
+
+    ContentBox = gs_2dboxf(ContentBox.Min + 2.f * _Context->m_Style.FramesWidth, ContentBox.Max - 2.f * _Context->m_Style.FramesWidth);
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        ContentBox.Min,
+        ContentBox,
+        [this](const ImmediateUserInterfaceNode* _Node){return _Node == DockerView;}
+    );
+
+    // layout
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        ContentBox.Min,
+        ContentBox,
+        [this](const ImmediateUserInterfaceNode* _Node){return _Node == SnapperView;}
+    );
+}
+
+void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    bool defaultPipeline = true;
+
+    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
+        _Context,
+        this,
+
+        // catch frame events
+        [this, _Event, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
+        {
+            // focus and activity
+            if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
+            {
+                _Context->get_controller<ImmedidateUserInterfaceWindowController>()->push_event(
+                    [_Window](ImmediateUserInterfaceContextLayer* _Context)
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
+                            _Context,
+                            _Window,
+                            [](const ImmediateUserInterfaceNode*)->bool{return true;});
+                    });
+            }
+
+            // move
+            if((_Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+                !((_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+            {
+                ImmediateUserInterfaceNode* movable = _Window;
+
+                if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
+                {
+                    movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+                    defaultPipeline = false;
+                    return;
+                }
+
+                if(_Event.MouseDown.has_value() &&
+                    _BoundingBox.contains(_Event.CursorPosition)   &&
+                    gs_vector_length(_Event.CursorDragDelta) > 8.f &&
+                    (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+                {
+                    movable->State.BoundingBox = gs_2dboxf(
+                        movable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
+                        movable->Cache.BoundingBox.Max + _Event.CursorDragDelta);
+
+                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable))
+                    {
+                        _Context->get_controller<ImmedidateUserInterfaceWindowController>()->push_event(
+                            [_Window](ImmediateUserInterfaceContextLayer* _Context)
+                            {
+                                // if detached window is a docker we reattach all docked windows to the first docked child window
+                                auto& dockedWindows =  _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+                                    _Context,
+                                    _Window,
+                                    ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+                                if(dockedWindows.empty())
+                                    return;
+
+                                ImmediateUserInterfaceWindow* newDocker =
+                                    dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindows[0]);
+
+                                int index = 0;
+                                for(auto it = dockedWindows.begin(); it != dockedWindows.end(); it++)
+                                {
+                                    ImmediateUserInterfaceWindow* window =
+                                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                                    if(window == nullptr || window == newDocker)
+                                        continue;
+
+                                    window->Docker       = newDocker->DockerView;
+                                    window->DockingIndex = index++;
+                                }
+
+                                newDocker->Docker        = nullptr;
+                                newDocker->TopSnapper    = nullptr;
+                                newDocker->LeftSnapper   = nullptr;
+                                newDocker->RightSnapper  = nullptr;
+                                newDocker->BottomSnapper = nullptr;
+                                newDocker->DockingIndex  = -1;
+                            }
+                        );
+                    }
+                    defaultPipeline = false;
+                    return;
+                }
+            }
+        },
+
+        // catch frame backgeround events
+        [this, _Event](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window){},
+
+        // catch frame dragging pane events
+        [this, _Event, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
+        {
+        });
+
+    // default event pipeline
+    if(defaultPipeline)
+        ImmediateUserInterfaceNode::events(_Context, _Event);
+}
+
+void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if(_Child == nullptr)
+        return;
+
+    if( dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
+        dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
+        dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child))
+    {
+        _Child->State.Parent = this;
+    }
+    else
+    {
+        _Child->State.Parent = ContentView;
+    }
+}
+
+// ImmediateUserInterfaceNodePanel
+ImmediateUserInterfaceNodePanel::ImmediateUserInterfaceNodePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceNodePanel::~ImmediateUserInterfaceNodePanel(){}
+
+void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr)
+        return;
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        State.BoundingBox.Min,
+        State.BoundingBox,
+        [](const ImmediateUserInterfaceNode*){return true;});
+}
+
+void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context){}
+
+// ImmediateUserInterfaceNodeVerticalStack
+ImmediateUserInterfaceNodeVerticalStack::ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceNodeVerticalStack::~ImmediateUserInterfaceNodeVerticalStack(){}
+
+void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr)
+        return;
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        State.BoundingBox.Min,
+        State.BoundingBox,
+        [](const ImmediateUserInterfaceNode*){return true;});
+}
+
+void ImmediateUserInterfaceNodeVerticalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
+
+// ImmediateUserInterfaceNodeHorizontalStack
+ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceNodeHorizontalStack::~ImmediateUserInterfaceNodeHorizontalStack(){}
+
+void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr)
+        return;
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        State.BoundingBox.Min,
+        State.BoundingBox,
+        [](const ImmediateUserInterfaceNode*){return true;});
+}
+
+void ImmediateUserInterfaceNodeHorizontalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
+
+// ImmediateUserInterfacePushButton
+ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
+
+void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    if(Cache.MouseDown.has_value())
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+            _Context->m_Style.FramesRadius,
+            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed],
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+            _Context->m_Style.FramesRadius,
+            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered] :
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackground],
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // outline frame
+    _Context->m_Renderer->push_rectangle_rounded(
+        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+        State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+        _Context->m_Style.FramesRadius,
+        _Context->m_Style.FramesWidth,
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonOutline],
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // title
+    _Context->m_Renderer->push_text(
+        Name,
+        _Context->m_Style.FontSize,
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
+        _Context->m_Renderer->calculate_transform_matrix(
+            (float)place_in_follow(),
+            gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.FontSize, _Context->m_Style.Font).size() * 0.5f)));
+}
+
+// ImmedidateUserInterfaceWindowController
+ImmedidateUserInterfaceWindowController::ImmedidateUserInterfaceWindowController(){}
+ImmedidateUserInterfaceWindowController::~ImmedidateUserInterfaceWindowController(){}
+
+void ImmedidateUserInterfaceWindowController::execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    place_on_dockers(_Context, _Event);
+
+    // rebuild hierarchy
+    m_WindowsDockingList.clear();
+    m_WindowsDockingCache.clear();
+    
+    for(auto node : _Context->m_NodesRenderingList)
+    {
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
+            m_WindowsDockingList.push_back(node);
+        else
+            m_WindowsDockingCache.push_back(node);
+    }
+
+    std::sort(
+        m_WindowsDockingList.begin(),
+        m_WindowsDockingList.end(),
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
+        {
+            return dynamic_cast<const ImmediateUserInterfaceWindow*>(_A)->DockingIndex <
+                dynamic_cast<const ImmediateUserInterfaceWindow*>(_B)->DockingIndex;
+        });
+
+    _Context->m_NodesRenderingList.clear();
+
+    for(auto node : m_WindowsDockingList)
+        _Context->m_NodesRenderingList.push_back(node);
+
+    for(auto node : m_WindowsDockingCache)
+        _Context->m_NodesRenderingList.push_back(node);
+
+    _Context->m_Hierarchy.build(_Context->m_NodesRenderingList);
+}
+
+void ImmedidateUserInterfaceWindowController::push_event(std::function<void(ImmediateUserInterfaceContextLayer*)> _Event)
+{
+    m_DockingEventsStack.push(_Event);
+}
+
+void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    // execute enqueued requests on docking and undocking
+    while (!m_DockingEventsStack.empty())
+    {
+        if(m_DockingEventsStack.top() != nullptr)
+            m_DockingEventsStack.top()(_Context);
+        m_DockingEventsStack.pop();
+    }
+
+    // analyze moved windows
+    if(gs_vector_length(_Event.CursorDragDelta) < 8.f) return;
+
+    // find moved node and detach it from a docker
+    ImmediateUserInterfaceWindow* moved = dynamic_cast<ImmediateUserInterfaceWindow*>(
+        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(
+            _Context,
+            [](const ImmediateUserInterfaceNode*)->bool{return true;}));
+
+    // pass focus to the moved node
+    if(moved != nullptr)
+    {
+        for (auto node : _Context->m_Hierarchy.Singletons)
+        {
+            node->State.RenderingOrder =
+                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+        }
+
+        moved->State.RenderingOrder =
+            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+    }
+
+    detach_from_docker(_Context, moved);
+
+    // find top most hovered node not equal to the moved one
+    ImmediateUserInterfaceNode* hoveredNode =
+        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
+            _Context,
+            _Event,
+            [moved](const ImmediateUserInterfaceNode* _Node)->bool{return _Node != moved;});
+
+    // detect hovered window
+    ImmediateUserInterfaceWindow* hovered = nullptr;
+
+    if(hoveredNode != nullptr)
+    {
+        auto next = hoveredNode;
+
+        while (next)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(next))
+            {
+                hovered = dynamic_cast<ImmediateUserInterfaceWindow*>(next);
+                break;
+            }
+
+            next = next->State.Parent;
+        }
+    }
+
+    if(hovered == nullptr || moved == nullptr)
+        return;
+
+    // dock the moved window to the hovered one if all mouse buttons are released
+    bool allMouseButtonsAreReleased = true;
+
+    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
+            button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+            button++)
+    {
+        allMouseButtonsAreReleased =
+            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+    }
+
+    // compute gizmos
+    gs_2dboxf dockingGizmo = gs_2dboxf(
+        hovered->ContentBox.center() - gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f,
+        hovered->ContentBox.center() + gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f);
+
+    gs_vec2f gizmoSize = dockingGizmo.size() * 0.333f;
+
+    gs_2dboxf topDockingGizmo = gs_2dboxf(
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x, 0.f),
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y));
+
+    gs_2dboxf leftDockingGizmo = gs_2dboxf(
+        dockingGizmo.Min + gs_vec2f(0.f, gizmoSize.y),
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f));
+
+    gs_2dboxf rightDockingGizmo = gs_2dboxf(
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y),
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x * 3.f, gizmoSize.y * 2.f));
+
+    gs_2dboxf bottomDockingGizmo = gs_2dboxf(
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x, gizmoSize.y * 2.f),
+        dockingGizmo.Min + gs_vec2f(gizmoSize.x * 2.f, gizmoSize.y * 3.f));
+
+    gs_2dboxf centralDockingGizmo = gs_2dboxf(
+        dockingGizmo.center() - gizmoSize * 0.5f,
+        dockingGizmo.center() + gizmoSize * 0.5f);
+
+    if(allMouseButtonsAreReleased)
+    {
+        if(centralDockingGizmo.contains(_Event.CursorPosition))
+        {
+            attach_to_docker(
+                _Context,
+                hovered,
+                moved,
+                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+        }
+        if(topDockingGizmo.contains(_Event.CursorPosition))
+        {
+            attach_to_docker(
+                _Context,
+                hovered,
+                moved,
+                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
+        }
+        else if(leftDockingGizmo.contains(_Event.CursorPosition))
+        {
+            attach_to_docker(
+                _Context,
+                hovered,
+                moved,
+                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
+        }
+        else if(rightDockingGizmo.contains(_Event.CursorPosition))
+        {
+            attach_to_docker(
+                _Context,
+                hovered,
+                moved,
+                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
+        }
+        else if(bottomDockingGizmo.contains(_Event.CursorPosition))
+        {
+            attach_to_docker(
+                _Context,
+                hovered,
+                moved,
+                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom);
+        }
+    }
+    else if(can_be_docked(_Context, moved, hovered))
+    {
+        // render potential docking window gizmo
+        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_layer_depth(
+            _Context,
+            ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos);
+
+        if(dockingGizmo.contains(_Event.CursorPosition))
+        {
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                dockingGizmo.Min,
+                dockingGizmo.Max,
+                _Context->m_Style.FramesRadius,
+                gs_vec4f(
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].x,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].y,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].z,
+                    128.f),
+                _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                topDockingGizmo.Min,
+                topDockingGizmo.Max,
+                _Context->m_Style.FramesRadius,
+                topDockingGizmo.contains(_Event.CursorPosition) ?
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                leftDockingGizmo.Min,
+                leftDockingGizmo.Max,
+                _Context->m_Style.FramesRadius,
+                leftDockingGizmo.contains(_Event.CursorPosition) ?
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                rightDockingGizmo.Min,
+                rightDockingGizmo.Max,
+                _Context->m_Style.FramesRadius,
+                rightDockingGizmo.contains(_Event.CursorPosition) ?
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                bottomDockingGizmo.Min,
+                bottomDockingGizmo.Max,
+                _Context->m_Style.FramesRadius,
+                bottomDockingGizmo.contains(_Event.CursorPosition) ?
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                centralDockingGizmo.Min,
+                centralDockingGizmo.Max,
+                _Context->m_Style.FramesRadius,
+                centralDockingGizmo.contains(_Event.CursorPosition) ?
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered] :
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
+                _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+        }
+    }
+}
+
+bool ImmedidateUserInterfaceWindowController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
+{
+    if( // general checks
+        _Context == nullptr ||
+        _Docker  == nullptr ||
+        _Docked  == nullptr ||
+
+        // check that we are not attaching to self
+        (_Docked->Docker == _Docker->DockerView  ||
+            _Docker->Docker == _Docked->DockerView) ||
+
+        (_Docked->TopSnapper   == _Docker->TopSnapperView       ||
+        _Docked->LeftSnapper   == _Docker->LeftSnapperView      ||
+        _Docked->RightSnapper  == _Docker->RightSnapperView     ||
+        _Docked->BottomSnapper == _Docker->BottomSnapperView)   ||
+
+        (_Docker->TopSnapper   == _Docked->TopSnapperView       ||
+        _Docker->LeftSnapper   == _Docked->LeftSnapperView      ||
+        _Docker->RightSnapper  == _Docked->RightSnapperView     ||
+        _Docker->BottomSnapper == _Docked->BottomSnapperView))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void ImmedidateUserInterfaceWindowController::attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
+{
+    // auxiliary lambdas
+    auto move_to_cache = [this](
+        ImmediateUserInterfaceContextLayer* _Context,
+        ImmediateUserInterfaceWindow*       _Docker)
+    {
+        if(_Context == nullptr || _Docker == nullptr)
+            return;
+
+        m_WindowsDockingCache.push_back(_Docker);
+    };
+
+    auto move_child_docked_windows_to_cache = [this](
+        ImmediateUserInterfaceContextLayer*          _Context,
+        ImmediateUserInterfaceNode*                  _Docker,
+        const ImmedidateUserInterfaceDockingAnchor& _Orientation)
+    {
+        if(_Context == nullptr || _Docker == nullptr)
+            return;
+
+        auto& dockedWindows = retrieve_docked_windows(_Context, _Docker, _Orientation);
+        for(auto it  = dockedWindows.begin(); it != dockedWindows.end(); it++)
+            m_WindowsDockingCache.push_back(*it);
+    };
+
+    if(!can_be_docked(_Context, _Docker, _Docked))
+        return;
+
+    // get ready
+    m_WindowsDockingCache.clear();
+    m_WindowsDockingList.clear();
+
+    // attach to a central part as a tab
+    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center)
+    {
+        ImmediateUserInterfaceWindow * docker =
+            _Docker->Docker ?
+                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Docker->Docker) :
+                    _Docker;
+
+        // move child docked windows and self to windows docking cache
+        move_child_docked_windows_to_cache(_Context, docker, _Anchors);
+        move_to_cache(_Context, _Docked);
+        move_child_docked_windows_to_cache(_Context, _Docked, _Anchors);
+
+        // reindex docked nodes and setup their docker
+        int dockindex = 0;
+
+        for(auto it = m_WindowsDockingCache.begin(); it != m_WindowsDockingCache.end(); it++)
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+            if(window == nullptr)
+                continue;
+
+            window->Docker = docker->DockerView;
+            window->DockingIndex  = dockindex++;
+        }
+
+        // setup self as active
+        push_event([_Docked](ImmediateUserInterfaceContextLayer* _Context)
+        {
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
+                _Context,
+                _Docked,
+                [](const ImmediateUserInterfaceNode*)->bool{return true;});
+        });
+
+        // clear
+        m_WindowsDockingCache.clear();
+        m_WindowsDockingList.clear();
+        return;
+    }
+
+    // attach to top/left/right/bottom parts
+    ImmediateUserInterfaceWindow* docker = _Docker;
+
+    // move child docked windows and self to windows docking cache
+    move_child_docked_windows_to_cache(_Context, docker, _Anchors);
+    move_to_cache(_Context, _Docked);
+
+    // reindex docked nodes and setup their docker
+    int dockindex = 0;
+
+    for(auto it = m_WindowsDockingCache.begin(); it != m_WindowsDockingCache.end(); it++)
+    {
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+        if(window == nullptr)
+            continue;
+
+        if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top)
+            window->TopSnapper = docker->TopSnapperView;
+        else if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left)
+            window->LeftSnapper = docker->LeftSnapperView;
+        else if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right)
+            window->RightSnapper = docker->RightSnapperView;
+        else if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom)
+            window->BottomSnapper = docker->BottomSnapperView;
+
+        window->DockingIndex = dockindex++;
+    }
+
+    // clear
+    m_WindowsDockingCache.clear();
+    m_WindowsDockingList.clear();
+}
+
+void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached)
+{
+    if(_Detached == nullptr)
+        return;
+
+    // detach self from docker
+    if( _Detached->TopSnapper    != nullptr ||
+        _Detached->LeftSnapper   != nullptr ||
+        _Detached->RightSnapper  != nullptr ||
+        _Detached->BottomSnapper != nullptr ||
+        _Detached->Docker        != nullptr)
+    {
+        // reattach docked windows of detached window if detached window used to be attached
+        auto& dockedWindows = retrieve_docked_windows(
+            _Context,
+            _Detached,
+            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+        if(!dockedWindows.empty() &&
+            (_Detached->TopSnapper    != nullptr ||
+                _Detached->LeftSnapper   != nullptr ||
+                _Detached->RightSnapper  != nullptr ||
+                _Detached->BottomSnapper != nullptr))
+        {
+            ImmediateUserInterfaceWindow* newDocker =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindows[0]);
+
+            int index = 0;
+            for(auto it = dockedWindows.begin(); it != dockedWindows.end(); it++)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                
+                if(window == nullptr || window == newDocker)
+                    continue;
+                    
+                window->Docker       = newDocker->DockerView;
+                window->DockingIndex = index++;
+            }
+
+            newDocker->Docker        = nullptr;
+            newDocker->TopSnapper    = nullptr;
+            newDocker->LeftSnapper   = nullptr;
+            newDocker->RightSnapper  = nullptr;
+            newDocker->BottomSnapper = nullptr;
+            newDocker->DockingIndex  = -1;
+
+            if(_Detached->TopSnapper != nullptr)
+                newDocker->TopSnapper = _Detached->TopSnapper;
+            else if(_Detached->LeftSnapper != nullptr)
+                newDocker->LeftSnapper = _Detached->LeftSnapper;
+            else if(_Detached->RightSnapper != nullptr)
+                newDocker->RightSnapper = _Detached->RightSnapper;
+            else if(_Detached->BottomSnapper != nullptr)
+                newDocker->BottomSnapper = _Detached->BottomSnapper;
+
+            push_event([_Detached, newDocker](ImmediateUserInterfaceContextLayer* _Context)
+            {
+                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
+                    _Context,
+                    _Detached,
+                    [_Detached, newDocker](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
+
+                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
+                    _Context,
+                    newDocker,
+                    [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
+            });
+        }
+        else
+        {
+            push_event([_Detached](ImmediateUserInterfaceContextLayer* _Context)
+            {
+                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
+                    _Context,
+                    _Detached,
+                    [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
+            });
+        }
+
+        // detach self
+        _Detached->TopSnapper    = nullptr;
+        _Detached->LeftSnapper   = nullptr;
+        _Detached->RightSnapper  = nullptr;
+        _Detached->BottomSnapper = nullptr;
+        _Detached->Docker        = nullptr;
+        _Detached->DockingIndex  = -1;
+        return;
+    }
+
+    // detach self
+    _Detached->TopSnapper     = nullptr;
+    _Detached->LeftSnapper    = nullptr;
+    _Detached->RightSnapper   = nullptr;
+    _Detached->BottomSnapper  = nullptr;
+    _Detached->Docker         = nullptr;
+    _Detached->DockingIndex   = -1;
+}
+
+std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowController::retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors)
+{
+    // get ready
+    m_WindowsDockingList.clear();
+
+    ImmediateUserInterfaceWindow* docker =
+        dynamic_cast<ImmediateUserInterfaceWindow*>(_Docker);
+
+    if(docker == nullptr)
+        return m_WindowsDockingList;
+
+    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(docker->TopSnapperView); it != _Context->m_Hierarchy.end(docker->TopSnapperView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) != nullptr)
+                m_WindowsDockingList.push_back(*it);
+        }
+    }
+
+    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(docker->LeftSnapperView); it != _Context->m_Hierarchy.end(docker->LeftSnapperView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) != nullptr)
+                m_WindowsDockingList.push_back(*it);
+        }
+    }
+
+    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(docker->RightSnapperView); it != _Context->m_Hierarchy.end(docker->RightSnapperView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) != nullptr)
+                m_WindowsDockingList.push_back(*it);
+        }
+    }
+
+    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(docker->BottomSnapperView); it != _Context->m_Hierarchy.end(docker->BottomSnapperView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) != nullptr)
+                m_WindowsDockingList.push_back(*it);
+        }
+    }
+
+    if(_Anchors & ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(docker->DockerView); it != _Context->m_Hierarchy.end(docker->DockerView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) != nullptr)
+                m_WindowsDockingList.push_back(*it);
+        }
+    }
+
+    return m_WindowsDockingList;
+}
+
+// ImmedidateUserInterfaceEventsController
+ImmedidateUserInterfaceEventsController::ImmedidateUserInterfaceEventsController(){}
+ImmedidateUserInterfaceEventsController::~ImmedidateUserInterfaceEventsController(){}
+
+void ImmedidateUserInterfaceEventsController::execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    catch_hover(_Context, _Event);
+    catch_input(_Context, _Event);
+    catch_event(_Context, _Event);
+}
+
+void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    if(_Context == nullptr)
+        return;
+
+    // find the top most node catching the mouse cursor
+    ImmediateUserInterfaceNode* hoveredNode  = nullptr;
+    int                         maximumDepth = INT_MIN;
+
+    for (auto& node : _Context->m_NodesRenderingList)
+    {
+        if(!node->is_partially_visible() || (node->State.Settings == ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        {
+            node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
+            continue;
+        }
+
+        // hover end logic
+        if(!node->State.BoundingBox.contains(_Event.CursorPosition))
+        {
+            if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
+            {
+                node->State.MouseLeaveTimer = Frenchie::Core::tic();
+                node->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft;
+            }
+            else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                node->State.MouseLeaveTimer,Frenchie::Core::tic()) > 200.f) // TODO: this MUST BE A SETTING !!!!
+            {
+                node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
+            }
+
+            continue;
+        }
+
+        if(node->Cache.Depth > maximumDepth)
+        {
+            maximumDepth = node->Cache.Depth;
+            hoveredNode  = node;
+        }
+    }
+
+    // hover start logic
+    if(hoveredNode)
+    {
+        if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
+        {
+            hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
+            hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
+        }
+        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+            hoveredNode->State.MouseEnterTimer,
+            Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+        {
+            hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
+        }
+    }
+}
+
+void ImmedidateUserInterfaceEventsController::catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    if(_Context == nullptr)
+        return;
+    
+    for (auto& node : _Context->m_NodesRenderingList)
+    {
+        if(!(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+        {
+            node->State.MouseDown.reset();
+            node->State.MouseHold.reset();
+            node->State.MousePressed.reset();
+            node->State.MouseClicked.reset();
+            node->State.MouseDoubleClicked.reset();
+            continue;
+        }
+
+        node->State.MouseDown          = _Event.MouseDown;
+        node->State.MouseHold          = _Event.MouseHold;
+        node->State.MousePressed       = _Event.MousePressed;
+        node->State.MouseClicked       = _Event.MouseClicked;
+        node->State.MouseDoubleClicked = _Event.MouseDoubleClicked;
+    }
+}
+
+void ImmedidateUserInterfaceEventsController::catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    if(_Context == nullptr)
+        return;
+
+    // check if anything is already catching event
+    bool catchingEvent = false;
+
+    for (auto& node : _Context->m_NodesRenderingList)
+    {
+        if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+            continue;
+
+        node->events(_Context, _Event);
+        catchingEvent = true;
+    }
+
+    if(catchingEvent)
+        return;
+
+    // find the top most hovered node
+    ImmediateUserInterfaceNode* hoveredNode  = nullptr;
+    int                         maximumDepth = INT_MIN;
+
+    for (auto& node : _Context->m_NodesRenderingList)
+    {
+        if(!node->is_partially_visible() || !node->State.BoundingBox.contains(_Event.CursorPosition))
+            continue;
+
+        if(node->Cache.Depth > maximumDepth)
+        {
+            maximumDepth = node->Cache.Depth;
+            hoveredNode  = node;
+        }
+    }
+
+    if (hoveredNode == nullptr)
+        return;
+
+    // process hovered node events
+    hoveredNode->events(_Context, _Event);
+
+    // check in-parent intersection and process events of intersected nodes
+    for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(hoveredNode));
+            it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(hoveredNode));
+            it++)
+    {
+        if((*it) == hoveredNode)
+            continue;
+
+        if(gs_2dboxf(
+            (*it)->State.BoundingBox.Min - gs_vec2f(16.f), // TODO: may be, this should be a setting ???
+            (*it)->State.BoundingBox.Max + gs_vec2f(16.f)).contains(_Event.CursorPosition))
+        {
+            (*it)->events(_Context, _Event);
+        }
+    }
+}
+
+// ImmedidateUserInterfaceLayoutController
+ImmedidateUserInterfaceLayoutController::ImmedidateUserInterfaceLayoutController(){}
+ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutController(){}
+
+void ImmedidateUserInterfaceLayoutController::execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
+{
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
+        node_layout(_Context, singleton);
+}
+
+void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+{
+    if(_Context == nullptr || _Node == nullptr)
+        return;
+
+    _Node->layout(_Context);
+    _Node->measure(_Context);
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+        node_layout(_Context, (*it));
+}
+
 // ImmediateUserInterfaceContextLayer2
 ImmediateUserInterfaceContextLayer::ImmediateUserInterfaceContextLayer(){}
 ImmediateUserInterfaceContextLayer::~ImmediateUserInterfaceContextLayer(){}
@@ -2550,7 +2342,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         m_Renderer = Frenchie::Application::application()->push_layer<Immediate2DRenderer>();
 
     // hierarchy
-    m_Hierarchy = ImmedidateUserInterfaceNodeHierarchy(
+    m_Hierarchy = ImmedidateUserInterfaceHierarchy(
         [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
             if(_Node == nullptr)
@@ -2800,14 +2592,13 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
             node->Cache = node->State;
 
         // restore
-        node->restore();
-        // node->State.Depth                 = 0;
-        // node->State.SelfThickness         = 0;
-        // node->State.RenderingIndex        = 0;
-        // node->State.MaximumChildDepth     = 0;
-        // node->State.MaximumChildThickness = 0;
-        // node->State.Parent                = nullptr;
-        // node->State.Settings              = 0;
+        node->State.Depth                 = 0;
+        node->State.SelfThickness         = 0;
+        node->State.RenderingIndex        = 0;
+        node->State.MaximumChildDepth     = 0;
+        node->State.MaximumChildThickness = 0;
+        node->State.Parent                = nullptr;
+        node->State.Settings              = 0;
 
         // duplicates control
         m_Duplicates[node->Name]++;

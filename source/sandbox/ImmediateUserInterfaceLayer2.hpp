@@ -85,11 +85,42 @@ namespace Frenchie
             ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2,
         };
 
+        enum ImmedidateUserInterfaceDockingAnchor_ : int
+        {
+            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0,
+            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 2,
+            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 3,
+            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 4,
+            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 5,
+        };
+
+        enum ImmedidateUserInterfaceRenderingOrder_ : int
+        {
+            ImmedidateUserInterfaceRenderingOrder_Begin   = 0,
+            ImmedidateUserInterfaceRenderingOrder_Main    = ImmedidateUserInterfaceRenderingOrder_Begin,
+            ImmedidateUserInterfaceRenderingOrder_Focus,
+            ImmedidateUserInterfaceRenderingOrder_Modal,
+            ImmedidateUserInterfaceRenderingOrder_End,
+        };
+
+        enum ImmedidateUserInterfaceRenderingLayer_ : int
+        {
+            ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
+            ImmedidateUserInterfaceRenderingLayer_Main    = ImmedidateUserInterfaceRenderingLayer_Begin,
+            ImmedidateUserInterfaceRenderingLayer_Gizmos,
+            ImmedidateUserInterfaceRenderingLayer_End,
+        };
+
         typedef int ImmediateUserInterfaceNodeEvents;
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceNodeMouseHover;
+        typedef int ImmedidateUserInterfaceDockingAnchor;
+        typedef int ImmedidateUserInterfaceRenderingOrder;
+        typedef int ImmedidateUserInterfaceRenderingLayer;
+
         class ImmediateUserInterfaceContextLayer;
 
+        // style and events
         struct ImmedidateUserInterfaceStyle
         {
             ImmedidateUserInterfaceStyle()
@@ -120,6 +151,7 @@ namespace Frenchie
                 // gizmos
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
             }
+
             ~ImmedidateUserInterfaceStyle(){}
 
             std::vector<gs_vec4f> Colors;
@@ -145,6 +177,7 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
+        // nodes
         struct ImmediateUserInterfaceNode
         {
             ImmediateUserInterfaceNode(const std::string _Name);
@@ -154,9 +187,6 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
-
-            virtual void restore();
-
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
             bool is_visible() const;
@@ -213,15 +243,94 @@ namespace Frenchie
             std::string Name = "UINode";
         };
 
-        struct ImmedidateUserInterfaceNodeHierarchy
+        struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNode
         {
-            ImmedidateUserInterfaceNodeHierarchy(const std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> _GetParent =
+        public:
+
+            ImmediateUserInterfaceWindow(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindow();
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            ImmediateUserInterfaceNode* TopSnapper    {nullptr};
+            ImmediateUserInterfaceNode* LeftSnapper   {nullptr};
+            ImmediateUserInterfaceNode* RightSnapper  {nullptr};
+            ImmediateUserInterfaceNode* BottomSnapper {nullptr};
+            ImmediateUserInterfaceNode* Docker        {nullptr};
+
+            gs_2dboxf                   FrameBox;
+
+            gs_2dboxf                   ContentBox;
+
+            bool*                       Opened            {nullptr};
+
+            int                         DockingIndex      {-1};
+            int                         DockingActive     {false};
+
+            // snapping
+            ImmediateUserInterfaceNode* SnapperView       {nullptr};
+            ImmediateUserInterfaceNode* TopSnapperView    {nullptr};
+            ImmediateUserInterfaceNode* LeftSnapperView   {nullptr};
+            ImmediateUserInterfaceNode* RightSnapperView  {nullptr};
+            ImmediateUserInterfaceNode* BottomSnapperView {nullptr};
+
+            // docking
+            ImmediateUserInterfaceNode* DockerView        {nullptr};
+
+            // content
+            ImmediateUserInterfaceNode* ContentView       {nullptr};
+        };
+
+        // layouts
+        struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceNodePanel(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodePanel();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodeVerticalStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodeHorizontalStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // widgets
+        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfacePushButton(const std::string& _Name);
+            virtual ~ImmediateUserInterfacePushButton();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // hierarchy
+        struct ImmedidateUserInterfaceHierarchy
+        {
+            ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> _GetParent =
                 [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
                     return _Node != nullptr ? _Node->State.Parent : nullptr;
                 }) : GetParent(_GetParent){}
 
-            ~ImmedidateUserInterfaceNodeHierarchy(){}
+            ~ImmedidateUserInterfaceHierarchy(){}
 
             mutable std::vector<int>                                                        Indexes;
             mutable std::vector<int>                                                        Entries;
@@ -350,6 +459,7 @@ namespace Frenchie
             }
         };
 
+        // controllers
         class ImmediateUserInterfaceContextController
         {
         public:
@@ -358,6 +468,58 @@ namespace Frenchie
             virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) = 0;
         };
 
+        class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceWindowController();
+            virtual ~ImmedidateUserInterfaceWindowController();
+
+            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            void push_event(std::function<void(ImmediateUserInterfaceContextLayer*)> _Event);
+
+            std::vector<ImmediateUserInterfaceNode*>&
+            retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors);
+
+        private:
+
+            void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            bool can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
+            void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchor);
+            void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
+
+            mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingCache;
+            mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingList;
+            mutable std::stack<std::function<void(ImmediateUserInterfaceContextLayer*)>> m_DockingEventsStack;
+        };
+    
+        class ImmedidateUserInterfaceEventsController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceEventsController();
+            virtual ~ImmedidateUserInterfaceEventsController();
+
+            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+
+        private:
+
+            void catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            void catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            void catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+        };
+    
+        class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceLayoutController();
+            virtual ~ImmedidateUserInterfaceLayoutController();
+
+            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&) override;
+
+        private:
+            void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+        };
+
+        // context layer
         class ImmediateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -389,7 +551,7 @@ namespace Frenchie
             // auxiliary API
             template<typename Type> Type* get_controller() const
             {
-                for(auto controller : m_Controllers)
+                for(auto& controller : m_Controllers)
                 {
                     if(dynamic_cast<Type*>(controller.get()))
                         return dynamic_cast<Type*>(controller.get());
@@ -449,7 +611,7 @@ namespace Frenchie
 
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
             mutable ImmedidateUserInterfaceStyle                                       m_Style;
-            mutable ImmedidateUserInterfaceNodeHierarchy                               m_Hierarchy;
+            mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
             mutable std::map<std::string, int>                                         m_Duplicates;
 
             // rendering
