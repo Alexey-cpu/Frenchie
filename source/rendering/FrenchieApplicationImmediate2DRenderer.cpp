@@ -69,6 +69,32 @@ int calculate_arc_segments_number(float _Radius, float _MaximumError)
 Immediate2DRenderer::Immediate2DRenderer(){}
 Immediate2DRenderer::~Immediate2DRenderer(){}
 
+gs_vec3f Immediate2DRenderer::get_cursor_postion() const
+{
+    gs_vec2f size   = Frenchie::Application::application()->get_window_size();
+    gs_vec2f cursor = Frenchie::Application::application()->get_window_cursor_position();
+    gs_mat4f matrix =
+        gs_matrix_invert_square(m_RenderingQueue->get_cameraview_matrix()) *
+        gs_matrix_invert_square(m_RenderingQueue->get_projection_matrix());
+    
+    return matrix * gs_vec4f(gs_vector_convert_to_NDC(cursor, size), -1.f, 1.f);
+}
+
+RenderingQueueMetrics Immediate2DRenderer::get_rendering_queue_metrics() const
+{
+    return m_RenderingQueue != nullptr ? m_RenderingQueue->get_rendering_queue_metrics() : RenderingQueueMetrics();
+}
+
+float Immediate2DRenderer::get_near_plane() const
+{
+    return -10000.f;
+}
+
+float Immediate2DRenderer::get_far_plane() const
+{
+    return +10000.f;
+}
+
 bool Immediate2DRenderer::awake()
 {
     if(m_RenderingQueue == nullptr)
@@ -88,7 +114,7 @@ void Immediate2DRenderer::frame_start()
     float height = Frenchie::Application::application()->get_window_size().y;
 
     auto camera = calculate_2d_camera_view_and_projection(
-        Immediate2DRenderer::bottom_right(gs_vec2f(width * 0.5f, height * 0.5f)),
+        gs_vec2f(width * 0.5f, height * 0.5f),
         gs_vec3f(0.f, 1.f, 0.f),
         gs_vec3f(0.f, 0.f, -1.f),
         gs_vec2f(width, height),
@@ -126,7 +152,7 @@ void Immediate2DRenderer::finish(){}
 
 void Immediate2DRenderer::push_rendering_command(
     const RenderingQueueTexture&            _Texture,
-    const gs_vec4f&                         _Color,
+    const RenderingQueueColor&              _Color,
     const gs_mat4f&                         _Transform,
     const RenderingQueueMeshRenderingHints& _MeshRenderingHints)
 {
@@ -163,6 +189,14 @@ void Immediate2DRenderer::push_rendering_command(
     m_Indexes.clear();
     m_Vertexes.clear();
 }
+
+void Immediate2DRenderer::push_rendering_command(
+    const gs_mat4f&                         _Transform,
+    const RenderingQueueMeshRenderingHints& _MeshRenderingHints)
+{
+    push_rendering_command(m_RenderingQueue->get_default_texture(), 1, _Transform);
+}
+
 
 void Immediate2DRenderer::push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform)
 {
@@ -231,7 +265,7 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
     float scale     = _Size / (float)font.SizeInPixels;
     float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = 0.f;
-    float positionY = Immediate2DRenderer::down(gs_vec2f(0.f, offset)).y;
+    float positionY = gs_vec2f(0.f, offset).y;
 
     gs_vec2f min;
     gs_vec2f max;
@@ -246,7 +280,7 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
             // next line
             if(symbol == '\n')
             {
-                positionY += Immediate2DRenderer::down(gs_vec2f(0.f, gs_max(_Size, gs_abs(offset)))).y;
+                positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
                 positionX =  0.f;
             }
             // carriage return
@@ -254,7 +288,7 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
                 positionX =  0.f;
             // tab
             else if(symbol == '\t')
-                positionX += Immediate2DRenderer::right(gs_vec2f(_Size, 0.f)).x;
+                positionX += gs_vec2f(_Size, 0.f).x;
             else
             {
                 // TODO: do someting here...
@@ -268,7 +302,7 @@ gs_2dboxf Immediate2DRenderer::calculate_bounding_box(
         max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
 
         // move cursor
-        positionX += Immediate2DRenderer::right(gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f)).x;
+        positionX += gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f).x;
     }
 
     min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
@@ -305,7 +339,7 @@ void Immediate2DRenderer::push_triangle_filled(
     const gs_vec2f&              _P1,
     const gs_vec2f&              _P2,
     const gs_vec2f&              _P3,
-    const gs_vec4f&              _Color,
+    const RenderingQueueColor& _Color,
     const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
@@ -316,26 +350,23 @@ void Immediate2DRenderer::push_triangle_filled(
         return;
     }
 
-    Immediate2DRenderer::build_triangle_filled_mesh(
+    build_triangle_filled_mesh(
         _P1,
         _P2,
         _P3,
         _Color,
-        !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(),
-        m_Vertexes,
-        m_Indexes);
+        !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture());
 
     push_rendering_command(
         !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(),
         _Color,
-        _Transform
-    );
+        _Transform);
 }
 
 void Immediate2DRenderer::push_rectangle_filled(
     const gs_vec2f&              _Min,
     const gs_vec2f&              _Max,
-    const gs_vec4f&              _Color,
+    const RenderingQueueColor& _Color,
     const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
@@ -351,9 +382,7 @@ void Immediate2DRenderer::push_rectangle_filled(
         _Min,
         _Max,
         _Color,
-        !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(),
-        m_Vertexes,
-        m_Indexes);
+        !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture());
 
     push_rendering_command(
         !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(),
@@ -362,11 +391,11 @@ void Immediate2DRenderer::push_rectangle_filled(
 }
 
 void Immediate2DRenderer::push_rectangle_rounded_filled(
-    const gs_vec2f& _Min,
-    const gs_vec2f& _Max,
-    const float&    _Radius,
-    const gs_vec4f& _Color,
-    const gs_mat4f& _Transform)
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const float&               _Radius,
+    const RenderingQueueColor& _Color,
+    const gs_mat4f&            _Transform)
 {
     // check that we are within viewport
     if(!m_Viewport.overlaps(
@@ -377,58 +406,23 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
         return;
     }
 
-    // compute radius
-    float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
-
-    // build angle ellipses
-    const gs_vec2f p1 = gs_vec2f(_Min.x, _Min.y);
-    const gs_vec2f p2 = gs_vec2f(_Max.x, _Min.y);
-    const gs_vec2f p3 = gs_vec2f(_Max.x, _Max.y);
-    const gs_vec2f p4 = gs_vec2f(_Min.x, _Max.y);
-
-    gs_vec2f p13 = gs_vector_normalize(p1 - p3);
-    gs_vec2f p24 = gs_vector_normalize(p2 - p4);
-    p13 = gs_vec2f(gs_sign(p13.x), gs_sign(p13.y));
-    p24 = gs_vec2f(gs_sign(p24.x), gs_sign(p24.y));
-
-    build_arc_filled_mesh(p1 - p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
-    build_arc_filled_mesh(p2 - p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
-    build_arc_filled_mesh(p3 + p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
-    build_arc_filled_mesh(p4 + p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes, 16);
-
-    // build inner rectnagle
-    Immediate2DRenderer::build_rectangle_filled_mesh(
-        p1 - p13 * gs_vec2f(radius, 0.f),
-        p3 + p13 * gs_vec2f(radius, 0.f),
-        _Color,
-        m_RenderingQueue->get_default_texture(),
-        m_Vertexes,
-        m_Indexes);
-
-    Immediate2DRenderer::build_rectangle_filled_mesh(
-        p1 - p13 * gs_vec2f(0.f, radius),
-        p3 + p13 * gs_vec2f(0.f, radius),
-        _Color,
-        m_RenderingQueue->get_default_texture(),
-        m_Vertexes,
-        m_Indexes);
-
+    build_rectangle_rounded_filled_mesh(_Min, _Max, _Radius, _Color);
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_text(
-    const std::u32string&     _Text,
-    const float&              _Size,
-    const gs_vec4f&           _Color,
-    const gs_mat4f&           _Transform,
-    const RenderingQueueFont& _Font)
+    const std::u32string&      _Text,
+    const float&               _Size,
+    const RenderingQueueColor& _Color,
+    const gs_mat4f&            _Transform,
+    const RenderingQueueFont&  _Font)
 {
     RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
 
     float scale     = _Size / (float)font.SizeInPixels;
     float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
     float positionX = 0.f;
-    float positionY = Immediate2DRenderer::down(gs_vec2f(0.f, offset)).y;
+    float positionY = gs_vec2f(0.f, offset).y;
 
     for(int i = 0; i < (int)_Text.size(); ++i)
     {
@@ -440,7 +434,7 @@ void Immediate2DRenderer::push_text(
             // next line
             if(symbol == '\n')
             {
-                positionY += Immediate2DRenderer::down(gs_vec2f(0.f, gs_max(_Size, gs_abs(offset)))).y;
+                positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
                 positionX =  0.f;
             }
             // carriage return
@@ -448,7 +442,7 @@ void Immediate2DRenderer::push_text(
                 positionX =  0.f;
             // tab
             else if(symbol == '\t')
-                positionX += Immediate2DRenderer::right(gs_vec2f(_Size, 0.f)).x;
+                positionX += gs_vec2f(_Size, 0.f).x;
             else
             {
                 // TODO: do someting here...
@@ -465,21 +459,18 @@ void Immediate2DRenderer::push_text(
         float glyphVerticalBearing   = glyph.Bearing.y * scale;
         float glyphAdvance           = glyph.Advance * scale;
 
-        auto min = gs_vec2f(positionX, positionY) + Immediate2DRenderer::bottom_right(gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing));
-        auto max = min + Immediate2DRenderer::bottom_right(gs_vec2f(glyphWidth, glyphHeight));
+        auto min = gs_vec2f(positionX, positionY) + gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing);
+        auto max = min + gs_vec2f(glyphWidth, glyphHeight);
 
         build_rectangle_filled_mesh(
             min,
             max,
             glyph.MinUV,
             glyph.MaxUV,
-            _Color,
-            m_Vertexes,
-            m_Indexes
-        );
+            _Color);
 
         // move cursor
-        positionX += Immediate2DRenderer::right(gs_vec2f(glyphAdvance, 0.f)).x;
+        positionX += gs_vec2f(glyphAdvance, 0.f).x;
     }
 
     push_rendering_command(font.AtlasTexture, _Color, _Transform);
@@ -488,7 +479,7 @@ void Immediate2DRenderer::push_text(
 void Immediate2DRenderer::push_text(
     const std::u16string&     _Text,
     const float&              _Size,
-    const gs_vec4f&           _Color,
+    const RenderingQueueColor&           _Color,
     const gs_mat4f&           _Transform,
     const RenderingQueueFont& _Font)
 {
@@ -502,11 +493,11 @@ void Immediate2DRenderer::push_text(
 }
 
 void Immediate2DRenderer::push_text(
-    const std::string&        _Text,
-    const float&              _Size,
-    const gs_vec4f&           _Color,
-    const gs_mat4f&           _Transform,
-    const RenderingQueueFont& _Font)
+    const std::string&         _Text,
+    const float&               _Size,
+    const RenderingQueueColor& _Color,
+    const gs_mat4f&            _Transform,
+    const RenderingQueueFont&  _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
@@ -523,7 +514,7 @@ void Immediate2DRenderer::push_arc_filled(
     const float&                 _MajorRadius,
     const float&                 _SourceAngle,
     const float&                 _TargetAngle,
-    const gs_vec4f&              _Color,
+    const RenderingQueueColor& _Color,
     const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
@@ -543,9 +534,7 @@ void Immediate2DRenderer::push_arc_filled(
         _SourceAngle,
         _TargetAngle,
         _Color,
-        !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(),
-        m_Vertexes,
-        m_Indexes);
+        !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture());
 
     push_rendering_command(
         !_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(),
@@ -557,7 +546,7 @@ void Immediate2DRenderer::push_line(
     const gs_vec2f& _P1,
     const gs_vec2f& _P2,
     const float&    _Width,
-    const gs_vec4f& _Color,
+    const RenderingQueueColor& _Color,
     const gs_mat4f& _Transform)
 {
     if(!m_Viewport.contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
@@ -571,9 +560,7 @@ void Immediate2DRenderer::push_line(
         _P2,
         _Width,
         _Color,
-        m_RenderingQueue->get_default_texture(),
-        m_Vertexes,
-        m_Indexes);
+        m_RenderingQueue->get_default_texture());
 
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
@@ -585,7 +572,7 @@ void Immediate2DRenderer::push_arc(
     const float&    _SourceAngle,
     const float&    _TargetAngle,
     const float&    _Width,
-    const gs_vec4f& _Color,
+    const RenderingQueueColor& _Color,
     const gs_mat4f& _Transform)
 {
     // check that we are within viewport
@@ -597,7 +584,7 @@ void Immediate2DRenderer::push_arc(
         return;
     }
 
-    Immediate2DRenderer::build_arc_mesh(
+    build_arc_mesh(
         _Center,
         _MinorRadius,
         _MajorRadius,
@@ -605,10 +592,7 @@ void Immediate2DRenderer::push_arc(
         _TargetAngle,
         _Width,
         _Color,
-        m_RenderingQueue->get_default_texture(),
-        m_PathSegments,
-        m_Vertexes,
-        m_Indexes);
+        m_RenderingQueue->get_default_texture());
 
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
@@ -618,7 +602,7 @@ void Immediate2DRenderer::push_triangle(
     const gs_vec2f& _P2,
     const gs_vec2f& _P3,
     const float&    _Width,
-    const gs_vec4f& _Color,
+    const RenderingQueueColor& _Color,
     const gs_mat4f& _Transform)
 {
     // check if we are within viewport
@@ -630,20 +614,20 @@ void Immediate2DRenderer::push_triangle(
     }
 
     // build mesh
-    build_line_mesh(_P1, _P2, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(_P2, _P3, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(_P3, _P1, _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
+    build_line_mesh(_P1, _P2, _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_line_mesh(_P2, _P3, _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_line_mesh(_P3, _P1, _Width, _Color, m_RenderingQueue->get_default_texture());
 
     // push rendering command
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_rectangle(
-    const gs_vec2f& _Min,
-    const gs_vec2f& _Max,
-    const float&    _Width,
-    const gs_vec4f& _Color,
-    const gs_mat4f& _Transform)
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const float&               _Width,
+    const RenderingQueueColor& _Color,
+    const gs_mat4f&            _Transform)
 {
     // check that we are within viewport
     if(!m_Viewport.overlaps(
@@ -655,29 +639,19 @@ void Immediate2DRenderer::push_rectangle(
     }
 
     // build mesh
-    const gs_vec2f _P1 = gs_vec2f(_Min.x, _Min.y);
-    const gs_vec2f _P2 = gs_vec2f(_Max.x, _Min.y);
-    const gs_vec2f _P3 = gs_vec2f(_Max.x, _Max.y);
-    const gs_vec2f _P4 = gs_vec2f(_Min.x, _Max.y);
-
-    Immediate2DRendererPathBuilder pathBuilder;
-    pathBuilder.push_segment(_P1, _P2, _Width, m_PathSegments);
-    pathBuilder.push_segment(_P2, _P3, _Width, m_PathSegments);
-    pathBuilder.push_segment(_P3, _P4, _Width, m_PathSegments);
-    pathBuilder.push_segment(_P4, _P1, _Width, m_PathSegments);
-    pathBuilder.build_mesh(_Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
+    build_push_rectangle_mesh(_Min, _Max, _Width, _Color);
 
     // push rendering command
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
 void Immediate2DRenderer::push_rectangle_rounded(
-    const gs_vec2f& _Min,
-    const gs_vec2f& _Max,
-    const float&    _Radius,
-    const float&    _Width,
-    const gs_vec4f& _Color,
-    const gs_mat4f& _Transform)
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const float&               _Radius,
+    const float&               _Width,
+    const RenderingQueueColor& _Color,
+    const gs_mat4f&            _Transform)
 {
     // check that we are within viewport
     if(!m_Viewport.overlaps(
@@ -688,36 +662,7 @@ void Immediate2DRenderer::push_rectangle_rounded(
         return;
     }
 
-    // check rounding radius
-    if(_Radius <= gs_max(_Width, 4.f))
-    {
-        return push_rectangle(
-            _Min,
-            _Max,
-            _Width,
-            _Color,
-            _Transform);
-    }
-
-    // compute radius
-    float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
-
-    // points
-    gs_vec2f TL = gs_vec2f(_Min.x + radius, _Max.y - radius);
-    gs_vec2f BL = gs_vec2f(_Min.x + radius, _Min.y + radius);
-    gs_vec2f TR = gs_vec2f(_Max.x - radius, _Max.y - radius);
-    gs_vec2f BR = gs_vec2f(_Max.x - radius, _Min.y + radius);
-
-    // sides
-    build_arc_mesh(TL, radius, radius, 90.f, 180.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
-    build_arc_mesh(BL, radius, radius, 180.f, 270.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
-    build_arc_mesh(TR, radius, radius, 0.f, 90.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
-    build_arc_mesh(BR, radius, radius, 270.f, 360.f, _Width, _Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
-    build_line_mesh(calculate_arc_point(TL, radius, radius, 180), calculate_arc_point(BL, radius, radius, 180), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(calculate_arc_point(TL, radius, radius, 90), calculate_arc_point(TR, radius, radius, 90), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(calculate_arc_point(TR, radius, radius, 0), calculate_arc_point(BR, radius, radius, 0), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-    build_line_mesh(calculate_arc_point(BL, radius, radius, 270), calculate_arc_point(BR, radius, radius, 270), _Width, _Color, m_RenderingQueue->get_default_texture(), m_Vertexes, m_Indexes);
-
+    build_rectangle_rounded_mesh(_Min, _Max, _Radius, _Width, _Color);
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
@@ -725,107 +670,101 @@ void Immediate2DRenderer::build_triangle_filled_mesh(
     const gs_vec2f&                    _P1,
     const gs_vec2f&                    _P2,
     const gs_vec2f&                    _P3,
-    const gs_vec4f&                    _Color,
-    const RenderingQueueTexture&       _Texture,
-    std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes)
+    const RenderingQueueColor&         _Color,
+    const RenderingQueueTexture&       _Texture)
 {
-    const int size = (int)_Vertexes.size();
+    const int size = (int)m_Vertexes.size();
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             gs_vec3f(_P1.x, _P1.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
             _Color));
     
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             gs_vec3f(_P2.x, _P2.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
             _Color));
     
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             gs_vec3f(_P3.x, _P3.y, 0.f),
             gs_vec3f(0.f),
             gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
             _Color));
     
-    for (int i = size; i < (int)_Vertexes.size(); ++i)
-        _Indexes.push_back(i);
+    for (int i = size; i < (int)m_Vertexes.size(); ++i)
+        m_Indexes.push_back(i);
 }
 
 void Immediate2DRenderer::build_rectangle_filled_mesh(
-    const gs_vec2f&                    _Min,
-    const gs_vec2f&                    _Max,
-    const gs_vec4f&                    _Color,
-    const RenderingQueueTexture&       _Texture,
-    std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes)
+    const gs_vec2f&              _Min,
+    const gs_vec2f&              _Max,
+    const RenderingQueueColor&   _Color,
+    const RenderingQueueTexture& _Texture)
 {
-    const int      size   = (int)_Vertexes.size();
+    const int      size   = (int)m_Vertexes.size();
     const gs_vec3f point1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f point2 = gs_vec3f(_Max.x, _Min.y, 0.f);
     const gs_vec3f point3 = gs_vec3f(_Max.x, _Max.y, 0.f);
     const gs_vec3f point4 = gs_vec3f(_Min.x, _Max.y, 0.f);
 
     // triangle 1
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             point1,
             gs_vec3f(0.f),
             gs_vec2f(point1.x / _Texture.Width, point1.y / _Texture.Height),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             point2,
             gs_vec3f(0.f),
             gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             point4,
             gs_vec3f(0.f),
             gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
             _Color));
 
     // triangle 2
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             point2,
             gs_vec3f(0.f),
             gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             point3, gs_vec3f(0.f),
             gs_vec2f(point3.x / _Texture.Width, point3.y / _Texture.Height),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             point4,
             gs_vec3f(0.f),
             gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
             _Color));
 
-    for (int i = size; i < (int)_Vertexes.size(); ++i)
-        _Indexes.push_back(i);
+    for (int i = size; i < (int)m_Vertexes.size(); ++i)
+        m_Indexes.push_back(i);
 }
 
 void Immediate2DRenderer::build_rectangle_filled_mesh(
-    const gs_vec2f&                    _Min,
-    const gs_vec2f&                    _Max,
-    const gs_vec2f&                    _MinUV,
-    const gs_vec2f&                    _MaxUV,
-    const gs_vec4f&                    _Color,
-    std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes)
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const gs_vec2f&            _MinUV,
+    const gs_vec2f&            _MaxUV,
+    const RenderingQueueColor& _Color)
 {
-    const int size = (int)_Vertexes.size();
+    const int size = (int)m_Vertexes.size();
 
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
@@ -838,64 +777,151 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
     const gs_vec3f _UV4 = gs_vec3f(_MinUV.x, _MaxUV.y, 0.f);
 
     // triangle 1
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
     // triangle 2
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
-    _Vertexes.push_back(
-        RenderingQueueVertex(
+    m_Vertexes.push_back(
+        RenderingQueue::construct_vertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
-    for (int i = size; i < (int)_Vertexes.size(); ++i)
-        _Indexes.push_back(i);
+    for (int i = size; i < (int)m_Vertexes.size(); ++i)
+        m_Indexes.push_back(i);
+}
+
+void Immediate2DRenderer::build_rectangle_rounded_filled_mesh(
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const float&               _Radius,
+    const RenderingQueueColor& _Color)
+{
+    // compute radius
+    float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
+
+    // build angle ellipses
+    const gs_vec2f p1 = gs_vec2f(_Min.x, _Min.y);
+    const gs_vec2f p2 = gs_vec2f(_Max.x, _Min.y);
+    const gs_vec2f p3 = gs_vec2f(_Max.x, _Max.y);
+    const gs_vec2f p4 = gs_vec2f(_Min.x, _Max.y);
+
+    gs_vec2f p13 = gs_vector_normalize(p1 - p3);
+    gs_vec2f p24 = gs_vector_normalize(p2 - p4);
+    p13 = gs_vec2f(gs_sign(p13.x), gs_sign(p13.y));
+    p24 = gs_vec2f(gs_sign(p24.x), gs_sign(p24.y));
+
+    build_arc_filled_mesh(p1 - p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    build_arc_filled_mesh(p2 - p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    build_arc_filled_mesh(p3 + p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    build_arc_filled_mesh(p4 + p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+
+    // build inner rectnagle
+    Immediate2DRenderer::build_rectangle_filled_mesh(
+        p1 - p13 * gs_vec2f(radius, 0.f),
+        p3 + p13 * gs_vec2f(radius, 0.f),
+        _Color,
+        m_RenderingQueue->get_default_texture());
+
+    Immediate2DRenderer::build_rectangle_filled_mesh(
+        p1 - p13 * gs_vec2f(0.f, radius),
+        p3 + p13 * gs_vec2f(0.f, radius),
+        _Color,
+        m_RenderingQueue->get_default_texture());
+}
+
+void Immediate2DRenderer::build_push_rectangle_mesh(
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const float&               _Width,
+    const RenderingQueueColor& _Color)
+{
+    const gs_vec2f _P1 = gs_vec2f(_Min.x, _Min.y);
+    const gs_vec2f _P2 = gs_vec2f(_Max.x, _Min.y);
+    const gs_vec2f _P3 = gs_vec2f(_Max.x, _Max.y);
+    const gs_vec2f _P4 = gs_vec2f(_Min.x, _Max.y);
+
+    Immediate2DRendererPathBuilder pathBuilder;
+    pathBuilder.push_segment(_P1, _P2, _Width, m_PathSegments);
+    pathBuilder.push_segment(_P2, _P3, _Width, m_PathSegments);
+    pathBuilder.push_segment(_P3, _P4, _Width, m_PathSegments);
+    pathBuilder.push_segment(_P4, _P1, _Width, m_PathSegments);
+    pathBuilder.build_mesh(_Color, m_RenderingQueue->get_default_texture(), m_PathSegments, m_Vertexes, m_Indexes);
+}
+
+void Immediate2DRenderer::build_rectangle_rounded_mesh(
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const float&               _Radius,
+    const float&               _Width,
+    const RenderingQueueColor& _Color)
+{
+    // check rounding radius
+    if(_Radius <= gs_max(_Width, 4.f))
+        return build_push_rectangle_mesh(_Min, _Max, _Width, _Color);
+
+    // compute radius
+    float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
+
+    // points
+    gs_vec2f TL = gs_vec2f(_Min.x + radius, _Max.y - radius);
+    gs_vec2f BL = gs_vec2f(_Min.x + radius, _Min.y + radius);
+    gs_vec2f TR = gs_vec2f(_Max.x - radius, _Max.y - radius);
+    gs_vec2f BR = gs_vec2f(_Max.x - radius, _Min.y + radius);
+
+    // sides
+    build_arc_mesh(TL, radius, radius, 90.f, 180.f, _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_arc_mesh(BL, radius, radius, 180.f, 270.f, _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_arc_mesh(TR, radius, radius, 0.f, 90.f, _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_arc_mesh(BR, radius, radius, 270.f, 360.f, _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_line_mesh(calculate_arc_point(TL, radius, radius, 180), calculate_arc_point(BL, radius, radius, 180), _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_line_mesh(calculate_arc_point(TL, radius, radius, 90), calculate_arc_point(TR, radius, radius, 90), _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_line_mesh(calculate_arc_point(TR, radius, radius, 0), calculate_arc_point(BR, radius, radius, 0), _Width, _Color, m_RenderingQueue->get_default_texture());
+    build_line_mesh(calculate_arc_point(BL, radius, radius, 270), calculate_arc_point(BR, radius, radius, 270), _Width, _Color, m_RenderingQueue->get_default_texture());
 }
 
 void Immediate2DRenderer::build_arc_filled_mesh(
-    const gs_vec2f&                    _Center,
-    const float&                       _MinorRadius,
-    const float&                       _MajorRadius,
-    const float&                       _SourceAngle,
-    const float&                       _TargetAngle,
-    const gs_vec4f&                    _Color,
-    const RenderingQueueTexture&       _Texture,
-    std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes,
-    const int&                         _SegmentsCount)
+    const gs_vec2f&              _Center,
+    const float&                 _MinorRadius,
+    const float&                 _MajorRadius,
+    const float&                 _SourceAngle,
+    const float&                 _TargetAngle,
+    const RenderingQueueColor&   _Color,
+    const RenderingQueueTexture& _Texture,
+    const int&                   _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
@@ -906,26 +932,16 @@ void Immediate2DRenderer::build_arc_filled_mesh(
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {
         p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
-
-        Immediate2DRenderer::build_triangle_filled_mesh(
-            _Center,
-            p1,
-            p2,
-            _Color,
-            _Texture,
-            _Vertexes,
-            _Indexes);
+        build_triangle_filled_mesh(_Center, p1, p2, _Color, _Texture);
     }
 }
 
 void Immediate2DRenderer::build_line_mesh(
-    const gs_vec2f&                    _P1,
-    const gs_vec2f&                    _P2,
-    const float&                       _Width,
-    const gs_vec4f&                    _Color,
-    const RenderingQueueTexture&       _Texture,
-    std::vector<RenderingQueueVertex>& _Vertexes,
-    std::vector<int>&                  _Indexes)
+    const gs_vec2f&              _P1,
+    const gs_vec2f&              _P2,
+    const float&                 _Width,
+    const RenderingQueueColor&   _Color,
+    const RenderingQueueTexture& _Texture)
 {
     const gs_vec3f p1 = gs_vec3f(_P1.x, _P1.y, 0.f);
     const gs_vec3f p2 = gs_vec3f(_P2.x, _P2.y, 0.f);
@@ -963,40 +979,31 @@ void Immediate2DRenderer::build_line_mesh(
     //     );
     // }
 
-    Immediate2DRenderer::build_triangle_filled_mesh(
+    build_triangle_filled_mesh(
         _P1 - perpendicular,
         _P2 - perpendicular,
         _P1 + perpendicular,
         _Color,
-        _Texture,
-        _Vertexes,
-        _Indexes
-    );
+        _Texture);
 
-    Immediate2DRenderer::build_triangle_filled_mesh(
+    build_triangle_filled_mesh(
         _P1 + perpendicular,
         _P2 - perpendicular,
         _P2 + perpendicular,
         _Color,
-        _Texture,
-        _Vertexes,
-        _Indexes
-    );
+        _Texture);
 }
 
 void Immediate2DRenderer::build_arc_mesh(
-    const gs_vec2f&                              _Center,
-    const float&                                 _MinorRadius,
-    const float&                                 _MajorRadius,
-    const float&                                 _SourceAngle,
-    const float&                                 _TargetAngle,
-    const float&                                 _LineWidth,
-    const gs_vec4f&                              _Color,
-    const RenderingQueueTexture&                 _Texture,
-    std::vector<Immediate2DRendererPathSegment>& _Segments,
-    std::vector<RenderingQueueVertex>&           _Vertexes,
-    std::vector<int>&                            _Indexes,
-    const int&                                   _SegmentsCount)
+    const gs_vec2f&              _Center,
+    const float&                 _MinorRadius,
+    const float&                 _MajorRadius,
+    const float&                 _SourceAngle,
+    const float&                 _TargetAngle,
+    const float&                 _LineWidth,
+    const RenderingQueueColor&   _Color,
+    const RenderingQueueTexture& _Texture,
+    const int&                   _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
@@ -1010,8 +1017,8 @@ void Immediate2DRenderer::build_arc_mesh(
     {
         p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
 
-        pathBuilder.push_segment(p1, p2, _LineWidth, _Segments);
+        pathBuilder.push_segment(p1, p2, _LineWidth, m_PathSegments);
     }
 
-    pathBuilder.build_mesh(_Color, _Texture, _Segments, _Vertexes, _Indexes);
+    pathBuilder.build_mesh(_Color, _Texture, m_PathSegments, m_Vertexes, m_Indexes);
 }
