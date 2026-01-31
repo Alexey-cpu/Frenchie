@@ -55,7 +55,6 @@ namespace Frenchie
 
                     // calculate frame unlocking and dragging panes
                     gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
-                    gs_2dboxf frameBoxDraggingPane  = gs_2dboxf(_Window->FrameBox.Min + gs_vec2f(totalFramesSize.x, 0.f), _Window->FrameBox.Max);
 
                     // process frameboxes
                     gs_vec2f position = frameBoxUnlockingPane.Min;
@@ -417,36 +416,41 @@ namespace Frenchie
                 return gs_2d_ellipsef(_Node->State.BoundingBox.Max, WindowResizeAngleGizmoRadius);
             };
 
-            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceNode* _Node)
+            float calculate_offset(ImmediateUserInterfaceContextLayer* _Context)
             {
-                float WindowResizeSideGizmoWidth = 8.f;
+                return _Context ? gs_max(16.f, 0.f) : 16.f;
+            }
+
+            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                float WindowResizeSideGizmoWidth = ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context);
 
                 return gs_2dboxf(
                     _Node->State.BoundingBox.Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
                     _Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width(), WindowResizeSideGizmoWidth));
             };
 
-            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                float WindowResizeSideGizmoWidth = 8.f;
+                float WindowResizeSideGizmoWidth = ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context);
 
                 return gs_2dboxf(
                     _Node->State.BoundingBox.Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
                     _Node->State.BoundingBox.Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->State.BoundingBox.height()));
             };
 
-            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                float WindowResizeSideGizmoWidth = 8.f;
+                float WindowResizeSideGizmoWidth = ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context);
 
                 return gs_2dboxf(
                     _Node->State.BoundingBox.Min + gs_vec2f(_Node->State.BoundingBox.width() - WindowResizeSideGizmoWidth, 0.f),
                     _Node->State.BoundingBox.Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
             };
 
-            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
-                float WindowResizeSideGizmoWidth = 8.f;
+                float WindowResizeSideGizmoWidth = ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context);
 
                 return gs_2dboxf(
                     _Node->State.BoundingBox.Min + gs_vec2f(0.f, _Node->State.BoundingBox.height() - WindowResizeSideGizmoWidth),
@@ -465,7 +469,31 @@ namespace Frenchie
             ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
             virtual ~ImmediateUserInterfaceWindowCentralDocker(){}
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override{}
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // frame
+                _Context->m_Renderer->push_rectangle_rounded(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Style.FramesWidth,
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
 
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {                
@@ -482,11 +510,14 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+                // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
                     _Context->m_Style.FramesRadius,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -501,7 +532,7 @@ namespace Frenchie
             ImmediateUserInterfaceWindowHorizontalSnapper(const std::string& _Name) : ImmediateUserInterfaceNodeHorizontalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindowHorizontalSnapper(){}
 
-            void measure(ImmediateUserInterfaceContextLayer* _Context) override
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 ImmediateUserInterfaceNodeHorizontalStack::measure(_Context);
 
@@ -517,11 +548,14 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+                // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
                     _Context->m_Style.FramesRadius,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -636,7 +670,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
         {
-            auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Node);
+            auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeTop.Min,
@@ -649,7 +683,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
         {
-            auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Node);
+            auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeLeft.Min,
@@ -662,7 +696,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
         {
-            auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Node);
+            auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeRight.Min,
@@ -675,7 +709,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
         {
-            auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Node);
+            auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node);
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 resizeBottom.Min,
@@ -687,7 +721,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         }
     };
 
-    auto check_cursor_intersection_with_resize_gizmo = [](
+    auto check_cursor_intersection_with_resize_gizmo = [_Context](
         ImmediateUserInterfaceNode*             _Node,
         const ImmedidateUserInterfaceEvent&     _Event,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType)->bool
@@ -705,16 +739,16 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Event.CursorPosition);
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Event.CursorPosition);
         
         return false;
     };
@@ -1109,19 +1143,19 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     {
         // background
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+            State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+            State.BoundingBox.Max - _Context->m_Style.FramesWidth,
             _Context->m_Style.FramesRadius,
-            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground],
+            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
         // background frame
         _Context->m_Renderer->push_rectangle_rounded(
-            State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-            State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
+            State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+            State.BoundingBox.Max - _Context->m_Style.FramesWidth,
             _Context->m_Style.FramesRadius,
             _Context->m_Style.FramesWidth,
-            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
+            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
@@ -1149,26 +1183,6 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
 
             // construct events
             ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
-
-            // render framebox
-            {
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    _FrameBox.Min,
-                    _FrameBox.Max,
-                    _Context->m_Style.FramesRadius,
-                    _FrameBox.contains(event.CursorPosition) ?
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered] :
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                _Context->m_Renderer->push_rectangle_rounded(
-                    _FrameBox.Min,
-                    _FrameBox.Max,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.FramesWidth,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
 
             // render frame
             if(_Window->Docker == nullptr &&
@@ -1200,7 +1214,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Frame.Min + _Context->m_Style.FramesWidth,
                         _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundActive],
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                     _Context->m_Renderer->push_rectangle_rounded(
@@ -1208,16 +1222,18 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundActive],
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
-                else if(_Frame.contains(event.CursorPosition))
+                else
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
                         _Frame.Min + _Context->m_Style.FramesWidth,
                         _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundHovered],
+                        _Frame.contains(event.CursorPosition) ?
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered] :
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                     _Context->m_Renderer->push_rectangle_rounded(
@@ -1225,7 +1241,9 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundHovered],
+                        _Frame.contains(event.CursorPosition) ?
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered] :
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
 
@@ -1251,13 +1269,13 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             // title
             _Context->m_Renderer->push_text(
                 _Window->Name,
-                _Context->m_Style.FontSize * 0.7f,
+                _Context->m_Style.FontSize * 0.6f,
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
                 _Context->m_Renderer->calculate_transform_matrix(
                     (float)place_in_follow(),
                     gs_vec2f(
-                        _Frame.Min.x + 16.f,
-                        _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.7f * 0.5f)));
+                        _Frame.Min.x + 16.f + _Context->m_Style.FramesWidth,
+                        _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.6f * 0.5f)));
         }
     );
 }
@@ -1269,33 +1287,27 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
 
     // compute self geometry
     FrameBox = gs_2dboxf(
-        State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
+        State.BoundingBox.Min,
         gs_vec2f(
             State.BoundingBox.Max.x,
-            State.BoundingBox.Min.y + gs_max(_Context->m_Style.FontSize, 64.f)) - _Context->m_Style.FramesWidth * 0.5f);
+            State.BoundingBox.Min.y + gs_max(_Context->m_Style.FontSize, 64.f)));
 
     ContentBox = gs_2dboxf(
         (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
         State.BoundingBox.Max);
 
-    ContentBox = gs_2dboxf(ContentBox.Min + 2.f * _Context->m_Style.FramesWidth, ContentBox.Max - 2.f * _Context->m_Style.FramesWidth);
+    if(_Context->m_Hierarchy.get_parent(this) == nullptr || TopSnapper || LeftSnapper || RightSnapper || BottomSnapper)
+    {
+        ContentBox = gs_2dboxf(ContentBox.Min + _Context->m_Style.FramesWidth, ContentBox.Max - _Context->m_Style.FramesWidth);
+        FrameBox   = gs_2dboxf(FrameBox.Min + _Context->m_Style.FramesWidth, FrameBox.Max - _Context->m_Style.FramesWidth);
+    }
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         ContentBox.Min,
         ContentBox,
-        [this](const ImmediateUserInterfaceNode* _Node){return _Node == DockerView;}
-    );
-
-    // layout
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-        _Context->m_Hierarchy.begin(this),
-        _Context->m_Hierarchy.end(this),
-        ContentBox.Min,
-        ContentBox,
-        [this](const ImmediateUserInterfaceNode* _Node){return _Node == SnapperView;}
-    );
+        [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
 void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -1490,7 +1502,7 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
             State.BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
             State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
             _Context->m_Style.FramesRadius,
-            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed],
+            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed],
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
     else
@@ -1500,8 +1512,8 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
             State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
             _Context->m_Style.FramesRadius,
             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered] :
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackground],
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered] :
+                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground],
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
 
@@ -1511,7 +1523,7 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
         State.BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
         _Context->m_Style.FramesRadius,
         _Context->m_Style.FramesWidth,
-        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonOutline],
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline],
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // title
@@ -2109,7 +2121,9 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
         }
 
         // hover end logic
-        if(!node->State.BoundingBox.contains(_Event.CursorPosition))
+        if(!gs_2dboxf(
+            node->State.BoundingBox.Min + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
+            node->State.BoundingBox.Max - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Event.CursorPosition))
         {
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
