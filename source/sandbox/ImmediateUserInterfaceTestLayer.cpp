@@ -163,7 +163,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
         64.f,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        RenderingQueue::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane()
         )
@@ -172,7 +172,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("CMD ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
         64.f,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        RenderingQueue::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 64.f)
@@ -182,7 +182,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
         64.f,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
+        RenderingQueue::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 128.f)

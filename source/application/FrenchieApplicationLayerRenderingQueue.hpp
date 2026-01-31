@@ -55,13 +55,6 @@ namespace Frenchie
             RenderingQueueMeshRenderingHints_Default   = RenderingQueueMeshRenderingHints_Triangles
         };
 
-        // enum RenderingQueueRendererHints_ : int
-        // {
-        //     RenderingQueueRendererHints_Blend,
-        //     RenderingQueueRendererHints_DepthTest,
-        //     RenderingQueueRendererHints_StencilTest,
-        // };
-
         enum RenderingQueueShaderType_ : int
         {
             RenderingQueueShaderType_Vertex,
@@ -74,6 +67,7 @@ namespace Frenchie
         typedef int RenderingQueueTextureMaxFilter;
         typedef int RenderingQueueMeshRenderingHints;
         typedef int RenderingQueueShaderType;
+        typedef unsigned int RenderingQueueColor;
 
         // Enities
         struct RenderingQueueTexture final
@@ -82,7 +76,7 @@ namespace Frenchie
                 const unsigned int&                   _Ptr       = 0,
                 const int&                            _Width     = 128,
                 const int&                            _Height    = 128,
-                gs_vec4f                              _Color     = {255.f, 255.f, 255.f, 255.f},
+                const RenderingQueueColor&            _Color     = 1, // white
                 const RenderingQueueTextureFormat&    _Format    = RenderingQueueTextureFormat_RGBA,
                 const RenderingQueueTextureWrapMode&  _Wrap      = RenderingQueueTextureWrapMode_::RenderingQueueTextureWrapMode_Repeat,
                 const RenderingQueueTextureMinFilter& _MinFilter = RenderingQueueTextureMinFilter_::RenderingQueueTextureMinFilter_Linear,
@@ -90,7 +84,7 @@ namespace Frenchie
             Ptr(_Ptr),
             Width(_Width),
             Height(_Height),
-            Color(_Color.x / 255.f, _Color.y / 255.f, _Color.z / 255.f, _Color.w / 255.f),
+            Color(_Color),
             Format(_Format),
             Wrap(_Wrap),
             MinFilter(_MinFilter),
@@ -104,7 +98,7 @@ namespace Frenchie
             unsigned int                   Ptr       {+0};
             int                            Width     {-1};
             int                            Height    {-1};
-            gs_vec4f                       Color     {255.f, 255.f, 255.f, 255.f};
+            RenderingQueueColor            Color     {1}; // white
             RenderingQueueTextureFormat    Format    {RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA};
             RenderingQueueTextureWrapMode  Wrap      {RenderingQueueTextureWrapMode_::RenderingQueueTextureWrapMode_Repeat};
             RenderingQueueTextureMinFilter MinFilter {RenderingQueueTextureMinFilter_::RenderingQueueTextureMinFilter_Linear};
@@ -125,20 +119,20 @@ namespace Frenchie
 
         struct RenderingQueueVertex final
         {
-            RenderingQueueVertex(
-                const gs_vec3f& _Position = gs_vec3f(0),
-                const gs_vec3f& _Normal   = gs_vec3f(0),
-                const gs_vec2f& _UV       = gs_vec2f(0),
-                const gs_vec4f& _Color    = gs_vec4f(1.f)) :
-            Position(_Position),
-            Normal(_Normal),
-            UV(_UV),
-            Color(_Color.x / 255.f, _Color.y / 255.f, _Color.z / 255.f, _Color.w / 255.f){}
+            // RenderingQueueVertex(
+            //     const gs_vec3f&            _Position = gs_vec3f(0),
+            //     const gs_vec3f&            _Normal   = gs_vec3f(0),
+            //     const gs_vec2f&            _UV       = gs_vec2f(0),
+            //     const RenderingQueueColor& _Color    = 1) :
+            // Position(_Position),
+            // Normal(_Normal),
+            // UV(_UV),
+            // Color(_Color){}
 
-            gs_vec3f Position;
-            gs_vec3f Normal;
-            gs_vec2f UV;
-            gs_vec4f Color;
+            gs_vec3f            Position{gs_vec3f(0.f, 0.f, 0.f)};
+            gs_vec3f            Normal  {gs_vec3f(0.f, 0.f, 0.f)};
+            gs_vec2f            UV      {gs_vec3f(0.f, 0.f, 0.f)};
+            RenderingQueueColor Color   {1}; // white
         };
 
         struct RenderingQueueMesh final
@@ -383,6 +377,49 @@ namespace Frenchie
                 const RenderingQueueMeshRenderingHints& _RendererHints,
                 const gs_vec4f&                         _ClearColor,
                 const gs_2dboxf&                        _ClippinBox);
+
+            // static API
+            static RenderingQueueVertex construct_vertex(
+                const gs_vec3f&            _Position = gs_vec3f(0),
+                const gs_vec3f&            _Normal   = gs_vec3f(0),
+                const gs_vec2f&            _UV       = gs_vec2f(0),
+                const RenderingQueueColor& _Color    = 1)
+            {
+                RenderingQueueVertex vertex;
+                vertex.Position = _Position;
+                vertex.Normal   = _Normal;
+                vertex.UV       = _UV;
+                vertex.Color    = _Color;
+                return vertex;
+            }
+
+            static RenderingQueueColor construct_rgba_color(const RenderingQueueColor& _R, const RenderingQueueColor& _G, const RenderingQueueColor& _B, const RenderingQueueColor& _A)
+            {
+                return (((RenderingQueueColor)(_A)<<24) |
+                        ((RenderingQueueColor)(_B)<<16) |
+                        ((RenderingQueueColor)(_G)<<8)  |
+                        ((RenderingQueueColor)(_R)<<0));
+            }
+
+            static RenderingQueueColor retrieve_red_component(const RenderingQueueColor& _Color)
+            {
+                return (_Color >> 0) & 0xFF;
+            }
+
+            static RenderingQueueColor retrieve_green_component(const RenderingQueueColor& _Color)
+            {
+                return (_Color >> 8) & 0xFF;
+            }
+
+            static RenderingQueueColor retrieve_blue_component(const RenderingQueueColor& _Color)
+            {
+                return (_Color >> 16) & 0xFF;
+            }
+
+            static RenderingQueueColor retrieve_alpha_component(const RenderingQueueColor& _Color)
+            {
+                return (_Color >> 24) & 0xFF;
+            }
 
         protected:
 

@@ -813,7 +813,7 @@ RenderingQueueTexture RenderingQueue::construct_texture(
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return RenderingQueueTexture(sampler, _Width, _Height, {255.f, 255.f, 255.f, 255.f}, _Format, _Wrap, _MinFilter, _MaxFilter);
+    return RenderingQueueTexture(sampler, _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter);
 }
 
 RenderingQueueTexture RenderingQueue::construct_texture(
@@ -1113,7 +1113,7 @@ RenderingQueueMesh RenderingQueue::construct_mesh(
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Position)));
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Normal)));
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, UV)));
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Color)));
+    glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(RenderingQueueVertex), (void*)(offsetof(RenderingQueueVertex, Color)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);

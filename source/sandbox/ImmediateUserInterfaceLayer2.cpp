@@ -19,13 +19,11 @@ namespace Frenchie
             {
             public:
 
-                template<typename FrameProcessor, typename FrameBackgroundProcessor, typename DraggingPaneProcessor>
+                template<typename FrameProcessor>
                 void process_window_frame(
                     ImmediateUserInterfaceContextLayer* _Context,
                     ImmediateUserInterfaceWindow*       _Window,
-                    const FrameProcessor&               _FrameProcessor,
-                    const FrameBackgroundProcessor&     _FrameBackgroundProcessor,
-                    const DraggingPaneProcessor&        _DraggingPaneProcessor)
+                    const FrameProcessor&               _FrameProcessor)
                 {
                     if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
                         return;
@@ -59,17 +57,13 @@ namespace Frenchie
                     gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
                     gs_2dboxf frameBoxDraggingPane  = gs_2dboxf(_Window->FrameBox.Min + gs_vec2f(totalFramesSize.x, 0.f), _Window->FrameBox.Max);
 
-                    // process dragging pane
-                    _FrameBackgroundProcessor(_Context, _Window->FrameBox, _Window);
-                    _DraggingPaneProcessor(_Context, frameBoxDraggingPane, _Window);
-
                     // process frameboxes
                     gs_vec2f position = frameBoxUnlockingPane.Min;
                     gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
 
                     // process self frame
                     gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
-                    _FrameProcessor(_Context, boundingBox, _Window);
+                    _FrameProcessor(_Context, _Window->FrameBox, boundingBox, _Window);
                     position += gs_vec2f(size.x, 0.f);
 
                     // process docked windows frames
@@ -83,8 +77,12 @@ namespace Frenchie
                         if(window == nullptr || window->Docker == nullptr)
                             continue;
 
-                        gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
-                        _FrameProcessor(_Context, boundingBox, dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+                        _FrameProcessor(
+                            _Context,
+                            gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                            gs_2dboxf(position, position + size),
+                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+
                         position += gs_vec2f(size.x, 0.f);
                     }
                 }
@@ -542,55 +540,11 @@ namespace Frenchie
 ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string _Name) : Name(_Name){}
 ImmediateUserInterfaceNode::~ImmediateUserInterfaceNode(){}
 
-void ImmediateUserInterfaceNode::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceNode::render(ImmediateUserInterfaceContextLayer*)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr || !is_partially_visible())
-        return;
-
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        32.f,
-        gs_vec4f(128.f, 200.f, 128.f, 255.f),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    _Context->m_Renderer->push_rectangle_rounded(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        32.f,
-        8.f,
-        gs_vec4f(12.f, 128.f, 128.f, 255.f),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    _Context->m_Renderer->push_text(
-        Name,
-        32.f,
-        gs_vec4f(255.f, 0.f, 0.f, 255.f),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.Min));
-
-    if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-    {
-        _Context->m_Renderer->push_rectangle_rounded(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
-            32.f,
-            8.f,
-            gs_vec4f(0.f, 255.f, 0.f, 255.f),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
-
-    if(State.MouseClicked.has_value())
-    {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
-            32.f,
-            gs_vec4f(255.f, 0.f, 0.f, 255.f),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
 }
 
-void ImmediateUserInterfaceNode::layout(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfaceNode::layout(ImmediateUserInterfaceContextLayer*){}
 
 void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
@@ -1180,41 +1134,119 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         this,
 
         // render self and child frames
-        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
+        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
+            // auxiliary lambdas
+            auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
+            {
+                if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
+                    return RenderingQueue::construct_rgba_color(255, 0, 0, 255);
+
+                return closeButtonBox.contains(_Event.CursorPosition) ?
+                    RenderingQueue::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
+                    RenderingQueue::construct_rgba_color(64, 0, 0, 255);
+            };
+
             // construct events
             ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
 
-            // background
-            if(!_Window->DockingActive)
+            // render framebox
             {
                 _Context->m_Renderer->push_rectangle_rounded_filled(
-                    _BoundingBox.Min,
-                    _BoundingBox.Max,
+                    _FrameBox.Min,
+                    _FrameBox.Max,
                     _Context->m_Style.FramesRadius,
-                    _BoundingBox.contains(event.CursorPosition) ?
+                    _FrameBox.contains(event.CursorPosition) ?
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-            else
-            {
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    _BoundingBox.Min,
-                    _BoundingBox.Max,
+
+                _Context->m_Renderer->push_rectangle_rounded(
+                    _FrameBox.Min,
+                    _FrameBox.Max,
                     _Context->m_Style.FramesRadius,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive],
+                    _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            // outline
-            _Context->m_Renderer->push_rectangle_rounded(
-                _BoundingBox.Min,
-                _BoundingBox.Max,
-                _Context->m_Style.FramesRadius,
-                _Context->m_Style.FramesWidth,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            // render frame
+            if(_Window->Docker == nullptr &&
+                _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+                    _Context,
+                    _Window,
+                    ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
+            {
+                // close button
+                if(_Window->Opened != nullptr)
+                {
+                    gs_2dboxf closeButtonBox  = gs_2dboxf(
+                        gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) - _FrameBox.height() / 4.f,
+                        gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) + _FrameBox.height() / 4.f);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        closeButtonBox.Min,
+                        closeButtonBox.Max,
+                        _Context->m_Style.FramesRadius,
+                        close_button_color(closeButtonBox, event),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+            }
+            else
+            {
+                if(_Window->DockingActive)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundActive],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundActive],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+                else if(_Frame.contains(event.CursorPosition))
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundHovered],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundHovered],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+
+                // close button
+                if(_Window->Opened != nullptr)
+                {
+                    if(_Window->DockingActive || _Frame.contains(event.CursorPosition))
+                    {
+                        gs_2dboxf closeButtonBox  = gs_2dboxf(
+                            gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) - _Frame.height() / 4.f,
+                            gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) + _Frame.height() / 4.f);
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            closeButtonBox.Min,
+                            closeButtonBox.Max,
+                            _Context->m_Style.FramesRadius,
+                            close_button_color(closeButtonBox, event),
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    }
+                }
+            }
 
             // title
             _Context->m_Renderer->push_text(
@@ -1223,113 +1255,9 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                 _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
                 _Context->m_Renderer->calculate_transform_matrix(
                     (float)place_in_follow(),
-                    gs_vec2f(_BoundingBox.Min.x + 16.f,
-                        _BoundingBox.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.7f * 0.5f)));
-
-            // TODO: refactor this code
-            if(_Window->Opened != nullptr)
-            {
-                gs_vec4f closeButtonСolor = gs_vec4f(255.f, 0.f, 0.f, 255.f); // TODO: this MUST BE a setting
-
-                gs_2dboxf closeButtonBox  = gs_2dboxf(
-                    gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y) - _Window->FrameBox.height() / 4.f,
-                    gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y) + _Window->FrameBox.height() / 4.f);
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    closeButtonBox.Min,
-                    closeButtonBox.Max,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                if(closeButtonBox.contains(event.CursorPosition))
-                {
-                    closeButtonСolor = event.MouseDown.has_value() ?
-                        gs_vec4f(255.f, 230.f, 0.f, 255.f) : // TODO: this MUST BE a setting
-                        gs_vec4f(255.f, 128.f, 0.f, 255.f);  // TODO: this MUST BE a setting
-
-                    *_Window->Opened = !event.MouseClicked.has_value();
-
-                    // detach all docked windows
-                    if(!(*_Window->Opened))
-                    {
-                        auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
-                            _Context,
-                            _Window,
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top    |
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left   |
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right  |
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom |
-                            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
-
-                        for(auto dockedWindow : dockedWindows)
-                        {
-                            ImmediateUserInterfaceWindow* window =
-                                dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
-
-                            if(window == nullptr)
-                                continue;
-
-                            window->TopSnapper     = nullptr;
-                            window->LeftSnapper    = nullptr;
-                            window->RightSnapper   = nullptr;
-                            window->BottomSnapper  = nullptr;
-                            window->Docker         = nullptr;
-                        }
-                    }
-                }
-
-                _Context->m_Renderer->push_arc_filled(
-                    gs_vec2f(_BoundingBox.Max.x - _Window->FrameBox.height() / 2.f, _BoundingBox.center().y),
-                    _Window->FrameBox.height() / 4.f,
-                    _Window->FrameBox.height() / 4.f,
-                    0.f,
-                    360.f,
-                    closeButtonСolor,
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            if(_BoundingBox.contains(_Context->m_Renderer->get_cursor_postion()))
-            {
-                _Context->m_Renderer->push_rectangle_rounded(
-                    _BoundingBox.Min,
-                    _BoundingBox.Max,
-                    _Context->m_Style.FramesRadius,
-                    _Context->m_Style.FramesWidth,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos],
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-        },
-
-        // render background
-        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
-        {
-            // construct events
-            ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
-
-            // background
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                _BoundingBox.Min + _Context->m_Style.FramesWidth * 0.5f,
-                _BoundingBox.Max - _Context->m_Style.FramesWidth * 0.5f,
-                _Context->m_Style.FramesRadius,
-                _BoundingBox.contains(event.CursorPosition) ?
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered] :
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBox],
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-            // outline
-            _Context->m_Renderer->push_rectangle_rounded(
-                _BoundingBox.Min,
-                _BoundingBox.Max,
-                _Context->m_Style.FramesRadius,
-                _Context->m_Style.FramesWidth,
-                _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline],
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        },
-
-        // render dragging pane
-        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Node)
-        {
+                    gs_vec2f(
+                        _Frame.Min.x + 16.f,
+                        _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.7f * 0.5f)));
         }
     );
 }
@@ -1379,10 +1307,10 @@ void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
         this,
 
         // catch frame events
-        [this, _Event, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
+        [this, _Event, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
             // focus and activity
-            if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
+            if(_Event.MousePressed.has_value() && _Frame.contains(_Event.CursorPosition))
             {
                 _Context->get_controller<ImmedidateUserInterfaceWindowController>()->push_event(
                     [_Window](ImmediateUserInterfaceContextLayer* _Context)
@@ -1407,7 +1335,7 @@ void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
             {
                 ImmediateUserInterfaceNode* movable = _Window;
 
-                if(_Event.MousePressed.has_value() && _BoundingBox.contains(_Event.CursorPosition))
+                if(_Event.MousePressed.has_value() && _Frame.contains(_Event.CursorPosition))
                 {
                     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
                     defaultPipeline = false;
@@ -1415,7 +1343,7 @@ void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
                 }
 
                 if(_Event.MouseDown.has_value() &&
-                    _BoundingBox.contains(_Event.CursorPosition)   &&
+                    _Frame.contains(_Event.CursorPosition)   &&
                     gs_vector_length(_Event.CursorDragDelta) > 8.f &&
                     (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                 {
@@ -1466,14 +1394,6 @@ void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
                     return;
                 }
             }
-        },
-
-        // catch frame backgeround events
-        [this, _Event](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window){},
-
-        // catch frame dragging pane events
-        [this, _Event, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _BoundingBox, ImmediateUserInterfaceWindow* _Window)
-        {
         });
 
     // default event pipeline
@@ -1806,11 +1726,11 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 dockingGizmo.Min,
                 dockingGizmo.Max,
                 _Context->m_Style.FramesRadius,
-                gs_vec4f(
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].x,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].y,
-                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos].z,
-                    128.f),
+                RenderingQueue::construct_rgba_color(
+                    RenderingQueue::retrieve_red_component(_Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]),
+                    RenderingQueue::retrieve_green_component(_Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]),
+                    RenderingQueue::retrieve_blue_component(_Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]),
+                    128),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
             _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -1864,13 +1784,16 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 bool ImmedidateUserInterfaceWindowController::can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked)
 {
     if( // general checks
-        _Context == nullptr ||
-        _Docker  == nullptr ||
-        _Docked  == nullptr ||
+        _Context == nullptr                                     ||
+        _Docker  == nullptr                                     ||
+        _Docked  == nullptr                                     ||
 
-        // check that we are not attaching to self
-        (_Docked->Docker == _Docker->DockerView  ||
-            _Docker->Docker == _Docked->DockerView) ||
+        // check that we are not trying attaching to self
+        _Docker == _Docked                                      ||
+
+        // check that we are not attaching again
+        (_Docked->Docker == _Docker->DockerView                 ||
+         _Docker->Docker == _Docked->DockerView)                ||
 
         (_Docked->TopSnapper   == _Docker->TopSnapperView       ||
         _Docked->LeftSnapper   == _Docker->LeftSnapperView      ||

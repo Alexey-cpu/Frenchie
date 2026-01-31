@@ -38,16 +38,16 @@ namespace Frenchie
         {
             ImmediateUserInterfaceNodeColors_Begin         = 0,
 
-            // window background
+            // windows
             ImmediateUserInterfaceNodeColors_WindowOutline = ImmediateUserInterfaceNodeColors_Begin,
             ImmediateUserInterfaceNodeColors_WindowBackground,
-            
-            // window frame
-            ImmediateUserInterfaceNodeColors_WindowFrameBox,
-            ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered,
             ImmediateUserInterfaceNodeColors_WindowFrameBackground,
-            ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive,
             ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered,
+
+            // tabs
+            ImmediateUserInterfaceNodeColors_TabBackground,
+            ImmediateUserInterfaceNodeColors_TabBackgroundActive,
+            ImmediateUserInterfaceNodeColors_TabBackgroundHovered,
 
             // push button
             ImmediateUserInterfaceNodeColors_PushButtonOutline,
@@ -114,6 +114,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceNodeEvents;
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceNodeMouseHover;
+
         typedef int ImmedidateUserInterfaceDockingAnchor;
         typedef int ImmedidateUserInterfaceRenderingOrder;
         typedef int ImmedidateUserInterfaceRenderingLayer;
@@ -128,40 +129,40 @@ namespace Frenchie
                 Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
                 // window
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline]                      = gs_vec4f(12.f, 64.f, 128.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground]                   = gs_vec4f(12.f, 128.f, 200.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowOutline]                      = RenderingQueue::construct_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowBackground]                   = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]              = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]       = RenderingQueue::construct_rgba_color(20, 32, 20, 255);
                 
-                // window frame
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBox]                     = gs_vec4f(128.f, 128.f, 128.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBoxHovered]              = gs_vec4f(200.f, 200.f, 200.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackground]              = gs_vec4f(12.f, 128.f, 200.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundActive]        = gs_vec4f(32.f, 0.f, 0.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_WindowFrameBackgroundHovered]       = gs_vec4f(32.f, 175.f, 255.f, 255.f);
-                
+                // tabs
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackground]                      = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundActive]                = RenderingQueue::construct_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_TabBackgroundHovered]               = RenderingQueue::construct_rgba_color(128, 128, 128, 255);
+
                 // push button
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonOutline]                  = gs_vec4f(12.f, 64.f, 128.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackground]               = gs_vec4f(200.f, 200.f, 200.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered]        = gs_vec4f(32.f, 175.f, 255.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed]        = gs_vec4f(0.f, 120.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonOutline]                  = RenderingQueue::construct_rgba_color(12, 64, 128, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackground]               = RenderingQueue::construct_rgba_color(200, 200, 200, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundHovered]        = RenderingQueue::construct_rgba_color(32, 175, 255, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_PushButtonBackgroundPressed]        = RenderingQueue::construct_rgba_color(0, 120, 255, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = gs_vec4f(32.f, 200.f, 200.f, 255.f);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = gs_vec4f(32.f, 230.f, 200.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = RenderingQueue::construct_rgba_color(50, 50, 100, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = RenderingQueue::construct_rgba_color(100, 100, 172, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = gs_vec4f(255.f, 255.f, 255.f, 255.f);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = RenderingQueue::construct_rgba_color(255, 255, 255, 255);
             }
 
             ~ImmedidateUserInterfaceStyle(){}
 
-            std::vector<gs_vec4f> Colors;
+            std::vector<RenderingQueueColor> Colors;
 
             // font
             RenderingQueueFont Font;
             float              FontSize = 64.f;
 
             // frames of windows, buttons, child windows e.t.c
-            float FramesRadius = 0.f;
+            float FramesRadius = 32.f;
             float FramesWidth  = 8.f;
         };
 
