@@ -468,12 +468,42 @@ namespace Frenchie
         {
             ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
             virtual ~ImmediateUserInterfaceWindowCentralDocker(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
         };
 
         struct ImmediateUserInterfaceWindowVerticalSnapper : public ImmediateUserInterfaceNodeVerticalStack
         {
             ImmediateUserInterfaceWindowVerticalSnapper(const std::string& _Name) : ImmediateUserInterfaceNodeVerticalStack(_Name){}
             virtual ~ImmediateUserInterfaceWindowVerticalSnapper(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
         };
 
         struct ImmediateUserInterfaceWindowHorizontalSnapper : public ImmediateUserInterfaceNodeHorizontalStack
@@ -499,6 +529,21 @@ namespace Frenchie
                     return;
                 
                 ImmediateUserInterfaceNodeHorizontalStack::events(_Context, _Event);
+            }
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.FramesRadius,
+                    _Context->m_Hierarchy.get_parent(this) ?
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
     }
@@ -1066,40 +1111,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // content background and outline frame
-    {
-        // background
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.FramesWidth,
-            State.BoundingBox.Max - _Context->m_Style.FramesWidth,
-            _Context->m_Style.FramesRadius,
-            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-        // background frame
-        _Context->m_Renderer->push_rectangle_rounded(
-            State.BoundingBox.Min + _Context->m_Style.FramesWidth,
-            State.BoundingBox.Max - _Context->m_Style.FramesWidth,
-            _Context->m_Style.FramesRadius,
-            _Context->m_Style.FramesWidth,
-            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
-
-    // background
     _Context->m_Renderer->push_rectangle_rounded_filled(
-        ContentBox.Min + _Context->m_Style.FramesWidth,
-        ContentBox.Max - _Context->m_Style.FramesWidth,
+        State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+        State.BoundingBox.Max - _Context->m_Style.FramesWidth,
         _Context->m_Style.FramesRadius,
-        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // background frame
-    _Context->m_Renderer->push_rectangle_rounded(
-        ContentBox.Min + _Context->m_Style.FramesWidth,
-        ContentBox.Max - _Context->m_Style.FramesWidth,
-        _Context->m_Style.FramesRadius,
-        _Context->m_Style.FramesWidth,
-        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // frame
@@ -1151,34 +1167,18 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                 if(_Window->DockingActive)
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.FramesWidth,
-                        _Frame.Max - _Context->m_Style.FramesWidth,
+                        _Frame.Min,
+                        _Frame.Max,
                         _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        _Frame.Min + _Context->m_Style.FramesWidth,
-                        _Frame.Max - _Context->m_Style.FramesWidth,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
                 else if(_Frame.contains(event.CursorPosition))
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.FramesWidth,
-                        _Frame.Max - _Context->m_Style.FramesWidth,
+                        _Frame.Min,
+                        _Frame.Max,
                         _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        _Frame.Min + _Context->m_Style.FramesWidth,
-                        _Frame.Max - _Context->m_Style.FramesWidth,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
