@@ -135,11 +135,11 @@ namespace Frenchie
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]        = RenderingQueue::construct_rgba_color(120, 128, 120, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                             = RenderingQueue::construct_rgba_color(50, 50, 100, 200);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                      = RenderingQueue::construct_rgba_color(100, 100, 172, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                         = RenderingQueue::construct_rgba_color(50, 50, 100, 200);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                  = RenderingQueue::construct_rgba_color(100, 100, 172, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                               = RenderingQueue::construct_rgba_color(255, 255, 255, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                           = RenderingQueue::construct_rgba_color(255, 255, 255, 255);
             }
 
             ~ImmedidateUserInterfaceStyle(){}
