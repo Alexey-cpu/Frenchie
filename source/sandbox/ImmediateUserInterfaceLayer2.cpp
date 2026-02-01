@@ -110,17 +110,11 @@ namespace Frenchie
 
                             ImmediateUserInterfaceWindow* window =
                                 dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                            if(window != nullptr)
-                                window->DockingActive = false;
                         }
 
                         _Docked->State.RenderingOrder = renderingOrder++;
-                        _Docked->DockingActive        = true;
 
                         auto docker = retrieve_docker_by_view(_Context, _Docked->Docker);
-                        if(docker != nullptr)
-                            docker->DockingActive = false;
 
                         return;
                     }
@@ -138,16 +132,71 @@ namespace Frenchie
 
                         ImmediateUserInterfaceWindow* window =
                             dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                        if(window != nullptr)
-                            window->DockingActive = false;
                     }
                     _Docked->SnapperView->State.RenderingOrder = renderingOrder++;
-                    
-                    _Docked->DockingActive =
-                        _Context->m_Hierarchy.count(
-                            _Docked->DockerView,
-                            [](ImmediateUserInterfaceNode* _Node){return dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);}) > 0;
+                }
+
+                bool is_docking_window_is_active(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window)
+                {
+                    if(_Context == nullptr || _Window == nullptr)
+                        return false;
+
+                    bool active = false;
+
+                    if(_Window->Docker != nullptr)
+                    {
+                        // detect if self active
+                        bool selfActive = false;
+
+                        {
+                            auto dockedWindows =
+                                _Context->get_controller<ImmedidateUserInterfaceWindowController>()
+                                    ->retrieve_docked_windows(_Context, _Window->Docker, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+                            int maximumRenderingOrder = 0;
+
+                            for (auto dockedWindow : dockedWindows)
+                                maximumRenderingOrder = gs_max(maximumRenderingOrder, dockedWindow->State.RenderingOrder);
+                            
+                            selfActive = _Window->State.RenderingOrder == maximumRenderingOrder;
+                        }
+
+                        // detect if docker active
+                        bool dockerActive = false;
+
+                        {
+                            ImmediateUserInterfaceWindow * docker =
+                                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Window->Docker);
+
+                            int maximumRenderingOrder = 0;
+
+                            for (auto it = _Context->m_Hierarchy.begin(docker->DockerView);
+                                    it != _Context->m_Hierarchy.end(docker->DockerView);
+                                    it++)
+                            {
+                                maximumRenderingOrder = gs_max(maximumRenderingOrder, (*it)->State.RenderingOrder);
+                            }
+
+                            dockerActive = docker->SnapperView->State.RenderingOrder == maximumRenderingOrder;
+                        }
+
+                        active = selfActive && !dockerActive;
+                    }
+                    else
+                    {
+                        int maximumRenderingOrder = 0;
+
+                        for (auto it = _Context->m_Hierarchy.begin(_Window->DockerView);
+                                it != _Context->m_Hierarchy.end(_Window->DockerView);
+                                it++)
+                        {
+                            maximumRenderingOrder = gs_max(maximumRenderingOrder, (*it)->State.RenderingOrder);
+                        }
+
+                        active = _Window->SnapperView->State.RenderingOrder == maximumRenderingOrder;
+                    }
+
+                    return active;
                 }
 
                 ImmediateUserInterfaceWindow*
@@ -1111,6 +1160,14 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // content background and outline frame
+    _Context->m_Renderer->push_rectangle_rounded(
+        State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+        State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+        _Context->m_Style.FramesRadius,
+        _Context->m_Style.FramesWidth,
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min + _Context->m_Style.FramesWidth,
         State.BoundingBox.Max - _Context->m_Style.FramesWidth,
@@ -1140,6 +1197,9 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             // construct events
             ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
 
+            // detect if we are active
+            bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_is_active(_Context, _Window);
+
             // render frame
             if(_Window->Docker == nullptr &&
                 _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
@@ -1147,6 +1207,29 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                     _Window,
                     ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
             {
+                // frame
+                if(_Frame.contains(event.CursorPosition) &&
+                    (_Window->TopSnapper    != nullptr ||
+                     _Window->LeftSnapper   != nullptr ||
+                     _Window->RightSnapper  != nullptr ||
+                     _Window->BottomSnapper != nullptr))
+                {
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        _Frame.Min,
+                        _Frame.Max,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Frame.Min,
+                        _Frame.Max,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+
                 // close button
                 if(_Window->Opened != nullptr)
                 {
@@ -1164,8 +1247,17 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             }
             else
             {
-                if(_Window->DockingActive)
+                // frame
+                if(active)
                 {
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        _Frame.Min,
+                        _Frame.Max,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
                     _Context->m_Renderer->push_rectangle_rounded_filled(
                         _Frame.Min,
                         _Frame.Max,
@@ -1175,6 +1267,14 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                 }
                 else if(_Frame.contains(event.CursorPosition))
                 {
+                    _Context->m_Renderer->push_rectangle_rounded(
+                        _Frame.Min,
+                        _Frame.Max,
+                        _Context->m_Style.FramesRadius,
+                        _Context->m_Style.FramesWidth,
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
                     _Context->m_Renderer->push_rectangle_rounded_filled(
                         _Frame.Min,
                         _Frame.Max,
@@ -1186,7 +1286,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                 // close button
                 if(_Window->Opened != nullptr)
                 {
-                    if(_Window->DockingActive || _Frame.contains(event.CursorPosition))
+                    if(active || _Frame.contains(event.CursorPosition))
                     {
                         gs_2dboxf closeButtonBox  = gs_2dboxf(
                             gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) - _Frame.height() / 4.f,
@@ -1260,14 +1360,13 @@ void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
             // focus and activity
             if(_Event.MousePressed.has_value() && _Frame.contains(_Event.CursorPosition))
             {
-                _Context->get_controller<ImmedidateUserInterfaceWindowController>()->push_event(
-                    [_Window](ImmediateUserInterfaceContextLayer* _Context)
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
-                            _Context,
-                            _Window,
-                            [](const ImmediateUserInterfaceNode*)->bool{return true;});
-                    });
+                _Context->get_controller<ImmedidateUserInterfaceWindowController>()->push_event([_Window](ImmediateUserInterfaceContextLayer* _Context)
+                {
+                    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
+                        _Context,
+                        _Window,
+                        [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
+                });
             }
 
             // move
@@ -1893,7 +1992,7 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
             ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
 
         if(!dockedWindows.empty() &&
-            (_Detached->TopSnapper    != nullptr ||
+            (_Detached->TopSnapper       != nullptr ||
                 _Detached->LeftSnapper   != nullptr ||
                 _Detached->RightSnapper  != nullptr ||
                 _Detached->BottomSnapper != nullptr))
@@ -1943,16 +2042,6 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
                     [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
             });
         }
-        else
-        {
-            push_event([_Detached](ImmediateUserInterfaceContextLayer* _Context)
-            {
-                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
-                    _Context,
-                    _Detached,
-                    [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
-            });
-        }
 
         // detach self
         _Detached->TopSnapper    = nullptr;
@@ -1979,7 +2068,8 @@ std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowControlle
     m_WindowsDockingList.clear();
 
     ImmediateUserInterfaceWindow* docker =
-        dynamic_cast<ImmediateUserInterfaceWindow*>(_Docker);
+        dynamic_cast<ImmediateUserInterfaceWindow*>(
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Docker));
 
     if(docker == nullptr)
         return m_WindowsDockingList;

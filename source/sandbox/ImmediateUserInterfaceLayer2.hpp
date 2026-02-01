@@ -258,7 +258,6 @@ namespace Frenchie
             bool*                       Opened            {nullptr};
 
             int                         DockingIndex      {-1};
-            int                         DockingActive     {false};
 
             // docking
             ImmediateUserInterfaceNode* DockerView        {nullptr};
