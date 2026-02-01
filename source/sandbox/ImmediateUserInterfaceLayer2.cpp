@@ -1175,6 +1175,13 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        FrameBox.Min + _Context->m_Style.FramesWidth,
+        FrameBox.Max - _Context->m_Style.FramesWidth,
+        _Context->m_Style.FramesRadius,
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
     // frame
     ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
         _Context,
@@ -1214,17 +1221,9 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                      _Window->RightSnapper  != nullptr ||
                      _Window->BottomSnapper != nullptr))
                 {
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        _Frame.Min,
-                        _Frame.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min,
-                        _Frame.Max,
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -1250,34 +1249,18 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                 // frame
                 if(active)
                 {
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        _Frame.Min,
-                        _Frame.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min,
-                        _Frame.Max,
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
                 else if(_Frame.contains(event.CursorPosition))
                 {
-                    _Context->m_Renderer->push_rectangle_rounded(
-                        _Frame.Min,
-                        _Frame.Max,
-                        _Context->m_Style.FramesRadius,
-                        _Context->m_Style.FramesWidth,
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min,
-                        _Frame.Max,
+                        _Frame.Min + _Context->m_Style.FramesWidth,
+                        _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
