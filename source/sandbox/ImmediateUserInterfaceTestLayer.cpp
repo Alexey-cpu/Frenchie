@@ -108,6 +108,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     // }
 
     static bool opened = true;
+    static std::string button;
 
     if(m_ImmediateUserInterface->begin_window(
         "Window-2",
@@ -116,9 +117,9 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     {
         if(m_ImmediateUserInterface->begin_horizontal_stack("Window-2/Stack"))
         {
-            m_ImmediateUserInterface->push_button("Button-1");
-            m_ImmediateUserInterface->push_button("Button-2");
-            m_ImmediateUserInterface->push_button("Button-3");
+            if(m_ImmediateUserInterface->push_button("Button-1")) button = "Button-1";
+            if(m_ImmediateUserInterface->push_button("Button-2")) button = "Button-2";
+            if(m_ImmediateUserInterface->push_button("Button-3")) button = "Button-3";
 
             m_ImmediateUserInterface->end_horizontal_stack();
         }
@@ -134,9 +135,9 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     {
         if(m_ImmediateUserInterface->begin_vertial_stack("Window-3/Stack"))
         {
-            m_ImmediateUserInterface->push_button("Button-4");
-            m_ImmediateUserInterface->push_button("Button-5");
-            m_ImmediateUserInterface->push_button("Button-6");
+            if(m_ImmediateUserInterface->push_button("Button-4")) button = "Button-4";
+            if(m_ImmediateUserInterface->push_button("Button-5")) button = "Button-5";
+            if(m_ImmediateUserInterface->push_button("Button-6")) button = "Button-6";
 
             m_ImmediateUserInterface->end_vertical_stack();
         }
@@ -186,6 +187,16 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 128.f)
+        )
+    );
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("Pressed ").append(button),
+        64.f,
+        RenderingQueue::construct_rgba_color(255, 0, 0, 255),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
+            gs_vec2f(0.f, 256.f)
         )
     );
 }
