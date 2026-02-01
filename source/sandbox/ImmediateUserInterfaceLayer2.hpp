@@ -245,11 +245,11 @@ namespace Frenchie
             virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
+            ImmediateUserInterfaceNode* Docker        {nullptr};
             ImmediateUserInterfaceNode* TopSnapper    {nullptr};
             ImmediateUserInterfaceNode* LeftSnapper   {nullptr};
             ImmediateUserInterfaceNode* RightSnapper  {nullptr};
             ImmediateUserInterfaceNode* BottomSnapper {nullptr};
-            ImmediateUserInterfaceNode* Docker        {nullptr};
 
             gs_2dboxf                   FrameBox;
 
@@ -260,15 +260,15 @@ namespace Frenchie
             int                         DockingIndex      {-1};
             int                         DockingActive     {false};
 
+            // docking
+            ImmediateUserInterfaceNode* DockerView        {nullptr};
+
             // snapping
             ImmediateUserInterfaceNode* SnapperView       {nullptr};
             ImmediateUserInterfaceNode* TopSnapperView    {nullptr};
             ImmediateUserInterfaceNode* LeftSnapperView   {nullptr};
             ImmediateUserInterfaceNode* RightSnapperView  {nullptr};
             ImmediateUserInterfaceNode* BottomSnapperView {nullptr};
-
-            // docking
-            ImmediateUserInterfaceNode* DockerView        {nullptr};
 
             // content
             ImmediateUserInterfaceNode* ContentView       {nullptr};
