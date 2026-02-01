@@ -188,6 +188,7 @@ void Immediate2DRenderer::push_rendering_command(
     // clean-up
     m_Indexes.clear();
     m_Vertexes.clear();
+    m_PathSegments.clear();
 }
 
 void Immediate2DRenderer::push_rendering_command(
