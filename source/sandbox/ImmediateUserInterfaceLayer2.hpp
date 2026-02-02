@@ -151,7 +151,7 @@ namespace Frenchie
             float              FontSize = 64.f;
 
             // frames of windows, buttons, child windows e.t.c
-            float FramesRadius = 32.f;
+            float FramesRadius = 0.f;
             float FramesWidth  = 8.f;
         };
 
@@ -282,9 +282,11 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
         };
 
-        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
         {
         public:
             ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
@@ -293,7 +295,7 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
         {
         public:
             ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
