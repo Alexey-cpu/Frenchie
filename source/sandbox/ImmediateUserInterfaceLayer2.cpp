@@ -528,8 +528,8 @@ namespace Frenchie
                     State.BoundingBox.Max - _Context->m_Style.FramesWidth,
                     _Context->m_Style.FramesRadius,
                     _Context->m_Hierarchy.get_parent(this) ?
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
@@ -549,8 +549,8 @@ namespace Frenchie
                     State.BoundingBox.Max - _Context->m_Style.FramesWidth,
                     _Context->m_Style.FramesRadius,
                     _Context->m_Hierarchy.get_parent(this) ?
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
@@ -590,8 +590,8 @@ namespace Frenchie
                     State.BoundingBox.Max - _Context->m_Style.FramesWidth,
                     _Context->m_Style.FramesRadius,
                     _Context->m_Hierarchy.get_parent(this) ?
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground] :
-                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground] :
+                        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
@@ -1165,7 +1165,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         State.BoundingBox.Max - _Context->m_Style.FramesWidth,
         _Context->m_Style.FramesRadius,
         _Context->m_Style.FramesWidth,
-        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+        _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -1315,11 +1315,11 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
         State.BoundingBox.Max);
 
-    if(_Context->m_Hierarchy.get_parent(this) == nullptr || TopSnapper || LeftSnapper || RightSnapper || BottomSnapper)
-    {
-        ContentBox = gs_2dboxf(ContentBox.Min + _Context->m_Style.FramesWidth, ContentBox.Max - _Context->m_Style.FramesWidth);
-        FrameBox   = gs_2dboxf(FrameBox.Min + _Context->m_Style.FramesWidth, FrameBox.Max - _Context->m_Style.FramesWidth);
-    }
+    // if(_Context->m_Hierarchy.get_parent(this) == nullptr || TopSnapper || LeftSnapper || RightSnapper || BottomSnapper)
+    // {
+    //     ContentBox = gs_2dboxf(ContentBox.Min + _Context->m_Style.FramesWidth, ContentBox.Max - _Context->m_Style.FramesWidth);
+    //     FrameBox   = gs_2dboxf(FrameBox.Min + _Context->m_Style.FramesWidth, FrameBox.Max - _Context->m_Style.FramesWidth);
+    // }
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
@@ -1460,15 +1460,15 @@ void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer*
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min,
-        State.BoundingBox.size(),
+        State.BoundingBox.Min + ContentPadding,
+        State.BoundingBox.size() - ContentPadding * 2.f,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
 void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmediateUserInterfaceNodeVerticalStack
-ImmediateUserInterfaceNodeVerticalStack::ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceNodeVerticalStack::ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceNodeVerticalStack::~ImmediateUserInterfaceNodeVerticalStack(){}
 
 void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -1479,15 +1479,15 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min,
-        State.BoundingBox.size(),
+        State.BoundingBox.Min + ContentPadding,
+        State.BoundingBox.size() - ContentPadding * 2.f,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
 void ImmediateUserInterfaceNodeVerticalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmediateUserInterfaceNodeHorizontalStack
-ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceNodeHorizontalStack::~ImmediateUserInterfaceNodeHorizontalStack(){}
 
 void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -1498,8 +1498,8 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min,
-        State.BoundingBox.size(),
+        State.BoundingBox.Min + ContentPadding,
+        State.BoundingBox.size() - ContentPadding * 2.f,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
@@ -2617,6 +2617,7 @@ bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, co
                         _Settings))
                     {
                         window->ContentView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+                        get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = m_Style.FramesWidth;
                         end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
                     }
 
