@@ -12,10 +12,15 @@ namespace Frenchie
 {
     namespace Application
     {
-        class Immediate2DRendererPathSegment
+        struct Immediate2DRendererPathSegment
         {
         public:
-            Immediate2DRendererPathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float _Width = 4.f)
+            Immediate2DRendererPathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width = 4.f)
+            {
+                setup(_P1, _P2, _Width);
+            }
+
+            void setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float _Width)
             {
                 P1 = _P1;
                 P2 = _P2;
@@ -29,6 +34,11 @@ namespace Frenchie
                 P2max = _P2 + perpendicular;
             }
 
+            void setup(const float& _Width)
+            {
+                setup(P1, P2, _Width);
+            }
+
             gs_vec2f P1;
             gs_vec2f P1min;
             gs_vec2f P1max;
@@ -36,24 +46,52 @@ namespace Frenchie
             gs_vec2f P2;
             gs_vec2f P2min;
             gs_vec2f P2max;
+
+            bool     Index{0};
         };
 
-        class Immediate2DRendererPathBuilder
+        struct Immediate2DRendererPathBuilder
         {
         public:
 
-            void push_segment(
-                const gs_vec2f&                              _P1,
-                const gs_vec2f&                              _P2,
-                const float                                  _Width,
-                std::vector<Immediate2DRendererPathSegment>& _Segments)
+            Immediate2DRendererPathBuilder(const gs_vec2f& _Point = gs_vec2f(0.f, 0.f)) : m_Source(_Point){}
+
+            // TODO: add Bezier and random power curves here e.t.c
+            void line_to(const gs_vec2f& _Target, std::vector<Immediate2DRendererPathSegment>& _Segments)
             {
-                _Segments.push_back(Immediate2DRendererPathSegment(_P1, _P2, _Width));
+                _Segments.push_back(Immediate2DRendererPathSegment(m_Source, _Target, m_DefaultWidth));
+                m_Source = _Target;
+            }
+
+            void arc_to(const gs_vec2f& _Target, const float& _Radius, std::vector<Immediate2DRendererPathSegment>& _Segments)
+            {
+                // calculate ellipse data
+                gs_complex<float> perpendicular  = gs_cnormf<float>(gs_complex<float>((_Target - m_Source).x, (_Target - m_Source).y)) * gs_complex<float>(0.f, 1.f);
+                gs_vec2f          center         = (m_Source + (_Target - m_Source) * 0.5f) + gs_vec2f(gs_realf(perpendicular), gs_imagf(perpendicular)) * _Radius;
+                float             sourceAngle    = gs_to_degrees(atan2((m_Source - center).y, (m_Source - center).x));
+                float             targetAngle    = gs_to_degrees(atan2((_Target - center).y, (_Target - center).x));
+                float             radius         = (float)gs_vector_length(center - _Target);
+                int               segmentsCount  = 36; // TODO: how to compute approximate ellipse segments count ???
+                
+                if(gs_abs(targetAngle - sourceAngle) < 1e-3) return;
+                
+                float angleIncrement = gs_abs((targetAngle - sourceAngle) / segmentsCount);
+
+                for (float angle = sourceAngle; angle <= targetAngle; angle += angleIncrement)
+                {
+                    line_to(gs_vec2f(
+                        center.x + radius * cos(gs_to_radians(angle)),
+                        center.y + radius * sin(gs_to_radians(angle))),
+                        _Segments);
+                }
+
+                line_to(_Target, _Segments);
             }
 
             void build_mesh(
                 const RenderingQueueColor&                   _Color,
                 const RenderingQueueTexture&                 _Texture,
+                const float&                                 _Width,
                 std::vector<Immediate2DRendererPathSegment>& _Segments,
                 std::vector<RenderingQueueVertex>&           _Vertexes,
                 std::vector<int>&                            _Indexes)
@@ -63,6 +101,8 @@ namespace Frenchie
 
                 if (_Segments.size() == 1)
                 {
+                    _Segments[0].setup(_Width);
+
                     build_triangle_filled_mesh(
                         _Segments[0].P1min,
                         _Segments[0].P2min,
@@ -98,6 +138,8 @@ namespace Frenchie
 
                 for (int i = 0; i < (int)_Segments.size(); i++)
                 {
+                    _Segments[get_element(i, (int)_Segments.size())].setup(_Width);
+
                     build_triangle_filled_mesh(
                         _Segments[get_element(i, (int)_Segments.size())].P1min,
                         _Segments[get_element(i, (int)_Segments.size())].P2min,
@@ -116,8 +158,11 @@ namespace Frenchie
                         _Vertexes,
                         _Indexes);
 
+                    // TODO: need another algorithm of lines smoothing
                     if(i-1 >= 0 || pathIsClosed)
                     {
+                        _Segments[get_element(i-1, (int)_Segments.size())].setup(_Width);
+
                         build_triangle_filled_mesh(
                             _Segments[i].P1max,
                             _Segments[get_element(i-1, (int)_Segments.size())].P2max,
@@ -141,7 +186,106 @@ namespace Frenchie
                 _Segments.clear();
             }
 
+            void build_mesh_filled_no_convex(
+                const RenderingQueueColor&                   _Color,
+                const RenderingQueueTexture&                 _Texture,
+                std::vector<Immediate2DRendererPathSegment>& _PolygonLines,
+                std::vector<int>&                            _PolygonTriangulatedIndexes,
+                std::vector<RenderingQueueVertex>&           _Vertexes,
+                std::vector<int>&                            _Indexes)
+            {
+                // auxiliary lambdas
+                auto get_element = [](const int& _Index, const int& _Size)->int
+                {
+                    int index = _Index;
+                    while (index < 0)      index += _Size;
+                    while (index >= _Size) index -= _Size;
+                    return index;
+                };
+
+                // checks
+
+                // no triangles
+                if((int)_PolygonLines.size() < 3)
+                {
+                    _PolygonLines.clear();
+                    _PolygonTriangulatedIndexes.clear();
+                    return;
+                }
+
+                // triangle
+                if((int)_PolygonLines.size() == 3)
+                {
+                    build_triangle_filled_mesh(
+                        _PolygonLines[0].P1,
+                        _PolygonLines[1].P1,
+                        _PolygonLines[2].P1,
+                        _Color,
+                        _Texture,
+                        _Vertexes,
+                        _Indexes);
+
+                    _PolygonLines.clear();
+                    _PolygonTriangulatedIndexes.clear();
+                    return;
+                }
+
+                // fill triangulation queue
+                for (int i = 0; i < (int)_PolygonLines.size(); i++)
+                {
+                    _PolygonLines[i].Index = i;
+                    _PolygonTriangulatedIndexes.push_back(i);
+                }
+
+                // triangulate polygon
+                while (_PolygonTriangulatedIndexes.size() > 2)
+                {
+                    for (int i = 0; i < (int)_PolygonTriangulatedIndexes.size(); i++)
+                    {
+                        // construct triangle
+                        int      ia = _PolygonTriangulatedIndexes[get_element(i, (int)_PolygonTriangulatedIndexes.size())    ];
+                        int      ib = _PolygonTriangulatedIndexes[get_element(i - 1, (int)_PolygonTriangulatedIndexes.size())];
+                        int      ic = _PolygonTriangulatedIndexes[get_element(i + 1, (int)_PolygonTriangulatedIndexes.size())];
+                        gs_vec2f pa = _PolygonLines[ia].P1;
+                        gs_vec2f pb = _PolygonLines[ib].P1;
+                        gs_vec2f pc = _PolygonLines[ic].P1;
+
+                        // detect if this triangle is an ear, i.e there are no other points besides
+                        // this triangle points that are inside this triangle
+                        bool isEar = true;
+
+                        for (int j = 0; j < (int)_PolygonLines.size(); j++)
+                        {
+                            if( _PolygonLines[j].Index == _PolygonLines[ia].Index ||
+                                _PolygonLines[j].Index == _PolygonLines[ib].Index ||
+                                _PolygonLines[j].Index == _PolygonLines[ic].Index) continue;
+
+                            gs_vec2f poly[3] = {pa, pb, pc};
+
+                            if(gs_point_in_2D_polygon(poly, 3, gs_vec2f(_PolygonLines[j].P1)))
+                            {
+                                isEar = false;
+                                break;
+                            }
+                        }
+
+                        if(isEar || _PolygonTriangulatedIndexes.size() <= 3)
+                        {
+                            build_triangle_filled_mesh(pb, pa, pc, _Color, _Texture, _Vertexes, _Indexes);
+                            _PolygonTriangulatedIndexes.erase(_PolygonTriangulatedIndexes.begin() + i);
+                            break;
+                        }
+                    }
+                }
+
+                _PolygonLines.clear();
+                _PolygonTriangulatedIndexes.clear();
+            }
+
         protected:
+
+            gs_vec2f m_Source       = gs_vec2f(0.f, 0.f);
+            float    m_DefaultWidth = 4.f;
 
             // service methods
             void build_triangle_filled_mesh(
@@ -243,7 +387,16 @@ namespace Frenchie
                 const float&              _Size,
                 const RenderingQueueFont& _Font);
 
-            // ready to use rendering commands API
+            // path building and rendering API
+            void begin_path(const gs_vec2f& _Source);
+
+            void current_path_line_to(const gs_vec2f& _Target);
+            void current_path_arc_to(const gs_vec2f& _Target, const float& _Radius);
+
+            void push_current_path(const RenderingQueueColor& _Color, const float& _Width, const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void push_current_path_filled(const RenderingQueueColor& _Color, const gs_mat4f& _Transform = gs_mat4f(1.f));
+
+            // graphical primitives rendering API
             void push_triangle_filled(
                 const gs_vec2f&              _P1,
                 const gs_vec2f&              _P2,
@@ -337,7 +490,9 @@ namespace Frenchie
                 const RenderingQueueColor& _Color,
                 const gs_mat4f&            _Transform = gs_mat4f(1.f));
 
-            // mesh building API
+        private:
+
+            // auxiliary mesh building API
             void build_triangle_filled_mesh(
                 const gs_vec2f&              _P1,
                 const gs_vec2f&              _P2,
@@ -358,25 +513,6 @@ namespace Frenchie
                 const gs_vec2f&            _MaxUV,
                 const RenderingQueueColor& _Color);
 
-            void build_rectangle_rounded_filled_mesh(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const float&               _Radius,
-                const RenderingQueueColor& _Color);
-
-            void build_push_rectangle_mesh(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const float&               _Width,
-                const RenderingQueueColor& _Color);
-
-            void build_rectangle_rounded_mesh(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const float&               _Radius,
-                const float&               _Width,
-                const RenderingQueueColor& _Color);
-
             void build_arc_filled_mesh(
                 const gs_vec2f&              _Center,
                 const float&                 _MinorRadius,
@@ -395,131 +531,28 @@ namespace Frenchie
                 const RenderingQueueTexture& _Texture);
 
             void build_arc_mesh(
-                const gs_vec2f&                              _Center,
-                const float&                                 _MinorRadius,
-                const float&                                 _MajorRadius,
-                const float&                                 _SourceAngle,
-                const float&                                 _TargetAngle,
-                const float&                                 _LineWidth,
-                const RenderingQueueColor&                   _Color,
-                const RenderingQueueTexture&                 _Texture,
-                const int&                                   _SegmentsCount = 36);
+                const gs_vec2f&              _Center,
+                const float&                 _MinorRadius,
+                const float&                 _MajorRadius,
+                const float&                 _SourceAngle,
+                const float&                 _TargetAngle,
+                const float&                 _LineWidth,
+                const RenderingQueueColor&   _Color,
+                const RenderingQueueTexture& _Texture,
+                const int&                   _SegmentsCount = 36);
 
-            // this is a plipeline
-            std::vector<gs_vec4f>                       m_ClearColors;
-            std::vector<gs_2dboxf>                      m_Clippingboxes;
-            std::vector<Immediate2DRendererPathSegment> m_PathSegments;
-            std::vector<RenderingQueueVertex>           m_Vertexes;
-            std::vector<int>                            m_Indexes;
-            gs_2dboxf                                   m_Viewport      {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::shared_ptr<RenderingQueue>             m_RenderingQueue{nullptr};
+            // rendering queue data
+            std::shared_ptr<RenderingQueue>             m_RenderingQueue        {nullptr};
+            gs_2dboxf                                   m_RenderingQueueViewport{gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_vec4f>                       m_RenderingQueueClearColors;
+            std::vector<gs_2dboxf>                      m_RenderingQueueClippingBoxes;
+            std::vector<RenderingQueueVertex>           m_RenderingQueueMeshVertexes;
+            std::vector<int>                            m_RenderingQueueMeshVertexesIndexes;
+
+            // path building data
+            Immediate2DRendererPathBuilder              m_PathBuilder;
+            std::vector<Immediate2DRendererPathSegment> m_PathBuilderPolygonLines;
+            std::vector<int>                            m_PathBuilderPolygonLinesIndexes;
         };
     }
 }
-
-// template<typename ...Args>
-// void push_polygon(
-
-//     const float&                       _Depth,
-//     const RenderingQueueTexture&       _Texture,
-//     const RenderingQueueColor& _Color,
-//     const gs_mat4f&                    _Transform,
-//     Args ...                           _Args);
-
-// template<typename Head, typename ...Args>
-// void push_polygon(
-//     const float&                       _Depth,
-//     const RenderingQueueTexture&       _Texture,
-//     const RenderingQueueColor& _Color,
-//     const gs_mat4f&                    _Transform,
-//     const Head&                        _Point,
-//     Args ...                           _Args)
-// {
-//     m_TriangulationQueue.push_back(
-//         RenderingQueueVertex(
-//             gs_vec3f(static_cast<gs_vec2f>(_Point), 1.f),
-//             gs_vec3f(0.f),
-//             gs_vec2f(0.f),
-//             _Color
-//         )
-//     );
-
-//     push_polygon(_Depth, _Texture, _Color, _Transform, static_cast<gs_vec2f>(_Args)...);
-// }
-
-// template<>
-// void push_polygon(
-//     const float&                       _Depth,
-//     const RenderingQueueTexture&       _Texture,
-//     const RenderingQueueColor& _Color,
-//     const gs_mat4f&                    _Transform)
-// {
-//     auto get_item = [](
-//         const std::vector<int>& _Vertexes,
-//         const int&              _Index)->int
-//     {
-//         int index = _Index;
-
-//         while(index < 0)
-//             index += (int)_Vertexes.size();
-
-//         while(index >= (int)_Vertexes.size())
-//             index -= (int)_Vertexes.size();
-
-//         return _Vertexes[index];
-//     };
-
-//     for (int i = 0; i < (int)m_TriangulationQueue.size(); i++)
-//         m_TriangulationIndexes.push_back(i);
-
-//     // triangulate
-//     while (m_TriangulationIndexes.size() > 2)
-//     {
-//         for (int i = 0; i < (int)m_TriangulationIndexes.size(); i++)
-//         {
-//             int ia = get_item(m_TriangulationIndexes, i);
-//             int ib = get_item(m_TriangulationIndexes, i - 1);
-//             int ic = get_item(m_TriangulationIndexes, i + 1);
-
-//             auto a = m_TriangulationQueue[ia].Position;
-//             auto b = m_TriangulationQueue[ib].Position;
-//             auto c = m_TriangulationQueue[ic].Position;
-
-//             if(gs_vector_cross(gs_vec2f(b - a), gs_vec2f(c - a)) < 0)
-//                 continue;
-
-//             bool isEar = true;
-
-//             for (int j = 0; j < (int)m_TriangulationQueue.size(); j++)
-//             {
-//                 if(j == ia || j == ib || j == ic)
-//                     continue;
-
-//                 gs_vec2f poly[3] = {a, b, c};
-
-//                 if(gs_point_in_2D_polygon(poly, 3, gs_vec2f(m_TriangulationQueue[j].Position)))
-//                 {
-//                     isEar = false;
-//                     break;
-//                 }
-//             }
-
-//             if(isEar)
-//             {
-//                 m_Vertexes.push_back(b);
-//                 m_Vertexes.push_back(a);
-//                 m_Vertexes.push_back(c);
-//                 m_TriangulationIndexes.erase(m_TriangulationIndexes.begin() + i);
-//                 break;
-//             }
-//         }
-//     }
-    
-//     for (int i = 0; i < m_Vertexes.size(); i++)
-//         m_Indexes.push_back(i);
-
-//     m_TriangulationQueue.clear();
-//     m_TriangulationIndexes.clear();
-
-//     push_rendering_command(m_DefaultTexture, _Color, _Transform);
-// }

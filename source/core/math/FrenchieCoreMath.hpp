@@ -288,7 +288,7 @@ protected:
 
     static Type complex_abs(const complex_plain& _Number)
     {
-        return _Number.REAL == 0.0 && _Number.IMAG == 0.0 ? 0.0 : sqrt(_Number.REAL * _Number.REAL + _Number.IMAG * _Number.IMAG);
+        return (Type)(_Number.REAL == 0.0 && _Number.IMAG == 0.0 ? 0.0 : sqrt(_Number.REAL * _Number.REAL + _Number.IMAG * _Number.IMAG));
     }
 
     static Type complex_argument(const complex_plain& _Number)
@@ -374,7 +374,7 @@ gs_imagf(const Type& _Number)
 template<typename Type>
 inline Type gs_cabsf(const gs_complex<Type>& _complex)
 {
-    return __cabsf__(_complex);
+    return gs_complex<Type>::complex_abs(_complex.m_data);
 }
 
 template<typename Type>
@@ -386,7 +386,7 @@ Type gs_cargf(const gs_complex<Type>& _Number)
 template<typename Type> gs_complex<Type>
 gs_csqrtf(const gs_complex<Type>& _Number)
 {
-    Type abs = __cabsf__(_Number);
+    Type abs = gs_cabsf(_Number);
     Type arg = gs_cargf(_Number);
     return gs_complex<Type>(cos(arg * 0.5), sin(arg * 0.5)) * sqrt(abs);
 }
@@ -394,7 +394,7 @@ gs_csqrtf(const gs_complex<Type>& _Number)
 template<typename Type> gs_complex<Type>
 gs_cpowf(const gs_complex<Type>& _Number, const Type& _Power)
 {
-    Type abs = __cabsf__(_Number);
+    Type abs = gs_cabsf(_Number);
     Type arg = gs_cargf(_Number);
     return gs_complex<Type>(cos(arg * _Power), sin(arg * _Power)) * pow(abs, _Power);
 }
@@ -408,8 +408,9 @@ gs_conjf(const gs_complex<Type>& _Number)
 template<typename Type> gs_complex<Type>
 gs_cnormf(const gs_complex<Type>& _Number)
 {
-    Type abs = __cabsf__(_Number);
-    return gs_complex<Type>(_Number / (abs < 1e-12 ? 1.0 : abs));
+    Type abs = gs_cabsf(_Number);
+    abs = (Type)(abs < 1e-12 ? (Type)1.0 : abs);
+    return gs_complex<Type>(gs_realf(_Number) / abs, gs_imagf(_Number) / abs);
 }
 
 template<typename Type> gs_complex<Type>
