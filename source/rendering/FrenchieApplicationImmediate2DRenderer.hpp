@@ -67,7 +67,7 @@ namespace Frenchie
             {
                 // calculate ellipse data
                 gs_complex<float> perpendicular  = gs_cnormf<float>(gs_complex<float>((_Target - m_Source).x, (_Target - m_Source).y)) * gs_complex<float>(0.f, 1.f);
-                gs_vec2f          center         = (m_Source + (_Target - m_Source) * 0.5f) + gs_vec2f(gs_realf(perpendicular), gs_imagf(perpendicular)) * _Radius;
+                gs_vec2f          center         = (_Target + m_Source) * 0.5f + gs_vec2f(gs_realf(perpendicular), gs_imagf(perpendicular)) * _Radius;
                 float             sourceAngle    = gs_to_degrees(atan2((m_Source - center).y, (m_Source - center).x));
                 float             targetAngle    = gs_to_degrees(atan2((_Target - center).y, (_Target - center).x));
                 float             radius         = (float)gs_vector_length(center - _Target);
@@ -92,36 +92,36 @@ namespace Frenchie
                 const RenderingQueueColor&                   _Color,
                 const RenderingQueueTexture&                 _Texture,
                 const float&                                 _Width,
-                std::vector<Immediate2DRendererPathSegment>& _Segments,
+                std::vector<Immediate2DRendererPathSegment>& _PolygonLines,
                 std::vector<RenderingQueueVertex>&           _Vertexes,
                 std::vector<int>&                            _Indexes)
             {
-                if(_Segments.empty())
+                if(_PolygonLines.empty())
                     return;
 
-                if (_Segments.size() == 1)
+                if (_PolygonLines.size() == 1)
                 {
-                    _Segments[0].setup(_Width);
+                    _PolygonLines[0].setup(_Width);
 
                     build_triangle_filled_mesh(
-                        _Segments[0].P1min,
-                        _Segments[0].P2min,
-                        _Segments[0].P1max,
+                        _PolygonLines[0].P1min,
+                        _PolygonLines[0].P2min,
+                        _PolygonLines[0].P1max,
                         _Color,
                         _Texture,
                         _Vertexes,
                         _Indexes);
 
                     build_triangle_filled_mesh(
-                        _Segments[0].P1max,
-                        _Segments[0].P2min,
-                        _Segments[0].P2max,
+                        _PolygonLines[0].P1max,
+                        _PolygonLines[0].P2min,
+                        _PolygonLines[0].P2max,
                         _Color,
                         _Texture,
                         _Vertexes,
                         _Indexes);
                     
-                    _Segments.clear();
+                    _PolygonLines.clear();
 
                     return;
                 }
@@ -134,25 +134,25 @@ namespace Frenchie
                     return index;
                 };
 
-                const bool pathIsClosed = gs_vector_length(_Segments[0].P1 - _Segments[_Segments.size() - 1].P2) < gs_epsilon<float>();
+                const bool pathIsClosed = gs_vector_length(_PolygonLines[0].P1 - _PolygonLines[_PolygonLines.size() - 1].P2) < gs_epsilon<float>();
 
-                for (int i = 0; i < (int)_Segments.size(); i++)
+                for (int i = 0; i < (int)_PolygonLines.size(); i++)
                 {
-                    _Segments[get_element(i, (int)_Segments.size())].setup(_Width);
+                    _PolygonLines[get_element(i, (int)_PolygonLines.size())].setup(_Width);
 
                     build_triangle_filled_mesh(
-                        _Segments[get_element(i, (int)_Segments.size())].P1min,
-                        _Segments[get_element(i, (int)_Segments.size())].P2min,
-                        _Segments[get_element(i, (int)_Segments.size())].P1max,
+                        _PolygonLines[get_element(i, (int)_PolygonLines.size())].P1min,
+                        _PolygonLines[get_element(i, (int)_PolygonLines.size())].P2min,
+                        _PolygonLines[get_element(i, (int)_PolygonLines.size())].P1max,
                         _Color,
                         _Texture,
                         _Vertexes,
                         _Indexes);
 
                     build_triangle_filled_mesh(
-                        _Segments[get_element(i, (int)_Segments.size())].P1max,
-                        _Segments[get_element(i, (int)_Segments.size())].P2min,
-                        _Segments[get_element(i, (int)_Segments.size())].P2max,
+                        _PolygonLines[get_element(i, (int)_PolygonLines.size())].P1max,
+                        _PolygonLines[get_element(i, (int)_PolygonLines.size())].P2min,
+                        _PolygonLines[get_element(i, (int)_PolygonLines.size())].P2max,
                         _Color,
                         _Texture,
                         _Vertexes,
@@ -161,21 +161,21 @@ namespace Frenchie
                     // TODO: need another algorithm of lines smoothing
                     if(i-1 >= 0 || pathIsClosed)
                     {
-                        _Segments[get_element(i-1, (int)_Segments.size())].setup(_Width);
+                        _PolygonLines[get_element(i-1, (int)_PolygonLines.size())].setup(_Width);
 
                         build_triangle_filled_mesh(
-                            _Segments[i].P1max,
-                            _Segments[get_element(i-1, (int)_Segments.size())].P2max,
-                            _Segments[get_element(i-1, (int)_Segments.size())].P2,
+                            _PolygonLines[i].P1max,
+                            _PolygonLines[get_element(i-1, (int)_PolygonLines.size())].P2max,
+                            _PolygonLines[get_element(i-1, (int)_PolygonLines.size())].P2,
                             _Color,
                             _Texture,
                             _Vertexes,
                             _Indexes);
 
                         build_triangle_filled_mesh(
-                            _Segments[i].P1min,
-                            _Segments[get_element(i-1, (int)_Segments.size())].P2min,
-                            _Segments[get_element(i-1, (int)_Segments.size())].P2,
+                            _PolygonLines[i].P1min,
+                            _PolygonLines[get_element(i-1, (int)_PolygonLines.size())].P2min,
+                            _PolygonLines[get_element(i-1, (int)_PolygonLines.size())].P2,
                             _Color,
                             _Texture,
                             _Vertexes,
@@ -183,7 +183,7 @@ namespace Frenchie
                     }
                 }
                 
-                _Segments.clear();
+                _PolygonLines.clear();
             }
 
             void build_mesh_filled_no_convex(
