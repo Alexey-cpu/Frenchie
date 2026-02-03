@@ -176,7 +176,7 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context);
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
-            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
             bool is_visible() const;
@@ -243,7 +243,7 @@ namespace Frenchie
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
             ImmediateUserInterfaceNode* Docker        {nullptr};
@@ -283,7 +283,7 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
 
             gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
         };

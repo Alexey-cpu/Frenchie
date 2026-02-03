@@ -615,7 +615,7 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
     State.ContentSize = box.size();
 }
 
-void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     // auxiliary lambdas
     auto render_resize_gizmo = [](
@@ -898,7 +898,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
-                return;
+                return true;
             }
 
             // execute event
@@ -906,7 +906,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight) ||
@@ -921,7 +921,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                return;
+                return true;
             }
 
             // execute event
@@ -929,7 +929,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft) ||
@@ -944,7 +944,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
-                return;
+                return true;
             }
 
             // execute event
@@ -952,7 +952,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
@@ -967,7 +967,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
-                return;
+                return true;
             }
 
             // execute event
@@ -975,7 +975,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop) ||
@@ -990,7 +990,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
-                return;
+                return true;
             }
 
             // execute event
@@ -998,7 +998,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft) ||
@@ -1013,7 +1013,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
-                return;
+                return true;
             }
 
             // execute event
@@ -1021,7 +1021,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight) ||
@@ -1036,7 +1036,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
-                return;
+                return true;
             }
 
             // execute event
@@ -1044,7 +1044,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight, _Event);
-                return;
+                return true;
             }
         }
         else if(check_cursor_intersection_with_resize_gizmo(this, _Event, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom) ||
@@ -1059,7 +1059,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             if(_Event.MousePressed.has_value())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
-                return;
+                return true;
             }
 
             // execute event
@@ -1067,7 +1067,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom, _Event);
-                return;
+                return true;
             }
         }
     }
@@ -1091,7 +1091,7 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         if(_Event.MousePressed.has_value())
         {
             movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-            return;
+            return true;
         }
 
         if(_Event.MouseDown.has_value() &&
@@ -1100,9 +1100,11 @@ void ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             movable->State.BoundingBox = gs_2dboxf(
                 movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
                 movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
-            return;
+            return true;
         }
     }
+
+    return false;
 }
 
 void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child)
@@ -1356,7 +1358,7 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     bool defaultPipeline = true;
 
@@ -1455,7 +1457,9 @@ void ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
 
     // default event pipeline
     if(defaultPipeline)
-        ImmediateUserInterfaceNode::events(_Context, _Event);
+        return ImmediateUserInterfaceNode::events(_Context, _Event);
+    else
+        return !defaultPipeline;
 }
 
 void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Child)
@@ -1494,10 +1498,23 @@ void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer*
 
 void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context){}
 
-void ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
-    if(_Context != nullptr && _Context->m_Hierarchy.size(this) > 0)
-        ImmediateUserInterfaceNode::events(_Context, _Event);
+    if(_Context == nullptr)
+        return false;
+
+    if(_Context->m_Hierarchy.size(this) > 0)
+        return ImmediateUserInterfaceNode::events(_Context, _Event);
+
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
+    while (parent)
+    {
+        if(parent->events(_Context, _Event))
+            return true;
+        parent = _Context->m_Hierarchy.get_parent(parent);
+    }
+    
+    return false;
 }
 
 // ImmediateUserInterfaceNodeVerticalStack
