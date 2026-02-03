@@ -572,14 +572,6 @@ namespace Frenchie
                     State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f));
             }
 
-            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
-            {
-                if(_Context == nullptr || _Context->m_Hierarchy.size(this) <= 0)
-                    return;
-                
-                ImmediateUserInterfaceNodeHorizontalStack::events(_Context, _Event);
-            }
-
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
@@ -1501,6 +1493,12 @@ void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer*
 }
 
 void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context){}
+
+void ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    if(_Context != nullptr && _Context->m_Hierarchy.size(this) > 0)
+        ImmediateUserInterfaceNode::events(_Context, _Event);
+}
 
 // ImmediateUserInterfaceNodeVerticalStack
 ImmediateUserInterfaceNodeVerticalStack::ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
