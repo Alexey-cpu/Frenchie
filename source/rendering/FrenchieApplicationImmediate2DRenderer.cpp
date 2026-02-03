@@ -375,52 +375,72 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
     const gs_vec2f&            _Max,
     const float&               _Radius,
     const RenderingQueueColor& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f&            _Transform,
+    bool                       _RoundTopLeftCorner,
+    bool                       _RoundTopRightCorner,
+    bool                       _RoundBottomRightCorner,
+    bool                       _RoundBottomLeftCorner)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
         return;
 
-    // auxiliary lambdas
-    auto build_rectangle_rounded_filled_mesh = [this](
-        const gs_vec2f&            _Min,
-        const gs_vec2f&            _Max,
-        const float&               _Radius,
-        const RenderingQueueColor& _Color)
+    // check rounding radius
+    if(_Radius <= 4.f ||
+        (!_RoundTopLeftCorner     &&
+         !_RoundTopRightCorner    &&
+         !_RoundBottomRightCorner &&
+         !_RoundBottomLeftCorner))
     {
-        // compute radius
-        float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
+        push_rectangle_filled(_Min, _Max, _Color);
+        return;
+    }
 
-        // build angle ellipses
-        const gs_vec2f p1 = gs_vec2f(_Min.x, _Min.y);
-        const gs_vec2f p2 = gs_vec2f(_Max.x, _Min.y);
-        const gs_vec2f p3 = gs_vec2f(_Max.x, _Max.y);
-        const gs_vec2f p4 = gs_vec2f(_Min.x, _Max.y);
+    // build mesh
+    float radius = gs_min(gs_min(_Radius, gs_abs(_Max.x - _Min.x) * 0.5f), gs_min(_Radius, gs_abs(_Max.y - _Min.y) * 0.5f));
 
-        gs_vec2f p13 = gs_vector_normalize(p1 - p3);
-        gs_vec2f p24 = gs_vector_normalize(p2 - p4);
-        p13 = gs_vec2f(gs_sign(p13.x), gs_sign(p13.y));
-        p24 = gs_vec2f(gs_sign(p24.x), gs_sign(p24.y));
+    const gs_vec2f p1 = gs_vec2f(_Min.x, _Min.y);
+    const gs_vec2f p2 = gs_vec2f(_Max.x, _Min.y);
+    const gs_vec2f p3 = gs_vec2f(_Max.x, _Max.y);
+    const gs_vec2f p4 = gs_vec2f(_Min.x, _Max.y);
 
+    gs_vec2f p13 = gs_vector_normalize(p1 - p3);
+    gs_vec2f p24 = gs_vector_normalize(p2 - p4);
+    p13 = gs_vec2f(gs_sign(p13.x), gs_sign(p13.y));
+    p24 = gs_vec2f(gs_sign(p24.x), gs_sign(p24.y));
+
+    if(_RoundTopLeftCorner)
         build_arc_filled_mesh(p1 - p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    else
+        build_rectangle_filled_mesh(p1, p1 + radius, _Color, m_RenderingQueue->get_default_texture());
+
+    if(_RoundTopRightCorner)
         build_arc_filled_mesh(p2 - p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    else
+        build_rectangle_filled_mesh(p2 - gs_vec2f(radius, 0.f), p2 + gs_vec2f(0.f, radius), _Color, m_RenderingQueue->get_default_texture());
+
+    if(_RoundBottomRightCorner)
         build_arc_filled_mesh(p3 + p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    else
+        build_rectangle_filled_mesh(p3 - radius, p3, _Color, m_RenderingQueue->get_default_texture());
+
+    if(_RoundBottomLeftCorner)
         build_arc_filled_mesh(p4 + p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+    else
+        build_rectangle_filled_mesh(p4 - gs_vec2f(0.f, radius), p4 + gs_vec2f(radius, 0.f), _Color, m_RenderingQueue->get_default_texture());
 
-        // build inner rectnagle
-        Immediate2DRenderer::build_rectangle_filled_mesh(
-            p1 - p13 * gs_vec2f(radius, 0.f),
-            p3 + p13 * gs_vec2f(radius, 0.f),
-            _Color,
-            m_RenderingQueue->get_default_texture());
+    build_rectangle_filled_mesh(
+        p1 - p13 * gs_vec2f(radius, 0.f),
+        p3 + p13 * gs_vec2f(radius, 0.f),
+        _Color,
+        m_RenderingQueue->get_default_texture());
 
-        Immediate2DRenderer::build_rectangle_filled_mesh(
-            p1 - p13 * gs_vec2f(0.f, radius),
-            p3 + p13 * gs_vec2f(0.f, radius),
-            _Color,
-            m_RenderingQueue->get_default_texture());
-    };
+    build_rectangle_filled_mesh(
+        p1 - p13 * gs_vec2f(0.f, radius),
+        p3 + p13 * gs_vec2f(0.f, radius),
+        _Color,
+        m_RenderingQueue->get_default_texture());
 
-    build_rectangle_rounded_filled_mesh(_Min, _Max, _Radius, _Color);
+    // push rendering command
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
