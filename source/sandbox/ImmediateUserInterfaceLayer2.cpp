@@ -1733,7 +1733,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 {
     if(_Context == nullptr) return;
 
-    const std::string                        _ID       = "DockArea"; // TODO: rename this
+    const std::string                        _ID       = Frenchie::Application::application()->get_window_name();
     const ImmediateUserInterfaceNodeSettings _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(_ID, _Settings))
@@ -2555,6 +2555,124 @@ void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterface
         node_layout(_Context, (*it));
 }
 
+ImmedidateUserInterfaceRenderingController::ImmedidateUserInterfaceRenderingController(){}
+ImmedidateUserInterfaceRenderingController::~ImmedidateUserInterfaceRenderingController(){}
+void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // get ready
+    m_NodesRenderingCache.clear();
+    
+    // sort singletones by rendering order
+    std::sort(
+        _Context->m_Hierarchy.Singletons.begin(),
+        _Context->m_Hierarchy.Singletons.end(),
+        [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+        {
+            return _A->State.RenderingOrder < _B->State.RenderingOrder;
+        });
+    
+    // render singletones
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
+    {
+        singleton->State.Depth = singleton->State.InitialDepth;
+        
+        for (auto& renderedNode : m_NodesRenderingCache)
+        {
+            if(renderedNode->State.InitialDepth == singleton->State.InitialDepth)
+            {
+                int depth =
+                    gs_max(
+                        renderedNode->State.MaximumChildDepth + renderedNode->State.MaximumChildThickness - renderedNode->State.Depth,
+                        renderedNode->State.MaximumChildDepth + renderedNode->State.SelfThickness + 1);
+
+                singleton->State.Depth =
+                    gs_max(
+                        depth,
+                        singleton->State.Depth);
+            }
+        }
+
+        ImmedidateUserInterfaceRenderingController::render_node(_Context, singleton);
+        m_NodesRenderingCache.push_back(singleton);
+    }
+
+    #ifdef IMMEDIATE_USER_INTERFACE_DEBUG
+
+    std::cout << "\n\n\n";
+    std::cout << "------------------------------------------------------------------------------------------------\n";
+    std::cout << "HIERARCHY:\n";
+    std::cout << "------------------------------------------------------------------------------------------------\n";
+    for (auto& singleton : _Context->m_Hierarchy.Singletons)
+        showHierarchy(_Context, singleton, "\t");
+    #endif
+
+    // clean-up
+    m_NodesRenderingCache.clear();
+}
+
+void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+{
+    // calculate clippingbox
+    {
+        auto next   = _Node;
+        auto parent = _Context->m_Hierarchy.get_parent(_Node);
+
+        while (parent != nullptr)
+        {
+            next   = parent;
+            parent = _Context->m_Hierarchy.get_parent(parent);
+        }
+
+        _Context->m_Renderer->push_clip_box(
+            _Node->State.BoundingBox.clip_with(next->State.BoundingBox));
+    }
+
+    // render self
+    _Node->render(_Context);
+
+    // render children
+    if(_Node->State.OrderChildrenWhileRendering)
+    {
+        std::sort(
+            _Context->m_Hierarchy.begin(_Node),
+            _Context->m_Hierarchy.end(_Node),
+            [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
+            {
+                return _A->State.RenderingOrder < _B->State.RenderingOrder;
+            });
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+    {
+        int depth = gs_max(
+            _Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness - _Node->State.Depth,
+            _Node->State.MaximumChildDepth + _Node->State.SelfThickness + 1,
+            _Node->State.Depth + _Node->State.SelfThickness + 1);
+
+        (*it)->State.Depth = _Node->State.PlaceInFollow ? depth : _Node->State.Depth + _Node->State.SelfThickness + 1;
+
+        render_node(_Context, (*it));
+
+        _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
+        _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
+    }
+
+    _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, _Node->State.SelfThickness);
+
+    // update parent maximum child depth and maximum child thickness
+    auto parent = _Context->m_Hierarchy.get_parent(_Node);
+
+    while (parent)
+    {
+        parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
+        parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
+        parent = _Context->m_Hierarchy.get_parent(parent);
+    }            
+
+    // remove clipping
+    _Context->m_Renderer->pop_clip_box();
+}
+
 // ImmediateUserInterfaceContextLayer2
 ImmediateUserInterfaceContextLayer::ImmediateUserInterfaceContextLayer(){}
 ImmediateUserInterfaceContextLayer::~ImmediateUserInterfaceContextLayer(){}
@@ -2595,10 +2713,14 @@ bool ImmediateUserInterfaceContextLayer::awake()
             return nullptr;
         });
 
-    // event processors
+    // event controllers
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceEventsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
+    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
+
+    for(auto& controller : m_Controllers)
+        GS_ASSERT(controller->awake(this));
 
     return m_Renderer != nullptr;
 }
@@ -2659,126 +2781,8 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
 
 void ImmediateUserInterfaceContextLayer::frame_render()
 {
-    class ImmediateUserInterfaceNodeRenderer
-    {
-    public:
-        static void execute(ImmediateUserInterfaceContextLayer* _Context)
-        {
-            // get ready
-            _Context->m_NodesRenderingCache.clear();
-            
-            // sort singletones by rendering order
-            std::sort(
-                _Context->m_Hierarchy.Singletons.begin(),
-                _Context->m_Hierarchy.Singletons.end(),
-                [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                {
-                    return _A->State.RenderingOrder < _B->State.RenderingOrder;
-                });
-            
-            // render singletones
-            for (auto& singleton : _Context->m_Hierarchy.Singletons)
-            {
-                singleton->State.Depth = singleton->State.InitialDepth;
-                
-                for (auto& renderedNode : _Context->m_NodesRenderingCache)
-                {
-                    if(renderedNode->State.InitialDepth == singleton->State.InitialDepth)
-                    {
-                        int depth =
-                            gs_max(
-                                renderedNode->State.MaximumChildDepth + renderedNode->State.MaximumChildThickness - renderedNode->State.Depth,
-                                renderedNode->State.MaximumChildDepth + renderedNode->State.SelfThickness + 1);
-
-                        singleton->State.Depth =
-                            gs_max(
-                                depth,
-                                singleton->State.Depth);
-                    }
-                }
-
-                ImmediateUserInterfaceNodeRenderer::render_node(_Context, singleton);
-                _Context->m_NodesRenderingCache.push_back(singleton);
-            }
-
-            #ifdef IMMEDIATE_USER_INTERFACE_DEBUG
-
-            std::cout << "\n\n\n";
-            std::cout << "------------------------------------------------------------------------------------------------\n";
-            std::cout << "HIERARCHY:\n";
-            std::cout << "------------------------------------------------------------------------------------------------\n";
-            for (auto& singleton : _Context->m_Hierarchy.Singletons)
-                showHierarchy(_Context, singleton, "\t");
-            #endif
-        }
-
-    private:
-
-        static void render_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-        {
-            // calculate clippingbox
-            {
-                auto next   = _Node;
-                auto parent = _Context->m_Hierarchy.get_parent(_Node);
-
-                while (parent != nullptr)
-                {
-                    next   = parent;
-                    parent = _Context->m_Hierarchy.get_parent(parent);
-                }
-
-                _Context->m_Renderer->push_clip_box(
-                    _Node->State.BoundingBox.clip_with(next->State.BoundingBox));
-            }
-
-            // render self
-            _Node->render(_Context);
-
-            // render children
-            if(_Node->State.OrderChildrenWhileRendering)
-            {
-                std::sort(
-                    _Context->m_Hierarchy.begin(_Node),
-                    _Context->m_Hierarchy.end(_Node),
-                    [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
-                    {
-                        return _A->State.RenderingOrder < _B->State.RenderingOrder;
-                    });
-            }
-
-            for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-            {
-                int depth = gs_max(
-                    _Node->State.MaximumChildDepth + _Node->State.MaximumChildThickness - _Node->State.Depth,
-                    _Node->State.MaximumChildDepth + _Node->State.SelfThickness + 1,
-                    _Node->State.Depth + _Node->State.SelfThickness + 1);
-
-                (*it)->State.Depth = _Node->State.PlaceInFollow ? depth : _Node->State.Depth + _Node->State.SelfThickness + 1;
-
-                render_node(_Context, (*it));
-
-                _Node->State.MaximumChildDepth     = gs_max(_Node->State.MaximumChildDepth, (*it)->State.Depth);
-                _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, (*it)->State.SelfThickness);
-            }
-
-            _Node->State.MaximumChildThickness = gs_max(_Node->State.MaximumChildThickness, _Node->State.SelfThickness);
-
-            // update parent maximum child depth and maximum child thickness
-            auto parent = _Context->m_Hierarchy.get_parent(_Node);
-
-            while (parent)
-            {
-                parent->State.MaximumChildDepth     = gs_max(parent->State.MaximumChildDepth, _Node->State.MaximumChildDepth);
-                parent->State.MaximumChildThickness = gs_max(parent->State.MaximumChildThickness, _Node->State.MaximumChildThickness);
-                parent = _Context->m_Hierarchy.get_parent(parent);
-            }            
-
-            // remove clipping
-            _Context->m_Renderer->pop_clip_box();
-        }
-    };
-
-    ImmediateUserInterfaceNodeRenderer::execute(this);
+    for(auto& controller : m_Controllers)
+        controller->frame_render(this);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_finish()
@@ -2795,7 +2799,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     }
 
     for (auto& node : m_NodesRenderingList)
-        m_Duplicates[node->Name] = 0;
+        m_Duplicates[node->Hash] = 0;
 
     for (auto& node : m_NodesRenderingList)
     {
@@ -2828,15 +2832,14 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.Settings              = 0;
 
         // duplicates control
-        m_Duplicates[node->Name]++;
-        GS_ASSERT(m_Duplicates[node->Name] <= 1);
+        m_Duplicates[node->Hash]++;
+        GS_ASSERT(m_Duplicates[node->Hash] <= 1);
     }
 
     GS_ASSERT(m_NodesRenderingStack.empty());
 
     // rendering
     m_NodesRenderingList.clear();
-    m_NodesRenderingCache.clear();
     m_NodesRenderingStack.clear();
 }
 
