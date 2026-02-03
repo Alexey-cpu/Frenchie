@@ -232,6 +232,7 @@ namespace Frenchie
 
         //private:
             std::string Name = "UINode";
+            uint32_t    Hash = 0;
         };
 
         // windows
@@ -460,8 +461,11 @@ namespace Frenchie
             ImmediateUserInterfaceContextController(){}
             virtual ~ImmediateUserInterfaceContextController(){}
 
-            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context){}
+            virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_debug(ImmediateUserInterfaceContextLayer*, const ImmedidateUserInterfaceEvent&){}
+            virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
         };
 
         class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
@@ -469,7 +473,6 @@ namespace Frenchie
         public:
             ImmedidateUserInterfaceWindowController();
             virtual ~ImmedidateUserInterfaceWindowController();
-
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
 
@@ -496,7 +499,6 @@ namespace Frenchie
         public:
             ImmedidateUserInterfaceEventsController();
             virtual ~ImmedidateUserInterfaceEventsController();
-
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
 
         private:
@@ -511,11 +513,24 @@ namespace Frenchie
         public:
             ImmedidateUserInterfaceLayoutController();
             virtual ~ImmedidateUserInterfaceLayoutController();
-
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&) override;
 
         private:
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+        };
+
+        class ImmedidateUserInterfaceRenderingController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceRenderingController();
+            virtual ~ImmedidateUserInterfaceRenderingController();
+            virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
+
+        private:
+
+            static void render_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
+
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
 
         // context layer
@@ -575,15 +590,34 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr)
             {
+                // FNV‑1a
+                auto hashFunction = [](const void* _Data, size_t _Length)->uint32_t
+                {
+                    const uint8_t *bytes = (const uint8_t*)_Data;
+                    uint32_t       hash  = 2166136261u;
+
+                    for (size_t i = 0; i < _Length; i++)
+                    {
+                        hash ^= bytes[i];
+                        hash *= 16777619u;
+                    }
+                    return hash;
+                };
+
+                // compute hash
+                unsigned int hash = hashFunction(_ID.c_str(), _ID.size());
+
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
                     return false;
 
                 // create node
-                if(m_Cache.find(_ID) == m_Cache.end())
-                    m_Cache[_ID] = std::make_unique<Type>(_ID);
-                ImmediateUserInterfaceNode* node = m_Cache[_ID].get();
+                if(m_Cache.find(hash) == m_Cache.end())
+                    m_Cache[hash] = std::make_unique<Type>(_ID);
+                ImmediateUserInterfaceNode* node = m_Cache[hash].get();
 
+                // setup node parameters
+                node->Hash                 = hash;
                 node->State.Settings       = _Settings;
                 node->State.RenderingIndex = (int)m_NodesRenderingList.size();
 
@@ -608,16 +642,15 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
-            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmedidateUserInterfaceStyle                                       m_Style;
-            mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
-            mutable std::map<std::string, int>                                         m_Duplicates;
+            mutable std::map<uint32_t, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
+            mutable ImmedidateUserInterfaceStyle                                    m_Style;
+            mutable ImmedidateUserInterfaceHierarchy                                m_Hierarchy;
+            mutable std::map<uint32_t, int>                                         m_Duplicates;
 
             // rendering
-            mutable std::shared_ptr<Immediate2DRenderer>                               m_Renderer{nullptr};
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingCache;
-            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
+            mutable std::shared_ptr<Immediate2DRenderer>                            m_Renderer{nullptr};
+            mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingList;
+            mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingStack;
 
             // controllers
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
