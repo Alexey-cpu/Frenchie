@@ -1402,21 +1402,10 @@ struct gs_2dbox
             _Transform * gs_vector<Type, 4>(Max, 0.f, 1.f));
     }
 
-    bool overlaps(const gs_2dbox<Type>& _Other) const
+    bool  overlaps(const gs_2dbox<Type>& _Other) const
     {
-        const gs_vector<Type, 2> p1 = gs_vector<Type, 2>(_Other.Min.x, _Other.Min.y);
-        const gs_vector<Type, 2> p2 = gs_vector<Type, 2>(_Other.Max.x, _Other.Min.y);
-        const gs_vector<Type, 2> p3 = gs_vector<Type, 2>(_Other.Max.x, _Other.Max.y);
-        const gs_vector<Type, 2> p4 = gs_vector<Type, 2>(_Other.Min.x, _Other.Max.y);
-
-        const gs_vector<Type, 2> p5 = gs_vector<Type, 2>(Min.x, Min.y);
-        const gs_vector<Type, 2> p6 = gs_vector<Type, 2>(Max.x, Min.y);
-        const gs_vector<Type, 2> p7 = gs_vector<Type, 2>(Max.x, Max.y);
-        const gs_vector<Type, 2> p8 = gs_vector<Type, 2>(Min.x, Max.y);
-
-
-        return (contains(p1) || contains(p2) || contains(p3) || contains(p4)) ||
-               (_Other.contains(p5) || _Other.contains(p6) || _Other.contains(p7) || _Other.contains(p8));
+        return gs_abs(clip_with(_Other).size().x * clip_with(_Other).size().y) > 1e-3 ||
+               gs_abs(_Other.clip_with(*this).size().x * _Other.clip_with(*this).size().y);
     }
 
     gs_2dbox<Type> clip_with(const gs_2dbox<Type>& _Clipbox) const

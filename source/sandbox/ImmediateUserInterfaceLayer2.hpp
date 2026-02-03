@@ -91,8 +91,9 @@ namespace Frenchie
 
         enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
-            ImmedidateUserInterfaceRenderingOrder_Begin   = 0,
-            ImmedidateUserInterfaceRenderingOrder_Main    = ImmedidateUserInterfaceRenderingOrder_Begin,
+            ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
+            ImmedidateUserInterfaceRenderingOrder_Background = ImmedidateUserInterfaceRenderingOrder_Begin,
+            ImmedidateUserInterfaceRenderingOrder_Main,
             ImmedidateUserInterfaceRenderingOrder_Focus,
             ImmedidateUserInterfaceRenderingOrder_Modal,
             ImmedidateUserInterfaceRenderingOrder_End,
@@ -458,7 +459,9 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceContextController(){}
             virtual ~ImmediateUserInterfaceContextController(){}
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) = 0;
+
+            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context){}
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer*, const ImmedidateUserInterfaceEvent&){}
         };
 
         class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
@@ -467,7 +470,9 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowController();
             virtual ~ImmedidateUserInterfaceWindowController();
 
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+
             void push_event(std::function<void(ImmediateUserInterfaceContextLayer*)> _Event);
 
             std::vector<ImmediateUserInterfaceNode*>&
@@ -483,6 +488,7 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingList;
             mutable std::stack<std::function<void(ImmediateUserInterfaceContextLayer*)>> m_DockingEventsStack;
+            mutable ImmediateUserInterfaceNode*                                          m_DockArea{nullptr};
         };
     
         class ImmedidateUserInterfaceEventsController : public ImmediateUserInterfaceContextController
@@ -491,7 +497,7 @@ namespace Frenchie
             ImmedidateUserInterfaceEventsController();
             virtual ~ImmedidateUserInterfaceEventsController();
 
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
 
         private:
 
@@ -506,7 +512,7 @@ namespace Frenchie
             ImmedidateUserInterfaceLayoutController();
             virtual ~ImmedidateUserInterfaceLayoutController();
 
-            virtual void execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&) override;
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&) override;
 
         private:
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
