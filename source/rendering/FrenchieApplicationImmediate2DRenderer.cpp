@@ -229,6 +229,11 @@ gs_2dboxf Immediate2DRenderer::current_clipping_box() const
     return !m_RenderingQueueClippingBoxes.empty() ? m_RenderingQueueClippingBoxes[m_RenderingQueueClippingBoxes.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size());
 }
 
+gs_2dboxf Immediate2DRenderer::current_viewport() const
+{
+    return m_RenderingQueueViewport;
+}
+
 gs_vec4f Immediate2DRenderer::current_clear_color() const
 {
     return !m_RenderingQueueClearColors.empty() ? m_RenderingQueueClearColors[m_RenderingQueueClearColors.size() - 1] : gs_vec4f(255.f, 255.f, 255.f, 255.f);
