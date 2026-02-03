@@ -126,7 +126,7 @@ namespace Frenchie
                 // window
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                = RenderingQueue::construct_rgba_color(72, 72, 72, 255);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]               = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = RenderingQueue::construct_rgba_color(64, 72, 64, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = RenderingQueue::construct_rgba_color(72, 82, 72, 255);
                 
                 // push button
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                  = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
@@ -151,7 +151,7 @@ namespace Frenchie
             float              FontSize = 64.f;
 
             // frames of windows, buttons, child windows e.t.c
-            float FramesRadius = 0.f;
+            float FramesRadius = 32.f;
             float FramesWidth  = 8.f;
         };
 

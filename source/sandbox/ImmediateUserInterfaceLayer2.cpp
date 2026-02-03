@@ -1242,6 +1242,8 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Context->m_Style.FramesRadius,
                         close_button_color(closeButtonBox, event),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    *_Window->Opened = !(closeButtonBox.contains(event.CursorPosition) && event.MouseClicked.has_value());
                 }
             }
             else
@@ -1254,7 +1256,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                        true,
+                        true,
+                        false,
+                        false);
                 }
                 else if(_Frame.contains(event.CursorPosition))
                 {
@@ -1263,7 +1269,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Frame.Max - _Context->m_Style.FramesWidth,
                         _Context->m_Style.FramesRadius,
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                        true,
+                        true,
+                        false,
+                        false);
                 }
 
                 // close button
@@ -1281,6 +1291,8 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                             _Context->m_Style.FramesRadius,
                             close_button_color(closeButtonBox, event),
                             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                        *_Window->Opened = !(closeButtonBox.contains(event.CursorPosition) && event.MouseClicked.has_value());
                     }
                 }
             }
@@ -1297,6 +1309,35 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.6f * 0.5f)));
         }
     );
+
+    if(Opened != nullptr && !(*Opened))
+    {
+        auto dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+            _Context,
+            this,
+            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top    |
+            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left   |
+            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right  |
+            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom |
+            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+
+        for(auto dockedWindow : dockedWindows)
+        {
+            ImmediateUserInterfaceWindow* window =
+                dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
+
+            if(window == nullptr)
+                continue;
+
+            window->Docker               = nullptr;
+            window->TopSnapper           = nullptr;
+            window->LeftSnapper          = nullptr;
+            window->RightSnapper         = nullptr;
+            window->BottomSnapper        = nullptr;
+            window->DockingIndex         = -1;
+            window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+        }
+    }
 }
 
 void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -1314,12 +1355,6 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
     ContentBox = gs_2dboxf(
         (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
         State.BoundingBox.Max);
-
-    // if(_Context->m_Hierarchy.get_parent(this) == nullptr || TopSnapper || LeftSnapper || RightSnapper || BottomSnapper)
-    // {
-    //     ContentBox = gs_2dboxf(ContentBox.Min + _Context->m_Style.FramesWidth, ContentBox.Max - _Context->m_Style.FramesWidth);
-    //     FrameBox   = gs_2dboxf(FrameBox.Min + _Context->m_Style.FramesWidth, FrameBox.Max - _Context->m_Style.FramesWidth);
-    // }
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),

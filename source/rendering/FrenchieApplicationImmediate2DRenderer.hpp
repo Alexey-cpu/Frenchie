@@ -411,7 +411,11 @@ namespace Frenchie
                 const gs_vec2f&            _Max,
                 const float&               _Radius,
                 const RenderingQueueColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_mat4f&            _Transform              = gs_mat4f(1.f),
+                bool                       _RoundTopLeftCorner     = true,
+                bool                       _RoundTopRightCorner    = true,
+                bool                       _RoundBottomRightCorner = true,
+                bool                       _RoundBottomLeftCorner  = true);
 
             void push_text(
                 const std::u32string&      _Text,
