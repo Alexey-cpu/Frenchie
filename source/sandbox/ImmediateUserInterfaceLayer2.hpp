@@ -233,6 +233,7 @@ namespace Frenchie
             std::string Name = "UINode";
         };
 
+        // windows
         struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNode
         {
         public:
@@ -282,6 +283,7 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
 
             gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
         };
