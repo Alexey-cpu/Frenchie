@@ -1729,6 +1729,15 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
         hovered->ContentBox.center() - gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f,
         hovered->ContentBox.center() + gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f);
 
+    dockingGizmo = gs_2dboxf(
+        dockingGizmo.Min,
+        dockingGizmo.Min + gs_min(dockingGizmo.size().x, 256.f));
+
+    dockingGizmo = gs_2dboxf(
+        hovered->ContentBox.center() - dockingGizmo.size() * 0.5f,
+        hovered->ContentBox.center() + dockingGizmo.size() * 0.5f);
+
+
     gs_vec2f gizmoSize = dockingGizmo.size() * 0.333f;
 
     gs_2dboxf topDockingGizmo = gs_2dboxf(

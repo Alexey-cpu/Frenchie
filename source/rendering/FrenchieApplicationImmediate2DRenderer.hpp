@@ -361,6 +361,7 @@ namespace Frenchie
             void push_clear_color(const gs_vec4f& _Value);
             void pop_clear_color();
             
+            gs_2dboxf current_viewport() const;
             gs_2dboxf current_clipping_box() const;
             gs_vec4f  current_clear_color() const;
 
