@@ -590,34 +590,14 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr)
             {
-                // FNV‑1a
-                auto hashFunction = [](const void* _Data, size_t _Length)->uint32_t
-                {
-                    const uint8_t *bytes = (const uint8_t*)_Data;
-                    uint32_t       hash  = 2166136261u;
-
-                    for (size_t i = 0; i < _Length; i++)
-                    {
-                        hash ^= bytes[i];
-                        hash *= 16777619u;
-                    }
-                    return hash;
-                };
-
-                // compute hash
-                unsigned int hash = hashFunction(_ID.c_str(), _ID.size());
-
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
                     return false;
 
-                // create node
-                if(m_Cache.find(hash) == m_Cache.end())
-                    m_Cache[hash] = std::make_unique<Type>(_ID);
-                ImmediateUserInterfaceNode* node = m_Cache[hash].get();
+                // create node (output is never nullptr)
+                ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
 
                 // setup node parameters
-                node->Hash                 = hash;
                 node->State.Settings       = _Settings;
                 node->State.RenderingIndex = (int)m_NodesRenderingList.size();
 
@@ -654,6 +634,39 @@ namespace Frenchie
 
             // controllers
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
+
+        private:
+
+            // service methods
+            template<typename Type> Type* create_node(const std::string& _ID)
+            {
+                // FNV‑1a
+                auto hashFunction = [](const void* _Data, size_t _Length)->uint32_t
+                {
+                    const uint8_t *bytes = (const uint8_t*)_Data;
+                    uint32_t       hash  = 2166136261u;
+
+                    for (size_t i = 0; i < _Length; i++)
+                    {
+                        hash ^= bytes[i];
+                        hash *= 16777619u;
+                    }
+                    return hash;
+                };
+
+                // compute hash
+                unsigned int hash = hashFunction(_ID.c_str(), _ID.size());
+
+                // create node
+                if(m_Cache.find(hash) == m_Cache.end())
+                    m_Cache[hash] = std::make_unique<Type>(_ID);
+                ImmediateUserInterfaceNode* node = m_Cache[hash].get();
+
+                // setup node parameters
+                node->Hash = hash;
+
+                return dynamic_cast<Type*>(node);
+            }
         };
     };
 }
