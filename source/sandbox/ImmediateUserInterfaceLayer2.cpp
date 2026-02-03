@@ -136,7 +136,7 @@ namespace Frenchie
                     _Docked->SnapperView->State.RenderingOrder = renderingOrder++;
                 }
 
-                bool is_docking_window_is_active(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window)
+                bool is_docking_window_active(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window)
                 {
                     if(_Context == nullptr || _Window == nullptr)
                         return false;
@@ -186,9 +186,9 @@ namespace Frenchie
                     {
                         int maximumRenderingOrder = 0;
 
-                        for (auto it = _Context->m_Hierarchy.begin(_Window->DockerView);
-                                it != _Context->m_Hierarchy.end(_Window->DockerView);
-                                it++)
+                        for (auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+                                  it != _Context->m_Hierarchy.end(_Window->DockerView);
+                                  it++)
                         {
                             maximumRenderingOrder = gs_max(maximumRenderingOrder, (*it)->State.RenderingOrder);
                         }
@@ -585,6 +585,127 @@ namespace Frenchie
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground] :
                         _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+        };
+    
+        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
+        {
+            ImmediateUserInterfaceWindowDockArea(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
+            virtual ~ImmediateUserInterfaceWindowDockArea(){}
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                State.BoundingBox = gs_2dboxf(
+                    _Context->m_Renderer->current_viewport().Min - _Context->m_Style.FramesWidth,
+                    _Context->m_Renderer->current_viewport().Max + _Context->m_Style.FramesWidth);
+
+                ImmediateUserInterfaceWindow::layout(_Context);
+            }
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                    return;
+
+                // content background and outline frame
+                _Context->m_Renderer->push_rectangle(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    State.BoundingBox.Min + _Context->m_Style.FramesWidth,
+                    State.BoundingBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    FrameBox.Min + _Context->m_Style.FramesWidth,
+                    FrameBox.Max - _Context->m_Style.FramesWidth,
+                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground],
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // frame
+                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
+                    _Context,
+                    this,
+
+                    // render self and child frames
+                    [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
+                    {
+                        // construct events
+                        ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
+
+                        // detect if we are active
+                        bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, _Window);
+
+                        // render frame
+                        if(_Window->Docker == nullptr &&
+                            _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+                                _Context,
+                                _Window,
+                                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
+                        {
+                            // frame
+                            if(_Frame.contains(event.CursorPosition) &&
+                                (_Window->TopSnapper    != nullptr ||
+                                _Window->LeftSnapper   != nullptr ||
+                                _Window->RightSnapper  != nullptr ||
+                                _Window->BottomSnapper != nullptr))
+                            {
+                                _Context->m_Renderer->push_rectangle_rounded_filled(
+                                    _Frame.Min + _Context->m_Style.FramesWidth,
+                                    _Frame.Max - _Context->m_Style.FramesWidth,
+                                    _Context->m_Style.FramesRadius,
+                                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
+                                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                            }
+                        }
+                        else
+                        {
+                            // frame
+                            if(active)
+                            {
+                                _Context->m_Renderer->push_rectangle_rounded_filled(
+                                    _Frame.Min + _Context->m_Style.FramesWidth,
+                                    _Frame.Max - _Context->m_Style.FramesWidth,
+                                    _Context->m_Style.FramesRadius,
+                                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground],
+                                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                                    true,
+                                    true,
+                                    false,
+                                    false);
+                            }
+                            else if(_Frame.contains(event.CursorPosition))
+                            {
+                                _Context->m_Renderer->push_rectangle_rounded_filled(
+                                    _Frame.Min + _Context->m_Style.FramesWidth,
+                                    _Frame.Max - _Context->m_Style.FramesWidth,
+                                    _Context->m_Style.FramesRadius,
+                                    _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered],
+                                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                                    true,
+                                    true,
+                                    false,
+                                    false);
+                            }
+                        }
+
+                        // title
+                        _Context->m_Renderer->push_text(
+                            _Window->Name,
+                            _Context->m_Style.FontSize * 0.6f,
+                            _Context->m_Style.Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text],
+                            _Context->m_Renderer->calculate_transform_matrix(
+                                (float)place_in_follow(),
+                                gs_vec2f(
+                                    _Frame.Min.x + 16.f + _Context->m_Style.FramesWidth,
+                                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.FontSize, _Context->m_Style.Font).height() * 0.6f * 0.5f)));
+                    }
+                );
             }
         };
     }
@@ -1199,7 +1320,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
 
             // detect if we are active
-            bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_is_active(_Context, _Window);
+            bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, _Window);
 
             // render frame
             if(_Window->Docker == nullptr &&
@@ -1608,9 +1729,102 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
 ImmedidateUserInterfaceWindowController::ImmedidateUserInterfaceWindowController(){}
 ImmedidateUserInterfaceWindowController::~ImmedidateUserInterfaceWindowController(){}
 
-void ImmedidateUserInterfaceWindowController::execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    const std::string                        _ID       = "DockArea"; // TODO: rename this
+    const ImmediateUserInterfaceNodeSettings _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
+
+    if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(_ID, _Settings))
+    {
+        ImmediateUserInterfaceWindow* window = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
+
+        // memorize docking area
+        m_DockArea = window;
+
+        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
+            std::string(_ID).append("/CentralDockerView"),
+            _Settings))
+        {
+            window->DockerView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
+            window->DockerView->State.PlaceInFollow               = true;
+            window->DockerView->State.OrderChildrenWhileRendering = true;
+
+            if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+                std::string(_ID).append("/SnapperView"),
+                _Settings))
+            {
+                window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+
+                // top
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                    std::string(_ID).append("/SnapperView/TopSnapperView"),
+                    _Settings))
+                {
+                    window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                // center
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                    std::string(_ID).append("/SnapperView/CentralSnapperView"),
+                    _Settings))
+                {
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                        std::string(_ID).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
+                        _Settings))
+                    {
+                        window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                        _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    }
+
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+                        std::string(_ID).append("/SnapperView/CentralSnapperView/ContentView"),
+                        _Settings))
+                    {
+                        window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.FramesWidth;
+                        _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+                    }
+
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                        std::string(_ID).append("/SnapperView/CentralSnapperView/RightSnapperView"),
+                        _Settings))
+                    {
+                        window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                        _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    }
+
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                // bottom
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                    std::string(_ID).append("/SnapperView/BottomSnapperView"),
+                    _Settings))
+                {
+                    window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+            }
+
+            _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+        }
+
+        _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
+    }
+}
+
+void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     place_on_dockers(_Context, _Event);
+
+    // setup rendering order of docking area
+    if(m_DockArea != nullptr)
+        m_DockArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background;
 
     // rebuild hierarchy
     m_WindowsDockingList.clear();
@@ -2168,7 +2382,7 @@ std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowControlle
 ImmedidateUserInterfaceEventsController::ImmedidateUserInterfaceEventsController(){}
 ImmedidateUserInterfaceEventsController::~ImmedidateUserInterfaceEventsController(){}
 
-void ImmedidateUserInterfaceEventsController::execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceEventsController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     catch_hover(_Context, _Event);
     catch_input(_Context, _Event);
@@ -2323,7 +2537,7 @@ void ImmedidateUserInterfaceEventsController::catch_event(ImmediateUserInterface
 ImmedidateUserInterfaceLayoutController::ImmedidateUserInterfaceLayoutController(){}
 ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutController(){}
 
-void ImmedidateUserInterfaceLayoutController::execute(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
+void ImmedidateUserInterfaceLayoutController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
@@ -2389,7 +2603,11 @@ bool ImmediateUserInterfaceContextLayer::awake()
     return m_Renderer != nullptr;
 }
 
-void ImmediateUserInterfaceContextLayer::frame_start(){}
+void ImmediateUserInterfaceContextLayer::frame_start()
+{
+    for(auto& controller : m_Controllers)
+        controller->frame_start(this);
+}
 
 void ImmediateUserInterfaceContextLayer::frame_update()
 {
@@ -2435,8 +2653,8 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
             event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
     }
 
-    for(auto& eventProcessor : m_Controllers)
-        eventProcessor->execute(this, event);
+    for(auto& controller : m_Controllers)
+        controller->frame_debug(this, event);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_render()
