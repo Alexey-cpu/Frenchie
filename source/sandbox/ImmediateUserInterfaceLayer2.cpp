@@ -1,5 +1,8 @@
 #include <ImmediateUserInterfaceLayer2.hpp>
 
+// Core
+#include <FrenchieCoreStringUtilities.hpp>
+
 // STL
 #include <algorithm>
 #include <typeinfo>
@@ -510,6 +513,42 @@ namespace Frenchie
             {
                 return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
             };
+        
+            FILE* open_file(const std::u32string& _Path, std::u32string _Mode)
+            {
+                return std::fopen(
+                    Frenchie::Core::String::convert_utf32_to_utf8(_Path).c_str(),
+                    Frenchie::Core::String::convert_utf32_to_utf8(_Mode).c_str());
+            }
+
+            void close_file(FILE* _File)
+            {
+                if(_File != nullptr)
+                    fclose(_File);
+            }
+        
+            gs_vec2f parse_vector_2d(std::string& _File)
+            {
+                if(_File.empty()) return gs_vec2f(0.f, 0.f);
+
+                gs_vec2f vector;
+
+                char* begin = &_File[0];
+                char* end   = begin;
+
+                for (; *end != ',' && *end != '\0'; end++);
+                vector.x = Frenchie::Core::String::from_string<float>(std::string(begin, end));
+
+                if(*end == '\n')
+                    return vector;
+
+                begin = ++end;
+                for (;*end != '\0'; end++);
+
+                vector.y = Frenchie::Core::String::from_string<float>(std::string(begin, end));
+
+                return vector;
+            }
         }
 
         // windows
@@ -1234,6 +1273,9 @@ void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child
         _Child->State.Parent = this;
 }
 
+void ImmediateUserInterfaceNode::load_state(ImmediateUserInterfaceContextLayer*){}
+void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*, FILE*){}
+
 bool ImmediateUserInterfaceNode::is_visible() const
 {
     if(State.Parent == nullptr)
@@ -1241,8 +1283,7 @@ bool ImmediateUserInterfaceNode::is_visible() const
 
     gs_2dboxf box = gs_2dboxf(
         State.Parent->State.BoundingBox.Min - gs_vec2f(12.f),
-        State.Parent->State.BoundingBox.Max + gs_vec2f(12.f)
-    );
+        State.Parent->State.BoundingBox.Max + gs_vec2f(12.f));
 
     return box.contains(State.BoundingBox);
 }
@@ -1598,6 +1639,38 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
     {
         _Child->State.Parent = ContentView;
     }
+}
+
+void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    auto iterator = _Context->m_IniFileState.find(Name);
+
+    if(iterator == _Context->m_IniFileState.end()) return;
+
+    auto& state = iterator->second;
+
+    gs_vec2f size     = ImmediateUserInterfaceContextLayerHelpers::parse_vector_2d(state["Size"]);
+    gs_vec2f position = ImmediateUserInterfaceContextLayerHelpers::parse_vector_2d(state["Position"]);
+
+    State.BoundingBox = gs_2dboxf(position, position + size);
+}
+
+void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer* _Context, FILE* _File)
+{
+    if(_Context == nullptr || _File == nullptr) return;
+
+    fprintf(_File, "[%s]\n", Name.c_str());
+    fprintf(_File, "Size=%f,%f\n", State.BoundingBox.size().x, State.BoundingBox.size().y);
+    fprintf(_File, "Position=%f,%f\n", State.BoundingBox.Min.x, State.BoundingBox.Min.y);
+    fprintf(_File, "DockingIndex=%d\n", DockingIndex);
+
+    if(Docker) fprintf(_File, "Docker=%s\n", ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, Docker)->Name.c_str());
+    if(TopSnapper) fprintf(_File, "TopSnapper=%s\n", ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, TopSnapper)->Name.c_str());
+    if(LeftSnapper) fprintf(_File, "LeftSnapper=%s\n", ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, LeftSnapper)->Name.c_str());
+    if(RightSnapper) fprintf(_File, "RightSnapper=%s\n", ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, RightSnapper)->Name.c_str());
+    if(BottomSnapper) fprintf(_File, "BottomSnapper=%s\n", ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, BottomSnapper)->Name.c_str());
 }
 
 // ImmediateUserInterfaceNodePanel
@@ -2679,10 +2752,146 @@ ImmediateUserInterfaceContextLayer::~ImmediateUserInterfaceContextLayer(){}
 
 bool ImmediateUserInterfaceContextLayer::awake()
 {
+    // auxiliary lambdas
+    auto load_ini_file = [](const std::u32string& _File)->ImmediateUserInterfaceState
+    {
+        // open file
+        FILE* file = ImmediateUserInterfaceContextLayerHelpers::open_file(_File, U"rb");
+        if(file == nullptr)
+            return ImmediateUserInterfaceState();
+
+        // determine file size
+        fseek(file, 0, SEEK_END);
+        long file_size = ftell(file);
+        rewind(file); // Go back to the beginning
+
+        if (file_size == -1)
+        {
+            fclose(file);
+            return ImmediateUserInterfaceState();
+        }
+
+        // allocate memory for the content (+1 for null terminator)
+        char* buffer = (char*)malloc(file_size + 1);
+        if (!buffer)
+        {
+            fclose(file);
+            return ImmediateUserInterfaceState();
+        }
+
+        // Read the entire file into string buffer
+        size_t bytes_read = fread(buffer, 1, file_size, file);
+        if (bytes_read != file_size)
+        {
+            free(buffer);
+            fclose(file);
+            return ImmediateUserInterfaceState();
+        }
+
+        // add the null terminator to make it a valid C string
+        buffer[file_size] = '\0';
+
+        // read file contents
+        std::map<
+            std::string,     // section
+            std::map<
+                std::string, // key
+                std::string  // value
+                >
+                > settings;
+
+        // auxiliary lambda predicates
+        auto isEndOfFile    = [](const char* _Contents)->bool{return *_Contents ==  '\0';};
+        auto isSectionStart = [](const char* _Contents)->bool{return *_Contents ==  '['; };
+        auto isSectionEnd   = [](const char* _Contents)->bool{return *_Contents ==  ']'; };
+        auto isValueStart   = [](const char* _Contents)->bool{return *_Contents ==  '='; };
+        auto isKeyStart     = [](const char* _Contents)->bool{return *_Contents == '\n'; };
+
+        char* fileContents = buffer;
+
+        std::string currentSection;
+        std::string currentSectionKey;
+
+        for (;!isEndOfFile(fileContents); fileContents++)
+        {
+            // read section name
+            if(isSectionStart(fileContents) && !isEndOfFile(++fileContents))
+            {
+                char* sectionNameBegin = fileContents;
+                char* sectionNameEnd   = fileContents;
+
+                for (;!isEndOfFile(sectionNameEnd); sectionNameEnd++)
+                {
+                    if (isSectionEnd(sectionNameEnd))
+                    {
+                        for (;isSectionEnd(sectionNameEnd) && !isEndOfFile(sectionNameEnd); sectionNameEnd++);
+                        break;
+                    }
+                }
+
+                currentSection = std::string(sectionNameBegin, (sectionNameBegin != sectionNameEnd - 1 ? sectionNameEnd - 1 : sectionNameEnd));
+                fileContents   = --sectionNameEnd;
+            }
+
+            // read section contents
+            if(isSectionEnd(fileContents) && !currentSection.empty())
+            {
+                char* sectionContentsBegin = fileContents;
+                char* sectionContentsEnd   = sectionContentsBegin;
+                for (;!isKeyStart(sectionContentsBegin) && !isEndOfFile(sectionContentsBegin); sectionContentsBegin++);
+                for (;!isSectionStart(sectionContentsEnd) && !isEndOfFile(sectionContentsEnd); sectionContentsEnd++);
+
+                for(auto it = sectionContentsBegin; it != sectionContentsEnd && !isEndOfFile(it); it++)
+                {
+                    if(isKeyStart(it))
+                    {
+                        char* keyBegin = ++it;
+                        char* keyEnd   = keyBegin;
+                        for (;!isValueStart(keyEnd) && keyEnd != sectionContentsEnd && !isEndOfFile(keyEnd); keyEnd++);
+                        currentSectionKey = std::string(keyBegin, keyEnd);
+                        it = --keyEnd;
+                    }
+
+                    if(isValueStart(it) && !currentSectionKey.empty())
+                    {
+                        char* valueBegin = ++it;
+                        char* valueEnd   = valueBegin;
+                        for (;!isKeyStart(valueEnd) && valueEnd != sectionContentsEnd && !isEndOfFile(valueEnd); valueEnd++);
+                        settings[currentSection][currentSectionKey] = std::string(valueBegin, valueEnd);
+                        it = --valueEnd;
+                    }
+                }
+
+                fileContents = --sectionContentsEnd;
+            }
+        }
+
+        for (auto& section : settings)
+        {
+            std::cout << "------------------------------------------\n";
+            std::cout << section.first << "\n";
+            std::cout << "------------------------------------------\n";
+
+            for (auto& keyValue : section.second)
+            {
+                std::cout << keyValue.first << "\t" << keyValue.second << "\n";
+            }
+        }
+        
+        // close the file
+        fclose(file);
+
+        // free fine contents buffer
+        free(buffer);
+
+        return settings;
+    };
+
+    // launch renderer
     if(m_Renderer == nullptr)
         m_Renderer = Frenchie::Application::application()->push_layer<Immediate2DRenderer>();
 
-    // hierarchy
+    // create hierarchy
     m_Hierarchy = ImmedidateUserInterfaceHierarchy(
         [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
@@ -2713,14 +2922,18 @@ bool ImmediateUserInterfaceContextLayer::awake()
             return nullptr;
         });
 
-    // event controllers
+    // create controllers
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceEventsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
 
+    // awake controllers
     for(auto& controller : m_Controllers)
         GS_ASSERT(controller->awake(this));
+
+    // load .ini file
+    m_IniFileState = load_ini_file(m_IniFilePath);
 
     return m_Renderer != nullptr;
 }
@@ -2828,7 +3041,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.RenderingIndex        = 0;
         node->State.MaximumChildDepth     = 0;
         node->State.MaximumChildThickness = 0;
-        node->State.Parent                = nullptr;
         node->State.Settings              = 0;
 
         // duplicates control
@@ -2839,14 +3051,26 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     GS_ASSERT(m_NodesRenderingStack.empty());
 
     // rendering
+    m_NodesRenderingCache = m_NodesRenderingList;
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
+
+    // clear ini file state
+    m_IniFileState.clear();
 }
 
 void ImmediateUserInterfaceContextLayer::finish()
 {
+    // close renderer
     if(m_Renderer != nullptr)
         m_Renderer->close();
+
+    // save state of windows
+    FILE* file = ImmediateUserInterfaceContextLayerHelpers::open_file(m_IniFilePath, U"wb");
+
+    for (auto node : m_NodesRenderingCache)
+        node->save_state(this, file);
+    fclose(file);
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)

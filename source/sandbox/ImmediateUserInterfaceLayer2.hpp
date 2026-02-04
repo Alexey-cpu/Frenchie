@@ -168,6 +168,14 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
+        typedef std::map<
+            std::string,     // section
+            std::map<
+                std::string, // key
+                std::string  // value
+                >
+                > ImmediateUserInterfaceState; 
+
         // nodes
         struct ImmediateUserInterfaceNode
         {
@@ -179,6 +187,8 @@ namespace Frenchie
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
+            virtual void load_state(ImmediateUserInterfaceContextLayer*);
+            virtual void save_state(ImmediateUserInterfaceContextLayer*, FILE*);
 
             bool is_visible() const;
             bool is_partially_visible() const;
@@ -229,6 +239,7 @@ namespace Frenchie
 
             Data State;
             Data Cache;
+            bool Loaded{false};
 
         //private:
             std::string Name = "UINode";
@@ -247,6 +258,8 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+            virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
+            virtual void save_state(ImmediateUserInterfaceContextLayer*, FILE*) override;
 
             ImmediateUserInterfaceNode* Docker        {nullptr};
             ImmediateUserInterfaceNode* TopSnapper    {nullptr};
@@ -630,10 +643,15 @@ namespace Frenchie
             // rendering
             mutable std::shared_ptr<Immediate2DRenderer>                            m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingList;
+            mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingStack;
 
             // controllers
-            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>      m_Controllers;
+            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>   m_Controllers;
+
+            // ini file
+            std::u32string              m_IniFilePath = U"Frenchie.ini";
+            ImmediateUserInterfaceState m_IniFileState;
 
         private:
 
@@ -664,6 +682,9 @@ namespace Frenchie
 
                 // setup node parameters
                 node->Hash = hash;
+
+                if(!m_IniFileState.empty())
+                    node->load_state(this);
 
                 return dynamic_cast<Type*>(node);
             }
