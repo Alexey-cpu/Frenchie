@@ -145,15 +145,37 @@ namespace Frenchie
 
             ~ImmedidateUserInterfaceStyle(){}
 
-            std::vector<RenderingQueueColor> Colors;
+            // getters
+            float get_frames_radius() const
+            {
+                return gs_max(FramesRadius, 0.f);
+            }
+
+            float get_frames_width() const
+            {
+                return gs_max(FramesWidth, 4.f);
+            }
+
+            float get_font_size() const
+            {
+                return gs_max(32.f, FontSize);
+            }
+
+            RenderingQueueColor get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
+            {
+                return Colors[_Color];
+            }
 
             // font
             RenderingQueueFont Font;
-            float              FontSize = 64.f;
 
-            // frames of windows, buttons, child windows e.t.c
-            float FramesRadius = 32.f;
-            float FramesWidth  = 8.f;
+        private:
+
+            // infos
+            float                            FramesRadius = 0.f;
+            float                            FramesWidth  = 0.f;
+            float                            FontSize     = 64.f;
+            std::vector<RenderingQueueColor> Colors;
         };
 
         struct ImmedidateUserInterfaceEvent
@@ -654,6 +676,11 @@ namespace Frenchie
                 if(m_NodesRenderingStack.empty())
                     return;
 
+                // as the node can contain nested items and store pointers to them
+                // we need to load state when the node finishes it's hierarchy
+                if(!m_IniFileState.empty())
+                    m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->load_state(this);
+
                 GS_ASSERT((dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) != nullptr));
 
                 m_NodesRenderingStack.pop_back();
@@ -724,10 +751,6 @@ namespace Frenchie
                 // TODO: optimize this !!!
                 if(node->Name != std::string(_ID.c_str(), _ID.c_str() + hashable))
                     node->Name = std::string(_ID.c_str(), _ID.c_str() + hashable);
-
-                // load state
-                if(!m_IniFileState.empty())
-                    node->load_state(this);
 
                 return dynamic_cast<Type*>(node);
             }
