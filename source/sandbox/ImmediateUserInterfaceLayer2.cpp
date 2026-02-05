@@ -3190,9 +3190,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     }
 
     for (auto& node : m_NodesRenderingList)
-        m_Duplicates[node->Hash] = 0;
-
-    for (auto& node : m_NodesRenderingList)
     {
         // stop all modifications
         if(allMouseButtonsAreReleased)
@@ -3220,10 +3217,9 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->State.MaximumChildDepth     = 0;
         node->State.MaximumChildThickness = 0;
         node->State.Settings              = 0;
-
-        // duplicates control
-        m_Duplicates[node->Hash]++;
-        GS_ASSERT(m_Duplicates[node->Hash] <= 1);
+        
+        // restore duplicates control variable
+        node->Count                       = 0;
     }
 
     GS_ASSERT(m_NodesRenderingStack.empty());
