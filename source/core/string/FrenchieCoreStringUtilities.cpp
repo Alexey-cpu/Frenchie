@@ -298,7 +298,7 @@ template<> bool Frenchie::Core::String::from_string<bool>(const std::string& _In
 {
     try
     {
-        return _Input == "true" || std::stoi( _Input ) ? true : false;
+        return !_Input.empty() && ((utf8_to_lower(_Input) == "true") || std::stoi(_Input) > 0) ? true : false;
     }
     catch(...)
     {

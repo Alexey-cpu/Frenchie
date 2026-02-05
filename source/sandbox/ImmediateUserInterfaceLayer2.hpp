@@ -168,14 +168,6 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
         };
 
-        typedef std::map<
-            std::string,     // section
-            std::map<
-                std::string, // key
-                std::string  // value
-                >
-                > ImmediateUserInterfaceState; 
-
         // nodes
         struct ImmediateUserInterfaceNode
         {
@@ -188,7 +180,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
-            virtual void save_state(ImmediateUserInterfaceContextLayer*, FILE*);
+            virtual void save_state(ImmediateUserInterfaceContextLayer*);
 
             bool is_visible() const;
             bool is_partially_visible() const;
@@ -259,7 +251,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
             virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
-            virtual void save_state(ImmediateUserInterfaceContextLayer*, FILE*) override;
+            virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
 
             ImmediateUserInterfaceNode* Docker        {nullptr};
             ImmediateUserInterfaceNode* TopSnapper    {nullptr};
@@ -546,6 +538,37 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
 
+        // context configuration
+        class ImmediateUserInterfaceContextConfiguration final
+        {
+        public:
+            ImmediateUserInterfaceContextConfiguration();
+            ~ImmediateUserInterfaceContextConfiguration();
+
+            template<typename Type>
+            Type get(const std::string& _Section, const std::string& _Name);
+
+            template<typename Type>
+            void set(const std::string& _Section, const std::string& _Name, const Type& _Value);
+
+            bool contains(const std::string& _Section, const std::string& _Name) const;
+            bool empty() const;
+            void clear();
+
+            bool read(const std::u32string& _Path);
+            bool write(const std::u32string& _Path);
+
+        private:
+
+        std::map<
+            std::string,     // section
+            std::map<
+                std::string, // key
+                std::string  // value
+                >
+                > m_Configuration; 
+        };
+
         // context layer
         class ImmediateUserInterfaceContextLayer : public Layer
         {
@@ -650,8 +673,8 @@ namespace Frenchie
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>   m_Controllers;
 
             // ini file
-            std::u32string              m_IniFilePath = U"Frenchie.ini";
-            ImmediateUserInterfaceState m_IniFileState;
+            std::u32string                             m_IniFilePath = U"Frenchie.ini";
+            ImmediateUserInterfaceContextConfiguration m_IniFileState;
 
         private:
 
