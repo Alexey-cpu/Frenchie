@@ -98,14 +98,14 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
     //create_horizontal_layout("SOMELAYOUT");
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-1",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {
-    //     create_horizontal_layout("Window-1/Layout");
-    //     m_ImmediateUserInterface->end_window();
-    // }
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-1",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        create_horizontal_layout("Window-1/Layout");
+        m_ImmediateUserInterface->end_window();
+    }
 
     static bool opened = true;
     static std::string button;
@@ -175,18 +175,16 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         RenderingQueue::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane()
-        )
-    );
+        ));
 
     m_ImmediateUserInterface->m_Renderer->push_text(
-        std::string("CMD ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
+        std::string("Commands ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
         64.f,
         RenderingQueue::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 64.f)
-        )
-    );
+        ));
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
@@ -195,18 +193,27 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 128.f)
-        )
-    );
+        ));
 
-    m_ImmediateUserInterface->m_Renderer->push_text(
-        std::string("Pressed ").append(button),
-        64.f,
-        RenderingQueue::construct_rgba_color(255, 0, 0, 255),
-        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
-            gs_vec2f(0.f, 256.f)
-        )
-    );
+    // m_ImmediateUserInterface->m_Renderer->push_text(
+    //     std::string("Pressed ").append(button),
+    //     64.f,
+    //     RenderingQueue::construct_rgba_color(255, 0, 0, 255),
+    //     m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+    //         m_ImmediateUserInterface->m_Renderer->get_far_plane(),
+    //         gs_vec2f(0.f, 256.f)
+    //     )
+    // );
+
+    // m_ImmediateUserInterface->m_Renderer->push_rectangle_rounded(
+    //     gs_vec2f(512.f, 512.f),
+    //     gs_vec2f(1024.f, 1024.f),
+    //     0.f,
+    //     0.f,
+    //     RenderingQueue::construct_rgba_color(255, 0, 0, 255),
+    //     m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+    //         m_ImmediateUserInterface->m_Renderer->get_far_plane())
+    // );
 }
 
 void ImmediateUserInterfaceTestLayer::finish()

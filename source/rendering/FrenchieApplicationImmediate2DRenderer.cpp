@@ -197,7 +197,11 @@ void Immediate2DRenderer::push_rendering_command(
     const gs_mat4f&                         _Transform,
     const RenderingQueueMeshRenderingHints& _MeshRenderingHints)
 {
-    push_rendering_command(m_RenderingQueue->get_default_texture(), 1, _Transform);
+    push_rendering_command(
+        m_RenderingQueue->get_default_texture(),
+        RenderingQueue::construct_rgba_color(255, 255, 255, 255),
+        _Transform,
+        _MeshRenderingHints);
 }
 
 
@@ -390,13 +394,13 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
         return;
 
     // check rounding radius
-    if(_Radius <= 4.f ||
+    if(_Radius <= m_RenderingQueueMinimumLineWidth ||
         (!_RoundTopLeftCorner     &&
          !_RoundTopRightCorner    &&
          !_RoundBottomRightCorner &&
          !_RoundBottomLeftCorner))
     {
-        push_rectangle_filled(_Min, _Max, _Color);
+        push_rectangle_filled(_Min, _Max, _Color, _Transform);
         return;
     }
 
@@ -527,8 +531,7 @@ void Immediate2DRenderer::push_text(
         _Size,
         _Color,
         _Transform,
-        _Font
-    );
+        _Font);
 }
 
 void Immediate2DRenderer::push_text(
@@ -543,8 +546,7 @@ void Immediate2DRenderer::push_text(
         _Size,
         _Color,
         _Transform,
-        _Font
-    );
+        _Font);
 }
 
 void Immediate2DRenderer::push_arc_filled(
@@ -553,7 +555,7 @@ void Immediate2DRenderer::push_arc_filled(
     const float&                 _MajorRadius,
     const float&                 _SourceAngle,
     const float&                 _TargetAngle,
-    const RenderingQueueColor& _Color,
+    const RenderingQueueColor&   _Color,
     const gs_mat4f&              _Transform,
     const RenderingQueueTexture& _Texture)
 {
@@ -647,6 +649,7 @@ void Immediate2DRenderer::push_triangle(
     m_PathBuilder.begin(_P1);
     m_PathBuilder.line_to(_P2);
     m_PathBuilder.line_to(_P3);
+    m_PathBuilder.line_to(_P1);
 
     // build mesh
     m_PathBuilder.build_mesh(
@@ -680,12 +683,13 @@ void Immediate2DRenderer::push_rectangle(
     m_PathBuilder.line_to(gs_vec2f(_Max.x, _Min.y));
     m_PathBuilder.line_to(_Max);
     m_PathBuilder.line_to(gs_vec2f(_Min.x, _Max.y));
+    m_PathBuilder.line_to(_Min);
 
     // build mesh
     m_PathBuilder.build_mesh(
         _Color,
         m_RenderingQueue->get_default_texture(),
-        _Width,
+        gs_max(_Width, m_RenderingQueueMinimumLineWidth),
         m_RenderingQueueMeshVertexes,
         m_RenderingQueueMeshVertexesIndexes);
 
@@ -712,7 +716,7 @@ void Immediate2DRenderer::push_rectangle_rounded(
     // check rounding radius
     if(_Radius <= gs_max(_Width, 4.f))
     {
-        push_rectangle(_Min, _Max, _Width, _Color);
+        push_rectangle(_Min, _Max, _Width, _Color, _Transform);
         return;
     }
 
@@ -910,7 +914,7 @@ void Immediate2DRenderer::build_arc_filled_mesh(
     gs_vec2f p1 = p0;
     gs_vec2f p2 = p0;
 
-    const float angleIncrement = (_TargetAngle - _SourceAngle) / _SegmentsCount;
+    const float angleIncrement = 360.f / _SegmentsCount;
 
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {
@@ -926,11 +930,12 @@ void Immediate2DRenderer::build_line_mesh(
     const RenderingQueueColor&   _Color,
     const RenderingQueueTexture& _Texture)
 {
-    const gs_vec3f p1 = gs_vec3f(_P1.x, _P1.y, 0.f);
-    const gs_vec3f p2 = gs_vec3f(_P2.x, _P2.y, 0.f);
+    const gs_vec3f p1    = gs_vec3f(_P1.x, _P1.y, 0.f);
+    const gs_vec3f p2    = gs_vec3f(_P2.x, _P2.y, 0.f);
+    float          width = gs_max(_Width, m_RenderingQueueMinimumLineWidth);
 
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
-    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
+    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * width * 0.5f;
 
     build_triangle_filled_mesh(
         _P1 - perpendicular,
@@ -956,14 +961,15 @@ void Immediate2DRenderer::build_arc_mesh(
     const float&               _Width,
     const RenderingQueueColor& _Color)
 {
-    const float angleIncrement = (_TargetAngle - _SourceAngle) / 36.f;
+    const float angleIncrement = 360.f / 36.f;
 
     gs_vec2f p1 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p2;
-    
+    float    width = gs_max(_Width, m_RenderingQueueMinimumLineWidth);
+
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {
         p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
-        build_line_mesh(p1, p2, _Width, _Color, m_RenderingQueue->get_default_texture());
+        build_line_mesh(p1, p2, width, _Color, m_RenderingQueue->get_default_texture());
     }
 }

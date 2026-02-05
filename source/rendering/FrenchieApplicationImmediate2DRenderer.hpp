@@ -54,7 +54,7 @@ namespace Frenchie
         {
         public:
 
-            Immediate2DRendererPathBuilder(){}
+            Immediate2DRendererPathBuilder(const float& _PolygonLinesWidth = 4.f) : m_PolygonLinesWidth(_PolygonLinesWidth){}
             ~Immediate2DRendererPathBuilder(){}
 
             // TODO: add Bezier and random power curves here e.t.c
@@ -84,7 +84,7 @@ namespace Frenchie
                 
                 if(gs_abs(targetAngle - sourceAngle) < 1e-3) return;
                 
-                float angleIncrement = gs_abs((targetAngle - sourceAngle) / segmentsCount);
+                float angleIncrement = gs_abs(360.f / segmentsCount);
 
                 for (float angle = sourceAngle; angle <= targetAngle; angle += angleIncrement)
                     line_to(gs_vec2f(center.x + radius * cos(gs_to_radians(angle)), center.y + radius * sin(gs_to_radians(angle))));
@@ -92,11 +92,11 @@ namespace Frenchie
             }
 
             void build_mesh(
-                const RenderingQueueColor&                   _Color,
-                const RenderingQueueTexture&                 _Texture,
-                const float&                                 _Width,
-                std::vector<RenderingQueueVertex>&           _Vertexes,
-                std::vector<int>&                            _Indexes)
+                const RenderingQueueColor&         _Color,
+                const RenderingQueueTexture&       _Texture,
+                const float&                       _Width,
+                std::vector<RenderingQueueVertex>& _Vertexes,
+                std::vector<int>&                  _Indexes)
             {
                 if(m_PolygonLines.empty())
                 {
@@ -104,9 +104,11 @@ namespace Frenchie
                     return;
                 }
 
+                float width = gs_max(_Width, m_PolygonLinesWidth);
+
                 if (m_PolygonLines.size() == 1)
                 {
-                    m_PolygonLines[0].setup(_Width);
+                    m_PolygonLines[0].setup(width);
 
                     build_triangle_filled_mesh(
                         m_PolygonLines[0].P1min,
@@ -142,7 +144,7 @@ namespace Frenchie
 
                 for (int i = 0; i < (int)m_PolygonLines.size(); i++)
                 {
-                    m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].setup(_Width);
+                    m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].setup(width);
 
                     build_triangle_filled_mesh(
                         m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P1min,
@@ -165,7 +167,7 @@ namespace Frenchie
                     // TODO: need another algorithm of lines smoothing
                     if(i-1 >= 0 || pathIsClosed)
                     {
-                        m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].setup(_Width);
+                        m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].setup(width);
 
                         build_triangle_filled_mesh(
                             m_PolygonLines[i].P1max,
@@ -539,15 +541,16 @@ namespace Frenchie
                 const RenderingQueueColor& _Color);
 
             // rendering queue data
-            std::shared_ptr<RenderingQueue>             m_RenderingQueue        {nullptr};
-            gs_2dboxf                                   m_RenderingQueueViewport{gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_vec4f>                       m_RenderingQueueClearColors;
-            std::vector<gs_2dboxf>                      m_RenderingQueueClippingBoxes;
-            std::vector<RenderingQueueVertex>           m_RenderingQueueMeshVertexes;
-            std::vector<int>                            m_RenderingQueueMeshVertexesIndexes;
+            std::shared_ptr<RenderingQueue>   m_RenderingQueue        {nullptr};
+            gs_2dboxf                         m_RenderingQueueViewport{gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_vec4f>             m_RenderingQueueClearColors;
+            std::vector<gs_2dboxf>            m_RenderingQueueClippingBoxes;
+            std::vector<RenderingQueueVertex> m_RenderingQueueMeshVertexes;
+            float                             m_RenderingQueueMinimumLineWidth{8.f};
+            std::vector<int>                  m_RenderingQueueMeshVertexesIndexes;
 
             // path building data
-            Immediate2DRendererPathBuilder              m_PathBuilder;
+            Immediate2DRendererPathBuilder    m_PathBuilder{Immediate2DRendererPathBuilder(8.f)};
         };
     }
 }
