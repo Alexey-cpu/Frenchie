@@ -975,7 +975,7 @@ bool ImmediateUserInterfaceContextConfiguration::write(const std::u32string& _Pa
 }
 
 // ImmedidateUserInterfaceNode
-ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string _Name) : Name(_Name){}
+ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string _Hash) : Hash(_Hash){}
 ImmediateUserInterfaceNode::~ImmediateUserInterfaceNode(){}
 
 void ImmediateUserInterfaceNode::render(ImmediateUserInterfaceContextLayer*)
@@ -1869,19 +1869,21 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
 {
     if(_Context == nullptr) return;
 
+    std::cout << Hash << "\n";
+
     gs_vec2f size =
-        _Context->m_IniFileState.contains(Name, "Size") ?
-            _Context->m_IniFileState.get<gs_vec2f>(Name, "Size") :
+        _Context->m_IniFileState.contains(Hash, "Size") ?
+            _Context->m_IniFileState.get<gs_vec2f>(Hash, "Size") :
                 gs_vec2f(512.f, 512.f);
     
     gs_vec2f position =
-        _Context->m_IniFileState.contains(Name, "Position") ?
-            _Context->m_IniFileState.get<gs_vec2f>(Name, "Position") :
+        _Context->m_IniFileState.contains(Hash, "Position") ?
+            _Context->m_IniFileState.get<gs_vec2f>(Hash, "Position") :
                 gs_vec2f(0.f, 0.f);
     
     DockingIndex =
-        _Context->m_IniFileState.contains(Name, "DockingIndex") ?
-            _Context->m_IniFileState.get<int>(Name, "DockingIndex") :
+        _Context->m_IniFileState.contains(Hash, "DockingIndex") ?
+            _Context->m_IniFileState.get<int>(Hash, "DockingIndex") :
                 -1;
 
     State.BoundingBox = gs_2dboxf(position, position + size);
@@ -1891,14 +1893,14 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
 {
     if(_Context == nullptr) return;
 
-    _Context->m_IniFileState.set<gs_vec2f>(Name, "Size", State.BoundingBox.size());
-    _Context->m_IniFileState.set<gs_vec2f>(Name, "Position", State.BoundingBox.Min);
-    _Context->m_IniFileState.set<int>(Name, "DockingIndex", DockingIndex);
+    _Context->m_IniFileState.set<gs_vec2f>(Hash, "Size", State.BoundingBox.size());
+    _Context->m_IniFileState.set<gs_vec2f>(Hash, "Position", State.BoundingBox.Min);
+    _Context->m_IniFileState.set<int>(Hash, "DockingIndex", DockingIndex);
 
     if(Docker)
     {
         _Context->m_IniFileState.set<std::string>(
-            Name,
+            Hash,
             "Docker",
             ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, Docker)->Name);
     }
@@ -1906,7 +1908,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     if(TopSnapper)
     {
         _Context->m_IniFileState.set<std::string>(
-            Name,
+            Hash,
             "TopSnapper",
             ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, TopSnapper)->Name);
     }
@@ -1914,7 +1916,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     if(LeftSnapper)
     {
         _Context->m_IniFileState.set<std::string>(
-            Name,
+            Hash,
             "LeftSnapper",
             ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, LeftSnapper)->Name);
     }
@@ -1922,7 +1924,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     if(RightSnapper)
     {
         _Context->m_IniFileState.set<std::string>(
-            Name,
+            Hash,
             "RightSnapper",
             ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, RightSnapper)->Name);
     }
@@ -1930,13 +1932,13 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
     if(BottomSnapper)
     {
         _Context->m_IniFileState.set<std::string>(
-            Name,
+            Hash,
             "BottomSnapper",
             ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, BottomSnapper)->Name);
     }
 
     if(ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, this))
-        _Context->m_IniFileState.set<bool>(Name, "IsActive", true);
+        _Context->m_IniFileState.set<bool>(Hash, "IsActive", true);
 }
 
 // ImmediateUserInterfaceNodePanel
@@ -2218,7 +2220,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
             if(window == nullptr) continue;
 
-            windows[window->Name] = window;
+            windows[window->Hash] = window;
         }
 
         // restore docking
@@ -2229,11 +2231,11 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
             if(window == nullptr) continue;
 
-            ImmediateUserInterfaceWindow* docker        = windows[_Context->m_IniFileState.get<std::string>(window->Name, "Docker")];
-            ImmediateUserInterfaceWindow* topSnapper    = windows[_Context->m_IniFileState.get<std::string>(window->Name, "TopSnapper")];
-            ImmediateUserInterfaceWindow* LeftSnapper   = windows[_Context->m_IniFileState.get<std::string>(window->Name, "LeftSnapper")];
-            ImmediateUserInterfaceWindow* RightSnapper  = windows[_Context->m_IniFileState.get<std::string>(window->Name, "RightSnapper")];
-            ImmediateUserInterfaceWindow* BottomSnapper = windows[_Context->m_IniFileState.get<std::string>(window->Name, "BottomSnapper")];
+            ImmediateUserInterfaceWindow* docker        = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "Docker")];
+            ImmediateUserInterfaceWindow* topSnapper    = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "TopSnapper")];
+            ImmediateUserInterfaceWindow* LeftSnapper   = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "LeftSnapper")];
+            ImmediateUserInterfaceWindow* RightSnapper  = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "RightSnapper")];
+            ImmediateUserInterfaceWindow* BottomSnapper = windows[_Context->m_IniFileState.get<std::string>(window->Hash, "BottomSnapper")];
 
             if(docker) window->Docker = docker->DockerView;
             if(topSnapper) window->TopSnapper = topSnapper->TopSnapperView;
@@ -2241,7 +2243,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
             if(RightSnapper) window->RightSnapper = RightSnapper->RightSnapperView;
             if(BottomSnapper) window->BottomSnapper = BottomSnapper->BottomSnapperView;
 
-            if(_Context->m_IniFileState.get<bool>(window->Name, "IsActive"))
+            if(_Context->m_IniFileState.get<bool>(window->Hash, "IsActive"))
             {
                 ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().setup_as_active_docking_window(
                     _Context,
