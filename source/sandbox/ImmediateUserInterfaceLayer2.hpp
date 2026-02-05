@@ -235,6 +235,7 @@ namespace Frenchie
 
         //private:
             std::string Name  = "UINode";
+            std::string Hash  = "###UINode";
             int         Count = 0;
         };
 
@@ -694,14 +695,35 @@ namespace Frenchie
                     return hash;
                 };
 
+                // determine hashable part of the _ID
+                int hashable = 0;
+
+                for (;hashable < (int)_ID.size(); hashable++)
+                {
+                    // TODO: here we should hash only if there are ### but now it is #
+                    if(_ID[hashable] == '#') break;
+                }
+                
                 // compute hash
-                unsigned int hash = hashFunction(_ID.c_str(), _ID.size());
+                unsigned int hash =
+                    hashable < _ID.size() ?
+                        hashFunction(_ID.c_str() + hashable, _ID.size()) :
+                            hashFunction(_ID.c_str(), _ID.size());
 
                 // create node
                 if(m_Cache.find(hash) == m_Cache.end())
-                    m_Cache[hash] = std::make_unique<Type>(_ID);
+                {
+                    m_Cache[hash] = std::make_unique<Type>(
+                        hashable < _ID.size() ?
+                            std::string(_ID.c_str() + hashable, _ID.c_str() + _ID.size()) :
+                                std::string(_ID.c_str(), _ID.c_str() + hashable));
+                }
                 ImmediateUserInterfaceNode* node = m_Cache[hash].get();
                 GS_ASSERT((++node->Count) <= 1);
+
+                // TODO: optimize this !!!
+                if(node->Name != std::string(_ID.c_str(), _ID.c_str() + hashable))
+                    node->Name = std::string(_ID.c_str(), _ID.c_str() + hashable);
 
                 // load state
                 if(!m_IniFileState.empty())

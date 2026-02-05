@@ -161,6 +161,14 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         m_ImmediateUserInterface->end_window();
     }
 
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-5###Window-6",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {        
+        m_ImmediateUserInterface->end_window();
+    }
+
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
         64.f,
