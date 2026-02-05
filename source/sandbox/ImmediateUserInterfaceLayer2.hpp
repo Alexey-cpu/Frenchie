@@ -234,8 +234,8 @@ namespace Frenchie
             bool Loaded{false};
 
         //private:
-            std::string Name = "UINode";
-            uint32_t    Hash = 0;
+            std::string Name  = "UINode";
+            int         Count = 0;
         };
 
         // windows
@@ -661,7 +661,6 @@ namespace Frenchie
             mutable std::map<uint32_t, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
             mutable ImmedidateUserInterfaceStyle                                    m_Style;
             mutable ImmedidateUserInterfaceHierarchy                                m_Hierarchy;
-            mutable std::map<uint32_t, int>                                         m_Duplicates;
 
             // rendering
             mutable std::shared_ptr<Immediate2DRenderer>                            m_Renderer{nullptr};
@@ -702,10 +701,9 @@ namespace Frenchie
                 if(m_Cache.find(hash) == m_Cache.end())
                     m_Cache[hash] = std::make_unique<Type>(_ID);
                 ImmediateUserInterfaceNode* node = m_Cache[hash].get();
+                GS_ASSERT((++node->Count) <= 1);
 
-                // setup node parameters
-                node->Hash = hash;
-
+                // load state
                 if(!m_IniFileState.empty())
                     node->load_state(this);
 
