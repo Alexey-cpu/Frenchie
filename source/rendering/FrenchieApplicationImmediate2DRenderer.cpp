@@ -9,54 +9,54 @@ namespace Frenchie
 {
     namespace Application
     {
-        template<typename Type>
-        auto calculate_2d_camera_view_and_projection(
-            const gs_vector<Type, 2>& _CameraWorldPosition,
-            const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
-            const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
-            const gs_vector<Type, 2>& _CameraResolution,
-            const float&              _CameraRotationAngle,
-            const Type&               _CameraNearPlanePosition,
-            const Type&               _CameraFarPlanePosition)
-        {
-            // compute projection matrix
-            // float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-            // float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-            // float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-            // float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+        // template<typename Type>
+        // auto calculate_2d_camera_view_and_projection(
+        //     const gs_vector<Type, 2>& _CameraWorldPosition,
+        //     const gs_vector<Type, 3>& _CameraWorldUpAxisDirection,
+        //     const gs_vector<Type, 3>& _CameraWorldFrontAxisDirection,
+        //     const gs_vector<Type, 2>& _CameraResolution,
+        //     const float&              _CameraRotationAngle,
+        //     const Type&               _CameraNearPlanePosition,
+        //     const Type&               _CameraFarPlanePosition)
+        // {
+        //     // compute projection matrix
+        //     // float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+        //     // float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+        //     // float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+        //     // float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
 
-            float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-            float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-            float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-            float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+        //     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+        //     float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
+        //     float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
+        //     float top    = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
 
-            // camera orientation
-            gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
-            gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
-            gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
+        //     // camera orientation
+        //     gs_vector<Type, 3> cameraLocalFrontAxisDirection = gs_vector_normalize(_CameraWorldFrontAxisDirection);
+        //     gs_vector<Type, 3> cameraLocalRightAxisDirection = gs_vector_normalize(gs_vector_cross(cameraLocalFrontAxisDirection, _CameraWorldUpAxisDirection));
+        //     gs_vector<Type, 3> cameraLocalUpAxisDirection    = gs_vector_normalize(gs_vector_cross(cameraLocalRightAxisDirection, cameraLocalFrontAxisDirection));
 
-            gs_matrix<Type, 4, 4> cameraview =
-                gs_matrix_look_at(
-                    gs_vector<Type, 3>(0.f, 0.f, 1),
-                    gs_vector<Type, 3>(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
+        //     gs_matrix<Type, 4, 4> cameraview =
+        //         gs_matrix_look_at(
+        //             gs_vector<Type, 3>(0.f, 0.f, 1),
+        //             gs_vector<Type, 3>(0.f, 0.f, 1) + cameraLocalFrontAxisDirection, cameraLocalUpAxisDirection);
             
-            gs_matrix<Type, 4, 4> projection =
-                gs_matrix_ortho(
-                    left,
-                    right,
-                    bottom,
-                    top,
-                    _CameraNearPlanePosition,
-                    _CameraFarPlanePosition) * gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraRotationAngle), gs_vector<Type, 3>(0.f, 0.f, 1.f));
+        //     gs_matrix<Type, 4, 4> projection =
+        //         gs_matrix_ortho(
+        //             left,
+        //             right,
+        //             bottom,
+        //             top,
+        //             _CameraNearPlanePosition,
+        //             _CameraFarPlanePosition) * gs_matrix_rotate(gs_matrix<Type, 4, 4>(1.f), gs_to_radians(_CameraRotationAngle), gs_vector<Type, 3>(0.f, 0.f, 1.f));
 
-            struct
-            {
-                gs_matrix<Type, 4, 4> cameraview;
-                gs_matrix<Type, 4, 4> projection;
-            } result = {cameraview, projection};
+        //     struct
+        //     {
+        //         gs_matrix<Type, 4, 4> cameraview;
+        //         gs_matrix<Type, 4, 4> projection;
+        //     } result = {cameraview, projection};
 
-            return result;
-        }
+        //     return result;
+        // }
     }
 }
 
@@ -106,14 +106,14 @@ bool Immediate2DRenderer::awake()
 void Immediate2DRenderer::frame_start()
 {
     // push clear colo
-    push_clear_color(gs_vec4f(150.f, 150.f, 150.f, 150.f));
+    push_clear_color(RenderingQueueGraphicsApi::construct_rgba_color(150, 150, 150, 150));
     push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), application()->get_window_size()));
 
     // compute projection matrix
     float width  = Frenchie::Application::application()->get_window_size().x;
     float height = Frenchie::Application::application()->get_window_size().y;
 
-    auto camera = calculate_2d_camera_view_and_projection(
+    auto camera = RenderingQueueGraphicsApi::calculate_2d_camera_view_and_projection(
         gs_vec2f(width * 0.5f, height * 0.5f),
         gs_vec3f(0.f, 1.f, 0.f),
         gs_vec3f(0.f, 0.f, -1.f),
@@ -155,7 +155,7 @@ void Immediate2DRenderer::push_rendering_command(
     const RenderingQueueTexture&            _Texture,
     const RenderingQueueColor&              _Color,
     const gs_mat4f&                         _Transform,
-    const RenderingQueueMeshRenderingHints& _MeshRenderingHints)
+    const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints)
 {
     if(m_RenderingQueueMeshVertexesIndexes.empty() || m_RenderingQueueMeshVertexes.empty()) return;
 
@@ -195,11 +195,11 @@ void Immediate2DRenderer::push_rendering_command(
 
 void Immediate2DRenderer::push_rendering_command(
     const gs_mat4f&                         _Transform,
-    const RenderingQueueMeshRenderingHints& _MeshRenderingHints)
+    const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints)
 {
     push_rendering_command(
         m_RenderingQueue->get_default_texture(),
-        RenderingQueue::construct_rgba_color(255, 255, 255, 255),
+        RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
         _Transform,
         _MeshRenderingHints);
 }
@@ -217,7 +217,7 @@ void Immediate2DRenderer::pop_clip_box()
         m_RenderingQueueClippingBoxes.pop_back();
 }
 
-void Immediate2DRenderer::push_clear_color(const gs_vec4f& _Value)
+void Immediate2DRenderer::push_clear_color(const RenderingQueueColor& _Value)
 {
     m_RenderingQueueClearColors.push_back(_Value);
 }
@@ -238,9 +238,11 @@ gs_2dboxf Immediate2DRenderer::current_viewport() const
     return m_RenderingQueueViewport;
 }
 
-gs_vec4f Immediate2DRenderer::current_clear_color() const
+RenderingQueueColor Immediate2DRenderer::current_clear_color() const
 {
-    return !m_RenderingQueueClearColors.empty() ? m_RenderingQueueClearColors[m_RenderingQueueClearColors.size() - 1] : gs_vec4f(255.f, 255.f, 255.f, 255.f);
+    return !m_RenderingQueueClearColors.empty() ?
+        m_RenderingQueueClearColors[m_RenderingQueueClearColors.size() - 1] :
+            RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255);
 }
 
 gs_mat4f Immediate2DRenderer::calculate_transform_matrix(
@@ -752,19 +754,19 @@ void Immediate2DRenderer::build_triangle_filled_mesh(
     const int size = (int)m_RenderingQueueMeshVertexes.size();
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             gs_vec3f(_P1.x, _P1.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
             _Color));
     
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             gs_vec3f(_P2.x, _P2.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
             _Color));
     
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             gs_vec3f(_P3.x, _P3.y, 0.f),
             gs_vec3f(0.f),
             gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
@@ -788,21 +790,21 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
 
     // triangle 1
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             point1,
             gs_vec3f(0.f),
             gs_vec2f(point1.x / _Texture.Width, point1.y / _Texture.Height),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             point2,
             gs_vec3f(0.f),
             gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             point4,
             gs_vec3f(0.f),
             gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
@@ -810,20 +812,20 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
 
     // triangle 2
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             point2,
             gs_vec3f(0.f),
             gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             point3, gs_vec3f(0.f),
             gs_vec2f(point3.x / _Texture.Width, point3.y / _Texture.Height),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             point4,
             gs_vec3f(0.f),
             gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
@@ -854,21 +856,21 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
 
     // triangle 1
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
@@ -876,21 +878,21 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
 
     // triangle 2
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
-        RenderingQueue::construct_vertex(
+        RenderingQueueGraphicsApi::construct_vertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),

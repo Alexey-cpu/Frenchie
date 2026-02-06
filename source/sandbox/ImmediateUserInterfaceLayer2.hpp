@@ -125,22 +125,22 @@ namespace Frenchie
                 Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
                 // window
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                = RenderingQueue::construct_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]               = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = RenderingQueue::construct_rgba_color(72, 82, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                = RenderingQueueGraphicsApi::construct_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]               = RenderingQueueGraphicsApi::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = RenderingQueueGraphicsApi::construct_rgba_color(72, 82, 72, 255);
                 
                 // push button
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                  = RenderingQueue::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]               = RenderingQueue::construct_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]        = RenderingQueue::construct_rgba_color(60, 72, 60, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]        = RenderingQueue::construct_rgba_color(120, 128, 120, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                  = RenderingQueueGraphicsApi::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]               = RenderingQueueGraphicsApi::construct_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]        = RenderingQueueGraphicsApi::construct_rgba_color(60, 72, 60, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]        = RenderingQueueGraphicsApi::construct_rgba_color(120, 128, 120, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                         = RenderingQueue::construct_rgba_color(50, 50, 100, 200);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                  = RenderingQueue::construct_rgba_color(100, 100, 172, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                         = RenderingQueueGraphicsApi::construct_rgba_color(50, 50, 100, 200);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                  = RenderingQueueGraphicsApi::construct_rgba_color(100, 100, 172, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                           = RenderingQueue::construct_rgba_color(255, 255, 255, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                           = RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255);
             }
 
             ~ImmedidateUserInterfaceStyle(){}
@@ -172,7 +172,7 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius = 0.f;
+            float                            FramesRadius = 32.f;
             float                            FramesWidth  = 0.f;
             float                            FontSize     = 64.f;
             std::vector<RenderingQueueColor> Colors;
@@ -696,14 +696,14 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingStack;
 
-            // controllers
-            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>>   m_Controllers;
-
             // ini file
-            std::u32string                             m_IniFilePath = U"Frenchie.ini";
-            ImmediateUserInterfaceContextConfiguration m_IniFileState;
+            ImmediateUserInterfaceContextConfiguration                              m_IniFileState;
 
         private:
+
+            // info
+            std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
+            std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
 
             // service methods
             template<typename Type> Type* create_node(const std::string& _ID)

@@ -306,19 +306,19 @@ namespace Frenchie
                 const int size = (int)_Vertexes.size();
 
                 _Vertexes.push_back(
-                    RenderingQueue::construct_vertex(
+                    RenderingQueueGraphicsApi::construct_vertex(
                         gs_vec3f(_P1.x, _P1.y, 0.f),
                         gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
                         _Color));
                 
                 _Vertexes.push_back(
-                    RenderingQueue::construct_vertex(
+                    RenderingQueueGraphicsApi::construct_vertex(
                         gs_vec3f(_P2.x, _P2.y, 0.f),
                         gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
                         _Color));
                 
                 _Vertexes.push_back(
-                    RenderingQueue::construct_vertex(
+                    RenderingQueueGraphicsApi::construct_vertex(
                         gs_vec3f(_P3.x, _P3.y, 0.f),
                         gs_vec3f(0.f),
                         gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
@@ -351,21 +351,21 @@ namespace Frenchie
                 const RenderingQueueTexture&            _Texture,
                 const RenderingQueueColor&              _Color,
                 const gs_mat4f&                         _Transform,
-                const RenderingQueueMeshRenderingHints& _MeshRenderingHints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
+                const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints = RenderingQueueGraphicsApiRenderingHints_::RenderingQueueGraphicsApiRenderingHints_Default);
 
             void push_rendering_command(
                 const gs_mat4f&                         _Transform,
-                const RenderingQueueMeshRenderingHints& _MeshRenderingHints = RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default);
+                const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints = RenderingQueueGraphicsApiRenderingHints_::RenderingQueueGraphicsApiRenderingHints_Default);
 
             void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
             void pop_clip_box();
 
-            void push_clear_color(const gs_vec4f& _Value);
+            void push_clear_color(const RenderingQueueColor& _Value);
             void pop_clear_color();
             
-            gs_2dboxf current_viewport() const;
-            gs_2dboxf current_clipping_box() const;
-            gs_vec4f  current_clear_color() const;
+            gs_2dboxf           current_viewport() const;
+            gs_2dboxf           current_clipping_box() const;
+            RenderingQueueColor current_clear_color() const;
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
@@ -543,7 +543,7 @@ namespace Frenchie
             // rendering queue data
             std::shared_ptr<RenderingQueue>   m_RenderingQueue        {nullptr};
             gs_2dboxf                         m_RenderingQueueViewport{gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_vec4f>             m_RenderingQueueClearColors;
+            std::vector<RenderingQueueColor>  m_RenderingQueueClearColors;
             std::vector<gs_2dboxf>            m_RenderingQueueClippingBoxes;
             std::vector<RenderingQueueVertex> m_RenderingQueueMeshVertexes;
             float                             m_RenderingQueueMinimumLineWidth{8.f};
