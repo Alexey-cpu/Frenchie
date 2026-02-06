@@ -15,6 +15,9 @@ namespace Frenchie
             virtual bool awake() override;
             virtual void frame_update() override;
             virtual void finish() override;
+
+            void windows_test();
+
         protected:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};
         };
