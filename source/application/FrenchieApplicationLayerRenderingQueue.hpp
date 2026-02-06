@@ -47,12 +47,27 @@ namespace Frenchie
             RenderingQueueTextureMaxFilter_Nearest,
         };
 
-        enum RenderingQueueMeshRenderingHints_ : int
+        enum RenderingQueueGraphicsApiHints_ : int
         {
-            RenderingQueueMeshRenderingHints_Lines     = 1 << 1,
-            RenderingQueueMeshRenderingHints_Points    = 1 << 2,
-            RenderingQueueMeshRenderingHints_Triangles = 1 << 3,
-            RenderingQueueMeshRenderingHints_Default   = RenderingQueueMeshRenderingHints_Triangles
+            RenderingQueueGraphicsApiHints_Blending    = 1 << 0,
+            RenderingQueueGraphicsApiHints_DepthTest   = 1 << 1,
+            RenderingQueueGraphicsApiHints_StencilTest = 1 << 2,
+            RenderingQueueGraphicsApiHints_ScissorTest = 1 << 3,
+        };
+
+        enum RenderingQueueGraphicsApiBuffers_ : int
+        {
+            RenderingQueueGraphicsApiBuffers_Color,
+            RenderingQueueGraphicsApiBuffers_Depth,
+            RenderingQueueGraphicsApiBuffers_Stencil
+        };
+
+        enum RenderingQueueGraphicsApiRenderingHints_ : int
+        {
+            RenderingQueueGraphicsApiRenderingHints_Lines     = 1 << 1,
+            RenderingQueueGraphicsApiRenderingHints_Points    = 1 << 2,
+            RenderingQueueGraphicsApiRenderingHints_Triangles = 1 << 3,
+            RenderingQueueGraphicsApiRenderingHints_Default   = RenderingQueueGraphicsApiRenderingHints_Triangles
         };
 
         enum RenderingQueueShaderType_ : int
@@ -65,8 +80,12 @@ namespace Frenchie
         typedef int RenderingQueueTextureWrapMode;
         typedef int RenderingQueueTextureMinFilter;
         typedef int RenderingQueueTextureMaxFilter;
-        typedef int RenderingQueueMeshRenderingHints;
         typedef int RenderingQueueShaderType;
+
+        typedef int RenderingQueueGraphicsApiRenderingHints;
+        typedef int RenderingQueueGraphicsApiBuffers;
+        typedef int RenderingQueueGraphicsApiHints;
+
         typedef unsigned int RenderingQueueColor;
 
         // Enities
@@ -160,10 +179,10 @@ namespace Frenchie
                     Advance(_Advance){}
 
             gs_2dboxf Box    {gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f))};
-            gs_vec2f MinUV  {gs_vec2f(0.f)};
-            gs_vec2f MaxUV  {gs_vec2f(0.f)};
-            gs_vec2f Bearing{gs_vec2f(0.f)};
-            float    Advance{0.f};
+            gs_vec2f  MinUV  {gs_vec2f(0.f)};
+            gs_vec2f  MaxUV  {gs_vec2f(0.f)};
+            gs_vec2f  Bearing{gs_vec2f(0.f)};
+            float     Advance{0.f};
         };
 
         struct RenderingQueueFont
@@ -220,7 +239,7 @@ namespace Frenchie
                 const RenderingQueueShader&             _Shader,
                 const RenderingQueueTexture&            _Texture,
                 const gs_mat4f&                         _Transform,
-                const RenderingQueueMeshRenderingHints& _MeshRenderingHints) :
+                const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints) :
                 Mesh(_Mesh),
                 Transform(_Transform),
                 Texture(_Texture),
@@ -231,13 +250,13 @@ namespace Frenchie
             RenderingQueueShader             Shader           {RenderingQueueShader()};
             RenderingQueueTexture            Texture          {RenderingQueueTexture()};
             gs_mat4f                         Transform        {gs_mat4f(1.f)};
-            RenderingQueueMeshRenderingHints MeshRendererHints{RenderingQueueMeshRenderingHints_::RenderingQueueMeshRenderingHints_Default};
+            RenderingQueueGraphicsApiRenderingHints MeshRendererHints{RenderingQueueGraphicsApiRenderingHints_::RenderingQueueGraphicsApiRenderingHints_Default};
         };
 
         struct RenderingQueueRendererCommandClearColor
         {
-            RenderingQueueRendererCommandClearColor(const gs_vec4f&  _ClearColor) : ClearColor(_ClearColor){}
-            gs_vec4f ClearColor;
+            RenderingQueueRendererCommandClearColor(const RenderingQueueColor&  _ClearColor) : ClearColor(_ClearColor){}
+            RenderingQueueColor ClearColor;
         };
 
         struct RenderingQueueRendererCommandClippingBox
@@ -267,6 +286,108 @@ namespace Frenchie
             double FrameRate              = 0.0;
             int    RenderedTrianglesCount = 0;
             int    RenderingCommandsCount = 0;
+        };
+
+        class RenderingQueueGraphicsApi
+        {
+        public:
+
+            struct Projections
+            {
+                gs_mat4f cameraview;
+                gs_mat4f projection;
+            };
+
+            // texture API
+            static RenderingQueueTexture construct_texture(
+                const unsigned char*                  _RawBuffer,
+                const int&                            _Width,
+                const int&                            _Height,
+                const RenderingQueueTextureFormat&    _Format    = RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA,
+                const RenderingQueueTextureWrapMode&  _Wrap      = RenderingQueueTextureWrapMode_::RenderingQueueTextureWrapMode_Repeat,
+                const RenderingQueueTextureMinFilter& _MinFilter = RenderingQueueTextureMinFilter_::RenderingQueueTextureMinFilter_Linear, 
+                const RenderingQueueTextureMaxFilter& _MaxFilter = RenderingQueueTextureMaxFilter_::RenderingQueueTextureMaxFilter_Linear);
+
+            static void begin_use_texture(const RenderingQueueTexture& _Texture);
+            static void end_use_texture();
+
+            static void destroy_texture(const RenderingQueueTexture& _Texture);
+
+            // shader API
+            static RenderingQueueShader construct_shader(const std::vector<std::pair<std::string, RenderingQueueShaderType>>& _ShaderInfos);
+
+            static void begin_use_shader(const RenderingQueueShader&   _Shader);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const bool&     _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const int&      _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const float&    _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec2f& _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec3f& _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec4f& _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_mat2f& _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_mat3f& _Value);
+            static void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_mat4f& _Value);
+            static void end_use_shader();
+
+            static void destroy_shader(const RenderingQueueShader& _Shader);
+
+            // mesh API
+            static RenderingQueueMesh construct_mesh(
+                const RenderingQueueVertex* _Vertexes,
+                const int&                  _VertexesCount,
+                const int*                  _Indexes,
+                const int&                  _IndexesCount);
+            
+            static void begin_use_mesh(
+                const RenderingQueueMesh&                      _Mesh,
+                const RenderingQueueGraphicsApiRenderingHints& _MeshRenderHints = RenderingQueueGraphicsApiRenderingHints_Default);
+
+            static void end_use_mesh();
+
+            static void destroy_mesh(const RenderingQueueMesh& _Mesh);
+
+            // mesh vertex API
+            static RenderingQueueVertex construct_vertex(
+                const gs_vec3f&            _Position = gs_vec3f(0),
+                const gs_vec3f&            _Normal   = gs_vec3f(0),
+                const gs_vec2f&            _UV       = gs_vec2f(0),
+                const RenderingQueueColor& _Color    = 1)
+            {
+                RenderingQueueVertex vertex;
+                vertex.Position = _Position;
+                vertex.Normal   = _Normal;
+                vertex.UV       = _UV;
+                vertex.Color    = _Color;
+                return vertex;
+            }
+
+            // color API
+            static RenderingQueueColor construct_rgba_color(
+                const RenderingQueueColor& _R,
+                const RenderingQueueColor& _G,
+                const RenderingQueueColor& _B,
+                const RenderingQueueColor& _A);
+
+            static RenderingQueueColor retrieve_red_component(const RenderingQueueColor& _Color);
+            static RenderingQueueColor retrieve_green_component(const RenderingQueueColor& _Color);
+            static RenderingQueueColor retrieve_blue_component(const RenderingQueueColor& _Color);
+            static RenderingQueueColor retrieve_alpha_component(const RenderingQueueColor& _Color);
+
+            // camera and view projection API
+            static Projections calculate_2d_camera_view_and_projection(
+                const gs_vec2f& _CameraWorldPosition,
+                const gs_vec3f& _CameraWorldUpAxisDirection,
+                const gs_vec3f& _CameraWorldFrontAxisDirection,
+                const gs_vec2f& _CameraResolution,
+                const float&    _CameraRotationAngle,
+                const float&    _CameraNearPlanePosition,
+                const float&    _CameraFarPlanePosition);
+
+            // rendering platoform API
+            static void enable(const RenderingQueueGraphicsApiHints&);
+            static void disable(const RenderingQueueGraphicsApiHints&);
+            static void clear_color(const RenderingQueueColor&);
+            static void scissor_box(const gs_2dboxf&);
+            static void clear_buffers(const RenderingQueueGraphicsApiBuffers&);
         };
 
         class RenderingQueue : public Layer
@@ -304,16 +425,7 @@ namespace Frenchie
             RenderingQueueFont construct_font(const char* _FilePath, const int& _Size);
             void destroy_font(const RenderingQueueFont& _Font);
 
-            // image API
-            RenderingQueueTexture construct_texture(
-                const unsigned char*                  _RawBuffer,
-                const int&                            _Width,
-                const int&                            _Height,
-                const RenderingQueueTextureFormat&    _Format    = RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA,
-                const RenderingQueueTextureWrapMode&  _Wrap      = RenderingQueueTextureWrapMode_::RenderingQueueTextureWrapMode_Repeat,
-                const RenderingQueueTextureMinFilter& _MinFilter = RenderingQueueTextureMinFilter_::RenderingQueueTextureMinFilter_Linear, 
-                const RenderingQueueTextureMaxFilter& _MaxFilter = RenderingQueueTextureMaxFilter_::RenderingQueueTextureMaxFilter_Linear);
-
+            // texture API
             RenderingQueueTexture construct_texture(
                 const char*                           _FilePath,
                 const RenderingQueueTextureFormat&    _Format    = RenderingQueueTextureFormat_::RenderingQueueTextureFormat_RGBA,
@@ -321,26 +433,10 @@ namespace Frenchie
                 const RenderingQueueTextureMinFilter& _MinFilter = RenderingQueueTextureMinFilter_::RenderingQueueTextureMinFilter_Linear, 
                 const RenderingQueueTextureMaxFilter& _MaxFilter = RenderingQueueTextureMaxFilter_::RenderingQueueTextureMaxFilter_Linear);
 
-            void begin_use_texture(const RenderingQueueTexture& _Texture);
-            void end_use_texture();
-
             void destroy_texture(const RenderingQueueTexture& _Texture);
 
             // shader API
-            RenderingQueueShader construct_shader(const std::vector<std::pair<std::string, RenderingQueueShaderType>>& _ShaderInfos) const;
-
-            void begin_use_shader(const RenderingQueueShader&   _Shader);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const bool&     _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const int&      _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const float&    _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec2f& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec3f& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_vec4f& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_mat2f& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_mat3f& _Value);
-            void set_shader_uniform(const RenderingQueueShader& _Shader, const char* _Uniform, const gs_mat4f& _Value);
-            void end_use_shader();
-
+            RenderingQueueShader construct_shader(const std::vector<std::pair<std::string, RenderingQueueShaderType>>& _ShaderInfos);
             void destroy_shader(const RenderingQueueShader& _Shader);
 
             // mesh API
@@ -349,67 +445,18 @@ namespace Frenchie
                 const int&                  _VertexesCount,
                 const int*                  _Indexes,
                 const int&                  _IndexesCount);
-            
-            void begin_use_mesh(
-                const RenderingQueueMesh&               _Mesh,
-                const RenderingQueueMeshRenderingHints& _MeshRenderHints = RenderingQueueMeshRenderingHints_Default);
-
-            void end_use_mesh();
 
             void destroy_mesh(const RenderingQueueMesh& _Mesh);
 
             // commands API
             void push_rendering_command(
-                const RenderingQueueMesh&               _Mesh,
-                const RenderingQueueShader&             _Shader,
-                const RenderingQueueTexture&            _Texture,
-                const gs_mat4f&                         _Transform,
-                const RenderingQueueMeshRenderingHints& _RendererHints,
-                const gs_vec4f&                         _ClearColor,
-                const gs_2dboxf&                        _ClippinBox);
-
-            // static API
-            static RenderingQueueVertex construct_vertex(
-                const gs_vec3f&            _Position = gs_vec3f(0),
-                const gs_vec3f&            _Normal   = gs_vec3f(0),
-                const gs_vec2f&            _UV       = gs_vec2f(0),
-                const RenderingQueueColor& _Color    = 1)
-            {
-                RenderingQueueVertex vertex;
-                vertex.Position = _Position;
-                vertex.Normal   = _Normal;
-                vertex.UV       = _UV;
-                vertex.Color    = _Color;
-                return vertex;
-            }
-
-            static RenderingQueueColor construct_rgba_color(const RenderingQueueColor& _R, const RenderingQueueColor& _G, const RenderingQueueColor& _B, const RenderingQueueColor& _A)
-            {
-                return (((RenderingQueueColor)(_A)<<24) |
-                        ((RenderingQueueColor)(_B)<<16) |
-                        ((RenderingQueueColor)(_G)<<8)  |
-                        ((RenderingQueueColor)(_R)<<0));
-            }
-
-            static RenderingQueueColor retrieve_red_component(const RenderingQueueColor& _Color)
-            {
-                return (_Color >> 0) & 0xFF;
-            }
-
-            static RenderingQueueColor retrieve_green_component(const RenderingQueueColor& _Color)
-            {
-                return (_Color >> 8) & 0xFF;
-            }
-
-            static RenderingQueueColor retrieve_blue_component(const RenderingQueueColor& _Color)
-            {
-                return (_Color >> 16) & 0xFF;
-            }
-
-            static RenderingQueueColor retrieve_alpha_component(const RenderingQueueColor& _Color)
-            {
-                return (_Color >> 24) & 0xFF;
-            }
+                const RenderingQueueMesh&                      _Mesh,
+                const RenderingQueueShader&                    _Shader,
+                const RenderingQueueTexture&                   _Texture,
+                const gs_mat4f&                                _Transform,
+                const RenderingQueueGraphicsApiRenderingHints& _RendererHints,
+                const RenderingQueueColor&                     _ClearColor,
+                const gs_2dboxf&                               _ClippinBox);
 
         protected:
 

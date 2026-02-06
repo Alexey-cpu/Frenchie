@@ -1574,11 +1574,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
             auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
             {
                 if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
-                    return RenderingQueue::construct_rgba_color(255, 0, 0, 255);
+                    return RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255);
 
                 return closeButtonBox.contains(_Event.CursorPosition) ?
-                    RenderingQueue::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-                    RenderingQueue::construct_rgba_color(64, 0, 0, 255);
+                    RenderingQueueGraphicsApi::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
+                    RenderingQueueGraphicsApi::construct_rgba_color(64, 0, 0, 255);
             };
 
             // construct events
@@ -2467,10 +2467,10 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 dockingGizmo.Min,
                 dockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                RenderingQueue::construct_rgba_color(
-                    RenderingQueue::retrieve_red_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    RenderingQueue::retrieve_green_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    RenderingQueue::retrieve_blue_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                RenderingQueueGraphicsApi::construct_rgba_color(
+                    RenderingQueueGraphicsApi::retrieve_red_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    RenderingQueueGraphicsApi::retrieve_green_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    RenderingQueueGraphicsApi::retrieve_blue_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
