@@ -272,6 +272,9 @@ RenderingQueueMesh RenderingQueueGraphicsApi::construct_mesh(
     const int*                  _Indexes,
     const int&                  _IndexesCount)
 {
+    if(_Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
+        return RenderingQueueMesh();
+
     // create mesh
     unsigned int m_VBO = 0;
     unsigned int m_VAO = 0;
@@ -377,10 +380,10 @@ void RenderingQueueGraphicsApi::disable(const RenderingQueueGraphicsApiHints& _H
 void RenderingQueueGraphicsApi::clear_color(const RenderingQueueColor& _Color)
 {
     glClearColor(
-        RenderingQueueGraphicsApi::retrieve_red_component(_Color)   / 255.f,
-        RenderingQueueGraphicsApi::retrieve_green_component(_Color) / 255.f,
-        RenderingQueueGraphicsApi::retrieve_blue_component(_Color)  / 255.f,
-        RenderingQueueGraphicsApi::retrieve_alpha_component(_Color) / 255.f);
+        (float)RenderingQueueGraphicsApi::retrieve_red_component(_Color)   / 255.f,
+        (float)RenderingQueueGraphicsApi::retrieve_green_component(_Color) / 255.f,
+        (float)RenderingQueueGraphicsApi::retrieve_blue_component(_Color)  / 255.f,
+        (float)RenderingQueueGraphicsApi::retrieve_alpha_component(_Color) / 255.f);
 }
 
 void RenderingQueueGraphicsApi::scissor_box(const gs_2dboxf& _ClippingRect)

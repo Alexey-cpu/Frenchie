@@ -336,6 +336,69 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
+        // scroll area
+        struct ImmediateUserInterfaceScrollAreaScrollBarSlider : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaScrollBarSlider(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaScrollBarSlider();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+
+            gs_vec2f Position      = gs_vec2f(0.f, 0.f);
+            gs_vec2f PositionScale = gs_vec2f(1.f, 1.f);
+        private:
+            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
+        };
+
+        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaScrollBar();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            enum ImmediateUserInterfaceScrollAreaScrollBarType_
+            {
+                ImmediateUserInterfaceScrollAreaScrollBarType_Vertical,
+                ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
+            } Type = ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+        };
+
+        struct ImmediateUserInterfaceScrollAreaContentRoot : public ImmediateUserInterfaceNodeVerticalStack
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaContentRoot(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaContentRoot();
+        };
+
+        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfaceNode
+        {
+        public:
+
+            ImmediateUserInterfaceScrollAreaContent(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaContent();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+        
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+
+            ImmediateUserInterfaceScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollArea();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            ImmediateUserInterfaceNode*                      ContentView         = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
+        };
+
         // widgets
         struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
         {
@@ -618,8 +681,13 @@ namespace Frenchie
             bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
+            // scroll area
+            bool begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_scrollarea();
+
             // widgets
             bool push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void scrollarea_next_line();
 
             // auxiliary API
             template<typename Type> Type* get_controller() const

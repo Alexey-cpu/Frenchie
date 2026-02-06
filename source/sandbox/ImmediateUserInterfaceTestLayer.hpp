@@ -17,6 +17,7 @@ namespace Frenchie
             virtual void finish() override;
 
             void windows_test();
+            void scrollarea_test();
 
         protected:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};

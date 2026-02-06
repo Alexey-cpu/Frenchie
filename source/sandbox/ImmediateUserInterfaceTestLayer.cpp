@@ -15,7 +15,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    windows_test();   
+    //windows_test();   
+    scrollarea_test();
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -154,10 +155,6 @@ void ImmediateUserInterfaceTestLayer::windows_test()
     {
         if(m_ImmediateUserInterface->begin_horizontal_stack("Window-2/Stack"))
         {
-            if(m_ImmediateUserInterface->push_button("Button-1")) button = "Button-1";
-            if(m_ImmediateUserInterface->push_button("Button-2")) button = "Button-2";
-            if(m_ImmediateUserInterface->push_button("Button-3")) button = "Button-3";
-
             m_ImmediateUserInterface->end_horizontal_stack();
         }
         
@@ -172,9 +169,12 @@ void ImmediateUserInterfaceTestLayer::windows_test()
     {
         if(m_ImmediateUserInterface->begin_vertial_stack("Window-3/Stack"))
         {
-            if(m_ImmediateUserInterface->push_button("Button-4")) button = "Button-4";
-            if(m_ImmediateUserInterface->push_button("Button-5")) button = "Button-5";
-            if(m_ImmediateUserInterface->push_button("Button-6")) button = "Button-6";
+            for(int i = 0; i < 1e1; i++)
+            {
+                auto buttonID = std::string("Button-").append(std::to_string(i));
+
+                if(m_ImmediateUserInterface->push_button(buttonID)) button = buttonID;
+            }
 
             m_ImmediateUserInterface->end_vertical_stack();
         }
@@ -203,6 +203,27 @@ void ImmediateUserInterfaceTestLayer::windows_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {        
+        m_ImmediateUserInterface->end_window();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::scrollarea_test()
+{
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-1",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        if(m_ImmediateUserInterface->begin_scrollarea("ScrollArea"))
+        {
+            for(int i = 0 ; i < 1e1; i++)
+            {
+                m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
+            }
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+
         m_ImmediateUserInterface->end_window();
     }
 }

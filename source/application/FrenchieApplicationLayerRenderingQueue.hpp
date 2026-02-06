@@ -57,9 +57,9 @@ namespace Frenchie
 
         enum RenderingQueueGraphicsApiBuffers_ : int
         {
-            RenderingQueueGraphicsApiBuffers_Color,
-            RenderingQueueGraphicsApiBuffers_Depth,
-            RenderingQueueGraphicsApiBuffers_Stencil
+            RenderingQueueGraphicsApiBuffers_Color   = 1 << 0,
+            RenderingQueueGraphicsApiBuffers_Depth   = 1 << 1,
+            RenderingQueueGraphicsApiBuffers_Stencil = 1 << 2,
         };
 
         enum RenderingQueueGraphicsApiRenderingHints_ : int
