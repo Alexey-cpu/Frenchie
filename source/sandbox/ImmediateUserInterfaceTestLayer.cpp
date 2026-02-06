@@ -15,6 +15,43 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
+    windows_test();   
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
+        64.f,
+        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane()
+        ));
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("Commands ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
+        64.f,
+        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
+            gs_vec2f(0.f, 64.f)
+        ));
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
+        64.f,
+        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
+            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
+            gs_vec2f(0.f, 128.f)
+        ));
+}
+
+void ImmediateUserInterfaceTestLayer::finish()
+{
+    if(m_ImmediateUserInterface != nullptr)
+        m_ImmediateUserInterface->close();
+}
+
+void ImmediateUserInterfaceTestLayer::windows_test()
+{
     auto create_horizontal_layout = [this](const std::string& _Name)
     {
         ImmediateUserInterfaceNodeSettings settins =
@@ -98,6 +135,9 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
     //create_horizontal_layout("SOMELAYOUT");
 
+    static bool opened = true;
+    static std::string button;
+
     if(m_ImmediateUserInterface->begin_window(
         "Window-1",
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
@@ -106,9 +146,6 @@ void ImmediateUserInterfaceTestLayer::frame_update()
         create_horizontal_layout("Window-1/Layout");
         m_ImmediateUserInterface->end_window();
     }
-
-    static bool opened = true;
-    static std::string button;
 
     if(m_ImmediateUserInterface->begin_window(
         "Window-2",
@@ -168,56 +205,4 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     {        
         m_ImmediateUserInterface->end_window();
     }
-
-    m_ImmediateUserInterface->m_Renderer->push_text(
-        std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
-        64.f,
-        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-            m_ImmediateUserInterface->m_Renderer->get_far_plane()
-        ));
-
-    m_ImmediateUserInterface->m_Renderer->push_text(
-        std::string("Commands ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
-        64.f,
-        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
-            gs_vec2f(0.f, 64.f)
-        ));
-
-    m_ImmediateUserInterface->m_Renderer->push_text(
-        std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
-        64.f,
-        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-            m_ImmediateUserInterface->m_Renderer->get_far_plane(),
-            gs_vec2f(0.f, 128.f)
-        ));
-
-    // m_ImmediateUserInterface->m_Renderer->push_text(
-    //     std::string("Pressed ").append(button),
-    //     64.f,
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-    //     m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-    //         m_ImmediateUserInterface->m_Renderer->get_far_plane(),
-    //         gs_vec2f(0.f, 256.f)
-    //     )
-    // );
-
-    // m_ImmediateUserInterface->m_Renderer->push_rectangle_rounded(
-    //     gs_vec2f(512.f, 512.f),
-    //     gs_vec2f(1024.f, 1024.f),
-    //     0.f,
-    //     0.f,
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-    //     m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-    //         m_ImmediateUserInterface->m_Renderer->get_far_plane())
-    // );
-}
-
-void ImmediateUserInterfaceTestLayer::finish()
-{
-    if(m_ImmediateUserInterface != nullptr)
-        m_ImmediateUserInterface->close();
 }
