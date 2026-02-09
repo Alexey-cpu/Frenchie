@@ -3,8 +3,8 @@
 // Core
 #include <FrenchieCoreSingleton.hpp>
 
-// GLAD
-#include <glad/glad.h>
+// Application
+#include <FrenchieApplicationLayerRenderingQueue.hpp>
 
 // GLFW
 #include <GLFW/glfw3.h>
@@ -68,7 +68,7 @@ namespace Frenchie
             static void glfw_on_window_resize_callback(GLFWwindow* _Window, int _Width, int _Height)
             {
                 (void)_Window;
-                glViewport(0, 0, _Width, _Height);
+                RenderingQueueGraphicsApi::set_viewport(gs_vec2f(0, 0), gs_vec2f(_Width, _Height));
             }
 
             static void glfw_on_window_maximized_callback(GLFWwindow* _Window, int _Maximized)
@@ -77,7 +77,7 @@ namespace Frenchie
                 int width  = 0;
                 int height = 0;
                 glfwGetWindowSize(_Window, &width, &height);
-                glViewport(0, 0, width, height);
+                RenderingQueueGraphicsApi::set_viewport(gs_vec2f(0, 0), gs_vec2f(width, height));
             }
 
             static void glfw_oon_window_focused_callback(GLFWwindow* _Window, int _Focused)
@@ -253,8 +253,8 @@ bool ApplicationInstance::awake()
     // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
 
-    // load OpenGL interface using GLAD
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    // load rendering API
+    if(!RenderingQueueGraphicsApi::load((RenderingQueueGraphicsApi::Loader)glfwGetProcAddress))
     {
         glfwTerminate();
         return false;
@@ -375,7 +375,7 @@ void ApplicationInstance::ApplicationInstance::frame_update()
     int display_w = 0;
     int display_h = 0;
     glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
+    RenderingQueueGraphicsApi::set_viewport(gs_vec2f(0, 0), gs_vec2f(display_w, display_h));
 
     // execute layers
     for(auto layer : m_Layers) 

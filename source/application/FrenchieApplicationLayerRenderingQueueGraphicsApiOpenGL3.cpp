@@ -8,6 +8,16 @@
 
 using namespace Frenchie::Application;
 
+bool RenderingQueueGraphicsApi::load(Loader _Loader)
+{
+    return gladLoadGLLoader((GLADloadproc)_Loader);
+}
+
+void RenderingQueueGraphicsApi::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
+{
+    glViewport((int)_Position.x, (int)_Position.y, (int)_Size.x, (int)_Size.y);
+}
+
 RenderingQueueTexture RenderingQueueGraphicsApi::construct_texture(
     const unsigned char*                  _RawBuffer,
     const int&                            _Width,
