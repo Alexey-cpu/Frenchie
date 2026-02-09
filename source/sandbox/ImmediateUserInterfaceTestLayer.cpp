@@ -53,6 +53,10 @@ void ImmediateUserInterfaceTestLayer::finish()
 
 void ImmediateUserInterfaceTestLayer::windows_test()
 {
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+
     auto create_horizontal_layout = [this](const std::string& _Name)
     {
         ImmediateUserInterfaceNodeSettings settins =
