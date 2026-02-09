@@ -2752,16 +2752,6 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
         }
     }
 
-    if(hovered != nullptr)
-    {
-        _Context->m_Renderer->push_rectangle(
-            hovered->State.BoundingBox.Min,
-            hovered->State.BoundingBox.Max,
-            12.f,
-            RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-            _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
-    }
-
     if(hovered == nullptr || moved == nullptr)
         return;
 
@@ -3248,7 +3238,6 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
         // hover end logic
         gs_2dboxf rect = node->get_visible_rect(_Context);
         rect = gs_2dboxf(rect.Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), rect.Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context));
-
 
         if(!rect.contains(_Event.CursorPosition))
         {
