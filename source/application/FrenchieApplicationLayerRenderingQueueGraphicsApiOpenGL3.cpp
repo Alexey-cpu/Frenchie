@@ -321,7 +321,7 @@ RenderingQueueMesh RenderingQueueGraphicsApi::construct_mesh(
 }
 
 void RenderingQueueGraphicsApi::begin_use_mesh(
-    const RenderingQueueMesh&               _Mesh,
+    const RenderingQueueMesh&                      _Mesh,
     const RenderingQueueGraphicsApiRenderingHints& _MeshRenderHints)
 {
     // bind VAO containing VBO, EBO
