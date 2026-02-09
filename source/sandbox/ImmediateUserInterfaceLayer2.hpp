@@ -66,10 +66,37 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_None      = 0,
 
             // settings
-            ImmediateUserInterfaceNodeSettings_Movable   = 1 << 0,
-            ImmediateUserInterfaceNodeSettings_Resizable = 1 << 1,
+            ImmediateUserInterfaceNodeSettings_Movable     = 1 << 0,
+            ImmediateUserInterfaceNodeSettings_Resizable   = 1 << 1,
 
-            ImmediateUserInterfaceNodeSettings_Defaults  = ImmediateUserInterfaceNodeSettings_Movable | ImmediateUserInterfaceNodeSettings_Resizable
+            ImmediateUserInterfaceNodeSettings_UserDefined = 1 << 2,
+
+            ImmediateUserInterfaceNodeSettings_Defaults  =
+                ImmediateUserInterfaceNodeSettings_Movable |
+                ImmediateUserInterfaceNodeSettings_Resizable,
+        };
+
+        enum ImmediateUserInterfaceContextSettings_ : int
+        {
+            // docking
+            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
+        };
+
+        enum ImmediateUserInterfaceScrollAreaSettings_ : int
+        {
+            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+
+            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+
+            ImmediateUserInterfaceScrollAreaSettings_Defaults                    =
+                ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar |
+                ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar,
         };
 
         enum ImmediateUserInterfaceNodeMouseHover_ : int
@@ -109,6 +136,7 @@ namespace Frenchie
 
         typedef int ImmediateUserInterfaceNodeEvents;
         typedef int ImmediateUserInterfaceNodeSettings;
+        typedef int ImmediateUserInterfaceContextSettings;
         typedef int ImmediateUserInterfaceNodeMouseHover;
 
         typedef int ImmedidateUserInterfaceDockingAnchor;
@@ -204,29 +232,30 @@ namespace Frenchie
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
 
-            bool is_visible() const;
-            bool is_partially_visible() const;
+            // getters
+            gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const;
+            bool is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const;
 
             int place_in_follow();
 
             struct Data
             {
                 // rendering
-                int            Depth         {0};
-                int            InitialDepth  {0};
-                int            SelfThickness {0}; // thickness of self rendered content
-                int            RenderingIndex{0}; // index of the node within context rendering list
-                int            RenderingOrder{0};
-                int            MaximumChildDepth{0};
-                int            MaximumChildThickness{0};
-                bool           PlaceInFollow{false};
+                int            Depth                      {0};
+                int            InitialDepth               {0};
+                int            SelfThickness              {0}; // thickness of self rendered content
+                int            RenderingIndex             {0}; // index of the node within context rendering list
+                int            RenderingOrder             {0};
+                int            MaximumChildDepth          {0};
+                int            MaximumChildThickness      {0};
+                bool           PlaceInFollow              {false};
                 bool           OrderChildrenWhileRendering{false};
 
-                // geimetry
-                gs_2dboxf      BoundingBox{gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
-                gs_vec2f       ContentSize{gs_vec2f(0.f)};
-                gs_vec2f       MinimumSize{gs_vec2f(32.f)};
-                gs_vec2f       MaximumSize{gs_vec2f((float)INT_MAX)};
+                // geometry
+                gs_2dboxf      BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
+                gs_vec2f       ContentSize                {gs_vec2f(0.f)};
+                gs_vec2f       MinimumSize                {gs_vec2f(32.f)};
+                gs_vec2f       MaximumSize                {gs_vec2f((float)INT_MAX)};
 
                 // hierarchy
                 ImmediateUserInterfaceNode*        Parent{nullptr};
@@ -236,6 +265,9 @@ namespace Frenchie
 
                 // events
                 ImmediateUserInterfaceNodeEvents   Events{ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+
+                // layout hints
+                bool PushNextLine{false};
 
                 // mouse hover
                 ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
@@ -350,39 +382,6 @@ namespace Frenchie
             gs_vec2f PositionScale = gs_vec2f(1.f, 1.f);
         private:
             gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-        };
-
-        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaScrollBar();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            enum ImmediateUserInterfaceScrollAreaScrollBarType_
-            {
-                ImmediateUserInterfaceScrollAreaScrollBarType_Vertical,
-                ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
-            } Type = ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
-        };
-
-        struct ImmediateUserInterfaceScrollAreaContentRoot : public ImmediateUserInterfaceNodeVerticalStack
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaContentRoot(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaContentRoot();
-        };
-
-        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfaceNode
-        {
-        public:
-
-            ImmediateUserInterfaceScrollAreaContent(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaContent();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
         
         struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
@@ -624,6 +623,30 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
 
+        class ImmedidateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceNextNodeController();
+            virtual ~ImmedidateUserInterfaceNextNodeController();
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*);
+
+            void set_next_line()
+            {
+                PushNextLine = true;
+            }
+
+            bool is_next_line() const
+            {
+                bool value = PushNextLine.has_value();
+                PushNextLine.reset();
+                return value;
+            }
+
+        private:
+            // info
+            mutable Frenchie::Core::Optional<bool> PushNextLine;
+        };
+
         // context configuration
         class ImmediateUserInterfaceContextConfiguration final
         {
@@ -682,12 +705,16 @@ namespace Frenchie
             void end_horizontal_stack();
 
             // scroll area
-            bool begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_scrollarea(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings =
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults            |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults);
             void end_scrollarea();
 
             // widgets
             bool push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void scrollarea_next_line();
+            void next_line();
 
             // auxiliary API
             template<typename Type> Type* get_controller() const
@@ -727,6 +754,7 @@ namespace Frenchie
                 // setup node parameters
                 node->State.Settings       = _Settings;
                 node->State.RenderingIndex = (int)m_NodesRenderingList.size();
+                node->State.PushNextLine   = get_controller<ImmedidateUserInterfaceNextNodeController>()->is_next_line();
 
                 // build nodes hierarchy
                 if(!m_NodesRenderingStack.empty())
@@ -766,6 +794,9 @@ namespace Frenchie
 
             // ini file
             ImmediateUserInterfaceContextConfiguration                              m_IniFileState;
+
+            // settings
+            ImmediateUserInterfaceContextSettings                                   m_Settings = ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
 
         private:
 
