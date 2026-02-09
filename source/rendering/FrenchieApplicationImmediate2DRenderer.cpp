@@ -97,9 +97,9 @@ void Immediate2DRenderer::frame_finish()
 void Immediate2DRenderer::finish(){}
 
 void Immediate2DRenderer::push_rendering_command(
-    const RenderingQueueTexture&            _Texture,
-    const RenderingQueueColor&              _Color,
-    const gs_mat4f&                         _Transform,
+    const RenderingQueueTexture&                   _Texture,
+    const RenderingQueueColor&                     _Color,
+    const gs_mat4f&                                _Transform,
     const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints)
 {
     if(m_RenderingQueueMeshVertexesIndexes.empty() || m_RenderingQueueMeshVertexes.empty()) return;
@@ -132,14 +132,12 @@ void Immediate2DRenderer::push_rendering_command(
         current_clipping_box());
 
     // clean-up
-
-    // clear rendering queue data
     m_RenderingQueueMeshVertexes.clear();
     m_RenderingQueueMeshVertexesIndexes.clear();
 }
 
 void Immediate2DRenderer::push_rendering_command(
-    const gs_mat4f&                         _Transform,
+    const gs_mat4f&                                _Transform,
     const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints)
 {
     push_rendering_command(
@@ -365,36 +363,27 @@ void Immediate2DRenderer::push_rectangle_rounded_filled(
     p24 = gs_vec2f(gs_sign(p24.x), gs_sign(p24.y));
 
     if(_RoundTopLeftCorner)
-        build_arc_filled_mesh(p1 - p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+        build_arc_filled_mesh(p1 - p13 * radius, radius, radius, 180.f, 270.f, _Color, m_RenderingQueue->get_default_texture(), 16);
     else
         build_rectangle_filled_mesh(p1, p1 + radius, _Color, m_RenderingQueue->get_default_texture());
 
     if(_RoundTopRightCorner)
-        build_arc_filled_mesh(p2 - p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+        build_arc_filled_mesh(p2 - p24 * radius, radius, radius, 270.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
     else
         build_rectangle_filled_mesh(p2 - gs_vec2f(radius, 0.f), p2 + gs_vec2f(0.f, radius), _Color, m_RenderingQueue->get_default_texture());
 
     if(_RoundBottomRightCorner)
-        build_arc_filled_mesh(p3 + p13 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+        build_arc_filled_mesh(p3 + p13 * radius, radius, radius, 0.f, 90.f, _Color, m_RenderingQueue->get_default_texture(), 16);
     else
         build_rectangle_filled_mesh(p3 - radius, p3, _Color, m_RenderingQueue->get_default_texture());
 
     if(_RoundBottomLeftCorner)
-        build_arc_filled_mesh(p4 + p24 * radius, radius, radius, 0.f, 360.f, _Color, m_RenderingQueue->get_default_texture(), 16);
+        build_arc_filled_mesh(p4 + p24 * radius, radius, radius, 90.f, 180.f, _Color, m_RenderingQueue->get_default_texture(), 16);
     else
         build_rectangle_filled_mesh(p4 - gs_vec2f(0.f, radius), p4 + gs_vec2f(radius, 0.f), _Color, m_RenderingQueue->get_default_texture());
-
-    build_rectangle_filled_mesh(
-        p1 - p13 * gs_vec2f(radius, 0.f),
-        p3 + p13 * gs_vec2f(radius, 0.f),
-        _Color,
-        m_RenderingQueue->get_default_texture());
-
-    build_rectangle_filled_mesh(
-        p1 - p13 * gs_vec2f(0.f, radius),
-        p3 + p13 * gs_vec2f(0.f, radius),
-        _Color,
-        m_RenderingQueue->get_default_texture());
+    
+    build_rectangle_filled_mesh(p1 - p13 * gs_vec2f(radius, 0.f), p3 + p13 * gs_vec2f(radius, 0.f), _Color, m_RenderingQueue->get_default_texture());
+    build_rectangle_filled_mesh(p1 - p13 * gs_vec2f(0.f, radius), p3 + p13 * gs_vec2f(0.f, radius), _Color, m_RenderingQueue->get_default_texture());
 
     // push rendering command
     push_rendering_command(m_RenderingQueue->get_default_texture(), _Color, _Transform);
