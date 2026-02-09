@@ -2593,6 +2593,34 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 
 void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
+    // pass focus
+    ImmediateUserInterfaceWindow* pressedWindow = nullptr;
+
+    for (auto node : _Context->m_Hierarchy.Singletons)
+    {
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+        if(window != nullptr &&
+            window->get_visible_rect(_Context).contains(_Event.CursorPosition) && _Event.MousePressed.has_value())
+        {
+            pressedWindow = window;
+            break;
+        }
+    }
+
+    if(pressedWindow != nullptr)
+    {
+        for (auto node : _Context->m_Hierarchy.Singletons)
+        {
+            node->State.RenderingOrder =
+                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+        }
+
+        pressedWindow->State.RenderingOrder =
+            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+    }
+
     if(!(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking)) return;
 
     place_on_dockers(_Context, _Event);
@@ -2713,19 +2741,6 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
         ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(
             _Context,
             [](const ImmediateUserInterfaceNode*)->bool{return true;}));
-
-    // pass focus to the moved node
-    if(moved != nullptr)
-    {
-        for (auto node : _Context->m_Hierarchy.Singletons)
-        {
-            node->State.RenderingOrder =
-                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-        }
-
-        moved->State.RenderingOrder =
-            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
-    }
 
     detach_from_docker(_Context, moved);
 
