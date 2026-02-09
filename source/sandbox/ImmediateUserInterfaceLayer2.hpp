@@ -544,9 +544,21 @@ namespace Frenchie
 
         //private:
 
-            ImmediateUserInterfaceNode* get_parent(const ImmediateUserInterfaceNode* _Node) const
+            template<typename Type = ImmediateUserInterfaceNode>
+            Type* get_parent(const ImmediateUserInterfaceNode* _Node) const
             {
-                return GetParent != nullptr ? GetParent(_Node) : nullptr;
+                auto parent = (GetParent != nullptr ? GetParent(_Node) : nullptr);
+
+                while (parent)
+                {
+                    if(dynamic_cast<Type*>(parent))
+                        return dynamic_cast<Type*>(parent);
+
+                    parent = (GetParent != nullptr ? GetParent(parent) : nullptr);
+                }
+                
+
+                return nullptr;
             }
         };
 
@@ -587,7 +599,8 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingList;
             mutable std::stack<std::function<void(ImmediateUserInterfaceContextLayer*)>> m_DockingEventsStack;
-            mutable ImmediateUserInterfaceNode*                                          m_DockArea{nullptr};
+            mutable ImmediateUserInterfaceNode*                                          m_WorkspaceDockArea      {nullptr};
+            mutable bool                                                                 m_WorkspaceDockAreaOpened{true};
         };
     
         class ImmedidateUserInterfaceEventsController : public ImmediateUserInterfaceContextController
