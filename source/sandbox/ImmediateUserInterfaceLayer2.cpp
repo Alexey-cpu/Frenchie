@@ -1796,10 +1796,12 @@ gs_2dboxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceCon
     if(_Context == nullptr)
         return State.BoundingBox;
 
-    if(State.Parent == nullptr)
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
+
+    if(parent == nullptr)
         return State.BoundingBox.clip_with(_Context->m_Renderer->current_viewport());
 
-    return State.BoundingBox.clip_with(State.Parent->State.BoundingBox);
+    return State.BoundingBox.clip_with(parent->State.BoundingBox);
 }
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
@@ -1807,12 +1809,14 @@ bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceCont
     if(_Context == nullptr)
         return false;
 
-    if(State.Parent == nullptr)
+    ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(this);
+
+    if(parent == nullptr)
         return _Context->m_Renderer->current_viewport().overlaps(State.BoundingBox);
 
     gs_2dboxf box = gs_2dboxf(
-        State.Parent->State.BoundingBox.Min - gs_vec2f(12.f),
-        State.Parent->State.BoundingBox.Max + gs_vec2f(12.f));
+        parent->State.BoundingBox.Min - gs_vec2f(12.f),
+        parent->State.BoundingBox.Max + gs_vec2f(12.f));
 
     return box.overlaps(State.BoundingBox);
 }
@@ -1832,11 +1836,10 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // content background and outline frame
-    _Context->m_Renderer->push_rectangle_rounded(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
@@ -3228,8 +3231,7 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
 
     for (auto& node : _Context->m_NodesRenderingList)
     {
-        if(!node->is_partially_visible(_Context) ||
-            (node->State.Settings == ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        if(!node->is_partially_visible(_Context))
         {
             node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
             continue;
@@ -3538,7 +3540,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
 
     // create hierarchy
     m_Hierarchy = ImmedidateUserInterfaceHierarchy(
-        [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+        [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
         {
             if(_Node == nullptr)
                 return nullptr;
@@ -3546,8 +3548,8 @@ bool ImmediateUserInterfaceContextLayer::awake()
             if(_Node->State.Parent != nullptr)
                 return _Node->State.Parent;
 
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(_Node);
+            const ImmediateUserInterfaceWindow* window =
+                dynamic_cast<const ImmediateUserInterfaceWindow*>(_Node);
 
             if(window != nullptr && window->Docker != nullptr)
                 return window->Docker;

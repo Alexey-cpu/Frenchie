@@ -396,63 +396,7 @@ void Immediate2DRenderer::push_text(
     const gs_mat4f&            _Transform,
     const RenderingQueueFont&  _Font)
 {
-    RenderingQueueFont font = _Font.is_null() ? m_RenderingQueue->get_default_font() : _Font;
-
-    float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
-    float positionX = 0.f;
-    float positionY = gs_vec2f(0.f, offset).y;
-
-    for(int i = 0; i < (int)_Text.size(); ++i)
-    {
-        unsigned int symbol = _Text[i];
-
-        // fallbacks
-        if(!font.contains_glyph(symbol))
-        {
-            // next line
-            if(symbol == '\n')
-            {
-                positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
-                positionX =  0.f;
-            }
-            // carriage return
-            else if(symbol == '\r')
-                positionX =  0.f;
-            // tab
-            else if(symbol == '\t')
-                positionX += gs_vec2f(_Size, 0.f).x;
-            else
-            {
-                // TODO: do someting here...
-                // May be use fallback font and take fallback character from there ???
-            }
-
-            continue;
-        }
-
-        RenderingQueueGlyph glyph    = font.retrieve_glyph(symbol);
-        float glyphWidth             = glyph.Box.size().x * scale;
-        float glyphHeight            = glyph.Box.size().y * scale;
-        float glyphHorizontalBearing = glyph.Bearing.x * scale;
-        float glyphVerticalBearing   = glyph.Bearing.y * scale;
-        float glyphAdvance           = glyph.Advance * scale;
-
-        auto min = gs_vec2f(positionX, positionY) + gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing);
-        auto max = min + gs_vec2f(glyphWidth, glyphHeight);
-
-        build_rectangle_filled_mesh(
-            min,
-            max,
-            glyph.MinUV,
-            glyph.MaxUV,
-            _Color);
-
-        // move cursor
-        positionX += gs_vec2f(glyphAdvance, 0.f).x;
-    }
-
-    push_rendering_command(font.AtlasTexture, _Color, _Transform);
+    push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
 }
 
 void Immediate2DRenderer::push_text(
@@ -462,12 +406,7 @@ void Immediate2DRenderer::push_text(
     const gs_mat4f&            _Transform,
     const RenderingQueueFont&  _Font)
 {
-    push_text(
-        Frenchie::Core::String::convert_utf16_to_utf8(_Text),
-        _Size,
-        _Color,
-        _Transform,
-        _Font);
+    push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
 }
 
 void Immediate2DRenderer::push_text(
@@ -477,12 +416,7 @@ void Immediate2DRenderer::push_text(
     const gs_mat4f&            _Transform,
     const RenderingQueueFont&  _Font)
 {
-    push_text(
-        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
-        _Size,
-        _Color,
-        _Transform,
-        _Font);
+    push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
 }
 
 void Immediate2DRenderer::push_arc_filled(
