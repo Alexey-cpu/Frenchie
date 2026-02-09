@@ -235,15 +235,15 @@ namespace Frenchie
         struct RenderingQueueRenderingCommand final
         {
             RenderingQueueRenderingCommand(
-                const RenderingQueueMesh&               _Mesh,
-                const RenderingQueueShader&             _Shader,
-                const RenderingQueueTexture&            _Texture,
-                const gs_mat4f&                         _Transform,
+                const RenderingQueueMesh&                      _Mesh,
+                const RenderingQueueShader&                    _Shader,
+                const RenderingQueueTexture&                   _Texture,
+                const gs_mat4f&                                _Transform,
                 const RenderingQueueGraphicsApiRenderingHints& _MeshRenderingHints) :
                 Mesh(_Mesh),
-                Transform(_Transform),
-                Texture(_Texture),
                 Shader(_Shader),
+                Texture(_Texture),
+                Transform(_Transform),
                 MeshRendererHints(_MeshRenderingHints){}
 
             RenderingQueueMesh               Mesh             {RenderingQueueMesh()};
