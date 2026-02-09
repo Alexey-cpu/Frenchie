@@ -210,18 +210,16 @@ out vec4 Color;
 
 // uniforms
 uniform mat4 u_ModelMatrix;
-uniform mat4 u_CameraViewMatrix;
-uniform mat4 u_ProjectionMatrix;
 
 void main()
 {
-// setup position
-gl_Position = u_ProjectionMatrix * u_CameraViewMatrix * u_ModelMatrix * vec4(a_Position, 1.0);
+    // setup position
+    gl_Position = u_ModelMatrix * vec4(a_Position, 1.0);
 
-// setup outputs
-Normal = a_Normal;
-UV     = a_UV;
-Color  = a_Color;
+    // setup outputs
+    Normal = a_Normal;
+    UV     = a_UV;
+    Color  = a_Color;
 }            
 )"),
                 RenderingQueueShaderType_::RenderingQueueShaderType_Vertex
@@ -317,6 +315,8 @@ void RenderingQueue::frame_render()
     );
 
     // execute rendering commands
+    gs_mat4f projectionMatrix = m_ProjectionMatrix * m_CameraViewMatrix;
+
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
         // clipping box
@@ -350,15 +350,13 @@ void RenderingQueue::frame_render()
             auto shader             = renderingCommand.value().Shader;
             auto color              = renderingCommand.value().Texture.Color;
             auto texture            = renderingCommand.value().Texture;
-            auto transform          = renderingCommand.value().Transform;
+            auto transformMatrix    = renderingCommand.value().Transform;
             auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
 
             RenderingQueueGraphicsApi::begin_use_texture(texture);
             RenderingQueueGraphicsApi::begin_use_shader(shader);
 
-            RenderingQueueGraphicsApi::set_shader_uniform(shader, "u_ModelMatrix", transform);
-            RenderingQueueGraphicsApi::set_shader_uniform(shader, "u_CameraViewMatrix", m_CameraViewMatrix);
-            RenderingQueueGraphicsApi::set_shader_uniform(shader, "u_ProjectionMatrix", m_ProjectionMatrix);
+            RenderingQueueGraphicsApi::set_shader_uniform(shader, "u_ModelMatrix", projectionMatrix * transformMatrix);
             RenderingQueueGraphicsApi::set_shader_uniform(shader, "u_Texture", 0);
 
             RenderingQueueGraphicsApi::begin_use_mesh(mesh, meshRenderingHints);
