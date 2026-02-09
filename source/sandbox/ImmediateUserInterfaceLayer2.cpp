@@ -834,15 +834,15 @@ namespace Frenchie
                         gs_vec2f(scrollBarWidth, (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : State.BoundingBox.size().y)) :
                             gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : State.BoundingBox.size().x), scrollBarWidth);
 
-                gs_vec2f _MinSize     = gs_vec2f(64.f, 64.f);
-                gs_vec2f _Total       = State.ContentSize; // this is scrollarea content size
-                gs_vec2f _Track       = Max;
-                gs_vec2f SliderLength = gs_vec2f(
-                    gs_min(gs_max(gs_abs(Max.x - Min.x) / gs_abs(_Total.x) * _Track.x, _MinSize.x), Max.x),
-                    gs_min(gs_max(gs_abs(Max.y - Min.y) / gs_abs(_Total.y) * _Track.y, _MinSize.y), Max.y));
+                gs_vec2f totalContentSize       = State.ContentSize; // this is scrollarea content size
+                gs_vec2f scrollbarMinimumSize   = gs_vec2f(scrollBarWidth, scrollBarWidth);
+                gs_vec2f scrollbarTrackableSize = Max;
+                gs_vec2f scrollbarSliderLength  = gs_vec2f(
+                    gs_min(gs_max(gs_abs(Max.x - Min.x) / gs_abs(totalContentSize.x) * scrollbarTrackableSize.x, scrollbarMinimumSize.x), Max.x),
+                    gs_min(gs_max(gs_abs(Max.y - Min.y) / gs_abs(totalContentSize.y) * scrollbarTrackableSize.y, scrollbarMinimumSize.y), Max.y));
 
-                gs_vec2f SliderScale  =
-                    gs_vec2f(gs_abs(_Total.x), gs_abs(_Total.y)) / gs_vec2f(gs_abs(Max.x - Min.x), gs_abs(Max.y - Min.y));
+                gs_vec2f scrollbarSliderScale  =
+                    gs_vec2f(gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(Max.x - Min.x), gs_abs(Max.y - Min.y));
 
                 ImmediateUserInterfaceScrollArea* contentArea = retrieve_scroll_area(_Context);
 
@@ -858,7 +858,7 @@ namespace Frenchie
                 {
                     if((contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar))
                     {
-                        if(SliderLength.x >= Max.x)
+                        if(scrollbarSliderLength.x >= Max.x)
                         {
                             do_not_render_scroll_bar();
                             return;
@@ -884,7 +884,7 @@ namespace Frenchie
                 {
                     if((contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar))
                     {
-                        if(SliderLength.y >= Max.y)
+                        if(scrollbarSliderLength.y >= Max.y)
                         {
                             do_not_render_scroll_bar();
                             return;
@@ -923,9 +923,22 @@ namespace Frenchie
                     if(slider == nullptr)
                         continue;
 
-                    gs_vec2f sliderMin        = gs_clamp(State.BoundingBox.Min + slider->Position, State.BoundingBox.Min, State.BoundingBox.Max - SliderLength);
-                    slider->PositionScale     = SliderScale;
-                    slider->State.BoundingBox = gs_2dboxf(sliderMin + ContentPadding, sliderMin + SliderLength - ContentPadding);
+                    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + slider->Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
+                    
+                    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+                    {
+                        if(sliderPosition.y > State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
+                            slider->PositionScale = scrollbarSliderScale;
+                    }
+                    else
+                    {
+                        if(sliderPosition.x > State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
+                            slider->PositionScale = scrollbarSliderScale;
+                    }
+                    
+                    slider->State.BoundingBox = gs_2dboxf(
+                        sliderPosition + ContentPadding,
+                        sliderPosition + scrollbarSliderLength - ContentPadding);
                 }
             }
 
