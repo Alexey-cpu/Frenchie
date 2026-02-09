@@ -246,10 +246,10 @@ namespace Frenchie
                 Transform(_Transform),
                 MeshRendererHints(_MeshRenderingHints){}
 
-            RenderingQueueMesh               Mesh             {RenderingQueueMesh()};
-            RenderingQueueShader             Shader           {RenderingQueueShader()};
-            RenderingQueueTexture            Texture          {RenderingQueueTexture()};
-            gs_mat4f                         Transform        {gs_mat4f(1.f)};
+            RenderingQueueMesh                      Mesh             {RenderingQueueMesh()};
+            RenderingQueueShader                    Shader           {RenderingQueueShader()};
+            RenderingQueueTexture                   Texture          {RenderingQueueTexture()};
+            gs_mat4f                                Transform        {gs_mat4f(1.f)};
             RenderingQueueGraphicsApiRenderingHints MeshRendererHints{RenderingQueueGraphicsApiRenderingHints_::RenderingQueueGraphicsApiRenderingHints_Default};
         };
 
