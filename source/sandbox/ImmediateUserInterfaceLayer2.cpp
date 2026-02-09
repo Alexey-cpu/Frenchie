@@ -576,9 +576,11 @@ namespace Frenchie
                 State.MinimumSize = gs_vec2f(0.f, 0.f);
 
                 if(_Context->m_Hierarchy.size(this) <= 0)
-                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
                 else if(gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 1.f)
-                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(512.f, 512.f));
+                {
+                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(512.f, 512.f));
+                }
             }
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
@@ -2388,14 +2390,26 @@ void ImmediateUserInterfaceScrollAreaScrollBarSlider::render(ImmediateUserInterf
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Hierarchy.get_parent(this) ?
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Hierarchy.get_parent(this) ?
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
 }
 
 bool ImmediateUserInterfaceScrollAreaScrollBarSlider::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
@@ -3217,7 +3231,11 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
         }
 
         // hover end logic
-        if(!node->get_visible_rect(_Context).contains(_Event.CursorPosition))
+        gs_2dboxf rect = node->get_visible_rect(_Context);
+        rect = gs_2dboxf(rect.Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), rect.Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context));
+
+
+        if(!rect.contains(_Event.CursorPosition))
         {
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
@@ -3252,13 +3270,6 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
             hoveredNode->State.MouseEnterTimer,
             Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
         {
-            _Context->m_Renderer->push_rectangle(
-                hoveredNode->get_visible_rect(_Context).Min,
-                hoveredNode->get_visible_rect(_Context).Max,
-                12.f,
-                RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-                _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
-
             hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
         }
     }
