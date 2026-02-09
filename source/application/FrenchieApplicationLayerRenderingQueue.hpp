@@ -292,11 +292,20 @@ namespace Frenchie
         {
         public:
 
+            typedef void* (*Loader)(const char*);
+
             struct Projections
             {
                 gs_mat4f cameraview;
                 gs_mat4f projection;
             };
+
+            // API loader
+            // TODO: this might differ for different rendering APIs...
+            static bool load(Loader);
+
+            // viewport API
+            static void set_viewport(const gs_vec2f&, const gs_vec2f&);
 
             // texture API
             static RenderingQueueTexture construct_texture(
