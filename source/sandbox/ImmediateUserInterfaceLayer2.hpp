@@ -415,20 +415,20 @@ namespace Frenchie
         // hierarchy
         struct ImmedidateUserInterfaceHierarchy
         {
-            ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> _GetParent =
-                [](ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
+            ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
+                [](const ImmediateUserInterfaceNode* _Node)->ImmediateUserInterfaceNode*
                 {
                     return _Node != nullptr ? _Node->State.Parent : nullptr;
                 }) : GetParent(_GetParent){}
 
             ~ImmedidateUserInterfaceHierarchy(){}
 
-            mutable std::vector<int>                                                        Indexes;
-            mutable std::vector<int>                                                        Entries;
-            mutable std::vector<ImmediateUserInterfaceNode*>                                Singletons;
-            mutable std::vector<ImmediateUserInterfaceNode*>                                Sorted;
-            mutable std::map<const ImmediateUserInterfaceNode*, int>                        RenderingIndexesCache;
-            mutable std::function<ImmediateUserInterfaceNode*(ImmediateUserInterfaceNode*)> GetParent;
+            mutable std::vector<int>                                                              Indexes;
+            mutable std::vector<int>                                                              Entries;
+            mutable std::vector<ImmediateUserInterfaceNode*>                                      Singletons;
+            mutable std::vector<ImmediateUserInterfaceNode*>                                      Sorted;
+            mutable std::map<const ImmediateUserInterfaceNode*, int>                              RenderingIndexesCache;
+            mutable std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> GetParent;
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const
             {
@@ -544,7 +544,7 @@ namespace Frenchie
 
         //private:
 
-            ImmediateUserInterfaceNode* get_parent(ImmediateUserInterfaceNode* _Node)
+            ImmediateUserInterfaceNode* get_parent(const ImmediateUserInterfaceNode* _Node) const
             {
                 return GetParent != nullptr ? GetParent(_Node) : nullptr;
             }
