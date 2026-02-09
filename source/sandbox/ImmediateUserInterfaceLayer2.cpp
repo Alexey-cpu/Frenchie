@@ -295,22 +295,14 @@ namespace Frenchie
                     const ImmedidateUserInterfaceEvent& _Event,
                     const FrameProcessor&               _Filter)
                 {
-                    if(_Context == nullptr || _Next == nullptr)
+                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Event.CursorPosition))
                         return;
 
                     // check self
                     if(_Filter(_Next))
                     {
-                        // gs_2dboxf dockingGizmo = gs_2dboxf(
-                        //     _Next->State.BoundingBox.center() - gs_min(_Next->State.BoundingBox.size().x, _Next->State.BoundingBox.size().y) * 0.25f,
-                        //     _Next->State.BoundingBox.center() + gs_min(_Next->State.BoundingBox.size().x, _Next->State.BoundingBox.size().y) * 0.25f);
-
-                        //if(dockingGizmo.contains(_Event.CursorPosition))
-                        if(_Next->State.BoundingBox.contains(_Event.CursorPosition))
-                        {
-                            if(*_Hovered == nullptr || _Next->Cache.Depth > (*_Hovered)->Cache.Depth)
-                                *_Hovered = _Next;
-                        }
+                        if(*_Hovered == nullptr || _Next->Cache.Depth > (*_Hovered)->Cache.Depth)
+                            *_Hovered = _Next;
                     }
 
                     // check children
@@ -2758,6 +2750,16 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
             next = next->State.Parent;
         }
+    }
+
+    if(hovered != nullptr)
+    {
+        _Context->m_Renderer->push_rectangle(
+            hovered->State.BoundingBox.Min,
+            hovered->State.BoundingBox.Max,
+            12.f,
+            RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+            _Context->m_Renderer->calculate_transform_matrix((float)_Context->m_Renderer->get_far_plane()));
     }
 
     if(hovered == nullptr || moved == nullptr)
