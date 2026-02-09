@@ -114,6 +114,12 @@ namespace Frenchie
             ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 3,
             ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 4,
             ImmedidateUserInterfaceDockingAnchor_Center = 1 << 5,
+            ImmedidateUserInterfaceDockingAnchor_All    =
+                ImmedidateUserInterfaceDockingAnchor_Top    |
+                ImmedidateUserInterfaceDockingAnchor_Left   |
+                ImmedidateUserInterfaceDockingAnchor_Right  |
+                ImmedidateUserInterfaceDockingAnchor_Bottom |
+                ImmedidateUserInterfaceDockingAnchor_Center
         };
 
         enum ImmedidateUserInterfaceRenderingOrder_ : int
