@@ -15,8 +15,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //windows_test();   
-    scrollarea_test();
+    windows_test();   
+    //scrollarea_test();
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -144,7 +144,24 @@ void ImmediateUserInterfaceTestLayer::windows_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
-        create_horizontal_layout("Window-1/Layout");
+        if(m_ImmediateUserInterface->begin_scrollarea(
+            "Window-1/ScrollArea",
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults))
+        {
+            int k = 0;
+
+            for(int i = 0 ; i < 1e1; i++)
+            {
+                for(int j = 0 ; j < 1e1; j++)
+                    m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)));
+
+                m_ImmediateUserInterface->next_line();
+            }
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+
         m_ImmediateUserInterface->end_window();
     }
 
@@ -167,18 +184,6 @@ void ImmediateUserInterfaceTestLayer::windows_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
-        if(m_ImmediateUserInterface->begin_vertial_stack("Window-3/Stack"))
-        {
-            for(int i = 0; i < 1e1; i++)
-            {
-                auto buttonID = std::string("Button-").append(std::to_string(i));
-
-                if(m_ImmediateUserInterface->push_button(buttonID)) button = buttonID;
-            }
-
-            m_ImmediateUserInterface->end_vertical_stack();
-        }
-
         m_ImmediateUserInterface->end_window();
     }
 
@@ -214,11 +219,19 @@ void ImmediateUserInterfaceTestLayer::scrollarea_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
-        if(m_ImmediateUserInterface->begin_scrollarea("ScrollArea"))
+        if(m_ImmediateUserInterface->begin_scrollarea(
+            "ScrollArea",
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults))
         {
+            int k = 0;
+
             for(int i = 0 ; i < 1e1; i++)
             {
-                m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
+                for(int j = 0 ; j < 1e1; j++)
+                    m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)));
+
+                m_ImmediateUserInterface->next_line();
             }
 
             m_ImmediateUserInterface->end_scrollarea();
