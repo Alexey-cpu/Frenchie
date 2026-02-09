@@ -453,11 +453,6 @@ RenderingQueueGraphicsApi::Projections RenderingQueueGraphicsApi::calculate_2d_c
     const float&    _CameraFarPlanePosition)
 {
     // compute projection matrix
-    // float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    // float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
-    // float bottom = -_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-    // float top    = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
-
     float left   = -_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
     float right  = +_CameraResolution.x * 0.5f + _CameraWorldPosition.x;
     float bottom = +_CameraResolution.y * 0.5f + _CameraWorldPosition.y;
@@ -481,12 +476,6 @@ RenderingQueueGraphicsApi::Projections RenderingQueueGraphicsApi::calculate_2d_c
             top,
             _CameraNearPlanePosition,
             _CameraFarPlanePosition) * gs_matrix_rotate(gs_mat4f(1.f), gs_to_radians(_CameraRotationAngle), gs_vec3f(0.f, 0.f, 1.f));
-
-    // struct
-    // {
-    //     gs_mat4f cameraview;
-    //     gs_mat4f projection;
-    // } result = {cameraview, projection};
 
     return {cameraview, projection};
 }
