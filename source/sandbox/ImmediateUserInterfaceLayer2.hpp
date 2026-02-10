@@ -807,9 +807,9 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
-            mutable std::map<uint32_t, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmedidateUserInterfaceStyle                                    m_Style;
-            mutable ImmedidateUserInterfaceHierarchy                                m_Hierarchy;
+            mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
+            mutable ImmedidateUserInterfaceStyle                                       m_Style;
+            mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
 
             // rendering
             mutable std::shared_ptr<Immediate2DRenderer>                            m_Renderer{nullptr};
@@ -832,19 +832,20 @@ namespace Frenchie
             // service methods
             template<typename Type> Type* create_node(const std::string& _ID)
             {
-                // FNV‑1a
-                auto hashFunction = [](const void* _Data, size_t _Length)->uint32_t
-                {
-                    const uint8_t *bytes = (const uint8_t*)_Data;
-                    uint32_t       hash  = 2166136261u;
+                // TODO: this is not reliable due to duplicated ID's for different strings
+                // // FNV‑1a
+                // auto hashFunction = [](const void* _Data, size_t _Length)->uint32_t
+                // {
+                //     const uint8_t *bytes = (const uint8_t*)_Data;
+                //     uint32_t       hash  = 2166136261u;
 
-                    for (size_t i = 0; i < _Length; i++)
-                    {
-                        hash ^= bytes[i];
-                        hash *= 16777619u;
-                    }
-                    return hash;
-                };
+                //     for (size_t i = 0; i < _Length; i++)
+                //     {
+                //         hash ^= bytes[i];
+                //         hash *= 16777619u;
+                //     }
+                //     return hash;
+                // };
 
                 // determine hashable part of the _ID
                 int hashable = 0;
@@ -856,18 +857,20 @@ namespace Frenchie
                 }
                 
                 // compute hash
-                unsigned int hash =
+                std::string hash =
                     hashable < _ID.size() ?
-                        hashFunction(_ID.c_str() + hashable, _ID.size()) :
-                            hashFunction(_ID.c_str(), _ID.size());
+                            std::string(_ID.c_str() + hashable, _ID.c_str() + _ID.size()) :
+                                std::string(_ID.c_str(), _ID.c_str() + hashable);
 
                 // create node
                 if(m_Cache.find(hash) == m_Cache.end())
                 {
-                    m_Cache[hash] = std::make_unique<Type>(
-                        hashable < _ID.size() ?
-                            std::string(_ID.c_str() + hashable, _ID.c_str() + _ID.size()) :
-                                std::string(_ID.c_str(), _ID.c_str() + hashable));
+                    m_Cache[hash] = std::make_unique<Type>(hash);
+
+                    // m_Cache[hash] = std::make_unique<Type>(
+                    //     hashable < _ID.size() ?
+                    //         std::string(_ID.c_str() + hashable, _ID.c_str() + _ID.size()) :
+                    //             std::string(_ID.c_str(), _ID.c_str() + hashable));
                 }
                 ImmediateUserInterfaceNode* node = m_Cache[hash].get();
                 GS_ASSERT((++node->Count) <= 1);
