@@ -756,13 +756,10 @@ namespace Frenchie
 
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
                 {
-                    auto size = (*it)->State.BoundingBox.size();
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + (*it)->State.BoundingBox.size());
 
                     maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
-                    // TODO: how to identify if we need to go onto next line ???
                     if((*it)->State.PushNextLine)
                     {
                         position  = gs_vec2f(start.x, position.y + maxHeight + ContentPadding.y);
@@ -770,7 +767,7 @@ namespace Frenchie
                     }
                     else
                     {
-                        position += gs_vec2f(size.x + ContentPadding.x, 0.f);
+                        position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.x, 0.f);
                     }
                 }
             }
@@ -805,7 +802,7 @@ namespace Frenchie
             }
             ~ImmediateUserInterfaceScrollAreaScrollBar(){}
 
-            void layout(ImmediateUserInterfaceContextLayer* _Context)
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 // auxiliary lambdas
                 auto do_not_render_scroll_bar = [this]()
@@ -818,16 +815,14 @@ namespace Frenchie
                 if(_Context == nullptr) return;
 
                 // layout self
-                float scrollBarWidth = 64.f; // TODO: this MUST BE a setting
-
                 gs_vec2f Min = gs_vec2f(0.f, 0.f);
                 gs_vec2f Max =
                     Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-                        gs_vec2f(scrollBarWidth, (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : State.BoundingBox.size().y)) :
-                            gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : State.BoundingBox.size().x), scrollBarWidth);
+                        gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : State.BoundingBox.size().y)) :
+                            gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : State.BoundingBox.size().x), _Context->m_Style.get_scrollbar_width());
 
-                gs_vec2f totalContentSize       = State.ContentSize; // this is scrollarea content size
-                gs_vec2f scrollbarMinimumSize   = gs_vec2f(scrollBarWidth, scrollBarWidth);
+                gs_vec2f totalContentSize       = State.ContentSize + _Context->m_Style.get_scrollbar_width() + ContentPadding; // this is scrollarea content size
+                gs_vec2f scrollbarMinimumSize   = gs_vec2f(_Context->m_Style.get_scrollbar_width(), _Context->m_Style.get_scrollbar_width());
                 gs_vec2f scrollbarTrackableSize = Max;
                 gs_vec2f scrollbarSliderLength  = gs_vec2f(
                     gs_min(gs_max(gs_abs(Max.x - Min.x) / gs_abs(totalContentSize.x) * scrollbarTrackableSize.x, scrollbarMinimumSize.x), Max.x),
@@ -899,8 +894,8 @@ namespace Frenchie
 
                 State.MaximumSize =
                     Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-                        gs_vec2f(scrollBarWidth, (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
-                            gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), scrollBarWidth);
+                        gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
+                            gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), _Context->m_Style.get_scrollbar_width());
 
                 State.MinimumSize = State.MaximumSize;
 
@@ -934,7 +929,7 @@ namespace Frenchie
                 }
             }
 
-            void measure(ImmediateUserInterfaceContextLayer* _Context)
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 if(_Context == nullptr) return;
 
@@ -942,6 +937,27 @@ namespace Frenchie
 
                 if(contentArea != nullptr)
                     State.ContentSize = contentArea->ContentView->State.ContentSize;
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
+            {
+                if(State.MousePressed.has_value())
+                {
+                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+                    {
+                        ImmediateUserInterfaceScrollAreaScrollBarSlider* slider =
+                            dynamic_cast<ImmediateUserInterfaceScrollAreaScrollBarSlider*>(*it);
+
+                        if(slider == nullptr) continue;
+
+                        slider->Position = gs_clamp(
+                            _Event.CursorPosition - State.BoundingBox.Min,
+                            gs_vec2f(0.f, 0.f),
+                            State.BoundingBox.size() - slider->State.BoundingBox.size());
+                    }
+                }
+
+                return ImmediateUserInterfaceNodePanel::events(_Context, _Event);
             }
 
             void render(ImmediateUserInterfaceContextLayer* _Context)
@@ -969,6 +985,7 @@ namespace Frenchie
             }
 
         private:
+
             ImmediateUserInterfaceScrollArea* retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context)
             {
                 if(_Context == nullptr) return nullptr;

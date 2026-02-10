@@ -195,6 +195,11 @@ namespace Frenchie
                 return gs_max(32.f, FontSize);
             }
 
+            float get_scrollbar_width() const
+            {
+                return gs_max(get_frames_width(), ScrollBarWidth);
+            }
+
             RenderingQueueColor get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
             {
                 return Colors[_Color];
@@ -206,9 +211,10 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius = 32.f;
-            float                            FramesWidth  = 0.f;
-            float                            FontSize     = 64.f;
+            float                            FramesRadius   = 32.f;
+            float                            FramesWidth    = 0.f;
+            float                            FontSize       = 64.f;
+            float                            ScrollBarWidth = 64.f;
             std::vector<RenderingQueueColor> Colors;
         };
 
