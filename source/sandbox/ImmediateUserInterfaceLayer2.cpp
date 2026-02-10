@@ -12,6 +12,16 @@
 
 using namespace Frenchie::Application;
 
+void showHierarchy(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const std::string& _Delimiter)
+{
+    std::cout << _Delimiter << _Node->Hash << "\t" << _Node->State.Depth << "\t" << _Node->State.SelfThickness << "\t" << _Node->State.MaximumChildDepth << "\n";
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
+    {
+        showHierarchy(_Context, (*it), _Delimiter + "\t");
+    }
+}
+
 namespace Frenchie
 {
     namespace Application
@@ -98,26 +108,20 @@ namespace Frenchie
                     if(_Context == nullptr || _Docked == nullptr)
                         return;
 
+                    // setup maximum rendering order for docked window within it's docker hierarchy
                     if(_Docked->Docker != nullptr)
                     {
-                        // setup maximum rendering order for docked window within it's hierarchy
-                        int renderingOrder = 0;
+                        int renderingOrder = _Docked->Docker->State.RenderingOrder;
 
                         for(auto it  = _Context->m_Hierarchy.begin(_Docked->Docker);
                                  it != _Context->m_Hierarchy.end(_Docked->Docker);
                                  it++)
                         {
-                            if(!_Filter(*it)) continue;
-                                
-                            (*it)->State.RenderingOrder = renderingOrder++;
-
-                            ImmediateUserInterfaceWindow* window =
-                                dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                            if(_Filter(*it))
+                                (*it)->State.RenderingOrder = renderingOrder;
                         }
-
-                        _Docked->State.RenderingOrder = renderingOrder++;
-
-                        auto docker = retrieve_docker_by_view(_Context, _Docked->Docker);
+                        
+                        _Docked->State.RenderingOrder = ++renderingOrder;
 
                         return;
                     }
@@ -129,14 +133,11 @@ namespace Frenchie
                              it != _Context->m_Hierarchy.end(_Docked->DockerView);
                              it++)
                     {
-                        if(!_Filter(*it)) continue;
-                            
-                        (*it)->State.RenderingOrder = renderingOrder++;
-
-                        ImmediateUserInterfaceWindow* window =
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+                        if(_Filter(*it))
+                            (*it)->State.RenderingOrder = renderingOrder;
                     }
-                    _Docked->SnapperView->State.RenderingOrder = renderingOrder++;
+
+                    _Docked->SnapperView->State.RenderingOrder = ++renderingOrder;
                 }
 
                 bool is_docking_window_active(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window)
@@ -154,14 +155,17 @@ namespace Frenchie
                         {
                             auto dockedWindows =
                                 _Context->get_controller<ImmedidateUserInterfaceWindowController>()
-                                    ->retrieve_docked_windows(_Context, _Window->Docker, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
+                                    ->retrieve_docked_windows(
+                                        _Context,
+                                        _Window->Docker,
+                                        ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
 
-                            int maximumRenderingOrder = 0;
+                            int maximumRenderingOrder = -1;
 
                             for (auto dockedWindow : dockedWindows)
                                 maximumRenderingOrder = gs_max(maximumRenderingOrder, dockedWindow->State.RenderingOrder);
                             
-                            selfActive = _Window->State.RenderingOrder == maximumRenderingOrder;
+                            selfActive = _Window->State.RenderingOrder >= maximumRenderingOrder;
                         }
 
                         // detect if docker active
@@ -171,23 +175,23 @@ namespace Frenchie
                             ImmediateUserInterfaceWindow * docker =
                                 ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Window->Docker);
 
-                            int maximumRenderingOrder = 0;
+                            int maximumRenderingOrder = -1;
 
-                            for (auto it = _Context->m_Hierarchy.begin(docker->DockerView);
-                                    it != _Context->m_Hierarchy.end(docker->DockerView);
-                                    it++)
+                            for (auto it  = _Context->m_Hierarchy.begin(docker->DockerView);
+                                      it != _Context->m_Hierarchy.end(docker->DockerView);
+                                      it++)
                             {
                                 maximumRenderingOrder = gs_max(maximumRenderingOrder, (*it)->State.RenderingOrder);
                             }
 
-                            dockerActive = docker->SnapperView->State.RenderingOrder == maximumRenderingOrder;
+                            dockerActive = docker->SnapperView->State.RenderingOrder >= maximumRenderingOrder;
                         }
 
                         active = selfActive && !dockerActive;
                     }
                     else
                     {
-                        int maximumRenderingOrder = 0;
+                        int maximumRenderingOrder = -1;
 
                         for (auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
                                   it != _Context->m_Hierarchy.end(_Window->DockerView);
@@ -196,7 +200,7 @@ namespace Frenchie
                             maximumRenderingOrder = gs_max(maximumRenderingOrder, (*it)->State.RenderingOrder);
                         }
 
-                        active = _Window->SnapperView->State.RenderingOrder == maximumRenderingOrder;
+                        active = _Window->SnapperView->State.RenderingOrder >= maximumRenderingOrder;
                     }
 
                     return active;
@@ -2255,7 +2259,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "Docker",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, Docker)->Name);
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, Docker)->Hash);
     }
     
     if(TopSnapper)
@@ -2263,7 +2267,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "TopSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, TopSnapper)->Name);
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, TopSnapper)->Hash);
     }
     
     if(LeftSnapper)
@@ -2271,7 +2275,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "LeftSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, LeftSnapper)->Name);
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, LeftSnapper)->Hash);
     }
     
     if(RightSnapper)
@@ -2279,7 +2283,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "RightSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, RightSnapper)->Name);
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, RightSnapper)->Hash);
     }
     
     if(BottomSnapper)
@@ -2287,11 +2291,13 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "BottomSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, BottomSnapper)->Name);
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, BottomSnapper)->Hash);
     }
 
-    if(ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, this))
-        _Context->m_IniFileState.set<bool>(Hash, "IsActive", true);
+    _Context->m_IniFileState.set<bool>(
+        Hash,
+        "IsActive",
+        ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, this));
 }
 
 // ImmediateUserInterfaceNodePanel
@@ -2540,7 +2546,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
             std::string(_ID).append("/CentralDockerView"),
             _Settings))
         {
-            window->DockerView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
+            window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
             window->DockerView->State.PlaceInFollow               = true;
             window->DockerView->State.OrderChildrenWhileRendering = true;
 
@@ -3650,16 +3656,6 @@ void ImmediateUserInterfaceContextLayer::frame_update()
 {
 }
 
-void showHierarchy(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const std::string& _Delimiter)
-{
-    std::cout << _Delimiter << _Node->Name << "\t" << _Node->State.Depth << "\t" << _Node->State.SelfThickness << "\t" << _Node->State.MaximumChildDepth << "\n";
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
-    {
-        showHierarchy(_Context, (*it), _Delimiter + "\t");
-    }
-}
-
 void ImmediateUserInterfaceContextLayer::frame_debug()
 {
     // build hierarchy
@@ -3780,7 +3776,7 @@ bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, co
             std::string(_ID).append("/CentralDockerView"),
             _Settings))
         {
-            window->DockerView = get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
+            window->DockerView                                    = get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
             window->DockerView->State.PlaceInFollow               = true;
             window->DockerView->State.OrderChildrenWhileRendering = true;
 
