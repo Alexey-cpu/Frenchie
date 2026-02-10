@@ -17,7 +17,8 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 {
     //windows_test();   
     //scrollarea_test();
-    vertical_stack_test();
+    panel_test();
+    //vertical_stack_test();
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -239,6 +240,22 @@ void ImmediateUserInterfaceTestLayer::scrollarea_test()
         }
 
         m_ImmediateUserInterface->end_scrollarea();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::panel_test()
+{
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+
+    if(m_ImmediateUserInterface->begin_panel(
+        "Panel-1",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter))
+    {
+        m_ImmediateUserInterface->push_button("Panel-1/Button");
+        m_ImmediateUserInterface->end_panel();
     }
 }
 
