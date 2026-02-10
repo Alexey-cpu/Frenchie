@@ -18,6 +18,7 @@ namespace Frenchie
 
             void windows_test();
             void scrollarea_test();
+            void panel_test();
             void vertical_stack_test();
             void horizontal_stack_test();
 

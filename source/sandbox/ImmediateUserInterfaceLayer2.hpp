@@ -76,17 +76,9 @@ namespace Frenchie
                 ImmediateUserInterfaceNodeSettings_Resizable,
         };
 
-        enum ImmediateUserInterfaceContextSettings_ : int
-        {
-            // docking
-            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
-        };
-
         enum ImmediateUserInterfaceScrollAreaSettings_ : int
         {
-            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined,
+            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 0,
             ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
             ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
 
@@ -100,6 +92,29 @@ namespace Frenchie
             ImmediateUserInterfaceScrollAreaSettings_Defaults                    =
                 ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar |
                 ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar,
+        };
+
+        enum ImmediateUserInterfaceLayoutAlignmentSettings_ : int
+        {
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 0,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+
+            ImmediateUserInterfaceLayoutAlignmentSettings_Defaults =
+                ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
+                ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter,
+        };
+
+        enum ImmediateUserInterfaceContextSettings_ : int
+        {
+            // docking
+            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
         };
 
         enum ImmediateUserInterfaceNodeMouseHover_ : int
@@ -371,7 +386,7 @@ namespace Frenchie
             ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNodeVerticalStack();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            //virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
@@ -380,7 +395,7 @@ namespace Frenchie
             ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNodeHorizontalStack();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            //virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         // scroll area
@@ -727,6 +742,9 @@ namespace Frenchie
             void end_window();
             
             // layout
+            bool begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_panel();
+
             bool begin_vertial_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
 

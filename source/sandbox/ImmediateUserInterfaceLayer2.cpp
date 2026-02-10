@@ -349,16 +349,52 @@ namespace Frenchie
             }
 
             template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_panel(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_vec2f& _Size, const FrameProcessor& _Filter)
+            void layout_nodes_as_panel(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
             {
+                // layout children
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    auto node = *it;
+                    if((*it) == nullptr || !_Filter(*it)) continue;
 
-                    if(node == nullptr || !_Filter(node))
-                        continue;
+                    gs_vec2f  position = _Position;
+                    gs_vec2f  size     = gs_clamp(_Size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    gs_2dboxf bbox     = gs_2dboxf(_Position, _Position + _Size);
 
-                    node->State.BoundingBox = gs_2dboxf(_Position, _Position + _Size);
+                    // vertical alignment
+                    if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop)
+                    {
+                        position = gs_vec2f(position.x, _Position.y);
+                    }
+                    else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom)
+                    {
+                        position = gs_vec2f(position.x, (position + bbox.size() - size).y);
+                    }
+                    else // center is default
+                    {
+                        position = gs_vec2f(position.x, (bbox.center() - size * 0.5f).y);
+                    }
+
+                    // horizontal alignment
+                    if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft)
+                    {
+                        position = gs_vec2f(_Position.x, position.y);
+                    }
+                    else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight)
+                    {
+                        position = gs_vec2f((position + bbox.size() - size).x, position.y);
+                    }
+                    else // center is default
+                    {
+                        position = gs_vec2f((bbox.center() - size * 0.5f).x, position.y);
+                    }
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                 }
             }
 
@@ -2029,6 +2065,7 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Hierarchy.end(this),
         ContentBox.Min,
         ContentBox.size(),
+        State.Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
@@ -2316,10 +2353,23 @@ void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer*
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min + ContentPadding,
         State.BoundingBox.size() - ContentPadding * 2.f,
+        State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context){}
+void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        State.Parent ?
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground):
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
 
 bool ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
@@ -2357,7 +2407,7 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfaceNodeVerticalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
+//void ImmediateUserInterfaceNodeVerticalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmediateUserInterfaceNodeHorizontalStack
 ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
@@ -2376,7 +2426,7 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfaceNodeHorizontalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
+//void ImmediateUserInterfaceNodeHorizontalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmediateUserInterfaceScrollArea
 ImmediateUserInterfaceScrollArea::ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
@@ -3835,6 +3885,16 @@ bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, co
 void ImmediateUserInterfaceContextLayer::end_window()
 {
     end_node<ImmediateUserInterfaceWindow>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceNodePanel>(_ID, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_panel()
+{
+    end_node<ImmediateUserInterfaceNodePanel>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_vertial_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
