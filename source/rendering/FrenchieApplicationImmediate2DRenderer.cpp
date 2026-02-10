@@ -406,7 +406,13 @@ void Immediate2DRenderer::push_text(
     const gs_mat4f&            _Transform,
     const RenderingQueueFont&  _Font)
 {
-    push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
+    push_text(
+        Frenchie::Core::String::convert_utf8_to_utf32(
+            Frenchie::Core::String::convert_utf16_to_utf8(_Text)),
+        _Size,
+        _Color,
+        _Transform,
+        _Font);
 }
 
 void Immediate2DRenderer::push_text(
@@ -416,7 +422,12 @@ void Immediate2DRenderer::push_text(
     const gs_mat4f&            _Transform,
     const RenderingQueueFont&  _Font)
 {
-    push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
+    push_text(
+        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
+        _Size,
+        _Color,
+        _Transform,
+        _Font);
 }
 
 void Immediate2DRenderer::push_arc_filled(

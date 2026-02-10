@@ -2504,7 +2504,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     if(_Context == nullptr) return;
 
     // render worksapce dockarea
-    const std::string                        _ID       = Frenchie::Application::application()->get_window_name();
+    const std::string                        _ID       = std::string(application()->get_window_name()).append("###").append("Application");
     const ImmediateUserInterfaceNodeSettings _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
     m_WorkspaceDockAreaOpened =
