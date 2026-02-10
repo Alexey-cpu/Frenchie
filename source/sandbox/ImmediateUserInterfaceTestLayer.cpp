@@ -15,8 +15,9 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    windows_test();   
+    //windows_test();   
     //scrollarea_test();
+    vertical_stack_test();
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -218,29 +219,55 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 
 void ImmediateUserInterfaceTestLayer::scrollarea_test()
 {
-    if(m_ImmediateUserInterface->begin_window(
-        "Window-1",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+
+    if(m_ImmediateUserInterface->begin_scrollarea(
+        "ScrollArea",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+        ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults // | ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically | ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally
+    ))
     {
-        if(m_ImmediateUserInterface->begin_scrollarea(
-            "ScrollArea",
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults))
+        int k = 0;
+
+        for(int i = 0 ; i < 5; i++)
         {
-            int k = 0;
+            for(int j = 0 ; j < 3; j++)
+                m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)));
 
-            for(int i = 0 ; i < 1e1; i++)
-            {
-                for(int j = 0 ; j < 1e1; j++)
-                    m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)));
-
-                m_ImmediateUserInterface->next_line();
-            }
-
-            m_ImmediateUserInterface->end_scrollarea();
+            m_ImmediateUserInterface->next_line();
         }
 
-        m_ImmediateUserInterface->end_window();
+        m_ImmediateUserInterface->end_scrollarea();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::vertical_stack_test()
+{
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+
+    if(m_ImmediateUserInterface->begin_vertial_stack(
+        "VerticalStack",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+    {
+        for(int i = 0 ; i < 5; i++)
+            m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
+        m_ImmediateUserInterface->end_vertical_stack();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::horizontal_stack_test()
+{
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+
+    if(m_ImmediateUserInterface->begin_horizontal_stack(
+        "VerticalStack",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+    {
+        for(int i = 0 ; i < 5; i++)
+            m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
+        m_ImmediateUserInterface->end_horizontal_stack();
     }
 }

@@ -18,6 +18,8 @@ namespace Frenchie
 
             void windows_test();
             void scrollarea_test();
+            void vertical_stack_test();
+            void horizontal_stack_test();
 
         protected:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};

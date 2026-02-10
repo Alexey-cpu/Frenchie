@@ -466,7 +466,7 @@ namespace Frenchie
 
             float calculate_offset(ImmediateUserInterfaceContextLayer* _Context)
             {
-                return _Context ? gs_max(16.f, 0.f) : 16.f;
+                return _Context ? gs_max(16.f, _Context->m_Style.get_frames_width()) : 16.f;
             }
 
             gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -849,7 +849,7 @@ namespace Frenchie
                 {
                     if((contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar))
                     {
-                        if(scrollbarSliderLength.x >= Max.x)
+                        if(gs_abs(scrollbarSliderLength.x - Max.x) < ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context))
                         {
                             do_not_render_scroll_bar();
                             return;
@@ -875,7 +875,7 @@ namespace Frenchie
                 {
                     if((contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar))
                     {
-                        if(scrollbarSliderLength.y >= Max.y)
+                        if(gs_abs(scrollbarSliderLength.y - Max.y) < ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context))
                         {
                             do_not_render_scroll_bar();
                             return;
@@ -945,6 +945,8 @@ namespace Frenchie
 
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
+                if(ImmediateUserInterfaceNodePanel::events(_Context, _Event)) return true;
+
                 if(State.MousePressed.has_value())
                 {
                     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -961,7 +963,7 @@ namespace Frenchie
                     }
                 }
 
-                return ImmediateUserInterfaceNodePanel::events(_Context, _Event);
+                return true;
             }
 
             void render(ImmediateUserInterfaceContextLayer* _Context)
@@ -2380,6 +2382,29 @@ void ImmediateUserInterfaceNodeHorizontalStack::render(ImmediateUserInterfaceCon
 ImmediateUserInterfaceScrollArea::ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceScrollArea::~ImmediateUserInterfaceScrollArea(){}
 
+void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // resize to contents
+    State.MinimumSize = gs_vec2f(
+        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally) ?
+            (ContentView->State.ContentSize + _Context->m_Style.get_scrollbar_width() * 2.f).x :
+                State.MinimumSize.x,
+        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically) ?
+            (ContentView->State.ContentSize + _Context->m_Style.get_scrollbar_width() * 2.f).y :
+                State.MinimumSize.y);
+    
+    State.MaximumSize = gs_vec2f(
+        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
+        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
+    
+    State.BoundingBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+
+    // default layout
+    ImmediateUserInterfaceNodePanel::layout(_Context);
+}
+
 void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
@@ -2394,18 +2419,8 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* _Child)
 {
-    if(_Child == nullptr)
-        return;
-
-    if( dynamic_cast<ImmediateUserInterfaceScrollAreaRoot*>(_Child) ||
-        dynamic_cast<ImmediateUserInterfaceScrollAreaScrollBar*>(_Child))
-    {
-        _Child->State.Parent = this;
-    }
-    else
-    {
-        _Child->State.Parent = ContentView;
-    }
+    if(_Child != nullptr)
+        _Child->State.Parent = dynamic_cast<ImmediateUserInterfaceScrollAreaRoot*>(_Child) ? this : ContentView;
 }
 
 // ImmediateUserInterfaceScrollAreaScrollBarSlider
@@ -2471,6 +2486,8 @@ bool ImmediateUserInterfaceScrollAreaScrollBarSlider::events(ImmediateUserInterf
 ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
 {
     State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+    State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
+    State.MaximumSize = gs_vec2f(gs_vec2f(512.f, 256.f));
 }
 
 ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
@@ -3490,29 +3507,13 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 
     // calculate clippingbox
     {
-        auto parent = _Context->m_Hierarchy.get_parent(_Node);
+        ImmediateUserInterfaceNode* parent =
+            _Context->m_Hierarchy.get_parent(_Node);
 
-        if(parent)
-        {
-            _Context->m_Renderer->push_clip_box(
-                _Node->State.BoundingBox.clip_with(parent->State.BoundingBox));
-        }
-        else
-        {
-            _Context->m_Renderer->push_clip_box(_Node->State.BoundingBox);
-        }
-
-        // auto next   = _Node;
-        // auto parent = _Context->m_Hierarchy.get_parent(_Node);
-
-        // while (parent != nullptr)
-        // {
-        //     next   = parent;
-        //     parent = _Context->m_Hierarchy.get_parent(parent);
-        // }
-
-        // _Context->m_Renderer->push_clip_box(
-        //     _Node->State.BoundingBox.clip_with(next->State.BoundingBox));
+        _Context->m_Renderer->push_clip_box(
+            parent != nullptr ?
+                _Node->State.BoundingBox.clip_with(parent->State.BoundingBox) :
+                    _Node->State.BoundingBox);
     }
 
     // render self
@@ -3868,7 +3869,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
     return false;
 }
 
-void ImmediateUserInterfaceContextLayer::next_line() // TODO: how to generate hash for this instance ???
+void ImmediateUserInterfaceContextLayer::next_line()
 {
     get_controller<ImmedidateUserInterfaceNextNodeController>()->set_next_line();
 }
