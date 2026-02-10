@@ -86,13 +86,16 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceScrollAreaSettings_ : int
         {
-            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
 
-            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+
+            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 6,
+            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 7,
 
             ImmediateUserInterfaceScrollAreaSettings_Defaults                    =
                 ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar |
@@ -402,6 +405,7 @@ namespace Frenchie
 
             ImmediateUserInterfaceScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceScrollArea();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
