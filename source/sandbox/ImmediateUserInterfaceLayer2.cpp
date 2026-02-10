@@ -2530,14 +2530,15 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     const std::string                        _ID       = std::string(application()->get_window_name()).append("###").append("Application");
     const ImmediateUserInterfaceNodeSettings _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
-    m_WorkspaceDockAreaOpened =
-        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
-        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
-
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(_ID, _Settings, &m_WorkspaceDockAreaOpened))
     {
+        m_WorkspaceDockAreaOpened =
+            (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
+            (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
+
         // retrieve window
         ImmediateUserInterfaceWindow* window = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
+        window->Opened                       = &m_WorkspaceDockAreaOpened;
 
         // memorize docking area
         m_WorkspaceDockArea = window;
@@ -2651,26 +2652,7 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
     }
 
     if(!(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
-    {
-        // TODO: detach all windows from each other
-        for(auto node : _Context->m_NodesRenderingList)
-        {
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(node);
-
-            if(window == nullptr) continue;
-
-            // detach self
-            window->Docker        = nullptr;
-            window->TopSnapper    = nullptr;
-            window->LeftSnapper   = nullptr;
-            window->RightSnapper  = nullptr;
-            window->BottomSnapper = nullptr;
-            window->DockingIndex  = -1;
-        }
-
         return;
-    }
 
     place_on_dockers(_Context, _Event);
 
