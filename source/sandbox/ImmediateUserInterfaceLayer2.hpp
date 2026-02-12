@@ -323,6 +323,77 @@ namespace Frenchie
             int         Count = 0;
         };
 
+        // scroll area
+        struct ImmediateUserInterfaceScrollAreaScrollBarSlider : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaScrollBarSlider(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaScrollBarSlider();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+
+            gs_vec2f Position      = gs_vec2f(0.f, 0.f);
+            gs_vec2f PositionScale = gs_vec2f(1.f, 1.f);
+        private:
+            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
+        };
+        
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNode
+        {
+        public:
+
+            ImmediateUserInterfaceScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollArea();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            ImmediateUserInterfaceNode*                      ContentView         = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
+        };
+
+        // layouts
+        struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceNodePanel(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodePanel();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+
+            virtual void create_contents(){} // place contents creation function here...
+
+            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
+        };
+
+        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodeVerticalStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodeHorizontalStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // widgets
+        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfacePushButton(const std::string& _Name);
+            virtual ~ImmediateUserInterfacePushButton();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
         // windows
         struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNode
         {
@@ -364,75 +435,6 @@ namespace Frenchie
 
             // content
             ImmediateUserInterfaceNode* ContentView       {nullptr};
-        };
-
-        // layouts
-        struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceNodePanel(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceNodePanel();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
-
-            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
-        };
-
-        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceNodeVerticalStack();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
-
-        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceNodeHorizontalStack();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
-
-        // scroll area
-        struct ImmediateUserInterfaceScrollAreaScrollBarSlider : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaScrollBarSlider(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaScrollBarSlider();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
-
-            gs_vec2f Position      = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale = gs_vec2f(1.f, 1.f);
-        private:
-            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-        };
-        
-        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-
-            ImmediateUserInterfaceScrollArea(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollArea();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
-
-            ImmediateUserInterfaceNode*                      ContentView         = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
-        };
-
-        // widgets
-        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
-        {
-            ImmediateUserInterfacePushButton(const std::string& _Name);
-            virtual ~ImmediateUserInterfacePushButton();
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         // hierarchy
