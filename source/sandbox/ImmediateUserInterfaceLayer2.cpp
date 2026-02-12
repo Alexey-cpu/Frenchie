@@ -348,6 +348,34 @@ namespace Frenchie
                 return event;
             }
 
+            gs_vec2f layout_compute_aligned_position(
+                const int       _Settings,
+                const gs_vec2f& _Position,
+                const gs_vec2f& _Size,
+                gs_vec2f        _ChildrenSize)
+            {
+                gs_2dboxf parentBoundingBox = gs_2dboxf(_Position, _Position + _Size);
+                gs_vec2f  position = _Position;
+
+                // vertical alignment
+                if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop)
+                    position = gs_vec2f(position.x, _Position.y);
+                else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom)
+                    position = gs_vec2f(position.x, (position + parentBoundingBox.size() - _ChildrenSize).y);
+                else // center is default
+                    position = gs_vec2f(position.x, (parentBoundingBox.center() - _ChildrenSize * 0.5f).y);
+
+                // horizontal alignment
+                if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft)
+                    position = gs_vec2f(_Position.x, position.y);
+                else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight)
+                    position = gs_vec2f((position + parentBoundingBox.size() - _ChildrenSize).x, position.y);
+                else // center is default
+                    position = gs_vec2f((parentBoundingBox.center() - _ChildrenSize * 0.5f).x, position.y);
+
+                return position;
+            }
+
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_panel(
                 const Type&           _Begin,
@@ -362,49 +390,25 @@ namespace Frenchie
                 {
                     if((*it) == nullptr || !_Filter(*it)) continue;
 
-                    gs_vec2f  position = _Position;
-                    gs_vec2f  size     = gs_clamp(_Size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    gs_2dboxf bbox     = gs_2dboxf(_Position, _Position + _Size);
-
-                    // vertical alignment
-                    if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop)
-                    {
-                        position = gs_vec2f(position.x, _Position.y);
-                    }
-                    else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom)
-                    {
-                        position = gs_vec2f(position.x, (position + bbox.size() - size).y);
-                    }
-                    else // center is default
-                    {
-                        position = gs_vec2f(position.x, (bbox.center() - size * 0.5f).y);
-                    }
-
-                    // horizontal alignment
-                    if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft)
-                    {
-                        position = gs_vec2f(_Position.x, position.y);
-                    }
-                    else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight)
-                    {
-                        position = gs_vec2f((position + bbox.size() - size).x, position.y);
-                    }
-                    else // center is default
-                    {
-                        position = gs_vec2f((bbox.center() - size * 0.5f).x, position.y);
-                    }
-
+                    gs_vec2f size     = gs_clamp(_Size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    gs_vec2f position = layout_compute_aligned_position( _Settings, _Position, _Size, size);
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                 }
             }
 
             template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_vertical_stack(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_vec2f& _Size, const FrameProcessor& _Filter)
+            void layout_nodes_as_vertical_stack(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
             {
                 gs_vec2f position  = _Position;
                 gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
-                // compute total size
+                // compute total children size
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
@@ -414,23 +418,49 @@ namespace Frenchie
                 // compute children size scale
                 gs_vec2f scale = _Size / totalsize;
 
-                // compute layout
+                // layout children and compute their bounding box
+                gs_2dboxf childrenBoundingBox = gs_2dboxf(_Position, _Position);
+
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    auto node = *it;
-
-                    if(node == nullptr || !_Filter(node))
+                    if(*it == nullptr || !_Filter(*it))
                         continue;
 
-                    gs_vec2f size = gs_vec2f(_Size.x, (node->State.BoundingBox.size() * scale).y);
-                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                    node->State.BoundingBox = gs_2dboxf(position, position + size);
+                    gs_vec2f size = gs_vec2f(_Size.x, ((*it)->State.BoundingBox.size() * scale).y);
+                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(0.f, size.y);
+
+                    childrenBoundingBox = gs_2dboxf(
+                        childrenBoundingBox.Min,
+                        childrenBoundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within parent
+                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+
+                    gs_vec2f size = (*it)->State.BoundingBox.size();
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(0.f, size.y);
                 }
             }
 
             template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_horizontal_stack(const Type& _Begin, const Type& _End, const gs_vec2f& _Position, const gs_vec2f& _Size, const FrameProcessor& _Filter)
+            void layout_nodes_as_horizontal_stack(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
             {
                 gs_vec2f position   = _Position;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
@@ -445,17 +475,37 @@ namespace Frenchie
                 // compute children scale
                 gs_vec2f scale = _Size / totalsize;
 
-                // compute layout
+                // layout children and compute their bounding box
+                gs_2dboxf childrenBoundingBox = gs_2dboxf(_Position, _Position);
+
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    auto node = *it;
-
-                    if(node == nullptr || !_Filter(node))
+                    if(*it == nullptr || !_Filter(*it))
                         continue;
 
-                    gs_vec2f size = gs_vec2f((node->State.BoundingBox.size() * scale).x, _Size.y);
-                    size = gs_clamp(size, node->State.MinimumSize, node->State.MaximumSize);
-                    node->State.BoundingBox = gs_2dboxf(position, position + size);
+                    gs_vec2f size = gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, _Size.y);
+                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(size.x, 0.f);
+
+                    childrenBoundingBox = gs_2dboxf(
+                        childrenBoundingBox.Min,
+                        childrenBoundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within parent
+                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+
+                    gs_vec2f size = (*it)->State.BoundingBox.size();
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(size.x, 0.f);
                 }
             }
@@ -2404,6 +2454,7 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min + ContentPadding,
         State.BoundingBox.size() - ContentPadding * 2.f,
+        State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
@@ -2423,6 +2474,7 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
         _Context->m_Hierarchy.end(this),
         State.BoundingBox.Min + ContentPadding,
         State.BoundingBox.size() - ContentPadding * 2.f,
+        State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
@@ -2537,7 +2589,7 @@ ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::st
 {
     State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
     State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
-    State.MaximumSize = gs_vec2f(gs_vec2f(512.f, 256.f));
+    State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
 }
 
 ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
@@ -3618,7 +3670,7 @@ ImmedidateUserInterfaceNextNodeController::~ImmedidateUserInterfaceNextNodeContr
 void ImmedidateUserInterfaceNextNodeController::frame_start(ImmediateUserInterfaceContextLayer*)
 {
     // reset all
-    PushNextLine.reset();
+    PushNextItemNextLine.reset();
 }
 
 // ImmediateUserInterfaceContextLayer2

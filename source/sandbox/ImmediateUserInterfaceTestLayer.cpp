@@ -19,6 +19,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     //scrollarea_test();
     panel_test();
     //vertical_stack_test();
+    //horizontal_stack_test();
 
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -251,7 +252,7 @@ void ImmediateUserInterfaceTestLayer::panel_test()
     if(m_ImmediateUserInterface->begin_panel(
         "Panel-1",
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop |
         ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter))
     {
         m_ImmediateUserInterface->push_button("Panel-1/Button");
@@ -266,7 +267,9 @@ void ImmediateUserInterfaceTestLayer::vertical_stack_test()
 
     if(m_ImmediateUserInterface->begin_vertial_stack(
         "VerticalStack",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight))
     {
         for(int i = 0 ; i < 5; i++)
             m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
@@ -281,7 +284,9 @@ void ImmediateUserInterfaceTestLayer::horizontal_stack_test()
 
     if(m_ImmediateUserInterface->begin_horizontal_stack(
         "VerticalStack",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
+        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter))
     {
         for(int i = 0 ; i < 5; i++)
             m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
