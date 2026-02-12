@@ -737,10 +737,14 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
 
-            // windows
-            bool begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened = nullptr);
-            void end_window();
-            
+            // scroll area
+            bool begin_scrollarea(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings =
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults            |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults);
+            void end_scrollarea();
+
             // layout
             bool begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
@@ -751,17 +755,13 @@ namespace Frenchie
             bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
-            // scroll area
-            bool begin_scrollarea(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings =
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults            |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults);
-            void end_scrollarea();
-
             // widgets
             bool push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void next_line();
+
+            // windows
+            bool begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened = nullptr);
+            void end_window();
 
             // auxiliary API
             template<typename Type> Type* get_controller() const
