@@ -676,19 +676,19 @@ namespace Frenchie
 
             void set_next_line()
             {
-                PushNextLine = true;
+                PushNextItemNextLine = true;
             }
 
             bool is_next_line() const
             {
-                bool value = PushNextLine.has_value();
-                PushNextLine.reset();
+                bool value = PushNextItemNextLine.has_value();
+                PushNextItemNextLine.reset();
                 return value;
             }
 
         private:
             // info
-            mutable Frenchie::Core::Optional<bool> PushNextLine;
+            mutable Frenchie::Core::Optional<bool> PushNextItemNextLine;
         };
 
         // context configuration
