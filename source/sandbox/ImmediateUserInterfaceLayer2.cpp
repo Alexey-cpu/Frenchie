@@ -2458,8 +2458,6 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-//void ImmediateUserInterfaceNodeVerticalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
-
 // ImmediateUserInterfaceNodeHorizontalStack
 ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceNodeHorizontalStack::~ImmediateUserInterfaceNodeHorizontalStack(){}
@@ -2477,8 +2475,6 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
-
-//void ImmediateUserInterfaceNodeHorizontalStack::render(ImmediateUserInterfaceContextLayer* _Context){}
 
 // ImmediateUserInterfaceScrollArea
 ImmediateUserInterfaceScrollArea::ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}

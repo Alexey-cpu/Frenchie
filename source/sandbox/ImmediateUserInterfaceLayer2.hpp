@@ -386,7 +386,6 @@ namespace Frenchie
             ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNodeVerticalStack();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            //virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
@@ -395,7 +394,6 @@ namespace Frenchie
             ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNodeHorizontalStack();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            //virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         // scroll area
