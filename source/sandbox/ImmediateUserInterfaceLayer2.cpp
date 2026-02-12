@@ -895,11 +895,13 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 // auxiliary lambdas
-                auto do_not_render_scroll_bar = [this]()
+                auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
                 {
                     State.MaximumSize = gs_vec2f(0.f, 0.f);
                     State.MinimumSize = gs_vec2f(0.f, 0.f);
                     State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+
+                    ImmediateUserInterfaceNodePanel::layout(_Context);
                 };
 
                 if(_Context == nullptr) return;
@@ -926,7 +928,7 @@ namespace Frenchie
                 // do not render scrollbar out of scrollarea
                 if(contentArea == nullptr)
                 {
-                    do_not_render_scroll_bar();
+                    do_not_render_scroll_bar(_Context);
                     return;
                 }
                 
@@ -937,13 +939,13 @@ namespace Frenchie
                     {
                         if(gs_abs(scrollbarSliderLength.x - Max.x) < ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context))
                         {
-                            do_not_render_scroll_bar();
+                            do_not_render_scroll_bar(_Context);
                             return;
                         }
                     }
                     else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar)
                     {
-                        do_not_render_scroll_bar();
+                        do_not_render_scroll_bar(_Context);
                         return;
                     }
                     else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar)
@@ -951,7 +953,7 @@ namespace Frenchie
                     }
                     else
                     {
-                        do_not_render_scroll_bar();
+                        do_not_render_scroll_bar(_Context);
                         return;
                     }
                 }
@@ -963,13 +965,13 @@ namespace Frenchie
                     {
                         if(gs_abs(scrollbarSliderLength.y - Max.y) < ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context))
                         {
-                            do_not_render_scroll_bar();
+                            do_not_render_scroll_bar(_Context);
                             return;
                         }
                     }
                     else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar)
                     {
-                        do_not_render_scroll_bar();
+                        do_not_render_scroll_bar(_Context);
                         return;
                     }
                     else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar)
@@ -977,7 +979,7 @@ namespace Frenchie
                     }
                     else
                     {
-                        do_not_render_scroll_bar();
+                        do_not_render_scroll_bar(_Context);
                         return;
                     }
                 }
@@ -1940,13 +1942,15 @@ ImmediateUserInterfaceScrollArea::~ImmediateUserInterfaceScrollArea(){}
 
 void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
+    float scrollBarWidth = gs_min(VerticalScrollBar->State.BoundingBox.size().x, VerticalScrollBar->State.BoundingBox.size().y);
+
     // resize to contents
     State.MinimumSize = gs_vec2f(
         (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally) ?
-            (ContentView->State.ContentSize + _Context->m_Style.get_scrollbar_width() * 2.f).x :
+            (ContentView->State.ContentSize + scrollBarWidth * 2.f).x :
                 State.MinimumSize.x,
         (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically) ?
-            (ContentView->State.ContentSize + _Context->m_Style.get_scrollbar_width() * 2.f).y :
+            (ContentView->State.ContentSize + scrollBarWidth * 2.f).y :
                 State.MinimumSize.y);
     
     State.MaximumSize = gs_vec2f(
@@ -1981,8 +1985,16 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* _Child)
 {
-    if(_Child != nullptr)
-        _Child->State.Parent = dynamic_cast<ImmediateUserInterfaceScrollAreaRoot*>(_Child) ? this : ContentView;
+    if(_Child == nullptr) return;
+
+    if(dynamic_cast<ImmediateUserInterfaceScrollAreaRoot*>(_Child))
+    {
+        _Child->State.Parent = this;
+        return;
+    }
+
+    if(ContentView)
+        ContentView->attach_child(_Child);
 }
 
 // ImmediateUserInterfaceScrollAreaScrollBarSlider
@@ -3611,13 +3623,24 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 
     // calculate clippingbox
     {
-        ImmediateUserInterfaceNode* parent =
-            _Context->m_Hierarchy.get_parent(_Node);
+        ImmediateUserInterfaceNode* next   = _Node;
+        ImmediateUserInterfaceNode* parent = _Context->m_Hierarchy.get_parent(_Node);
 
-        _Context->m_Renderer->push_clip_box(
-            parent != nullptr ?
-                _Node->State.BoundingBox.clip_with(parent->State.BoundingBox) :
-                    _Node->State.BoundingBox);
+        gs_2dboxf clippingBox = next->State.BoundingBox;
+
+        while (parent)
+        {
+            //next   = parent;
+            clippingBox = gs_2dboxf(
+                gs_vec2f( gs_max(next->State.BoundingBox.Min.x, clippingBox.Min.x), gs_max(next->State.BoundingBox.Min.y, clippingBox.Min.y) ),
+                gs_vec2f( gs_min(next->State.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->State.BoundingBox.Max.y, clippingBox.Max.y) )
+            );
+
+            next   = parent;
+            parent = _Context->m_Hierarchy.get_parent(parent);
+        }
+
+        _Context->m_Renderer->push_clip_box(clippingBox);
     }
 
     // render self
@@ -3866,6 +3889,8 @@ bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID
                 std::string(_ID).append("/VerticalStack/HorizontalStack"),
                 _Settings))
             {
+                get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.PlaceInFollow = true;
+
                 // contents
                 if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
                     std::string(_ID).append("/VerticalStack/HorizontalStack/Contents"),
