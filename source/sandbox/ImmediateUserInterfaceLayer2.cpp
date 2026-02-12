@@ -2209,7 +2209,7 @@ void ImmediateUserInterfaceMenuItem::layout(ImmediateUserInterfaceContextLayer* 
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
         State.BoundingBox.Min +
-            ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context) +
+            _Context->m_Style.get_font_size() +
             _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.Font).size());
 
     // layout children
