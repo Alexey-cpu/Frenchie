@@ -3866,6 +3866,7 @@ bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID
                 std::string(_ID).append("/VerticalStack/HorizontalStack"),
                 _Settings))
             {
+                // contents
                 if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
                     std::string(_ID).append("/VerticalStack/HorizontalStack/Contents"),
                     _Settings))

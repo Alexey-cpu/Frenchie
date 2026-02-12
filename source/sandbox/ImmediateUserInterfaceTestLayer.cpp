@@ -16,8 +16,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
     //windows_test();   
-    //scrollarea_test();
-    panel_test();
+    scrollarea_test();
+    //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
