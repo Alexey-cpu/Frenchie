@@ -22,6 +22,8 @@ namespace Frenchie
             void vertical_stack_test();
             void horizontal_stack_test();
 
+            void menu_test();
+
         protected:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};
         };
