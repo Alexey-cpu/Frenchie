@@ -3852,6 +3852,125 @@ void ImmediateUserInterfaceContextLayer::finish()
     m_IniFileState.write(m_IniFilePath);
 }
 
+bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings))
+    {
+        ImmediateUserInterfaceScrollArea* scrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+
+        if(begin_node<ImmediateUserInterfaceScrollAreaRoot>(std::string(_ID).append("/VerticalStack"), _Settings))
+        {
+            get_rendering_stack_top<ImmediateUserInterfaceScrollAreaRoot>()->State.PlaceInFollow = true;
+
+            if(begin_horizontal_stack(
+                std::string(_ID).append("/VerticalStack/HorizontalStack"),
+                _Settings))
+            {
+                if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
+                    std::string(_ID).append("/VerticalStack/HorizontalStack/Contents"),
+                    _Settings))
+                {
+                    scrollArea->ContentView = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
+                    end_node<ImmediateUserInterfaceScrollAreaContent>();
+                }
+
+                // vertical scrollbar
+                if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
+                    std::string(_ID).append("/VerticalStack/HorizontalStack/VerticalScrollBar"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                {
+                    get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
+                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+
+                    if(begin_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>(
+                        std::string(_ID).append("/VerticalStack/HorizontalStack/VerticalScrollBar/Slider"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+                    {
+                        scrollArea->VerticalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
+                        end_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
+                    }
+
+                    end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
+                }
+
+                end_horizontal_stack();
+            }
+
+            // horizontal scrollbar
+            if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
+                std::string(_ID).append("/VerticalStack/HorizontalScrollBar"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+            {
+                get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
+                    ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
+
+                if(begin_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>(
+                    std::string(_ID).append("/VerticalStack/HorizontalScrollBar/Slider"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+                {
+                    scrollArea->HorizontalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
+                    end_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
+                }
+
+                end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
+            }
+
+            end_node<ImmediateUserInterfaceScrollAreaRoot>();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_scrollarea()
+{
+    end_node<ImmediateUserInterfaceScrollArea>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceNodePanel>(_ID, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_panel()
+{
+    end_node<ImmediateUserInterfaceNodePanel>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_vertial_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceNodeVerticalStack>(_Name, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_vertical_stack()
+{
+    end_node<ImmediateUserInterfaceNodeVerticalStack>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_horizontal_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceNodeHorizontalStack>(_Name, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
+{
+    end_node<ImmediateUserInterfaceNodeHorizontalStack>();
+}
+
+bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfacePushButton>(_ID, _Settings))
+    {
+        bool clicked = get_rendering_stack_top<ImmediateUserInterfacePushButton>()->State.MouseClicked.has_value();
+        end_node<ImmediateUserInterfacePushButton>();
+        return clicked;
+    }
+
+    return false;
+}
+
 bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
     if(begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened))
@@ -3941,126 +4060,7 @@ void ImmediateUserInterfaceContextLayer::end_window()
     end_node<ImmediateUserInterfaceWindow>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    return begin_node<ImmediateUserInterfaceNodePanel>(_ID, _Settings);
-}
-
-void ImmediateUserInterfaceContextLayer::end_panel()
-{
-    end_node<ImmediateUserInterfaceNodePanel>();
-}
-
-bool ImmediateUserInterfaceContextLayer::begin_vertial_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    return begin_node<ImmediateUserInterfaceNodeVerticalStack>(_Name, _Settings);
-}
-
-void ImmediateUserInterfaceContextLayer::end_vertical_stack()
-{
-    end_node<ImmediateUserInterfaceNodeVerticalStack>();
-}
-
-bool ImmediateUserInterfaceContextLayer::begin_horizontal_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    return begin_node<ImmediateUserInterfaceNodeHorizontalStack>(_Name, _Settings);
-}
-
-void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
-{
-    end_node<ImmediateUserInterfaceNodeHorizontalStack>();
-}
-
-bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    if(begin_node<ImmediateUserInterfacePushButton>(_ID, _Settings))
-    {
-        bool clicked = get_rendering_stack_top<ImmediateUserInterfacePushButton>()->State.MouseClicked.has_value();
-        end_node<ImmediateUserInterfacePushButton>();
-        return clicked;
-    }
-
-    return false;
-}
-
 void ImmediateUserInterfaceContextLayer::next_line()
 {
     get_controller<ImmedidateUserInterfaceNextNodeController>()->set_next_line();
-}
-
-bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    if(begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings))
-    {
-        ImmediateUserInterfaceScrollArea* scrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-
-        if(begin_node<ImmediateUserInterfaceScrollAreaRoot>(std::string(_ID).append("/VerticalStack"), _Settings))
-        {
-            get_rendering_stack_top<ImmediateUserInterfaceScrollAreaRoot>()->State.PlaceInFollow = true;
-
-            if(begin_horizontal_stack(
-                std::string(_ID).append("/VerticalStack/HorizontalStack"),
-                _Settings))
-            {
-                if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
-                    std::string(_ID).append("/VerticalStack/HorizontalStack/Contents"),
-                    _Settings))
-                {
-                    scrollArea->ContentView = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
-                    end_node<ImmediateUserInterfaceScrollAreaContent>();
-                }
-
-                // vertical scrollbar
-                if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                    std::string(_ID).append("/VerticalStack/HorizontalStack/VerticalScrollBar"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
-                {
-                    get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
-
-                    if(begin_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>(
-                        std::string(_ID).append("/VerticalStack/HorizontalStack/VerticalScrollBar/Slider"),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-                    {
-                        scrollArea->VerticalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                        end_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                    }
-
-                    end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-                }
-
-                end_horizontal_stack();
-            }
-
-            // horizontal scrollbar
-            if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                std::string(_ID).append("/VerticalStack/HorizontalScrollBar"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
-            {
-                get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                    ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
-
-                if(begin_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>(
-                    std::string(_ID).append("/VerticalStack/HorizontalScrollBar/Slider"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-                {
-                    scrollArea->HorizontalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                    end_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                }
-
-                end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-            }
-
-            end_node<ImmediateUserInterfaceScrollAreaRoot>();
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-void ImmediateUserInterfaceContextLayer::end_scrollarea()
-{
-    end_node<ImmediateUserInterfaceScrollArea>();
 }
