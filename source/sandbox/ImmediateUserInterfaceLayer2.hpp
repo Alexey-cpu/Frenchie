@@ -63,13 +63,14 @@ namespace Frenchie
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
-            ImmediateUserInterfaceNodeSettings_None      = 0,
+            ImmediateUserInterfaceNodeSettings_None        = 0,
 
             // settings
             ImmediateUserInterfaceNodeSettings_Movable     = 1 << 0,
             ImmediateUserInterfaceNodeSettings_Resizable   = 1 << 1,
+            ImmediateUserInterfaceNodeSettings_NullParent  = 1 << 2,
 
-            ImmediateUserInterfaceNodeSettings_UserDefined = 1 << 2,
+            ImmediateUserInterfaceNodeSettings_UserDefined = 1 << 3,
 
             ImmediateUserInterfaceNodeSettings_Defaults  =
                 ImmediateUserInterfaceNodeSettings_Movable |
@@ -78,16 +79,16 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceScrollAreaSettings_ : int
         {
-            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 0,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
 
-            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 6,
 
-            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 6,
-            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 7,
+            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 7,
+            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 8,
 
             ImmediateUserInterfaceScrollAreaSettings_Defaults                    =
                 ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar |
@@ -96,13 +97,13 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceLayoutAlignmentSettings_ : int
         {
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 0,
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 9,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 10,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 11,
 
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 12,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 13,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 14,
 
             ImmediateUserInterfaceLayoutAlignmentSettings_Defaults =
                 ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
@@ -272,7 +273,7 @@ namespace Frenchie
             {
                 // rendering
                 int            Depth                      {0};
-                int            InitialDepth               {0};
+                int            CummulativeRenderingOrder  {0};
                 int            SelfThickness              {0}; // thickness of self rendered content
                 int            RenderingIndex             {0}; // index of the node within context rendering list
                 int            RenderingOrder             {0};
@@ -288,7 +289,8 @@ namespace Frenchie
                 gs_vec2f       MaximumSize                {gs_vec2f((float)INT_MAX)};
 
                 // hierarchy
-                ImmediateUserInterfaceNode*        Parent{nullptr};
+                ImmediateUserInterfaceNode*        Parent {nullptr};
+                ImmediateUserInterfaceNode*        Relative {nullptr};
 
                 // settings
                 ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
@@ -384,6 +386,31 @@ namespace Frenchie
             ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNodeHorizontalStack();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // popups
+        struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceMenu(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenu();
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            ImmediateUserInterfaceNode* InternalScrollArea = nullptr;
+            ImmediateUserInterfaceNode* ExternalScrollArea = nullptr;
+        };
+
+        struct ImmediateUserInterfaceMenuItem : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceMenuItem(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenuItem();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         // widgets
@@ -691,6 +718,17 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<bool> PushNextItemNextLine;
         };
 
+        class ImmedidateUserInterfaceMenusController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceMenusController();
+            virtual ~ImmedidateUserInterfaceMenusController();
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
+
+            mutable std::vector<ImmediateUserInterfaceMenu*>         ActiveMenus;
+            mutable std::vector<ImmediateUserInterfaceMenu*>         ActiveMenusCache;
+        };
+
         // context configuration
         class ImmediateUserInterfaceContextConfiguration final
         {
@@ -755,6 +793,10 @@ namespace Frenchie
             bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
+            // menus
+            bool begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_menu();
+
             // widgets
             bool push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void next_line();
@@ -805,7 +847,11 @@ namespace Frenchie
 
                 // build nodes hierarchy
                 if(!m_NodesRenderingStack.empty())
-                    m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
+                {
+                    if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
+                        m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
+                    node->State.Relative = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+                }
 
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);

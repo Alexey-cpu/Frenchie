@@ -16,11 +16,13 @@ bool ImmediateUserInterfaceTestLayer::awake()
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
     //windows_test();   
-    scrollarea_test();
+    //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
+    menu_test();
+    
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
         64.f,
@@ -293,5 +295,42 @@ void ImmediateUserInterfaceTestLayer::horizontal_stack_test()
         for(int i = 0 ; i < 5; i++)
             m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
         m_ImmediateUserInterface->end_horizontal_stack();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::menu_test()
+{
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+
+    if(m_ImmediateUserInterface->begin_menu("Menu-1"))
+    {
+        m_ImmediateUserInterface->push_button("Action-1");
+        m_ImmediateUserInterface->push_button("Action-2");
+        //m_ImmediateUserInterface->push_button("Action-3");
+
+        if(m_ImmediateUserInterface->begin_menu("Menu-2"))
+        {
+            m_ImmediateUserInterface->push_button("Action-4");
+            m_ImmediateUserInterface->push_button("Action-5");
+            m_ImmediateUserInterface->push_button("Action-6");
+            m_ImmediateUserInterface->push_button("Action-7");
+            m_ImmediateUserInterface->push_button("Action-8");
+
+            if(m_ImmediateUserInterface->begin_menu("Menu-3"))
+            {
+                m_ImmediateUserInterface->push_button("Action-9");
+                m_ImmediateUserInterface->push_button("Action-10");
+                m_ImmediateUserInterface->push_button("Action-11");
+                m_ImmediateUserInterface->push_button("Action-12");
+                m_ImmediateUserInterface->push_button("Action-13");
+
+                m_ImmediateUserInterface->end_menu();
+            }
+                
+            m_ImmediateUserInterface->end_menu();
+        }
+
+        m_ImmediateUserInterface->end_menu();
     }
 }
