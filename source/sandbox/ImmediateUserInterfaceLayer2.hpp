@@ -233,7 +233,7 @@ namespace Frenchie
             float                            FramesRadius   = 32.f;
             float                            FramesWidth    = 0.f;
             float                            FontSize       = 64.f;
-            float                            ScrollBarWidth = 64.f;
+            float                            ScrollBarWidth = 128.f;
             std::vector<RenderingQueueColor> Colors;
         };
 
@@ -325,22 +325,9 @@ namespace Frenchie
             int         Count = 0;
         };
 
-        // scroll area
-        struct ImmediateUserInterfaceScrollAreaScrollBarSlider : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaScrollBarSlider(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaScrollBarSlider();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+        // scroll area        
+        struct ImmediateUserInterfaceScrollAreaScrollBarSlider;
 
-            gs_vec2f Position      = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale = gs_vec2f(1.f, 1.f);
-        private:
-            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-        };
-        
         struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNode
         {
         public:
