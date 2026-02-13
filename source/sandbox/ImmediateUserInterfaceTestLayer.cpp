@@ -15,8 +15,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //windows_test();   
-    scrollarea_test();
+    windows_test();   
+    //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
@@ -59,8 +59,7 @@ void ImmediateUserInterfaceTestLayer::finish()
 void ImmediateUserInterfaceTestLayer::windows_test()
 {
     m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
     static bool opened = true;
     static std::string button;
@@ -99,9 +98,11 @@ void ImmediateUserInterfaceTestLayer::windows_test()
     {
         if(m_ImmediateUserInterface->begin_horizontal_stack("Window-2/Stack"))
         {
+            m_ImmediateUserInterface->push_button("Button-1###Window-2/Button-1");
+            m_ImmediateUserInterface->push_button("Button-2###Window-2/Button-2");
+
             m_ImmediateUserInterface->end_horizontal_stack();
         }
-        
 
         m_ImmediateUserInterface->end_window();
     }
@@ -221,58 +222,63 @@ void ImmediateUserInterfaceTestLayer::menu_test()
     m_ImmediateUserInterface->m_Settings =
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
 
-    if(m_ImmediateUserInterface->begin_menu("Menu-1"))
+    if(m_ImmediateUserInterface->begin_window("Window"))
     {
-        m_ImmediateUserInterface->menu_action("Action-1");
-        m_ImmediateUserInterface->menu_action("Action-2");
-        m_ImmediateUserInterface->menu_action("Action-3");
-
-        m_ImmediateUserInterface->menu_action("Action-11111");
-        m_ImmediateUserInterface->menu_action("Action-12222222");
-        m_ImmediateUserInterface->menu_action("Action-1111111111");
-        m_ImmediateUserInterface->menu_action("Action-12222222222");
-        m_ImmediateUserInterface->menu_action("Action-111111111111");
-        m_ImmediateUserInterface->menu_action("Action-1222222222222");
-        m_ImmediateUserInterface->menu_action("Action-111111111111111");
-        m_ImmediateUserInterface->menu_action("Action-122222222222222222");
-
-        if(m_ImmediateUserInterface->begin_menu("Menu-2"))
+        if(m_ImmediateUserInterface->begin_menu("Menu-1"))
         {
-            m_ImmediateUserInterface->menu_action("Action-4");
-            m_ImmediateUserInterface->menu_action("Action-5");
-            m_ImmediateUserInterface->menu_action("Action-6");
-            m_ImmediateUserInterface->menu_action("Action-7");
-            m_ImmediateUserInterface->menu_action("Action-8");
-            m_ImmediateUserInterface->menu_action("Action-9");
-            m_ImmediateUserInterface->menu_action("Action-10");
-            m_ImmediateUserInterface->menu_action("Action-11");
-            m_ImmediateUserInterface->menu_action("Action-12");
+            m_ImmediateUserInterface->menu_action("Action-1");
+            m_ImmediateUserInterface->menu_action("Action-2");
+            m_ImmediateUserInterface->menu_action("Action-3");
 
-        if(m_ImmediateUserInterface->begin_menu("Menu-3333333333334333333"))
-        {
-            m_ImmediateUserInterface->menu_action("Action-133333333");
-            m_ImmediateUserInterface->menu_action("Action-14444444444");
-            m_ImmediateUserInterface->menu_action("Action-155555");
-            m_ImmediateUserInterface->menu_action("Action-166666666666");
-            m_ImmediateUserInterface->menu_action("Action-177777777777777");
+            m_ImmediateUserInterface->menu_action("Action-11111");
+            m_ImmediateUserInterface->menu_action("Action-12222222");
+            m_ImmediateUserInterface->menu_action("Action-1111111111");
+            m_ImmediateUserInterface->menu_action("Action-12222222222");
+            m_ImmediateUserInterface->menu_action("Action-111111111111");
+            m_ImmediateUserInterface->menu_action("Action-1222222222222");
+            m_ImmediateUserInterface->menu_action("Action-111111111111111");
+            m_ImmediateUserInterface->menu_action("Action-122222222222222222");
+
+            if(m_ImmediateUserInterface->begin_menu("Menu-2"))
+            {
+                m_ImmediateUserInterface->menu_action("Action-4");
+                m_ImmediateUserInterface->menu_action("Action-5");
+                m_ImmediateUserInterface->menu_action("Action-6");
+                m_ImmediateUserInterface->menu_action("Action-7");
+                m_ImmediateUserInterface->menu_action("Action-8");
+                m_ImmediateUserInterface->menu_action("Action-9");
+                m_ImmediateUserInterface->menu_action("Action-10");
+                m_ImmediateUserInterface->menu_action("Action-11");
+                m_ImmediateUserInterface->menu_action("Action-12");
+
+            if(m_ImmediateUserInterface->begin_menu("Menu-3333333333334333333"))
+            {
+                m_ImmediateUserInterface->menu_action("Action-133333333");
+                m_ImmediateUserInterface->menu_action("Action-14444444444");
+                m_ImmediateUserInterface->menu_action("Action-155555");
+                m_ImmediateUserInterface->menu_action("Action-166666666666");
+                m_ImmediateUserInterface->menu_action("Action-177777777777777");
+
+                m_ImmediateUserInterface->end_menu();
+            }
+
+                m_ImmediateUserInterface->end_menu();
+            }
+
+            if(m_ImmediateUserInterface->begin_menu("Menu-333333333333"))
+            {
+                m_ImmediateUserInterface->menu_action("Action-13");
+                m_ImmediateUserInterface->menu_action("Action-14");
+                m_ImmediateUserInterface->menu_action("Action-15");
+                m_ImmediateUserInterface->menu_action("Action-16");
+                m_ImmediateUserInterface->menu_action("Action-17");
+
+                m_ImmediateUserInterface->end_menu();
+            }
 
             m_ImmediateUserInterface->end_menu();
         }
 
-            m_ImmediateUserInterface->end_menu();
-        }
-
-        if(m_ImmediateUserInterface->begin_menu("Menu-333333333333"))
-        {
-            m_ImmediateUserInterface->menu_action("Action-13");
-            m_ImmediateUserInterface->menu_action("Action-14");
-            m_ImmediateUserInterface->menu_action("Action-15");
-            m_ImmediateUserInterface->menu_action("Action-16");
-            m_ImmediateUserInterface->menu_action("Action-17");
-
-            m_ImmediateUserInterface->end_menu();
-        }
-
-        m_ImmediateUserInterface->end_menu();
+        m_ImmediateUserInterface->end_window();
     }
 }
