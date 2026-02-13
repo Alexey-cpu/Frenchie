@@ -16,12 +16,12 @@ bool ImmediateUserInterfaceTestLayer::awake()
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
     //windows_test();   
-    //scrollarea_test();
+    scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
-    menu_test();
+    //menu_test();
     
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -62,94 +62,12 @@ void ImmediateUserInterfaceTestLayer::windows_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
-    auto create_horizontal_layout = [this](const std::string& _Name)
-    {
-        ImmediateUserInterfaceNodeSettings settins =
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-        
-        if(m_ImmediateUserInterface->begin_horizontal_stack(_Name, settins))
-        {
-            if(m_ImmediateUserInterface->begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
-            {
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
-                {
-                    if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1/Child-1"), settins))
-                        m_ImmediateUserInterface->end_horizontal_stack();
-
-                    if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1/Child-2"), settins))
-                        m_ImmediateUserInterface->end_horizontal_stack();
-
-                    if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1/Child-3"), settins))
-                        m_ImmediateUserInterface->end_horizontal_stack();
-
-                    m_ImmediateUserInterface->end_horizontal_stack();
-                }
-
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
-
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-3"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
-
-                m_ImmediateUserInterface->end_vertical_stack();
-            }
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-2"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-3"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-4"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
-
-            m_ImmediateUserInterface->end_horizontal_stack();
-        }
-    };
-
-    auto create_vertical_layout = [this](const std::string& _Name)
-    {
-        ImmediateUserInterfaceNodeSettings settins =
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-        
-        if(m_ImmediateUserInterface->begin_vertial_stack(_Name, settins))
-        {
-            if(m_ImmediateUserInterface->begin_vertial_stack(std::string(_Name).append("/Child-1"), settins))
-            {
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-1"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
-
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-2"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
-
-                if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-1/Child-3"), settins))
-                    m_ImmediateUserInterface->end_horizontal_stack();
-
-                m_ImmediateUserInterface->end_vertical_stack();
-            }
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-2"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-3"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack(std::string(_Name).append("/Child-4"), settins))
-                m_ImmediateUserInterface->end_horizontal_stack();
-
-            m_ImmediateUserInterface->end_vertical_stack();
-        }
-    };
-
-    //create_horizontal_layout("SOMELAYOUT");
-
     static bool opened = true;
     static std::string button;
 
     if(m_ImmediateUserInterface->begin_window(
         "Window-1",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
     {
@@ -309,6 +227,15 @@ void ImmediateUserInterfaceTestLayer::menu_test()
         m_ImmediateUserInterface->menu_action("Action-2");
         m_ImmediateUserInterface->menu_action("Action-3");
 
+        m_ImmediateUserInterface->menu_action("Action-11111");
+        m_ImmediateUserInterface->menu_action("Action-12222222");
+        m_ImmediateUserInterface->menu_action("Action-1111111111");
+        m_ImmediateUserInterface->menu_action("Action-12222222222");
+        m_ImmediateUserInterface->menu_action("Action-111111111111");
+        m_ImmediateUserInterface->menu_action("Action-1222222222222");
+        m_ImmediateUserInterface->menu_action("Action-111111111111111");
+        m_ImmediateUserInterface->menu_action("Action-122222222222222222");
+
         if(m_ImmediateUserInterface->begin_menu("Menu-2"))
         {
             m_ImmediateUserInterface->menu_action("Action-4");
@@ -320,7 +247,18 @@ void ImmediateUserInterfaceTestLayer::menu_test()
             m_ImmediateUserInterface->menu_action("Action-10");
             m_ImmediateUserInterface->menu_action("Action-11");
             m_ImmediateUserInterface->menu_action("Action-12");
-                
+
+        if(m_ImmediateUserInterface->begin_menu("Menu-3333333333334333333"))
+        {
+            m_ImmediateUserInterface->menu_action("Action-133333333");
+            m_ImmediateUserInterface->menu_action("Action-14444444444");
+            m_ImmediateUserInterface->menu_action("Action-155555");
+            m_ImmediateUserInterface->menu_action("Action-166666666666");
+            m_ImmediateUserInterface->menu_action("Action-177777777777777");
+
+            m_ImmediateUserInterface->end_menu();
+        }
+
             m_ImmediateUserInterface->end_menu();
         }
 
