@@ -216,7 +216,7 @@ namespace Frenchie
 
             float get_scrollbar_width() const
             {
-                return gs_max(get_frames_width(), ScrollBarWidth);
+                return gs_max(64.f, get_frames_width(), ScrollBarWidth);
             }
 
             RenderingQueueFont get_current_font() const
@@ -278,7 +278,6 @@ namespace Frenchie
             {
                 // rendering
                 int            Depth                      {0};
-                int            CummulativeRenderingOrder  {0};
                 int            SelfThickness              {0}; // thickness of self rendered content
                 int            RenderingIndex             {0}; // index of the node within context rendering list
                 int            RenderingOrder             {0};
@@ -375,6 +374,9 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
+            float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
+            float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
+
             ImmediateUserInterfaceNode*                      ContentView         = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
@@ -386,6 +388,20 @@ namespace Frenchie
             ImmediateUserInterfacePushButton(const std::string& _Name);
             virtual ~ImmediateUserInterfacePushButton();
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // popups
+        struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceMenu(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenu();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            ImmediateUserInterfaceNode* InternalScrollArea = nullptr;
+            ImmediateUserInterfaceNode* ExternalScrollArea = nullptr;
         };
 
         // windows
@@ -661,24 +677,28 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
         };
 
+        class ImmedidateUserInterfaceMenusController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceMenusController();
+            virtual ~ImmedidateUserInterfaceMenusController();
+
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            mutable std::vector<ImmediateUserInterfaceMenu*> ActiveMenus;
+        };
+    
         class ImmedidateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
         {
         public:
             ImmedidateUserInterfaceNextNodeController();
             virtual ~ImmedidateUserInterfaceNextNodeController();
-            virtual void frame_start(ImmediateUserInterfaceContextLayer*);
 
-            void set_next_line()
-            {
-                PushNextItemNextLine = true;
-            }
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
 
-            bool is_next_line() const
-            {
-                bool value = PushNextItemNextLine.has_value();
-                PushNextItemNextLine.reset();
-                return value;
-            }
+            void set_next_line();
+
+            bool is_next_line() const;
 
         private:
             // info
@@ -740,22 +760,31 @@ namespace Frenchie
             void end_scrollarea();
 
             // layout
-            bool begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_panel(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
 
-            bool begin_vertial_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_vertial_stack(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
 
-            bool begin_horizontal_stack(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_horizontal_stack(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
             // menus
-            bool begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool begin_menu(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_menu();
 
             // widgets
             bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
             bool menu_action(const std::string& _ID);
+            bool item_highlighter(const std::string& _ID, ImmediateUserInterfaceNode*);
 
             void next_line();
 
