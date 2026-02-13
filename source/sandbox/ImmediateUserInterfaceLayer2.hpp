@@ -398,6 +398,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceMenu();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             ImmediateUserInterfaceNode* InternalScrollArea = nullptr;
@@ -784,12 +785,14 @@ namespace Frenchie
             // widgets
             bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
             bool menu_action(const std::string& _ID);
-            bool item_highlighter(const std::string& _ID, ImmediateUserInterfaceNode*);
 
             void next_line();
 
             // windows
-            bool begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened = nullptr);
+            bool begin_window(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool*                                     _Opened = nullptr);
             void end_window();
 
             // auxiliary API
