@@ -219,13 +219,17 @@ namespace Frenchie
                 return gs_max(get_frames_width(), ScrollBarWidth);
             }
 
+            RenderingQueueFont get_current_font() const
+            {
+                return Font;
+            }
+
             RenderingQueueColor get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
             {
                 return Colors[_Color];
             }
 
             // font
-            RenderingQueueFont Font;
 
         private:
 
@@ -233,8 +237,9 @@ namespace Frenchie
             float                            FramesRadius   = 32.f;
             float                            FramesWidth    = 0.f;
             float                            FontSize       = 64.f;
-            float                            ScrollBarWidth = 128.f;
+            float                            ScrollBarWidth = 32.f;
             std::vector<RenderingQueueColor> Colors;
+            RenderingQueueFont               Font;
         };
 
         struct ImmedidateUserInterfaceEvent
@@ -325,24 +330,6 @@ namespace Frenchie
             int         Count = 0;
         };
 
-        // scroll area        
-        struct ImmediateUserInterfaceScrollAreaScrollBarSlider;
-
-        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNode
-        {
-        public:
-
-            ImmediateUserInterfaceScrollArea(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollArea();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
-
-            ImmediateUserInterfaceNode*                      ContentView         = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
-        };
-
         // layouts
         struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
         {
@@ -375,29 +362,22 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        // popups
-        struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
+        // scroll area        
+        struct ImmediateUserInterfaceScrollAreaScrollBarSlider;
+
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
         {
         public:
-            ImmediateUserInterfaceMenu(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceMenu();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-
-            ImmediateUserInterfaceNode* InternalScrollArea = nullptr;
-            ImmediateUserInterfaceNode* ExternalScrollArea = nullptr;
-        };
-
-        struct ImmediateUserInterfaceMenuItem : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceMenuItem(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceMenuItem();
-
+            ImmediateUserInterfaceScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            ImmediateUserInterfaceNode*                      ContentView         = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
         };
 
         // widgets
@@ -705,17 +685,6 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<bool> PushNextItemNextLine;
         };
 
-        class ImmedidateUserInterfaceMenusController : public ImmediateUserInterfaceContextController
-        {
-        public:
-            ImmedidateUserInterfaceMenusController();
-            virtual ~ImmedidateUserInterfaceMenusController();
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
-
-            mutable std::vector<ImmediateUserInterfaceMenu*>         ActiveMenus;
-            mutable std::vector<ImmediateUserInterfaceMenu*>         ActiveMenusCache;
-        };
-
         // context configuration
         class ImmediateUserInterfaceContextConfiguration final
         {
@@ -785,7 +754,9 @@ namespace Frenchie
             void end_menu();
 
             // widgets
-            bool push_button(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
+            bool menu_action(const std::string& _ID);
+
             void next_line();
 
             // windows
