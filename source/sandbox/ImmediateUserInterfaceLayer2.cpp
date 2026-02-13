@@ -1274,55 +1274,6 @@ namespace Frenchie
                             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
             }
         };
-
-        // widgets
-        struct ImmediateUserInterfaceWidgetHighlighter : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceWidgetHighlighter(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-            virtual ~ImmediateUserInterfaceWidgetHighlighter(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                if(Cache.MouseDown.has_value())
-                {
-                    RenderingQueueColor color =
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        RenderingQueueGraphicsApi::construct_rgba_color(
-                            RenderingQueueGraphicsApi::retrieve_red_component(color),
-                            RenderingQueueGraphicsApi::retrieve_green_component(color),
-                            RenderingQueueGraphicsApi::retrieve_blue_component(color),
-                            200),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    RenderingQueueColor color =
-                        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        RenderingQueueGraphicsApi::construct_rgba_color(
-                            RenderingQueueGraphicsApi::retrieve_red_component(color),
-                            RenderingQueueGraphicsApi::retrieve_green_component(color),
-                            RenderingQueueGraphicsApi::retrieve_blue_component(color),
-                            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ? 200 : 0),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-            }
-        };
     }
 }
 
