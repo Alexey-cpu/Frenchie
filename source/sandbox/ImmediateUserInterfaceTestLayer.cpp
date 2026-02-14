@@ -15,13 +15,13 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    windows_test();   
+    //windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
-    //menu_test();
+    menu_test();
     
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -80,7 +80,7 @@ void ImmediateUserInterfaceTestLayer::windows_test()
             for(int i = 0 ; i < 1e1; i++)
             {
                 for(int j = 0 ; j < 1e1; j++)
-                    m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)));
+                    m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)), gs_vec2f(512.f, 128.f));
 
                 m_ImmediateUserInterface->next_line();
             }
@@ -226,19 +226,6 @@ void ImmediateUserInterfaceTestLayer::menu_test()
     {
         if(m_ImmediateUserInterface->begin_menu("Menu-1"))
         {
-            m_ImmediateUserInterface->menu_action("Action-1");
-            m_ImmediateUserInterface->menu_action("Action-2");
-            m_ImmediateUserInterface->menu_action("Action-3");
-
-            m_ImmediateUserInterface->menu_action("Action-11111");
-            m_ImmediateUserInterface->menu_action("Action-12222222");
-            m_ImmediateUserInterface->menu_action("Action-1111111111");
-            m_ImmediateUserInterface->menu_action("Action-12222222222");
-            m_ImmediateUserInterface->menu_action("Action-111111111111");
-            m_ImmediateUserInterface->menu_action("Action-1222222222222");
-            m_ImmediateUserInterface->menu_action("Action-111111111111111");
-            m_ImmediateUserInterface->menu_action("Action-122222222222222222");
-
             if(m_ImmediateUserInterface->begin_menu("Menu-2"))
             {
                 m_ImmediateUserInterface->menu_action("Action-4");
@@ -273,6 +260,21 @@ void ImmediateUserInterfaceTestLayer::menu_test()
                 m_ImmediateUserInterface->menu_action("Action-16");
                 m_ImmediateUserInterface->menu_action("Action-17");
 
+                m_ImmediateUserInterface->end_menu();
+            }
+
+            m_ImmediateUserInterface->end_menu();
+        }
+
+        m_ImmediateUserInterface->end_window();
+    }
+
+    if(m_ImmediateUserInterface->begin_window("Window-1"))
+    {
+        if(m_ImmediateUserInterface->begin_menu("Menu-11"))
+        {
+            if(m_ImmediateUserInterface->begin_menu("Menu-22"))
+            {
                 m_ImmediateUserInterface->end_menu();
             }
 

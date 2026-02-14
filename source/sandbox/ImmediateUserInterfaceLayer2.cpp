@@ -1230,11 +1230,24 @@ namespace Frenchie
         };
     
         // popups
-        struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfacePushButton
         {
         public:
-            ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+            ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfacePushButton(_Name){}
             virtual ~ImmediateUserInterfaceMenuAction(){}
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr) return;
+
+                gs_vec2f size =
+                    _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+                    gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+                Size = gs_vec2f(_Context->m_Style.get_popup_menu_width(), size.y);
+
+                ImmediateUserInterfacePushButton::layout(_Context);
+            }
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
@@ -1272,6 +1285,68 @@ namespace Frenchie
                         gs_vec2f(
                             State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
                             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
+            }
+        };
+
+        struct ImmediateUserInterfaceMenuItem : public ImmediateUserInterfaceMenuAction
+        {
+        public:
+            ImmediateUserInterfaceMenuItem(const std::string& _Name) : ImmediateUserInterfaceMenuAction(_Name){}
+            virtual ~ImmediateUserInterfaceMenuItem(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // background
+                if(Cache.MouseDown.has_value())
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+                else
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+
+                // title
+                _Context->m_Renderer->push_text(
+                    Name,
+                    _Context->m_Style.get_font_size(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    _Context->m_Renderer->calculate_transform_matrix(
+                        (float)place_in_follow(),
+                        gs_vec2f(
+                            State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
+                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
+
+                // triangle
+                float triangleWidth = 32.f;
+
+                _Context->m_Renderer->push_triangle_filled(
+                    gs_vec2f(0.f, 0.0),
+                    gs_vec2f(0.f, triangleWidth),
+                    gs_vec2f(triangleWidth * 0.5f, triangleWidth * 0.5f),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    _Context->m_Renderer->calculate_transform_matrix(
+                        (float)place_in_follow(),
+                        gs_vec2f(
+                            State.BoundingBox.Max.x - triangleWidth,
+                            State.BoundingBox.center().y - triangleWidth * 0.5f
+                        )
+                    )
+                );
             }
         };
     }
@@ -2295,6 +2370,19 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
         _Context->m_Renderer->calculate_transform_matrix(
             (float)place_in_follow(),
             gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
+}
+
+void ImmediateUserInterfacePushButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    gs_vec2f size =
+        _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+    State.MinimumSize = gs_vec2f(gs_min(size.x, Size.x), gs_min(size.y, Size.y));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, Size.x), gs_max(size.y, Size.y));
+    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + Size);
 }
 
 // ImmediateUserInterfaceMenu
@@ -3569,6 +3657,13 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
     // hover start logic
     if(hoveredNode)
     {
+        _Context->m_Renderer->push_rectangle_filled(
+            hoveredNode->State.BoundingBox.Min,
+            hoveredNode->State.BoundingBox.Max,
+            RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 32),
+            _Context->m_Renderer->calculate_transform_matrix((float)1000.f)
+        );
+
         // check if anythin is already started to be hovered
         if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
         {
@@ -4157,19 +4252,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfacePushButton* button =  get_rendering_stack_top<ImmediateUserInterfacePushButton>();
-
-        gs_vec2f textSize = m_Renderer->calculate_bounding_box(_ID, m_Style.get_font_size(), m_Style.get_current_font()).size() + m_Style.get_font_size() * 0.5f;
-        button->State.MinimumSize = gs_vec2f(128.f, gs_max(m_Style.get_font_size(), 64.f));
-        button->State.MaximumSize = gs_vec2f(gs_max(_Size.x, textSize.x), gs_max(_Size.y, textSize.y));
-        
-        // do not setup size of layouted widget
-        if(m_Hierarchy.get_parent<ImmediateUserInterfaceNodePanel>(button) == nullptr)
-        {
-            button->State.BoundingBox = gs_2dboxf(
-                button->State.BoundingBox.Min,
-                button->State.BoundingBox.Min + gs_clamp(_Size, button->State.MinimumSize, button->State.MaximumSize));
-        }
-
+        button->Size = _Size;
         end_node<ImmediateUserInterfacePushButton>();
         
         return button->State.MouseClicked.has_value();
@@ -4186,19 +4269,6 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
     {
         ImmediateUserInterfaceMenuAction* menuAction =
             get_rendering_stack_top<ImmediateUserInterfaceMenuAction>();
-
-        gs_vec2f textSize = m_Renderer->calculate_bounding_box(_ID, m_Style.get_font_size(), m_Style.get_current_font()).size() + gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size() * 0.5f);
-        menuAction->State.MinimumSize = textSize;
-        menuAction->State.MaximumSize = textSize;
-        menuAction->State.BoundingBox = gs_2dboxf(menuAction->State.BoundingBox.Min, menuAction->State.BoundingBox.Min + textSize);
-
-        // do not setup size of layouted widget
-        if(m_Hierarchy.get_parent<ImmediateUserInterfaceNodePanel>(menuAction) == nullptr)
-        {
-            menuAction->State.BoundingBox = gs_2dboxf(
-                menuAction->State.BoundingBox.Min,
-                menuAction->State.BoundingBox.Min + textSize);
-        }
 
         end_node<ImmediateUserInterfaceMenuAction>();
 
@@ -4239,20 +4309,13 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
             // if menu is inside another menu we draw menu item
             if(hasParent)
             {
-                if(begin_node<ImmediateUserInterfaceMenuAction>(
+                if(begin_node<ImmediateUserInterfaceMenuItem>(
                     _ID,
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    menuItem = get_rendering_stack_top<ImmediateUserInterfaceMenuAction>();
-                    gs_vec2f textSize = m_Renderer->calculate_bounding_box(_ID, m_Style.get_font_size(), m_Style.get_current_font()).size() + gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size() * 0.5f);
-                                        
-                    menuItem->State.MinimumSize = textSize;
-                    menuItem->State.MaximumSize = menuItem->State.MinimumSize;
-                    menuItem->State.BoundingBox = gs_2dboxf(menuItem->State.BoundingBox.Min, menuItem->State.BoundingBox.Min + menuItem->State.MaximumSize);
-
+                    menuItem = get_rendering_stack_top<ImmediateUserInterfaceMenuItem>();
                     isHovered = (menuItem->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
-
-                    end_node<ImmediateUserInterfaceMenuAction>();
+                    end_node<ImmediateUserInterfaceMenuItem>();
                 }
             }
 
@@ -4271,7 +4334,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
 
     if(hasParent)
     {
-        if(hasParent && isHovered)
+        if(hasParent && isHovered && menuItem != nullptr)
         {
             if(begin_scrollarea(std::string(_ID).append("/Main/ExternalScrollArea"),
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent                               |
