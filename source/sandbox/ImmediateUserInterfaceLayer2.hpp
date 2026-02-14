@@ -219,6 +219,11 @@ namespace Frenchie
                 return gs_max(64.f, get_frames_width(), ScrollBarWidth);
             }
 
+            float get_popup_menu_width() const
+            {
+                return gs_max(PopupMenuWidth, 256.f);
+            }
+
             RenderingQueueFont get_current_font() const
             {
                 return Font;
@@ -238,6 +243,7 @@ namespace Frenchie
             float                            FramesWidth    = 0.f;
             float                            FontSize       = 64.f;
             float                            ScrollBarWidth = 32.f;
+            float                            PopupMenuWidth = 512.f;
             std::vector<RenderingQueueColor> Colors;
             RenderingQueueFont               Font;
         };
@@ -388,6 +394,9 @@ namespace Frenchie
             ImmediateUserInterfacePushButton(const std::string& _Name);
             virtual ~ImmediateUserInterfacePushButton();
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_vec2f Size = gs_vec2f(256.f, 128.f);
         };
 
         // popups
