@@ -238,27 +238,27 @@ void ImmediateUserInterfaceTestLayer::menu_test()
                 m_ImmediateUserInterface->menu_action("Action-11");
                 m_ImmediateUserInterface->menu_action("Action-12");
 
-            if(m_ImmediateUserInterface->begin_menu("Menu-3333333333334333333"))
-            {
-                m_ImmediateUserInterface->menu_action("Action-133333333");
-                m_ImmediateUserInterface->menu_action("Action-14444444444");
-                m_ImmediateUserInterface->menu_action("Action-155555");
-                m_ImmediateUserInterface->menu_action("Action-166666666666");
-                m_ImmediateUserInterface->menu_action("Action-177777777777777");
+                if(m_ImmediateUserInterface->begin_menu("Menu-333"))
+                {
+                    m_ImmediateUserInterface->menu_action("Action-333-1");
+                    m_ImmediateUserInterface->menu_action("Action-333-22");
+                    m_ImmediateUserInterface->menu_action("Action-333-333");
+                    m_ImmediateUserInterface->menu_action("Action-333-4444");
+                    m_ImmediateUserInterface->menu_action("Action-333-55555");
 
-                m_ImmediateUserInterface->end_menu();
-            }
+                    if(m_ImmediateUserInterface->begin_menu("Menu-3333"))
+                    {
+                        m_ImmediateUserInterface->menu_action("Action-3333-1");
+                        m_ImmediateUserInterface->menu_action("Action-3333-22");
+                        m_ImmediateUserInterface->menu_action("Action-3333-333");
+                        m_ImmediateUserInterface->menu_action("Action-3333-4444");
+                        m_ImmediateUserInterface->menu_action("Action-3333-55555");
 
-                m_ImmediateUserInterface->end_menu();
-            }
+                        m_ImmediateUserInterface->end_menu();
+                    }
 
-            if(m_ImmediateUserInterface->begin_menu("Menu-333333333333"))
-            {
-                m_ImmediateUserInterface->menu_action("Action-13");
-                m_ImmediateUserInterface->menu_action("Action-14");
-                m_ImmediateUserInterface->menu_action("Action-15");
-                m_ImmediateUserInterface->menu_action("Action-16");
-                m_ImmediateUserInterface->menu_action("Action-17");
+                    m_ImmediateUserInterface->end_menu();
+                }
 
                 m_ImmediateUserInterface->end_menu();
             }

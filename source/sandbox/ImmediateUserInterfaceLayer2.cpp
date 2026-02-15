@@ -1229,25 +1229,14 @@ namespace Frenchie
             }
         };
     
+        // widgets
+
         // popups
         struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfacePushButton
         {
         public:
             ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfacePushButton(_Name){}
             virtual ~ImmediateUserInterfaceMenuAction(){}
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr) return;
-
-                gs_vec2f size =
-                    _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-                    gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
-                Size = gs_vec2f(_Context->m_Style.get_popup_menu_width(), size.y);
-
-                ImmediateUserInterfacePushButton::layout(_Context);
-            }
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
@@ -1332,7 +1321,7 @@ namespace Frenchie
                             (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
 
                 // triangle
-                float triangleWidth = 32.f;
+                float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
 
                 _Context->m_Renderer->push_triangle_filled(
                     gs_vec2f(0.f, 0.0),
@@ -2319,8 +2308,28 @@ float ImmediateUserInterfaceScrollArea::get_vertical_scrollbar_width(ImmediateUs
     return verticalScrollBarSize;
 }
 
+// ImmediateUserInterfaceWidget
+ImmediateUserInterfaceWidget::ImmediateUserInterfaceWidget(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceWidget::~ImmediateUserInterfaceWidget()
+{
+
+}
+
+void ImmediateUserInterfaceWidget::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    gs_vec2f size =
+        _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+    State.MinimumSize = gs_vec2f(gs_min(size.x, Size.x), gs_min(size.y, Size.y));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, Size.x), gs_max(size.y, Size.y));
+    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + Size);
+}
+
 // ImmediateUserInterfacePushButton
-ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name)
 {
     State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
     State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
@@ -2372,19 +2381,6 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
             gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
 }
 
-void ImmediateUserInterfacePushButton::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr) return;
-
-    gs_vec2f size =
-        _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
-    State.MinimumSize = gs_vec2f(gs_min(size.x, Size.x), gs_min(size.y, Size.y));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, Size.x), gs_max(size.y, Size.y));
-    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + Size);
-}
-
 // ImmediateUserInterfaceMenu
 ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
@@ -2416,7 +2412,8 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
         return;
     }
 
-    _Child->State.PushNextLine = true;
+    if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(_Child))
+        _Child->State.PushNextLine = true;
     
     if(State.Parent)
     {
@@ -3907,12 +3904,114 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 ImmedidateUserInterfaceMenusController::ImmedidateUserInterfaceMenusController(){}
 ImmedidateUserInterfaceMenusController::~ImmedidateUserInterfaceMenusController(){}
 
+void detect_maximum_width(
+    ImmediateUserInterfaceContextLayer* _Context,
+    ImmediateUserInterfaceNode*         _Node,
+    float&                              _MaximumWidth)
+{
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
+
+    if(scrollArea != nullptr && scrollArea->ContentView != nullptr)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it))
+            {
+                gs_vec2f size =
+                    _Context->m_Renderer->calculate_bounding_box(
+                        (*it)->Name,
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+                _MaximumWidth = gs_max(_MaximumWidth, size.x);
+            }
+        }
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
+        detect_maximum_width(_Context, *it, _MaximumWidth);
+}
+
+void setup_maximum_with(
+    ImmediateUserInterfaceContextLayer* _Context,
+    ImmediateUserInterfaceNode*         _Node,
+    float&                              _MaximumWidth)
+{
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
+
+    if(scrollArea != nullptr && scrollArea->ContentView != nullptr)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it))
+            {
+                gs_vec2f size =
+                    _Context->m_Renderer->calculate_bounding_box(
+                        (*it)->Name,
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+                dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->Size = gs_vec2f(_MaximumWidth, size.y);
+            }
+        }
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
+        setup_maximum_with(_Context, *it, _MaximumWidth);
+}
+
 void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     ActiveMenus.clear();
 
     for(auto node : _Context->m_NodesRenderingList)
     {
+        ImmediateUserInterfaceMenu* menu =
+            dynamic_cast<ImmediateUserInterfaceMenu*>(node);
+
+        if(menu != nullptr)
+        {
+            // look for parental scroll bar
+            ImmediateUserInterfaceScrollArea* scroll = nullptr;
+            ImmediateUserInterfaceScrollArea* parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(menu);
+
+            while (parent)
+            {
+                scroll = parent;
+                parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(parent);
+            }
+            
+            if(scroll)
+            {
+                // manage internal scroll area
+                float internal = 0.f;
+                detect_maximum_width(_Context, scroll, internal);
+                detect_maximum_width(_Context, menu->InternalScrollArea, internal);
+                setup_maximum_with(_Context, scroll, internal);
+                setup_maximum_with(_Context, menu->InternalScrollArea, internal);
+
+                // manage external scroll area
+                float external = 0.f;
+                detect_maximum_width(_Context, menu->ExternalScrollArea, external);
+                setup_maximum_with(_Context, menu->ExternalScrollArea, external);
+            }
+            else
+            {
+                // manage internal scroll area
+                float internal = 0.f;
+                detect_maximum_width(_Context, menu->InternalScrollArea, internal);
+                setup_maximum_with(_Context, menu->InternalScrollArea, internal);
+
+                // manage external scroll area
+                float external = 0.f;
+                detect_maximum_width(_Context, menu->ExternalScrollArea, external);
+                setup_maximum_with(_Context, menu->ExternalScrollArea, external);
+            }
+        }
+
+        // collect active menus
         if(!(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)) continue;
 
         auto relative = node;
