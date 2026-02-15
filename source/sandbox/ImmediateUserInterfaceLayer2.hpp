@@ -410,8 +410,8 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            ImmediateUserInterfaceNode* InternalScrollArea = nullptr;
-            ImmediateUserInterfaceNode* ExternalScrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea* InternalScrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea* ExternalScrollArea = nullptr;
         };
 
         // windows

@@ -2391,13 +2391,11 @@ ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
 
 void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    ImmediateUserInterfaceNode* contentNode = InternalScrollArea;
-
-    if(contentNode)
+    if(InternalScrollArea != nullptr)
     {
         State.BoundingBox = gs_2dboxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Min + contentNode->State.BoundingBox.size());
+            State.BoundingBox.Min + InternalScrollArea->State.BoundingBox.size());
     }
 
     ImmediateUserInterfaceNodePanel::layout(_Context);
