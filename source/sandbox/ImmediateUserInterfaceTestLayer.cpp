@@ -229,10 +229,11 @@ void ImmediateUserInterfaceTestLayer::menu_test()
             if(m_ImmediateUserInterface->begin_menu("Menu-2"))
             {
                 static bool checked = false;
-                std::string name= "Checkbox";
-                m_ImmediateUserInterface->checkbox(name, &checked);
+                m_ImmediateUserInterface->checkbox("Checkbox-1", &checked);
 
                 m_ImmediateUserInterface->menu_action("Action-4");
+
+                m_ImmediateUserInterface->checkbox("Checkbox-2", &checked);
                 m_ImmediateUserInterface->menu_action("Action-5");
                 m_ImmediateUserInterface->menu_action("Action-6");
                 m_ImmediateUserInterface->menu_action("Action-7");
