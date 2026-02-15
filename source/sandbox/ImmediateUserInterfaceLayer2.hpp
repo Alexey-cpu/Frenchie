@@ -263,7 +263,7 @@ namespace Frenchie
         // nodes
         struct ImmediateUserInterfaceNode
         {
-            ImmediateUserInterfaceNode(const std::string _Name);
+            ImmediateUserInterfaceNode(const std::string& _Name);
             virtual ~ImmediateUserInterfaceNode();
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context);
@@ -391,6 +391,7 @@ namespace Frenchie
         // widgets
         struct ImmediateUserInterfaceWidget : public ImmediateUserInterfaceNode
         {
+        public:
             ImmediateUserInterfaceWidget(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWidget();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -400,9 +401,22 @@ namespace Frenchie
 
         struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
         {
+        public:
             ImmediateUserInterfacePushButton(const std::string& _Name);
             virtual ~ImmediateUserInterfacePushButton();
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceCheckbox : public ImmediateUserInterfaceWidget
+        {
+        
+            ImmediateUserInterfaceCheckbox(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceCheckbox();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            bool* Checked = nullptr;
         };
 
         // popups
@@ -799,6 +813,7 @@ namespace Frenchie
 
             // widgets
             bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
+            bool checkbox(const std::string& _ID, bool* Checked = nullptr);
             bool menu_action(const std::string& _ID);
 
             void next_line();

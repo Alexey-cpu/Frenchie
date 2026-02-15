@@ -1596,7 +1596,7 @@ bool ImmediateUserInterfaceContextConfiguration::write(const std::u32string& _Pa
 }
 
 // ImmedidateUserInterfaceNode
-ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string _Hash) : Hash(_Hash){}
+ImmediateUserInterfaceNode::ImmediateUserInterfaceNode(const std::string& _Hash) : Hash(_Hash){}
 ImmediateUserInterfaceNode::~ImmediateUserInterfaceNode(){}
 
 void ImmediateUserInterfaceNode::render(ImmediateUserInterfaceContextLayer*)
@@ -2335,9 +2335,7 @@ ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::st
     State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
     State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
 }
-
 ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
-
 void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
@@ -2379,6 +2377,89 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
         _Context->m_Renderer->calculate_transform_matrix(
             (float)place_in_follow(),
             gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
+}
+
+// ImmediateUserInterfaceCheckbox
+ImmediateUserInterfaceCheckbox::ImmediateUserInterfaceCheckbox(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
+
+ImmediateUserInterfaceCheckbox::~ImmediateUserInterfaceCheckbox(){}
+
+void ImmediateUserInterfaceCheckbox::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    State.BoundingBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + _Context->m_Style.get_font_size());
+}
+void ImmediateUserInterfaceCheckbox::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    if(Cache.MouseDown.has_value())
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // render tick
+    if(Checked != nullptr && (*Checked))
+    {
+        auto start = gs_vec2f(
+            State.BoundingBox.center().x,
+            State.BoundingBox.center().y + State.BoundingBox.height() * 0.5f * 0.5f);
+
+        _Context->m_Renderer->push_line(
+            start,
+            gs_vec2f(
+                State.BoundingBox.center().x - State.BoundingBox.width() * 0.5f * 0.7f,
+                State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.25f),
+            _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_line(
+            start,
+            gs_vec2f(
+                State.BoundingBox.center().x + State.BoundingBox.width() * 0.5f * 0.7f,
+                State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.9f),
+            _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+}
+
+bool ImmediateUserInterfaceCheckbox::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+
+    if(State.MouseClicked.has_value() && Checked != nullptr)
+        *Checked = !(*Checked);
+
+    return true;
 }
 
 // ImmediateUserInterfaceMenu
@@ -4353,6 +4434,22 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
         end_node<ImmediateUserInterfacePushButton>();
         
         return button->State.MouseClicked.has_value();
+    }
+
+    return false;
+}
+
+bool ImmediateUserInterfaceContextLayer::checkbox(const std::string& _ID, bool* Checked)
+{
+    if(begin_node<ImmediateUserInterfaceCheckbox>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceCheckbox* widget =  get_rendering_stack_top<ImmediateUserInterfaceCheckbox>();
+        widget->Checked = Checked;
+        end_node<ImmediateUserInterfaceCheckbox>();
+        
+        return (widget->Checked != nullptr && *widget->Checked);
     }
 
     return false;
