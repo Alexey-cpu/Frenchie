@@ -219,9 +219,9 @@ namespace Frenchie
                 return gs_max(64.f, get_frames_width(), ScrollBarWidth);
             }
 
-            float get_popup_menu_width() const
+            float get_popup_menu_pointer_size() const
             {
-                return gs_max(PopupMenuWidth, 256.f);
+                return gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
             }
 
             RenderingQueueFont get_current_font() const
@@ -239,11 +239,11 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius   = 32.f;
-            float                            FramesWidth    = 0.f;
-            float                            FontSize       = 64.f;
-            float                            ScrollBarWidth = 32.f;
-            float                            PopupMenuWidth = 512.f;
+            float                            FramesRadius         = 32.f;
+            float                            FramesWidth          = 0.f;
+            float                            FontSize             = 64.f;
+            float                            ScrollBarWidth       = 32.f;
+            float                            PopupMenuPointerSize = 32.f;
             std::vector<RenderingQueueColor> Colors;
             RenderingQueueFont               Font;
         };
@@ -389,14 +389,20 @@ namespace Frenchie
         };
 
         // widgets
-        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfaceWidget : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfaceWidget(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWidget();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_vec2f Size = gs_vec2f(256.f, 128.f);
+        };
+
+        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
         {
             ImmediateUserInterfacePushButton(const std::string& _Name);
             virtual ~ImmediateUserInterfacePushButton();
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            gs_vec2f Size = gs_vec2f(256.f, 128.f);
         };
 
         // popups
