@@ -228,6 +228,10 @@ void ImmediateUserInterfaceTestLayer::menu_test()
         {
             if(m_ImmediateUserInterface->begin_menu("Menu-2"))
             {
+                static bool checked = false;
+                std::string name= "Checkbox";
+                m_ImmediateUserInterface->checkbox(name, &checked);
+
                 m_ImmediateUserInterface->menu_action("Action-4");
                 m_ImmediateUserInterface->menu_action("Action-5");
                 m_ImmediateUserInterface->menu_action("Action-6");
@@ -269,18 +273,18 @@ void ImmediateUserInterfaceTestLayer::menu_test()
         m_ImmediateUserInterface->end_window();
     }
 
-    if(m_ImmediateUserInterface->begin_window("Window-1"))
-    {
-        if(m_ImmediateUserInterface->begin_menu("Menu-11"))
-        {
-            if(m_ImmediateUserInterface->begin_menu("Menu-22"))
-            {
-                m_ImmediateUserInterface->end_menu();
-            }
+    // if(m_ImmediateUserInterface->begin_window("Window-1"))
+    // {
+    //     if(m_ImmediateUserInterface->begin_menu("Menu-11"))
+    //     {
+    //         if(m_ImmediateUserInterface->begin_menu("Menu-22"))
+    //         {
+    //             m_ImmediateUserInterface->end_menu();
+    //         }
 
-            m_ImmediateUserInterface->end_menu();
-        }
+    //         m_ImmediateUserInterface->end_menu();
+    //     }
 
-        m_ImmediateUserInterface->end_window();
-    }
+    //     m_ImmediateUserInterface->end_window();
+    // }
 }
