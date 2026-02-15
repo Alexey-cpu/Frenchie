@@ -15,6 +15,7 @@ namespace Frenchie
 {
     namespace Application
     {
+        // events
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             // sentinel
@@ -34,6 +35,7 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
         };
 
+        // colors
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin         = 0,
@@ -60,6 +62,7 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_End
         };
 
+        // settings
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
@@ -118,6 +121,7 @@ namespace Frenchie
             ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
         };
 
+        // mouse hover
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
             ImmediateUserInterfaceNodeMouseHover_None         = 0,
@@ -126,6 +130,7 @@ namespace Frenchie
             ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2,
         };
 
+        // windows docking anchors
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
             ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0,
@@ -141,6 +146,7 @@ namespace Frenchie
                 ImmedidateUserInterfaceDockingAnchor_Center
         };
 
+        // rendering order and rendering layer
         enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
             ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
