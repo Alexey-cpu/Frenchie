@@ -15,13 +15,15 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
+    renderer_test();
+    
     //windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
-    menu_test();
+    //menu_test();
     
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
@@ -229,11 +231,11 @@ void ImmediateUserInterfaceTestLayer::menu_test()
             if(m_ImmediateUserInterface->begin_menu("Menu-2"))
             {
                 static bool checked = false;
-                m_ImmediateUserInterface->checkbox("Checkbox-1", &checked);
+                m_ImmediateUserInterface->radio_button("Checkbox-1", &checked);
 
                 m_ImmediateUserInterface->menu_action("Action-4");
 
-                m_ImmediateUserInterface->checkbox("Checkbox-2", &checked);
+                m_ImmediateUserInterface->radio_button("Checkbox-2", &checked);
                 m_ImmediateUserInterface->menu_action("Action-5");
                 m_ImmediateUserInterface->menu_action("Action-6");
                 m_ImmediateUserInterface->menu_action("Action-7");
@@ -288,4 +290,52 @@ void ImmediateUserInterfaceTestLayer::menu_test()
 
     //     m_ImmediateUserInterface->end_window();
     // }
+}
+
+void ImmediateUserInterfaceTestLayer::renderer_test()
+{    
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+
+    m_ImmediateUserInterface->color_picker("ColorPicker");
+
+    // gs_vec2f start(512.f, 512.f);
+    // gs_vec2f size (128.f, 64.f);
+
+    // RenderingQueueColor colors[7] =
+    // {
+    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 0, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 0, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 255, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 255, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 255, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255)
+    // };
+
+    // gs_vec2f position = start;
+
+    // for (int i = 1; i < 7; i++)
+    // {
+    //     auto sourceColor = colors[i-1];
+    //     auto targetColor = colors[i-0];
+
+    //     m_ImmediateUserInterface->m_Renderer->push_rectangle_gradient_mesh(
+    //         position,
+    //         position + size,
+    //         sourceColor,
+    //         sourceColor, // this is current color
+    //         targetColor,
+    //         targetColor);
+
+    //     position += gs_vec2f(0.f, size.y);
+    // }
+
+    // m_ImmediateUserInterface->m_Renderer->push_rectangle_gradient_mesh(
+    //     start + gs_vec2f(size.x, 0.f) * 2.f,
+    //     start + gs_vec2f(size.x, 0.f) * 2.f + gs_vec2f(512.f, 512.f),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 255, 255), // this is current color
+    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255),
+    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255));
 }

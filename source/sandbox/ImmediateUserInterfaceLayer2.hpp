@@ -425,6 +425,19 @@ namespace Frenchie
             bool* Checked = nullptr;
         };
 
+        struct ImmediateUserInterfaceColorPickerGradientColorSelector;
+        struct ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector;
+
+        struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+            virtual ~ImmediateUserInterfaceColorPicker(){}
+
+            ImmediateUserInterfaceColorPickerGradientColorSelector*        GradientColorSelector        = nullptr;
+            ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector* GradientSurfaceColorModifier = nullptr;
+        };
+
         // popups
         struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
         {
@@ -819,7 +832,8 @@ namespace Frenchie
 
             // widgets
             bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
-            bool checkbox(const std::string& _ID, bool* Checked = nullptr);
+            bool radio_button(const std::string& _ID, bool* Checked = nullptr);
+            void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
 
             void next_line();

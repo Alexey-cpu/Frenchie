@@ -1240,6 +1240,136 @@ namespace Frenchie
         };
     
         // widgets
+        struct ImmediateUserInterfaceColorPickerGradientColorSelector : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceColorPickerGradientColorSelector(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+            virtual ~ImmediateUserInterfaceColorPickerGradientColorSelector(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                RenderingQueueColor colors[7] =
+                {
+                    RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 0, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 0, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 255, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 255, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 255, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255)
+                };
+
+                // render vertical color selector
+                gs_vec2f position = State.BoundingBox.Min;
+                gs_vec2f size     = gs_vec2f(State.BoundingBox.width(), State.BoundingBox.height() / 6.f);
+
+                gs_2dboxf slider = gs_2dboxf(
+                    position + gs_vec2f(0.f, SliderPosition),
+                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+
+                bool caught = false;
+
+                for (int i = 1; i < 7; i++)
+                {
+                    RenderingQueueColor sourceColor = colors[i-1];
+                    RenderingQueueColor targetColor = colors[i-0];
+
+                    _Context->m_Renderer->push_rectangle_gradient_mesh(
+                        position,
+                        position + size,
+                        sourceColor,
+                        sourceColor,
+                        targetColor,
+                        targetColor,
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    // calculate color
+                    if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
+                    {
+                        int r1 = RenderingQueueGraphicsApi::retrieve_red_component(sourceColor);
+                        int g1 = RenderingQueueGraphicsApi::retrieve_green_component(sourceColor);
+                        int b1 = RenderingQueueGraphicsApi::retrieve_blue_component(sourceColor);
+
+                        int r2 = RenderingQueueGraphicsApi::retrieve_red_component(targetColor);
+                        int g2 = RenderingQueueGraphicsApi::retrieve_green_component(targetColor);
+                        int b2 = RenderingQueueGraphicsApi::retrieve_blue_component(targetColor);
+
+                        float fraction = (slider.Min.y - position.y) / size.y;
+
+                        Color = RenderingQueueGraphicsApi::construct_rgba_color(
+                            (RenderingQueueColor)(r1 + (r2 - r1) * fraction),
+                            (RenderingQueueColor)(g1 + (g2 - g1) * fraction),
+                            (RenderingQueueColor)(b1 + (b2 - b1) * fraction),
+                            255);
+
+                        caught = true;
+                    }
+
+                    position += gs_vec2f(0.f, size.y);
+                }
+
+                // render slider
+                _Context->m_Renderer->push_rectangle_filled(
+                    slider.Min,
+                    slider.Max,
+                    RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+
+                if(_Event.MousePressed.has_value())
+                    SliderPreviousPosition = SliderPosition;
+
+                if(!_Event.MouseDown.has_value()) return false;
+
+                gs_vec2f position = State.BoundingBox.Min;
+
+                gs_2dboxf slider = gs_2dboxf(
+                    position + gs_vec2f(0.f, SliderPosition),
+                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+
+                SliderPosition = gs_clamp(
+                    SliderPreviousPosition + _Event.CursorDragDelta.y,
+                    0.f,
+                    State.BoundingBox.height() - slider.height());
+
+                return true;
+            }
+
+            float               SliderPreviousPosition = 0.f;
+            float               SliderPosition = 0.f;
+            RenderingQueueColor Color;
+        };
+
+        struct ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+            virtual ~ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                _Context->m_Renderer->push_rectangle_gradient_mesh(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
+                    BaseColor, // this is current color
+                    RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255),
+                    RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            RenderingQueueColor BaseColor;
+            RenderingQueueColor ModifiedColor;
+        };
+
 
         // popups
         struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfacePushButton
@@ -2317,10 +2447,7 @@ float ImmediateUserInterfaceScrollArea::get_vertical_scrollbar_width(ImmediateUs
 
 // ImmediateUserInterfaceWidget
 ImmediateUserInterfaceWidget::ImmediateUserInterfaceWidget(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-ImmediateUserInterfaceWidget::~ImmediateUserInterfaceWidget()
-{
-
-}
+ImmediateUserInterfaceWidget::~ImmediateUserInterfaceWidget(){}
 
 void ImmediateUserInterfaceWidget::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
@@ -4470,7 +4597,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::checkbox(const std::string& _ID, bool* Checked)
+bool ImmediateUserInterfaceContextLayer::radio_button(const std::string& _ID, bool* Checked)
 {
     if(begin_node<ImmediateUserInterfaceCheckbox>(
         _ID,
@@ -4485,6 +4612,57 @@ bool ImmediateUserInterfaceContextLayer::checkbox(const std::string& _ID, bool* 
 
     return false;
 }
+
+//------------------------------------------------------------------------------------------
+// color picker
+//------------------------------------------------------------------------------------------
+
+void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID)
+{
+    if(begin_node<ImmediateUserInterfaceColorPicker>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        ImmediateUserInterfaceColorPicker* colorPicker =
+            get_rendering_stack_top<ImmediateUserInterfaceColorPicker>();
+
+        if(begin_horizontal_stack(std::string(_ID).append("/ColorPickers")))
+        {
+            // gradient color modifier
+            if(begin_node<ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector>(
+                std::string(_ID).append("/ColorPickers/GradientColorModifier"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                colorPicker->GradientSurfaceColorModifier =
+                    get_rendering_stack_top<ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector>();
+
+                if(colorPicker->GradientColorSelector != nullptr)
+                    colorPicker->GradientSurfaceColorModifier->BaseColor = colorPicker->GradientColorSelector->Color;
+
+                end_node<ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector>();
+            }
+
+            // gradient color selector
+            if(begin_node<ImmediateUserInterfaceColorPickerGradientColorSelector>(
+                std::string(_ID).append("/ColorPickers/GradientColorSelector"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                colorPicker->GradientColorSelector =
+                    get_rendering_stack_top<ImmediateUserInterfaceColorPickerGradientColorSelector>();
+
+                colorPicker->GradientColorSelector->State.MinimumSize = gs_vec2f(64.f, colorPicker->GradientColorSelector->State.MinimumSize.y);
+                colorPicker->GradientColorSelector->State.MaximumSize = gs_vec2f(64.f, colorPicker->GradientColorSelector->State.MaximumSize.y);
+
+                end_node<ImmediateUserInterfaceColorPickerGradientColorSelector>();
+            }
+
+            end_horizontal_stack();
+        }
+
+        end_node<ImmediateUserInterfaceColorPicker>();
+    }
+}
+//------------------------------------------------------------------------------------------
 
 bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
 {

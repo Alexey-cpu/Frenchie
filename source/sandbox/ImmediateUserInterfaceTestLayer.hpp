@@ -24,6 +24,8 @@ namespace Frenchie
 
             void menu_test();
 
+            void renderer_test();
+
         protected:
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};
         };
