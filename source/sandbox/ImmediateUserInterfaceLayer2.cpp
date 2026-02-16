@@ -367,7 +367,7 @@ namespace Frenchie
                     gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
             }
 
-            static gs_2dboxf calculate_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf calculate_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
             {
                 const ImmediateUserInterfaceNode* next   = _Node;
                 ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
@@ -390,6 +390,17 @@ namespace Frenchie
                 }
 
                 return clippingBox;
+            }
+
+            int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Node == nullptr)
+                    return 0;
+
+                return gs_max(
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.SelfThickness + 1,
+                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
             }
 
             int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
@@ -1629,10 +1640,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         ImmediateUserInterfaceNode*             _Node,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
     {
-        int depth =  gs_max(
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.SelfThickness + 1,
-                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
+        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Node);
 
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
         {
@@ -3107,7 +3115,7 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
             m_WindowsDockingCache.push_back(node);
     }
 
-    std::sort(
+    std::stable_sort(
         m_WindowsDockingList.begin(),
         m_WindowsDockingList.end(),
         [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B) 
@@ -3733,11 +3741,15 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
     // hover start logic
     if(hoveredNode)
     {
-        _Context->m_Renderer->push_rectangle_filled(
-            hoveredNode->State.BoundingBox.Min,
-            hoveredNode->State.BoundingBox.Max,
-            RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 32),
-            _Context->m_Renderer->calculate_transform_matrix((float)1000.f)
+        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
+
+        _Context->m_Renderer->push_rectangle_rounded(
+            hoveredNode->get_visible_rect(_Context).Min,
+            hoveredNode->get_visible_rect(_Context).Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+            _Context->m_Renderer->calculate_transform_matrix((float)depth)
         );
 
         // check if anythin is already started to be hovered
@@ -3886,7 +3898,7 @@ void ImmedidateUserInterfaceRenderingController::frame_render(ImmediateUserInter
     // get ready
     m_NodesRenderingCache.clear();
 
-    std::sort(
+    std::stable_sort(
         _Context->m_Hierarchy.Singletons.begin(),
         _Context->m_Hierarchy.Singletons.end(),
         [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
@@ -3942,7 +3954,7 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
     // render children
     if(_Node->State.OrderChildrenWhileRendering)
     {
-        std::sort(
+        std::stable_sort(
             _Context->m_Hierarchy.begin(_Node),
             _Context->m_Hierarchy.end(_Node),
             [](const ImmediateUserInterfaceNode* _A, const ImmediateUserInterfaceNode* _B)
