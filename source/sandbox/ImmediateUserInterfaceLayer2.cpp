@@ -1346,11 +1346,11 @@ namespace Frenchie
             RenderingQueueColor Color;
         };
 
-        struct ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceColorPickerGradientColorModifier : public ImmediateUserInterfaceNodePanel
         {
         public:
-            ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-            virtual ~ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector(){}
+            ImmediateUserInterfaceColorPickerGradientColorModifier(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+            virtual ~ImmediateUserInterfaceColorPickerGradientColorModifier(){}
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
@@ -1369,7 +1369,6 @@ namespace Frenchie
             RenderingQueueColor BaseColor;
             RenderingQueueColor ModifiedColor;
         };
-
 
         // popups
         struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfacePushButton
@@ -2514,11 +2513,11 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
 }
 
 // ImmediateUserInterfaceCheckbox
-ImmediateUserInterfaceCheckbox::ImmediateUserInterfaceCheckbox(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
+ImmediateUserInterfaceRadioButton::ImmediateUserInterfaceRadioButton(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
 
-ImmediateUserInterfaceCheckbox::~ImmediateUserInterfaceCheckbox(){}
+ImmediateUserInterfaceRadioButton::~ImmediateUserInterfaceRadioButton(){}
 
-void ImmediateUserInterfaceCheckbox::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceRadioButton::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
@@ -2526,7 +2525,7 @@ void ImmediateUserInterfaceCheckbox::layout(ImmediateUserInterfaceContextLayer* 
         State.BoundingBox.Min,
         State.BoundingBox.Min + _Context->m_Style.get_font_size());
 }
-void ImmediateUserInterfaceCheckbox::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceRadioButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
@@ -2562,31 +2561,43 @@ void ImmediateUserInterfaceCheckbox::render(ImmediateUserInterfaceContextLayer* 
     // render tick
     if(Checked != nullptr && (*Checked))
     {
-        auto start = gs_vec2f(
-            State.BoundingBox.center().x,
-            State.BoundingBox.center().y + State.BoundingBox.height() * 0.5f * 0.5f);
+        if(State.Settings & ImmediateUserInterfaceRadioButtonSettings_::ImmediateUserInterfaceRadioButtonSettings_DrawAsRadioButton)
+        {
+            auto start = gs_vec2f(
+                State.BoundingBox.center().x,
+                State.BoundingBox.center().y + State.BoundingBox.height() * 0.5f * 0.5f);
 
-        _Context->m_Renderer->push_line(
-            start,
-            gs_vec2f(
-                State.BoundingBox.center().x - State.BoundingBox.width() * 0.5f * 0.7f,
-                State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.25f),
-            _Context->m_Style.get_frames_width(),
+            _Context->m_Renderer->push_line(
+                start,
+                gs_vec2f(
+                    State.BoundingBox.center().x - State.BoundingBox.width() * 0.5f * 0.7f,
+                    State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.25f),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+            _Context->m_Renderer->push_line(
+                start,
+                gs_vec2f(
+                    State.BoundingBox.center().x + State.BoundingBox.width() * 0.5f * 0.7f,
+                    State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.9f),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+        else
+        {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 3.f,
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 3.f,
+            _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-        _Context->m_Renderer->push_line(
-            start,
-            gs_vec2f(
-                State.BoundingBox.center().x + State.BoundingBox.width() * 0.5f * 0.7f,
-                State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.9f),
-            _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
     }
 }
 
-bool ImmediateUserInterfaceCheckbox::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceRadioButton::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
 
@@ -4397,6 +4408,10 @@ void ImmediateUserInterfaceContextLayer::frame_render()
 
 void ImmediateUserInterfaceContextLayer::frame_finish()
 {
+    // process controllers
+    for(auto& controller : m_Controllers)
+        controller->frame_finish(this);
+
     // save state
     bool allMouseButtonsAreReleased = true;
 
@@ -4442,9 +4457,6 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     }
 
     GS_ASSERT(m_NodesRenderingStack.empty());
-
-    for(auto& controller : m_Controllers)
-        controller->frame_finish(this);
 
     // rendering
     m_NodesRenderingCache = m_NodesRenderingList;
@@ -4597,15 +4609,20 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::radio_button(const std::string& _ID, bool* Checked)
+bool ImmediateUserInterfaceContextLayer::radio_button(
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings,
+    bool*                                     _Checked)
 {
-    if(begin_node<ImmediateUserInterfaceCheckbox>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    ImmediateUserInterfaceNodeSettings settings = _Settings;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
+
+    if(begin_node<ImmediateUserInterfaceRadioButton>(_ID, settings))
     {
-        ImmediateUserInterfaceCheckbox* widget =  get_rendering_stack_top<ImmediateUserInterfaceCheckbox>();
-        widget->Checked = Checked;
-        end_node<ImmediateUserInterfaceCheckbox>();
+        ImmediateUserInterfaceRadioButton* widget =  get_rendering_stack_top<ImmediateUserInterfaceRadioButton>();
+        widget->Checked = _Checked;
+        end_node<ImmediateUserInterfaceRadioButton>();
         
         return (widget->Checked != nullptr && *widget->Checked);
     }
@@ -4629,17 +4646,28 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID)
         if(begin_horizontal_stack(std::string(_ID).append("/ColorPickers")))
         {
             // gradient color modifier
-            if(begin_node<ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector>(
+            if(begin_node<ImmediateUserInterfaceColorPickerGradientColorModifier>(
                 std::string(_ID).append("/ColorPickers/GradientColorModifier"),
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 colorPicker->GradientSurfaceColorModifier =
-                    get_rendering_stack_top<ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector>();
+                    get_rendering_stack_top<ImmediateUserInterfaceColorPickerGradientColorModifier>();
 
                 if(colorPicker->GradientColorSelector != nullptr)
                     colorPicker->GradientSurfaceColorModifier->BaseColor = colorPicker->GradientColorSelector->Color;
 
-                end_node<ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector>();
+                end_node<ImmediateUserInterfaceColorPickerGradientColorModifier>();
+            }
+
+            // spacer
+            if(begin_node<ImmediateUserInterfaceNode>(
+                std::string(_ID).append("/ColorPickers/Spacer"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.MinimumSize = gs_vec2f(32.f, 64.f);
+                get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.MaximumSize = gs_vec2f(32.f, 32.f);
+
+                end_node<ImmediateUserInterfaceNode>();
             }
 
             // gradient color selector
