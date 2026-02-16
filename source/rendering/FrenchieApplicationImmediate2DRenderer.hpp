@@ -609,16 +609,16 @@ namespace Frenchie
                 const RenderingQueueColor& _Color);
 
             // rendering queue data
-            std::shared_ptr<RenderingQueue>   m_RenderingQueue        {nullptr};
-            gs_2dboxf                         m_RenderingQueueViewport{gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<RenderingQueueColor>  m_RenderingQueueClearColors;
-            std::vector<gs_2dboxf>            m_RenderingQueueClippingBoxes;
-            std::vector<RenderingQueueVertex> m_RenderingQueueMeshVertexes;
-            float                             m_RenderingQueueMinimumLineWidth{4.f};
-            std::vector<int>                  m_RenderingQueueMeshVertexesIndexes;
+            std::shared_ptr<RenderingQueue>   m_RenderingQueue                   {nullptr};
+            gs_2dboxf                         m_RenderingQueueViewport           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<RenderingQueueColor>  m_RenderingQueueClearColors        {std::vector<RenderingQueueColor>()};
+            std::vector<gs_2dboxf>            m_RenderingQueueClippingBoxes      {std::vector<gs_2dboxf>()};
+            std::vector<RenderingQueueVertex> m_RenderingQueueMeshVertexes       {std::vector<RenderingQueueVertex>()};
+            std::vector<int>                  m_RenderingQueueMeshVertexesIndexes{std::vector<int>()};
+            float                             m_RenderingQueueMinimumLineWidth   {4.f};
 
             // path building data
-            Immediate2DRendererPathBuilder    m_PathBuilder{Immediate2DRendererPathBuilder(8.f)};
+            Immediate2DRendererPathBuilder    m_PathBuilder                      {Immediate2DRendererPathBuilder(8.f)};
         };
     }
 }
