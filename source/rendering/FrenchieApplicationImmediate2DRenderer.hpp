@@ -614,7 +614,7 @@ namespace Frenchie
             std::vector<RenderingQueueColor>  m_RenderingQueueClearColors;
             std::vector<gs_2dboxf>            m_RenderingQueueClippingBoxes;
             std::vector<RenderingQueueVertex> m_RenderingQueueMeshVertexes;
-            float                             m_RenderingQueueMinimumLineWidth{8.f};
+            float                             m_RenderingQueueMinimumLineWidth{4.f};
             std::vector<int>                  m_RenderingQueueMeshVertexesIndexes;
 
             // path building data

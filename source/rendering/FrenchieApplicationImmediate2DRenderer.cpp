@@ -827,6 +827,9 @@ void Immediate2DRenderer::build_line_mesh(
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
     gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * width * 0.5f;
 
+    build_arc_filled_mesh(_P1, width * 0.5f, width * 0.5f, 0.f, 360.f, _Color, _Texture, 8);
+    build_arc_filled_mesh(_P2, width * 0.5f, width * 0.5f, 0.f, 360.f, _Color, _Texture, 8);
+
     build_triangle_filled_mesh(
         _P1 - perpendicular,
         _P2 - perpendicular,
@@ -862,4 +865,24 @@ void Immediate2DRenderer::build_arc_mesh(
         p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
         build_line_mesh(p1, p2, width, _Color, m_RenderingQueue->get_default_texture());
     }
+
+    // const float angleIncrement = 360.f / 36.f;
+
+    // m_PathBuilder.begin(gs_vec2f(
+    //     _Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)),
+    //     _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle))));
+
+    // for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement)
+    // {
+    //     m_PathBuilder.line_to(gs_vec2f(
+    //         _Center.x + _MinorRadius * cos(gs_to_radians(angle)),
+    //         _Center.y + _MajorRadius * sin(gs_to_radians(angle))));
+    // }
+
+    // m_PathBuilder.build_mesh(
+    //     _Color,
+    //     m_RenderingQueue->get_default_texture(),
+    //     gs_max(_Width, m_RenderingQueueMinimumLineWidth),
+    //     m_RenderingQueueMeshVertexes,
+    //     m_RenderingQueueMeshVertexesIndexes);
 }

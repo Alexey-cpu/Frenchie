@@ -1131,11 +1131,10 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-                _Context->m_Renderer->push_rectangle_rounded(
+                _Context->m_Renderer->push_rectangle_rounded_filled(
                     State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
                     State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
                     _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_frames_width(),
                     _Context->m_Hierarchy.get_parent(this) ?
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
@@ -2522,6 +2521,47 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
+    // auxiliary lambdas
+    auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
+    {
+        if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
+            return RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255);
+
+        return closeButtonBox.contains(_Event.CursorPosition) ?
+            RenderingQueueGraphicsApi::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
+            RenderingQueueGraphicsApi::construct_rgba_color(64, 0, 0, 255);
+    };
+
+    auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box, const ImmedidateUserInterfaceEvent& _Event)
+    {
+        gs_2dboxf closeButtonBox = gs_2dboxf(
+            _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
+            _Box.Max - _Context->m_Style.get_frames_width() * 2.f);
+
+        _Context->m_Renderer->push_arc_filled(
+            closeButtonBox.center(),
+            closeButtonBox.size().x,
+            closeButtonBox.size().y,
+            0.f,
+            360.f,
+            close_button_color(closeButtonBox, _Event),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_line(
+            closeButtonBox.Min + gs_vec2f(+4.f, +4.f),
+            closeButtonBox.Max - gs_vec2f(+4.f, +4.f),
+            4.f,
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_line(
+            gs_vec2f(closeButtonBox.Max.x, closeButtonBox.Min.y) + gs_vec2f(-4.f, +4.f),
+            gs_vec2f(closeButtonBox.Min.x, closeButtonBox.Max.y) + gs_vec2f(+4.f, -4.f),
+            4.f,
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    };
+
     // content background and outline frame
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min,
@@ -2543,19 +2583,8 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         this,
 
         // render self and child frames
-        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
+        [this, &render_close_button](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
-            // auxiliary lambdas
-            auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
-            {
-                if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
-                    return RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255);
-
-                return closeButtonBox.contains(_Event.CursorPosition) ?
-                    RenderingQueueGraphicsApi::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-                    RenderingQueueGraphicsApi::construct_rgba_color(64, 0, 0, 255);
-            };
-
             // construct events
             ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
 
@@ -2591,12 +2620,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) - _FrameBox.height() / 4.f,
                         gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) + _FrameBox.height() / 4.f);
 
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        closeButtonBox.Min,
-                        closeButtonBox.Max,
-                        _Context->m_Style.get_frames_radius(),
-                        close_button_color(closeButtonBox, event),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    render_close_button(_Context, closeButtonBox, event);
 
                     *_Window->Opened = !(closeButtonBox.contains(event.CursorPosition) && event.MouseClicked.has_value());
                 }
@@ -2640,12 +2664,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                             gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) - _Frame.height() / 4.f,
                             gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) + _Frame.height() / 4.f);
 
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            closeButtonBox.Min,
-                            closeButtonBox.Max,
-                            _Context->m_Style.get_frames_radius(),
-                            close_button_color(closeButtonBox, event),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                        render_close_button(_Context, closeButtonBox, event);
 
                         *_Window->Opened = !(closeButtonBox.contains(event.CursorPosition) && event.MouseClicked.has_value());
                     }
