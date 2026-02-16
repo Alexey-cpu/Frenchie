@@ -15,9 +15,9 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    renderer_test();
+    //renderer_test();
     
-    //windows_test();   
+    windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
@@ -231,11 +231,11 @@ void ImmediateUserInterfaceTestLayer::menu_test()
             if(m_ImmediateUserInterface->begin_menu("Menu-2"))
             {
                 static bool checked = false;
-                m_ImmediateUserInterface->radio_button("Checkbox-1", &checked);
+                m_ImmediateUserInterface->radio_button("Checkbox-1", ImmediateUserInterfaceRadioButtonSettings_::ImmediateUserInterfaceRadioButtonSettings_DrawAsCheckBox, &checked);
 
                 m_ImmediateUserInterface->menu_action("Action-4");
 
-                m_ImmediateUserInterface->radio_button("Checkbox-2", &checked);
+                m_ImmediateUserInterface->radio_button("Checkbox-2", ImmediateUserInterfaceRadioButtonSettings_::ImmediateUserInterfaceRadioButtonSettings_DrawAsRadioButton, &checked);
                 m_ImmediateUserInterface->menu_action("Action-5");
                 m_ImmediateUserInterface->menu_action("Action-6");
                 m_ImmediateUserInterface->menu_action("Action-7");

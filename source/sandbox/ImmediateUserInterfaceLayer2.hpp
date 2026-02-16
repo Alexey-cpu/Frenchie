@@ -80,6 +80,14 @@ namespace Frenchie
                 ImmediateUserInterfaceNodeSettings_Resizable,
         };
 
+        enum ImmediateUserInterfaceContextSettings_ : int
+        {
+            // docking
+            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
+        };
+
         enum ImmediateUserInterfaceScrollAreaSettings_ : int
         {
             ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
@@ -98,6 +106,12 @@ namespace Frenchie
                 ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar,
         };
 
+        enum ImmediateUserInterfaceRadioButtonSettings_ : int
+        {
+            ImmediateUserInterfaceRadioButtonSettings_DrawAsCheckBox    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceRadioButtonSettings_DrawAsRadioButton = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2
+        };
+
         enum ImmediateUserInterfaceLayoutAlignmentSettings_ : int
         {
             ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 9,
@@ -111,14 +125,6 @@ namespace Frenchie
             ImmediateUserInterfaceLayoutAlignmentSettings_Defaults =
                 ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
                 ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter,
-        };
-
-        enum ImmediateUserInterfaceContextSettings_ : int
-        {
-            // docking
-            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
         };
 
         // mouse hover
@@ -413,11 +419,11 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceCheckbox : public ImmediateUserInterfaceWidget
+        struct ImmediateUserInterfaceRadioButton : public ImmediateUserInterfaceWidget
         {
         
-            ImmediateUserInterfaceCheckbox(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceCheckbox();
+            ImmediateUserInterfaceRadioButton(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceRadioButton();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -426,7 +432,7 @@ namespace Frenchie
         };
 
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
-        struct ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector;
+        struct ImmediateUserInterfaceColorPickerGradientColorModifier;
 
         struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
         {
@@ -435,7 +441,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceColorPicker(){}
 
             ImmediateUserInterfaceColorPickerGradientColorSelector*        GradientColorSelector        = nullptr;
-            ImmediateUserInterfaceColorPickerGradientSurfaceColorSelector* GradientSurfaceColorModifier = nullptr;
+            ImmediateUserInterfaceColorPickerGradientColorModifier* GradientSurfaceColorModifier = nullptr;
         };
 
         // popups
@@ -511,46 +517,31 @@ namespace Frenchie
             mutable std::vector<int>                                                              Entries;
             mutable std::vector<ImmediateUserInterfaceNode*>                                      Singletons;
             mutable std::vector<ImmediateUserInterfaceNode*>                                      Sorted;
-            mutable std::map<const ImmediateUserInterfaceNode*, int>                              RenderingIndexesCache;
+            //mutable std::map<const ImmediateUserInterfaceNode*, int>                              RenderingIndexesCache;
             mutable std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> GetParent;
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const
             {
-                if(_Node == nullptr || RenderingIndexesCache.empty())
-                    return Sorted.end();
-
-                auto iterator = RenderingIndexesCache.find(_Node);
-
-                if(iterator == RenderingIndexesCache.end())
-                    return Sorted.end();
-
-                if( iterator->second          >= (int)Indexes.size() ||
-                    Indexes[iterator->second] >= (int)Sorted.size())
+                if( _Node == nullptr                                            ||
+                    _Node->State.RenderingIndex          >= (int)Indexes.size() ||
+                    Indexes[_Node->State.RenderingIndex] >= (int)Sorted.size())
                 {
                     return Sorted.end();
                 }
 
-                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[iterator->second];
+                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex];
             }
 
             std::vector<ImmediateUserInterfaceNode*>::iterator end(const ImmediateUserInterfaceNode* _Node) const
             {
-                if(_Node == nullptr || RenderingIndexesCache.empty())
-                    return Sorted.end();
-
-                auto iterator = RenderingIndexesCache.find(_Node);
-
-                if(iterator == RenderingIndexesCache.end())
-                    return Sorted.end();
-
-                if(_Node == nullptr                                      ||
-                    iterator->second + 1          >= (int)Indexes.size() ||
-                    Indexes[iterator->second + 1] >= (int)Sorted.size())
+                if(_Node == nullptr                                                 ||
+                    _Node->State.RenderingIndex + 1          >= (int)Indexes.size() ||
+                    Indexes[_Node->State.RenderingIndex + 1] >= (int)Sorted.size())
                 {
                     return Sorted.end();
                 }
 
-                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[iterator->second + 1];
+                return Sorted.empty() ? Sorted.end() : Sorted.begin() + Indexes[_Node->State.RenderingIndex + 1];
             }
 
             int size(const ImmediateUserInterfaceNode* _Node) const
@@ -587,7 +578,7 @@ namespace Frenchie
                     Indexes[i] = 0;
                     Sorted [i] = nullptr;
 
-                    RenderingIndexesCache[_Nodes[i]] = _Nodes[i]->State.RenderingIndex;
+                    //RenderingIndexesCache[_Nodes[i]] = _Nodes[i]->State.RenderingIndex;
 
                     if(get_parent(_Nodes[i]) == nullptr)
                         Singletons.push_back(_Nodes[i]);
@@ -832,7 +823,12 @@ namespace Frenchie
 
             // widgets
             bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
-            bool radio_button(const std::string& _ID, bool* Checked = nullptr);
+            
+            bool radio_button(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceRadioButtonSettings_::ImmediateUserInterfaceRadioButtonSettings_DrawAsCheckBox,
+                bool*                                     _Checked  = nullptr);
+            
             void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
 
