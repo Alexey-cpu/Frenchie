@@ -624,11 +624,11 @@ void Immediate2DRenderer::push_rectangle_rounded(
 }
 
 void Immediate2DRenderer::build_triangle_filled_mesh(
-    const gs_vec2f&                    _P1,
-    const gs_vec2f&                    _P2,
-    const gs_vec2f&                    _P3,
-    const RenderingQueueColor&         _Color,
-    const RenderingQueueTexture&       _Texture)
+    const gs_vec2f&              _P1,
+    const gs_vec2f&              _P2,
+    const gs_vec2f&              _P3,
+    const RenderingQueueColor&   _Color,
+    const RenderingQueueTexture& _Texture)
 {
     const int size = (int)m_RenderingQueueMeshVertexes.size();
 
@@ -662,52 +662,61 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
     const RenderingQueueTexture& _Texture)
 {
     const int      size   = (int)m_RenderingQueueMeshVertexes.size();
-    const gs_vec3f point1 = gs_vec3f(_Min.x, _Min.y, 0.f);
-    const gs_vec3f point2 = gs_vec3f(_Max.x, _Min.y, 0.f);
-    const gs_vec3f point3 = gs_vec3f(_Max.x, _Max.y, 0.f);
-    const gs_vec3f point4 = gs_vec3f(_Min.x, _Max.y, 0.f);
+    const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
+    const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
+    const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, 0.f);
+    const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, 0.f);
+
+    const gs_vec2f _MinUV = gs_vec2f(0.f, 0.f);
+    const gs_vec2f _MaxUV = gs_vec2f(1.f, 1.f);
+
+    const gs_vec3f _UV1 = gs_vec3f(_MinUV.x, _MinUV.y, 0.f);
+    const gs_vec3f _UV2 = gs_vec3f(_MaxUV.x, _MinUV.y, 0.f);
+    const gs_vec3f _UV3 = gs_vec3f(_MaxUV.x, _MaxUV.y, 0.f);
+    const gs_vec3f _UV4 = gs_vec3f(_MinUV.x, _MaxUV.y, 0.f);
 
     // triangle 1
     m_RenderingQueueMeshVertexes.push_back(
         RenderingQueueGraphicsApi::construct_vertex(
-            point1,
+            _P1,
             gs_vec3f(0.f),
-            gs_vec2f(point1.x / _Texture.Width, point1.y / _Texture.Height),
+            gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
         RenderingQueueGraphicsApi::construct_vertex(
-            point2,
+            _P2,
             gs_vec3f(0.f),
-            gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
+            gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
         RenderingQueueGraphicsApi::construct_vertex(
-            point4,
+            _P4,
             gs_vec3f(0.f),
-            gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
+            gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
     // triangle 2
     m_RenderingQueueMeshVertexes.push_back(
         RenderingQueueGraphicsApi::construct_vertex(
-            point2,
+            _P2,
             gs_vec3f(0.f),
-            gs_vec2f(point2.x / _Texture.Width, point2.y / _Texture.Height),
+            gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
         RenderingQueueGraphicsApi::construct_vertex(
-            point3, gs_vec3f(0.f),
-            gs_vec2f(point3.x / _Texture.Width, point3.y / _Texture.Height),
+            _P3,
+            gs_vec3f(0.f),
+            gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
     m_RenderingQueueMeshVertexes.push_back(
         RenderingQueueGraphicsApi::construct_vertex(
-            point4,
+            _P4,
             gs_vec3f(0.f),
-            gs_vec2f(point4.x / _Texture.Width, point4.y / _Texture.Height),
+            gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
     for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
