@@ -409,6 +409,15 @@ namespace Frenchie
                 const gs_mat4f&              _Transform = gs_mat4f(1.f),
                 const RenderingQueueTexture& _Texture   = RenderingQueueTexture());
 
+            void push_rectangle_gradient_mesh(
+                const gs_vec2f&            _Min,
+                const gs_vec2f&            _Max,
+                const RenderingQueueColor& _Color1,
+                const RenderingQueueColor& _Color2,
+                const RenderingQueueColor& _Color3,
+                const RenderingQueueColor& _Color4,
+                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+
             void push_rectangle_rounded_filled(
                 const gs_vec2f&            _Min,
                 const gs_vec2f&            _Max,
@@ -581,6 +590,14 @@ namespace Frenchie
                 const gs_vec2f&            _MinUV,
                 const gs_vec2f&            _MaxUV,
                 const RenderingQueueColor& _Color);
+
+            void build_rectangle_gradient_mesh(
+                const gs_vec2f&            _Min,
+                const gs_vec2f&            _Max,
+                const RenderingQueueColor& _Color1,
+                const RenderingQueueColor& _Color2,
+                const RenderingQueueColor& _Color3,
+                const RenderingQueueColor& _Color4);
 
             void build_arc_filled_mesh(
                 const gs_vec2f&              _Center,

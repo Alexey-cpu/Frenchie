@@ -324,6 +324,22 @@ void Immediate2DRenderer::push_rectangle_filled(
     push_rendering_command(!_Texture.is_null() ? _Texture : m_RenderingQueue->get_default_texture(), _Color, _Transform);
 }
 
+void Immediate2DRenderer::push_rectangle_gradient_mesh(
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const RenderingQueueColor& _Color1,
+    const RenderingQueueColor& _Color2,
+    const RenderingQueueColor& _Color3,
+    const RenderingQueueColor& _Color4,
+    const gs_mat4f&            _Transform)
+{
+    if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
+        return;
+
+    build_rectangle_gradient_mesh(_Min, _Max, _Color1, _Color2, _Color3, _Color4);
+    push_rendering_command(_Transform);
+}
+
 void Immediate2DRenderer::push_rectangle_rounded_filled(
     const gs_vec2f&            _Min,
     const gs_vec2f&            _Max,
@@ -785,6 +801,69 @@ void Immediate2DRenderer::build_rectangle_filled_mesh(
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
+
+    for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
+        m_RenderingQueueMeshVertexesIndexes.push_back(i);
+}
+
+void Immediate2DRenderer::build_rectangle_gradient_mesh(
+    const gs_vec2f&            _Min,
+    const gs_vec2f&            _Max,
+    const RenderingQueueColor& _Color1,
+    const RenderingQueueColor& _Color2,
+    const RenderingQueueColor& _Color3,
+    const RenderingQueueColor& _Color4)
+{
+    const int size = (int)m_RenderingQueueMeshVertexes.size();
+
+    const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
+    const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
+    const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, 0.f);
+    const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, 0.f);
+
+    // triangle 1
+    m_RenderingQueueMeshVertexes.push_back(
+        RenderingQueueGraphicsApi::construct_vertex(
+            _P1,
+            gs_vec3f(0.f),
+            gs_vec2f(0.f),
+            _Color1));
+
+    m_RenderingQueueMeshVertexes.push_back(
+        RenderingQueueGraphicsApi::construct_vertex(
+            _P2,
+            gs_vec3f(0.f),
+            gs_vec2f(0.f),
+            _Color2));
+
+    m_RenderingQueueMeshVertexes.push_back(
+        RenderingQueueGraphicsApi::construct_vertex(
+            _P4,
+            gs_vec3f(0.f),
+            gs_vec2f(0.f),
+            _Color4));
+
+    // triangle 2
+    m_RenderingQueueMeshVertexes.push_back(
+        RenderingQueueGraphicsApi::construct_vertex(
+            _P2,
+            gs_vec3f(0.f),
+            gs_vec2f(0.f),
+            _Color2));
+
+    m_RenderingQueueMeshVertexes.push_back(
+        RenderingQueueGraphicsApi::construct_vertex(
+            _P3,
+            gs_vec3f(0.f),
+            gs_vec2f(0.f),
+            _Color3));
+
+    m_RenderingQueueMeshVertexes.push_back(
+        RenderingQueueGraphicsApi::construct_vertex(
+            _P4,
+            gs_vec3f(0.f),
+            gs_vec2f(0.f),
+            _Color4));
 
     for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
         m_RenderingQueueMeshVertexesIndexes.push_back(i);
