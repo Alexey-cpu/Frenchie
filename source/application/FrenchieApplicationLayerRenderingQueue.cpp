@@ -375,6 +375,7 @@ void RenderingQueue::frame_render()
     // clear commands queue
     m_Commands.clear();
 
+    // clean-up
     RenderingQueueGraphicsApi::disable(
         RenderingQueueGraphicsApiHints_::RenderingQueueGraphicsApiHints_Blending    |
         RenderingQueueGraphicsApiHints_::RenderingQueueGraphicsApiHints_DepthTest   |
