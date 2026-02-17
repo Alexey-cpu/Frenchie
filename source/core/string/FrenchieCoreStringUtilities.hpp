@@ -1,5 +1,8 @@
 #pragma once
 
+// STL
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -46,6 +49,25 @@ namespace Frenchie
             // from UTF-8
             std::u16string convert_utf8_to_utf16(const std::string&);
             std::u32string convert_utf8_to_utf32(const std::string&);
+
+            // UTF-8 string formatting
+            template<typename ... Args>
+            std::string format(const std::string& _Format, Args... _Args)
+            {
+                // identify size
+                int size = snprintf(nullptr, 0, _Format.c_str(), _Args ...);
+                
+                if(size <= 0)
+                    return _Format;
+
+                // allocate buffer
+                std::string buffer;
+                buffer.resize(size);
+
+                // print result
+                snprintf(buffer.data(), size + 1, _Format.c_str(), _Args ...);
+                return buffer;
+            }
         }
     }
 }

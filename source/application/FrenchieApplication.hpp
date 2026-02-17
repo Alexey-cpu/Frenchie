@@ -35,8 +35,6 @@ namespace Frenchie
             bool                                           DoubleClicked{false};
             std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
             std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
-
-            
         };
 
         struct ApplicationMouseCursor
@@ -64,6 +62,23 @@ namespace Frenchie
         struct ApplicationWindow
         {
             bool Focused {false};
+        };
+
+        struct ApplicationKey
+        {
+            enum Key : int
+            {
+                ApplicationKey_None,
+            };
+
+            int                                            Clicks       {0    };
+            bool                                           Down         {false};
+            bool                                           Hold         {false};
+            bool                                           Pressed      {false};
+            bool                                           Released     {false};
+            bool                                           Clicked      {false};
+            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
+            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
         };
 
         struct ApplicationInput

@@ -8,7 +8,7 @@
 
 using namespace Frenchie::Application;
 
-bool RenderingQueueGraphicsApi::load(Loader _Loader)
+bool RenderingQueueGraphicsApi::awake(Loader _Loader)
 {
     return gladLoadGLLoader((GLADloadproc)_Loader);
 }

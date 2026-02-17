@@ -106,10 +106,11 @@ namespace Frenchie
                 ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar,
         };
 
-        enum ImmediateUserInterfaceRadioButtonSettings_ : int
+        enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
-            ImmediateUserInterfaceRadioButtonSettings_DrawAsCheckBox    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceRadioButtonSettings_DrawAsRadioButton = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2
+            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3
         };
 
         enum ImmediateUserInterfaceLayoutAlignmentSettings_ : int
@@ -407,8 +408,6 @@ namespace Frenchie
             ImmediateUserInterfaceWidget(const std::string& _Name);
             virtual ~ImmediateUserInterfaceWidget();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            gs_vec2f Size = gs_vec2f(256.f, 128.f);
         };
 
         struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
@@ -419,16 +418,28 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceRadioButton : public ImmediateUserInterfaceWidget
+        struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceWidget
         {
-        
-            ImmediateUserInterfaceRadioButton(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceRadioButton();
+        public:
+            ImmediateUserInterfaceCheckButton(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceCheckButton();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
 
             bool* Checked = nullptr;
+        };
+
+        struct ImmediateUserInterfaceInputFloat : public ImmediateUserInterfaceWidget
+        {
+        public:
+            ImmediateUserInterfaceInputFloat(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceInputFloat();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            float* Value = nullptr;
         };
 
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
@@ -824,13 +835,14 @@ namespace Frenchie
             // widgets
             bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
             
-            bool radio_button(
+            bool check_button(
                 const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceRadioButtonSettings_::ImmediateUserInterfaceRadioButtonSettings_DrawAsCheckBox,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
                 bool*                                     _Checked  = nullptr);
             
             void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
+            void float_input_x1(const std::string& _ID, float* _Value = nullptr);
 
             void next_line();
 
