@@ -1,7 +1,6 @@
 // Application
 #include <FrenchieApplication.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
-#include <FrenchieApplicationRenderingBackend.hpp>
 
 // Core
 #include <FrenchieCoreSingleton.hpp>
@@ -60,8 +59,8 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     // update application input input
 
     // mouse buttons
-    for (int mouseButton = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-             mouseButton < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+    for (int mouseButton = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+             mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
              mouseButton++)
     {
         if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
@@ -105,6 +104,10 @@ void ApplicationInstance::ApplicationInstance::frame_start()
                 ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked && ++ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks >= 2;
         }        
     }
+
+    // keys
+
+    // character input
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
@@ -146,8 +149,8 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
             layer->frame_finish();
     }
 
-    for (int mouseButton = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-             mouseButton < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+    for (int mouseButton = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+             mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
              mouseButton++)
     {
         ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released      = false;
@@ -182,7 +185,6 @@ void ApplicationInstance::ApplicationInstance::quit()
 
     // execute backend
     ApplicationPlatformBackend::quit();
-    ApplicationRenderingBackend::quit();
 }
 
 bool ApplicationInstance::is_closed()

@@ -18,19 +18,19 @@ namespace Frenchie
         {
         public:
 
-            static ApplicationMouseButton::Button glfw_mouse_button_to_application_mouse_button(int _MouseButton)
+            static ApplicationPlatformBackendMouseButton::Button glfw_mouse_button_to_application_mouse_button(int _MouseButton)
             {
                 switch (_MouseButton)
                 {
                 case GLFW_MOUSE_BUTTON_LEFT:
-                    return ApplicationMouseButton::Button::ApplicationMouseButton_Left;
+                    return ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonLeft;
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    return ApplicationMouseButton::Button::ApplicationMouseButton_Right;
+                    return ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonRight;
                 case GLFW_MOUSE_BUTTON_MIDDLE:
-                    return ApplicationMouseButton::Button::ApplicationMouseButton_Middle;
+                    return ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonMiddle;
                 }
 
-                return ApplicationMouseButton::Button::ApplicationMouseButton_End;
+                return ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
             }
 
             static bool glfw_boolean_to_application_boolean(int _Boolean)
@@ -177,7 +177,7 @@ bool ApplicationPlatformBackend::awake()
     // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
 
-    // load rendering API
+    // load rendering backend
     if(!ApplicationRenderingBackend::awake((ApplicationRenderingBackend::Loader)glfwGetProcAddress))
     {
         glfwTerminate();
@@ -215,9 +215,13 @@ void ApplicationPlatformBackend::frame_finish()
 
 void ApplicationPlatformBackend::quit()
 {
+    // terminate self
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Context));
     glfwTerminate();
     m_Context = nullptr;
+
+    // terminate rendering API
+    ApplicationRenderingBackend::quit();
 }
 
 bool ApplicationPlatformBackend::is_closed()

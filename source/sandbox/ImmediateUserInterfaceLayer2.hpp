@@ -266,11 +266,11 @@ namespace Frenchie
             gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
             gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
 
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
-            Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
         };
 
         // nodes
@@ -331,11 +331,11 @@ namespace Frenchie
 
                 // mouse and keyboard input
                 // TODO: implement keyboard input !!!
-                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDown;
-                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseHold;
-                Frenchie::Core::Optional<ApplicationMouseButton::Button> MousePressed;
-                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseClicked;
-                Frenchie::Core::Optional<ApplicationMouseButton::Button> MouseDoubleClicked;
+                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
+                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
+                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
+                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
+                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
             };
 
             Data State;
