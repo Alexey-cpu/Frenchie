@@ -1,81 +1,12 @@
 #pragma once
 
-// Core
-#include <FrenchieCoreMath.hpp>
-#include <FrenchieCoreClock.hpp>
-
 // Application
 #include <FrenchieApplicationLayer.hpp>
-
-// STL
-#include <iostream>
-#include <chrono>
 
 namespace Frenchie
 {
     namespace Application
     {
-        struct ApplicationMouseButton
-        {
-            enum Button : int
-            {
-                ApplicationMouseButton_Begin,
-                ApplicationMouseButton_Left = ApplicationMouseButton_Begin,
-                ApplicationMouseButton_Right,
-                ApplicationMouseButton_Middle,
-                ApplicationMouseButton_End
-            };
-
-            int                                            Clicks       {0    };
-            bool                                           Down         {false};
-            bool                                           Hold         {false};
-            bool                                           Pressed      {false};
-            bool                                           Released     {false};
-            bool                                           Clicked      {false};
-            bool                                           DoubleClicked{false};
-            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
-            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
-        };
-
-        struct ApplicationMouseCursor
-        {
-            bool      Entered           {false};
-            gs_vec2f  Position          {gs_vec2f(0.f)};
-            gs_vec2f  MousePressPosition{gs_vec2f(0.f)};
-            gs_vec2f  DragDelta         {gs_vec2f(0.f)};
-        };
-
-        struct ApplicationWindow
-        {
-            bool Focused {false};
-        };
-
-        struct ApplicationKey
-        {
-            enum Key : int
-            {
-                ApplicationKey_None,
-                ApplicationKey_End,
-            };
-
-            int                                            Clicks       {0    };
-            bool                                           Down         {false};
-            bool                                           Hold         {false};
-            bool                                           Pressed      {false};
-            bool                                           Released     {false};
-            bool                                           Clicked      {false};
-            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
-            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
-        };
-
-        struct ApplicationInput
-        {            
-            ApplicationMouseButton MouseButtons[ApplicationMouseButton::Button::ApplicationMouseButton_End]{};
-            ApplicationMouseCursor MouseCursor {ApplicationMouseCursor()};
-            ApplicationWindow      Window      {ApplicationWindow()};
-            ApplicationKey         Keys        [ApplicationKey::Key::ApplicationKey_End]{};
-        };
-
         class ApplicationInstance
         {
         public:

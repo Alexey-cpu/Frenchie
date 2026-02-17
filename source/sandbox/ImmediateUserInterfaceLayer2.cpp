@@ -12,6 +12,10 @@
 
 using namespace Frenchie::Application;
 
+#ifdef IMMEDIATE_USER_INTERFACE_DEBUG
+
+#include <iostream>
+
 void showHierarchy(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const std::string& _Delimiter)
 {
     std::cout << _Delimiter << _Node->Hash << "\t" << _Node->State.Depth << "\t" << _Node->State.SelfThickness << "\t" << _Node->State.MaximumChildDepth << "\n";
@@ -21,6 +25,7 @@ void showHierarchy(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserIn
         showHierarchy(_Context, (*it), _Delimiter + "\t");
     }
 }
+#endif
 
 namespace Frenchie
 {
@@ -325,24 +330,24 @@ namespace Frenchie
                 event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
                 event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
 
-                for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-                        button < ApplicationMouseButton::ApplicationMouseButton_End;
+                for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+                        button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
                         button++)
                 {
-                    if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button))
-                        event.MouseDown = (ApplicationMouseButton::Button)button;
+                    if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
+                        event.MouseDown = (ApplicationPlatformBackendMouseButton::Button)button;
 
-                    if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationMouseButton::Button)button))
-                        event.MouseHold = (ApplicationMouseButton::Button)button;
+                    if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
+                        event.MouseHold = (ApplicationPlatformBackendMouseButton::Button)button;
 
-                    if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationMouseButton::Button)button))
-                        event.MousePressed = (ApplicationMouseButton::Button)button;
+                    if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
+                        event.MousePressed = (ApplicationPlatformBackendMouseButton::Button)button;
 
-                    if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationMouseButton::Button)button))
-                        event.MouseClicked = (ApplicationMouseButton::Button)button;
+                    if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+                        event.MouseClicked = (ApplicationPlatformBackendMouseButton::Button)button;
 
-                    if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
-                        event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+                    if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+                        event.MouseDoubleClicked = (ApplicationPlatformBackendMouseButton::Button)button;
                 }
 
                 return event;
@@ -3553,12 +3558,12 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
     // dock the moved window to the hovered one if all mouse buttons are released
     bool allMouseButtonsAreReleased = true;
 
-    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-            button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+    for (int button = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+            button < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
             button++)
     {
         allMouseButtonsAreReleased =
-            allMouseButtonsAreReleased && !ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button);
+            allMouseButtonsAreReleased && !ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button);
     }
 
     // compute gizmos
@@ -4540,24 +4545,24 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
     event.CursorPosition  = m_Renderer->get_cursor_postion();
     event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
 
-    for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
-             button < ApplicationMouseButton::ApplicationMouseButton_End;
+    for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+             button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
              button++)
     {
-        if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button))
-            event.MouseDown = (ApplicationMouseButton::Button)button;
+        if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseDown = (ApplicationPlatformBackendMouseButton::Button)button;
 
-        if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationMouseButton::Button)button))
-            event.MouseHold = (ApplicationMouseButton::Button)button;
+        if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseHold = (ApplicationPlatformBackendMouseButton::Button)button;
 
-        if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationMouseButton::Button)button))
-            event.MousePressed = (ApplicationMouseButton::Button)button;
+        if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MousePressed = (ApplicationPlatformBackendMouseButton::Button)button;
 
-        if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationMouseButton::Button)button))
-            event.MouseClicked = (ApplicationMouseButton::Button)button;
+        if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseClicked = (ApplicationPlatformBackendMouseButton::Button)button;
 
-        if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
-            event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
+        if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseDoubleClicked = (ApplicationPlatformBackendMouseButton::Button)button;
     }
 
     for(auto& controller : m_Controllers)
@@ -4579,12 +4584,12 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     // save state
     bool allMouseButtonsAreReleased = true;
 
-    for (int button = ApplicationMouseButton::Button::ApplicationMouseButton_Begin;
-             button < ApplicationMouseButton::Button::ApplicationMouseButton_End;
+    for (int button = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+             button < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
              button++)
     {
         allMouseButtonsAreReleased =
-            allMouseButtonsAreReleased && !ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button);
+            allMouseButtonsAreReleased && !ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button);
     }
 
     for (auto& node : m_NodesRenderingList)
