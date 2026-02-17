@@ -14,6 +14,7 @@
 
 #define GS_ASSERT assert
 #define GS_STRINGIFY(INPUT) #INPUT
+#define GS_OFFSET_OF(s,m) ((::size_t)&reinterpret_cast<char const volatile&>((((s*)0)->m)))
 
 //------------------------------------------------------------------------------------------------------------------------------------------------
 // [GENERAL]
