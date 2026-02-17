@@ -191,22 +191,22 @@ namespace Frenchie
                 Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
                 // window
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                = RenderingQueueGraphicsApi::construct_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]               = RenderingQueueGraphicsApi::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = RenderingQueueGraphicsApi::construct_rgba_color(72, 82, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                = ApplicationRenderingBackend::construct_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]               = ApplicationRenderingBackend::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = ApplicationRenderingBackend::construct_rgba_color(72, 82, 72, 255);
                 
                 // push button
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                  = RenderingQueueGraphicsApi::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]               = RenderingQueueGraphicsApi::construct_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]        = RenderingQueueGraphicsApi::construct_rgba_color(60, 72, 60, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]        = RenderingQueueGraphicsApi::construct_rgba_color(120, 128, 120, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                  = ApplicationRenderingBackend::construct_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]               = ApplicationRenderingBackend::construct_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]        = ApplicationRenderingBackend::construct_rgba_color(60, 72, 60, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]        = ApplicationRenderingBackend::construct_rgba_color(120, 128, 120, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                         = RenderingQueueGraphicsApi::construct_rgba_color(50, 50, 100, 200);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                  = RenderingQueueGraphicsApi::construct_rgba_color(100, 100, 172, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                         = ApplicationRenderingBackend::construct_rgba_color(50, 50, 100, 200);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                  = ApplicationRenderingBackend::construct_rgba_color(100, 100, 172, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                           = RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                           = ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255);
             }
 
             ~ImmedidateUserInterfaceStyle(){}
@@ -237,12 +237,12 @@ namespace Frenchie
                 return gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
             }
 
-            RenderingQueueFont get_current_font() const
+            ApplicationRenderingBackendFont get_current_font() const
             {
                 return Font;
             }
 
-            RenderingQueueColor get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
+            ApplicationRenderingBackendColor get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
             {
                 return Colors[_Color];
             }
@@ -257,8 +257,8 @@ namespace Frenchie
             float                            FontSize             = 64.f;
             float                            ScrollBarWidth       = 32.f;
             float                            PopupMenuPointerSize = 32.f;
-            std::vector<RenderingQueueColor> Colors;
-            RenderingQueueFont               Font;
+            std::vector<ApplicationRenderingBackendColor> Colors;
+            ApplicationRenderingBackendFont               Font;
         };
 
         struct ImmedidateUserInterfaceEvent

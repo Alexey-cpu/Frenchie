@@ -323,25 +323,25 @@ namespace Frenchie
                 // construct events
                 ImmedidateUserInterfaceEvent event;
                 event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
-                event.CursorDragDelta = Frenchie::Application::application()->get_window_cursor_dragdelta();
+                event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
 
                 for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
                         button < ApplicationMouseButton::ApplicationMouseButton_End;
                         button++)
                 {
-                    if(Frenchie::Application::application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+                    if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button))
                         event.MouseDown = (ApplicationMouseButton::Button)button;
 
-                    if(Frenchie::Application::application()->is_mouse_button_hold((ApplicationMouseButton::Button)button))
+                    if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationMouseButton::Button)button))
                         event.MouseHold = (ApplicationMouseButton::Button)button;
 
-                    if(Frenchie::Application::application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+                    if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationMouseButton::Button)button))
                         event.MousePressed = (ApplicationMouseButton::Button)button;
 
-                    if(Frenchie::Application::application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+                    if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationMouseButton::Button)button))
                         event.MouseClicked = (ApplicationMouseButton::Button)button;
 
-                    if(Frenchie::Application::application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+                    if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
                         event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
                 }
 
@@ -772,11 +772,11 @@ namespace Frenchie
                         auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
                         {
                             if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
-                                return RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255);
+                                return ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255);
 
                             return closeButtonBox.contains(_Event.CursorPosition) ?
-                                RenderingQueueGraphicsApi::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-                                RenderingQueueGraphicsApi::construct_rgba_color(64, 0, 0, 255);
+                                ApplicationRenderingBackend::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
+                                ApplicationRenderingBackend::construct_rgba_color(64, 0, 0, 255);
                         };
 
                         // construct events
@@ -913,8 +913,8 @@ namespace Frenchie
                     auto parent = _Context->m_Hierarchy.get_parent(this);
 
                     Position = parent != nullptr ? 
-                        gs_clamp(PreviousPosition + application()->get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), parent->State.BoundingBox.size() - State.BoundingBox.size()) :
-                            PreviousPosition + application()->get_window_cursor_dragdelta();
+                        gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), parent->State.BoundingBox.size() - State.BoundingBox.size()) :
+                            PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta();
 
                     return true;
                 }
@@ -1250,15 +1250,15 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-                RenderingQueueColor colors[7] =
+                ApplicationRenderingBackendColor colors[7] =
                 {
-                    RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 0, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 0, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 255, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 255, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 255, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255)
+                    ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(255, 255, 0, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(0, 255, 0, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(0, 255, 255, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(0, 0, 255, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(255, 0, 255, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255)
                 };
 
                 // render vertical color selector
@@ -1273,8 +1273,8 @@ namespace Frenchie
 
                 for (int i = 1; i < 7; i++)
                 {
-                    RenderingQueueColor sourceColor = colors[i-1];
-                    RenderingQueueColor targetColor = colors[i-0];
+                    ApplicationRenderingBackendColor sourceColor = colors[i-1];
+                    ApplicationRenderingBackendColor targetColor = colors[i-0];
 
                     _Context->m_Renderer->push_rectangle_gradient_mesh(
                         position,
@@ -1288,20 +1288,20 @@ namespace Frenchie
                     // calculate color
                     if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
                     {
-                        int r1 = RenderingQueueGraphicsApi::retrieve_red_component(sourceColor);
-                        int g1 = RenderingQueueGraphicsApi::retrieve_green_component(sourceColor);
-                        int b1 = RenderingQueueGraphicsApi::retrieve_blue_component(sourceColor);
+                        int r1 = ApplicationRenderingBackend::retrieve_red_component(sourceColor);
+                        int g1 = ApplicationRenderingBackend::retrieve_green_component(sourceColor);
+                        int b1 = ApplicationRenderingBackend::retrieve_blue_component(sourceColor);
 
-                        int r2 = RenderingQueueGraphicsApi::retrieve_red_component(targetColor);
-                        int g2 = RenderingQueueGraphicsApi::retrieve_green_component(targetColor);
-                        int b2 = RenderingQueueGraphicsApi::retrieve_blue_component(targetColor);
+                        int r2 = ApplicationRenderingBackend::retrieve_red_component(targetColor);
+                        int g2 = ApplicationRenderingBackend::retrieve_green_component(targetColor);
+                        int b2 = ApplicationRenderingBackend::retrieve_blue_component(targetColor);
 
                         float fraction = (slider.Min.y - position.y) / size.y;
 
-                        Color = RenderingQueueGraphicsApi::construct_rgba_color(
-                            (RenderingQueueColor)(r1 + (r2 - r1) * fraction),
-                            (RenderingQueueColor)(g1 + (g2 - g1) * fraction),
-                            (RenderingQueueColor)(b1 + (b2 - b1) * fraction),
+                        Color = ApplicationRenderingBackend::construct_rgba_color(
+                            (ApplicationRenderingBackendColor)(r1 + (r2 - r1) * fraction),
+                            (ApplicationRenderingBackendColor)(g1 + (g2 - g1) * fraction),
+                            (ApplicationRenderingBackendColor)(b1 + (b2 - b1) * fraction),
                             255);
 
                         caught = true;
@@ -1314,7 +1314,7 @@ namespace Frenchie
                 _Context->m_Renderer->push_rectangle_filled(
                     slider.Min,
                     slider.Max,
-                    RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -1343,7 +1343,7 @@ namespace Frenchie
 
             float               SliderPreviousPosition = 0.f;
             float               SliderPosition = 0.f;
-            RenderingQueueColor Color;
+            ApplicationRenderingBackendColor Color;
         };
 
         struct ImmediateUserInterfaceColorPickerGradientColorModifier : public ImmediateUserInterfaceNodePanel
@@ -1359,15 +1359,15 @@ namespace Frenchie
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
                     State.BoundingBox.Min,
                     State.BoundingBox.Max,
-                    RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255),
                     BaseColor, // this is current color
-                    RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255),
-                    RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(0, 0, 0, 255),
+                    ApplicationRenderingBackend::construct_rgba_color(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            RenderingQueueColor BaseColor;
-            RenderingQueueColor ModifiedColor;
+            ApplicationRenderingBackendColor BaseColor;
+            ApplicationRenderingBackendColor ModifiedColor;
         };
 
         // popups
@@ -1948,16 +1948,16 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
-                _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y),
+                _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f)));
             return;
         }
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
-                _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                _Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f),
+                _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y)));
             return;
         }
     
@@ -1965,14 +1965,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min,
-                _Node->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta()));
+                _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta()));
             return;
         }
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y),
+                _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y),
                 _Node->Cache.BoundingBox.Max));
             return;
         }
@@ -1980,7 +1980,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                _Node->Cache.BoundingBox.Min + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f),
+                _Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f),
                 _Node->Cache.BoundingBox.Max));
             return;
         }
@@ -1989,7 +1989,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min,
-                _Node->Cache.BoundingBox.Max + gs_vec2f(application()->get_window_cursor_dragdelta().x, 0.f)));
+                _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f)));
             return;
         }
     
@@ -1997,7 +1997,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
                 _Node->Cache.BoundingBox.Min,
-                _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, application()->get_window_cursor_dragdelta().y)));
+                _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y)));
             return;
         }
     };
@@ -2246,8 +2246,8 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {            
             movable->State.BoundingBox = gs_2dboxf(
-                movable->Cache.BoundingBox.Min + application()->get_window_cursor_dragdelta(),
-                movable->Cache.BoundingBox.Max + application()->get_window_cursor_dragdelta());
+                movable->Cache.BoundingBox.Min + ApplicationPlatformBackend::get_window_cursor_dragdelta(),
+                movable->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
             return true;
         }
     }
@@ -2824,11 +2824,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
     {
         if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
-            return RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255);
+            return ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255);
 
         return closeButtonBox.contains(_Event.CursorPosition) ?
-            RenderingQueueGraphicsApi::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-            RenderingQueueGraphicsApi::construct_rgba_color(64, 0, 0, 255);
+            ApplicationRenderingBackend::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
+            ApplicationRenderingBackend::construct_rgba_color(64, 0, 0, 255);
     };
 
     auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box, const ImmedidateUserInterfaceEvent& _Event)
@@ -3288,7 +3288,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     if(_Context == nullptr) return;
 
     // render worksapce dockarea
-    const std::string                        id       = std::string(application()->get_window_name()).append("###").append("Application");
+    const std::string                        id       = std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application");
     const ImmediateUserInterfaceNodeSettings settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(id, settings, &m_WorkspaceDockAreaOpened))
@@ -3558,7 +3558,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
             button++)
     {
         allMouseButtonsAreReleased =
-            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+            allMouseButtonsAreReleased && !ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button);
     }
 
     // compute gizmos
@@ -3653,10 +3653,10 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 dockingGizmo.Min,
                 dockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                RenderingQueueGraphicsApi::construct_rgba_color(
-                    RenderingQueueGraphicsApi::retrieve_red_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    RenderingQueueGraphicsApi::retrieve_green_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    RenderingQueueGraphicsApi::retrieve_blue_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                ApplicationRenderingBackend::construct_rgba_color(
+                    ApplicationRenderingBackend::retrieve_red_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    ApplicationRenderingBackend::retrieve_green_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    ApplicationRenderingBackend::retrieve_blue_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
@@ -4469,7 +4469,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
 {
     // launch renderer
     if(m_Renderer == nullptr)
-        m_Renderer = Frenchie::Application::application()->push_layer<Immediate2DRenderer>();
+        m_Renderer = application()->push_layer<Immediate2DRenderer>();
 
     // create hierarchy
     m_Hierarchy = ImmedidateUserInterfaceHierarchy(
@@ -4538,25 +4538,25 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
     // construct events
     ImmedidateUserInterfaceEvent event;
     event.CursorPosition  = m_Renderer->get_cursor_postion();
-    event.CursorDragDelta = Frenchie::Application::application()->get_window_cursor_dragdelta();
+    event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
 
     for (int button = ApplicationMouseButton::ApplicationMouseButton_Begin;
              button < ApplicationMouseButton::ApplicationMouseButton_End;
              button++)
     {
-        if(Frenchie::Application::application()->is_mouse_button_down((ApplicationMouseButton::Button)button))
+        if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button))
             event.MouseDown = (ApplicationMouseButton::Button)button;
 
-        if(Frenchie::Application::application()->is_mouse_button_hold((ApplicationMouseButton::Button)button))
+        if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationMouseButton::Button)button))
             event.MouseHold = (ApplicationMouseButton::Button)button;
 
-        if(Frenchie::Application::application()->is_mouse_button_pressed((ApplicationMouseButton::Button)button))
+        if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationMouseButton::Button)button))
             event.MousePressed = (ApplicationMouseButton::Button)button;
 
-        if(Frenchie::Application::application()->is_mouse_button_clicked((ApplicationMouseButton::Button)button))
+        if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationMouseButton::Button)button))
             event.MouseClicked = (ApplicationMouseButton::Button)button;
 
-        if(Frenchie::Application::application()->is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
+        if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationMouseButton::Button)button))
             event.MouseDoubleClicked = (ApplicationMouseButton::Button)button;
     }
 
@@ -4584,7 +4584,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
              button++)
     {
         allMouseButtonsAreReleased =
-            allMouseButtonsAreReleased && !application()->is_mouse_button_down((ApplicationMouseButton::Button)button);
+            allMouseButtonsAreReleased && !ApplicationPlatformBackend::is_mouse_button_down((ApplicationMouseButton::Button)button);
     }
 
     for (auto& node : m_NodesRenderingList)

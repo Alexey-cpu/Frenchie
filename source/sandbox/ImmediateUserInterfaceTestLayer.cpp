@@ -17,20 +17,20 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 {
     //renderer_test();
     
-    //windows_test();   
+    windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
-    widgets_test();
+    //widgets_test();
 
     //menu_test();
     
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate)),
         64.f,
-        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+        ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane()
         ));
@@ -38,7 +38,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("Commands ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
         64.f,
-        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+        ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 64.f)
@@ -47,7 +47,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     m_ImmediateUserInterface->m_Renderer->push_text(
         std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
         64.f,
-        RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
+        ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255),
         m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
             m_ImmediateUserInterface->m_Renderer->get_far_plane(),
             gs_vec2f(0.f, 128.f)
@@ -63,37 +63,37 @@ void ImmediateUserInterfaceTestLayer::finish()
 void ImmediateUserInterfaceTestLayer::windows_test()
 {
     m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;// |ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
     static bool opened = true;
     static std::string button;
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-1",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {
-    //     if(m_ImmediateUserInterface->begin_scrollarea(
-    //         "Window-1/ScrollArea",
-    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-    //         ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults))
-    //     {
-    //         int k = 0;
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-1",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        if(m_ImmediateUserInterface->begin_scrollarea(
+            "Window-1/ScrollArea",
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults))
+        {
+            int k = 0;
 
-    //         for(int i = 0 ; i < 1e1; i++)
-    //         {
-    //             for(int j = 0 ; j < 1e1; j++)
-    //                 m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)), gs_vec2f(512.f, 128.f));
+            for(int i = 0 ; i < 1e1; i++)
+            {
+                for(int j = 0 ; j < 1e1; j++)
+                    m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)), gs_vec2f(512.f, 128.f));
 
-    //             m_ImmediateUserInterface->next_line();
-    //         }
+                m_ImmediateUserInterface->next_line();
+            }
 
-    //         m_ImmediateUserInterface->end_scrollarea();
-    //     }
+            m_ImmediateUserInterface->end_scrollarea();
+        }
 
-    //     m_ImmediateUserInterface->end_window();
-    // }
+        m_ImmediateUserInterface->end_window();
+    }
 
     if(m_ImmediateUserInterface->begin_window(
         "Window-2",
@@ -111,37 +111,37 @@ void ImmediateUserInterfaceTestLayer::windows_test()
         m_ImmediateUserInterface->end_window();
     }
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-3",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {
-    //     m_ImmediateUserInterface->end_window();
-    // }
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-3",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-4",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {
-    //     m_ImmediateUserInterface->end_window();
-    // }
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-4",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-5",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {        
-    //     m_ImmediateUserInterface->end_window();
-    // }
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-5",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {        
+        m_ImmediateUserInterface->end_window();
+    }
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     "Window-5###Window-6",
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-    // {        
-    //     m_ImmediateUserInterface->end_window();
-    // }
+    if(m_ImmediateUserInterface->begin_window(
+        "Window-5###Window-6",
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    {        
+        m_ImmediateUserInterface->end_window();
+    }
 }
 
 void ImmediateUserInterfaceTestLayer::scrollarea_test()
@@ -301,7 +301,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     m_ImmediateUserInterface->m_Settings =
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
 
-    static float input = 0.f;
+    static float input = 120.f;
 
     if(m_ImmediateUserInterface->begin_window("Window"))
     {
