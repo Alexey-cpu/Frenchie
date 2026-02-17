@@ -35,7 +35,7 @@ namespace Frenchie
             static bool is_mouse_button_double_clicked(const ApplicationMouseButton::Button&);
 
             // setters
-            static void ApplicationPlatformBackend::set_window_name(const std::string& _Name);
+            static void set_window_name(const std::string& _Name);
 
         //protected:
             static ApplicationInput m_Input;

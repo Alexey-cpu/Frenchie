@@ -873,7 +873,7 @@ namespace Frenchie
                 if(_Context == nullptr) return;
             }
 
-            virtual void ImmediateUserInterfaceScrollAreaScrollBarSlider::render(ImmediateUserInterfaceContextLayer* _Context) override
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
@@ -899,7 +899,7 @@ namespace Frenchie
                 }
             }
 
-            virtual bool ImmediateUserInterfaceScrollAreaScrollBarSlider::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
             {
                 if(!ImmediateUserInterfaceNode::events(_Context, _Event))
                     return false;
@@ -1127,7 +1127,7 @@ namespace Frenchie
                 return true;
             }
 
-            void render(ImmediateUserInterfaceContextLayer* _Context)
+            void render(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
