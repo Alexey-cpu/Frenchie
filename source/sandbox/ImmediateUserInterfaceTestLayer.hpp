@@ -23,6 +23,7 @@ namespace Frenchie
             void horizontal_stack_test();
 
             void menu_test();
+            void widgets_test();
 
             void renderer_test();
 

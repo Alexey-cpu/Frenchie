@@ -302,7 +302,7 @@ namespace Frenchie
 
             // API loader
             // TODO: this might differ for different rendering APIs...
-            static bool load(Loader);
+            static bool awake(Loader);
 
             // viewport API
             static void set_viewport(const gs_vec2f&, const gs_vec2f&);

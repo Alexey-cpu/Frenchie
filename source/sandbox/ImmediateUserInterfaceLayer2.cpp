@@ -2456,9 +2456,8 @@ void ImmediateUserInterfaceWidget::layout(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, Size.x), gs_min(size.y, Size.y));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, Size.x), gs_max(size.y, Size.y));
-    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + Size);
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
 }
 
 // ImmediateUserInterfacePushButton
@@ -2513,57 +2512,84 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
 }
 
 // ImmediateUserInterfaceCheckbox
-ImmediateUserInterfaceRadioButton::ImmediateUserInterfaceRadioButton(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
+ImmediateUserInterfaceCheckButton::ImmediateUserInterfaceCheckButton(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
 
-ImmediateUserInterfaceRadioButton::~ImmediateUserInterfaceRadioButton(){}
+ImmediateUserInterfaceCheckButton::~ImmediateUserInterfaceCheckButton(){}
 
-void ImmediateUserInterfaceRadioButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceCheckButton::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    State.BoundingBox = gs_2dboxf(
-        State.BoundingBox.Min,
-        State.BoundingBox.Min + _Context->m_Style.get_font_size());
+    // layout checkbox
+    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+    {
+        State.BoundingBox = gs_2dboxf(
+            State.BoundingBox.Min,
+            State.BoundingBox.Min + _Context->m_Style.get_font_size());
+
+        return;
+    }
+
+    // layout radio button
+    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+    {
+        State.BoundingBox = gs_2dboxf(
+            State.BoundingBox.Min,
+            State.BoundingBox.Min + _Context->m_Style.get_font_size());
+
+        return;
+    }
+
+    // layout slider button
+    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+    {
+        State.BoundingBox = gs_2dboxf(
+            State.BoundingBox.Min,
+            State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
+
+        return;
+    }
 }
-void ImmediateUserInterfaceRadioButton::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    if(Cache.MouseDown.has_value())
+    // render checkbox
+    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
     {
+        // background
         _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
             _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
-    else
-    {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_frames_radius(),
-            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
 
-    // render tick
-    if(Checked != nullptr && (*Checked))
-    {
-        if(State.Settings & ImmediateUserInterfaceRadioButtonSettings_::ImmediateUserInterfaceRadioButtonSettings_DrawAsRadioButton)
+        if(Cache.MouseDown.has_value())
         {
-            auto start = gs_vec2f(
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+        else
+        {
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_radius(),
+                (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+
+        // tick
+        if(Checked != nullptr && (*Checked))
+        {
+            gs_vec2f start = gs_vec2f(
                 State.BoundingBox.center().x,
                 State.BoundingBox.center().y + State.BoundingBox.height() * 0.5f * 0.5f);
 
@@ -2585,19 +2611,96 @@ void ImmediateUserInterfaceRadioButton::render(ImmediateUserInterfaceContextLaye
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
         }
+
+        return;
+    }
+
+    // render radio button
+    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+    {
+        // background
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        if(Cache.MouseDown.has_value())
+        {
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
         else
         {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 3.f,
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 3.f,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_radius(),
+                (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
         }
+
+        if(Checked != nullptr && (*Checked))
+        {
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 3.f,
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 3.f,
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+
+        return;
+    }
+
+    // render slider button
+    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+    {
+        // background
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        if(Checked != nullptr && (*Checked))
+        {
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min,
+                State.BoundingBox.Max,
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Max - _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+        else
+        {
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                State.BoundingBox.Min + _Context->m_Style.get_font_size() - _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+
+        return;
     }
 }
-
-bool ImmediateUserInterfaceRadioButton::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
 
@@ -2605,6 +2708,64 @@ bool ImmediateUserInterfaceRadioButton::events(ImmediateUserInterfaceContextLaye
         *Checked = !(*Checked);
 
     return true;
+}
+
+ImmediateUserInterfaceInputFloat::ImmediateUserInterfaceInputFloat(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
+ImmediateUserInterfaceInputFloat::~ImmediateUserInterfaceInputFloat(){}
+void ImmediateUserInterfaceInputFloat::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    gs_2dboxf box = _Context->m_Renderer->calculate_bounding_box(
+        Frenchie::Core::String::format("%.12f", (Value != nullptr ? *Value : 0.f)),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font());
+
+    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + box.size() + _Context->m_Style.get_font_size());
+}
+bool ImmediateUserInterfaceInputFloat::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+{
+    if(_Context == nullptr) return false;
+
+    if(!(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+        return false;
+
+    // TODO: process input here ...
+
+    return true;
+}
+void ImmediateUserInterfaceInputFloat::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // title
+    gs_2dboxf box = _Context->m_Renderer->calculate_bounding_box(
+        Frenchie::Core::String::format("%.12f", (Value != nullptr ? *Value : 0.f)),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_current_font());
+
+    _Context->m_Renderer->push_text(
+        Frenchie::Core::String::format("%.12f", (Value != nullptr ? *Value : 0.f)),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix(
+            (float)place_in_follow(),
+            gs_vec2f(State.BoundingBox.center() - box.size() * 0.5f)));
 }
 
 // ImmediateUserInterfaceMenu
@@ -2638,7 +2799,7 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(_Child))
+    if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(_Child) || dynamic_cast<ImmediateUserInterfaceMenu*>(_Child))
         _Child->State.PushNextLine = true;
     
     if(State.Parent)
@@ -4203,7 +4364,10 @@ void setup_maximum_with(
                         _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
                         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
-                dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->Size = gs_vec2f(_MaximumWidth, size.y);
+                dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->State.BoundingBox =
+                    gs_2dboxf(
+                        dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->State.BoundingBox.Min,
+                        dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, size.y));
             }
         }
     }
@@ -4599,8 +4763,15 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        ImmediateUserInterfacePushButton* button =  get_rendering_stack_top<ImmediateUserInterfacePushButton>();
-        button->Size = _Size;
+        ImmediateUserInterfacePushButton* button = 
+            get_rendering_stack_top<ImmediateUserInterfacePushButton>();
+        
+        button->State.MinimumSize = _Size;
+        button->State.MaximumSize = _Size;
+        button->State.BoundingBox = gs_2dboxf(
+            button->State.BoundingBox.Min,
+            button->State.BoundingBox.Min + gs_clamp(_Size, button->State.MinimumSize, button->State.MaximumSize));
+        
         end_node<ImmediateUserInterfacePushButton>();
         
         return button->State.MouseClicked.has_value();
@@ -4609,7 +4780,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
     return false;
 }
 
-bool ImmediateUserInterfaceContextLayer::radio_button(
+bool ImmediateUserInterfaceContextLayer::check_button(
     const std::string&                        _ID,
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Checked)
@@ -4618,11 +4789,11 @@ bool ImmediateUserInterfaceContextLayer::radio_button(
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
 
-    if(begin_node<ImmediateUserInterfaceRadioButton>(_ID, settings))
+    if(begin_node<ImmediateUserInterfaceCheckButton>(_ID, settings))
     {
-        ImmediateUserInterfaceRadioButton* widget =  get_rendering_stack_top<ImmediateUserInterfaceRadioButton>();
+        ImmediateUserInterfaceCheckButton* widget =  get_rendering_stack_top<ImmediateUserInterfaceCheckButton>();
         widget->Checked = _Checked;
-        end_node<ImmediateUserInterfaceRadioButton>();
+        end_node<ImmediateUserInterfaceCheckButton>();
         
         return (widget->Checked != nullptr && *widget->Checked);
     }
@@ -4707,6 +4878,18 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
     }
 
     return false;
+}
+
+void ImmediateUserInterfaceContextLayer::float_input_x1(const std::string& _ID, float* _Value)
+{
+    if(begin_node<ImmediateUserInterfaceInputFloat>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        get_rendering_stack_top<ImmediateUserInterfaceInputFloat>()->Value = _Value;
+
+        end_node<ImmediateUserInterfaceInputFloat>();
+    }
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)

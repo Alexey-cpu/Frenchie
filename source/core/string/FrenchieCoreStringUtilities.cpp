@@ -421,3 +421,8 @@ std::u32string Frenchie::Core::String::convert_utf8_to_utf32(const std::string& 
     utf8::unchecked::utf8to32(_Input.begin(), _Input.end(), std::back_inserter(result));
     return result;
 }
+
+template<> std::string Frenchie::Core::String::format(const std::string& _Format)
+{
+    return _Format;
+}

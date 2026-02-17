@@ -112,13 +112,13 @@ namespace Frenchie
                 // trigger mouse release event
                 application()->m_Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Released = action == GLFW_RELEASE;
             }
+        
+            //// key callbacks
+            // void OpenGLPlatformBackendMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+            // {
+            // }
         };
     }
-}
-
-// translator functions
-void OpenGLPlatformBackendMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
 }
 
 ApplicationInstance::ApplicationInstance()
@@ -254,7 +254,7 @@ bool ApplicationInstance::awake()
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
 
     // load rendering API
-    if(!RenderingQueueGraphicsApi::load((RenderingQueueGraphicsApi::Loader)glfwGetProcAddress))
+    if(!RenderingQueueGraphicsApi::awake((RenderingQueueGraphicsApi::Loader)glfwGetProcAddress))
     {
         glfwTerminate();
         return false;
