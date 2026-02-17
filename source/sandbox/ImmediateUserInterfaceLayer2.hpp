@@ -424,7 +424,7 @@ namespace Frenchie
             ImmediateUserInterfaceCheckButton(const std::string& _Name);
             virtual ~ImmediateUserInterfaceCheckButton();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
 
             bool* Checked = nullptr;
@@ -436,7 +436,7 @@ namespace Frenchie
             ImmediateUserInterfaceInputFloat(const std::string& _Name);
             virtual ~ImmediateUserInterfaceInputFloat();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
 
             float* Value = nullptr;
