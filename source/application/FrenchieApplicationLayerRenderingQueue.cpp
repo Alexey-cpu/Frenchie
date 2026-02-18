@@ -226,7 +226,7 @@ bool RenderingQueue::allows_multiple_instances() const
 }
 
 void RenderingQueue::push_rendering_command(
-    const gs_mat4f&                                _Transform,
+    const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints)
 {
     push_rendering_command(
@@ -238,7 +238,7 @@ void RenderingQueue::push_rendering_command(
 
 void RenderingQueue::push_rendering_command(
     const ApplicationRenderingBackendTexture&                   _Texture,
-    const gs_color&                     _Color,
+    const gs_color&                                             _Color,
     const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints)
 {
@@ -280,7 +280,7 @@ void RenderingQueue::push_rendering_command(
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
-    const gs_color&                     _ClearColor,
+    const gs_color&                                             _ClearColor,
     const gs_2dboxf&                                            _ClippinBox)
 {
     m_Commands.push_back(
@@ -334,11 +334,7 @@ gs_color RenderingQueue::current_clear_color() const
             gs_rgba_color(255, 255, 255, 255);
 }
 
-gs_mat4f RenderingQueue::calculate_transform_matrix(
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+gs_mat4f RenderingQueue::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
 {
     gs_mat4f matrix(1.f);
 
@@ -347,21 +343,14 @@ gs_mat4f RenderingQueue::calculate_transform_matrix(
             gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }
 
-gs_vec2f RenderingQueue::calculate_arc_point(
-    const gs_vec2f& _Center,
-    const float&    _MinorRadius,
-    const float&    _MajorRadius,
-    const float&    _ArcAngle)
+gs_vec2f RenderingQueue::calculate_arc_point(const gs_vec2f& _Center, const float& _MinorRadius, const float& _MajorRadius, const float&    _ArcAngle)
 {
     return gs_vec2f(
         _Center.x + _MinorRadius * cos(gs_to_radians(_ArcAngle)),
         _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)));
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(
-    const std::u32string&     _Text,
-    const float&              _Size,
-    const ApplicationRenderingBackendFont& _Font)
+gs_2dboxf RenderingQueue::calculate_bounding_box(const std::u32string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
 {
     ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
 
@@ -414,35 +403,22 @@ gs_2dboxf RenderingQueue::calculate_bounding_box(
     return gs_2dboxf(min, max);
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(
-    const std::u16string&     _Text,
-    const float&              _Size,
-    const ApplicationRenderingBackendFont& _Font)
+gs_2dboxf RenderingQueue::calculate_bounding_box(const std::u16string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
 {
-    return calculate_bounding_box(
-        Frenchie::Core::String::convert_utf16_to_utf8(_Text),
-        _Size,
-        _Font
-    );
+    return calculate_bounding_box(Frenchie::Core::String::convert_utf16_to_utf8(_Text), _Size, _Font);
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(
-    const std::string&        _Text,
-    const float&              _Size,
-    const ApplicationRenderingBackendFont& _Font)
+gs_2dboxf RenderingQueue::calculate_bounding_box(const std::string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
 {
-    return calculate_bounding_box(
-        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
-        _Size,
-        _Font);
+    return calculate_bounding_box(Frenchie::Core::String::convert_utf8_to_utf32(_Text), _Size, _Font);
 }
 
 void RenderingQueue::push_triangle_filled(
-    const gs_vec2f&              _P1,
-    const gs_vec2f&              _P2,
-    const gs_vec2f&              _P3,
-    const gs_color&   _Color,
-    const gs_mat4f&              _Transform,
+    const gs_vec2f&                           _P1,
+    const gs_vec2f&                           _P2,
+    const gs_vec2f&                           _P3,
+    const gs_color&                           _Color,
+    const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     if( !current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
@@ -457,10 +433,10 @@ void RenderingQueue::push_triangle_filled(
 }
 
 void RenderingQueue::push_rectangle_filled(
-    const gs_vec2f&              _Min,
-    const gs_vec2f&              _Max,
-    const gs_color&   _Color,
-    const gs_mat4f&              _Transform,
+    const gs_vec2f&                           _Min,
+    const gs_vec2f&                           _Max,
+    const gs_color&                           _Color,
+    const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
@@ -471,13 +447,13 @@ void RenderingQueue::push_rectangle_filled(
 }
 
 void RenderingQueue::push_rectangle_gradient_mesh(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
     const gs_color& _Color1,
     const gs_color& _Color2,
     const gs_color& _Color3,
     const gs_color& _Color4,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
         return;
@@ -487,15 +463,15 @@ void RenderingQueue::push_rectangle_gradient_mesh(
 }
 
 void RenderingQueue::push_rectangle_rounded_filled(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const float&               _Radius,
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Radius,
     const gs_color& _Color,
-    const gs_mat4f&            _Transform,
-    bool                       _RoundTopLeftCorner,
-    bool                       _RoundTopRightCorner,
-    bool                       _RoundBottomRightCorner,
-    bool                       _RoundBottomLeftCorner)
+    const gs_mat4f& _Transform,
+    bool            _RoundTopLeftCorner,
+    bool            _RoundTopRightCorner,
+    bool            _RoundBottomRightCorner,
+    bool            _RoundBottomLeftCorner)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
         return;
@@ -552,21 +528,21 @@ void RenderingQueue::push_rectangle_rounded_filled(
 }
 
 void RenderingQueue::push_text(
-    const std::u32string&      _Text,
-    const float&               _Size,
-    const gs_color& _Color,
-    const gs_mat4f&            _Transform,
-    const ApplicationRenderingBackendFont&  _Font)
+    const std::u32string&                  _Text,
+    const float&                           _Size,
+    const gs_color&                        _Color,
+    const gs_mat4f&                        _Transform,
+    const ApplicationRenderingBackendFont& _Font)
 {
     push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
 }
 
 void RenderingQueue::push_text(
-    const std::u16string&      _Text,
-    const float&               _Size,
-    const gs_color& _Color,
-    const gs_mat4f&            _Transform,
-    const ApplicationRenderingBackendFont&  _Font)
+    const std::u16string&                  _Text,
+    const float&                           _Size,
+    const gs_color&                        _Color,
+    const gs_mat4f&                        _Transform,
+    const ApplicationRenderingBackendFont& _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf8_to_utf32(
@@ -578,11 +554,11 @@ void RenderingQueue::push_text(
 }
 
 void RenderingQueue::push_text(
-    const std::string&         _Text,
-    const float&               _Size,
-    const gs_color& _Color,
-    const gs_mat4f&            _Transform,
-    const ApplicationRenderingBackendFont&  _Font)
+    const std::string&                     _Text,
+    const float&                           _Size,
+    const gs_color&                        _Color,
+    const gs_mat4f&                        _Transform,
+    const ApplicationRenderingBackendFont& _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
@@ -593,13 +569,13 @@ void RenderingQueue::push_text(
 }
 
 void RenderingQueue::push_arc_filled(
-    const gs_vec2f&              _Center,
-    const float&                 _MinorRadius,
-    const float&                 _MajorRadius,
-    const float&                 _SourceAngle,
-    const float&                 _TargetAngle,
-    const gs_color&   _Color,
-    const gs_mat4f&              _Transform,
+    const gs_vec2f&                           _Center,
+    const float&                              _MinorRadius,
+    const float&                              _MajorRadius,
+    const float&                              _SourceAngle,
+    const float&                              _TargetAngle,
+    const gs_color&                           _Color,
+    const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     // check that we are within viewport
@@ -627,11 +603,11 @@ void RenderingQueue::push_arc_filled(
 }
 
 void RenderingQueue::push_line(
-    const gs_vec2f&            _P1,
-    const gs_vec2f&            _P2,
-    const float&               _Width,
+    const gs_vec2f& _P1,
+    const gs_vec2f& _P2,
+    const float&    _Width,
     const gs_color& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
         !current_clipping_box().contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)))
@@ -650,14 +626,14 @@ void RenderingQueue::push_line(
 }
 
 void RenderingQueue::push_arc(
-    const gs_vec2f&            _Center,
-    const float&               _MinorRadius,
-    const float&               _MajorRadius,
-    const float&               _SourceAngle,
-    const float&               _TargetAngle,
-    const float&               _Width,
+    const gs_vec2f& _Center,
+    const float&    _MinorRadius,
+    const float&    _MajorRadius,
+    const float&    _SourceAngle,
+    const float&    _TargetAngle,
+    const float&    _Width,
     const gs_color& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f& _Transform)
 {
     // check that we are within viewport
     if(!current_clipping_box().overlaps(
@@ -673,12 +649,12 @@ void RenderingQueue::push_arc(
 }
 
 void RenderingQueue::push_triangle(
-    const gs_vec2f&            _P1,
-    const gs_vec2f&            _P2,
-    const gs_vec2f&            _P3,
-    const float&               _Width,
+    const gs_vec2f& _P1,
+    const gs_vec2f& _P2,
+    const gs_vec2f& _P3,
+    const float&    _Width,
     const gs_color& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f& _Transform)
 {
     // check if we are within viewport
     if( !current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
@@ -707,11 +683,11 @@ void RenderingQueue::push_triangle(
 }
 
 void RenderingQueue::push_rectangle(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const float&               _Width,
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Width,
     const gs_color& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().overlaps(
         gs_2dboxf(
@@ -741,12 +717,12 @@ void RenderingQueue::push_rectangle(
 }
 
 void RenderingQueue::push_rectangle_rounded(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const float&               _Radius,
-    const float&               _Width,
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Radius,
+    const float&    _Width,
     const gs_color& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().overlaps(
         gs_2dboxf(
@@ -786,10 +762,10 @@ void RenderingQueue::push_rectangle_rounded(
 }
 
 void RenderingQueue::build_triangle_filled_mesh(
-    const gs_vec2f&              _P1,
-    const gs_vec2f&              _P2,
-    const gs_vec2f&              _P3,
-    const gs_color&   _Color,
+    const gs_vec2f&                           _P1,
+    const gs_vec2f&                           _P2,
+    const gs_vec2f&                           _P3,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     const int size = (int)m_RenderingQueueMeshVertexes.size();
@@ -818,9 +794,9 @@ void RenderingQueue::build_triangle_filled_mesh(
 }
 
 void RenderingQueue::build_rectangle_filled_mesh(
-    const gs_vec2f&              _Min,
-    const gs_vec2f&              _Max,
-    const gs_color&   _Color,
+    const gs_vec2f&                           _Min,
+    const gs_vec2f&                           _Max,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     const int      size   = (int)m_RenderingQueueMeshVertexes.size();
@@ -886,10 +862,10 @@ void RenderingQueue::build_rectangle_filled_mesh(
 }
 
 void RenderingQueue::build_rectangle_filled_mesh(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const gs_vec2f&            _MinUV,
-    const gs_vec2f&            _MaxUV,
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const gs_vec2f& _MinUV,
+    const gs_vec2f& _MaxUV,
     const gs_color& _Color)
 {
     const int size = (int)m_RenderingQueueMeshVertexes.size();
@@ -953,8 +929,8 @@ void RenderingQueue::build_rectangle_filled_mesh(
 }
 
 void RenderingQueue::build_rectangle_gradient_mesh(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
     const gs_color& _Color1,
     const gs_color& _Color2,
     const gs_color& _Color3,
@@ -1016,14 +992,14 @@ void RenderingQueue::build_rectangle_gradient_mesh(
 }
 
 void RenderingQueue::build_arc_filled_mesh(
-    const gs_vec2f&              _Center,
-    const float&                 _MinorRadius,
-    const float&                 _MajorRadius,
-    const float&                 _SourceAngle,
-    const float&                 _TargetAngle,
-    const gs_color&   _Color,
+    const gs_vec2f&                           _Center,
+    const float&                              _MinorRadius,
+    const float&                              _MajorRadius,
+    const float&                              _SourceAngle,
+    const float&                              _TargetAngle,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture,
-    const int&                   _SegmentsCount)
+    const int&                                _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
@@ -1039,10 +1015,10 @@ void RenderingQueue::build_arc_filled_mesh(
 }
 
 void RenderingQueue::build_line_mesh(
-    const gs_vec2f&              _P1,
-    const gs_vec2f&              _P2,
-    const float&                 _Width,
-    const gs_color&   _Color,
+    const gs_vec2f&                           _P1,
+    const gs_vec2f&                           _P2,
+    const float&                              _Width,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     const gs_vec3f p1    = gs_vec3f(_P1.x, _P1.y, 0.f);
@@ -1071,12 +1047,12 @@ void RenderingQueue::build_line_mesh(
 }
 
 void RenderingQueue::build_arc_mesh(
-    const gs_vec2f&            _Center,
-    const float&               _MinorRadius,
-    const float&               _MajorRadius,
-    const float&               _SourceAngle,
-    const float&               _TargetAngle,
-    const float&               _Width,
+    const gs_vec2f& _Center,
+    const float&    _MinorRadius,
+    const float&    _MajorRadius,
+    const float&    _SourceAngle,
+    const float&    _TargetAngle,
+    const float&    _Width,
     const gs_color& _Color)
 {
     const float angleIncrement = 360.f / 36.f;
