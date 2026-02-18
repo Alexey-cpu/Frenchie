@@ -135,30 +135,20 @@ namespace Frenchie
 
         struct ApplicationRenderingBackendVertex final
         {
+            ApplicationRenderingBackendVertex(
+                const gs_vec3f&                         _Position = gs_vec3f(0),
+                const gs_vec3f&                         _Normal   = gs_vec3f(0),
+                const gs_vec2f&                         _UV       = gs_vec2f(0),
+                const ApplicationRenderingBackendColor& _Color    = 1) :
+                Position(_Position),
+                Normal(_Normal),
+                UV(_UV),
+                Color(_Color){}
+
             gs_vec3f                         Position{gs_vec3f(0.f, 0.f, 0.f)};
             gs_vec3f                         Normal  {gs_vec3f(0.f, 0.f, 0.f)};
             gs_vec2f                         UV      {gs_vec3f(0.f, 0.f, 0.f)};
             ApplicationRenderingBackendColor Color   {1}; // white
-        };
-
-        struct ApplicationRenderingBackendMesh final
-        {
-            ApplicationRenderingBackendMesh(
-                const unsigned int& _VBO = 0,
-                const unsigned int& _VAO = 0,
-                const unsigned int& _EBO = 0) :
-            VBO(_VBO),
-            VAO(_VAO),
-            EBO(_EBO){}
-
-            bool is_null() const
-            {
-                return VBO == 0 || VAO == 0 || EBO == 0;
-            }
-
-            unsigned int VBO{0};
-            unsigned int VAO{0};
-            unsigned int EBO{0};
         };
 
         struct ApplicationRenderingBackendGlyph
@@ -300,34 +290,24 @@ namespace Frenchie
             static void destroy_shader(const ApplicationRenderingBackendShader& _Shader);
 
             // mesh API
-            static ApplicationRenderingBackendMesh construct_mesh(
+            static void construct_mesh(
                 const ApplicationRenderingBackendVertex* _Vertexes,
                 const int&                               _VertexesCount,
+                const int&                               _VertexesOffset,
                 const int*                               _Indexes,
-                const int&                               _IndexesCount);
-            
+                const int&                               _IndexesCount,
+                const int&                               _IndexesOffset);
+
             static void begin_use_mesh(
-                const ApplicationRenderingBackendMesh&                      _Mesh,
+                const ApplicationRenderingBackendVertex*                    _Vertexes,
+                const int&                                                  _VertexesCount,
+                const int&                                                  _VertexesOffset,
+                const int*                                                  _Indexes,
+                const int&                                                  _IndexesCount,
+                const int&                                                  _IndexesOffset,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
-            static void end_use_mesh();
-
-            static void destroy_mesh(const ApplicationRenderingBackendMesh& _Mesh);
-
-            // mesh vertex API
-            static ApplicationRenderingBackendVertex construct_vertex(
-                const gs_vec3f&            _Position = gs_vec3f(0),
-                const gs_vec3f&            _Normal   = gs_vec3f(0),
-                const gs_vec2f&            _UV       = gs_vec2f(0),
-                const ApplicationRenderingBackendColor& _Color    = 1)
-            {
-                ApplicationRenderingBackendVertex vertex;
-                vertex.Position = _Position;
-                vertex.Normal   = _Normal;
-                vertex.UV       = _UV;
-                vertex.Color    = _Color;
-                return vertex;
-            }
+            static void ApplicationRenderingBackend::destroy_mesh();
 
             // color API
             static ApplicationRenderingBackendColor construct_rgba_color(
@@ -359,6 +339,8 @@ namespace Frenchie
             static void clear_buffers(const ApplicationRenderingBackendGraphicsApiBuffers&);
 
         private:
+            std::shared_ptr<>
+
             static ApplicationRenderingBackendFont    m_DefaultFont;
             static ApplicationRenderingBackendShader  m_DefaultShader;
             static ApplicationRenderingBackendTexture m_DefaultTexture;
