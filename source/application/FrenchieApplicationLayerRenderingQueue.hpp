@@ -101,10 +101,10 @@ namespace Frenchie
                 const ApplicationRenderingBackendMesh&                      _Mesh,
                 const ApplicationRenderingBackendShader&                    _Shader,
                 const ApplicationRenderingBackendTexture&                   _Texture,
-                const gs_mat4f&                                _Transform,
+                const gs_mat4f&                                             _Transform,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
                 const ApplicationRenderingBackendColor&                     _ClearColor,
-                const gs_2dboxf&                               _ClippinBox);
+                const gs_2dboxf&                                            _ClippinBox);
 
         protected:
 
