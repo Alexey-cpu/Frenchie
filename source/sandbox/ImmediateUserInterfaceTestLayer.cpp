@@ -1,5 +1,7 @@
 #include <ImmediateUserInterfaceTestLayer.hpp>
 
+#include <FrenchieCoreStringUtilities.hpp>
+
 using namespace Frenchie::Application;
 
 ImmediateUserInterfaceTestLayer::ImmediateUserInterfaceTestLayer(){}
@@ -17,13 +19,13 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 {
     //renderer_test();
     
-    windows_test();   
+    //windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
     //horizontal_stack_test();
 
-    //widgets_test();
+    widgets_test();
 
     //menu_test();
     
@@ -299,16 +301,32 @@ void ImmediateUserInterfaceTestLayer::menu_test()
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
     m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
 
     static float input = 120.f;
 
-    if(m_ImmediateUserInterface->begin_window("Window"))
+    if(m_ImmediateUserInterface->begin_window("Metrics"))
     {
-        m_ImmediateUserInterface->float_input_x1("Float_X1", &input);
+        m_ImmediateUserInterface->label(
+            "Metrics/FPS",
+            Frenchie::Core::String::format("Частота кадров %.4f", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
+
+        m_ImmediateUserInterface->label(
+            "Metrics/Commands",
+            Frenchie::Core::String::format("Количество комманд %d", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+
+        m_ImmediateUserInterface->label(
+            "Metrics/Triangles",
+            Frenchie::Core::String::format("Количество треугольников в сетке %d", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+
+        m_ImmediateUserInterface->push_button("Button-1###Metrics/Button-1");
+        m_ImmediateUserInterface->push_button("Button-2###Metrics/Button-2");
 
         m_ImmediateUserInterface->end_window();
     }
+
+    if(m_ImmediateUserInterface->begin_window("RandomWindow"))
+        m_ImmediateUserInterface->end_window();
 }
 
 void ImmediateUserInterfaceTestLayer::renderer_test()

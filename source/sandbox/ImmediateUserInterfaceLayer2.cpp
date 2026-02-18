@@ -2716,6 +2716,46 @@ bool ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLaye
     return true;
 }
 
+// ImmediateUserInterfaceLabel
+ImmediateUserInterfaceLabel::ImmediateUserInterfaceLabel(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name){}
+ImmediateUserInterfaceLabel::~ImmediateUserInterfaceLabel(){}
+void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    gs_vec2f size = _Context->m_Renderer->calculate_bounding_box(
+        Text,
+        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + _Context->m_Style.get_font_size() * 0.25f;
+
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
+}
+
+void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // title
+    gs_2dboxf textBoundingBox = _Context->m_Renderer->calculate_bounding_box(
+        Text,
+        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font());
+
+    _Context->m_Renderer->push_text(
+        Text,
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.center() - textBoundingBox.size() * 0.5f));
+}
+
+// ImmediateUserInterfaceInputFloat
 ImmediateUserInterfaceInputFloat::ImmediateUserInterfaceInputFloat(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
 ImmediateUserInterfaceInputFloat::~ImmediateUserInterfaceInputFloat(){}
 void ImmediateUserInterfaceInputFloat::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -4771,8 +4811,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
     {
         ImmediateUserInterfacePushButton* button = 
             get_rendering_stack_top<ImmediateUserInterfacePushButton>();
-        
-        button->State.MinimumSize = _Size;
+
         button->State.MaximumSize = _Size;
         button->State.BoundingBox = gs_2dboxf(
             button->State.BoundingBox.Min,
@@ -4805,6 +4844,18 @@ bool ImmediateUserInterfaceContextLayer::check_button(
     }
 
     return false;
+}
+
+void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std::string& _Text)
+{
+    if(begin_node<ImmediateUserInterfaceLabel>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        get_rendering_stack_top<ImmediateUserInterfaceLabel>()->Text = _Text;
+
+        end_node<ImmediateUserInterfaceLabel>();
+    }
 }
 
 //------------------------------------------------------------------------------------------
