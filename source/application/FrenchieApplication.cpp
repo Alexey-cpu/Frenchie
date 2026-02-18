@@ -149,8 +149,9 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
             layer->frame_finish();
     }
 
-    for (int mouseButton = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
-             mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+    // restore mouse buttons
+    for (int mouseButton = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+             mouseButton < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
              mouseButton++)
     {
         ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released      = false;
@@ -159,7 +160,18 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked = false;
     }
 
+    // restore cursor
     ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
+
+    // restore keys
+    for (int key = ApplicationPlatformBackendKey::ImGuiKey_NamedKey_BEGIN;
+             key < ApplicationPlatformBackendKey::ImGuiKey_End;
+             key++)
+    {
+        ApplicationPlatformBackend::m_Input.Keys[key].Released = false;
+        ApplicationPlatformBackend::m_Input.Keys[key].Pressed  = false;
+        ApplicationPlatformBackend::m_Input.Keys[key].Clicked  = false;
+    }
 
     // execute backend
     ApplicationPlatformBackend::frame_finish();

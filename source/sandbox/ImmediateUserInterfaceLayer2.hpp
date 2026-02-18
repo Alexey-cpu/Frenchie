@@ -432,6 +432,18 @@ namespace Frenchie
             bool* Checked = nullptr;
         };
 
+        struct ImmediateUserInterfaceLabel : public ImmediateUserInterfaceWidget
+        {
+        public:
+            ImmediateUserInterfaceLabel(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceLabel();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            //virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            std::string Text;
+        };
+
         struct ImmediateUserInterfaceInputFloat : public ImmediateUserInterfaceWidget
         {
         public:
@@ -842,6 +854,8 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
                 bool*                                     _Checked  = nullptr);
             
+            void label(const std::string& _ID, const std::string& _Text);
+
             void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
             void float_input_x1(const std::string& _ID, float* _Value = nullptr);
