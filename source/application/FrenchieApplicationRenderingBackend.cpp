@@ -128,17 +128,11 @@ namespace Frenchie
 }
 
 ApplicationRenderingBackendFont    ApplicationRenderingBackend::m_DefaultFont;
-ApplicationRenderingBackendShader  ApplicationRenderingBackend::m_DefaultShader;
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::m_DefaultTexture;
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
 {
     return m_DefaultFont;
-}
-
-ApplicationRenderingBackendShader ApplicationRenderingBackend::get_default_shader()
-{
-    return m_DefaultShader;
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_texture()

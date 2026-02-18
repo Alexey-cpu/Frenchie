@@ -110,6 +110,9 @@ void RenderingQueue::frame_render()
         ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Depth |
         ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Stencil);
 
+    // construct mesh
+    if(!ApplicationRenderingBackend::begin_render()) return;
+
     // sort rendering commands by depth
     std::stable_sort(
         m_Commands.begin(),
@@ -128,15 +131,6 @@ void RenderingQueue::frame_render()
     // compute projection matrix
     gs_mat4f projectionMatrix = m_ProjectionMatrix * m_CameraViewMatrix;
 
-    // construct mesh
-    ApplicationRenderingBackend::construct_mesh(
-        &m_RenderingQueueMeshVertexes[0],
-        (int)m_RenderingQueueMeshVertexes.size(),
-        0,
-        &m_RenderingQueueMeshVertexesIndexes[0],
-        (int)m_RenderingQueueMeshVertexesIndexes.size(),
-        0);
-
     // execute rendering commands
     for (int i = 0; i < (int)m_Commands.size(); ++i)
     {
@@ -150,10 +144,7 @@ void RenderingQueue::frame_render()
             auto displayScale = ApplicationPlatformBackend::get_window_framebuffer_size() / ApplicationPlatformBackend::get_window_size();
 
             // apply clipping rect
-            ApplicationRenderingBackend::scissor_box(
-                gs_2dboxf(
-                    clippingRect.Min * displayScale,
-                    clippingRect.Max * displayScale));
+            ApplicationRenderingBackend::scissor_box(gs_2dboxf(clippingRect.Min * displayScale, clippingRect.Max * displayScale));
         }
 
         // clear color
@@ -168,33 +159,26 @@ void RenderingQueue::frame_render()
         if(renderingCommand.has_value())
         {
             auto mesh               = renderingCommand.value().Mesh;
-            auto shader             = renderingCommand.value().Shader;
-            auto color              = renderingCommand.value().Texture.Color;
             auto texture            = renderingCommand.value().Texture;
             auto transformMatrix    = renderingCommand.value().Transform;
             auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
 
-            ApplicationRenderingBackend::begin_use_texture(texture);
-            ApplicationRenderingBackend::begin_use_shader(shader);
-
-            ApplicationRenderingBackend::set_shader_uniform(shader, "u_ModelMatrix", projectionMatrix * transformMatrix);
-            ApplicationRenderingBackend::set_shader_uniform(shader, "u_Texture", 0);
-
-            ApplicationRenderingBackend::begin_use_mesh(
+            ApplicationRenderingBackend::render_mesh(
                 &mesh.Vertexes->at(0),
+                (int)mesh.Vertexes->size(),
                 mesh.VertexesCount,
                 mesh.VertexesOffset,
                 &mesh.Indexes->at(0),
+                (int)mesh.Indexes->size(),
                 mesh.IndexesCount,
                 mesh.IndexesOffset,
+                texture,
+                projectionMatrix * transformMatrix,
                 meshRenderingHints);
-            
-            ApplicationRenderingBackend::end_use_texture();
-            ApplicationRenderingBackend::end_use_shader();
         }
     }
 
-    ApplicationRenderingBackend::destroy_mesh();
+    ApplicationRenderingBackend::end_render();
 
     // save metrics
     m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
@@ -270,9 +254,6 @@ void RenderingQueue::push_rendering_command(
             &m_RenderingQueueMeshVertexesIndexes,
             (int)m_RenderingQueueMeshVertexesIndexes.size(),
             m_IndexesOffset),
-        
-        // provide default shader
-        ApplicationRenderingBackend::get_default_shader(),
 
         // setup texture
         ApplicationRenderingBackendTexture(
@@ -295,8 +276,7 @@ void RenderingQueue::push_rendering_command(
 }
 
 void RenderingQueue::push_rendering_command(
-    const RenderingQueueMesh&                      _Mesh,
-    const ApplicationRenderingBackendShader&                    _Shader,
+    const RenderingQueueMesh&                                   _Mesh,
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
@@ -307,7 +287,6 @@ void RenderingQueue::push_rendering_command(
         RenderingQueueCommand(
             RenderingQueueRenderingCommand(
                 _Mesh,
-                _Shader,
                 _Texture,
                 _Transform,
                 _RendererHints),

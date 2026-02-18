@@ -360,19 +360,16 @@ namespace Frenchie
         struct RenderingQueueRenderingCommand final
         {
             RenderingQueueRenderingCommand(
-                const RenderingQueueMesh&                      _Mesh,
-                const ApplicationRenderingBackendShader&                    _Shader,
+                const RenderingQueueMesh&                                   _Mesh,
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_mat4f&                                             _Transform,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints) :
                 Mesh(_Mesh),
-                Shader(_Shader),
                 Texture(_Texture),
                 Transform(_Transform),
                 MeshRendererHints(_MeshRenderingHints){}
 
-            RenderingQueueMesh                      Mesh             {RenderingQueueMesh()};
-            ApplicationRenderingBackendShader                    Shader           {ApplicationRenderingBackendShader()};
+            RenderingQueueMesh                                   Mesh             {RenderingQueueMesh()};
             ApplicationRenderingBackendTexture                   Texture          {ApplicationRenderingBackendTexture()};
             gs_mat4f                                             Transform        {gs_mat4f(1.f)};
             ApplicationRenderingBackendGraphicsApiRenderingHints MeshRendererHints{ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default};
@@ -660,7 +657,6 @@ namespace Frenchie
 
             void push_rendering_command(
                 const RenderingQueueMesh&                                   _Mesh,
-                const ApplicationRenderingBackendShader&                    _Shader,
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_mat4f&                                             _Transform,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
