@@ -341,7 +341,6 @@ namespace Frenchie
             }
         };
 
-        // rendering queue
         struct RenderingQueueMesh final
         {
             RenderingQueueMesh(

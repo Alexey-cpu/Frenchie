@@ -99,19 +99,18 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
-    ApplicationRenderingBackend::enable(
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending    |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest   |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest);
-
-    ApplicationRenderingBackend::clear_buffers(
-        ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Color |
-        ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Depth |
-        ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Stencil);
-
-    // construct mesh
     if(!ApplicationRenderingBackend::begin_render()) return;
+
+    // ApplicationRenderingBackend::enable(
+    //     ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending    |
+    //     ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest   |
+    //     ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest |
+    //     ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest);
+
+    // ApplicationRenderingBackend::clear_buffers(
+    //     ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Color |
+    //     ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Depth |
+    //     ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Stencil);
 
     // sort rendering commands by depth
     std::stable_sort(
@@ -185,13 +184,6 @@ void RenderingQueue::frame_render()
 
     // clear commands queue
     m_Commands.clear();
-
-    // clean-up
-    ApplicationRenderingBackend::disable(
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending    |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest   |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest);
 }
 
 void RenderingQueue::frame_finish()

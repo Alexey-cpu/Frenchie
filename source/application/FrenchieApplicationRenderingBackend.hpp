@@ -44,21 +44,6 @@ namespace Frenchie
             ApplicationRenderingBackendTextureMaxFilter_Nearest,
         };
 
-        enum ApplicationRenderingBackendGraphicsApiHints_ : int
-        {
-            ApplicationRenderingBackendGraphicsApiHints_Blending    = 1 << 0,
-            ApplicationRenderingBackendGraphicsApiHints_DepthTest   = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiHints_StencilTest = 1 << 2,
-            ApplicationRenderingBackendGraphicsApiHints_ScissorTest = 1 << 3,
-        };
-
-        enum ApplicationRenderingBackendGraphicsApiBuffers_ : int
-        {
-            ApplicationRenderingBackendGraphicsApiBuffers_Color   = 1 << 0,
-            ApplicationRenderingBackendGraphicsApiBuffers_Depth   = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiBuffers_Stencil = 1 << 2,
-        };
-
         enum ApplicationRenderingBackendGraphicsApiRenderingHints_ : int
         {
             ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 1,
@@ -77,8 +62,6 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendTextureMinFilter;
         typedef int ApplicationRenderingBackendTextureMaxFilter;
 
-        typedef int ApplicationRenderingBackendGraphicsApiHints;
-        typedef int ApplicationRenderingBackendGraphicsApiBuffers;
         typedef int ApplicationRenderingBackendGraphicsApiRenderingHints;
 
         typedef int ApplicationRenderingBackendShaderType;
@@ -224,7 +207,6 @@ namespace Frenchie
 
             static ApplicationRenderingBackendFont    get_default_font();
             static ApplicationRenderingBackendTexture get_default_texture();
-            
 
             // viewport API
             static void set_viewport(const gs_vec2f&, const gs_vec2f&);
@@ -272,18 +254,6 @@ namespace Frenchie
 
             static void ApplicationRenderingBackend::end_render();
 
-            // // color API
-            // static ApplicationRenderingBackendColor construct_rgba_color(
-            //     const ApplicationRenderingBackendColor& _R,
-            //     const ApplicationRenderingBackendColor& _G,
-            //     const ApplicationRenderingBackendColor& _B,
-            //     const ApplicationRenderingBackendColor& _A);
-
-            // static ApplicationRenderingBackendColor retrieve_red_component(const ApplicationRenderingBackendColor& _Color);
-            // static ApplicationRenderingBackendColor retrieve_green_component(const ApplicationRenderingBackendColor& _Color);
-            // static ApplicationRenderingBackendColor retrieve_blue_component(const ApplicationRenderingBackendColor& _Color);
-            // static ApplicationRenderingBackendColor retrieve_alpha_component(const ApplicationRenderingBackendColor& _Color);
-
             // camera and view projection API
             static Projections calculate_2d_camera_view_and_projection(
                 const gs_vec2f& _CameraWorldPosition,
@@ -295,11 +265,8 @@ namespace Frenchie
                 const float&    _CameraFarPlanePosition);
 
             // rendering platoform API
-            static void enable(const ApplicationRenderingBackendGraphicsApiHints&);
-            static void disable(const ApplicationRenderingBackendGraphicsApiHints&);
             static void clear_color(const gs_color&);
             static void scissor_box(const gs_2dboxf&);
-            static void clear_buffers(const ApplicationRenderingBackendGraphicsApiBuffers&);
 
         private:
             static ApplicationRenderingBackendFont    m_DefaultFont;

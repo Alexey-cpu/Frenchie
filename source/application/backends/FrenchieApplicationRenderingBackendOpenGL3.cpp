@@ -338,8 +338,18 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 
 bool ApplicationRenderingBackend::begin_render()
 {
-    ApplicationRenderingBackendState.m_MeshLoaded = false;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glEnable(GL_SCISSOR_TEST);
 
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    ApplicationRenderingBackendState.m_MeshLoaded = false;
+    
     // check that everything has been instantiated
     return  ApplicationRenderingBackendState.m_VBO &&
             ApplicationRenderingBackendState.m_EBO &&
@@ -417,41 +427,13 @@ void ApplicationRenderingBackend::render_mesh(
 
 void ApplicationRenderingBackend::end_render()
 {
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+
     // unload mesh
     ApplicationRenderingBackendState.m_MeshLoaded = false;
-}
-
-void ApplicationRenderingBackend::enable(const ApplicationRenderingBackendGraphicsApiHints& _Hints)
-{
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending)
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest)
-        glEnable(GL_DEPTH_TEST);
-
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest)
-        glEnable(GL_STENCIL_TEST);
-
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest)
-        glEnable(GL_SCISSOR_TEST);
-}
-
-void ApplicationRenderingBackend::disable(const ApplicationRenderingBackendGraphicsApiHints& _Hints)
-{
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending)
-        glDisable(GL_BLEND);
-
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest)
-        glDisable(GL_DEPTH_TEST);
-
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest)
-        glDisable(GL_STENCIL_TEST);
-
-    if(_Hints & ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest)
-        glDisable(GL_SCISSOR_TEST);
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
@@ -465,7 +447,7 @@ void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
 
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
 {
-    ApplicationRenderingBackend::enable(ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest);
+    glEnable(GL_SCISSOR_TEST);
 
     glScissor(
         (int)_ClippingRect.Min.x,
@@ -473,51 +455,6 @@ void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
         (int)_ClippingRect.width(),
         (int)_ClippingRect.height());
 }
-
-void ApplicationRenderingBackend::clear_buffers(const ApplicationRenderingBackendGraphicsApiBuffers& _Buffers)
-{
-    if(_Buffers & ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Color)
-        glClear(GL_COLOR_BUFFER_BIT);
-
-    if(_Buffers & ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Depth)
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-    if(_Buffers & ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Stencil)
-        glClear(GL_STENCIL_BUFFER_BIT);
-}
-
-// // color API
-// ApplicationRenderingBackendColor ApplicationRenderingBackend::construct_rgba_color(
-//     const ApplicationRenderingBackendColor& _R,
-//     const ApplicationRenderingBackendColor& _G,
-//     const ApplicationRenderingBackendColor& _B,
-//     const ApplicationRenderingBackendColor& _A)
-// {
-//     return (((ApplicationRenderingBackendColor)(_A)<<24) |
-//             ((ApplicationRenderingBackendColor)(_B)<<16) |
-//             ((ApplicationRenderingBackendColor)(_G)<<8)  |
-//             ((ApplicationRenderingBackendColor)(_R)<<0));
-// }
-
-// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_red_component(const ApplicationRenderingBackendColor& _Color)
-// {
-//     return (_Color >> 0) & 0xFF;
-// }
-
-// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_green_component(const ApplicationRenderingBackendColor& _Color)
-// {
-//     return (_Color >> 8) & 0xFF;
-// }
-
-// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_blue_component(const ApplicationRenderingBackendColor& _Color)
-// {
-//     return (_Color >> 16) & 0xFF;
-// }
-
-// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_alpha_component(const ApplicationRenderingBackendColor& _Color)
-// {
-//     return (_Color >> 24) & 0xFF;
-// }
 
 // camera and view projection API
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(
