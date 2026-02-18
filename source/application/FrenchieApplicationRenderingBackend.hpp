@@ -62,8 +62,7 @@ namespace Frenchie
         enum ApplicationRenderingBackendGraphicsApiRenderingHints_ : int
         {
             ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Points    = 1 << 2,
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 3,
+            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 2,
             ApplicationRenderingBackendGraphicsApiRenderingHints_Default   = ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles
         };
 
@@ -119,18 +118,6 @@ namespace Frenchie
             ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat};
             ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear};
             ApplicationRenderingBackendTextureMaxFilter MaxFilter {ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear};
-        };
-
-        struct ApplicationRenderingBackendShader final
-        {
-            ApplicationRenderingBackendShader(const unsigned int& _Ptr = 0) : Ptr(_Ptr){}
-
-            bool is_null() const
-            {
-                return Ptr == 0;
-            }
-
-            unsigned int Ptr{0};
         };
 
         struct ApplicationRenderingBackendVertex final
@@ -237,7 +224,6 @@ namespace Frenchie
             static void quit();
 
             static ApplicationRenderingBackendFont    get_default_font();
-            static ApplicationRenderingBackendShader  get_default_shader();
             static ApplicationRenderingBackendTexture get_default_texture();
             
 
@@ -267,47 +253,25 @@ namespace Frenchie
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
                 const ApplicationRenderingBackendTextureMaxFilter& _MaxFilter = ApplicationRenderingBackendTextureMaxFilter_::ApplicationRenderingBackendTextureMaxFilter_Linear);
 
-            static void begin_use_texture(const ApplicationRenderingBackendTexture& _Texture);
-            static void end_use_texture();
-
             static void destroy_texture(const ApplicationRenderingBackendTexture& _Texture);
 
-            // shader API
-            static ApplicationRenderingBackendShader construct_shader(const std::vector<std::pair<std::string, ApplicationRenderingBackendShaderType>>& _ShaderInfos);
-
-            static void begin_use_shader(const ApplicationRenderingBackendShader&   _Shader);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const bool&     _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const int&      _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const float&    _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const gs_vec2f& _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const gs_vec3f& _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const gs_vec4f& _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const gs_mat2f& _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const gs_mat3f& _Value);
-            static void set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Uniform, const gs_mat4f& _Value);
-            static void end_use_shader();
-
-            static void destroy_shader(const ApplicationRenderingBackendShader& _Shader);
-
             // mesh API
-            static void construct_mesh(
-                const ApplicationRenderingBackendVertex* _Vertexes,
-                const int&                               _VertexesCount,
-                const int&                               _VertexesOffset,
-                const int*                               _Indexes,
-                const int&                               _IndexesCount,
-                const int&                               _IndexesOffset);
+            static bool begin_render();
 
-            static void begin_use_mesh(
+            static void render_mesh(
                 const ApplicationRenderingBackendVertex*                    _Vertexes,
                 const int&                                                  _VertexesCount,
-                const int&                                                  _VertexesOffset,
+                const int&                                                  _MeshVertexesCount,
+                const int&                                                  _MeshVertexesOffset,
                 const int*                                                  _Indexes,
                 const int&                                                  _IndexesCount,
-                const int&                                                  _IndexesOffset,
+                const int&                                                  _MeshIndexesCount,
+                const int&                                                  _MeshIndexesOffset,
+                const ApplicationRenderingBackendTexture&                   _Texture,
+                const gs_mat4f&                                             _MeshProjectionMatrix,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
-            static void ApplicationRenderingBackend::destroy_mesh();
+            static void ApplicationRenderingBackend::end_render();
 
             // color API
             static ApplicationRenderingBackendColor construct_rgba_color(
@@ -339,10 +303,7 @@ namespace Frenchie
             static void clear_buffers(const ApplicationRenderingBackendGraphicsApiBuffers&);
 
         private:
-            std::shared_ptr<>
-
             static ApplicationRenderingBackendFont    m_DefaultFont;
-            static ApplicationRenderingBackendShader  m_DefaultShader;
             static ApplicationRenderingBackendTexture m_DefaultTexture;
         };
     }

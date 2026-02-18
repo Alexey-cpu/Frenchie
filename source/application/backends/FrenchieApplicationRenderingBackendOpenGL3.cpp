@@ -18,14 +18,74 @@ namespace Frenchie
             static unsigned char BUFFER[316235];
         };
 
-        static unsigned int m_VBO = 0;
-        static unsigned int m_VAO = 0;
-        static unsigned int m_EBO = 0;
+        struct ApplicationRenderingBackendOpenGLState
+        {
+            unsigned int      m_VBO       {0};
+            unsigned int      m_VAO       {0};
+            unsigned int      m_EBO       {0};
+            unsigned int      m_Shader    {0};
+            bool              m_MeshLoaded{false};
+        } ApplicationRenderingBackendState;
     }
 }
 
 bool ApplicationRenderingBackend::awake(Loader _Loader)
 {
+    // auxiliary lambdas
+    auto construct_shader = [](const std::vector<std::pair<std::string, ApplicationRenderingBackendShaderType>>& _ShaderInfos)->unsigned int
+    {
+        unsigned int shaderProgram = glCreateProgram();
+
+        for(auto&& shaderInfo : _ShaderInfos)
+        {
+            auto         shaderSourceCode = shaderInfo.first;
+            auto         shaderType       = shaderInfo.second;
+            unsigned int shader           = 0;
+
+            if(shaderType == ApplicationRenderingBackendShaderType_::ApplicationRenderingBackendShaderType_Vertex)
+                shader = glCreateShader(GL_VERTEX_SHADER);
+            else if(shaderType == ApplicationRenderingBackendShaderType_::ApplicationRenderingBackendShaderType_Fragment)
+                shader = glCreateShader(GL_FRAGMENT_SHADER);
+
+            int status = 1;
+            const char* shaderSourceCodePtr = shaderSourceCode.c_str();
+            glShaderSource(shader, 1, &shaderSourceCodePtr, nullptr);
+            glCompileShader(shader);
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+
+            if(status == GL_TRUE)
+            {
+                glAttachShader(shaderProgram, shader);
+                glDeleteShader(shader);
+            }
+            else
+            {
+                const int logBufferSize = 4096;
+                char logBuffer[logBufferSize];
+                glGetShaderInfoLog(shader, logBufferSize, nullptr, logBuffer);
+
+                printf("error: %s\n", logBuffer);
+            }
+        }
+
+        int status = true;
+        glLinkProgram(shaderProgram);
+        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &status);
+
+        if(status == GL_FALSE)
+        {
+            const int logBufferSize = 4096;
+            char logBuffer[logBufferSize];
+            glGetProgramInfoLog(shaderProgram, logBufferSize, nullptr, logBuffer);
+            
+            printf("error: %s\n", logBuffer);
+
+            return 0;
+        }
+
+        return shaderProgram;
+    };
+
     // load backend API
     if(!gladLoadGLLoader((GLADloadproc)_Loader))
         return false;
@@ -35,8 +95,8 @@ bool ApplicationRenderingBackend::awake(Loader _Loader)
         RenderingQueueDefaultFont::COMPRESSED_SIZE,
         128);
 
-    // register default shader here
-    m_DefaultShader = construct_shader(
+    // create openGL backend handles
+    ApplicationRenderingBackendState.m_Shader = construct_shader(
         {
             // Vertex shader
             {
@@ -98,6 +158,10 @@ void main()
         }
     );    
 
+    glGenBuffers(1, &ApplicationRenderingBackendState.m_VBO);
+    glGenBuffers(1, &ApplicationRenderingBackendState.m_EBO);
+    glGenVertexArrays(1, &ApplicationRenderingBackendState.m_VAO);
+
     // create default white pattern texture
     const int     height   = 4;
     const int     width    = 4;
@@ -126,9 +190,15 @@ void main()
 
 void ApplicationRenderingBackend::quit()
 {
+    // destroy default font ant texture
     destroy_font(m_DefaultFont);
-    destroy_shader(m_DefaultShader);
     destroy_texture(m_DefaultTexture);
+
+    // destroy OpenGL state
+    glDeleteBuffers(1, &ApplicationRenderingBackendState.m_VBO);
+    glDeleteBuffers(1, &ApplicationRenderingBackendState.m_EBO);
+    glDeleteVertexArrays(1, &ApplicationRenderingBackendState.m_VAO);
+    glDeleteProgram(ApplicationRenderingBackendState.m_Shader);
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -159,7 +229,6 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     switch (_Format)
     {
     case ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_ALPHA:
-        //glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _Width, _Height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _RawBuffer);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, _Width, _Height, 0, GL_RED, GL_UNSIGNED_BYTE, _RawBuffer);
         break;
     
@@ -262,206 +331,94 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     return ApplicationRenderingBackendTexture(sampler, _Width, _Height, 1, _Format, _Wrap, _MinFilter, _MaxFilter);
 }
 
-void ApplicationRenderingBackend::begin_use_texture(const ApplicationRenderingBackendTexture& _Texture)
-{
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
-}
-
-void ApplicationRenderingBackend::end_use_texture()
-{
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
-
 void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBackendTexture& _Texture)
 {
     glDeleteTextures(1, &_Texture.Ptr);
 }
 
-ApplicationRenderingBackendShader ApplicationRenderingBackend::construct_shader(
-    const std::vector<std::pair<std::string, ApplicationRenderingBackendShaderType>>& _ShaderInfos)
+bool ApplicationRenderingBackend::begin_render()
 {
-    unsigned int shaderProgram = glCreateProgram();
+    ApplicationRenderingBackendState.m_MeshLoaded = false;
 
-    for(auto&& shaderInfo : _ShaderInfos)
+    // check that everything has been instantiated
+    return  ApplicationRenderingBackendState.m_VBO &&
+            ApplicationRenderingBackendState.m_EBO &&
+            ApplicationRenderingBackendState.m_VAO &&
+            ApplicationRenderingBackendState.m_Shader;
+}
+
+void ApplicationRenderingBackend::render_mesh(
+    const ApplicationRenderingBackendVertex*                    _Vertexes,
+    const int&                                                  _VertexesCount,
+    const int&                                                  _MeshVertexesCount,
+    const int&                                                  _MeshVertexesOffset,
+    const int*                                                  _Indexes,
+    const int&                                                  _IndexesCount,
+    const int&                                                  _MeshIndexesCount,
+    const int&                                                  _MeshIndexesOffset,
+    const ApplicationRenderingBackendTexture&                   _Texture,
+    const gs_mat4f&                                             _MeshProjectionMatrix,
+    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
+{
+    if(_Vertexes == nullptr || _Indexes == nullptr || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+        return;
+
+    // bind texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
+
+    // bind shader
+    glUseProgram(ApplicationRenderingBackendState.m_Shader);
+
+    // configure shader
+    glUniformMatrix4fv(glGetUniformLocation(ApplicationRenderingBackendState.m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
+    glUniform1i(glGetUniformLocation(ApplicationRenderingBackendState.m_Shader, "u_Texture"), 0);
+
+    // load mesh
+    if(!ApplicationRenderingBackendState.m_MeshLoaded)
     {
-        auto         shaderSourceCode = shaderInfo.first;
-        auto         shaderType       = shaderInfo.second;
-        unsigned int shader           = 0;
+        // bind VAO to remember VBO/EBO configuration and layout
+        glBindVertexArray(ApplicationRenderingBackendState.m_VAO);
 
-        if(shaderType == ApplicationRenderingBackendShaderType_::ApplicationRenderingBackendShaderType_Vertex)
-            shader = glCreateShader(GL_VERTEX_SHADER);
-        else if(shaderType == ApplicationRenderingBackendShaderType_::ApplicationRenderingBackendShaderType_Fragment)
-            shader = glCreateShader(GL_FRAGMENT_SHADER);
+        // load vertexes and indexes on GPU
+        glBindBuffer(GL_ARRAY_BUFFER, ApplicationRenderingBackendState.m_VBO);
+        glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
-        int status = 1;
-        const char* shaderSourceCodePtr = shaderSourceCode.c_str();
-        glShaderSource(shader, 1, &shaderSourceCodePtr, nullptr);
-        glCompileShader(shader);
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ApplicationRenderingBackendState.m_EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(int),  _Indexes, GL_DYNAMIC_DRAW);
 
-        if(status == GL_TRUE)
-        {
-            glAttachShader(shaderProgram, shader);
-            glDeleteShader(shader);
-        }
-        else
-        {
-            const int logBufferSize = 4096;
-            char logBuffer[logBufferSize];
-            glGetShaderInfoLog(shader, logBufferSize, nullptr, logBuffer);
+        // setup attributes pointers
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Position)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Normal)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, UV)));
+        glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Color)));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
 
-            printf("error: %s\n", logBuffer);
-        }
+        ApplicationRenderingBackendState.m_MeshLoaded = true;
     }
 
-    int status = true;
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &status);
+    // render mesh
+    glBindVertexArray(ApplicationRenderingBackendState.m_VAO);
 
-    if(status == GL_FALSE)
-    {
-        const int logBufferSize = 4096;
-        char logBuffer[logBufferSize];
-        glGetProgramInfoLog(shaderProgram, logBufferSize, nullptr, logBuffer);
-        
-        printf("error: %s\n", logBuffer);
+    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
+        glDrawElements(GL_LINE_LOOP, _MeshIndexesCount - _MeshVertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(int)));
 
-        return ApplicationRenderingBackendShader();
-    }
+    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
+        glDrawElements(GL_TRIANGLES, _MeshIndexesCount - _MeshVertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(int)));
 
-    return ApplicationRenderingBackendShader(shaderProgram);
-}
-
-void ApplicationRenderingBackend::begin_use_shader(const ApplicationRenderingBackendShader& _Shader)
-{
-     glUseProgram(_Shader.Ptr);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const bool& _Value)
-{
-    glUniform1i(glGetUniformLocation(_Shader.Ptr, _Name), (int)_Value);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const int& _Value)
-{
-    glUniform1i(glGetUniformLocation(_Shader.Ptr, _Name), _Value);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const float& _Value)
-{
-    glUniform1f(glGetUniformLocation(_Shader.Ptr, _Name), _Value);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const gs_vec2f& _Value)
-{
-    glUniform2fv(glGetUniformLocation(_Shader.Ptr, _Name), 1, &_Value[0]);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const gs_vec3f& _Value)
-{
-    glUniform3fv(glGetUniformLocation(_Shader.Ptr, _Name), 1, &_Value[0]);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const gs_vec4f& _Value)
-{
-    glUniform4fv(glGetUniformLocation(_Shader.Ptr, _Name), 1, &_Value[0]);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const gs_mat2f& _Value)
-{
-    glUniformMatrix2fv(glGetUniformLocation(_Shader.Ptr, _Name), 1, GL_FALSE, &_Value[0][0]);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const gs_mat3f& _Value)
-{
-    glUniformMatrix3fv(glGetUniformLocation(_Shader.Ptr, _Name), 1, GL_FALSE, &_Value[0][0]);
-}
-
-void ApplicationRenderingBackend::set_shader_uniform(const ApplicationRenderingBackendShader& _Shader, const char* _Name, const gs_mat4f& _Value)
-{
-    glUniformMatrix4fv(glGetUniformLocation(_Shader.Ptr, _Name), 1, GL_FALSE, &_Value[0][0]);
-}
-
-void ApplicationRenderingBackend::end_use_shader()
-{
+    // unbind
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
     glUseProgram(0);
 }
 
-void ApplicationRenderingBackend::destroy_shader(const ApplicationRenderingBackendShader& _Shader)
+void ApplicationRenderingBackend::end_render()
 {
-    glDeleteProgram(_Shader.Ptr);
-}
-
-void ApplicationRenderingBackend::construct_mesh(
-    const ApplicationRenderingBackendVertex* _Vertexes,
-    const int&                               _VertexesCount,
-    const int&                               _VertexesOffset,
-    const int*                               _Indexes,
-    const int&                               _IndexesCount,
-    const int&                               _IndexesOffset)
-{
-    if(_Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
-        return;
-    
-    // create buffers and vertex array
-    glGenBuffers(1, &m_VBO);
-    glGenBuffers(1, &m_EBO);
-    glGenVertexArrays(1, &m_VAO);
-
-    // bind VAO to remember VBO/EBO configuration and layout
-    glBindVertexArray(m_VAO);
-
-    // load vertexes and indexes on GPU
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendVertex), _Vertexes, GL_DYNAMIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(int),  _Indexes, GL_DYNAMIC_DRAW);
-
-    // setup attributes pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Position)));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Normal)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, UV)));
-    glVertexAttribPointer(3, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Color)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
-
-    glBindVertexArray(0);
-}
-
-void ApplicationRenderingBackend::begin_use_mesh(
-    const ApplicationRenderingBackendVertex*                    _Vertexes,
-    const int&                                                  _VertexesCount,
-    const int&                                                  _VertexesOffset,
-    const int*                                                  _Indexes,
-    const int&                                                  _IndexesCount,
-    const int&                                                  _IndexesOffset,
-    const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
-{
-    if(_Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
-        return;
-
-    glBindVertexArray(m_VAO);
-
-    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Points))
-        glDrawArrays(GL_POINTS, 0, _IndexesCount);
-
-    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
-        glDrawElements(GL_LINE_LOOP, _IndexesCount - _VertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_IndexesOffset * sizeof(int)));
-
-    if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
-        glDrawElements(GL_TRIANGLES, _IndexesCount - _VertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_IndexesOffset * sizeof(int)));
-}
-
-void ApplicationRenderingBackend::destroy_mesh()
-{
-    glDeleteBuffers(1, &m_VBO);
-    glDeleteBuffers(1, &m_EBO);
-    glDeleteVertexArrays(1, &m_VAO);
+    // unload mesh
+    ApplicationRenderingBackendState.m_MeshLoaded = false;
 }
 
 void ApplicationRenderingBackend::enable(const ApplicationRenderingBackendGraphicsApiHints& _Hints)
