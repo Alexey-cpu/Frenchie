@@ -18,12 +18,18 @@ namespace Frenchie
         struct RenderingQueuePathSegment
         {
         public:
-            RenderingQueuePathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width = 4.f)
+            RenderingQueuePathSegment(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float&    _Width = 4.f)
             {
                 setup(_P1, _P2, _Width);
             }
 
-            void setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float _Width)
+            void setup(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float     _Width)
             {
                 P1 = _P1;
                 P2 = _P2;
@@ -57,7 +63,8 @@ namespace Frenchie
         {
         public:
 
-            RenderingQueuePathBuilder(const float& _PolygonLinesWidth = 4.f) : m_PolygonLinesWidth(_PolygonLinesWidth){}
+            RenderingQueuePathBuilder(
+                const float& _PolygonLinesWidth = 4.f) : m_PolygonLinesWidth(_PolygonLinesWidth){}
             ~RenderingQueuePathBuilder(){}
 
             // TODO: add Bezier and random power curves here e.t.c
@@ -75,7 +82,9 @@ namespace Frenchie
                 m_PolygonLinesSourcePoint = _Target;
             }
 
-            void arc_to(const gs_vec2f& _Target, const float& _Radius)
+            void arc_to(
+                const gs_vec2f& _Target,
+                const float&    _Radius)
             {
                 // calculate ellipse data
                 gs_complex<float> perpendicular  = gs_cnormf<float>(gs_complex<float>((_Target - m_PolygonLinesSourcePoint).x, (_Target - m_PolygonLinesSourcePoint).y)) * gs_complex<float>(0.f, 1.f);
@@ -95,8 +104,8 @@ namespace Frenchie
             }
 
             void build_mesh(
-                const ApplicationRenderingBackendColor&         _Color,
-                const ApplicationRenderingBackendTexture&       _Texture,
+                const gs_color&                                 _Color,
+                const ApplicationRenderingBackendTexture&      _Texture,
                 const float&                                    _Width,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
                 std::vector<int>&                               _Indexes)
@@ -196,8 +205,8 @@ namespace Frenchie
             }
 
             void build_mesh_filled_no_convex(
-                const ApplicationRenderingBackendColor&         _Color,
-                const ApplicationRenderingBackendTexture&       _Texture,
+                const gs_color&                                 _Color,
+                const ApplicationRenderingBackendTexture&      _Texture,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
                 std::vector<int>&                               _Indexes)
             {
@@ -298,13 +307,13 @@ namespace Frenchie
             }
 
             void build_triangle_filled_mesh(
-                const gs_vec2f&                    _P1,
-                const gs_vec2f&                    _P2,
-                const gs_vec2f&                    _P3,
-                const ApplicationRenderingBackendColor&         _Color,
-                const ApplicationRenderingBackendTexture&       _Texture,
+                const gs_vec2f&                                 _P1,
+                const gs_vec2f&                                 _P2,
+                const gs_vec2f&                                 _P3,
+                const gs_color&                                 _Color,
+                const ApplicationRenderingBackendTexture&      _Texture,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
-                std::vector<int>&                  _Indexes)
+                std::vector<int>&                               _Indexes)
             {
                 const int size = (int)_Vertexes.size();
 
@@ -332,29 +341,22 @@ namespace Frenchie
             }
         };
 
-        // rendering queue
         struct RenderingQueueMesh final
         {
             RenderingQueueMesh(
-            std::vector<ApplicationRenderingBackendVertex>*      _Vertexes       = nullptr,                        
-            const int                                            _VertexesCount  = -1,
-            const int                                            _VertexesOffset = -1, 
-            std::vector<int>*                                    _Indexes        = nullptr,
-            const int                                            _IndexesCount   = -1,
-            const int                                            _IndexesOffset  = -1) :
-            Vertexes(_Vertexes),
-            VertexesCount(_VertexesCount),
-            VertexesOffset(_VertexesOffset),
-            Indexes(_Indexes),
-            IndexesCount(_IndexesCount),
-            IndexesOffset(_IndexesOffset){}
+                const int _VertexesCount  = -1,
+                const int _VertexesOffset = -1,
+                const int _IndexesCount   = -1,
+                const int _IndexesOffset  = -1) :
+                VertexesCount(_VertexesCount),
+                VertexesOffset(_VertexesOffset),
+                IndexesCount(_IndexesCount),
+                IndexesOffset(_IndexesOffset){}
 
-            std::vector<ApplicationRenderingBackendVertex>* Vertexes;
-            int                                             VertexesOffset;                           
-            int                                             VertexesCount;
-            std::vector<int>*                               Indexes;
-            int                                             IndexesOffset;
-            int                                             IndexesCount;
+            int VertexesOffset;                           
+            int VertexesCount;
+            int IndexesOffset;
+            int IndexesCount;
         };
 
         struct RenderingQueueRenderingCommand final
@@ -377,13 +379,15 @@ namespace Frenchie
 
         struct RenderingQueueRendererCommandClearColor
         {
-            RenderingQueueRendererCommandClearColor(const ApplicationRenderingBackendColor&  _ClearColor) : ClearColor(_ClearColor){}
-            ApplicationRenderingBackendColor ClearColor;
+            RenderingQueueRendererCommandClearColor(
+                const gs_color& _ClearColor) : ClearColor(_ClearColor){}
+            gs_color ClearColor;
         };
 
         struct RenderingQueueRendererCommandClippingBox
         {
-            RenderingQueueRendererCommandClippingBox(const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
+            RenderingQueueRendererCommandClippingBox(
+                const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
 
             gs_2dboxf ClippingBox;
         };
@@ -433,15 +437,17 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
             // API
-            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void push_clip_box(
+                const gs_2dboxf& _Value,
+                const gs_mat4f&  _Transform = gs_mat4f(1.f));
             void pop_clip_box();
 
-            void push_clear_color(const ApplicationRenderingBackendColor& _Value);
+            void push_clear_color(const gs_color& _Value);
             void pop_clear_color();
             
-            gs_2dboxf                        current_viewport() const;
-            gs_2dboxf                        current_clipping_box() const;
-            ApplicationRenderingBackendColor current_clear_color() const;
+            gs_2dboxf current_viewport() const;
+            gs_2dboxf current_clipping_box() const;
+            gs_color  current_clear_color() const;
 
             gs_mat4f calculate_transform_matrix(
                 const float&    _Depth,
@@ -456,63 +462,63 @@ namespace Frenchie
                 const float&    _ArcAngle);
 
             gs_2dboxf calculate_bounding_box(
-                const std::u32string&     _Text,
-                const float&              _Size,
+                const std::u32string&                  _Text,
+                const float&                           _Size,
                 const ApplicationRenderingBackendFont& _Font);
 
             gs_2dboxf calculate_bounding_box(
-                const std::u16string&     _Text,
-                const float&              _Size,
+                const std::u16string&                  _Text,
+                const float&                           _Size,
                 const ApplicationRenderingBackendFont& _Font);
 
             gs_2dboxf calculate_bounding_box(
-                const std::string&        _Text,
-                const float&              _Size,
+                const std::string&                     _Text,
+                const float&                           _Size,
                 const ApplicationRenderingBackendFont& _Font);
 
             void push_triangle_filled(
-                const gs_vec2f&              _P1,
-                const gs_vec2f&              _P2,
-                const gs_vec2f&              _P3,
-                const ApplicationRenderingBackendColor&   _Color,
-                const gs_mat4f&              _Transform = gs_mat4f(1.f),
+                const gs_vec2f&                           _P1,
+                const gs_vec2f&                           _P2,
+                const gs_vec2f&                           _P3,
+                const gs_color&                           _Color,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
             void push_rectangle_filled(
-                const gs_vec2f&              _Min,
-                const gs_vec2f&              _Max,
-                const ApplicationRenderingBackendColor&   _Color,
-                const gs_mat4f&              _Transform = gs_mat4f(1.f),
+                const gs_vec2f&                           _Min,
+                const gs_vec2f&                           _Max,
+                const gs_color&                           _Color,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
             void push_rectangle_gradient_mesh(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const ApplicationRenderingBackendColor& _Color1,
-                const ApplicationRenderingBackendColor& _Color2,
-                const ApplicationRenderingBackendColor& _Color3,
-                const ApplicationRenderingBackendColor& _Color4,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_vec2f&  _Min,
+                const gs_vec2f&  _Max,
+                const gs_color& _Color1,
+                const gs_color& _Color2,
+                const gs_color& _Color3,
+                const gs_color& _Color4,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_rectangle_rounded_filled(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const float&               _Radius,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform              = gs_mat4f(1.f),
-                bool                       _RoundTopLeftCorner     = true,
-                bool                       _RoundTopRightCorner    = true,
-                bool                       _RoundBottomRightCorner = true,
-                bool                       _RoundBottomLeftCorner  = true);
+                const gs_vec2f& _Min,
+                const gs_vec2f& _Max,
+                const float&    _Radius,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform              = gs_mat4f(1.f),
+                bool            _RoundTopLeftCorner     = true,
+                bool            _RoundTopRightCorner    = true,
+                bool            _RoundBottomRightCorner = true,
+                bool            _RoundBottomLeftCorner  = true);
 
             template<typename Type>
             void push_text(
-                const Type&                _Begin,
-                const Type&                _End,
-                const float&               _Size,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont&  _Font      = ApplicationRenderingBackendFont())
+                const Type&                            _Begin,
+                const Type&                            _End,
+                const float&                           _Size,
+                const gs_color&                        _Color,
+                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont())
             {
                 ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
 
@@ -574,75 +580,75 @@ namespace Frenchie
             }
 
             void push_text(
-                const std::u32string&      _Text,
-                const float&               _Size,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont&  _Font      = ApplicationRenderingBackendFont());
+                const std::u32string&                  _Text,
+                const float&                           _Size,
+                const gs_color&                        _Color,
+                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont());
 
             void push_text(
-                const std::u16string&      _Text,
-                const float&               _Size,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont&  _Font      = ApplicationRenderingBackendFont());
+                const std::u16string&                  _Text,
+                const float&                           _Size,
+                const gs_color&                        _Color,
+                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont());
 
             void push_text(
-                const std::string&         _Text,
-                const float&               _Size,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont&  _Font      = ApplicationRenderingBackendFont());
+                const std::string&                     _Text,
+                const float&                           _Size,
+                const gs_color&                        _Color,
+                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont());
 
             void push_arc_filled(
-                const gs_vec2f&              _Center,
-                const float&                 _MinorRadius,
-                const float&                 _MajorRadius,
-                const float&                 _SourceAngle,
-                const float&                 _TargetAngle,
-                const ApplicationRenderingBackendColor&   _Color,
-                const gs_mat4f&              _Transform = gs_mat4f(1.f),
+                const gs_vec2f&                           _Center,
+                const float&                              _MinorRadius,
+                const float&                              _MajorRadius,
+                const float&                              _SourceAngle,
+                const float&                              _TargetAngle,
+                const gs_color&                           _Color,
+                const gs_mat4f&                           _Transform = gs_mat4f(1.f),
                 const ApplicationRenderingBackendTexture& _Texture   = ApplicationRenderingBackendTexture());
 
             void push_line(
-                const gs_vec2f&            _P1,
-                const gs_vec2f&            _P2,
-                const float&               _Width,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float&    _Width,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_arc(
-                const gs_vec2f&            _Center,
-                const float&               _MinorRadius,
-                const float&               _MajorRadius,
-                const float&               _SourceAngle,
-                const float&               _TargetAngle,
-                const float&               _Width,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _SourceAngle,
+                const float&    _TargetAngle,
+                const float&    _Width,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_triangle(
-                const gs_vec2f&            _P1,
-                const gs_vec2f&            _P2,
-                const gs_vec2f&            _P3,
-                const float&               _Width,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_vec2f&  _P1,
+                const gs_vec2f&  _P2,
+                const gs_vec2f&  _P3,
+                const float&     _Width,
+                const gs_color&  _Color,
+                const gs_mat4f&  _Transform = gs_mat4f(1.f));
 
             void push_rectangle(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const float&               _Width,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_vec2f& _Min,
+                const gs_vec2f& _Max,
+                const float&    _Width,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             void push_rectangle_rounded(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const float&               _Radius,
-                const float&               _Width,
-                const ApplicationRenderingBackendColor& _Color,
-                const gs_mat4f&            _Transform = gs_mat4f(1.f));
+                const gs_vec2f& _Min,
+                const gs_vec2f& _Max,
+                const float&    _Radius,
+                const float&    _Width,
+                const gs_color& _Color,
+                const gs_mat4f& _Transform = gs_mat4f(1.f));
 
             // commands API
             void push_rendering_command(
@@ -651,7 +657,7 @@ namespace Frenchie
 
             void push_rendering_command(
                 const ApplicationRenderingBackendTexture&                   _Texture,
-                const ApplicationRenderingBackendColor&                     _Color,
+                const gs_color&                                             _Color,
                 const gs_mat4f&                                             _Transform,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints = ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
@@ -660,55 +666,55 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_mat4f&                                             _Transform,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
-                const ApplicationRenderingBackendColor&                     _ClearColor,
+                const gs_color&                                             _ClearColor,
                 const gs_2dboxf&                                            _ClippinBox);
 
         protected:
 
             // auxiliary mesh building API
             void build_triangle_filled_mesh(
-                const gs_vec2f&              _P1,
-                const gs_vec2f&              _P2,
-                const gs_vec2f&              _P3,
-                const ApplicationRenderingBackendColor&   _Color,
+                const gs_vec2f&                           _P1,
+                const gs_vec2f&                           _P2,
+                const gs_vec2f&                           _P3,
+                const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture);
 
             void build_rectangle_filled_mesh(
-                const gs_vec2f&              _Min,
-                const gs_vec2f&              _Max,
-                const ApplicationRenderingBackendColor&   _Color,
+                const gs_vec2f&                           _Min,
+                const gs_vec2f&                           _Max,
+                const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture);
 
             void build_rectangle_filled_mesh(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const gs_vec2f&            _MinUV,
-                const gs_vec2f&            _MaxUV,
-                const ApplicationRenderingBackendColor& _Color);
+                const gs_vec2f& _Min,
+                const gs_vec2f& _Max,
+                const gs_vec2f& _MinUV,
+                const gs_vec2f& _MaxUV,
+                const gs_color& _Color);
 
             void build_rectangle_gradient_mesh(
-                const gs_vec2f&            _Min,
-                const gs_vec2f&            _Max,
-                const ApplicationRenderingBackendColor& _Color1,
-                const ApplicationRenderingBackendColor& _Color2,
-                const ApplicationRenderingBackendColor& _Color3,
-                const ApplicationRenderingBackendColor& _Color4);
+                const gs_vec2f& _Min,
+                const gs_vec2f& _Max,
+                const gs_color& _Color1,
+                const gs_color& _Color2,
+                const gs_color& _Color3,
+                const gs_color& _Color4);
 
             void build_arc_filled_mesh(
-                const gs_vec2f&              _Center,
-                const float&                 _MinorRadius,
-                const float&                 _MajorRadius,
-                const float&                 _SourceAngle,
-                const float&                 _TargetAngle,
-                const ApplicationRenderingBackendColor&   _Color,
+                const gs_vec2f&                           _Center,
+                const float&                              _MinorRadius,
+                const float&                              _MajorRadius,
+                const float&                              _SourceAngle,
+                const float&                              _TargetAngle,
+                const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture,
-                const int&                   _SegmentsCount = 36);
+                const int&                                _SegmentsCount = 36);
 
             void build_line_mesh(
-                const gs_vec2f&              _P1,
-                const gs_vec2f&              _P2,
-                const float&                 _Width,
-                const ApplicationRenderingBackendColor&   _Color,
+                const gs_vec2f&                           _P1,
+                const gs_vec2f&                           _P2,
+                const float&                              _Width,
+                const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture);
 
             void build_arc_mesh(
@@ -718,15 +724,15 @@ namespace Frenchie
                 const float&               _SourceAngle,
                 const float&               _TargetAngle,
                 const float&               _Width,
-                const ApplicationRenderingBackendColor& _Color);
+                const gs_color&            _Color);
 
             // rendering queue data
-            gs_2dboxf                                      m_RenderingQueueViewport            {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<ApplicationRenderingBackendColor>  m_RenderingQueueClearColors         {std::vector<ApplicationRenderingBackendColor>()};
-            std::vector<gs_2dboxf>                         m_RenderingQueueClippingBoxes       {std::vector<gs_2dboxf>()};
-            std::vector<ApplicationRenderingBackendVertex> m_RenderingQueueMeshVertexes        {std::vector<ApplicationRenderingBackendVertex>()};
-            std::vector<int>                               m_RenderingQueueMeshVertexesIndexes {std::vector<int>()};
-            float                                          m_RenderingQueueMinimumLineWidth    {4.f};
+            gs_2dboxf                                      m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_color>                          m_ClearColors                        {std::vector<gs_color>()};
+            std::vector<gs_2dboxf>                         m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
+            std::vector<ApplicationRenderingBackendVertex> m_MeshVertexes                       {std::vector<ApplicationRenderingBackendVertex>()};
+            std::vector<int>                               m_MeshVertexesIndexes                {std::vector<int>()};
+            float                                          m_MinimumLineWidth                   {4.f};
 
             // path building data
             RenderingQueuePathBuilder                      m_PathBuilder                        {RenderingQueuePathBuilder(8.f)};
@@ -739,7 +745,6 @@ namespace Frenchie
             // metrics measurement
             std::chrono::high_resolution_clock::time_point m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};            
             Frenchie::Core::RingBuffer<double, 64>         m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
-            int                                            m_RenderedTrianglesCount             {0};
             RenderingQueueMetrics                          m_Metrics                            {RenderingQueueMetrics()};
 
             int m_IndexesOffset = 0;

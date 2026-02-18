@@ -44,21 +44,6 @@ namespace Frenchie
             ApplicationRenderingBackendTextureMaxFilter_Nearest,
         };
 
-        enum ApplicationRenderingBackendGraphicsApiHints_ : int
-        {
-            ApplicationRenderingBackendGraphicsApiHints_Blending    = 1 << 0,
-            ApplicationRenderingBackendGraphicsApiHints_DepthTest   = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiHints_StencilTest = 1 << 2,
-            ApplicationRenderingBackendGraphicsApiHints_ScissorTest = 1 << 3,
-        };
-
-        enum ApplicationRenderingBackendGraphicsApiBuffers_ : int
-        {
-            ApplicationRenderingBackendGraphicsApiBuffers_Color   = 1 << 0,
-            ApplicationRenderingBackendGraphicsApiBuffers_Depth   = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiBuffers_Stencil = 1 << 2,
-        };
-
         enum ApplicationRenderingBackendGraphicsApiRenderingHints_ : int
         {
             ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 1,
@@ -77,21 +62,20 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendTextureMinFilter;
         typedef int ApplicationRenderingBackendTextureMaxFilter;
 
-        typedef int ApplicationRenderingBackendGraphicsApiHints;
-        typedef int ApplicationRenderingBackendGraphicsApiBuffers;
         typedef int ApplicationRenderingBackendGraphicsApiRenderingHints;
 
         typedef int ApplicationRenderingBackendShaderType;
-        typedef unsigned int ApplicationRenderingBackendColor;
 
         // Enities
+        struct ApplicationRenderingBackendGraphicsApiState;
+
         struct ApplicationRenderingBackendTexture final
         {
             ApplicationRenderingBackendTexture(
                 const unsigned int&                                _Ptr       = 0,
                 const int&                                         _Width     = 128,
                 const int&                                         _Height    = 128,
-                const ApplicationRenderingBackendColor&            _Color     = 1, // white
+                const gs_color&            _Color     = 1, // white
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
@@ -113,7 +97,7 @@ namespace Frenchie
             unsigned int                                Ptr       {+0};
             int                                         Width     {-1};
             int                                         Height    {-1};
-            ApplicationRenderingBackendColor            Color     {1}; // white
+            gs_color            Color     {1}; // white
             ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA};
             ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat};
             ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear};
@@ -126,7 +110,7 @@ namespace Frenchie
                 const gs_vec3f&                         _Position = gs_vec3f(0),
                 const gs_vec3f&                         _Normal   = gs_vec3f(0),
                 const gs_vec2f&                         _UV       = gs_vec2f(0),
-                const ApplicationRenderingBackendColor& _Color    = 1) :
+                const gs_color& _Color    = 1) :
                 Position(_Position),
                 Normal(_Normal),
                 UV(_UV),
@@ -135,7 +119,7 @@ namespace Frenchie
             gs_vec3f                         Position{gs_vec3f(0.f, 0.f, 0.f)};
             gs_vec3f                         Normal  {gs_vec3f(0.f, 0.f, 0.f)};
             gs_vec2f                         UV      {gs_vec3f(0.f, 0.f, 0.f)};
-            ApplicationRenderingBackendColor Color   {1}; // white
+            gs_color Color   {1}; // white
         };
 
         struct ApplicationRenderingBackendGlyph
@@ -225,7 +209,6 @@ namespace Frenchie
 
             static ApplicationRenderingBackendFont    get_default_font();
             static ApplicationRenderingBackendTexture get_default_texture();
-            
 
             // viewport API
             static void set_viewport(const gs_vec2f&, const gs_vec2f&);
@@ -273,18 +256,6 @@ namespace Frenchie
 
             static void end_render();
 
-            // color API
-            static ApplicationRenderingBackendColor construct_rgba_color(
-                const ApplicationRenderingBackendColor& _R,
-                const ApplicationRenderingBackendColor& _G,
-                const ApplicationRenderingBackendColor& _B,
-                const ApplicationRenderingBackendColor& _A);
-
-            static ApplicationRenderingBackendColor retrieve_red_component(const ApplicationRenderingBackendColor& _Color);
-            static ApplicationRenderingBackendColor retrieve_green_component(const ApplicationRenderingBackendColor& _Color);
-            static ApplicationRenderingBackendColor retrieve_blue_component(const ApplicationRenderingBackendColor& _Color);
-            static ApplicationRenderingBackendColor retrieve_alpha_component(const ApplicationRenderingBackendColor& _Color);
-
             // camera and view projection API
             static Projections calculate_2d_camera_view_and_projection(
                 const gs_vec2f& _CameraWorldPosition,
@@ -296,15 +267,13 @@ namespace Frenchie
                 const float&    _CameraFarPlanePosition);
 
             // rendering platoform API
-            static void enable(const ApplicationRenderingBackendGraphicsApiHints&);
-            static void disable(const ApplicationRenderingBackendGraphicsApiHints&);
-            static void clear_color(const ApplicationRenderingBackendColor&);
+            static void clear_color(const gs_color&);
             static void scissor_box(const gs_2dboxf&);
-            static void clear_buffers(const ApplicationRenderingBackendGraphicsApiBuffers&);
 
         private:
-            static ApplicationRenderingBackendFont    m_DefaultFont;
-            static ApplicationRenderingBackendTexture m_DefaultTexture;
+            static ApplicationRenderingBackendFont                              m_DefaultFont;
+            static ApplicationRenderingBackendTexture                           m_DefaultTexture;
+            static std::shared_ptr<ApplicationRenderingBackendGraphicsApiState> m_GraphicsApiState;
         };
     }
 }

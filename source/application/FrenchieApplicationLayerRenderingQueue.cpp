@@ -50,10 +50,10 @@ bool RenderingQueue::awake()
 void RenderingQueue::frame_start()
 {
     // assetion
-    GS_ASSERT(m_RenderingQueueClearColors.empty());
-    GS_ASSERT(m_RenderingQueueClippingBoxes.empty());
-    GS_ASSERT(m_RenderingQueueMeshVertexes.empty());
-    GS_ASSERT(m_RenderingQueueMeshVertexesIndexes.empty());
+    GS_ASSERT(m_ClearColors.empty());
+    GS_ASSERT(m_ClippingBoxes.empty());
+    GS_ASSERT(m_MeshVertexes.empty());
+    GS_ASSERT(m_MeshVertexesIndexes.empty());
     GS_ASSERT(m_VertexesOffset == 0);
     GS_ASSERT(m_IndexesOffset == 0);
     
@@ -62,7 +62,7 @@ void RenderingQueue::frame_start()
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
 
     // push clear colo
-    push_clear_color(ApplicationRenderingBackend::construct_rgba_color(150, 150, 150, 150));
+    push_clear_color(gs_rgba_color(150, 150, 150, 150));
     push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size()));
 
     // compute projection matrix
@@ -86,7 +86,7 @@ void RenderingQueue::frame_start()
     gs_vec3f viewportMin = gs_vector_convert_to_NDC(gs_vec2f(0.f, 0.f), gs_vec2f(width, height));
     gs_vec3f viewportMax = gs_vector_convert_to_NDC(ApplicationPlatformBackend::get_window_size(), gs_vec2f(width, height));
 
-    m_RenderingQueueViewport = gs_2dboxf(
+    m_Viewport = gs_2dboxf(
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
 
@@ -99,19 +99,8 @@ void RenderingQueue::frame_update()
 
 void RenderingQueue::frame_render()
 {
-    ApplicationRenderingBackend::enable(
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending    |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest   |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest);
-
-    ApplicationRenderingBackend::clear_buffers(
-        ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Color |
-        ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Depth |
-        ApplicationRenderingBackendGraphicsApiBuffers_::ApplicationRenderingBackendGraphicsApiBuffers_Stencil);
-
-    // construct mesh
-    if(!ApplicationRenderingBackend::begin_render()) return;
+    if(!ApplicationRenderingBackend::begin_render())
+        return;
 
     // sort rendering commands by depth
     std::stable_sort(
@@ -164,12 +153,12 @@ void RenderingQueue::frame_render()
             auto meshRenderingHints = renderingCommand.value().MeshRendererHints;
 
             ApplicationRenderingBackend::render_mesh(
-                &mesh.Vertexes->at(0),
-                (int)mesh.Vertexes->size(),
+                &m_MeshVertexes[0],
+                (int)m_MeshVertexes.size(),
                 mesh.VertexesCount,
                 mesh.VertexesOffset,
-                &mesh.Indexes->at(0),
-                (int)mesh.Indexes->size(),
+                &m_MeshVertexesIndexes[0],
+                (int)m_MeshVertexesIndexes.size(),
                 mesh.IndexesCount,
                 mesh.IndexesOffset,
                 texture,
@@ -178,40 +167,31 @@ void RenderingQueue::frame_render()
         }
     }
 
-    ApplicationRenderingBackend::end_render();
-
     // save metrics
     m_Metrics.RenderingCommandsCount = (int)m_Commands.size();
+    m_Metrics.RenderedTrianglesCount = (int)(m_MeshVertexes.size() / 3);
+    double current = (double)1e9 / Frenchie::Core::elapsed<std::chrono::nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
+    m_FrameRateMeasurementFilterBuffer.push(current);
+    m_Metrics.FrameRate += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
 
     // clear commands queue
     m_Commands.clear();
 
-    // clean-up
-    ApplicationRenderingBackend::disable(
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_Blending    |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_DepthTest   |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_StencilTest |
-        ApplicationRenderingBackendGraphicsApiHints_::ApplicationRenderingBackendGraphicsApiHints_ScissorTest);
+    // end rendering
+    ApplicationRenderingBackend::end_render();
 }
 
 void RenderingQueue::frame_finish()
 {
-    // calculate frame rate and save metrics
-    double current = (double)1e9 / Frenchie::Core::elapsed<std::chrono::nanoseconds>(m_FrameRateMeasurementStartTimePoint, Frenchie::Core::tic());
-    m_FrameRateMeasurementFilterBuffer.push(current);
-    m_Metrics.FrameRate              += (current - m_FrameRateMeasurementFilterBuffer.at(m_FrameRateMeasurementFilterBuffer.size() - 1)) / (double)(m_FrameRateMeasurementFilterBuffer.size());
-    m_Metrics.RenderedTrianglesCount = m_RenderedTrianglesCount;
-    m_RenderedTrianglesCount         = 0;
-
     // clear rendering data
-    m_RenderingQueueClearColors.clear();
-    m_RenderingQueueClippingBoxes.clear();
-    m_RenderingQueueMeshVertexes.clear();
-    m_RenderingQueueMeshVertexesIndexes.clear();
+    m_ClearColors.clear();
+    m_ClippingBoxes.clear();
+    m_MeshVertexes.clear();
+    m_MeshVertexesIndexes.clear();
 
-    // restore offsets
-    m_IndexesOffset  = (int)m_RenderingQueueMeshVertexes.size();
-    m_VertexesOffset = (int)m_RenderingQueueMeshVertexesIndexes.size();
+    // restore mesh offsets
+    m_IndexesOffset  = (int)m_MeshVertexes.size();
+    m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
 }
 
 void RenderingQueue::finish()
@@ -226,33 +206,31 @@ bool RenderingQueue::allows_multiple_instances() const
 }
 
 void RenderingQueue::push_rendering_command(
-    const gs_mat4f&                                _Transform,
+    const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints)
 {
     push_rendering_command(
         ApplicationRenderingBackend::get_default_texture(),
-        ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255),
+        gs_rgba_color(255, 255, 255, 255),
         _Transform,
         _MeshRenderingHints);
 }
 
 void RenderingQueue::push_rendering_command(
     const ApplicationRenderingBackendTexture&                   _Texture,
-    const ApplicationRenderingBackendColor&                     _Color,
+    const gs_color&                                             _Color,
     const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderingHints)
 {
-    if(m_RenderingQueueMeshVertexesIndexes.empty() || m_RenderingQueueMeshVertexes.empty()) return;
+    if(m_MeshVertexesIndexes.empty() || m_MeshVertexes.empty()) return;
 
     push_rendering_command(
 
         // construct mesh
         RenderingQueueMesh(
-            &m_RenderingQueueMeshVertexes,
-            (int)m_RenderingQueueMeshVertexes.size(),
+            (int)m_MeshVertexes.size(),
             m_VertexesOffset,
-            &m_RenderingQueueMeshVertexesIndexes,
-            (int)m_RenderingQueueMeshVertexesIndexes.size(),
+            (int)m_MeshVertexesIndexes.size(),
             m_IndexesOffset),
 
         // setup texture
@@ -271,8 +249,8 @@ void RenderingQueue::push_rendering_command(
         current_clipping_box());
 
     // move offsets
-    m_IndexesOffset  = (int)m_RenderingQueueMeshVertexes.size();
-    m_VertexesOffset = (int)m_RenderingQueueMeshVertexesIndexes.size();
+    m_IndexesOffset  = (int)m_MeshVertexes.size();
+    m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
 }
 
 void RenderingQueue::push_rendering_command(
@@ -280,7 +258,7 @@ void RenderingQueue::push_rendering_command(
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _Transform,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _RendererHints,
-    const ApplicationRenderingBackendColor&                     _ClearColor,
+    const gs_color&                                             _ClearColor,
     const gs_2dboxf&                                            _ClippinBox)
 {
     m_Commands.push_back(
@@ -297,48 +275,44 @@ void RenderingQueue::push_rendering_command(
 void RenderingQueue::push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform)
 {
     gs_2dboxf clipRect = _Value.transform(_Transform);
-    m_RenderingQueueClippingBoxes.push_back(clipRect);
+    m_ClippingBoxes.push_back(clipRect);
 }
 
 void RenderingQueue::pop_clip_box()
 {
-    if(!m_RenderingQueueClippingBoxes.empty())
-        m_RenderingQueueClippingBoxes.pop_back();
+    if(!m_ClippingBoxes.empty())
+        m_ClippingBoxes.pop_back();
 }
 
-void RenderingQueue::push_clear_color(const ApplicationRenderingBackendColor& _Value)
+void RenderingQueue::push_clear_color(const gs_color& _Value)
 {
-    m_RenderingQueueClearColors.push_back(_Value);
+    m_ClearColors.push_back(_Value);
 }
 
 void RenderingQueue::pop_clear_color()
 {
-    if(!m_RenderingQueueClearColors.empty())
-        m_RenderingQueueClearColors.pop_back();
+    if(!m_ClearColors.empty())
+        m_ClearColors.pop_back();
 }
 
 gs_2dboxf RenderingQueue::current_clipping_box() const
 {
-    return !m_RenderingQueueClippingBoxes.empty() ? m_RenderingQueueClippingBoxes[m_RenderingQueueClippingBoxes.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
+    return !m_ClippingBoxes.empty() ? m_ClippingBoxes[m_ClippingBoxes.size() - 1] : gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size());
 }
 
 gs_2dboxf RenderingQueue::current_viewport() const
 {
-    return m_RenderingQueueViewport;
+    return m_Viewport;
 }
 
-ApplicationRenderingBackendColor RenderingQueue::current_clear_color() const
+gs_color RenderingQueue::current_clear_color() const
 {
-    return !m_RenderingQueueClearColors.empty() ?
-        m_RenderingQueueClearColors[m_RenderingQueueClearColors.size() - 1] :
-            ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255);
+    return !m_ClearColors.empty() ?
+        m_ClearColors[m_ClearColors.size() - 1] :
+            gs_rgba_color(255, 255, 255, 255);
 }
 
-gs_mat4f RenderingQueue::calculate_transform_matrix(
-    const float&    _Depth,
-    const gs_vec2f& _Position,
-    const float&    _Rotation,
-    const gs_vec2f& _Scale)
+gs_mat4f RenderingQueue::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
 {
     gs_mat4f matrix(1.f);
 
@@ -347,21 +321,14 @@ gs_mat4f RenderingQueue::calculate_transform_matrix(
             gs_matrix_scale(matrix, gs_vec3f(_Scale, 1.f));
 }
 
-gs_vec2f RenderingQueue::calculate_arc_point(
-    const gs_vec2f& _Center,
-    const float&    _MinorRadius,
-    const float&    _MajorRadius,
-    const float&    _ArcAngle)
+gs_vec2f RenderingQueue::calculate_arc_point(const gs_vec2f& _Center, const float& _MinorRadius, const float& _MajorRadius, const float&    _ArcAngle)
 {
     return gs_vec2f(
         _Center.x + _MinorRadius * cos(gs_to_radians(_ArcAngle)),
         _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)));
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(
-    const std::u32string&     _Text,
-    const float&              _Size,
-    const ApplicationRenderingBackendFont& _Font)
+gs_2dboxf RenderingQueue::calculate_bounding_box(const std::u32string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
 {
     ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
 
@@ -414,35 +381,22 @@ gs_2dboxf RenderingQueue::calculate_bounding_box(
     return gs_2dboxf(min, max);
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(
-    const std::u16string&     _Text,
-    const float&              _Size,
-    const ApplicationRenderingBackendFont& _Font)
+gs_2dboxf RenderingQueue::calculate_bounding_box(const std::u16string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
 {
-    return calculate_bounding_box(
-        Frenchie::Core::String::convert_utf16_to_utf8(_Text),
-        _Size,
-        _Font
-    );
+    return calculate_bounding_box(Frenchie::Core::String::convert_utf16_to_utf8(_Text), _Size, _Font);
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(
-    const std::string&        _Text,
-    const float&              _Size,
-    const ApplicationRenderingBackendFont& _Font)
+gs_2dboxf RenderingQueue::calculate_bounding_box(const std::string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
 {
-    return calculate_bounding_box(
-        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
-        _Size,
-        _Font);
+    return calculate_bounding_box(Frenchie::Core::String::convert_utf8_to_utf32(_Text), _Size, _Font);
 }
 
 void RenderingQueue::push_triangle_filled(
-    const gs_vec2f&              _P1,
-    const gs_vec2f&              _P2,
-    const gs_vec2f&              _P3,
-    const ApplicationRenderingBackendColor&   _Color,
-    const gs_mat4f&              _Transform,
+    const gs_vec2f&                           _P1,
+    const gs_vec2f&                           _P2,
+    const gs_vec2f&                           _P3,
+    const gs_color&                           _Color,
+    const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     if( !current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
@@ -457,10 +411,10 @@ void RenderingQueue::push_triangle_filled(
 }
 
 void RenderingQueue::push_rectangle_filled(
-    const gs_vec2f&              _Min,
-    const gs_vec2f&              _Max,
-    const ApplicationRenderingBackendColor&   _Color,
-    const gs_mat4f&              _Transform,
+    const gs_vec2f&                           _Min,
+    const gs_vec2f&                           _Max,
+    const gs_color&                           _Color,
+    const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
@@ -471,13 +425,13 @@ void RenderingQueue::push_rectangle_filled(
 }
 
 void RenderingQueue::push_rectangle_gradient_mesh(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const ApplicationRenderingBackendColor& _Color1,
-    const ApplicationRenderingBackendColor& _Color2,
-    const ApplicationRenderingBackendColor& _Color3,
-    const ApplicationRenderingBackendColor& _Color4,
-    const gs_mat4f&            _Transform)
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const gs_color& _Color1,
+    const gs_color& _Color2,
+    const gs_color& _Color3,
+    const gs_color& _Color4,
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
         return;
@@ -487,21 +441,21 @@ void RenderingQueue::push_rectangle_gradient_mesh(
 }
 
 void RenderingQueue::push_rectangle_rounded_filled(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const float&               _Radius,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform,
-    bool                       _RoundTopLeftCorner,
-    bool                       _RoundTopRightCorner,
-    bool                       _RoundBottomRightCorner,
-    bool                       _RoundBottomLeftCorner)
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Radius,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform,
+    bool            _RoundTopLeftCorner,
+    bool            _RoundTopRightCorner,
+    bool            _RoundBottomRightCorner,
+    bool            _RoundBottomLeftCorner)
 {
     if(!current_clipping_box().overlaps(gs_2dboxf(_Transform * gs_vec4f(_Min, 0.f, 1.f), _Transform * gs_vec4f(_Max, 0.f, 1.f))))
         return;
 
     // check rounding radius
-    if(_Radius <= m_RenderingQueueMinimumLineWidth ||
+    if(_Radius <= m_MinimumLineWidth ||
         (!_RoundTopLeftCorner     &&
          !_RoundTopRightCorner    &&
          !_RoundBottomRightCorner &&
@@ -552,21 +506,21 @@ void RenderingQueue::push_rectangle_rounded_filled(
 }
 
 void RenderingQueue::push_text(
-    const std::u32string&      _Text,
-    const float&               _Size,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform,
-    const ApplicationRenderingBackendFont&  _Font)
+    const std::u32string&                  _Text,
+    const float&                           _Size,
+    const gs_color&                        _Color,
+    const gs_mat4f&                        _Transform,
+    const ApplicationRenderingBackendFont& _Font)
 {
     push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
 }
 
 void RenderingQueue::push_text(
-    const std::u16string&      _Text,
-    const float&               _Size,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform,
-    const ApplicationRenderingBackendFont&  _Font)
+    const std::u16string&                  _Text,
+    const float&                           _Size,
+    const gs_color&                        _Color,
+    const gs_mat4f&                        _Transform,
+    const ApplicationRenderingBackendFont& _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf8_to_utf32(
@@ -578,11 +532,11 @@ void RenderingQueue::push_text(
 }
 
 void RenderingQueue::push_text(
-    const std::string&         _Text,
-    const float&               _Size,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform,
-    const ApplicationRenderingBackendFont&  _Font)
+    const std::string&                     _Text,
+    const float&                           _Size,
+    const gs_color&                        _Color,
+    const gs_mat4f&                        _Transform,
+    const ApplicationRenderingBackendFont& _Font)
 {
     push_text(
         Frenchie::Core::String::convert_utf8_to_utf32(_Text),
@@ -593,13 +547,13 @@ void RenderingQueue::push_text(
 }
 
 void RenderingQueue::push_arc_filled(
-    const gs_vec2f&              _Center,
-    const float&                 _MinorRadius,
-    const float&                 _MajorRadius,
-    const float&                 _SourceAngle,
-    const float&                 _TargetAngle,
-    const ApplicationRenderingBackendColor&   _Color,
-    const gs_mat4f&              _Transform,
+    const gs_vec2f&                           _Center,
+    const float&                              _MinorRadius,
+    const float&                              _MajorRadius,
+    const float&                              _SourceAngle,
+    const float&                              _TargetAngle,
+    const gs_color&                           _Color,
+    const gs_mat4f&                           _Transform,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     // check that we are within viewport
@@ -627,11 +581,11 @@ void RenderingQueue::push_arc_filled(
 }
 
 void RenderingQueue::push_line(
-    const gs_vec2f&            _P1,
-    const gs_vec2f&            _P2,
-    const float&               _Width,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_vec2f& _P1,
+    const gs_vec2f& _P2,
+    const float&    _Width,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
         !current_clipping_box().contains(_Transform * gs_vec4f(_P2, 0.f, 1.f)))
@@ -650,14 +604,14 @@ void RenderingQueue::push_line(
 }
 
 void RenderingQueue::push_arc(
-    const gs_vec2f&            _Center,
-    const float&               _MinorRadius,
-    const float&               _MajorRadius,
-    const float&               _SourceAngle,
-    const float&               _TargetAngle,
-    const float&               _Width,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_vec2f& _Center,
+    const float&    _MinorRadius,
+    const float&    _MajorRadius,
+    const float&    _SourceAngle,
+    const float&    _TargetAngle,
+    const float&    _Width,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform)
 {
     // check that we are within viewport
     if(!current_clipping_box().overlaps(
@@ -673,12 +627,12 @@ void RenderingQueue::push_arc(
 }
 
 void RenderingQueue::push_triangle(
-    const gs_vec2f&            _P1,
-    const gs_vec2f&            _P2,
-    const gs_vec2f&            _P3,
-    const float&               _Width,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_vec2f& _P1,
+    const gs_vec2f& _P2,
+    const gs_vec2f& _P3,
+    const float&    _Width,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform)
 {
     // check if we are within viewport
     if( !current_clipping_box().contains(_Transform * gs_vec4f(_P1, 0.f, 1.f)) &&
@@ -699,19 +653,19 @@ void RenderingQueue::push_triangle(
         _Color,
         ApplicationRenderingBackend::get_default_texture(),
         _Width,
-        m_RenderingQueueMeshVertexes,
-        m_RenderingQueueMeshVertexesIndexes);
+        m_MeshVertexes,
+        m_MeshVertexesIndexes);
 
     // push rendering command
     push_rendering_command(_Transform, _Color);
 }
 
 void RenderingQueue::push_rectangle(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const float&               _Width,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Width,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().overlaps(
         gs_2dboxf(
@@ -732,21 +686,21 @@ void RenderingQueue::push_rectangle(
     m_PathBuilder.build_mesh(
         _Color,
         ApplicationRenderingBackend::get_default_texture(),
-        gs_max(_Width, m_RenderingQueueMinimumLineWidth),
-        m_RenderingQueueMeshVertexes,
-        m_RenderingQueueMeshVertexesIndexes);
+        gs_max(_Width, m_MinimumLineWidth),
+        m_MeshVertexes,
+        m_MeshVertexesIndexes);
 
     // push rendering command
     push_rendering_command(_Transform, _Color);
 }
 
 void RenderingQueue::push_rectangle_rounded(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const float&               _Radius,
-    const float&               _Width,
-    const ApplicationRenderingBackendColor& _Color,
-    const gs_mat4f&            _Transform)
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const float&    _Radius,
+    const float&    _Width,
+    const gs_color& _Color,
+    const gs_mat4f& _Transform)
 {
     if(!current_clipping_box().overlaps(
         gs_2dboxf(
@@ -786,44 +740,44 @@ void RenderingQueue::push_rectangle_rounded(
 }
 
 void RenderingQueue::build_triangle_filled_mesh(
-    const gs_vec2f&              _P1,
-    const gs_vec2f&              _P2,
-    const gs_vec2f&              _P3,
-    const ApplicationRenderingBackendColor&   _Color,
+    const gs_vec2f&                           _P1,
+    const gs_vec2f&                           _P2,
+    const gs_vec2f&                           _P3,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    const int size = (int)m_RenderingQueueMeshVertexes.size();
+    const int size = (int)m_MeshVertexes.size();
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             gs_vec3f(_P1.x, _P1.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
             _Color));
     
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             gs_vec3f(_P2.x, _P2.y, 0.f),
             gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
             _Color));
     
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             gs_vec3f(_P3.x, _P3.y, 0.f),
             gs_vec3f(0.f),
             gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
             _Color));
     
-    for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
-        m_RenderingQueueMeshVertexesIndexes.push_back(i);
+    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
 }
 
 void RenderingQueue::build_rectangle_filled_mesh(
-    const gs_vec2f&              _Min,
-    const gs_vec2f&              _Max,
-    const ApplicationRenderingBackendColor&   _Color,
+    const gs_vec2f&                           _Min,
+    const gs_vec2f&                           _Max,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    const int      size   = (int)m_RenderingQueueMeshVertexes.size();
+    const int      size   = (int)m_MeshVertexes.size();
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
     const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, 0.f);
@@ -838,21 +792,21 @@ void RenderingQueue::build_rectangle_filled_mesh(
     const gs_vec3f _UV4 = gs_vec3f(_MinUV.x, _MaxUV.y, 0.f);
 
     // triangle 1
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P4,
             gs_vec3f(0.f),
@@ -860,39 +814,39 @@ void RenderingQueue::build_rectangle_filled_mesh(
             _Color));
 
     // triangle 2
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
-    for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
-        m_RenderingQueueMeshVertexesIndexes.push_back(i);
+    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
 }
 
 void RenderingQueue::build_rectangle_filled_mesh(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const gs_vec2f&            _MinUV,
-    const gs_vec2f&            _MaxUV,
-    const ApplicationRenderingBackendColor& _Color)
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const gs_vec2f& _MinUV,
+    const gs_vec2f& _MaxUV,
+    const gs_color& _Color)
 {
-    const int size = (int)m_RenderingQueueMeshVertexes.size();
+    const int size = (int)m_MeshVertexes.size();
 
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
@@ -905,21 +859,21 @@ void RenderingQueue::build_rectangle_filled_mesh(
     const gs_vec3f _UV4 = gs_vec3f(_MinUV.x, _MaxUV.y, 0.f);
 
     // triangle 1
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(_UV1.x, _UV1.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P4,
             gs_vec3f(0.f),
@@ -927,40 +881,40 @@ void RenderingQueue::build_rectangle_filled_mesh(
             _Color));
 
     // triangle 2
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(_UV2.x, _UV2.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(_UV3.x, _UV3.y),
             _Color));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
-    for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
-        m_RenderingQueueMeshVertexesIndexes.push_back(i);
+    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
 }
 
 void RenderingQueue::build_rectangle_gradient_mesh(
-    const gs_vec2f&            _Min,
-    const gs_vec2f&            _Max,
-    const ApplicationRenderingBackendColor& _Color1,
-    const ApplicationRenderingBackendColor& _Color2,
-    const ApplicationRenderingBackendColor& _Color3,
-    const ApplicationRenderingBackendColor& _Color4)
+    const gs_vec2f& _Min,
+    const gs_vec2f& _Max,
+    const gs_color& _Color1,
+    const gs_color& _Color2,
+    const gs_color& _Color3,
+    const gs_color& _Color4)
 {
-    const int size = (int)m_RenderingQueueMeshVertexes.size();
+    const int size = (int)m_MeshVertexes.size();
 
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
@@ -968,21 +922,21 @@ void RenderingQueue::build_rectangle_gradient_mesh(
     const gs_vec3f _P4 = gs_vec3f(_Min.x, _Max.y, 0.f);
 
     // triangle 1
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P1,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color1));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color2));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P4,
             gs_vec3f(0.f),
@@ -990,40 +944,40 @@ void RenderingQueue::build_rectangle_gradient_mesh(
             _Color4));
 
     // triangle 2
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P2,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color2));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P3,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color3));
 
-    m_RenderingQueueMeshVertexes.push_back(
+    m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
             _P4,
             gs_vec3f(0.f),
             gs_vec2f(0.f),
             _Color4));
 
-    for (int i = size; i < (int)m_RenderingQueueMeshVertexes.size(); ++i)
-        m_RenderingQueueMeshVertexesIndexes.push_back(i);
+    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
 }
 
 void RenderingQueue::build_arc_filled_mesh(
-    const gs_vec2f&              _Center,
-    const float&                 _MinorRadius,
-    const float&                 _MajorRadius,
-    const float&                 _SourceAngle,
-    const float&                 _TargetAngle,
-    const ApplicationRenderingBackendColor&   _Color,
+    const gs_vec2f&                           _Center,
+    const float&                              _MinorRadius,
+    const float&                              _MajorRadius,
+    const float&                              _SourceAngle,
+    const float&                              _TargetAngle,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture,
-    const int&                   _SegmentsCount)
+    const int&                                _SegmentsCount)
 {
     gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p1 = p0;
@@ -1039,15 +993,15 @@ void RenderingQueue::build_arc_filled_mesh(
 }
 
 void RenderingQueue::build_line_mesh(
-    const gs_vec2f&              _P1,
-    const gs_vec2f&              _P2,
-    const float&                 _Width,
-    const ApplicationRenderingBackendColor&   _Color,
+    const gs_vec2f&                           _P1,
+    const gs_vec2f&                           _P2,
+    const float&                              _Width,
+    const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
     const gs_vec3f p1    = gs_vec3f(_P1.x, _P1.y, 0.f);
     const gs_vec3f p2    = gs_vec3f(_P2.x, _P2.y, 0.f);
-    float          width = gs_max(_Width, m_RenderingQueueMinimumLineWidth);
+    float          width = gs_max(_Width, m_MinimumLineWidth);
 
     gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
     gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * width * 0.5f;
@@ -1071,19 +1025,19 @@ void RenderingQueue::build_line_mesh(
 }
 
 void RenderingQueue::build_arc_mesh(
-    const gs_vec2f&            _Center,
-    const float&               _MinorRadius,
-    const float&               _MajorRadius,
-    const float&               _SourceAngle,
-    const float&               _TargetAngle,
-    const float&               _Width,
-    const ApplicationRenderingBackendColor& _Color)
+    const gs_vec2f& _Center,
+    const float&    _MinorRadius,
+    const float&    _MajorRadius,
+    const float&    _SourceAngle,
+    const float&    _TargetAngle,
+    const float&    _Width,
+    const gs_color& _Color)
 {
     const float angleIncrement = 360.f / 36.f;
 
     gs_vec2f p1 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
     gs_vec2f p2;
-    float    width = gs_max(_Width, m_RenderingQueueMinimumLineWidth);
+    float    width = gs_max(_Width, m_MinimumLineWidth);
 
     for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
     {

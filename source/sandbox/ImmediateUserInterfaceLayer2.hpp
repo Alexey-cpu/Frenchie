@@ -193,22 +193,22 @@ namespace Frenchie
                 Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
                 // window
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                = ApplicationRenderingBackend::construct_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]               = ApplicationRenderingBackend::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]        = ApplicationRenderingBackend::construct_rgba_color(72, 82, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]         = gs_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]        = gs_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered] = gs_rgba_color(72, 82, 72, 255);
                 
                 // push button
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                  = ApplicationRenderingBackend::construct_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]               = ApplicationRenderingBackend::construct_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]        = ApplicationRenderingBackend::construct_rgba_color(60, 72, 60, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]        = ApplicationRenderingBackend::construct_rgba_color(120, 128, 120, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]           = gs_rgba_color(28, 28, 28, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]        = gs_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered] = gs_rgba_color(60, 72, 60, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed] = gs_rgba_color(120, 128, 120, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                         = ApplicationRenderingBackend::construct_rgba_color(50, 50, 100, 200);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                  = ApplicationRenderingBackend::construct_rgba_color(100, 100, 172, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                  = gs_rgba_color(50, 50, 100, 200);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]           = gs_rgba_color(100, 100, 172, 255);
 
                 // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                           = ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                    = gs_rgba_color(255, 255, 255, 255);
             }
 
             ~ImmedidateUserInterfaceStyle(){}
@@ -244,7 +244,7 @@ namespace Frenchie
                 return Font;
             }
 
-            ApplicationRenderingBackendColor get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
+            gs_color get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
             {
                 return Colors[_Color];
             }
@@ -259,7 +259,7 @@ namespace Frenchie
             float                            FontSize             = 64.f;
             float                            ScrollBarWidth       = 32.f;
             float                            PopupMenuPointerSize = 32.f;
-            std::vector<ApplicationRenderingBackendColor> Colors;
+            std::vector<gs_color> Colors;
             ApplicationRenderingBackendFont               Font;
         };
 

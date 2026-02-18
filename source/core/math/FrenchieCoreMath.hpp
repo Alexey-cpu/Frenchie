@@ -1760,6 +1760,23 @@ typedef gs_matrix<int,    2, 2> gs_mat2i;
 typedef gs_matrix<int,    3, 3> gs_mat3i;
 typedef gs_matrix<int,    4, 4> gs_mat4i;
 
+//---------
+// COLORS
+//---------
+typedef unsigned int gs_color;
+
+gs_color gs_rgba_color(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A);
+
+gs_color gs_rgba_color_get_r(const gs_color& _Color);
+
+gs_color gs_rgba_color_get_g(const gs_color& _Color);
+
+gs_color gs_rgba_color_get_b(const gs_color& _Color);
+
+gs_color gs_rgba_color_get_a(const gs_color& _Color);
+
+//---------
+
 // undef all macro
 #undef GS_TO_DEGREES_CONVERSION_MULTIPLYER__
 #undef GS_TO_RADIANS_CONVERSION_MULTIPLYER__
