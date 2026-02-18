@@ -409,7 +409,7 @@ void ApplicationRenderingBackend::render_mesh(
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
         glDrawElements(GL_TRIANGLES, _MeshIndexesCount - _MeshVertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(int)));
 
-    // unbind
+    // unbind everything
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
@@ -454,13 +454,13 @@ void ApplicationRenderingBackend::disable(const ApplicationRenderingBackendGraph
         glDisable(GL_SCISSOR_TEST);
 }
 
-void ApplicationRenderingBackend::clear_color(const ApplicationRenderingBackendColor& _Color)
+void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
 {
     glClearColor(
-        (float)ApplicationRenderingBackend::retrieve_red_component(_Color)   / 255.f,
-        (float)ApplicationRenderingBackend::retrieve_green_component(_Color) / 255.f,
-        (float)ApplicationRenderingBackend::retrieve_blue_component(_Color)  / 255.f,
-        (float)ApplicationRenderingBackend::retrieve_alpha_component(_Color) / 255.f);
+        (float)gs_rgba_color_get_r(_Color) / 255.f,
+        (float)gs_rgba_color_get_g(_Color) / 255.f,
+        (float)gs_rgba_color_get_b(_Color) / 255.f,
+        (float)gs_rgba_color_get_a(_Color) / 255.f);
 }
 
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)
@@ -486,38 +486,38 @@ void ApplicationRenderingBackend::clear_buffers(const ApplicationRenderingBacken
         glClear(GL_STENCIL_BUFFER_BIT);
 }
 
-// color API
-ApplicationRenderingBackendColor ApplicationRenderingBackend::construct_rgba_color(
-    const ApplicationRenderingBackendColor& _R,
-    const ApplicationRenderingBackendColor& _G,
-    const ApplicationRenderingBackendColor& _B,
-    const ApplicationRenderingBackendColor& _A)
-{
-    return (((ApplicationRenderingBackendColor)(_A)<<24) |
-            ((ApplicationRenderingBackendColor)(_B)<<16) |
-            ((ApplicationRenderingBackendColor)(_G)<<8)  |
-            ((ApplicationRenderingBackendColor)(_R)<<0));
-}
+// // color API
+// ApplicationRenderingBackendColor ApplicationRenderingBackend::construct_rgba_color(
+//     const ApplicationRenderingBackendColor& _R,
+//     const ApplicationRenderingBackendColor& _G,
+//     const ApplicationRenderingBackendColor& _B,
+//     const ApplicationRenderingBackendColor& _A)
+// {
+//     return (((ApplicationRenderingBackendColor)(_A)<<24) |
+//             ((ApplicationRenderingBackendColor)(_B)<<16) |
+//             ((ApplicationRenderingBackendColor)(_G)<<8)  |
+//             ((ApplicationRenderingBackendColor)(_R)<<0));
+// }
 
-ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_red_component(const ApplicationRenderingBackendColor& _Color)
-{
-    return (_Color >> 0) & 0xFF;
-}
+// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_red_component(const ApplicationRenderingBackendColor& _Color)
+// {
+//     return (_Color >> 0) & 0xFF;
+// }
 
-ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_green_component(const ApplicationRenderingBackendColor& _Color)
-{
-    return (_Color >> 8) & 0xFF;
-}
+// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_green_component(const ApplicationRenderingBackendColor& _Color)
+// {
+//     return (_Color >> 8) & 0xFF;
+// }
 
-ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_blue_component(const ApplicationRenderingBackendColor& _Color)
-{
-    return (_Color >> 16) & 0xFF;
-}
+// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_blue_component(const ApplicationRenderingBackendColor& _Color)
+// {
+//     return (_Color >> 16) & 0xFF;
+// }
 
-ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_alpha_component(const ApplicationRenderingBackendColor& _Color)
-{
-    return (_Color >> 24) & 0xFF;
-}
+// ApplicationRenderingBackendColor ApplicationRenderingBackend::retrieve_alpha_component(const ApplicationRenderingBackendColor& _Color)
+// {
+//     return (_Color >> 24) & 0xFF;
+// }
 
 // camera and view projection API
 ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_2d_camera_view_and_projection(

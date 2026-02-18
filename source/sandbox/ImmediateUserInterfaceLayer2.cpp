@@ -777,11 +777,12 @@ namespace Frenchie
                         auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
                         {
                             if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
-                                return ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255);
+                                return gs_rgba_color(255, 0, 0, 255);
 
+                            // TODO: this MUST BE a setting
                             return closeButtonBox.contains(_Event.CursorPosition) ?
-                                ApplicationRenderingBackend::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-                                ApplicationRenderingBackend::construct_rgba_color(64, 0, 0, 255);
+                                gs_rgba_color(128, 0, 0, 255) :
+                                gs_rgba_color(64, 0, 0, 255);
                         };
 
                         // construct events
@@ -1255,15 +1256,15 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-                ApplicationRenderingBackendColor colors[7] =
+                gs_color colors[7] =
                 {
-                    ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(255, 255, 0, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(0, 255, 0, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(0, 255, 255, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(0, 0, 255, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(255, 0, 255, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255)
+                    gs_rgba_color(255, 0, 0, 255),
+                    gs_rgba_color(255, 255, 0, 255),
+                    gs_rgba_color(0, 255, 0, 255),
+                    gs_rgba_color(0, 255, 255, 255),
+                    gs_rgba_color(0, 0, 255, 255),
+                    gs_rgba_color(255, 0, 255, 255),
+                    gs_rgba_color(255, 0, 0, 255)
                 };
 
                 // render vertical color selector
@@ -1278,8 +1279,8 @@ namespace Frenchie
 
                 for (int i = 1; i < 7; i++)
                 {
-                    ApplicationRenderingBackendColor sourceColor = colors[i-1];
-                    ApplicationRenderingBackendColor targetColor = colors[i-0];
+                    gs_color sourceColor = colors[i-1];
+                    gs_color targetColor = colors[i-0];
 
                     _Context->m_Renderer->push_rectangle_gradient_mesh(
                         position,
@@ -1293,20 +1294,20 @@ namespace Frenchie
                     // calculate color
                     if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
                     {
-                        int r1 = ApplicationRenderingBackend::retrieve_red_component(sourceColor);
-                        int g1 = ApplicationRenderingBackend::retrieve_green_component(sourceColor);
-                        int b1 = ApplicationRenderingBackend::retrieve_blue_component(sourceColor);
+                        int r1 = gs_rgba_color_get_r(sourceColor);
+                        int g1 = gs_rgba_color_get_g(sourceColor);
+                        int b1 = gs_rgba_color_get_b(sourceColor);
 
-                        int r2 = ApplicationRenderingBackend::retrieve_red_component(targetColor);
-                        int g2 = ApplicationRenderingBackend::retrieve_green_component(targetColor);
-                        int b2 = ApplicationRenderingBackend::retrieve_blue_component(targetColor);
+                        int r2 = gs_rgba_color_get_r(targetColor);
+                        int g2 = gs_rgba_color_get_g(targetColor);
+                        int b2 = gs_rgba_color_get_b(targetColor);
 
                         float fraction = (slider.Min.y - position.y) / size.y;
 
-                        Color = ApplicationRenderingBackend::construct_rgba_color(
-                            (ApplicationRenderingBackendColor)(r1 + (r2 - r1) * fraction),
-                            (ApplicationRenderingBackendColor)(g1 + (g2 - g1) * fraction),
-                            (ApplicationRenderingBackendColor)(b1 + (b2 - b1) * fraction),
+                        Color = gs_rgba_color(
+                            (gs_color)(r1 + (r2 - r1) * fraction),
+                            (gs_color)(g1 + (g2 - g1) * fraction),
+                            (gs_color)(b1 + (b2 - b1) * fraction),
                             255);
 
                         caught = true;
@@ -1319,7 +1320,7 @@ namespace Frenchie
                 _Context->m_Renderer->push_rectangle_filled(
                     slider.Min,
                     slider.Max,
-                    ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255),
+                    gs_rgba_color(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -1348,7 +1349,7 @@ namespace Frenchie
 
             float               SliderPreviousPosition = 0.f;
             float               SliderPosition = 0.f;
-            ApplicationRenderingBackendColor Color;
+            gs_color Color;
         };
 
         struct ImmediateUserInterfaceColorPickerGradientColorModifier : public ImmediateUserInterfaceNodePanel
@@ -1364,15 +1365,15 @@ namespace Frenchie
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
                     State.BoundingBox.Min,
                     State.BoundingBox.Max,
-                    ApplicationRenderingBackend::construct_rgba_color(255, 255, 255, 255),
+                    gs_rgba_color(255, 255, 255, 255),
                     BaseColor, // this is current color
-                    ApplicationRenderingBackend::construct_rgba_color(0, 0, 0, 255),
-                    ApplicationRenderingBackend::construct_rgba_color(0, 0, 0, 255),
+                    gs_rgba_color(0, 0, 0, 255),
+                    gs_rgba_color(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            ApplicationRenderingBackendColor BaseColor;
-            ApplicationRenderingBackendColor ModifiedColor;
+            gs_color BaseColor;
+            gs_color ModifiedColor;
         };
 
         // popups
@@ -2829,11 +2830,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
     {
         if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
-            return ApplicationRenderingBackend::construct_rgba_color(255, 0, 0, 255);
+            return gs_rgba_color(255, 0, 0, 255);
 
         return closeButtonBox.contains(_Event.CursorPosition) ?
-            ApplicationRenderingBackend::construct_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-            ApplicationRenderingBackend::construct_rgba_color(64, 0, 0, 255);
+            gs_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
+            gs_rgba_color(64, 0, 0, 255);
     };
 
     auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box, const ImmedidateUserInterfaceEvent& _Event)
@@ -3658,10 +3659,10 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 dockingGizmo.Min,
                 dockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                ApplicationRenderingBackend::construct_rgba_color(
-                    ApplicationRenderingBackend::retrieve_red_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    ApplicationRenderingBackend::retrieve_green_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    ApplicationRenderingBackend::retrieve_blue_component(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                gs_rgba_color(
+                    gs_rgba_color_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_rgba_color_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_rgba_color_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
