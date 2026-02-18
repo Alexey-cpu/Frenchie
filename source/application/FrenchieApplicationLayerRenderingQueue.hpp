@@ -18,12 +18,18 @@ namespace Frenchie
         struct RenderingQueuePathSegment
         {
         public:
-            RenderingQueuePathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width = 4.f)
+            RenderingQueuePathSegment(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float&    _Width = 4.f)
             {
                 setup(_P1, _P2, _Width);
             }
 
-            void setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float _Width)
+            void setup(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const float     _Width)
             {
                 P1 = _P1;
                 P2 = _P2;
@@ -57,7 +63,8 @@ namespace Frenchie
         {
         public:
 
-            RenderingQueuePathBuilder(const float& _PolygonLinesWidth = 4.f) : m_PolygonLinesWidth(_PolygonLinesWidth){}
+            RenderingQueuePathBuilder(
+                const float& _PolygonLinesWidth = 4.f) : m_PolygonLinesWidth(_PolygonLinesWidth){}
             ~RenderingQueuePathBuilder(){}
 
             // TODO: add Bezier and random power curves here e.t.c
@@ -75,7 +82,9 @@ namespace Frenchie
                 m_PolygonLinesSourcePoint = _Target;
             }
 
-            void arc_to(const gs_vec2f& _Target, const float& _Radius)
+            void arc_to(
+                const gs_vec2f& _Target,
+                const float&    _Radius)
             {
                 // calculate ellipse data
                 gs_complex<float> perpendicular  = gs_cnormf<float>(gs_complex<float>((_Target - m_PolygonLinesSourcePoint).x, (_Target - m_PolygonLinesSourcePoint).y)) * gs_complex<float>(0.f, 1.f);
@@ -95,8 +104,8 @@ namespace Frenchie
             }
 
             void build_mesh(
-                const gs_color&         _Color,
-                const ApplicationRenderingBackendTexture&       _Texture,
+                const gs_color&                                 _Color,
+                const ApplicationRenderingBackendTexture&      _Texture,
                 const float&                                    _Width,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
                 std::vector<int>&                               _Indexes)
@@ -196,8 +205,8 @@ namespace Frenchie
             }
 
             void build_mesh_filled_no_convex(
-                const gs_color&         _Color,
-                const ApplicationRenderingBackendTexture&       _Texture,
+                const gs_color&                                 _Color,
+                const ApplicationRenderingBackendTexture&      _Texture,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
                 std::vector<int>&                               _Indexes)
             {
@@ -298,13 +307,13 @@ namespace Frenchie
             }
 
             void build_triangle_filled_mesh(
-                const gs_vec2f&                    _P1,
-                const gs_vec2f&                    _P2,
-                const gs_vec2f&                    _P3,
-                const gs_color&         _Color,
-                const ApplicationRenderingBackendTexture&       _Texture,
+                const gs_vec2f&                                 _P1,
+                const gs_vec2f&                                 _P2,
+                const gs_vec2f&                                 _P3,
+                const gs_color&                                 _Color,
+                const ApplicationRenderingBackendTexture&      _Texture,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
-                std::vector<int>&                  _Indexes)
+                std::vector<int>&                               _Indexes)
             {
                 const int size = (int)_Vertexes.size();
 
@@ -336,12 +345,12 @@ namespace Frenchie
         struct RenderingQueueMesh final
         {
             RenderingQueueMesh(
-            std::vector<ApplicationRenderingBackendVertex>*      _Vertexes       = nullptr,                        
-            const int                                            _VertexesCount  = -1,
-            const int                                            _VertexesOffset = -1, 
-            std::vector<int>*                                    _Indexes        = nullptr,
-            const int                                            _IndexesCount   = -1,
-            const int                                            _IndexesOffset  = -1) :
+                std::vector<ApplicationRenderingBackendVertex>* _Vertexes       = nullptr,
+                const int                                       _VertexesCount  = -1,
+                const int                                       _VertexesOffset = -1,
+                std::vector<int>*                               _Indexes        = nullptr,
+                const int                                       _IndexesCount   = -1,
+                const int                                       _IndexesOffset  = -1) :
                 Vertexes(_Vertexes),
                 VertexesCount(_VertexesCount),
                 VertexesOffset(_VertexesOffset),
@@ -377,13 +386,15 @@ namespace Frenchie
 
         struct RenderingQueueRendererCommandClearColor
         {
-            RenderingQueueRendererCommandClearColor(const gs_color&  _ClearColor) : ClearColor(_ClearColor){}
+            RenderingQueueRendererCommandClearColor(
+                const gs_color& _ClearColor) : ClearColor(_ClearColor){}
             gs_color ClearColor;
         };
 
         struct RenderingQueueRendererCommandClippingBox
         {
-            RenderingQueueRendererCommandClippingBox(const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
+            RenderingQueueRendererCommandClippingBox(
+                const gs_2dboxf& _ClippinBox) : ClippingBox(_ClippinBox){}
 
             gs_2dboxf ClippingBox;
         };
@@ -433,7 +444,9 @@ namespace Frenchie
             virtual bool allows_multiple_instances() const override;
 
             // API
-            void push_clip_box(const gs_2dboxf& _Value, const gs_mat4f& _Transform = gs_mat4f(1.f));
+            void push_clip_box(
+                const gs_2dboxf& _Value,
+                const gs_mat4f&  _Transform = gs_mat4f(1.f));
             void pop_clip_box();
 
             void push_clear_color(const gs_color& _Value);
@@ -718,7 +731,7 @@ namespace Frenchie
                 const float&               _SourceAngle,
                 const float&               _TargetAngle,
                 const float&               _Width,
-                const gs_color& _Color);
+                const gs_color&            _Color);
 
             // rendering queue data
             gs_2dboxf                                      m_RenderingQueueViewport            {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
