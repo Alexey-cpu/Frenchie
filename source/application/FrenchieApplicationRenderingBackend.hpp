@@ -271,7 +271,7 @@ namespace Frenchie
                 const gs_mat4f&                                             _MeshProjectionMatrix,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);
 
-            static void ApplicationRenderingBackend::end_render();
+            static void end_render();
 
             // color API
             static ApplicationRenderingBackendColor construct_rgba_color(
