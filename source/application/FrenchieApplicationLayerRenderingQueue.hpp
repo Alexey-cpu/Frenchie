@@ -344,25 +344,19 @@ namespace Frenchie
         struct RenderingQueueMesh final
         {
             RenderingQueueMesh(
-                std::vector<ApplicationRenderingBackendVertex>* _Vertexes       = nullptr,
-                const int                                       _VertexesCount  = -1,
-                const int                                       _VertexesOffset = -1,
-                std::vector<int>*                               _Indexes        = nullptr,
-                const int                                       _IndexesCount   = -1,
-                const int                                       _IndexesOffset  = -1) :
-                Vertexes(_Vertexes),
+                const int _VertexesCount  = -1,
+                const int _VertexesOffset = -1,
+                const int _IndexesCount   = -1,
+                const int _IndexesOffset  = -1) :
                 VertexesCount(_VertexesCount),
                 VertexesOffset(_VertexesOffset),
-                Indexes(_Indexes),
                 IndexesCount(_IndexesCount),
                 IndexesOffset(_IndexesOffset){}
 
-            std::vector<ApplicationRenderingBackendVertex>* Vertexes;
-            int                                             VertexesOffset;                           
-            int                                             VertexesCount;
-            std::vector<int>*                               Indexes;
-            int                                             IndexesOffset;
-            int                                             IndexesCount;
+            int VertexesOffset;                           
+            int VertexesCount;
+            int IndexesOffset;
+            int IndexesCount;
         };
 
         struct RenderingQueueRenderingCommand final
@@ -733,12 +727,12 @@ namespace Frenchie
                 const gs_color&            _Color);
 
             // rendering queue data
-            gs_2dboxf                                      m_RenderingQueueViewport            {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_color>  m_RenderingQueueClearColors         {std::vector<gs_color>()};
-            std::vector<gs_2dboxf>                         m_RenderingQueueClippingBoxes       {std::vector<gs_2dboxf>()};
-            std::vector<ApplicationRenderingBackendVertex> m_RenderingQueueMeshVertexes        {std::vector<ApplicationRenderingBackendVertex>()};
-            std::vector<int>                               m_RenderingQueueMeshVertexesIndexes {std::vector<int>()};
-            float                                          m_RenderingQueueMinimumLineWidth    {4.f};
+            gs_2dboxf                                      m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_color>                          m_ClearColors                        {std::vector<gs_color>()};
+            std::vector<gs_2dboxf>                         m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
+            std::vector<ApplicationRenderingBackendVertex> m_MeshVertexes                       {std::vector<ApplicationRenderingBackendVertex>()};
+            std::vector<int>                               m_MeshVertexesIndexes                {std::vector<int>()};
+            float                                          m_MinimumLineWidth                   {4.f};
 
             // path building data
             RenderingQueuePathBuilder                      m_PathBuilder                        {RenderingQueuePathBuilder(8.f)};
@@ -751,7 +745,6 @@ namespace Frenchie
             // metrics measurement
             std::chrono::high_resolution_clock::time_point m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};            
             Frenchie::Core::RingBuffer<double, 64>         m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
-            int                                            m_RenderedTrianglesCount             {0};
             RenderingQueueMetrics                          m_Metrics                            {RenderingQueueMetrics()};
 
             int m_IndexesOffset = 0;

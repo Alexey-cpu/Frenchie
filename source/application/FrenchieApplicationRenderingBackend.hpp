@@ -67,6 +67,8 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendShaderType;
 
         // Enities
+        struct ApplicationRenderingBackendGraphicsApiState;
+
         struct ApplicationRenderingBackendTexture final
         {
             ApplicationRenderingBackendTexture(
@@ -269,8 +271,9 @@ namespace Frenchie
             static void scissor_box(const gs_2dboxf&);
 
         private:
-            static ApplicationRenderingBackendFont    m_DefaultFont;
-            static ApplicationRenderingBackendTexture m_DefaultTexture;
+            static ApplicationRenderingBackendFont                              m_DefaultFont;
+            static ApplicationRenderingBackendTexture                           m_DefaultTexture;
+            static std::shared_ptr<ApplicationRenderingBackendGraphicsApiState> m_GraphicsApiState;
         };
     }
 }

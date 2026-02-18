@@ -11,21 +11,21 @@ namespace Frenchie
 {
     namespace Application
     {
-        class RenderingQueueDefaultFont
+        class ApplicationRenderingBackendDefaultFont
         {
         public:
             static unsigned int  COMPRESSED_SIZE;
             static unsigned char BUFFER[316235];
         };
 
-        struct ApplicationRenderingBackendOpenGLState
+        struct ApplicationRenderingBackendGraphicsApiState
         {
-            unsigned int      m_VBO       {0};
-            unsigned int      m_VAO       {0};
-            unsigned int      m_EBO       {0};
-            unsigned int      m_Shader    {0};
-            bool              m_MeshLoaded{false};
-        } ApplicationRenderingBackendState;
+            unsigned int m_VBO       {0};
+            unsigned int m_VAO       {0};
+            unsigned int m_EBO       {0};
+            unsigned int m_Shader    {0};
+            bool         m_MeshLoaded{false};
+        };
     }
 }
 
@@ -91,12 +91,14 @@ bool ApplicationRenderingBackend::awake(Loader _Loader)
         return false;
 
     m_DefaultFont = construct_font(
-        RenderingQueueDefaultFont::BUFFER,
-        RenderingQueueDefaultFont::COMPRESSED_SIZE,
+        ApplicationRenderingBackendDefaultFont::BUFFER,
+        ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
         128);
 
     // create openGL backend handles
-    ApplicationRenderingBackendState.m_Shader = construct_shader(
+    m_GraphicsApiState = std::make_shared<ApplicationRenderingBackendGraphicsApiState>();
+
+    m_GraphicsApiState->m_Shader = construct_shader(
         {
             // Vertex shader
             {
@@ -158,9 +160,9 @@ void main()
         }
     );    
 
-    glGenBuffers(1, &ApplicationRenderingBackendState.m_VBO);
-    glGenBuffers(1, &ApplicationRenderingBackendState.m_EBO);
-    glGenVertexArrays(1, &ApplicationRenderingBackendState.m_VAO);
+    glGenBuffers(1, &m_GraphicsApiState->m_VBO);
+    glGenBuffers(1, &m_GraphicsApiState->m_EBO);
+    glGenVertexArrays(1, &m_GraphicsApiState->m_VAO);
 
     // create default white pattern texture
     const int     height   = 4;
@@ -195,10 +197,12 @@ void ApplicationRenderingBackend::quit()
     destroy_texture(m_DefaultTexture);
 
     // destroy OpenGL state
-    glDeleteBuffers(1, &ApplicationRenderingBackendState.m_VBO);
-    glDeleteBuffers(1, &ApplicationRenderingBackendState.m_EBO);
-    glDeleteVertexArrays(1, &ApplicationRenderingBackendState.m_VAO);
-    glDeleteProgram(ApplicationRenderingBackendState.m_Shader);
+    if(m_GraphicsApiState == nullptr) return;
+
+    glDeleteBuffers(1, &m_GraphicsApiState->m_VBO);
+    glDeleteBuffers(1, &m_GraphicsApiState->m_EBO);
+    glDeleteVertexArrays(1, &m_GraphicsApiState->m_VAO);
+    glDeleteProgram(m_GraphicsApiState->m_Shader);
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -338,6 +342,8 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 
 bool ApplicationRenderingBackend::begin_render()
 {
+    if(m_GraphicsApiState == nullptr) return false;
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
@@ -348,13 +354,13 @@ bool ApplicationRenderingBackend::begin_render()
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_STENCIL_BUFFER_BIT);
 
-    ApplicationRenderingBackendState.m_MeshLoaded = false;
+    m_GraphicsApiState->m_MeshLoaded = false;
     
     // check that everything has been instantiated
-    return  ApplicationRenderingBackendState.m_VBO &&
-            ApplicationRenderingBackendState.m_EBO &&
-            ApplicationRenderingBackendState.m_VAO &&
-            ApplicationRenderingBackendState.m_Shader;
+    return  m_GraphicsApiState->m_VBO &&
+            m_GraphicsApiState->m_EBO &&
+            m_GraphicsApiState->m_VAO &&
+            m_GraphicsApiState->m_Shader;
 }
 
 void ApplicationRenderingBackend::render_mesh(
@@ -370,7 +376,7 @@ void ApplicationRenderingBackend::render_mesh(
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    if(_Vertexes == nullptr || _Indexes == nullptr || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+    if(m_GraphicsApiState == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
         return;
 
     // bind texture
@@ -378,23 +384,23 @@ void ApplicationRenderingBackend::render_mesh(
     glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
 
     // bind shader
-    glUseProgram(ApplicationRenderingBackendState.m_Shader);
+    glUseProgram(m_GraphicsApiState->m_Shader);
 
     // configure shader
-    glUniformMatrix4fv(glGetUniformLocation(ApplicationRenderingBackendState.m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
-    glUniform1i(glGetUniformLocation(ApplicationRenderingBackendState.m_Shader, "u_Texture"), 0);
+    glUniformMatrix4fv(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
+    glUniform1i(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_Texture"), 0);
 
     // load mesh
-    if(!ApplicationRenderingBackendState.m_MeshLoaded)
+    if(!m_GraphicsApiState->m_MeshLoaded)
     {
         // bind VAO to remember VBO/EBO configuration and layout
-        glBindVertexArray(ApplicationRenderingBackendState.m_VAO);
+        glBindVertexArray(m_GraphicsApiState->m_VAO);
 
         // load vertexes and indexes on GPU
-        glBindBuffer(GL_ARRAY_BUFFER, ApplicationRenderingBackendState.m_VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, m_GraphicsApiState->m_VBO);
         glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ApplicationRenderingBackendState.m_EBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_GraphicsApiState->m_EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(int),  _Indexes, GL_DYNAMIC_DRAW);
 
         // setup attributes pointers
@@ -407,11 +413,11 @@ void ApplicationRenderingBackend::render_mesh(
         glEnableVertexAttribArray(2);
         glEnableVertexAttribArray(3);
 
-        ApplicationRenderingBackendState.m_MeshLoaded = true;
+        m_GraphicsApiState->m_MeshLoaded = true;
     }
 
     // render mesh
-    glBindVertexArray(ApplicationRenderingBackendState.m_VAO);
+    glBindVertexArray(m_GraphicsApiState->m_VAO);
 
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
         glDrawElements(GL_LINE_LOOP, _MeshIndexesCount - _MeshVertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(int)));
@@ -427,13 +433,15 @@ void ApplicationRenderingBackend::render_mesh(
 
 void ApplicationRenderingBackend::end_render()
 {
+    if(m_GraphicsApiState == nullptr) return;
+
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
 
     // unload mesh
-    ApplicationRenderingBackendState.m_MeshLoaded = false;
+    m_GraphicsApiState->m_MeshLoaded = false;
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
@@ -495,9 +503,9 @@ ApplicationRenderingBackend::Projections ApplicationRenderingBackend::calculate_
 }
 
 // RenderingQueueDefaultFont
-unsigned int RenderingQueueDefaultFont::COMPRESSED_SIZE = 316235;
+unsigned int ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE = 316235;
 
-unsigned char RenderingQueueDefaultFont::BUFFER[316235] =
+unsigned char ApplicationRenderingBackendDefaultFont::BUFFER[316235] =
 {
     87,188,0,0,0,0,0,0,0,6,179,232,0,4,0,0,37,0,1,0,0,0,21,130,4,8,41,4,0,80,71,68,69,70,7,81,16,99,0,6,24,156,0,0,1,234,71,80,79,83,7,82,58,24,0,6,26,136,0,0,142,18,71,83,85,66,1,86,158,
     130,15,32,168,130,31,57,11,74,76,84,83,72,79,227,56,169,0,0,42,148,0,0,10,28,79,83,47,50,252,230,232,163,130,59,32,216,130,85,8,72,96,86,68,77,88,86,5,112,127,0,0,52,176,0,0,17,148,
