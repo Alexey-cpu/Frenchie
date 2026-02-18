@@ -4474,7 +4474,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
 {
     // launch renderer
     if(m_Renderer == nullptr)
-        m_Renderer = application()->push_layer<Immediate2DRenderer>();
+        m_Renderer = application()->push_layer<RenderingQueue>();
 
     // create hierarchy
     m_Hierarchy = ImmedidateUserInterfaceHierarchy(

@@ -17,6 +17,10 @@ namespace Frenchie
             static unsigned int  COMPRESSED_SIZE;
             static unsigned char BUFFER[316235];
         };
+
+        static unsigned int m_VBO = 0;
+        static unsigned int m_VAO = 0;
+        static unsigned int m_EBO = 0;
     }
 }
 
@@ -390,19 +394,16 @@ void ApplicationRenderingBackend::destroy_shader(const ApplicationRenderingBacke
     glDeleteProgram(_Shader.Ptr);
 }
 
-ApplicationRenderingBackendMesh ApplicationRenderingBackend::construct_mesh(
+void ApplicationRenderingBackend::construct_mesh(
     const ApplicationRenderingBackendVertex* _Vertexes,
-    const int&                  _VertexesCount,
-    const int*                  _Indexes,
-    const int&                  _IndexesCount)
+    const int&                               _VertexesCount,
+    const int&                               _VertexesOffset,
+    const int*                               _Indexes,
+    const int&                               _IndexesCount,
+    const int&                               _IndexesOffset)
 {
     if(_Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
-        return ApplicationRenderingBackendMesh();
-
-    // create mesh
-    unsigned int m_VBO = 0;
-    unsigned int m_VAO = 0;
-    unsigned int m_EBO = 0;
+        return;
     
     // create buffers and vertex array
     glGenBuffers(1, &m_VBO);
@@ -430,42 +431,37 @@ ApplicationRenderingBackendMesh ApplicationRenderingBackend::construct_mesh(
     glEnableVertexAttribArray(3);
 
     glBindVertexArray(0);
-
-    return ApplicationRenderingBackendMesh(m_VBO, m_VAO, m_EBO);
 }
 
 void ApplicationRenderingBackend::begin_use_mesh(
-    const ApplicationRenderingBackendMesh&                      _Mesh,
+    const ApplicationRenderingBackendVertex*                    _Vertexes,
+    const int&                                                  _VertexesCount,
+    const int&                                                  _VertexesOffset,
+    const int*                                                  _Indexes,
+    const int&                                                  _IndexesCount,
+    const int&                                                  _IndexesOffset,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    // bind VAO containing VBO, EBO
-    glBindVertexArray(_Mesh.VAO);
+    if(_Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0)
+        return;
 
-    // get EBO size
-    int bufferSize; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+    glBindVertexArray(m_VAO);
 
-    // draw EBO
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Points))
-        glDrawArrays(GL_POINTS, 0, bufferSize);
+        glDrawArrays(GL_POINTS, 0, _IndexesCount);
 
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
-        glDrawElements(GL_LINE_LOOP, bufferSize, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_LINE_LOOP, _IndexesCount - _VertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_IndexesOffset * sizeof(int)));
 
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
-        glDrawElements(GL_TRIANGLES, bufferSize, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, _IndexesCount - _VertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_IndexesOffset * sizeof(int)));
 }
 
-void ApplicationRenderingBackend::end_use_mesh()
+void ApplicationRenderingBackend::destroy_mesh()
 {
-    glBindVertexArray(0);
-}
-
-void ApplicationRenderingBackend::destroy_mesh(const ApplicationRenderingBackendMesh& _Mesh)
-{
-    glDeleteBuffers(1, &_Mesh.VBO);
-    glDeleteBuffers(1, &_Mesh.EBO);
-    glDeleteVertexArrays(1, &_Mesh.VAO);
+    glDeleteBuffers(1, &m_VBO);
+    glDeleteBuffers(1, &m_EBO);
+    glDeleteVertexArrays(1, &m_VAO);
 }
 
 void ApplicationRenderingBackend::enable(const ApplicationRenderingBackendGraphicsApiHints& _Hints)
