@@ -44,4 +44,29 @@ template<> uint32_t           gs_epsilon(){return 0;           }
 template<> uint64_t           gs_epsilon(){return 0;           }
 template<> unsigned long      gs_epsilon(){return 0;           }
 
+gs_color gs_rgba_color(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A)
+{
+    return (((gs_color)(_A)<<24) | ((gs_color)(_B)<<16) | ((gs_color)(_G)<<8) | ((gs_color)(_R)<<0));
+}
+
+gs_color gs_rgba_color_get_r(const gs_color& _Color)
+{
+    return (_Color >> 0) & 0xFF;
+}
+
+gs_color gs_rgba_color_get_g(const gs_color& _Color)
+{
+    return (_Color >> 8) & 0xFF;
+}
+
+gs_color gs_rgba_color_get_b(const gs_color& _Color)
+{
+    return (_Color >> 16) & 0xFF;
+}
+
+gs_color gs_rgba_color_get_a(const gs_color& _Color)
+{
+    return (_Color >> 24) & 0xFF;
+}
+
 // [ALGEBRA]

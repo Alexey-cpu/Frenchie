@@ -127,8 +127,9 @@ namespace Frenchie
     }
 }
 
-ApplicationRenderingBackendFont    ApplicationRenderingBackend::m_DefaultFont;
-ApplicationRenderingBackendTexture ApplicationRenderingBackend::m_DefaultTexture;
+ApplicationRenderingBackendFont                              ApplicationRenderingBackend::m_DefaultFont;
+ApplicationRenderingBackendTexture                           ApplicationRenderingBackend::m_DefaultTexture;
+std::shared_ptr<ApplicationRenderingBackendGraphicsApiState> ApplicationRenderingBackend::m_GraphicsApiState = nullptr;
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
 {
