@@ -58,14 +58,20 @@ void ApplicationInstance::ApplicationInstance::frame_start()
 
     // update application input input
 
-    // mouse buttons
+    // TODO: this MUST BE SETTINGS
+    const double KeyClicksCountResetTime = 200;
+    const double KeyHoldDetectionTime    = 100;
+    const double KeyClickDetectionTime   = 500;
+
+    
+    // handle mouse buttons events
     for (int mouseButton = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
              mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
              mouseButton++)
     {
         if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime,
-            std::chrono::high_resolution_clock::now()) > 200)
+            std::chrono::high_resolution_clock::now()) > KeyClicksCountResetTime)
         {
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks = 0;
         }
@@ -86,7 +92,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Hold =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
                     ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime,
-                    Frenchie::Core::tic()) > 100; // TODO: MUST BE A SETTING
+                    Frenchie::Core::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
         }
 
         if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released)
@@ -98,14 +104,51 @@ void ApplicationInstance::ApplicationInstance::frame_start()
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
                     ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime,
-                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime) < 500;
+                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime) < KeyClickDetectionTime;
 
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked =
                 ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked && ++ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks >= 2;
         }        
     }
 
-    // keys
+    // handle keys events
+    for (int mouseButton = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+             mouseButton < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
+             mouseButton++)
+    {
+        if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime,
+            std::chrono::high_resolution_clock::now()) > KeyClicksCountResetTime)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicks = 0;
+        }
+
+        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Pressed)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down      = true;
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime = Frenchie::Core::tic();
+        }
+        
+        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Hold =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
+                    Frenchie::Core::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
+        }
+
+        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Released)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down        = false;
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Hold        = false;
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime = Frenchie::Core::tic();
+
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicked =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime,
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime) < KeyClickDetectionTime;
+        }
+    }
 
     // character input
 }
@@ -164,8 +207,8 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
     ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
 
     // restore keys
-    for (int key = ApplicationPlatformBackendKey::ImGuiKey_NamedKey_BEGIN;
-             key < ApplicationPlatformBackendKey::ImGuiKey_End;
+    for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+             key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
              key++)
     {
         ApplicationPlatformBackend::m_Input.Keys[key].Released = false;
