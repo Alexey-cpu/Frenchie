@@ -43,3 +43,28 @@ bool ApplicationPlatformBackend::is_mouse_button_double_clicked(const Applicatio
 {
     return m_Input.MouseButtons[_Button].DoubleClicked;
 }
+
+bool ApplicationPlatformBackend::is_key_down(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Input.Keys[_Key].Down;
+}
+
+bool ApplicationPlatformBackend::is_key_hold(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Input.Keys[_Key].Hold;
+}
+
+bool ApplicationPlatformBackend::is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Input.Keys[_Key].Pressed;
+}
+
+bool ApplicationPlatformBackend::is_key_released(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Input.Keys[_Key].Released;
+}
+
+bool ApplicationPlatformBackend::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Input.Keys[_Key].Clicked;
+}

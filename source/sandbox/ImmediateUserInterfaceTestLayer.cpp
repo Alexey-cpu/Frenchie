@@ -17,7 +17,9 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    renderer_test();
+    platform_backend_test();
+
+    //renderer_test();
     
     //windows_test();   
     //scrollarea_test();
@@ -368,4 +370,64 @@ void ImmediateUserInterfaceTestLayer::renderer_test()
     //     gs_vec2f(1024.f, 256.f),
     //     64.f,
     //     gs_rgba_color(255, 255, 255, 255));
+}
+
+void ImmediateUserInterfaceTestLayer::platform_backend_test()
+{
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
+
+    if(m_ImmediateUserInterface->begin_window("Окно тестирования обертки backend-а ОС###PlatformBackendTestWindow"))
+    {
+        if(m_ImmediateUserInterface->begin_scrollarea("PlatformBackendTestWindow/ScrollArea"))
+        {
+            static std::string keyDownName     = ApplicationPlatformBackendKey::key_to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
+            static std::string keyHoldName     = ApplicationPlatformBackendKey::key_to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
+            static std::string keyPressedName  = ApplicationPlatformBackendKey::key_to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
+            static std::string keyReleasedName = ApplicationPlatformBackendKey::key_to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
+            static std::string keyClickedName  = ApplicationPlatformBackendKey::key_to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
+
+            for(int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+                    key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
+                    key++)
+            {
+                if(ApplicationPlatformBackend::is_key_down((ApplicationPlatformBackendKey::Key)key))
+                    keyDownName = ApplicationPlatformBackendKey::key_to_string((ApplicationPlatformBackendKey::Key)key);
+
+                if(ApplicationPlatformBackend::is_key_hold((ApplicationPlatformBackendKey::Key)key))
+                    keyHoldName = ApplicationPlatformBackendKey::key_to_string((ApplicationPlatformBackendKey::Key)key);
+
+                if(ApplicationPlatformBackend::is_key_pressed((ApplicationPlatformBackendKey::Key)key))
+                    keyPressedName = ApplicationPlatformBackendKey::key_to_string((ApplicationPlatformBackendKey::Key)key);
+
+                if(ApplicationPlatformBackend::is_key_released((ApplicationPlatformBackendKey::Key)key))
+                    keyReleasedName = ApplicationPlatformBackendKey::key_to_string((ApplicationPlatformBackendKey::Key)key);
+
+                if(ApplicationPlatformBackend::is_key_clicked((ApplicationPlatformBackendKey::Key)key))
+                    keyClickedName = ApplicationPlatformBackendKey::key_to_string((ApplicationPlatformBackendKey::Key)key);
+            }
+
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/KeyEvents", "KeyEvents:"); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyDownName", Frenchie::Core::String::format("Down: [%s]", keyDownName.c_str())); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyHoldName", Frenchie::Core::String::format("Hold: [%s]", keyHoldName.c_str())); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyPressedName", Frenchie::Core::String::format("Pressed: [%s]", keyPressedName.c_str())); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyReleasedName", Frenchie::Core::String::format("Released: [%s]", keyReleasedName.c_str())); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyClickedName", Frenchie::Core::String::format("Clicked: [%s]", keyClickedName.c_str())); m_ImmediateUserInterface->next_line();
+
+            // TODO: test mouse events here...
+            // m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/KeyEvents", "MouseEvents:"); m_ImmediateUserInterface->next_line();
+
+            // m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyDownName", Frenchie::Core::String::format("Down: [%s]", keyDownName.c_str())); m_ImmediateUserInterface->next_line();
+            // m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyHoldName", Frenchie::Core::String::format("Hold: [%s]", keyHoldName.c_str())); m_ImmediateUserInterface->next_line();
+            // m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyPressedName", Frenchie::Core::String::format("Pressed: [%s]", keyPressedName.c_str())); m_ImmediateUserInterface->next_line();
+            // m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyReleasedName", Frenchie::Core::String::format("Released: [%s]", keyReleasedName.c_str())); m_ImmediateUserInterface->next_line();
+            // m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyClickedName", Frenchie::Core::String::format("Clicked: [%s]", keyClickedName.c_str())); m_ImmediateUserInterface->next_line();
+
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+
+        m_ImmediateUserInterface->end_window();
+    }
 }

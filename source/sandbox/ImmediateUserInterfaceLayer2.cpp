@@ -1214,7 +1214,9 @@ namespace Frenchie
 
                 for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
                 {
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + (*it)->State.BoundingBox.size());
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
 
                     maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
@@ -2723,12 +2725,16 @@ void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Co
 {
     if(_Context == nullptr) return;
 
+    // gs_vec2f size = _Context->m_Renderer->calculate_bounding_box(
+    //     Text,
+    //     _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + _Context->m_Style.get_font_size() * 0.25f;
+
     gs_vec2f size = _Context->m_Renderer->calculate_bounding_box(
         Text,
         _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + _Context->m_Style.get_font_size() * 0.25f;
 
-    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
-    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
+    State.MinimumSize = size;
+    State.MaximumSize = size;
 }
 
 void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context)
