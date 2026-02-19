@@ -75,7 +75,7 @@ namespace Frenchie
                 const unsigned int&                                _Ptr       = 0,
                 const int&                                         _Width     = 128,
                 const int&                                         _Height    = 128,
-                const gs_color&            _Color     = 1, // white
+                const gs_color&                                    _Color     = 1, // white
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear,
@@ -97,7 +97,7 @@ namespace Frenchie
             unsigned int                                Ptr       {+0};
             int                                         Width     {-1};
             int                                         Height    {-1};
-            gs_color            Color     {1}; // white
+            gs_color                                    Color     {1}; // white
             ApplicationRenderingBackendTextureFormat    Format    {ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA};
             ApplicationRenderingBackendTextureWrapMode  Wrap      {ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat};
             ApplicationRenderingBackendTextureMinFilter MinFilter {ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear};
@@ -121,6 +121,8 @@ namespace Frenchie
             gs_vec2f                         UV      {gs_vec3f(0.f, 0.f, 0.f)};
             gs_color Color   {1}; // white
         };
+
+        typedef unsigned int ApplicationRenderingBackendMeshVertexIndex;
 
         struct ApplicationRenderingBackendGlyph
         {
@@ -221,7 +223,7 @@ namespace Frenchie
 
             // texture API
             static ApplicationRenderingBackendTexture construct_texture(
-                const char*                           _FilePath,
+                const char*                                        _FilePath,
                 const ApplicationRenderingBackendTextureFormat&    _Format    = ApplicationRenderingBackendTextureFormat_::ApplicationRenderingBackendTextureFormat_RGBA,
                 const ApplicationRenderingBackendTextureWrapMode&  _Wrap      = ApplicationRenderingBackendTextureWrapMode_::ApplicationRenderingBackendTextureWrapMode_Repeat,
                 const ApplicationRenderingBackendTextureMinFilter& _MinFilter = ApplicationRenderingBackendTextureMinFilter_::ApplicationRenderingBackendTextureMinFilter_Linear, 
@@ -243,13 +245,13 @@ namespace Frenchie
 
             static void render_mesh(
                 const ApplicationRenderingBackendVertex*                    _Vertexes,
-                const int&                                                  _VertexesCount,
-                const int&                                                  _MeshVertexesCount,
-                const int&                                                  _MeshVertexesOffset,
-                const int*                                                  _Indexes,
-                const int&                                                  _IndexesCount,
-                const int&                                                  _MeshIndexesCount,
-                const int&                                                  _MeshIndexesOffset,
+                const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
+                const ApplicationRenderingBackendMeshVertexIndex*           _Indexes,
+                const ApplicationRenderingBackendMeshVertexIndex&           _IndexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesCount,
+                const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesOffset,
                 const ApplicationRenderingBackendTexture&                   _Texture,
                 const gs_mat4f&                                             _MeshProjectionMatrix,
                 const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints = ApplicationRenderingBackendGraphicsApiRenderingHints_Default);

@@ -56,7 +56,6 @@ void RenderingQueue::frame_start()
     GS_ASSERT(m_MeshVertexesIndexes.empty());
     GS_ASSERT(m_VertexesOffset == 0);
     GS_ASSERT(m_IndexesOffset == 0);
-    
 
     // metrics
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
@@ -154,7 +153,7 @@ void RenderingQueue::frame_render()
 
             ApplicationRenderingBackend::render_mesh(
                 &m_MeshVertexes[0],
-                (int)m_MeshVertexes.size(),
+                (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
                 mesh.VertexesCount,
                 mesh.VertexesOffset,
                 &m_MeshVertexesIndexes[0],
@@ -190,7 +189,7 @@ void RenderingQueue::frame_finish()
     m_MeshVertexesIndexes.clear();
 
     // restore mesh offsets
-    m_IndexesOffset  = (int)m_MeshVertexes.size();
+    m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
     m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
 }
 
@@ -228,7 +227,7 @@ void RenderingQueue::push_rendering_command(
 
         // construct mesh
         RenderingQueueMesh(
-            (int)m_MeshVertexes.size(),
+            (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(),
             m_VertexesOffset,
             (int)m_MeshVertexesIndexes.size(),
             m_IndexesOffset),
@@ -249,7 +248,7 @@ void RenderingQueue::push_rendering_command(
         current_clipping_box());
 
     // move offsets
-    m_IndexesOffset  = (int)m_MeshVertexes.size();
+    m_IndexesOffset  = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
     m_VertexesOffset = (int)m_MeshVertexesIndexes.size();
 }
 
@@ -642,6 +641,7 @@ void RenderingQueue::push_triangle(
         return;
     }
 
+    // TODO: check if path building algorithms are optimized enough to be user every frame...
     // build path
     m_PathBuilder.begin(_P1);
     m_PathBuilder.line_to(_P2);
@@ -675,6 +675,7 @@ void RenderingQueue::push_rectangle(
         return;
     }
 
+    // TODO: check if path building algorithms are optimized enough to be user every frame...
     // build path
     m_PathBuilder.begin(_Min);
     m_PathBuilder.line_to(gs_vec2f(_Max.x, _Min.y));
@@ -746,7 +747,7 @@ void RenderingQueue::build_triangle_filled_mesh(
     const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    const int size = (int)m_MeshVertexes.size();
+    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     m_MeshVertexes.push_back(
         ApplicationRenderingBackendVertex(
@@ -767,7 +768,7 @@ void RenderingQueue::build_triangle_filled_mesh(
             gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
             _Color));
     
-    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
         m_MeshVertexesIndexes.push_back(i);
 }
 
@@ -777,7 +778,7 @@ void RenderingQueue::build_rectangle_filled_mesh(
     const gs_color&                           _Color,
     const ApplicationRenderingBackendTexture& _Texture)
 {
-    const int      size   = (int)m_MeshVertexes.size();
+    const ApplicationRenderingBackendMeshVertexIndex size   = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
     const gs_vec3f _P3 = gs_vec3f(_Max.x, _Max.y, 0.f);
@@ -835,7 +836,7 @@ void RenderingQueue::build_rectangle_filled_mesh(
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
-    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
         m_MeshVertexesIndexes.push_back(i);
 }
 
@@ -846,7 +847,7 @@ void RenderingQueue::build_rectangle_filled_mesh(
     const gs_vec2f& _MaxUV,
     const gs_color& _Color)
 {
-    const int size = (int)m_MeshVertexes.size();
+    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
@@ -902,7 +903,7 @@ void RenderingQueue::build_rectangle_filled_mesh(
             gs_vec2f(_UV4.x, _UV4.y),
             _Color));
 
-    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
         m_MeshVertexesIndexes.push_back(i);
 }
 
@@ -914,7 +915,7 @@ void RenderingQueue::build_rectangle_gradient_mesh(
     const gs_color& _Color3,
     const gs_color& _Color4)
 {
-    const int size = (int)m_MeshVertexes.size();
+    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
 
     const gs_vec3f _P1 = gs_vec3f(_Min.x, _Min.y, 0.f);
     const gs_vec3f _P2 = gs_vec3f(_Max.x, _Min.y, 0.f);
@@ -965,7 +966,7 @@ void RenderingQueue::build_rectangle_gradient_mesh(
             gs_vec2f(0.f),
             _Color4));
 
-    for (int i = size; i < (int)m_MeshVertexes.size(); ++i)
+    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
         m_MeshVertexesIndexes.push_back(i);
 }
 
@@ -979,16 +980,15 @@ void RenderingQueue::build_arc_filled_mesh(
     const ApplicationRenderingBackendTexture& _Texture,
     const int&                                _SegmentsCount)
 {
-    gs_vec2f p0 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
-    gs_vec2f p1 = p0;
-    gs_vec2f p2 = p0;
+    const float delta = 360.f / _SegmentsCount;
 
-    const float angleIncrement = 360.f / _SegmentsCount;
-
-    for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
-    {
-        p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
-        build_triangle_filled_mesh(_Center, p1, p2, _Color, _Texture);
+    for (float angle = _SourceAngle; angle < _TargetAngle; angle += delta)
+    {        
+        build_triangle_filled_mesh(
+            _Center,
+            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle))),
+            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle + delta)), _Center.y + _MajorRadius * sin(gs_to_radians(angle + delta))),
+            _Color, _Texture);
     }
 }
 
@@ -1017,9 +1017,9 @@ void RenderingQueue::build_line_mesh(
         _Texture);
 
     build_triangle_filled_mesh(
-        _P1 + perpendicular,
         _P2 - perpendicular,
         _P2 + perpendicular,
+        _P1 + perpendicular,
         _Color,
         _Texture);
 }
@@ -1031,37 +1031,34 @@ void RenderingQueue::build_arc_mesh(
     const float&    _SourceAngle,
     const float&    _TargetAngle,
     const float&    _Width,
-    const gs_color& _Color)
+    const gs_color& _Color,
+    const int&      _SegmentsCount)
 {
-    const float angleIncrement = 360.f / 36.f;
+    const float delta = 360.f / _SegmentsCount;
+    const float width = gs_max(_Width, m_MinimumLineWidth);
 
-    gs_vec2f p1 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle)));
-    gs_vec2f p2;
-    float    width = gs_max(_Width, m_MinimumLineWidth);
-
-    for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement, p1 = p2)
+    for (float angle = _SourceAngle; angle < _TargetAngle; angle += delta)
     {
-        p2 = gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle)));
-        build_line_mesh(p1, p2, width, _Color, ApplicationRenderingBackend::get_default_texture());
+        build_line_mesh(
+            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle))),
+            gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle + delta)), _Center.y + _MajorRadius * sin(gs_to_radians(angle + delta))),
+            width,
+            _Color,
+            ApplicationRenderingBackend::get_default_texture());
     }
 
-    // const float angleIncrement = 360.f / 36.f;
+    // TODO: check if path building algorithms are optimized enough to be user every frame...
+    // // build path
+    // m_PathBuilder.begin(gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)), _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle))));
 
-    // m_PathBuilder.begin(gs_vec2f(
-    //     _Center.x + _MinorRadius * cos(gs_to_radians(_SourceAngle)),
-    //     _Center.y + _MajorRadius * sin(gs_to_radians(_SourceAngle))));
+    // for (float angle = _SourceAngle + delta; angle < _TargetAngle; angle += delta)
+    //     m_PathBuilder.line_to(gs_vec2f(_Center.x + _MinorRadius * cos(gs_to_radians(angle)), _Center.y + _MajorRadius * sin(gs_to_radians(angle))));
 
-    // for (float angle = _SourceAngle; angle <= _TargetAngle; angle += angleIncrement)
-    // {
-    //     m_PathBuilder.line_to(gs_vec2f(
-    //         _Center.x + _MinorRadius * cos(gs_to_radians(angle)),
-    //         _Center.y + _MajorRadius * sin(gs_to_radians(angle))));
-    // }
-
+    // // build mesh
     // m_PathBuilder.build_mesh(
     //     _Color,
     //     ApplicationRenderingBackend::get_default_texture(),
-    //     gs_max(_Width, m_RenderingQueueMinimumLineWidth),
-    //     m_RenderingQueueMeshVertexes,
-    //     m_RenderingQueueMeshVertexesIndexes);
+    //     _Width,
+    //     m_MeshVertexes,
+    //     m_MeshVertexesIndexes);
 }

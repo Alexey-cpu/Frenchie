@@ -20,11 +20,11 @@ namespace Frenchie
 
         struct ApplicationRenderingBackendGraphicsApiState
         {
-            unsigned int m_VBO       {0};
-            unsigned int m_VAO       {0};
-            unsigned int m_EBO       {0};
-            unsigned int m_Shader    {0};
-            bool         m_MeshLoaded{false};
+            unsigned int m_VBO   {0};
+            unsigned int m_VAO   {0};
+            unsigned int m_EBO   {0};
+            unsigned int m_Shader{0};
+            bool         m_Ready {false};
         };
     }
 }
@@ -354,24 +354,25 @@ bool ApplicationRenderingBackend::begin_render()
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_STENCIL_BUFFER_BIT);
 
-    m_GraphicsApiState->m_MeshLoaded = false;
+    // mark we are not ready yet
+    m_GraphicsApiState->m_Ready = false;
     
     // check that everything has been instantiated
-    return  m_GraphicsApiState->m_VBO &&
-            m_GraphicsApiState->m_EBO &&
-            m_GraphicsApiState->m_VAO &&
-            m_GraphicsApiState->m_Shader;
+    return m_GraphicsApiState->m_VBO &&
+           m_GraphicsApiState->m_EBO &&
+           m_GraphicsApiState->m_VAO &&
+           m_GraphicsApiState->m_Shader;
 }
 
 void ApplicationRenderingBackend::render_mesh(
     const ApplicationRenderingBackendVertex*                    _Vertexes,
-    const int&                                                  _VertexesCount,
-    const int&                                                  _MeshVertexesCount,
-    const int&                                                  _MeshVertexesOffset,
-    const int*                                                  _Indexes,
-    const int&                                                  _IndexesCount,
-    const int&                                                  _MeshIndexesCount,
-    const int&                                                  _MeshIndexesOffset,
+    const ApplicationRenderingBackendMeshVertexIndex&           _VertexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex&           _MeshVertexesOffset,
+    const ApplicationRenderingBackendMeshVertexIndex*           _Indexes,
+    const ApplicationRenderingBackendMeshVertexIndex&           _IndexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesCount,
+    const ApplicationRenderingBackendMeshVertexIndex&           _MeshIndexesOffset,
     const ApplicationRenderingBackendTexture&                   _Texture,
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
@@ -383,16 +384,14 @@ void ApplicationRenderingBackend::render_mesh(
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
 
-    // bind shader
-    glUseProgram(m_GraphicsApiState->m_Shader);
-
-    // configure shader
-    glUniformMatrix4fv(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
-    glUniform1i(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_Texture"), 0);
-
-    // load mesh
-    if(!m_GraphicsApiState->m_MeshLoaded)
+    // load mesh and bind shader
+    if(!m_GraphicsApiState->m_Ready)
     {
+        // bind shader
+        glUseProgram(m_GraphicsApiState->m_Shader);
+
+        // load mesh
+
         // bind VAO to remember VBO/EBO configuration and layout
         glBindVertexArray(m_GraphicsApiState->m_VAO);
 
@@ -401,7 +400,7 @@ void ApplicationRenderingBackend::render_mesh(
         glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_GraphicsApiState->m_EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(int),  _Indexes, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex), _Indexes, GL_DYNAMIC_DRAW);
 
         // setup attributes pointers
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ApplicationRenderingBackendVertex), (void*)(GS_OFFSET_OF(ApplicationRenderingBackendVertex, Position)));
@@ -413,35 +412,42 @@ void ApplicationRenderingBackend::render_mesh(
         glEnableVertexAttribArray(2);
         glEnableVertexAttribArray(3);
 
-        m_GraphicsApiState->m_MeshLoaded = true;
+        m_GraphicsApiState->m_Ready = true;
     }
 
-    // render mesh
-    glBindVertexArray(m_GraphicsApiState->m_VAO);
+    // configure shader
+    glUniformMatrix4fv(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
+    glUniform1i(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_Texture"), 0);
 
+    // render mesh
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
-        glDrawElements(GL_LINE_LOOP, _MeshIndexesCount - _MeshVertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(int)));
+        glDrawElements(GL_LINE_LOOP, _MeshIndexesCount - _MeshIndexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles))
-        glDrawElements(GL_TRIANGLES, _MeshIndexesCount - _MeshVertexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(int)));
+        glDrawElements(GL_TRIANGLES, _MeshIndexesCount - _MeshIndexesOffset, GL_UNSIGNED_INT, (void*)(intptr_t)(_MeshIndexesOffset * sizeof(ApplicationRenderingBackendMeshVertexIndex)));
 
     // unbind everything
     glBindTexture(GL_TEXTURE_2D, 0);
-    glBindVertexArray(0);
-    glUseProgram(0);
 }
 
 void ApplicationRenderingBackend::end_render()
 {
     if(m_GraphicsApiState == nullptr) return;
 
+    // disable all tests
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
 
-    // unload mesh
-    m_GraphicsApiState->m_MeshLoaded = false;
+    // unbind everything
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glUseProgram(0);
+
+    // mark we are not ready yet
+    m_GraphicsApiState->m_Ready = false;
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)

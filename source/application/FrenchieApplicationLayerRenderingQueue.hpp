@@ -36,7 +36,7 @@ namespace Frenchie
 
                 gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
                 gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
-
+                
                 P1min = _P1 - perpendicular;
                 P1max = _P1 + perpendicular;
                 P2min = _P2 - perpendicular;
@@ -108,7 +108,7 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&      _Texture,
                 const float&                                    _Width,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
-                std::vector<int>&                               _Indexes)
+                std::vector<ApplicationRenderingBackendMeshVertexIndex>&                      _Indexes)
             {
                 if(m_PolygonLines.empty())
                 {
@@ -132,9 +132,9 @@ namespace Frenchie
                         _Indexes);
 
                     build_triangle_filled_mesh(
-                        m_PolygonLines[0].P1max,
                         m_PolygonLines[0].P2min,
                         m_PolygonLines[0].P2max,
+                        m_PolygonLines[0].P1max,
                         _Color,
                         _Texture,
                         _Vertexes,
@@ -168,9 +168,9 @@ namespace Frenchie
                         _Indexes);
 
                     build_triangle_filled_mesh(
-                        m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P1max,
                         m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P2min,
                         m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P2max,
+                        m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P1max,
                         _Color,
                         _Texture,
                         _Vertexes,
@@ -205,10 +205,10 @@ namespace Frenchie
             }
 
             void build_mesh_filled_no_convex(
-                const gs_color&                                 _Color,
-                const ApplicationRenderingBackendTexture&      _Texture,
-                std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
-                std::vector<int>&                               _Indexes)
+                const gs_color&                                          _Color,
+                const ApplicationRenderingBackendTexture&                _Texture,
+                std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+                std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes)
             {
                 // auxiliary lambdas
                 auto get_element = [](const int& _Index, const int& _Size)->int
@@ -295,9 +295,9 @@ namespace Frenchie
         protected:
 
             std::vector<RenderingQueuePathSegment> m_PolygonLines           {std::vector<RenderingQueuePathSegment>()};
-            float                                       m_PolygonLinesWidth      {4.f};
-            std::vector<int>                            m_PolygonLinesIndexes    {std::vector<int>()};
-            gs_vec2f                                    m_PolygonLinesSourcePoint{gs_vec2f(0.f, 0.f)};
+            float                                  m_PolygonLinesWidth      {4.f};
+            std::vector<int>                       m_PolygonLinesIndexes    {std::vector<int>()};
+            gs_vec2f                               m_PolygonLinesSourcePoint{gs_vec2f(0.f, 0.f)};
 
             // service methods
             void end()
@@ -313,7 +313,7 @@ namespace Frenchie
                 const gs_color&                                 _Color,
                 const ApplicationRenderingBackendTexture&      _Texture,
                 std::vector<ApplicationRenderingBackendVertex>& _Vertexes,
-                std::vector<int>&                               _Indexes)
+                std::vector<ApplicationRenderingBackendMeshVertexIndex>&                      _Indexes)
             {
                 const int size = (int)_Vertexes.size();
 
@@ -529,7 +529,7 @@ namespace Frenchie
 
                 for(auto it = _Begin; it != _End; it++)
                 {
-                    unsigned int symbol = *it;
+                    ApplicationRenderingBackendMeshVertexIndex symbol = *it;
 
                     // fallbacks
                     if(!font.contains_glyph(symbol))
@@ -718,37 +718,38 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture& _Texture);
 
             void build_arc_mesh(
-                const gs_vec2f&            _Center,
-                const float&               _MinorRadius,
-                const float&               _MajorRadius,
-                const float&               _SourceAngle,
-                const float&               _TargetAngle,
-                const float&               _Width,
-                const gs_color&            _Color);
+                const gs_vec2f& _Center,
+                const float&    _MinorRadius,
+                const float&    _MajorRadius,
+                const float&    _SourceAngle,
+                const float&    _TargetAngle,
+                const float&    _Width,
+                const gs_color& _Color,
+                const int&      _SegmentsCount = 36);
 
             // rendering queue data
-            gs_2dboxf                                      m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
-            std::vector<gs_color>                          m_ClearColors                        {std::vector<gs_color>()};
-            std::vector<gs_2dboxf>                         m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
-            std::vector<ApplicationRenderingBackendVertex> m_MeshVertexes                       {std::vector<ApplicationRenderingBackendVertex>()};
-            std::vector<int>                               m_MeshVertexesIndexes                {std::vector<int>()};
-            float                                          m_MinimumLineWidth                   {4.f};
+            gs_2dboxf                                               m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
+            std::vector<gs_color>                                   m_ClearColors                        {std::vector<gs_color>()};
+            std::vector<gs_2dboxf>                                  m_ClippingBoxes                      {std::vector<gs_2dboxf>()};
+            std::vector<ApplicationRenderingBackendVertex>          m_MeshVertexes                       {std::vector<ApplicationRenderingBackendVertex>()};
+            std::vector<ApplicationRenderingBackendMeshVertexIndex> m_MeshVertexesIndexes                {std::vector<ApplicationRenderingBackendMeshVertexIndex>()};
+            float                                                   m_MinimumLineWidth                   {4.f};
 
             // path building data
-            RenderingQueuePathBuilder                      m_PathBuilder                        {RenderingQueuePathBuilder(8.f)};
+            RenderingQueuePathBuilder                               m_PathBuilder                        {RenderingQueuePathBuilder(8.f)};
 
             // rendering
-            gs_mat4f                                       m_ProjectionMatrix                   {gs_mat4f(1)};
-            gs_mat4f                                       m_CameraViewMatrix                   {gs_mat4f(1)};
-            std::vector<RenderingQueueCommand>             m_Commands                           {std::vector<RenderingQueueCommand>()};
+            gs_mat4f                                                m_ProjectionMatrix                   {gs_mat4f(1)};
+            gs_mat4f                                                m_CameraViewMatrix                   {gs_mat4f(1)};
+            std::vector<RenderingQueueCommand>                      m_Commands                           {std::vector<RenderingQueueCommand>()};
 
             // metrics measurement
-            std::chrono::high_resolution_clock::time_point m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};            
-            Frenchie::Core::RingBuffer<double, 64>         m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
-            RenderingQueueMetrics                          m_Metrics                            {RenderingQueueMetrics()};
+            std::chrono::high_resolution_clock::time_point          m_FrameRateMeasurementStartTimePoint {Frenchie::Core::tic()};            
+            Frenchie::Core::RingBuffer<double, 64>                  m_FrameRateMeasurementFilterBuffer   {Frenchie::Core::RingBuffer<double, 64>(0.0)};
+            RenderingQueueMetrics                                   m_Metrics                            {RenderingQueueMetrics()};
 
-            int m_IndexesOffset = 0;
-            int m_VertexesOffset = 0;
+            ApplicationRenderingBackendMeshVertexIndex              m_IndexesOffset                      {0};
+            ApplicationRenderingBackendMeshVertexIndex              m_VertexesOffset                     {0};
         };
     }
 }
