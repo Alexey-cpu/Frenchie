@@ -4549,8 +4549,8 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceEventsController>());
+    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceNextNodeController>());
