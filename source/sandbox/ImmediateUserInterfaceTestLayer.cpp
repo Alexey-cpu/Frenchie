@@ -17,7 +17,7 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //renderer_test();
+    renderer_test();
     
     //windows_test();   
     //scrollarea_test();
@@ -25,7 +25,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     //vertical_stack_test();
     //horizontal_stack_test();
 
-    widgets_test();
+    //widgets_test();
 
     //menu_test();
     
@@ -334,45 +334,38 @@ void ImmediateUserInterfaceTestLayer::renderer_test()
     m_ImmediateUserInterface->m_Settings =
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
 
-    m_ImmediateUserInterface->color_picker("ColorPicker");
+    m_ImmediateUserInterface->m_Renderer->push_arc(
+        gs_vec2f(512.f, 512.f),
+        256.f,
+        256.f,
+        0.f,
+        30.f,
+        64.f,
+        gs_rgba_color(255, 255, 255, 255));
 
-    // gs_vec2f start(512.f, 512.f);
-    // gs_vec2f size (128.f, 64.f);
+    m_ImmediateUserInterface->m_Renderer->push_arc_filled(
+        gs_vec2f(512.f, 512.f),
+        256.f,
+        256.f,
+        0.f,
+        30.f,
+        gs_rgba_color(255, 255, 255, 255));
 
-    // RenderingQueueColor colors[7] =
-    // {
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 0, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 0, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 255, 255, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 255, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 255, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 0, 0, 255)
-    // };
+    // m_ImmediateUserInterface->m_Renderer->push_rectangle(
+    //     gs_vec2f(512.f, 512.f),
+    //     gs_vec2f(512.f, 512.f) + gs_vec2f(512.f, 512.f),
+    //     64.f,
+    //     gs_rgba_color(255, 255, 255, 255));
 
-    // gs_vec2f position = start;
+    // m_ImmediateUserInterface->m_Renderer->push_line(
+    //     gs_vec2f(512.f, 512.f),
+    //     gs_vec2f(1024.f, 1024.f),
+    //     64.f,
+    //     gs_rgba_color(255, 255, 255, 255));
 
-    // for (int i = 1; i < 7; i++)
-    // {
-    //     auto sourceColor = colors[i-1];
-    //     auto targetColor = colors[i-0];
-
-    //     m_ImmediateUserInterface->m_Renderer->push_rectangle_gradient_mesh(
-    //         position,
-    //         position + size,
-    //         sourceColor,
-    //         sourceColor, // this is current color
-    //         targetColor,
-    //         targetColor);
-
-    //     position += gs_vec2f(0.f, size.y);
-    // }
-
-    // m_ImmediateUserInterface->m_Renderer->push_rectangle_gradient_mesh(
-    //     start + gs_vec2f(size.x, 0.f) * 2.f,
-    //     start + gs_vec2f(size.x, 0.f) * 2.f + gs_vec2f(512.f, 512.f),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(255, 255, 255, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 255, 255), // this is current color
-    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255),
-    //     RenderingQueueGraphicsApi::construct_rgba_color(0, 0, 0, 255));
+    // m_ImmediateUserInterface->m_Renderer->push_line(
+    //     gs_vec2f(1024.f, 1024.f),
+    //     gs_vec2f(1024.f, 256.f),
+    //     64.f,
+    //     gs_rgba_color(255, 255, 255, 255));
 }
