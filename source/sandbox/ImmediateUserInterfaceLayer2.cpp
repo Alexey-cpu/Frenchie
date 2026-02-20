@@ -57,13 +57,13 @@ namespace Frenchie
                         if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
 
                         totalFramesSize += gs_vec2f(
-                            _Context->m_Renderer->calculate_bounding_box((*it)->Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
+                            _Context->m_Renderer->calculate_bounding_box((*it)->Name.begin(), (*it)->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
                             0.f);
                         totalFramesCount++;
                     }
 
                     totalFramesSize += gs_vec2f(
-                        _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
+                        _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
                         0.f);
                     totalFramesCount++;
 
@@ -844,14 +844,15 @@ namespace Frenchie
 
                         // title
                         _Context->m_Renderer->push_text(
-                            _Window->Name,
+                            _Window->Name.begin(),
+                            _Window->Name.end(),
                             _Context->m_Style.get_font_size() * 0.6f,
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                             _Context->m_Renderer->calculate_transform_matrix(
                                 (float)place_in_follow(),
                                 gs_vec2f(
                                     _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f)));
+                                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f)));
                     }
                 );
             }
@@ -1411,14 +1412,15 @@ namespace Frenchie
 
                 // title
                 _Context->m_Renderer->push_text(
-                    Name,
+                    Name.begin(),
+                    Name.end(),
                     _Context->m_Style.get_font_size(),
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix(
                         (float)place_in_follow(),
                         gs_vec2f(
                             State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
-                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
+                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
             }
         };
 
@@ -1456,14 +1458,15 @@ namespace Frenchie
 
                 // title
                 _Context->m_Renderer->push_text(
-                    Name,
+                    Name.begin(),
+                    Name.end(),
                     _Context->m_Style.get_font_size(),
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix(
                         (float)place_in_follow(),
                         gs_vec2f(
                             State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
-                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
+                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
 
                 // triangle
                 float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
@@ -2459,7 +2462,7 @@ void ImmediateUserInterfaceWidget::layout(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr) return;
 
     gs_vec2f size =
-        _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+        _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
     State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
@@ -2509,12 +2512,13 @@ void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer
 
     // title
     _Context->m_Renderer->push_text(
-        Name,
+        Name.begin(),
+        Name.end(),
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix(
             (float)place_in_follow(),
-            gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
+            gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
 }
 
 // ImmediateUserInterfaceCheckbox
@@ -2733,11 +2737,13 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
 
     // title
     gs_2dboxf textBoundingBox = _Context->m_Renderer->calculate_bounding_box(
-        Text,
+        Text.begin(),
+        Text.end(),
         _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font());
 
     _Context->m_Renderer->push_text(
-        Text,
+        Text.begin(),
+        Text.end(),
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.center() - textBoundingBox.size() * 0.5f));
@@ -2947,14 +2953,15 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
 
             // title
             _Context->m_Renderer->push_text(
-                _Window->Name,
+                _Window->Name.begin(),
+                _Window->Name.end(),
                 _Context->m_Style.get_font_size() * 0.6f,
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 _Context->m_Renderer->calculate_transform_matrix(
                     (float)place_in_follow(),
                     gs_vec2f(
                         _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                        _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name, _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f)));
+                        _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f)));
         }
     );
 }
@@ -4306,7 +4313,8 @@ void detect_maximum_width(
             {
                 gs_vec2f size =
                     _Context->m_Renderer->calculate_bounding_box(
-                        (*it)->Name,
+                        (*it)->Name.begin(),
+                        (*it)->Name.end(),
                         _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
                         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
@@ -4335,7 +4343,8 @@ void setup_maximum_with(
             {
                 gs_vec2f size =
                     _Context->m_Renderer->calculate_bounding_box(
-                        (*it)->Name,
+                        (*it)->Name.begin(),
+                        (*it)->Name.end(),
                         _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
                         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
@@ -4784,7 +4793,8 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
         ImmediateUserInterfaceLabel* button = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
 
         gs_vec2f size = m_Renderer->calculate_bounding_box(
-            _Text,
+            _Text.begin(),
+            _Text.end(),
             m_Style.get_font_size(), m_Style.get_current_font()).size() + m_Style.get_font_size() * 0.25f;
 
         button->State.MaximumSize = size;
