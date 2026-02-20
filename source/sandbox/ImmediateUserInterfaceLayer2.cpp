@@ -378,17 +378,15 @@ namespace Frenchie
                 ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
 
                 if(parent == nullptr)
-                    return _Context->m_Renderer->current_viewport();
+                    return _Node->State.BoundingBox;
 
                 gs_2dboxf clippingBox = next->State.BoundingBox;
 
                 while (parent)
                 {
-                    //next   = parent;
                     clippingBox = gs_2dboxf(
                         gs_vec2f( gs_max(next->State.BoundingBox.Min.x, clippingBox.Min.x), gs_max(next->State.BoundingBox.Min.y, clippingBox.Min.y) ),
-                        gs_vec2f( gs_min(next->State.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->State.BoundingBox.Max.y, clippingBox.Max.y) )
-                    );
+                        gs_vec2f( gs_min(next->State.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->State.BoundingBox.Max.y, clippingBox.Max.y) ));
 
                     next   = parent;
                     parent = _Context->m_Hierarchy.get_parent(parent);
