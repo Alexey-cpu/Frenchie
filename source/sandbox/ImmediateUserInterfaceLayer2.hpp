@@ -437,23 +437,9 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceLabel(const std::string& _Name);
             virtual ~ImmediateUserInterfaceLabel();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            //virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
 
             std::string Text;
-        };
-
-        struct ImmediateUserInterfaceInputFloat : public ImmediateUserInterfaceWidget
-        {
-        public:
-            ImmediateUserInterfaceInputFloat(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceInputFloat();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            float* Value = nullptr;
         };
 
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
@@ -542,7 +528,6 @@ namespace Frenchie
             mutable std::vector<int>                                                              Entries;
             mutable std::vector<ImmediateUserInterfaceNode*>                                      Singletons;
             mutable std::vector<ImmediateUserInterfaceNode*>                                      Sorted;
-            //mutable std::map<const ImmediateUserInterfaceNode*, int>                              RenderingIndexesCache;
             mutable std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> GetParent;
 
             std::vector<ImmediateUserInterfaceNode*>::iterator begin(const ImmediateUserInterfaceNode* _Node) const
@@ -602,8 +587,6 @@ namespace Frenchie
                     Entries[i] = 0;
                     Indexes[i] = 0;
                     Sorted [i] = nullptr;
-
-                    //RenderingIndexesCache[_Nodes[i]] = _Nodes[i]->State.RenderingIndex;
 
                     if(get_parent(_Nodes[i]) == nullptr)
                         Singletons.push_back(_Nodes[i]);
@@ -858,7 +841,6 @@ namespace Frenchie
 
             void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
-            void float_input_x1(const std::string& _ID, float* _Value = nullptr);
 
             void next_line();
 

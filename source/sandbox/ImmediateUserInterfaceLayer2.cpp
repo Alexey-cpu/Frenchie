@@ -2721,22 +2721,6 @@ bool ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLaye
 // ImmediateUserInterfaceLabel
 ImmediateUserInterfaceLabel::ImmediateUserInterfaceLabel(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name){}
 ImmediateUserInterfaceLabel::~ImmediateUserInterfaceLabel(){}
-void ImmediateUserInterfaceLabel::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr) return;
-
-    // gs_vec2f size = _Context->m_Renderer->calculate_bounding_box(
-    //     Text,
-    //     _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + _Context->m_Style.get_font_size() * 0.25f;
-
-    gs_vec2f size = _Context->m_Renderer->calculate_bounding_box(
-        Text,
-        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + _Context->m_Style.get_font_size() * 0.25f;
-
-    State.MinimumSize = size;
-    State.MaximumSize = size;
-}
-
 void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
@@ -2759,65 +2743,6 @@ void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Co
         _Context->m_Style.get_font_size(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.center() - textBoundingBox.size() * 0.5f));
-}
-
-// ImmediateUserInterfaceInputFloat
-ImmediateUserInterfaceInputFloat::ImmediateUserInterfaceInputFloat(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
-ImmediateUserInterfaceInputFloat::~ImmediateUserInterfaceInputFloat(){}
-void ImmediateUserInterfaceInputFloat::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    gs_2dboxf box = _Context->m_Renderer->calculate_bounding_box(
-        Frenchie::Core::String::format("%.12f", (Value != nullptr ? *Value : 0.f)),
-        _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_current_font());
-
-    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + box.size() + _Context->m_Style.get_font_size());
-}
-bool ImmediateUserInterfaceInputFloat::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
-{
-    if(_Context == nullptr) return false;
-
-    if(!(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-        return false;
-
-    // TODO: process input here ...
-
-    return true;
-}
-void ImmediateUserInterfaceInputFloat::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // title
-    gs_2dboxf box = _Context->m_Renderer->calculate_bounding_box(
-        Frenchie::Core::String::format("%.12f", (Value != nullptr ? *Value : 0.f)),
-        _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_current_font());
-
-    _Context->m_Renderer->push_text(
-        Frenchie::Core::String::format("%.12f", (Value != nullptr ? *Value : 0.f)),
-        _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
-            (float)place_in_follow(),
-            gs_vec2f(State.BoundingBox.center() - box.size() * 0.5f)));
 }
 
 // ImmediateUserInterfaceMenu
@@ -4858,7 +4783,18 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        get_rendering_stack_top<ImmediateUserInterfaceLabel>()->Text = _Text;
+        ImmediateUserInterfaceLabel* button = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
+
+        gs_vec2f size = m_Renderer->calculate_bounding_box(
+            _Text,
+            m_Style.get_font_size(), m_Style.get_current_font()).size() + m_Style.get_font_size() * 0.25f;
+
+        button->State.MaximumSize = size;
+        button->State.BoundingBox = gs_2dboxf(
+            button->State.BoundingBox.Min,
+            button->State.BoundingBox.Min + gs_clamp(size, button->State.MinimumSize, button->State.MaximumSize));
+
+        button->Text = _Text;
 
         end_node<ImmediateUserInterfaceLabel>();
     }
@@ -4941,18 +4877,6 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
     }
 
     return false;
-}
-
-void ImmediateUserInterfaceContextLayer::float_input_x1(const std::string& _ID, float* _Value)
-{
-    if(begin_node<ImmediateUserInterfaceInputFloat>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-    {
-        get_rendering_stack_top<ImmediateUserInterfaceInputFloat>()->Value = _Value;
-
-        end_node<ImmediateUserInterfaceInputFloat>();
-    }
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)

@@ -1,8 +1,11 @@
 #pragma once
 
+// UTF-8
+#include <utf8.h>
+
 // STL
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -49,6 +52,13 @@ namespace Frenchie
             // from UTF-8
             std::u16string convert_utf8_to_utf16(const std::string&);
             std::u32string convert_utf8_to_utf32(const std::string&);
+
+            // UTF-8 iteration
+            template<typename octet_iterator>
+            unsigned int utf8_next(octet_iterator& _Iterator)
+            {
+                return utf8::unchecked::next(_Iterator);
+            }
 
             // UTF-8 string formatting
             template<typename ... Args>

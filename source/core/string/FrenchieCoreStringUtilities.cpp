@@ -7,8 +7,6 @@ using namespace Frenchie::Core::String;
 #include <algorithm>
 #include <functional>
 
-#include <utf8.h>
-
 namespace Frenchie
 {
     namespace Core
