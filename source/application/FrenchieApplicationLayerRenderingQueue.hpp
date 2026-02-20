@@ -6,10 +6,16 @@
 #include <FrenchieCoreOptional.hpp>
 #include <FrenchieCoreRingBuffer.hpp>
 
+// Core
+#include <FrenchieCoreStringUtilities.hpp>
+
 // Application
 #include <FrenchieApplicationLayer.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 #include <FrenchieApplicationRenderingBackend.hpp>
+
+// STL
+#include <iostream>
 
 namespace Frenchie
 {
@@ -461,20 +467,66 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _ArcAngle);
 
+            template<typename Type>
             gs_2dboxf calculate_bounding_box(
-                const std::u32string&                  _Text,
+                const Type&                            _Begin,
+                const Type&                            _End,
                 const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font);
+                const ApplicationRenderingBackendFont& _Font)
+            {
+                ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
 
-            gs_2dboxf calculate_bounding_box(
-                const std::u16string&                  _Text,
-                const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font);
+                float scale     = _Size / (float)font.SizeInPixels;
+                float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
+                float positionX = 0.f;
+                float positionY = gs_vec2f(0.f, offset).y;
 
-            gs_2dboxf calculate_bounding_box(
-                const std::string&                     _Text,
-                const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font);
+                gs_vec2f min;
+                gs_vec2f max;
+
+                Type start = _Begin;
+                Type end   = _End;
+
+                while (start < end)
+                {
+                    unsigned int symbol = Frenchie::Core::String::utf8_next(start);
+
+                    // fallbacks
+                    if(!font.contains_glyph(symbol))
+                    {
+                        // next line
+                        if(symbol == '\n')
+                        {
+                            positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
+                            positionX =  0.f;
+                        }
+                        // carriage return
+                        else if(symbol == '\r')
+                            positionX =  0.f;
+                        // tab
+                        else if(symbol == '\t')
+                            positionX += gs_vec2f(_Size, 0.f).x;
+                        else
+                        {
+                            // TODO: do someting here...
+                            // May be use fallback font and take fallback character from there ???
+                        }
+
+                        continue;
+                    }
+
+                    min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
+                    max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
+
+                    // move cursor
+                    positionX += gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f).x;
+                }
+
+                min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
+                max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
+
+                return gs_2dboxf(min, max);
+            }
 
             void push_triangle_filled(
                 const gs_vec2f&                           _P1,
@@ -527,24 +579,27 @@ namespace Frenchie
                 float positionX = 0.f;
                 float positionY = gs_vec2f(0.f, offset).y;
 
-                for(auto it = _Begin; it != _End; it++)
+                Type start = _Begin;
+                Type end   = _End;
+
+                while (start < end)                
                 {
-                    ApplicationRenderingBackendMeshVertexIndex symbol = *it;
+                    unsigned int symbol = Frenchie::Core::String::utf8_next(start);
 
                     // fallbacks
                     if(!font.contains_glyph(symbol))
                     {
                         // next line
-                        if(symbol == '\n')
+                        if(symbol == U'\n')
                         {
                             positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
                             positionX =  0.f;
                         }
                         // carriage return
-                        else if(symbol == '\r')
+                        else if(symbol == U'\r')
                             positionX =  0.f;
                         // tab
-                        else if(symbol == '\t')
+                        else if(symbol == U'\t')
                             positionX += gs_vec2f(_Size, 0.f).x;
                         else
                         {
@@ -578,27 +633,6 @@ namespace Frenchie
 
                 push_rendering_command(font.AtlasTexture, _Color, _Transform);
             }
-
-            void push_text(
-                const std::u32string&                  _Text,
-                const float&                           _Size,
-                const gs_color&                        _Color,
-                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont());
-
-            void push_text(
-                const std::u16string&                  _Text,
-                const float&                           _Size,
-                const gs_color&                        _Color,
-                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont());
-
-            void push_text(
-                const std::string&                     _Text,
-                const float&                           _Size,
-                const gs_color&                        _Color,
-                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont());
 
             void push_arc_filled(
                 const gs_vec2f&                           _Center,

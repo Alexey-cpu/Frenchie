@@ -7,9 +7,6 @@ using namespace Frenchie::Application;
 #include <FrenchieApplicationRenderingBackend.hpp>
 #include <FrenchieApplicationPlatformBackend.hpp>
 
-// Core
-#include <FrenchieCoreStringUtilities.hpp>
-
 // STL
 #include <algorithm>
 
@@ -60,7 +57,7 @@ void RenderingQueue::frame_start()
     // metrics
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
 
-    // push clear colo
+    // push clear color
     push_clear_color(gs_rgba_color(150, 150, 150, 150));
     push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size()));
 
@@ -88,8 +85,6 @@ void RenderingQueue::frame_start()
     m_Viewport = gs_2dboxf(
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMin, 1.f),
         gs_matrix_invert_square(m_ProjectionMatrix) * gs_matrix_invert_square(m_CameraViewMatrix) * gs_vec4f(viewportMax, 1.f));
-
-    pop_clip_box();
 }
 
 void RenderingQueue::frame_update()
@@ -157,7 +152,7 @@ void RenderingQueue::frame_render()
                 mesh.VertexesCount,
                 mesh.VertexesOffset,
                 &m_MeshVertexesIndexes[0],
-                (int)m_MeshVertexesIndexes.size(),
+                (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexesIndexes.size(),
                 mesh.IndexesCount,
                 mesh.IndexesOffset,
                 texture,
@@ -327,69 +322,6 @@ gs_vec2f RenderingQueue::calculate_arc_point(const gs_vec2f& _Center, const floa
         _Center.y + _MajorRadius * sin(gs_to_radians(_ArcAngle)));
 }
 
-gs_2dboxf RenderingQueue::calculate_bounding_box(const std::u32string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
-{
-    ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
-
-    float scale     = _Size / (float)font.SizeInPixels;
-    float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
-    float positionX = 0.f;
-    float positionY = gs_vec2f(0.f, offset).y;
-
-    gs_vec2f min;
-    gs_vec2f max;
-
-    for(int i = 0; i < (int)_Text.size(); ++i)
-    {
-        unsigned int symbol = _Text[i];
-
-        // fallbacks
-        if(!font.contains_glyph(symbol))
-        {
-            // next line
-            if(symbol == '\n')
-            {
-                positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
-                positionX =  0.f;
-            }
-            // carriage return
-            else if(symbol == '\r')
-                positionX =  0.f;
-            // tab
-            else if(symbol == '\t')
-                positionX += gs_vec2f(_Size, 0.f).x;
-            else
-            {
-                // TODO: do someting here...
-                // May be use fallback font and take fallback character from there ???
-            }
-
-            continue;
-        }
-
-        min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
-        max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
-
-        // move cursor
-        positionX += gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f).x;
-    }
-
-    min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
-    max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
-
-    return gs_2dboxf(min, max);
-}
-
-gs_2dboxf RenderingQueue::calculate_bounding_box(const std::u16string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
-{
-    return calculate_bounding_box(Frenchie::Core::String::convert_utf16_to_utf8(_Text), _Size, _Font);
-}
-
-gs_2dboxf RenderingQueue::calculate_bounding_box(const std::string& _Text, const float& _Size, const ApplicationRenderingBackendFont& _Font)
-{
-    return calculate_bounding_box(Frenchie::Core::String::convert_utf8_to_utf32(_Text), _Size, _Font);
-}
-
 void RenderingQueue::push_triangle_filled(
     const gs_vec2f&                           _P1,
     const gs_vec2f&                           _P2,
@@ -502,47 +434,6 @@ void RenderingQueue::push_rectangle_rounded_filled(
 
     // push rendering command
     push_rendering_command(ApplicationRenderingBackend::get_default_texture(), _Color, _Transform);
-}
-
-void RenderingQueue::push_text(
-    const std::u32string&                  _Text,
-    const float&                           _Size,
-    const gs_color&                        _Color,
-    const gs_mat4f&                        _Transform,
-    const ApplicationRenderingBackendFont& _Font)
-{
-    push_text(_Text.begin(), _Text.end(), _Size, _Color, _Transform, _Font);
-}
-
-void RenderingQueue::push_text(
-    const std::u16string&                  _Text,
-    const float&                           _Size,
-    const gs_color&                        _Color,
-    const gs_mat4f&                        _Transform,
-    const ApplicationRenderingBackendFont& _Font)
-{
-    push_text(
-        Frenchie::Core::String::convert_utf8_to_utf32(
-            Frenchie::Core::String::convert_utf16_to_utf8(_Text)),
-        _Size,
-        _Color,
-        _Transform,
-        _Font);
-}
-
-void RenderingQueue::push_text(
-    const std::string&                     _Text,
-    const float&                           _Size,
-    const gs_color&                        _Color,
-    const gs_mat4f&                        _Transform,
-    const ApplicationRenderingBackendFont& _Font)
-{
-    push_text(
-        Frenchie::Core::String::convert_utf8_to_utf32(_Text),
-        _Size,
-        _Color,
-        _Transform,
-        _Font);
 }
 
 void RenderingQueue::push_arc_filled(

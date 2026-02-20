@@ -348,7 +348,6 @@ bool ApplicationRenderingBackend::begin_render()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
-    glEnable(GL_SCISSOR_TEST);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -414,6 +413,8 @@ void ApplicationRenderingBackend::render_mesh(
 
         m_GraphicsApiState->m_Ready = true;
     }
+
+    glBindVertexArray(m_GraphicsApiState->m_VAO);
 
     // configure shader
     glUniformMatrix4fv(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
