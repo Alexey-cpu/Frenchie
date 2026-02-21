@@ -324,7 +324,7 @@ namespace Frenchie
                 ImmediateUserInterfaceNodeEvents   Events{ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
 
                 // layout hints
-                bool PushNextLine{false};
+                int NextLine = 0;
 
                 // mouse hover
                 ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
@@ -733,14 +733,7 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceNextNodeController();
 
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
-
-            void set_next_line();
-
-            bool is_next_line() const;
-
-        private:
-            // info
-            mutable Frenchie::Core::Optional<bool> PushNextItemNextLine;
+            mutable Frenchie::Core::Optional<int> NextLine;
         };
 
         // context configuration
@@ -879,7 +872,6 @@ namespace Frenchie
                 // setup node parameters
                 node->State.Settings       = _Settings;
                 node->State.RenderingIndex = (int)m_NodesRenderingList.size();
-                node->State.PushNextLine   = get_controller<ImmedidateUserInterfaceNextNodeController>()->is_next_line();
 
                 // build nodes hierarchy
                 if(!m_NodesRenderingStack.empty())
@@ -887,6 +879,19 @@ namespace Frenchie
                     if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
                         m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
                     node->State.Relative = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+                }
+
+                // setup next rendered node parameters
+                ImmedidateUserInterfaceNextNodeController* controller = get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+                if(!m_NodesRenderingList.empty() && controller != nullptr)
+                {
+                    // next line
+                    if(controller->NextLine.has_value())
+                    {
+                        m_NodesRenderingList[m_NodesRenderingList.size() - 1]->State.NextLine = controller->NextLine.value();
+                        controller->NextLine.reset();
+                    }
                 }
 
                 m_NodesRenderingList.push_back(node);
