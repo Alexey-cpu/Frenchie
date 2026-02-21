@@ -103,8 +103,8 @@ void ApplicationInstance::ApplicationInstance::frame_start()
 
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime,
-                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime) < KeyClickDetectionTime;
+                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime,
+                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime) < KeyClickDetectionTime;
 
             ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked =
                 ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked && ++ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks >= 2;
@@ -145,8 +145,10 @@ void ApplicationInstance::ApplicationInstance::frame_start()
 
             ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicked =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime,
-                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime) < KeyClickDetectionTime;
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime) < KeyClickDetectionTime;
+
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks++;
         }
     }
 
