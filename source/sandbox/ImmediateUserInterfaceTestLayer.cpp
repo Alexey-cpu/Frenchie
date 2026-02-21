@@ -17,7 +17,7 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    platform_backend_test();
+    //platform_backend_test();
 
     //renderer_test();
     
@@ -29,7 +29,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
     //widgets_test();
 
-    //menu_test();
+    menu_test();
     
     auto FPS = std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
 
@@ -455,6 +455,10 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
                     mouseButtonDoubleClickedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
             }
 
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseEvents", "MouseEvents:"); m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseDownName", Frenchie::Core::String::format("Down: [%s]", mouseButtonDownName.c_str())); m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseHoldName", Frenchie::Core::String::format("Hold: [%s]", mouseButtonHoldName.c_str())); m_ImmediateUserInterface->next_line();
