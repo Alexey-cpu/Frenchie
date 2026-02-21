@@ -31,6 +31,17 @@ namespace Frenchie
             bool                                           DoubleClicked{false};
             std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
             std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
+
+            static std::string to_string(const ApplicationPlatformBackendMouseButton::Button& _Button)
+            {
+                switch (_Button)
+                {
+                case ApplicationPlatformBackendMouseButtonLeft: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonLeft);
+                case ApplicationPlatformBackendMouseButtonRight: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonRight);
+                case ApplicationPlatformBackendMouseButtonMiddle: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonMiddle);
+                }
+                return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonEnd);
+            }
         };
 
         struct ApplicationPlatformBackendMouseCursor
@@ -176,7 +187,7 @@ namespace Frenchie
             std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
             std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
 
-            static std::string key_to_string(const ApplicationPlatformBackendKey::Key& _Key)
+            static std::string to_string(const ApplicationPlatformBackendKey::Key& _Key)
             {
                 switch (_Key)
                 {

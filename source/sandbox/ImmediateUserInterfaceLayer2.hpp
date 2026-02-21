@@ -412,35 +412,25 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
-        {
-        public:
-            ImmediateUserInterfacePushButton(const std::string& _Name);
-            virtual ~ImmediateUserInterfacePushButton();
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
+        // struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
+        // {
+        // public:
+        //     ImmediateUserInterfacePushButton(const std::string& _Name);
+        //     virtual ~ImmediateUserInterfacePushButton();
+        //     virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        // };
 
-        struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceWidget
-        {
-        public:
-            ImmediateUserInterfaceCheckButton(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceCheckButton();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        // struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceWidget
+        // {
+        // public:
+        //     ImmediateUserInterfaceCheckButton(const std::string& _Name);
+        //     virtual ~ImmediateUserInterfaceCheckButton();
+        //     virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        //     virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+        //     virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            bool* Checked = nullptr;
-        };
-
-        struct ImmediateUserInterfaceLabel : public ImmediateUserInterfaceWidget
-        {
-        public:
-            ImmediateUserInterfaceLabel(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceLabel();
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            std::string Text;
-        };
+        //     bool* Checked = nullptr;
+        // };
 
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
         struct ImmediateUserInterfaceColorPickerGradientColorModifier;

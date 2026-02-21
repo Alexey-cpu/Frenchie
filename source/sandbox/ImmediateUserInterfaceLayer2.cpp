@@ -372,7 +372,30 @@ namespace Frenchie
                     gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
             }
 
-            gs_2dboxf calculate_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf calculate_previous_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+            {
+                const ImmediateUserInterfaceNode* next   = _Node;
+                ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
+
+                if(parent == nullptr)
+                    return _Node->Cache.BoundingBox;
+
+                gs_2dboxf clippingBox = next->Cache.BoundingBox;
+
+                while (parent)
+                {
+                    clippingBox = gs_2dboxf(
+                        gs_vec2f(gs_max(next->Cache.BoundingBox.Min.x, clippingBox.Min.x), gs_max(next->Cache.BoundingBox.Min.y, clippingBox.Min.y)),
+                        gs_vec2f(gs_min(next->Cache.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->Cache.BoundingBox.Max.y, clippingBox.Max.y)));
+
+                    next   = parent;
+                    parent = _Context->m_Hierarchy.get_parent(parent);
+                }
+
+                return clippingBox;
+            }
+
+            gs_2dboxf calculate_current_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
             {
                 const ImmediateUserInterfaceNode* next   = _Node;
                 ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
@@ -385,8 +408,8 @@ namespace Frenchie
                 while (parent)
                 {
                     clippingBox = gs_2dboxf(
-                        gs_vec2f( gs_max(next->State.BoundingBox.Min.x, clippingBox.Min.x), gs_max(next->State.BoundingBox.Min.y, clippingBox.Min.y) ),
-                        gs_vec2f( gs_min(next->State.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->State.BoundingBox.Max.y, clippingBox.Max.y) ));
+                        gs_vec2f(gs_max(next->State.BoundingBox.Min.x, clippingBox.Min.x), gs_max(next->State.BoundingBox.Min.y, clippingBox.Min.y)),
+                        gs_vec2f(gs_min(next->State.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->State.BoundingBox.Max.y, clippingBox.Max.y)));
 
                     next   = parent;
                     parent = _Context->m_Hierarchy.get_parent(parent);
@@ -1378,10 +1401,10 @@ namespace Frenchie
         };
 
         // popups
-        struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfacePushButton
+        struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfaceWidget
         {
         public:
-            ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfacePushButton(_Name){}
+            ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name){}
             virtual ~ImmediateUserInterfaceMenuAction(){}
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
@@ -2275,12 +2298,12 @@ void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*)
 
 gs_2dboxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    return State.BoundingBox.clip_with(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(_Context, this));
+    return State.BoundingBox.clip_with(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(_Context, this));
 }
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    return State.BoundingBox.overlaps(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(_Context, this));
+    return State.BoundingBox.overlaps(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(_Context, this));
 }
 
 int ImmediateUserInterfaceNode::place_in_follow()
@@ -2469,285 +2492,256 @@ void ImmediateUserInterfaceWidget::layout(ImmediateUserInterfaceContextLayer* _C
     State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
 }
 
-// ImmediateUserInterfacePushButton
-ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name)
-{
-    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
-    State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
-    State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
-}
-ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
-void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+// // ImmediateUserInterfacePushButton
+// ImmediateUserInterfacePushButton::ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name)
+// {
+//     State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+//     State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
+//     State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
+// }
+// ImmediateUserInterfacePushButton::~ImmediateUserInterfacePushButton(){}
+// void ImmediateUserInterfacePushButton::render(ImmediateUserInterfaceContextLayer* _Context)
+// {
+//     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//     // background
+//     _Context->m_Renderer->push_rectangle_rounded_filled(
+//         State.BoundingBox.Min,
+//         State.BoundingBox.Max,
+//         _Context->m_Style.get_frames_radius(),
+//         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+//         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-    if(Cache.MouseDown.has_value())
-    {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
-    else
-    {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_frames_radius(),
-            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
+//     if(Cache.MouseDown.has_value())
+//     {
+//         _Context->m_Renderer->push_rectangle_rounded_filled(
+//             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//             State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//             _Context->m_Style.get_frames_radius(),
+//             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+//             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//     }
+//     else
+//     {
+//         _Context->m_Renderer->push_rectangle_rounded_filled(
+//             State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//             State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//             _Context->m_Style.get_frames_radius(),
+//             (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+//             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//     }
 
-    // title
-    _Context->m_Renderer->push_text(
-        Name.begin(),
-        Name.end(),
-        _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix(
-            (float)place_in_follow(),
-            gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
-}
+//     // title
+//     _Context->m_Renderer->push_text(
+//         Name.begin(),
+//         Name.end(),
+//         _Context->m_Style.get_font_size(),
+//         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+//         _Context->m_Renderer->calculate_transform_matrix(
+//             (float)place_in_follow(),
+//             gs_vec2f(State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f)));
+// }
 
-// ImmediateUserInterfaceCheckbox
-ImmediateUserInterfaceCheckButton::ImmediateUserInterfaceCheckButton(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
+// // ImmediateUserInterfaceCheckbox
+// ImmediateUserInterfaceCheckButton::ImmediateUserInterfaceCheckButton(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
 
-ImmediateUserInterfaceCheckButton::~ImmediateUserInterfaceCheckButton(){}
+// ImmediateUserInterfaceCheckButton::~ImmediateUserInterfaceCheckButton(){}
 
-void ImmediateUserInterfaceCheckButton::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+// void ImmediateUserInterfaceCheckButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+// {
+//     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    // layout checkbox
-    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
-    {
-        State.BoundingBox = gs_2dboxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Min + _Context->m_Style.get_font_size());
+//     // layout checkbox
+//     if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+//     {
+//         State.BoundingBox = gs_2dboxf(
+//             State.BoundingBox.Min,
+//             State.BoundingBox.Min + _Context->m_Style.get_font_size());
 
-        return;
-    }
+//         return;
+//     }
 
-    // layout radio button
-    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
-    {
-        State.BoundingBox = gs_2dboxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Min + _Context->m_Style.get_font_size());
+//     // layout radio button
+//     if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+//     {
+//         State.BoundingBox = gs_2dboxf(
+//             State.BoundingBox.Min,
+//             State.BoundingBox.Min + _Context->m_Style.get_font_size());
 
-        return;
-    }
+//         return;
+//     }
 
-    // layout slider button
-    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
-    {
-        State.BoundingBox = gs_2dboxf(
-            State.BoundingBox.Min,
-            State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
+//     // layout slider button
+//     if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+//     {
+//         State.BoundingBox = gs_2dboxf(
+//             State.BoundingBox.Min,
+//             State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
 
-        return;
-    }
-}
-void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+//         return;
+//     }
+// }
+// void ImmediateUserInterfaceCheckButton::render(ImmediateUserInterfaceContextLayer* _Context)
+// {
+//     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    // render checkbox
-    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
-    {
-        // background
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//     // render checkbox
+//     if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+//     {
+//         // background
+//         _Context->m_Renderer->push_rectangle_rounded_filled(
+//             State.BoundingBox.Min,
+//             State.BoundingBox.Max,
+//             _Context->m_Style.get_frames_radius(),
+//             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+//             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-        if(Cache.MouseDown.has_value())
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
-        else
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_radius(),
-                (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
+//         if(Cache.MouseDown.has_value())
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//                 State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_frames_radius(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
+//         else
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//                 State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_frames_radius(),
+//                 (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+//                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+//                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
 
-        // tick
-        if(Checked != nullptr && (*Checked))
-        {
-            gs_vec2f start = gs_vec2f(
-                State.BoundingBox.center().x,
-                State.BoundingBox.center().y + State.BoundingBox.height() * 0.5f * 0.5f);
+//         // tick
+//         if(Checked != nullptr && (*Checked))
+//         {
+//             gs_vec2f start = gs_vec2f(
+//                 State.BoundingBox.center().x,
+//                 State.BoundingBox.center().y + State.BoundingBox.height() * 0.5f * 0.5f);
 
-            _Context->m_Renderer->push_line(
-                start,
-                gs_vec2f(
-                    State.BoundingBox.center().x - State.BoundingBox.width() * 0.5f * 0.7f,
-                    State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.25f),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//             _Context->m_Renderer->push_line(
+//                 start,
+//                 gs_vec2f(
+//                     State.BoundingBox.center().x - State.BoundingBox.width() * 0.5f * 0.7f,
+//                     State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.25f),
+//                 _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-            _Context->m_Renderer->push_line(
-                start,
-                gs_vec2f(
-                    State.BoundingBox.center().x + State.BoundingBox.width() * 0.5f * 0.7f,
-                    State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.9f),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
+//             _Context->m_Renderer->push_line(
+//                 start,
+//                 gs_vec2f(
+//                     State.BoundingBox.center().x + State.BoundingBox.width() * 0.5f * 0.7f,
+//                     State.BoundingBox.center().y - State.BoundingBox.height() * 0.5f * 0.9f),
+//                 _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
 
-        return;
-    }
+//         return;
+//     }
 
-    // render radio button
-    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
-    {
-        // background
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//     // render radio button
+//     if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+//     {
+//         // background
+//         _Context->m_Renderer->push_rectangle_rounded_filled(
+//             State.BoundingBox.Min,
+//             State.BoundingBox.Max,
+//             _Context->m_Style.get_frames_radius(),
+//             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+//             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-        if(Cache.MouseDown.has_value())
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
-        else
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_radius(),
-                (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
+//         if(Cache.MouseDown.has_value())
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//                 State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_frames_radius(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
+//         else
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//                 State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_frames_radius(),
+//                 (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+//                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+//                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
 
-        if(Checked != nullptr && (*Checked))
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 3.f,
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 3.f,
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
+//         if(Checked != nullptr && (*Checked))
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 3.f,
+//                 State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 3.f,
+//                 _Context->m_Style.get_frames_radius(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
 
-        return;
-    }
+//         return;
+//     }
 
-    // render slider button
-    if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
-    {
-        // background
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            State.BoundingBox.Min,
-            State.BoundingBox.Max,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//     // render slider button
+//     if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+//     {
+//         // background
+//         _Context->m_Renderer->push_rectangle_rounded_filled(
+//             State.BoundingBox.Min,
+//             State.BoundingBox.Max,
+//             _Context->m_Style.get_frames_radius(),
+//             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+//             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-        if(Checked != nullptr && (*Checked))
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min,
-                State.BoundingBox.Max,
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         if(Checked != nullptr && (*Checked))
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min,
+//                 State.BoundingBox.Max,
+//                 _Context->m_Style.get_frames_radius(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Max - _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
-        else
-        {
-            _Context->m_Renderer->push_rectangle_rounded_filled(
-                State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                State.BoundingBox.Min + _Context->m_Style.get_font_size() - _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Max - _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width(),
+//                 State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_frames_radius(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
+//         else
+//         {
+//             _Context->m_Renderer->push_rectangle_rounded_filled(
+//                 State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+//                 State.BoundingBox.Min + _Context->m_Style.get_font_size() - _Context->m_Style.get_frames_width(),
+//                 _Context->m_Style.get_frames_radius(),
+//                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+//                 _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+//         }
 
-        return;
-    }
-}
-bool ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+//         return;
+//     }
+// }
+// bool ImmediateUserInterfaceCheckButton::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+// {
+//     if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
 
-    if(State.MouseClicked.has_value() && Checked != nullptr)
-        *Checked = !(*Checked);
+//     if(State.MouseClicked.has_value() && Checked != nullptr)
+//         *Checked = !(*Checked);
 
-    return true;
-}
-
-// ImmediateUserInterfaceLabel
-ImmediateUserInterfaceLabel::ImmediateUserInterfaceLabel(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name){}
-ImmediateUserInterfaceLabel::~ImmediateUserInterfaceLabel(){}
-void ImmediateUserInterfaceLabel::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // title
-    gs_2dboxf textBoundingBox = _Context->m_Renderer->calculate_bounding_box(
-        Text.begin(),
-        Text.end(),
-        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font());
-
-    _Context->m_Renderer->push_text(
-        Text.begin(),
-        Text.end(),
-        _Context->m_Style.get_font_size(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow(), State.BoundingBox.center() - textBoundingBox.size() * 0.5f));
-}
+//     return true;
+// }
 
 // ImmediateUserInterfaceMenu
 ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
@@ -4246,7 +4240,7 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 
     // calculate clippingbox
     _Context->m_Renderer->push_clip_box(
-        ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(_Context, _Node));
+        ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(_Context, _Node));
 
     // render self
     _Node->render(_Context);
@@ -4743,6 +4737,19 @@ void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
 
 bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, const gs_vec2f& _Size)
 {
+    struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
+    {
+    public:
+        ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceWidget(_Name)
+        {
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+            State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
+            State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
+        }
+        
+        virtual ~ImmediateUserInterfacePushButton(){}
+    };
+
     if(begin_node<ImmediateUserInterfacePushButton>(
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -4750,14 +4757,65 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
         ImmediateUserInterfacePushButton* button = 
             get_rendering_stack_top<ImmediateUserInterfacePushButton>();
 
-        button->State.MaximumSize = _Size;
-        button->State.BoundingBox = gs_2dboxf(
-            button->State.BoundingBox.Min,
-            button->State.BoundingBox.Min + gs_clamp(_Size, button->State.MinimumSize, button->State.MaximumSize));
+        // setup
+        {
+            button->State.MaximumSize = _Size;
+            button->State.BoundingBox = gs_2dboxf(
+                button->State.BoundingBox.Min,
+                button->State.BoundingBox.Min + gs_clamp(_Size, button->State.MinimumSize, button->State.MaximumSize));
+        }
         
+        // render
+        {
+            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_previous_clipping_box(this, button));
+
+            int depth = button->Cache.Depth;
+
+            // background
+            m_Renderer->push_rectangle_rounded_filled(
+                button->Cache.BoundingBox.Min,
+                button->Cache.BoundingBox.Max,
+                m_Style.get_frames_radius(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            if(button->Cache.MouseDown.has_value())
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    button->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                    button->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                    m_Style.get_frames_radius(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+            else
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    button->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                    button->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                    m_Style.get_frames_radius(),
+                    (button->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+
+            // title
+            m_Renderer->push_text(
+                button->Name.begin(),
+                button->Name.end(),
+                m_Style.get_font_size(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                m_Renderer->calculate_transform_matrix(
+                    (float)depth++,
+                    gs_vec2f(button->Cache.BoundingBox.center() - m_Renderer->calculate_bounding_box(button->Name.begin(), button->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() * 0.5f)));
+        
+            m_Renderer->pop_clip_box();
+        }
+
         end_node<ImmediateUserInterfacePushButton>();
         
-        return button->State.MouseClicked.has_value();
+        return button->Cache.MouseClicked.has_value();
     }
 
     return false;
@@ -4768,17 +4826,213 @@ bool ImmediateUserInterfaceContextLayer::check_button(
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Checked)
 {
+    struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceWidget
+    {
+    public:
+        ImmediateUserInterfaceCheckButton(const std::string& _Name) : ImmediateUserInterfaceWidget(Name){}
+        virtual ~ImmediateUserInterfaceCheckButton(){}
+
+        void layout(ImmediateUserInterfaceContextLayer* _Context)
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+            // layout checkbox
+            if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+            {
+                State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + _Context->m_Style.get_font_size());
+
+                return;
+            }
+
+            // layout radio button
+            if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+            {
+                State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + _Context->m_Style.get_font_size());
+
+                return;
+            }
+
+            // layout slider button
+            if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+            {
+                State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
+
+                return;
+            }
+        }
+    };
+
     ImmediateUserInterfaceNodeSettings settings = _Settings;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
     settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
 
     if(begin_node<ImmediateUserInterfaceCheckButton>(_ID, settings))
     {
+        // setup
         ImmediateUserInterfaceCheckButton* widget =  get_rendering_stack_top<ImmediateUserInterfaceCheckButton>();
-        widget->Checked = _Checked;
+        
+        // event processing
+        {
+            if(widget->Cache.MouseClicked.has_value() && _Checked != nullptr)
+                *_Checked = !(*_Checked);
+        }
+
+        // render
+        {
+            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_previous_clipping_box(this, widget));
+
+            int depth = widget->Cache.Depth;
+
+            // render checkbox
+            if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+            {
+                // background
+                m_Renderer->push_rectangle_rounded_filled(
+                    widget->Cache.BoundingBox.Min,
+                    widget->Cache.BoundingBox.Max,
+                    m_Style.get_frames_radius(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                if(widget->Cache.MouseDown.has_value())
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                        widget->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                        m_Style.get_frames_radius(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+                else
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                        widget->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                        m_Style.get_frames_radius(),
+                        (widget->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+
+                // tick
+                if(_Checked != nullptr && (*_Checked))
+                {
+                    gs_vec2f start = gs_vec2f(
+                        widget->Cache.BoundingBox.center().x,
+                        widget->Cache.BoundingBox.center().y + widget->Cache.BoundingBox.height() * 0.5f * 0.5f);
+
+                    m_Renderer->push_line(
+                        start,
+                        gs_vec2f(
+                            widget->Cache.BoundingBox.center().x - widget->Cache.BoundingBox.width() * 0.5f * 0.7f,
+                            widget->Cache.BoundingBox.center().y - widget->Cache.BoundingBox.height() * 0.5f * 0.25f),
+                        m_Style.get_frames_width(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    m_Renderer->push_line(
+                        start,
+                        gs_vec2f(
+                            widget->Cache.BoundingBox.center().x + widget->Cache.BoundingBox.width() * 0.5f * 0.7f,
+                            widget->Cache.BoundingBox.center().y - widget->Cache.BoundingBox.height() * 0.5f * 0.9f),
+                        m_Style.get_frames_width(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+            }
+            // render radio button
+            else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+            {
+                // background
+                m_Renderer->push_rectangle_rounded_filled(
+                    widget->Cache.BoundingBox.Min,
+                    widget->Cache.BoundingBox.Max,
+                    m_Style.get_frames_radius(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                if(widget->Cache.MouseDown.has_value())
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                        widget->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                        m_Style.get_frames_radius(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+                else
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                        widget->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                        m_Style.get_frames_radius(),
+                        (widget->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+
+                if(_Checked != nullptr && (*_Checked))
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min + m_Style.get_frames_width() * 3.f,
+                        widget->Cache.BoundingBox.Max - m_Style.get_frames_width() * 3.f,
+                        m_Style.get_frames_radius(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+            }
+            // render slider button
+            else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+            {
+                // background
+                m_Renderer->push_rectangle_rounded_filled(
+                    widget->Cache.BoundingBox.Min,
+                    widget->Cache.BoundingBox.Max,
+                    m_Style.get_frames_radius(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+
+                if(_Checked != nullptr && (*_Checked))
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min,
+                        widget->Cache.BoundingBox.Max,
+                        m_Style.get_frames_radius(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Max - m_Style.get_font_size() + m_Style.get_frames_width(),
+                        widget->Cache.BoundingBox.Max - m_Style.get_frames_width(),
+                        m_Style.get_frames_radius(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+                else
+                {
+                    m_Renderer->push_rectangle_rounded_filled(
+                        widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
+                        widget->Cache.BoundingBox.Min + m_Style.get_font_size() - m_Style.get_frames_width(),
+                        m_Style.get_frames_radius(),
+                        m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+            }
+        
+            m_Renderer->pop_clip_box();
+        }
+
         end_node<ImmediateUserInterfaceCheckButton>();
         
-        return (widget->Checked != nullptr && *widget->Checked);
+        return (_Checked != nullptr && *_Checked);
     }
 
     return false;
@@ -4786,10 +5040,18 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
 void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std::string& _Text)
 {
+    struct ImmediateUserInterfaceLabel : public ImmediateUserInterfaceWidget
+    {
+    public:
+        ImmediateUserInterfaceLabel(const std::string& _Name): ImmediateUserInterfaceWidget(_Name){}
+        virtual ~ImmediateUserInterfaceLabel(){}
+    };
+
     if(begin_node<ImmediateUserInterfaceLabel>(
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
+        // setup
         ImmediateUserInterfaceLabel* button = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
 
         gs_vec2f size = m_Renderer->calculate_bounding_box(
@@ -4802,7 +5064,35 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
             button->State.BoundingBox.Min,
             button->State.BoundingBox.Min + gs_clamp(size, button->State.MinimumSize, button->State.MaximumSize));
 
-        button->Text = _Text;
+        // render
+        {
+            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_previous_clipping_box(this, button));
+
+            int depth = button->Cache.Depth;
+
+            // background
+            m_Renderer->push_rectangle_rounded_filled(
+                button->Cache.BoundingBox.Min,
+                button->Cache.BoundingBox.Max,
+                m_Style.get_frames_radius(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // title
+            gs_2dboxf textBoundingBox = m_Renderer->calculate_bounding_box(
+                _Text.begin(),
+                _Text.end(),
+                m_Style.get_font_size(), m_Style.get_current_font());
+
+            m_Renderer->push_text(
+                _Text.begin(),
+                _Text.end(),
+                m_Style.get_font_size(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                m_Renderer->calculate_transform_matrix((float)depth++, button->Cache.BoundingBox.center() - textBoundingBox.size() * 0.5f));
+
+            m_Renderer->pop_clip_box();
+        }
 
         end_node<ImmediateUserInterfaceLabel>();
     }
