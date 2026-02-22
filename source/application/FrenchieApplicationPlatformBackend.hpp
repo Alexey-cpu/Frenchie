@@ -13,52 +13,6 @@ namespace Frenchie
 {
     namespace Application
     {
-        struct ApplicationPlatformBackendMouseButton
-        {
-            enum Button : int
-            {
-                ApplicationPlatformBackendMouseButtonBegin,
-                ApplicationPlatformBackendMouseButtonLeft = ApplicationPlatformBackendMouseButtonBegin,
-                ApplicationPlatformBackendMouseButtonRight,
-                ApplicationPlatformBackendMouseButtonMiddle,
-                ApplicationPlatformBackendMouseButtonEnd
-            };
-
-            int                                            Clicks       {0    };
-            bool                                           Down         {false};
-            bool                                           Hold         {false};
-            bool                                           Pressed      {false};
-            bool                                           Released     {false};
-            bool                                           Clicked      {false};
-            bool                                           DoubleClicked{false};
-            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
-            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
-
-            static std::string to_string(const ApplicationPlatformBackendMouseButton::Button& _Button)
-            {
-                switch (_Button)
-                {
-                case ApplicationPlatformBackendMouseButtonLeft: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonLeft);
-                case ApplicationPlatformBackendMouseButtonRight: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonRight);
-                case ApplicationPlatformBackendMouseButtonMiddle: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonMiddle);
-                }
-                return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonEnd);
-            }
-        };
-
-        struct ApplicationPlatformBackendMouseCursor
-        {
-            bool      Entered           {false};
-            gs_vec2f  Position          {gs_vec2f(0.f)};
-            gs_vec2f  MousePressPosition{gs_vec2f(0.f)};
-            gs_vec2f  DragDelta         {gs_vec2f(0.f)};
-        };
-
-        struct ApplicationPlatformBackendWindow
-        {
-            bool Focused {false};
-        };
-
         struct ApplicationPlatformBackendKey
         {
             enum Key : int
@@ -159,25 +113,7 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_ReservedForModCtrl, ApplicationPlatformBackendKey_ReservedForModShift, ApplicationPlatformBackendKey_ReservedForModAlt, ApplicationPlatformBackendKey_ReservedForModSuper,
 
                 // [Internal] If you need to iterate all keys (for e.g. an input mapper) you may use ApplicationPlatformBackendKey_NamedKey_BEGIN..ApplicationPlatformBackendKey_NamedKey_END.
-                ApplicationPlatformBackendKey_NamedKey_END,
-                ApplicationPlatformBackendKey_NamedKey_COUNT = ApplicationPlatformBackendKey_NamedKey_END - ApplicationPlatformBackendKey_NamedKey_BEGIN,
-
-                // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
-                // - Any functions taking a ApplicationPlatformBackendKeyChord parameter can binary-or those with regular keys, e.g. Shortcut(ImGuiMod_Ctrl | ApplicationPlatformBackendKey_S).
-                // - Those are written back into io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper for convenience,
-                //   but may be accessed via standard key API such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
-                // - Code polling every key (e.g. an interface to detect a key press for input mapping) might want to ignore those
-                //   and prefer using the real keys (e.g. ApplicationPlatformBackendKey_LeftCtrl, ApplicationPlatformBackendKey_RightCtrl instead of ImGuiMod_Ctrl).
-                // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent left/right keys.
-                //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
-                //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
-                // - On macOS, we swap Cmd(Super) and Ctrl keys at the time of the io.AddKeyEvent() call.
-                ImGuiMod_None                   = 0,
-                ImGuiMod_Ctrl                   = 1 << 12, // Ctrl (non-macOS), Cmd (macOS)
-                ImGuiMod_Shift                  = 1 << 13, // Shift
-                ImGuiMod_Alt                    = 1 << 14, // Option/Menu
-                ImGuiMod_Super                  = 1 << 15, // Windows/Super (non-macOS), Ctrl (macOS)
-                ImGuiMod_Mask_                  = 0xF000,  // 4-bits
+                ApplicationPlatformBackendKey_NamedKey_END
             };
 
             int                                            Clicks       {0    };
@@ -316,13 +252,60 @@ namespace Frenchie
             }
         };
 
+        struct ApplicationPlatformBackendMouseButton
+        {
+            enum Button : int
+            {
+                ApplicationPlatformBackendMouseButtonBegin,
+                ApplicationPlatformBackendMouseButtonLeft = ApplicationPlatformBackendMouseButtonBegin,
+                ApplicationPlatformBackendMouseButtonRight,
+                ApplicationPlatformBackendMouseButtonMiddle,
+                ApplicationPlatformBackendMouseButtonEnd
+            };
+
+            int                                            Clicks       {0    };
+            bool                                           Down         {false};
+            bool                                           Hold         {false};
+            bool                                           Pressed      {false};
+            bool                                           Released     {false};
+            bool                                           Clicked      {false};
+            bool                                           DoubleClicked{false};
+            std::chrono::high_resolution_clock::time_point PressTime    {std::chrono::high_resolution_clock::time_point()};
+            std::chrono::high_resolution_clock::time_point ReleaseTime  {std::chrono::high_resolution_clock::time_point()};
+
+            static std::string to_string(const ApplicationPlatformBackendMouseButton::Button& _Button)
+            {
+                switch (_Button)
+                {
+                    case ApplicationPlatformBackendMouseButtonLeft: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonLeft);
+                    case ApplicationPlatformBackendMouseButtonRight: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonRight);
+                    case ApplicationPlatformBackendMouseButtonMiddle: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonMiddle);
+                }
+                return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonEnd);
+            }
+        };
+
+        struct ApplicationPlatformBackendMouseCursor
+        {
+            bool      Entered           {false};
+            gs_vec2f  Position          {gs_vec2f(0.f)};
+            gs_vec2f  MousePressPosition{gs_vec2f(0.f)};
+            gs_vec2f  DragDelta         {gs_vec2f(0.f)};
+        };
+
+        struct ApplicationPlatformBackendWindow
+        {
+            bool Focused {false};
+        };
+
         struct ApplicationPlatformBackendInput
         {            
-            ApplicationPlatformBackendMouseButton  MouseButtons   [ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{};
-            ApplicationPlatformBackendMouseCursor  MouseCursor    {ApplicationPlatformBackendMouseCursor()};
-            ApplicationPlatformBackendWindow       Window         {ApplicationPlatformBackendWindow()};
-            ApplicationPlatformBackendKey          Keys           [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_COUNT]{};
+            ApplicationPlatformBackendMouseButton  MouseButtons     [ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{};
+            ApplicationPlatformBackendMouseCursor  MouseCursor      {ApplicationPlatformBackendMouseCursor()};
+            ApplicationPlatformBackendWindow       Window           {ApplicationPlatformBackendWindow()};
+            ApplicationPlatformBackendKey          Keys             [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END]{};
             Frenchie::Core::Optional<unsigned int> Character;
+            gs_vec2f                               MouseScrollOffset{gs_vec2f(0.f, 0.f)};
         };
 
         class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
@@ -345,6 +328,7 @@ namespace Frenchie
             static gs_vec2f    get_window_cursor_position();
             static gs_vec2f    get_window_cursor_dragdelta();
             static gs_vec2f    get_window_framebuffer_size();
+            static gs_vec2f    get_mouse_scroll_offset();
 
             static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&);

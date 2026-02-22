@@ -282,7 +282,7 @@ namespace Frenchie
                 template<typename FrameProcessor>
                 ImmediateUserInterfaceNode* search(
                     ImmediateUserInterfaceContextLayer* _Context,
-                    const ImmedidateUserInterfaceEvent& _Event,
+                    const ImmedidateUserInterfaceInput& _Event,
                     const FrameProcessor&               _Filter)
                 {
                     // find top most hovered singleton window or a snapped window not equal to the moved one
@@ -301,10 +301,10 @@ namespace Frenchie
                     ImmediateUserInterfaceContextLayer* _Context,
                     ImmediateUserInterfaceNode*         _Next,
                     ImmediateUserInterfaceNode**        _Hovered,
-                    const ImmedidateUserInterfaceEvent& _Event,
+                    const ImmedidateUserInterfaceInput& _Event,
                     const FrameProcessor&               _Filter)
                 {
-                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Event.CursorPosition))
+                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Event.get_cusor_position()))
                         return;
 
                     // check self
@@ -320,38 +320,38 @@ namespace Frenchie
                 }
             };
 
-            ImmedidateUserInterfaceEvent construct_event(ImmediateUserInterfaceContextLayer* _Context)
-            {
-                if(_Context == nullptr)
-                    return ImmedidateUserInterfaceEvent();
+            // ImmedidateUserInterfaceInput construct_event(ImmediateUserInterfaceContextLayer* _Context)
+            // {
+            //     if(_Context == nullptr)
+            //         return ImmedidateUserInterfaceInput();
 
-                // construct events
-                ImmedidateUserInterfaceEvent event;
-                event.CursorPosition  = _Context->m_Renderer->get_cursor_postion();
-                event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
+            //     // construct events
+            //     ImmedidateUserInterfaceInput event;
+            //     event.get_cusor_position()  = _Context->m_Renderer->get_cursor_postion();
+            //     event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
 
-                for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
-                        button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
-                        button++)
-                {
-                    if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
-                        event.MouseDown = (ApplicationPlatformBackendMouseButton::Button)button;
+            //     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+            //              button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
+            //              button++)
+            //     {
+            //         if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
+            //             event.MouseDown |= (1 << button);
 
-                    if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
-                        event.MouseHold = (ApplicationPlatformBackendMouseButton::Button)button;
+            //         if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
+            //             event.MouseHold |= (1 << button);
 
-                    if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
-                        event.MousePressed = (ApplicationPlatformBackendMouseButton::Button)button;
+            //         if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
+            //             event.MousePressed |= (1 << button);
 
-                    if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-                        event.MouseClicked = (ApplicationPlatformBackendMouseButton::Button)button;
+            //         if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+            //             event.MouseClicked |= (1 << button);
 
-                    if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-                        event.MouseDoubleClicked = (ApplicationPlatformBackendMouseButton::Button)button;
-                }
+            //         if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+            //             event.MouseDoubleClicked |= (1 << button);
+            //     }
 
-                return event;
-            }
+            //     return event;
+            // }
 
             float calculate_offset(ImmediateUserInterfaceContextLayer* _Context)
             {
@@ -795,19 +795,19 @@ namespace Frenchie
                     [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
                     {
                         // auxiliary lambdas
-                        auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
+                        auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceInput& _Event)
                         {
-                            if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
+                            if(_Event.is_mouse_button_down() && closeButtonBox.contains(_Event.get_cusor_position()))
                                 return gs_rgba_color(255, 0, 0, 255);
 
                             // TODO: this MUST BE a setting
-                            return closeButtonBox.contains(_Event.CursorPosition) ?
+                            return closeButtonBox.contains(_Event.get_cusor_position()) ?
                                 gs_rgba_color(128, 0, 0, 255) :
                                 gs_rgba_color(64, 0, 0, 255);
                         };
 
                         // construct events
-                        ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
+                        ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput::construct_event(_Context);
 
                         // detect if we are active
                         bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, _Window);
@@ -820,7 +820,7 @@ namespace Frenchie
                                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
                         {
                             // frame
-                            if(_Frame.contains(event.CursorPosition) &&
+                            if(_Frame.contains(event.get_cusor_position()) &&
                                 (_Window->TopSnapper    != nullptr ||
                                 _Window->LeftSnapper   != nullptr ||
                                 _Window->RightSnapper  != nullptr ||
@@ -850,7 +850,7 @@ namespace Frenchie
                                     false,
                                     false);
                             }
-                            else if(_Frame.contains(event.CursorPosition))
+                            else if(_Frame.contains(event.get_cusor_position()))
                             {
                                 _Context->m_Renderer->push_rectangle_rounded_filled(
                                     _Frame.Min + _Context->m_Style.get_frames_width(),
@@ -882,80 +882,13 @@ namespace Frenchie
         };
     
         // scrollarea
-        struct ImmediateUserInterfaceScrollAreaRoot : public ImmediateUserInterfaceNodeVerticalStack
+        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
         {
         public:
-            ImmediateUserInterfaceScrollAreaRoot(const std::string& _Name) : ImmediateUserInterfaceNodeVerticalStack(_Name){}
-            virtual ~ImmediateUserInterfaceScrollAreaRoot(){}
+            ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+            virtual ~ImmediateUserInterfaceScrollAreaPanel(){}
         };
-        
-        struct ImmediateUserInterfaceScrollAreaScrollBarSlider : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaScrollBarSlider(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 
-            virtual ~ImmediateUserInterfaceScrollAreaScrollBarSlider(){}
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr) return;
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Hierarchy.get_parent(this) ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
-            {
-                if(!ImmediateUserInterfaceNode::events(_Context, _Event))
-                    return false;
-
-                if(_Event.MousePressed.has_value())
-                    PreviousPosition = Position;
-
-                if(_Event.MouseDown.has_value() &&
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-                {
-                    auto parent = _Context->m_Hierarchy.get_parent(this);
-
-                    Position = parent != nullptr ? 
-                        gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), parent->State.BoundingBox.size() - State.BoundingBox.size()) :
-                            PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta();
-
-                    return true;
-                }
-
-                return false;
-            }
-
-            gs_vec2f Position      = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale = gs_vec2f(1.f, 1.f);
-        private:
-            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-        };
-    
         struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNodePanel
         {
         public:
@@ -977,19 +910,13 @@ namespace Frenchie
                 // auxiliary lambdas
                 auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
                 {
-                    State.MaximumSize = gs_vec2f(0.f, 0.f);
-                    State.MinimumSize = gs_vec2f(0.f, 0.f);
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+                    // // clamp self
+                    // State.MaximumSize = gs_vec2f(0.f, 0.f);
+                    // State.MinimumSize = gs_vec2f(0.f, 0.f);
+                    // State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
 
-                    // reset all sliders
-                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                    {
-                        ImmediateUserInterfaceScrollAreaScrollBarSlider* slider =
-                            dynamic_cast<ImmediateUserInterfaceScrollAreaScrollBarSlider*>(*it);
-
-                        if(slider != nullptr)
-                            slider->Position = gs_vec2f(0.f, 0.f);
-                    }
+                    // reset slider
+                    Position = gs_vec2f(0.f, 0.f);
                 };
 
                 if(_Context == nullptr) return;
@@ -1095,31 +1022,20 @@ namespace Frenchie
                     scrollbarMaximumValue,
                     State.ContentSize + _Context->m_Style.get_scrollbar_width());
 
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                {
-                    ImmediateUserInterfaceScrollAreaScrollBarSlider* slider =
-                        dynamic_cast<ImmediateUserInterfaceScrollAreaScrollBarSlider*>(*it);
-
-                    if(slider == nullptr)
-                        continue;
-
-                    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + slider->Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
+                    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
                     
                     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
                     {
                         if(sliderPosition.y > State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
-                            slider->PositionScale = scrollbarSliderScale;
+                            PositionScale = scrollbarSliderScale;
                     }
                     else
                     {
                         if(sliderPosition.x > State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
-                            slider->PositionScale = scrollbarSliderScale;
+                            PositionScale = scrollbarSliderScale;
                     }
 
-                    slider->State.BoundingBox = gs_2dboxf(
-                        sliderPosition + ContentPadding,
-                        sliderPosition + scrollbarSliderLength - ContentPadding);
-                }
+                    Size = scrollbarSliderLength;
             }
 
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
@@ -1132,25 +1048,21 @@ namespace Frenchie
                     State.ContentSize = contentArea->ContentView->State.ContentSize;
             }
 
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override
             {
-                if(ImmediateUserInterfaceNodePanel::events(_Context, _Event)) return true;
-
-                if(State.MousePressed.has_value())
+                // move slider on mouse press event
+                if(State.Input.is_mouse_button_pressed())
                 {
-                    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                    {
-                        ImmediateUserInterfaceScrollAreaScrollBarSlider* slider =
-                            dynamic_cast<ImmediateUserInterfaceScrollAreaScrollBarSlider*>(*it);
-
-                        if(slider == nullptr) continue;
-
-                        slider->Position = gs_clamp(
-                            _Event.CursorPosition - State.BoundingBox.Min,
-                            gs_vec2f(0.f, 0.f),
-                            State.BoundingBox.size() - slider->State.BoundingBox.size());
-                    }
+                    Position         = gs_clamp((_Event.get_cusor_position() - State.BoundingBox.Min) - Size * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+                    PreviousPosition = Position;
                 }
+
+                // move slider on mouse drag event
+                if(_Event.is_mouse_button_down())
+                    Position = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+
+                // move slider on mouse wheel scroll event
+                //if()
 
                 return true;
             }
@@ -1159,6 +1071,7 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+                // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
                     State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
@@ -1176,7 +1089,37 @@ namespace Frenchie
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground) :
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // slider
+                gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - Size);
+
+                if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
+                        sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+                else
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
+                        sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Hierarchy.get_parent(this) ?
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
             }
+
+            // info
+            gs_vec2f Size             = gs_vec2f(0.f, 0.f);
+            gs_vec2f Position         = gs_vec2f(0.f, 0.f);
+            gs_vec2f PositionScale    = gs_vec2f(1.f, 1.f);
+            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
 
         private:
 
@@ -1193,6 +1136,7 @@ namespace Frenchie
 
                     if(contentArea != nullptr)
                         return contentArea;
+                        
                     parent = _Context->m_Hierarchy.get_parent(parent);
                 }
 
@@ -1348,14 +1292,14 @@ namespace Frenchie
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
 
-                if(_Event.MousePressed.has_value())
+                if(_Event.is_mouse_button_pressed())
                     SliderPreviousPosition = SliderPosition;
 
-                if(!_Event.MouseDown.has_value()) return false;
+                if(!_Event.is_mouse_button_down()) return false;
 
                 gs_vec2f position = State.BoundingBox.Min;
 
@@ -1364,7 +1308,7 @@ namespace Frenchie
                     position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
 
                 SliderPosition = gs_clamp(
-                    SliderPreviousPosition + _Event.CursorDragDelta.y,
+                    SliderPreviousPosition + _Event.get_cusor_drag_delta().y,
                     0.f,
                     State.BoundingBox.height() - slider.height());
 
@@ -1412,7 +1356,7 @@ namespace Frenchie
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
                 // background
-                if(Cache.MouseDown.has_value())
+                if(Cache.Input.is_mouse_button_down())
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
                         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -1458,7 +1402,7 @@ namespace Frenchie
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
                 // background
-                if(Cache.MouseDown.has_value())
+                if(Cache.Input.is_mouse_button_down())
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
                         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -1510,6 +1454,159 @@ namespace Frenchie
             }
         };
     }
+}
+
+ImmedidateUserInterfaceInput ImmedidateUserInterfaceInput::construct_event(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr)
+        return ImmedidateUserInterfaceInput();
+
+    // construct events
+    ImmedidateUserInterfaceInput event;
+    event.CursorPosition    = _Context->m_Renderer->get_cursor_postion();
+    event.CursorDragDelta   = ApplicationPlatformBackend::get_window_cursor_dragdelta();
+    event.MouseScrollOffset = ApplicationPlatformBackend::get_mouse_scroll_offset();
+
+    // catch mouse buttons
+    for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+             button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
+             button++)
+    {
+        if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseDown |= (1 << button);
+
+        if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseHold |= (1 << button);
+
+        if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MousePressed |= (1 << button);
+
+        if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseClicked |= (1 << button);
+
+        if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
+            event.MouseDoubleClicked |= (1 << button);
+    }
+
+    // catch keys
+    for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+             key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
+             key++)
+    {
+        if(ApplicationPlatformBackend::is_key_down((ApplicationPlatformBackendKey::Key)key))
+            event.MouseDown |= (1 << key);
+
+        if(ApplicationPlatformBackend::is_key_hold((ApplicationPlatformBackendKey::Key)key))
+            event.MouseHold |= (1 << key);
+
+        if(ApplicationPlatformBackend::is_key_pressed((ApplicationPlatformBackendKey::Key)key))
+            event.MousePressed |= (1 << key);
+
+        if(ApplicationPlatformBackend::is_key_clicked((ApplicationPlatformBackendKey::Key)key))
+            event.MouseClicked |= (1 << key);
+    }
+
+    // catch character input
+
+    return event;
+}
+
+gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
+{
+    return CursorPosition;
+}
+
+gs_vec2f ImmedidateUserInterfaceInput::get_cusor_drag_delta() const
+{
+    return CursorDragDelta;
+}
+
+gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
+{
+    return MouseScrollOffset;
+}
+
+ImmedidateUserInterfaceInputMouseButton ImmedidateUserInterfaceInput::all_mouse_buttons()
+{
+    int buttons = 0;
+
+    for (int i = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+                i < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
+                i++)
+    {
+        buttons |= (1 << i);
+    }
+
+    return buttons;
+}
+
+ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::all_keys()
+{
+    int keys = 0;
+
+    for (int i = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+             i < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
+             i++)
+    {
+        keys |= (1 << i);
+    }
+
+    return keys;
+}
+
+bool ImmedidateUserInterfaceInput::is_mouse_button_down(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+{
+    return MouseDown & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_mouse_button_hold(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+{
+    return MouseHold & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_mouse_button_pressed(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+{
+    return MousePressed & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_mouse_button_released(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+{
+    return MouseReleased & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_mouse_button_clicked(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+{
+    return MouseClicked & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+{
+    return MouseDoubleClicked & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_key_down(const ImmedidateUserInterfaceInputKey& _Button) const
+{
+    return KeyDown & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_key_hold(const ImmedidateUserInterfaceInputKey& _Button) const
+{
+    return KeyHold & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_key_pressed(const ImmedidateUserInterfaceInputKey& _Button) const
+{
+    return KeyPressed & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_key_released(const ImmedidateUserInterfaceInputKey& _Button) const
+{
+    return KeyReleased & _Button;
+}
+
+bool ImmedidateUserInterfaceInput::is_key_clicked(const ImmedidateUserInterfaceInputKey& _Button) const
+{
+    return KeyClicked & _Button;
 }
 
 // ImmediateUserInterfaceContextConfiguration
@@ -1792,7 +1889,7 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
     State.ContentSize = box.size();
 }
 
-bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     // auxiliary lambdas
     auto render_resize_gizmo = [](
@@ -1917,32 +2014,32 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
 
     auto check_cursor_intersection_with_resize_gizmo = [_Context](
         ImmediateUserInterfaceNode*             _Node,
-        const ImmedidateUserInterfaceEvent&     _Event,
+        const ImmedidateUserInterfaceInput&     _Event,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType)->bool
     {
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Node).contains(_Event.get_cusor_position());
 
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Node).contains(_Event.get_cusor_position());
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Node).contains(_Event.get_cusor_position());
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Node).contains(_Event.get_cusor_position());
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Event.get_cusor_position());
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Event.get_cusor_position());
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Event.get_cusor_position());
     
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Event.CursorPosition);
+            return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Event.get_cusor_position());
         
         return false;
     };
@@ -1951,7 +2048,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
         ImmediateUserInterfaceContextLayer*     _Context,
         ImmediateUserInterfaceNode*             _Node,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType,
-        const ImmedidateUserInterfaceEvent&     _Event)
+        const ImmedidateUserInterfaceInput&     _Event)
     {
         // find resizable node
         ImmediateUserInterfaceNode* resizable = _Node;
@@ -1967,12 +2064,12 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     auto resize_node = [](
         ImmediateUserInterfaceNode*             _Node,
         const ImmediateUserInterfaceNodeEvents& _ResizeEventType,
-        const ImmedidateUserInterfaceEvent&     _Event)
+        const ImmedidateUserInterfaceInput&     _Event)
     {
         if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
         {
             ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                _Node->Cache.BoundingBox.Min + _Event.CursorDragDelta,
+                _Node->Cache.BoundingBox.Min + _Event.get_cusor_drag_delta(),
                 _Node->Cache.BoundingBox.Max));
             return;
         }
@@ -2035,7 +2132,7 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     };
 
     // pass focus
-    if(State.MousePressed.has_value())
+    if(State.Input.is_mouse_button_pressed())
     {
         for (auto node : _Context->m_Hierarchy.Singletons)
         {
@@ -2068,14 +2165,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft, _Event);
@@ -2091,14 +2188,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight, _Event);
@@ -2114,14 +2211,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft, _Event);
@@ -2137,14 +2234,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight, _Event);
@@ -2160,14 +2257,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop, _Event);
@@ -2183,14 +2280,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft, _Event);
@@ -2206,14 +2303,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight, _Event);
@@ -2229,14 +2326,14 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
 
             // trigger event
-            if(_Event.MousePressed.has_value())
+            if(_Event.is_mouse_button_pressed())
             {
                 resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
                 return true;
             }
 
             // execute event
-            if(_Event.MouseDown.has_value() &&
+            if(_Event.is_mouse_button_down() &&
                 (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
             {
                 resize_node(resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom, _Event);
@@ -2268,13 +2365,13 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
             parent = _Context->m_Hierarchy.get_parent(parent);
         }
 
-        if(_Event.MousePressed.has_value())
+        if(_Event.is_mouse_button_pressed())
         {
             movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
             return true;
         }
 
-        if(_Event.MouseDown.has_value() &&
+        if(_Event.is_mouse_button_down() &&
             (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
         {            
             movable->State.BoundingBox = gs_2dboxf(
@@ -2343,7 +2440,7 @@ void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer*
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
-bool ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     if(_Context == nullptr)
         return false;
@@ -2440,7 +2537,7 @@ void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* 
 {
     if(_Child == nullptr) return;
 
-    if(dynamic_cast<ImmediateUserInterfaceScrollAreaRoot*>(_Child))
+    if(dynamic_cast<ImmediateUserInterfaceScrollAreaPanel*>(_Child))
     {
         _Child->State.Parent = this;
         return;
@@ -2545,17 +2642,17 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         return;
 
     // auxiliary lambdas
-    auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceEvent& _Event)
+    auto close_button_color = [](const gs_2dboxf& closeButtonBox, const ImmedidateUserInterfaceInput& _Event)
     {
-        if(_Event.MouseDown.has_value() && closeButtonBox.contains(_Event.CursorPosition))
+        if(_Event.is_mouse_button_down() && closeButtonBox.contains(_Event.get_cusor_position()))
             return gs_rgba_color(255, 0, 0, 255);
 
-        return closeButtonBox.contains(_Event.CursorPosition) ?
+        return closeButtonBox.contains(_Event.get_cusor_position()) ?
             gs_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
             gs_rgba_color(64, 0, 0, 255);
     };
 
-    auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box, const ImmedidateUserInterfaceEvent& _Event)
+    auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box, const ImmedidateUserInterfaceInput& _Event)
     {
         gs_2dboxf closeButtonBox = gs_2dboxf(
             _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
@@ -2609,7 +2706,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         [this, &render_close_button](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
             // construct events
-            ImmedidateUserInterfaceEvent event = ImmediateUserInterfaceContextLayerHelpers::construct_event(_Context);
+            ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput::construct_event(_Context);
 
             // detect if we are active
             bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, _Window);
@@ -2622,7 +2719,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                     ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
             {
                 // frame
-                if(_Frame.contains(event.CursorPosition) &&
+                if(_Frame.contains(event.get_cusor_position()) &&
                     (_Window->TopSnapper    != nullptr ||
                      _Window->LeftSnapper   != nullptr ||
                      _Window->RightSnapper  != nullptr ||
@@ -2645,7 +2742,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
 
                     render_close_button(_Context, closeButtonBox, event);
 
-                    *_Window->Opened = !(closeButtonBox.contains(event.CursorPosition) && event.MouseClicked.has_value());
+                    *_Window->Opened = !(closeButtonBox.contains(event.get_cusor_position()) && event.is_mouse_button_clicked());
                 }
             }
             else
@@ -2664,7 +2761,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                         false,
                         false);
                 }
-                else if(_Frame.contains(event.CursorPosition))
+                else if(_Frame.contains(event.get_cusor_position()))
                 {
                     _Context->m_Renderer->push_rectangle_rounded_filled(
                         _Frame.Min + _Context->m_Style.get_frames_width(),
@@ -2681,7 +2778,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
                 // close button
                 if(_Window->Opened != nullptr)
                 {
-                    if(active || _Frame.contains(event.CursorPosition))
+                    if(active || _Frame.contains(event.get_cusor_position()))
                     {
                         gs_2dboxf closeButtonBox  = gs_2dboxf(
                             gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) - _Frame.height() / 4.f,
@@ -2689,7 +2786,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
 
                         render_close_button(_Context, closeButtonBox, event);
 
-                        *_Window->Opened = !(closeButtonBox.contains(event.CursorPosition) && event.MouseClicked.has_value());
+                        *_Window->Opened = !(closeButtonBox.contains(event.get_cusor_position()) && event.is_mouse_button_clicked());
                     }
                 }
             }
@@ -2734,7 +2831,7 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     bool defaultPipeline = true;
 
@@ -2777,7 +2874,7 @@ bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
         [this, _Event, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
             // focus and activity
-            if(_Event.MousePressed.has_value() && _Frame.contains(_Event.CursorPosition))
+            if(_Event.is_mouse_button_pressed() && _Frame.contains(_Event.get_cusor_position()))
             {
                 _Context->get_controller<ImmedidateUserInterfaceWindowController>()->push_event([_Window](ImmediateUserInterfaceContextLayer* _Context)
                 {
@@ -2801,21 +2898,21 @@ bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
             {
                 ImmediateUserInterfaceNode* movable = _Window;
 
-                if(_Event.MousePressed.has_value() && _Frame.contains(_Event.CursorPosition))
+                if(_Event.is_mouse_button_pressed() && _Frame.contains(_Event.get_cusor_position()))
                 {
                     movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
                     defaultPipeline = false;
                     return;
                 }
 
-                if(_Event.MouseDown.has_value() &&
-                    _Frame.contains(_Event.CursorPosition)   &&
-                    gs_vector_length(_Event.CursorDragDelta) > 8.f &&
+                if(_Event.is_mouse_button_down() &&
+                    _Frame.contains(_Event.get_cusor_position())   &&
+                    gs_vector_length(_Event.get_cusor_drag_delta()) > 8.f &&
                     (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
                 {
                     movable->State.BoundingBox = gs_2dboxf(
-                        movable->Cache.BoundingBox.Min + _Event.CursorDragDelta,
-                        movable->Cache.BoundingBox.Max + _Event.CursorDragDelta);
+                        movable->Cache.BoundingBox.Min + _Event.get_cusor_drag_delta(),
+                        movable->Cache.BoundingBox.Max + _Event.get_cusor_drag_delta());
 
                     if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable))
                     {
@@ -3104,7 +3201,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     }
 }
 
-void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     // top most hovered node
     ImmediateUserInterfaceNode* hoveredNode =
@@ -3113,7 +3210,7 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
             _Event,
             [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
 
-    if(!_Event.MousePressed.has_value())
+    if(!_Event.is_mouse_button_pressed())
         hoveredNode = nullptr;
 
     // top most moved node
@@ -3183,7 +3280,7 @@ void ImmedidateUserInterfaceWindowController::push_event(std::function<void(Imme
     m_DockingEventsStack.push(_Event);
 }
 
-void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     // read docking info
     if(!_Context->m_IniFileState.empty())
@@ -3250,7 +3347,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
     }
 
     // analyze moved windows
-    if(gs_vector_length(_Event.CursorDragDelta) < 8.f)
+    if(gs_vector_length(_Event.get_cusor_drag_delta()) < 8.f)
         return;
 
     // find moved node and detach it from a docker
@@ -3324,7 +3421,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
     if(allMouseButtonsAreReleased)
     {
-        if(centralDockingGizmo.contains(_Event.CursorPosition))
+        if(centralDockingGizmo.contains(_Event.get_cusor_position()))
         {
             attach_to_docker(
                 _Context,
@@ -3332,7 +3429,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 moved,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
         }
-        if(topDockingGizmo.contains(_Event.CursorPosition))
+        if(topDockingGizmo.contains(_Event.get_cusor_position()))
         {
             attach_to_docker(
                 _Context,
@@ -3340,7 +3437,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 moved,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top);
         }
-        else if(leftDockingGizmo.contains(_Event.CursorPosition))
+        else if(leftDockingGizmo.contains(_Event.get_cusor_position()))
         {
             attach_to_docker(
                 _Context,
@@ -3348,7 +3445,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 moved,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left);
         }
-        else if(rightDockingGizmo.contains(_Event.CursorPosition))
+        else if(rightDockingGizmo.contains(_Event.get_cusor_position()))
         {
             attach_to_docker(
                 _Context,
@@ -3356,7 +3453,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 moved,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right);
         }
-        else if(bottomDockingGizmo.contains(_Event.CursorPosition))
+        else if(bottomDockingGizmo.contains(_Event.get_cusor_position()))
         {
             attach_to_docker(
                 _Context,
@@ -3372,7 +3469,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
             _Context,
             ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Gizmos);
 
-        if(dockingGizmo.contains(_Event.CursorPosition))
+        if(dockingGizmo.contains(_Event.get_cusor_position()))
         {
             _Context->m_Renderer->push_rectangle_rounded_filled(
                 dockingGizmo.Min,
@@ -3389,7 +3486,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 topDockingGizmo.Min,
                 topDockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                topDockingGizmo.contains(_Event.CursorPosition) ?
+                topDockingGizmo.contains(_Event.get_cusor_position()) ?
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -3398,7 +3495,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 leftDockingGizmo.Min,
                 leftDockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                leftDockingGizmo.contains(_Event.CursorPosition) ?
+                leftDockingGizmo.contains(_Event.get_cusor_position()) ?
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -3407,7 +3504,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 rightDockingGizmo.Min,
                 rightDockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                rightDockingGizmo.contains(_Event.CursorPosition) ?
+                rightDockingGizmo.contains(_Event.get_cusor_position()) ?
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -3416,7 +3513,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 bottomDockingGizmo.Min,
                 bottomDockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                bottomDockingGizmo.contains(_Event.CursorPosition) ?
+                bottomDockingGizmo.contains(_Event.get_cusor_position()) ?
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -3425,7 +3522,7 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 centralDockingGizmo.Min,
                 centralDockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                centralDockingGizmo.contains(_Event.CursorPosition) ?
+                centralDockingGizmo.contains(_Event.get_cusor_position()) ?
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered) :
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
@@ -3727,17 +3824,17 @@ std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowControlle
 }
 
 // ImmedidateUserInterfaceEventsController
-ImmedidateUserInterfaceEventsController::ImmedidateUserInterfaceEventsController(){}
-ImmedidateUserInterfaceEventsController::~ImmedidateUserInterfaceEventsController(){}
+ImmedidateUserInterfaceInputController::ImmedidateUserInterfaceInputController(){}
+ImmedidateUserInterfaceInputController::~ImmedidateUserInterfaceInputController(){}
 
-void ImmedidateUserInterfaceEventsController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     catch_hover(_Context, _Event);
     catch_input(_Context, _Event);
     catch_event(_Context, _Event);
 }
 
-void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     if(_Context == nullptr)
         return;
@@ -3758,7 +3855,7 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
         gs_2dboxf rect = node->get_visible_rect(_Context);
         //rect = gs_2dboxf(rect.Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), rect.Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context));
 
-        if(!rect.contains(_Event.CursorPosition))
+        if(!rect.contains(_Event.get_cusor_position()))
         {
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
@@ -3817,7 +3914,7 @@ void ImmedidateUserInterfaceEventsController::catch_hover(ImmediateUserInterface
     }
 }
 
-void ImmedidateUserInterfaceEventsController::catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceInputController::catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     if(_Context == nullptr)
         return;
@@ -3826,29 +3923,21 @@ void ImmedidateUserInterfaceEventsController::catch_input(ImmediateUserInterface
     {
         if(!(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
         {
-            node->State.MouseDown.reset();
-            node->State.MouseHold.reset();
-            node->State.MousePressed.reset();
-            node->State.MouseClicked.reset();
-            node->State.MouseDoubleClicked.reset();
+            node->State.Input = ImmedidateUserInterfaceInput();
             continue;
         }
 
-        node->State.MouseDown          = _Event.MouseDown;
-        node->State.MouseHold          = _Event.MouseHold;
-        node->State.MousePressed       = _Event.MousePressed;
-        node->State.MouseClicked       = _Event.MouseClicked;
-        node->State.MouseDoubleClicked = _Event.MouseDoubleClicked;
+        node->State.Input = _Event;
     }
 }
 
-void ImmedidateUserInterfaceEventsController::catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event)
+void ImmedidateUserInterfaceInputController::catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     // auxiliary lambdas
     auto inParentEventProcessing = [](
         ImmediateUserInterfaceContextLayer* _Context,
         ImmediateUserInterfaceNode*         _Node,
-        const ImmedidateUserInterfaceEvent& _Event)
+        const ImmedidateUserInterfaceInput& _Event)
     {
         if(_Context == nullptr || _Node == nullptr) return;
 
@@ -3862,7 +3951,7 @@ void ImmedidateUserInterfaceEventsController::catch_event(ImmediateUserInterface
 
             if(gs_2dboxf(
                 (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
-                (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Event.CursorPosition))
+                (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Event.get_cusor_position()))
             {
                 // process events
                 (*it)->events(_Context, _Event);
@@ -3894,7 +3983,7 @@ void ImmedidateUserInterfaceEventsController::catch_event(ImmediateUserInterface
 
     for (auto& node : _Context->m_NodesRenderingList)
     {
-        if(!node->is_partially_visible(_Context) || !node->get_visible_rect(_Context).contains(_Event.CursorPosition))
+        if(!node->is_partially_visible(_Context) || !node->get_visible_rect(_Context).contains(_Event.get_cusor_position()))
             continue;
 
         if(node->Cache.Depth > maximumDepth)
@@ -3916,7 +4005,7 @@ void ImmedidateUserInterfaceEventsController::catch_event(ImmediateUserInterface
 ImmedidateUserInterfaceLayoutController::ImmedidateUserInterfaceLayoutController(){}
 ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutController(){}
 
-void ImmedidateUserInterfaceLayoutController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&)
+void ImmedidateUserInterfaceLayoutController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput&)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
@@ -4218,7 +4307,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
         });
 
     // create controllers
-    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceEventsController>());
+    m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceInputController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
@@ -4251,29 +4340,8 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
     m_Hierarchy.build(m_NodesRenderingList);
 
     // construct events
-    ImmedidateUserInterfaceEvent event;
-    event.CursorPosition  = m_Renderer->get_cursor_postion();
-    event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
-
-    for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
-             button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
-             button++)
-    {
-        if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseDown = (ApplicationPlatformBackendMouseButton::Button)button;
-
-        if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseHold = (ApplicationPlatformBackendMouseButton::Button)button;
-
-        if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MousePressed = (ApplicationPlatformBackendMouseButton::Button)button;
-
-        if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseClicked = (ApplicationPlatformBackendMouseButton::Button)button;
-
-        if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseDoubleClicked = (ApplicationPlatformBackendMouseButton::Button)button;
-    }
+    ImmedidateUserInterfaceInput event =
+        ImmedidateUserInterfaceInput::construct_event(this);
 
     for(auto& controller : m_Controllers)
         controller->frame_debug(this, event);
@@ -4311,11 +4379,13 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         // save cache
         node->Cache.Events             = node->State.Events;
         node->Cache.MouseHover         = node->State.MouseHover;
-        node->Cache.MouseDown          = node->State.MouseDown;
-        node->Cache.MouseHold          = node->State.MouseHold;
-        node->Cache.MousePressed       = node->State.MousePressed;
-        node->Cache.MouseClicked       = node->State.MouseClicked;
-        node->Cache.MouseDoubleClicked = node->State.MouseDoubleClicked;
+        node->Cache.Input              = node->State.Input;
+        // node->Cache.MouseDown          = node->State.MouseDown;
+        // node->Cache.MouseHold          = node->State.MouseHold;
+        // node->Cache.MousePressed       = node->State.MousePressed;
+        // node->Cache.MouseClicked       = node->State.MouseClicked;
+        // node->Cache.MouseDoubleClicked = node->State.MouseDoubleClicked;
+
         node->Cache.SelfThickness      = node->State.SelfThickness;
         node->Cache.Depth              = node->State.Depth;
         node->Cache.Parent             = node->State.Parent;
@@ -4366,69 +4436,64 @@ bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID
     {
         ImmediateUserInterfaceScrollArea* scrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
 
-        if(begin_node<ImmediateUserInterfaceScrollAreaRoot>(std::string(_ID).append("/VerticalStack"), settings))
+        if(begin_node<ImmediateUserInterfaceScrollAreaPanel>(std::string(_ID).append("/Panel"), settings))
         {
-            get_rendering_stack_top<ImmediateUserInterfaceScrollAreaRoot>()->State.PlaceInFollow = true;
+            get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>()->ContentPadding = gs_vec2f(16.f);
 
-            if(begin_horizontal_stack(
-                std::string(_ID).append("/VerticalStack/HorizontalStack"),
-                settings))
+            if(begin_vertial_stack(std::string(_ID).append("/Panel/VerticalStack"), settings))
             {
                 get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.PlaceInFollow = true;
 
-                // contents
-                if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
-                    std::string(_ID).append("/VerticalStack/HorizontalStack/Contents"),
-                    settings))
+                // vertical scrollbar area
+                if(begin_horizontal_stack(
+                    std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    scrollArea->ContentView = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
-                    get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
-                    get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->State.PlaceInFollow = scrollArea->State.PlaceInFollow;
-                    end_node<ImmediateUserInterfaceScrollAreaContent>();
+                    get_rendering_stack_top<ImmediateUserInterfaceNodeHorizontalStack>()->State.PlaceInFollow = true;
+
+                    // contents
+                    if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
+                        std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/Contents"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    {
+                        scrollArea->ContentView = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
+                        get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
+                        get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->State.PlaceInFollow = scrollArea->State.PlaceInFollow;
+                        end_node<ImmediateUserInterfaceScrollAreaContent>();
+                    }
+
+                    // vertical scrollbar
+                    if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
+                        std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/VerticalScrollBar"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    {
+                        get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
+                            ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+
+                        scrollArea->VerticalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
+
+                        end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
+                    }
+
+                    end_horizontal_stack();
                 }
 
-                // vertical scrollbar
                 if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                    std::string(_ID).append("/VerticalStack/HorizontalStack/VerticalScrollBar"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
+                    std::string(_ID).append("/Panel/VerticalStack/HorizontalScrollBar"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
 
-                    if(begin_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>(
-                        std::string(_ID).append("/VerticalStack/HorizontalStack/VerticalScrollBar/Slider"),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-                    {
-                        scrollArea->VerticalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                        end_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                    }
+                    scrollArea->HorizontalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
 
                     end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
                 }
 
-                end_horizontal_stack();
+                end_vertical_stack();
             }
-
-            // horizontal scrollbar
-            if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                std::string(_ID).append("/VerticalStack/HorizontalScrollBar"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
-            {
-                get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                    ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
-
-                if(begin_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>(
-                    std::string(_ID).append("/VerticalStack/HorizontalScrollBar/Slider"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
-                {
-                    scrollArea->HorizontalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                    end_node<ImmediateUserInterfaceScrollAreaScrollBarSlider>();
-                }
-
-                end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-            }
-
-            end_node<ImmediateUserInterfaceScrollAreaRoot>();
+        
+            end_node<ImmediateUserInterfaceScrollAreaPanel>();
         }
 
         return true;
@@ -4516,7 +4581,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
-            if(button->Cache.MouseDown.has_value())
+            if(button->Cache.Input.is_mouse_button_down())
             {
                 m_Renderer->push_rectangle_rounded_filled(
                     button->Cache.BoundingBox.Min + m_Style.get_frames_width(),
@@ -4552,7 +4617,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
 
         end_node<ImmediateUserInterfacePushButton>();
         
-        return button->Cache.MouseClicked.has_value();
+        return button->Cache.Input.is_mouse_button_clicked();
     }
 
     return false;
@@ -4616,7 +4681,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         
         // event processing
         {
-            if(widget->Cache.MouseClicked.has_value() && _Checked != nullptr)
+            if(widget->Cache.Input.is_mouse_button_clicked() && _Checked != nullptr)
                 *_Checked = !(*_Checked);
         }
 
@@ -4637,7 +4702,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
-                if(widget->Cache.MouseDown.has_value())
+                if(widget->Cache.Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
                         widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
@@ -4695,7 +4760,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
-                if(widget->Cache.MouseDown.has_value())
+                if(widget->Cache.Input.is_mouse_button_down())
                 {
                     m_Renderer->push_rectangle_rounded_filled(
                         widget->Cache.BoundingBox.Min + m_Style.get_frames_width(),
@@ -4908,7 +4973,7 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
 
         end_node<ImmediateUserInterfaceMenuAction>();
 
-        return menuAction->State.MouseClicked.has_value();
+        return menuAction->State.Input.is_mouse_button_clicked();
     }
 
     return false;
