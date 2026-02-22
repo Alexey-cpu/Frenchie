@@ -5,6 +5,8 @@
 // Core
 #include <FrenchieCoreSingleton.hpp>
 
+#include <iostream>
+
 using namespace Frenchie::Application;
 
 ApplicationInstance::ApplicationInstance()
@@ -148,7 +150,7 @@ void ApplicationInstance::ApplicationInstance::frame_start()
                     ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
                     ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime) < KeyClickDetectionTime;
 
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks++;
+            ++ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicks;
         }
     }
 
@@ -205,9 +207,6 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked = false;
     }
 
-    // restore cursor
-    ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
-
     // restore keys
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -217,6 +216,12 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         ApplicationPlatformBackend::m_Input.Keys[key].Pressed  = false;
         ApplicationPlatformBackend::m_Input.Keys[key].Clicked  = false;
     }
+
+    // restore cursor
+    ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
+
+    // restore input character
+    ApplicationPlatformBackend::m_Input.Character.reset();
 
     // execute backend
     ApplicationPlatformBackend::frame_finish();

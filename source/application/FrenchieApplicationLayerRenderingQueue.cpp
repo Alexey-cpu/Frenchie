@@ -10,6 +10,297 @@ using namespace Frenchie::Application;
 // STL
 #include <algorithm>
 
+RenderingQueuePathSegment::RenderingQueuePathSegment(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width)
+{
+    setup(_P1, _P2, _Width);
+}
+
+void RenderingQueuePathSegment::setup(const gs_vec2f& _P1, const gs_vec2f& _P2, const float& _Width)
+{
+    P1 = _P1;
+    P2 = _P2;
+
+    gs_vec3f direction     = gs_vector_normalize(_P2 - _P1);
+    gs_vec2f perpendicular = gs_vector_normalize(gs_vector_cross(direction, gs_vec3f(0.f, 0.f, 1.f))) * _Width * 0.5f;
+    
+    P1min = _P1 - perpendicular;
+    P1max = _P1 + perpendicular;
+    P2min = _P2 - perpendicular;
+    P2max = _P2 + perpendicular;
+}
+
+void RenderingQueuePathSegment::setup(const float& _Width)
+{
+    setup(P1, P2, _Width);
+}
+
+// RenderingQueuePathBuilder
+RenderingQueuePathBuilder::RenderingQueuePathBuilder(const float& _PolygonLinesWidth) : m_PolygonLinesWidth(_PolygonLinesWidth){}
+RenderingQueuePathBuilder::~RenderingQueuePathBuilder(){}
+
+void RenderingQueuePathBuilder::begin(const gs_vec2f& _Point)
+{
+    m_PolygonLinesSourcePoint = _Point;
+    m_PolygonLines.clear();
+    m_PolygonLinesIndexes.clear();
+}
+
+void RenderingQueuePathBuilder::line_to(const gs_vec2f& _Target)
+{
+    m_PolygonLines.push_back(RenderingQueuePathSegment(m_PolygonLinesSourcePoint, _Target, m_PolygonLinesWidth));
+    m_PolygonLinesIndexes.push_back((int)m_PolygonLinesIndexes.size());
+    m_PolygonLinesSourcePoint = _Target;
+}
+
+void RenderingQueuePathBuilder::arc_to(const gs_vec2f& _Target, const float& _Radius)
+{
+    // calculate ellipse data
+    gs_complex<float> perpendicular  = gs_cnormf<float>(gs_complex<float>((_Target - m_PolygonLinesSourcePoint).x, (_Target - m_PolygonLinesSourcePoint).y)) * gs_complex<float>(0.f, 1.f);
+    gs_vec2f          center         = (_Target + m_PolygonLinesSourcePoint) * 0.5f + gs_vec2f(gs_realf(perpendicular), gs_imagf(perpendicular)) * _Radius;
+    float             sourceAngle    = gs_to_degrees(atan2((m_PolygonLinesSourcePoint - center).y, (m_PolygonLinesSourcePoint - center).x));
+    float             targetAngle    = gs_to_degrees(atan2((_Target - center).y, (_Target - center).x));
+    float             radius         = (float)gs_vector_length(center - _Target);
+    int               segmentsCount  = 36; // TODO: how to compute approximate ellipse segments count ???
+    
+    if(gs_abs(targetAngle - sourceAngle) < 1e-3) return;
+    
+    float angleIncrement = gs_abs(360.f / segmentsCount);
+
+    for (float angle = sourceAngle; angle <= targetAngle; angle += angleIncrement)
+        line_to(gs_vec2f(center.x + radius * cos(gs_to_radians(angle)), center.y + radius * sin(gs_to_radians(angle))));
+    line_to(_Target);
+}
+
+void RenderingQueuePathBuilder::build_mesh(
+    const gs_color&                                          _Color,
+    const float&                                             _Width,
+    std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+    std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
+    const ApplicationRenderingBackendTexture&                _Texture)
+{
+    if(m_PolygonLines.empty())
+    {
+        end();
+        return;
+    }
+
+    float width = gs_max(_Width, m_PolygonLinesWidth);
+
+    if (m_PolygonLines.size() == 1)
+    {
+        m_PolygonLines[0].setup(width);
+
+        build_triangle_filled_mesh(
+            m_PolygonLines[0].P1min,
+            m_PolygonLines[0].P2min,
+            m_PolygonLines[0].P1max,
+            _Color,
+            _Texture,
+            _Vertexes,
+            _Indexes);
+
+        build_triangle_filled_mesh(
+            m_PolygonLines[0].P2min,
+            m_PolygonLines[0].P2max,
+            m_PolygonLines[0].P1max,
+            _Color,
+            _Texture,
+            _Vertexes,
+            _Indexes);
+        
+        end();
+        return;
+    }
+    
+    auto get_element = [](const int& _Index, const int& _Size)->int
+    {
+        int index = _Index;
+        while (index < 0)      index += _Size;
+        while (index >= _Size) index -= _Size;
+        return index;
+    };
+
+    const bool pathIsClosed = gs_vector_length(m_PolygonLines[0].P1 - m_PolygonLines[m_PolygonLines.size() - 1].P2) < gs_epsilon<float>();
+
+    for (int i = 0; i < (int)m_PolygonLines.size(); i++)
+    {
+        m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].setup(width);
+
+        build_triangle_filled_mesh(
+            m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P1min,
+            m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P2min,
+            m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P1max,
+            _Color,
+            _Texture,
+            _Vertexes,
+            _Indexes);
+
+        build_triangle_filled_mesh(
+            m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P2min,
+            m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P2max,
+            m_PolygonLines[get_element(i, (int)m_PolygonLines.size())].P1max,
+            _Color,
+            _Texture,
+            _Vertexes,
+            _Indexes);
+
+        // TODO: need another algorithm of lines smoothing
+        if(i-1 >= 0 || pathIsClosed)
+        {
+            m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].setup(width);
+
+            build_triangle_filled_mesh(
+                m_PolygonLines[i].P1max,
+                m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].P2max,
+                m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].P2,
+                _Color,
+                _Texture,
+                _Vertexes,
+                _Indexes);
+
+            build_triangle_filled_mesh(
+                m_PolygonLines[i].P1min,
+                m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].P2min,
+                m_PolygonLines[get_element(i-1, (int)m_PolygonLines.size())].P2,
+                _Color,
+                _Texture,
+                _Vertexes,
+                _Indexes);
+        }
+    }
+
+    end();
+}
+
+void RenderingQueuePathBuilder::build_mesh_filled(
+    const gs_color&                                          _Color,
+    std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+    std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes,
+    const ApplicationRenderingBackendTexture&                _Texture)
+{
+    // auxiliary lambdas
+    auto get_element = [](const int& _Index, const int& _Size)->int
+    {
+        int index = _Index;
+        while (index < 0)      index += _Size;
+        while (index >= _Size) index -= _Size;
+        return index;
+    };
+
+    // checks
+
+    // no triangles
+    if((int)m_PolygonLines.size() < 3)
+    {
+        end();
+        return;
+    }
+
+    // triangle
+    if((int)m_PolygonLines.size() == 3)
+    {
+        build_triangle_filled_mesh(
+            m_PolygonLines[0].P1,
+            m_PolygonLines[1].P1,
+            m_PolygonLines[2].P1,
+            _Color,
+            _Texture,
+            _Vertexes,
+            _Indexes);
+
+        end();
+        return;
+    }
+
+    // setup lines indexes
+    for (int i = 0; i < (int)m_PolygonLines.size(); i++)
+        m_PolygonLines[i].Index = i;
+
+    // triangulate polygon
+    while (m_PolygonLinesIndexes.size() > 2)
+    {
+        for (int i = 0; i < (int)m_PolygonLinesIndexes.size(); i++)
+        {
+            // construct triangle
+            int      ia = m_PolygonLinesIndexes[get_element(i, (int)m_PolygonLinesIndexes.size())    ];
+            int      ib = m_PolygonLinesIndexes[get_element(i - 1, (int)m_PolygonLinesIndexes.size())];
+            int      ic = m_PolygonLinesIndexes[get_element(i + 1, (int)m_PolygonLinesIndexes.size())];
+            gs_vec2f pa = m_PolygonLines[ia].P1;
+            gs_vec2f pb = m_PolygonLines[ib].P1;
+            gs_vec2f pc = m_PolygonLines[ic].P1;
+
+            // detect if this triangle is an ear, i.e there are no other points besides
+            // this triangle points that are inside this triangle
+            bool isEar = true;
+
+            for (int j = 0; j < (int)m_PolygonLines.size(); j++)
+            {
+                if( m_PolygonLines[j].Index == m_PolygonLines[ia].Index ||
+                    m_PolygonLines[j].Index == m_PolygonLines[ib].Index ||
+                    m_PolygonLines[j].Index == m_PolygonLines[ic].Index) continue;
+
+                gs_vec2f poly[3] = {pa, pb, pc};
+
+                if(gs_point_in_2D_polygon(poly, 3, gs_vec2f(m_PolygonLines[j].P1)))
+                {
+                    isEar = false;
+                    break;
+                }
+            }
+
+            if(isEar || m_PolygonLinesIndexes.size() <= 3)
+            {
+                build_triangle_filled_mesh(pb, pa, pc, _Color, _Texture, _Vertexes, _Indexes);
+                m_PolygonLinesIndexes.erase(m_PolygonLinesIndexes.begin() + i);
+                break;
+            }
+        }
+    }
+
+    end();
+}
+
+void RenderingQueuePathBuilder::end()
+{
+    m_PolygonLines.clear();
+    m_PolygonLinesIndexes.clear();
+}
+
+void RenderingQueuePathBuilder::build_triangle_filled_mesh(
+    const gs_vec2f&                                          _P1,
+    const gs_vec2f&                                          _P2,
+    const gs_vec2f&                                          _P3,
+    const gs_color&                                          _Color,
+    const ApplicationRenderingBackendTexture&                _Texture,
+    std::vector<ApplicationRenderingBackendVertex>&          _Vertexes,
+    std::vector<ApplicationRenderingBackendMeshVertexIndex>& _Indexes)
+{
+    const int size = (int)_Vertexes.size();
+
+    _Vertexes.push_back(
+        ApplicationRenderingBackendVertex(
+            gs_vec3f(_P1.x, _P1.y, 0.f),
+            gs_vec3f(0.f), gs_vec2f(_P1.x / _Texture.Width, _P1.y / _Texture.Height),
+            _Color));
+    
+    _Vertexes.push_back(
+        ApplicationRenderingBackendVertex(
+            gs_vec3f(_P2.x, _P2.y, 0.f),
+            gs_vec3f(0.f), gs_vec2f(_P2.x / _Texture.Width, _P2.y / _Texture.Height),
+            _Color));
+    
+    _Vertexes.push_back(
+        ApplicationRenderingBackendVertex(
+            gs_vec3f(_P3.x, _P3.y, 0.f),
+            gs_vec3f(0.f),
+            gs_vec2f(_P3.x / _Texture.Width, _P3.y / _Texture.Height),
+            _Color));
+    
+    for (int i = size; i < (int)_Vertexes.size(); ++i)
+        _Indexes.push_back(i);
+}
+
+// RenderingQueue
 RenderingQueue::RenderingQueue(){}
 RenderingQueue::~RenderingQueue(){}
 
@@ -542,10 +833,10 @@ void RenderingQueue::push_triangle(
     // build mesh
     m_PathBuilder.build_mesh(
         _Color,
-        ApplicationRenderingBackend::get_default_texture(),
         _Width,
         m_MeshVertexes,
-        m_MeshVertexesIndexes);
+        m_MeshVertexesIndexes,
+        ApplicationRenderingBackend::get_default_texture());
 
     // push rendering command
     push_rendering_command(_Transform, _Color);
@@ -577,10 +868,10 @@ void RenderingQueue::push_rectangle(
     // build mesh
     m_PathBuilder.build_mesh(
         _Color,
-        ApplicationRenderingBackend::get_default_texture(),
         gs_max(_Width, m_MinimumLineWidth),
         m_MeshVertexes,
-        m_MeshVertexesIndexes);
+        m_MeshVertexesIndexes,
+        ApplicationRenderingBackend::get_default_texture());
 
     // push rendering command
     push_rendering_command(_Transform, _Color);

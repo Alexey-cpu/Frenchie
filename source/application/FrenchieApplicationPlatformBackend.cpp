@@ -1,5 +1,8 @@
 #include <FrenchieApplicationPlatformBackend.hpp>
 
+// Core
+#include <FrenchieCoreStringUtilities.hpp>
+
 using namespace Frenchie::Application;
 
 ApplicationPlatformBackendInput ApplicationPlatformBackend::m_Input;
@@ -44,6 +47,11 @@ bool ApplicationPlatformBackend::is_mouse_button_double_clicked(const Applicatio
     return m_Input.MouseButtons[_Button].DoubleClicked;
 }
 
+int ApplicationPlatformBackend::mouse_button_clicks_count(const ApplicationPlatformBackendMouseButton::Button& _Button)
+{
+    return m_Input.MouseButtons[_Button].Clicks;
+}
+
 bool ApplicationPlatformBackend::is_key_down(const ApplicationPlatformBackendKey::Key& _Key)
 {
     return m_Input.Keys[_Key].Down;
@@ -67,4 +75,16 @@ bool ApplicationPlatformBackend::is_key_released(const ApplicationPlatformBacken
 bool ApplicationPlatformBackend::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key)
 {
     return m_Input.Keys[_Key].Clicked;
+}
+
+int ApplicationPlatformBackend::key_clicks_count(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return m_Input.Keys[_Key].Clicks;
+}
+
+std::string ApplicationPlatformBackend::input_text()
+{
+    return m_Input.Character.has_value() ?
+        Frenchie::Core::String::convert_utf32_to_utf8(std::u32string(1, m_Input.Character.value())) :
+            std::string();
 }
