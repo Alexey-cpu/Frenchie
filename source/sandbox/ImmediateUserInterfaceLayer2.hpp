@@ -183,6 +183,9 @@ namespace Frenchie
         typedef int ImmedidateUserInterfaceRenderingOrder;
         typedef int ImmedidateUserInterfaceRenderingLayer;
 
+        typedef int ImmedidateUserInterfaceInputKey;
+        typedef int ImmedidateUserInterfaceInputMouseButton;
+
         class ImmediateUserInterfaceContextLayer;
 
         // style and events
@@ -231,7 +234,7 @@ namespace Frenchie
 
             float get_scrollbar_width() const
             {
-                return gs_max(64.f, get_frames_width(), ScrollBarWidth);
+                return gs_max(32.f, get_frames_width(), ScrollBarWidth);
             }
 
             float get_popup_menu_pointer_size() const
@@ -257,22 +260,55 @@ namespace Frenchie
             float                            FramesRadius         = 32.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 64.f;
-            float                            ScrollBarWidth       = 32.f;
+            float                            ScrollBarWidth       = 64.f;
             float                            PopupMenuPointerSize = 32.f;
-            std::vector<gs_color> Colors;
-            ApplicationRenderingBackendFont               Font;
+            std::vector<gs_color>            Colors;
+            ApplicationRenderingBackendFont  Font;
         };
 
-        struct ImmedidateUserInterfaceEvent
+        struct ImmedidateUserInterfaceInput
         {
-            gs_vec2f             CursorPosition {gs_vec2f(0.f, 0.f)};
-            gs_vec2f             CursorDragDelta{gs_vec2f(0.f, 0.f)};
+            static ImmedidateUserInterfaceInput construct_event(ImmediateUserInterfaceContextLayer* _Context);
 
-            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
-            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
-            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
-            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
-            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
+            gs_vec2f get_cusor_position() const;
+            gs_vec2f get_cusor_drag_delta() const;
+            gs_vec2f get_cusor_scroll_offset() const;
+
+            static ImmedidateUserInterfaceInputMouseButton all_mouse_buttons();
+            static ImmedidateUserInterfaceInputKey all_keys();
+
+            bool is_mouse_button_down(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_hold(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_pressed(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_released(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_clicked(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+
+            bool is_key_down(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_hold(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_pressed(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_released(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_clicked(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+
+        private:
+            gs_vec2f CursorPosition   {gs_vec2f(0.f, 0.f)};
+            gs_vec2f CursorDragDelta  {gs_vec2f(0.f, 0.f)};
+            gs_vec2f MouseScrollOffset{gs_vec2f(0.f, 0.f)};
+
+            // mouse input
+            ImmedidateUserInterfaceInputMouseButton MouseDown         {0};
+            ImmedidateUserInterfaceInputMouseButton MouseHold         {0};
+            ImmedidateUserInterfaceInputMouseButton MousePressed      {0};
+            ImmedidateUserInterfaceInputMouseButton MouseClicked      {0};
+            ImmedidateUserInterfaceInputMouseButton MouseDoubleClicked{0};
+            ImmedidateUserInterfaceInputMouseButton MouseReleased     {0};
+
+            // key input
+            ImmedidateUserInterfaceInputKey KeyDown    {0};
+            ImmedidateUserInterfaceInputKey KeyHold    {0};
+            ImmedidateUserInterfaceInputKey KeyPressed {0};
+            ImmedidateUserInterfaceInputKey KeyClicked {0};
+            ImmedidateUserInterfaceInputKey KeyReleased{0};
         };
 
         // nodes
@@ -284,7 +320,7 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context);
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
@@ -332,12 +368,12 @@ namespace Frenchie
                 std::chrono::high_resolution_clock::time_point MouseLeaveTimer;
 
                 // mouse and keyboard input
-                // TODO: implement keyboard input !!!
-                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
-                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
-                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
-                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
-                Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
+                ImmedidateUserInterfaceInput Input;
+                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
+                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
+                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
+                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
+                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
             };
 
             Data State;
@@ -359,7 +395,7 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override;
 
             virtual void create_contents(){} // place contents creation function here...
 
@@ -383,7 +419,7 @@ namespace Frenchie
         };
 
         // scroll area        
-        struct ImmediateUserInterfaceScrollAreaScrollBarSlider;
+        struct ImmediateUserInterfaceScrollAreaScrollBar;
 
         struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
         {
@@ -399,8 +435,8 @@ namespace Frenchie
             float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
 
             ImmediateUserInterfaceNode*                      ContentView         = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBarSlider* VerticalScrollBar   = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBarSlider* HorizontalScrollBar = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBar* VerticalScrollBar   = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBar* HorizontalScrollBar = nullptr;
         };
 
         // widgets
@@ -411,26 +447,6 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceWidget();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
-
-        // struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceWidget
-        // {
-        // public:
-        //     ImmediateUserInterfacePushButton(const std::string& _Name);
-        //     virtual ~ImmediateUserInterfacePushButton();
-        //     virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-        // };
-
-        // struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceWidget
-        // {
-        // public:
-        //     ImmediateUserInterfaceCheckButton(const std::string& _Name);
-        //     virtual ~ImmediateUserInterfaceCheckButton();
-        //     virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-        //     virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
-        //     virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-        //     bool* Checked = nullptr;
-        // };
 
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
         struct ImmediateUserInterfaceColorPickerGradientColorModifier;
@@ -470,7 +486,7 @@ namespace Frenchie
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
             virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
             virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
@@ -644,7 +660,7 @@ namespace Frenchie
 
             virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
             virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer*, const ImmedidateUserInterfaceEvent&){}
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer*, const ImmedidateUserInterfaceInput&){}
             virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
         };
@@ -655,7 +671,7 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowController();
             virtual ~ImmedidateUserInterfaceWindowController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override;
 
             void push_event(std::function<void(ImmediateUserInterfaceContextLayer*)> _Event);
 
@@ -664,7 +680,7 @@ namespace Frenchie
 
         private:
 
-            void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event);
             bool can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
             void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchor);
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
@@ -676,18 +692,18 @@ namespace Frenchie
             mutable bool                                                                 m_WorkspaceDockAreaOpened{true};
         };
     
-        class ImmedidateUserInterfaceEventsController : public ImmediateUserInterfaceContextController
+        class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmedidateUserInterfaceEventsController();
-            virtual ~ImmedidateUserInterfaceEventsController();
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event) override;
+            ImmedidateUserInterfaceInputController();
+            virtual ~ImmedidateUserInterfaceInputController();
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override;
 
         private:
 
-            void catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
-            void catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
-            void catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent& _Event);
+            void catch_hover(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event);
+            void catch_input(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event);
+            void catch_event(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event);
         };
     
         class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
@@ -695,7 +711,7 @@ namespace Frenchie
         public:
             ImmedidateUserInterfaceLayoutController();
             virtual ~ImmedidateUserInterfaceLayoutController();
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceEvent&) override;
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput&) override;
 
         private:
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);

@@ -235,6 +235,13 @@ namespace Frenchie
                 (void)_Window;
                 ApplicationPlatformBackend::m_Input.Character = _Character;
             }
+
+            // scroll callbacks
+            static void glfw_on_mouse_sroll_offset_changed_callback(GLFWwindow* _Window, double _dX, double _dY)
+            {
+                (void)_Window;
+                ApplicationPlatformBackend::m_Input.MouseScrollOffset = gs_vec2f(_dX, _dY);
+            }
         };
     }
 }
@@ -268,6 +275,11 @@ gs_vec2f ApplicationPlatformBackend::get_window_framebuffer_size()
     int display_h = 0;
     glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
     return gs_vec2f(display_w, display_h);
+}
+
+gs_vec2f ApplicationPlatformBackend::get_mouse_scroll_offset()
+{
+    return m_Input.MouseScrollOffset;
 }
 
 void ApplicationPlatformBackend::set_window_name(const std::string& _Name)
@@ -319,7 +331,7 @@ bool ApplicationPlatformBackend::awake()
     glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_enter_callback);
     glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_moved_callback);
     glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_button_callback);
-    // glfwSetScrollCallback(vd->Window, ImGui_ImplGlfw_ScrollCallback);
+    glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_sroll_offset_changed_callback);
     glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_key_callback);
     glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_character_input_callback);
     // glfwSetWindowCloseCallback(vd->Window, ImGui_ImplGlfw_WindowCloseCallback);

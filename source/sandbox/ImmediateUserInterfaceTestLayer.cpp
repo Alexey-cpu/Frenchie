@@ -459,8 +459,6 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
 
             m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/InputText", Frenchie::Core::String::format("Text: [%s]", inputText.c_str()));
-
-            //if(ApplicationPlatformBackend::)
             
             m_ImmediateUserInterface->end_scrollarea();
         }

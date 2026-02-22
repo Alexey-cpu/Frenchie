@@ -217,6 +217,9 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         ApplicationPlatformBackend::m_Input.Keys[key].Clicked  = false;
     }
 
+    // restore scroll position
+    ApplicationPlatformBackend::m_Input.MouseScrollOffset = gs_vec2f(0.f, 0.f);
+
     // restore cursor
     ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
 
