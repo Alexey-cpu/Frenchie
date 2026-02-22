@@ -3,9 +3,11 @@
 // Core
 #include <FrenchieCoreMath.hpp>
 #include <FrenchieCoreClock.hpp>
+#include <FrenchieCoreOptional.hpp>
 
 // STL
 #include <string>
+#include <vector>
 
 namespace Frenchie
 {
@@ -316,10 +318,11 @@ namespace Frenchie
 
         struct ApplicationPlatformBackendInput
         {            
-            ApplicationPlatformBackendMouseButton MouseButtons[ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{};
-            ApplicationPlatformBackendMouseCursor MouseCursor {ApplicationPlatformBackendMouseCursor()};
-            ApplicationPlatformBackendWindow      Window      {ApplicationPlatformBackendWindow()};
-            ApplicationPlatformBackendKey         Keys        [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_COUNT]{};
+            ApplicationPlatformBackendMouseButton  MouseButtons   [ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{};
+            ApplicationPlatformBackendMouseCursor  MouseCursor    {ApplicationPlatformBackendMouseCursor()};
+            ApplicationPlatformBackendWindow       Window         {ApplicationPlatformBackendWindow()};
+            ApplicationPlatformBackendKey          Keys           [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_COUNT]{};
+            Frenchie::Core::Optional<unsigned int> Character;
         };
 
         class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
@@ -349,23 +352,28 @@ namespace Frenchie
             static bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button&);
+            static int  mouse_button_clicks_count(const ApplicationPlatformBackendMouseButton::Button&);
 
             static bool is_key_down(const ApplicationPlatformBackendKey::Key&);
             static bool is_key_hold(const ApplicationPlatformBackendKey::Key&);
             static bool is_key_pressed(const ApplicationPlatformBackendKey::Key&);
             static bool is_key_released(const ApplicationPlatformBackendKey::Key&);
             static bool is_key_clicked(const ApplicationPlatformBackendKey::Key&);
+            static int  key_clicks_count(const ApplicationPlatformBackendKey::Key&);
+
+            static std::string input_text();
 
             // setters
             static void set_window_name(const std::string& _Name);
 
-            // info
-            static ApplicationPlatformBackendInput m_Input;
-
         private:
 
+            friend class ApplicationInstance;
+            friend class ApplicationInputHandler;
+
             // context
-            static void* m_Context;
+            static void*                           m_Context;
+            static ApplicationPlatformBackendInput m_Input;
         };
     }
 }

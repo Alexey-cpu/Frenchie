@@ -17,7 +17,7 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //platform_backend_test();
+    platform_backend_test();
 
     //renderer_test();
     
@@ -29,7 +29,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
     //widgets_test();
 
-    menu_test();
+    //menu_test();
     
     auto FPS = std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
 
@@ -339,39 +339,21 @@ void ImmediateUserInterfaceTestLayer::renderer_test()
     m_ImmediateUserInterface->m_Settings =
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
 
-    m_ImmediateUserInterface->m_Renderer->push_arc(
-        gs_vec2f(512.f, 512.f),
-        256.f,
-        256.f,
-        0.f,
-        30.f,
-        64.f,
-        gs_rgba_color(255, 255, 255, 255));
-
-    m_ImmediateUserInterface->m_Renderer->push_arc_filled(
-        gs_vec2f(512.f, 512.f),
-        256.f,
-        256.f,
-        0.f,
-        30.f,
-        gs_rgba_color(255, 255, 255, 255));
-
-    // m_ImmediateUserInterface->m_Renderer->push_rectangle(
+    // m_ImmediateUserInterface->m_Renderer->push_arc(
     //     gs_vec2f(512.f, 512.f),
-    //     gs_vec2f(512.f, 512.f) + gs_vec2f(512.f, 512.f),
+    //     256.f,
+    //     256.f,
+    //     0.f,
+    //     30.f,
     //     64.f,
     //     gs_rgba_color(255, 255, 255, 255));
 
-    // m_ImmediateUserInterface->m_Renderer->push_line(
+    // m_ImmediateUserInterface->m_Renderer->push_arc_filled(
     //     gs_vec2f(512.f, 512.f),
-    //     gs_vec2f(1024.f, 1024.f),
-    //     64.f,
-    //     gs_rgba_color(255, 255, 255, 255));
-
-    // m_ImmediateUserInterface->m_Renderer->push_line(
-    //     gs_vec2f(1024.f, 1024.f),
-    //     gs_vec2f(1024.f, 256.f),
-    //     64.f,
+    //     256.f,
+    //     256.f,
+    //     0.f,
+    //     30.f,
     //     gs_rgba_color(255, 255, 255, 255));
 }
 
@@ -390,7 +372,7 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
             static std::string keyPressedName  = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
             static std::string keyReleasedName = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
             static std::string keyClickedName  = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
-            static int keyClicksCount = 0;
+            static int         keyClicksCount  = 0;
 
             for(int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
                     key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
@@ -411,7 +393,7 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
                 if(ApplicationPlatformBackend::is_key_clicked((ApplicationPlatformBackendKey::Key)key))
                 {
                     keyClickedName = ApplicationPlatformBackendKey::to_string((ApplicationPlatformBackendKey::Key)key);
-                    keyClicksCount = ApplicationPlatformBackend::m_Input.Keys[(ApplicationPlatformBackendKey::Key)key].Clicks;
+                    keyClicksCount = ApplicationPlatformBackend::key_clicks_count((ApplicationPlatformBackendKey::Key)key);
                 }
             }
 
@@ -425,12 +407,13 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyClicks", Frenchie::Core::String::format("Clicks: [%d]", keyClicksCount)); m_ImmediateUserInterface->next_line();
 
             // mouse events
-            static std::string mouseButtonDownName     = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonHoldName     = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonPressedName  = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonReleasedName = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonClickedName  = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonDoubleClickedName  = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static std::string mouseButtonDownName          = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static std::string mouseButtonHoldName          = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static std::string mouseButtonPressedName       = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static std::string mouseButtonReleasedName      = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static std::string mouseButtonClickedName       = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static std::string mouseButtonDoubleClickedName = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
+            static int         mouseButtonClicksCount       = 0;
 
             for(int key = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
                     key < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
@@ -449,15 +432,15 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
                     mouseButtonReleasedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
 
                 if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)key))
+                {
                     mouseButtonClickedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
+                    mouseButtonClicksCount = ApplicationPlatformBackend::mouse_button_clicks_count((ApplicationPlatformBackendMouseButton::Button)key);
+                }
 
                 if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)key))
                     mouseButtonDoubleClickedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
             }
 
-            m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseEvents", "MouseEvents:"); m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseDownName", Frenchie::Core::String::format("Down: [%s]", mouseButtonDownName.c_str())); m_ImmediateUserInterface->next_line();
@@ -465,7 +448,20 @@ void ImmediateUserInterfaceTestLayer::platform_backend_test()
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MousePressedName", Frenchie::Core::String::format("Pressed: [%s]", mouseButtonPressedName.c_str())); m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseReleasedName", Frenchie::Core::String::format("Released: [%s]", mouseButtonReleasedName.c_str())); m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseClickedName", Frenchie::Core::String::format("Clicked: [%s]", mouseButtonClickedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseDoubleClickedName", Frenchie::Core::String::format("Clicked: [%s]", mouseButtonDoubleClickedName.c_str())); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseDoubleClickedName", Frenchie::Core::String::format("Double clicked: [%s]", mouseButtonDoubleClickedName.c_str())); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseClicksCount", Frenchie::Core::String::format("Clicks: [%d]", mouseButtonClicksCount)); m_ImmediateUserInterface->next_line();
+            
+            // input text test
+            static std::string inputText;
+
+            if(!ApplicationPlatformBackend::input_text().empty())
+                inputText = ApplicationPlatformBackend::input_text();
+
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/InputText", Frenchie::Core::String::format("Text: [%s]", inputText.c_str()));
+
+            //if(ApplicationPlatformBackend::)
+            
             m_ImmediateUserInterface->end_scrollarea();
         }
 

@@ -183,7 +183,7 @@ namespace Frenchie
                 ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), gs_vec2f(width, height));
             }
 
-            static void glfw_oon_window_focused_callback(GLFWwindow* _Window, int _Focused)
+            static void glfw_on_window_focused_callback(GLFWwindow* _Window, int _Focused)
             {
                 ApplicationPlatformBackend::m_Input.Window.Focused =
                     glfw_boolean_to_application_boolean(_Focused);;
@@ -205,9 +205,9 @@ namespace Frenchie
             }
 
             // mouse callbacks
-            static void glfw_on_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+            static void glfw_on_mouse_button_callback(GLFWwindow* _Window, int button, int action, int mods)
             {
-                (void)window;
+                (void)_Window;
 
                 // trigger mouse press event
                 ApplicationPlatformBackend::m_Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Pressed  = action == GLFW_PRESS;
@@ -217,16 +217,23 @@ namespace Frenchie
             }
         
             // keys callbacks
-            static void glfw_on_key_callback(GLFWwindow* window, int keycode, int scancode, int action, int mods)
+            static void glfw_on_key_callback(GLFWwindow* _Window, int _Keycode, int _Scancode, int _Action, int _Mods)
             {
-                (void)window;
-                (void)mods;
+                (void)_Window;
+                (void)_Mods;
 
                 // trigger mouse press event
-                ApplicationPlatformBackend::m_Input.Keys[glfw_key_to_application_key(keycode, scancode)].Pressed  = action == GLFW_PRESS;
+                ApplicationPlatformBackend::m_Input.Keys[glfw_key_to_application_key(_Keycode, _Scancode)].Pressed  = _Action == GLFW_PRESS;
 
                 // trigger mouse release event
-                ApplicationPlatformBackend::m_Input.Keys[glfw_key_to_application_key(keycode, scancode)].Released = action == GLFW_RELEASE;
+                ApplicationPlatformBackend::m_Input.Keys[glfw_key_to_application_key(_Keycode, _Scancode)].Released = _Action == GLFW_RELEASE;
+            }
+        
+            // input callbacks
+            static void glfw_on_character_input_callback(GLFWwindow* _Window, unsigned int _Character)
+            {
+                (void)_Window;
+                ApplicationPlatformBackend::m_Input.Character = _Character;
             }
         };
     }
@@ -308,13 +315,13 @@ bool ApplicationPlatformBackend::awake()
     glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_resize_callback);
     glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_resize_callback);
     glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_maximized_callback);
-    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_oon_window_focused_callback);
+    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_focused_callback);
     glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_enter_callback);
     glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_moved_callback);
     glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_button_callback);
     // glfwSetScrollCallback(vd->Window, ImGui_ImplGlfw_ScrollCallback);
     glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_key_callback);
-    // glfwSetCharCallback(vd->Window, ImGui_ImplGlfw_CharCallback);
+    glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_character_input_callback);
     // glfwSetWindowCloseCallback(vd->Window, ImGui_ImplGlfw_WindowCloseCallback);
     // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
