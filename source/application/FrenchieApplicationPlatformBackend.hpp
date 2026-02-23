@@ -105,12 +105,12 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_GamepadRStickUp,       //             |         |          | [Analog]
                 ApplicationPlatformBackendKey_GamepadRStickDown,     //             |         |          | [Analog]
 
-                // Aliases: Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
-                // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
-                ApplicationPlatformBackendKey_MouseLeft, ApplicationPlatformBackendKey_MouseRight, ApplicationPlatformBackendKey_MouseMiddle, ApplicationPlatformBackendKey_MouseX1, ApplicationPlatformBackendKey_MouseX2, ApplicationPlatformBackendKey_MouseWheelX, ApplicationPlatformBackendKey_MouseWheelY,
+                // // Aliases: Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
+                // // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
+                // ApplicationPlatformBackendKey_MouseLeft, ApplicationPlatformBackendKey_MouseRight, ApplicationPlatformBackendKey_MouseMiddle, ApplicationPlatformBackendKey_MouseX1, ApplicationPlatformBackendKey_MouseX2, ApplicationPlatformBackendKey_MouseWheelX, ApplicationPlatformBackendKey_MouseWheelY,
 
-                // [Internal] Reserved for mod storage
-                ApplicationPlatformBackendKey_ReservedForModCtrl, ApplicationPlatformBackendKey_ReservedForModShift, ApplicationPlatformBackendKey_ReservedForModAlt, ApplicationPlatformBackendKey_ReservedForModSuper,
+                // // [Internal] Reserved for mod storage
+                // ApplicationPlatformBackendKey_ReservedForModCtrl, ApplicationPlatformBackendKey_ReservedForModShift, ApplicationPlatformBackendKey_ReservedForModAlt, ApplicationPlatformBackendKey_ReservedForModSuper,
 
                 // [Internal] If you need to iterate all keys (for e.g. an input mapper) you may use ApplicationPlatformBackendKey_NamedKey_BEGIN..ApplicationPlatformBackendKey_NamedKey_END.
                 ApplicationPlatformBackendKey_NamedKey_END

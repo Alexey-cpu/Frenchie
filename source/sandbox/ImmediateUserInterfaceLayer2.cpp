@@ -320,39 +320,6 @@ namespace Frenchie
                 }
             };
 
-            // ImmedidateUserInterfaceInput construct_event(ImmediateUserInterfaceContextLayer* _Context)
-            // {
-            //     if(_Context == nullptr)
-            //         return ImmedidateUserInterfaceInput();
-
-            //     // construct events
-            //     ImmedidateUserInterfaceInput event;
-            //     event.get_cusor_position()  = _Context->m_Renderer->get_cursor_postion();
-            //     event.CursorDragDelta = ApplicationPlatformBackend::get_window_cursor_dragdelta();
-
-            //     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
-            //              button < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
-            //              button++)
-            //     {
-            //         if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
-            //             event.MouseDown |= (1 << button);
-
-            //         if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
-            //             event.MouseHold |= (1 << button);
-
-            //         if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
-            //             event.MousePressed |= (1 << button);
-
-            //         if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-            //             event.MouseClicked |= (1 << button);
-
-            //         if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-            //             event.MouseDoubleClicked |= (1 << button);
-            //     }
-
-            //     return event;
-            // }
-
             float calculate_offset(ImmediateUserInterfaceContextLayer* _Context)
             {
                 return _Context ? gs_max(16.f, _Context->m_Style.get_frames_width()) : 16.f;
@@ -903,17 +870,30 @@ namespace Frenchie
                 ContentPadding = gs_vec2f(4.f, 4.f);
             }
 
-            ~ImmediateUserInterfaceScrollAreaScrollBar(){}
+            virtual ~ImmediateUserInterfaceScrollAreaScrollBar(){}
+
+            // getters
+            gs_vec2f get_scroll_offset() const
+            {
+                return Position * PositionScale;
+            }
+
+            // setters
+            void set_scroll_offset(const gs_vec2f _Value)
+            {
+                PreviousPosition = Position;
+                Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+            }
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 // auxiliary lambdas
                 auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
                 {
-                    // // clamp self
-                    // State.MaximumSize = gs_vec2f(0.f, 0.f);
-                    // State.MinimumSize = gs_vec2f(0.f, 0.f);
-                    // State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+                    // clamp self
+                    State.MaximumSize = gs_vec2f(0.f, 0.f);
+                    State.MinimumSize = gs_vec2f(0.f, 0.f);
+                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
 
                     // reset slider
                     Position = gs_vec2f(0.f, 0.f);
@@ -1061,9 +1041,6 @@ namespace Frenchie
                 if(_Event.is_mouse_button_down())
                     Position = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
 
-                // move slider on mouse wheel scroll event
-                //if()
-
                 return true;
             }
 
@@ -1115,13 +1092,13 @@ namespace Frenchie
                 }
             }
 
+        private:
+
             // info
             gs_vec2f Size             = gs_vec2f(0.f, 0.f);
             gs_vec2f Position         = gs_vec2f(0.f, 0.f);
             gs_vec2f PositionScale    = gs_vec2f(1.f, 1.f);
             gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-
-        private:
 
             ImmediateUserInterfaceScrollArea* retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context)
             {
@@ -1152,7 +1129,7 @@ namespace Frenchie
 
             void layout(ImmediateUserInterfaceContextLayer* _Context)
             {
-                if(_Context == nullptr) return;
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
                 ImmediateUserInterfaceScrollArea* scrollArea = nullptr;
                 ImmediateUserInterfaceNode*       parent     = _Context->m_Hierarchy.get_parent(this);
@@ -1166,12 +1143,12 @@ namespace Frenchie
                 
                 gs_vec2f horizontalScrollBarPosition =
                     scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ?
-                        scrollArea->HorizontalScrollBar->Position * scrollArea->HorizontalScrollBar->PositionScale :
+                        scrollArea->HorizontalScrollBar->get_scroll_offset() :
                             gs_vec2f(0.f, 0.f);
 
                 gs_vec2f verticalScrollBarPosition =
                     scrollArea != nullptr ?
-                        scrollArea->VerticalScrollBar->Position * scrollArea->VerticalScrollBar->PositionScale :
+                        scrollArea->VerticalScrollBar->get_scroll_offset() :
                             gs_vec2f(0.f, 0.f);
 
                 gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
@@ -1200,7 +1177,7 @@ namespace Frenchie
 
             void render(ImmediateUserInterfaceContextLayer* _Context)
             {
-                if(_Context == nullptr) return;
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
@@ -1494,21 +1471,34 @@ ImmedidateUserInterfaceInput ImmedidateUserInterfaceInput::construct_event(Immed
              key++)
     {
         if(ApplicationPlatformBackend::is_key_down((ApplicationPlatformBackendKey::Key)key))
-            event.MouseDown |= (1 << key);
+            event.KeyDown |= (1 << key);
 
         if(ApplicationPlatformBackend::is_key_hold((ApplicationPlatformBackendKey::Key)key))
-            event.MouseHold |= (1 << key);
+            event.KeyHold |= (1 << key);
 
         if(ApplicationPlatformBackend::is_key_pressed((ApplicationPlatformBackendKey::Key)key))
-            event.MousePressed |= (1 << key);
+            event.KeyPressed |= (1 << key);
 
         if(ApplicationPlatformBackend::is_key_clicked((ApplicationPlatformBackendKey::Key)key))
-            event.MouseClicked |= (1 << key);
+            event.KeyClicked |= (1 << key);
+
+        if(ApplicationPlatformBackend::is_key_released((ApplicationPlatformBackendKey::Key)key))
+            event.KeyReleased |= (1 << key);
     }
 
     // catch character input
 
     return event;
+}
+
+ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::to_input_key(const ApplicationPlatformBackendKey::Key& _Key)
+{
+    return ((ImmedidateUserInterfaceInputKey)1 << _Key);
+}
+
+ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::to_input_mouse(const ApplicationPlatformBackendMouseButton::Button& _Mouse)
+{
+    return ((ImmedidateUserInterfaceInputKey)1 << _Mouse);
 }
 
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
@@ -1526,15 +1516,15 @@ gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
     return MouseScrollOffset;
 }
 
-ImmedidateUserInterfaceInputMouseButton ImmedidateUserInterfaceInput::all_mouse_buttons()
+ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::all_mouse_buttons()
 {
     int buttons = 0;
 
     for (int i = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
-                i < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
-                i++)
+             i < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
+             i++)
     {
-        buttons |= (1 << i);
+        buttons |= ImmedidateUserInterfaceInput::to_input_mouse((ApplicationPlatformBackendMouseButton::Button)i);
     }
 
     return buttons;
@@ -1548,38 +1538,38 @@ ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::all_keys()
              i < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
              i++)
     {
-        keys |= (1 << i);
+        keys |= ImmedidateUserInterfaceInput::to_input_key((ApplicationPlatformBackendKey::Key)i);
     }
 
     return keys;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_down(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_down(const ImmedidateUserInterfaceInputKey& _Button) const
 {
     return MouseDown & _Button;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_hold(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_hold(const ImmedidateUserInterfaceInputKey& _Button) const
 {
     return MouseHold & _Button;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_pressed(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_pressed(const ImmedidateUserInterfaceInputKey& _Button) const
 {
     return MousePressed & _Button;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_released(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_released(const ImmedidateUserInterfaceInputKey& _Button) const
 {
     return MouseReleased & _Button;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_clicked(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_clicked(const ImmedidateUserInterfaceInputKey& _Button) const
 {
     return MouseClicked & _Button;
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputMouseButton& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputKey& _Button) const
 {
     return MouseDoubleClicked & _Button;
 }
@@ -4265,6 +4255,66 @@ void ImmedidateUserInterfaceNextNodeController::frame_start(ImmediateUserInterfa
     NextLine.reset();
 }
 
+// ImmediateUserInterfaceScrollBarsController
+ImmediateUserInterfaceScrollBarsController::ImmediateUserInterfaceScrollBarsController(){}
+ImmediateUserInterfaceScrollBarsController::~ImmediateUserInterfaceScrollBarsController(){}
+void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
+{
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceNode* hoveredNode =
+        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
+            _Context,
+            _Event,
+            [](const ImmediateUserInterfaceNode* _Node)->bool{return dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_Node);});
+
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(hoveredNode);
+    
+    if(scrollArea == nullptr ||
+        !scrollArea->State.BoundingBox.contains(_Event.get_cusor_position())) return;
+
+    // adjust vertical scroll bar by mouse wheel
+    if((scrollArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar))
+    {
+        ImmediateUserInterfaceScrollAreaScrollBar* verticalScrollBar =
+            scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
+
+        if(gs_vector_length(_Event.get_cusor_scroll_offset()) > 0.f)
+            verticalScrollBar->set_scroll_offset(_Event.get_cusor_scroll_offset() * (-1.f) * verticalScrollBar->State.ContentSize.y * 0.05f);
+    }
+
+    // adjust vertical scrollbar by arrow keys
+    if((scrollArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar))
+    {
+        ImmediateUserInterfaceScrollAreaScrollBar* verticalScrollBar =
+            scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
+
+        if(verticalScrollBar != nullptr)
+        {
+            if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)))
+                verticalScrollBar->set_scroll_offset((-1.f) * verticalScrollBar->State.ContentSize.y * 0.05f);
+            else if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)))
+                verticalScrollBar->set_scroll_offset((+1.f) * verticalScrollBar->State.ContentSize.y * 0.05f);
+        }
+    }
+
+    // adjust horizontal scrollbar by arrow keys
+    if((scrollArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar))
+    {
+        ImmediateUserInterfaceScrollAreaScrollBar* horizontalScrollBar =
+            scrollArea != nullptr ? scrollArea->HorizontalScrollBar : nullptr; 
+
+        if(horizontalScrollBar != nullptr)
+        {
+            if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)))
+                horizontalScrollBar->set_scroll_offset((-1.f) * horizontalScrollBar->State.ContentSize.y * 0.05f);
+            else if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow)))
+                horizontalScrollBar->set_scroll_offset((+1.f) * horizontalScrollBar->State.ContentSize.y * 0.05f);
+        }
+    }
+}
+
 // ImmediateUserInterfaceContextLayer2
 ImmediateUserInterfaceContextLayer::ImmediateUserInterfaceContextLayer(){}
 ImmediateUserInterfaceContextLayer::~ImmediateUserInterfaceContextLayer(){}
@@ -4308,6 +4358,7 @@ bool ImmediateUserInterfaceContextLayer::awake()
 
     // create controllers
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceInputController>());
+    m_Controllers.push_back(std::make_unique<ImmediateUserInterfaceScrollBarsController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceWindowController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceLayoutController>());
     m_Controllers.push_back(std::make_unique<ImmedidateUserInterfaceRenderingController>());
