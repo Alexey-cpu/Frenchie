@@ -240,7 +240,7 @@ namespace Frenchie
             static void glfw_on_mouse_sroll_offset_changed_callback(GLFWwindow* _Window, double _dX, double _dY)
             {
                 (void)_Window;
-                ApplicationPlatformBackend::m_Input.MouseScrollOffset = gs_vec2f(_dX, _dY);
+                ApplicationPlatformBackend::m_Input.MouseScrollOffset = gs_vector_normalize(gs_vec2f(_dX, _dY));
             }
         };
     }

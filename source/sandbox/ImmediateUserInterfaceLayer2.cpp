@@ -774,7 +774,7 @@ namespace Frenchie
                         };
 
                         // construct events
-                        ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput::construct_event(_Context);
+                        ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput(_Context);
 
                         // detect if we are active
                         bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, _Window);
@@ -1433,16 +1433,14 @@ namespace Frenchie
     }
 }
 
-ImmedidateUserInterfaceInput ImmedidateUserInterfaceInput::construct_event(ImmediateUserInterfaceContextLayer* _Context)
+ImmedidateUserInterfaceInput::ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr)
-        return ImmedidateUserInterfaceInput();
+    if(_Context == nullptr) return;
 
     // construct events
-    ImmedidateUserInterfaceInput event;
-    event.CursorPosition    = _Context->m_Renderer->get_cursor_postion();
-    event.CursorDragDelta   = ApplicationPlatformBackend::get_window_cursor_dragdelta();
-    event.MouseScrollOffset = ApplicationPlatformBackend::get_mouse_scroll_offset();
+    CursorPosition    = _Context->m_Renderer->get_cursor_postion();
+    CursorDragDelta   = ApplicationPlatformBackend::get_window_cursor_dragdelta();
+    MouseScrollOffset = ApplicationPlatformBackend::get_mouse_scroll_offset();
 
     // catch mouse buttons
     for (int button = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
@@ -1450,55 +1448,43 @@ ImmedidateUserInterfaceInput ImmedidateUserInterfaceInput::construct_event(Immed
              button++)
     {
         if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseDown |= (1 << button);
+            MouseDown = (ApplicationPlatformBackendMouseButton::Button)button;
 
         if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseHold |= (1 << button);
+            MouseHold = (ApplicationPlatformBackendMouseButton::Button)button;
 
         if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MousePressed |= (1 << button);
+            MousePressed = (ApplicationPlatformBackendMouseButton::Button)button;
 
         if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseClicked |= (1 << button);
+            MouseClicked = (ApplicationPlatformBackendMouseButton::Button)button;
 
         if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)button))
-            event.MouseDoubleClicked |= (1 << button);
+            MouseDoubleClicked = (ApplicationPlatformBackendMouseButton::Button)button;
     }
 
-    // catch keys
+    // catch keyboard keys
     for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
              key++)
     {
         if(ApplicationPlatformBackend::is_key_down((ApplicationPlatformBackendKey::Key)key))
-            event.KeyDown |= (1 << key);
+            KeyDown = (ApplicationPlatformBackendKey::Key)key;
 
         if(ApplicationPlatformBackend::is_key_hold((ApplicationPlatformBackendKey::Key)key))
-            event.KeyHold |= (1 << key);
+            KeyHold = (ApplicationPlatformBackendKey::Key)key;
 
         if(ApplicationPlatformBackend::is_key_pressed((ApplicationPlatformBackendKey::Key)key))
-            event.KeyPressed |= (1 << key);
+            KeyPressed = (ApplicationPlatformBackendKey::Key)key;
 
         if(ApplicationPlatformBackend::is_key_clicked((ApplicationPlatformBackendKey::Key)key))
-            event.KeyClicked |= (1 << key);
+            KeyClicked = (ApplicationPlatformBackendKey::Key)key;
 
         if(ApplicationPlatformBackend::is_key_released((ApplicationPlatformBackendKey::Key)key))
-            event.KeyReleased |= (1 << key);
+            KeyReleased = (ApplicationPlatformBackendKey::Key)key;
     }
 
     // catch character input
-
-    return event;
-}
-
-ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::to_input_key(const ApplicationPlatformBackendKey::Key& _Key)
-{
-    return ((ImmedidateUserInterfaceInputKey)1 << _Key);
-}
-
-ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::to_input_mouse(const ApplicationPlatformBackendMouseButton::Button& _Mouse)
-{
-    return ((ImmedidateUserInterfaceInputKey)1 << _Mouse);
 }
 
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
@@ -1516,87 +1502,114 @@ gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
     return MouseScrollOffset;
 }
 
-ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::all_mouse_buttons()
+bool ImmedidateUserInterfaceInput::is_mouse_button_down() const
 {
-    int buttons = 0;
-
-    for (int i = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
-             i < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
-             i++)
-    {
-        buttons |= ImmedidateUserInterfaceInput::to_input_mouse((ApplicationPlatformBackendMouseButton::Button)i);
-    }
-
-    return buttons;
+    return MouseDown.has_value();
 }
 
-ImmedidateUserInterfaceInputKey ImmedidateUserInterfaceInput::all_keys()
+bool ImmedidateUserInterfaceInput::is_mouse_button_hold() const
 {
-    int keys = 0;
-
-    for (int i = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
-             i < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
-             i++)
-    {
-        keys |= ImmedidateUserInterfaceInput::to_input_key((ApplicationPlatformBackendKey::Key)i);
-    }
-
-    return keys;
+    return MouseHold.has_value();
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_down(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_pressed() const
 {
-    return MouseDown & _Button;
+    return MousePressed.has_value();
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_hold(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_released() const
 {
-    return MouseHold & _Button;
+    return MouseReleased.has_value();
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_pressed(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_clicked() const
 {
-    return MousePressed & _Button;
+    return MouseClicked.has_value();
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_released(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked() const
 {
-    return MouseReleased & _Button;
+    return MouseDoubleClicked.has_value();
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_clicked(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
-    return MouseClicked & _Button;
+    return is_mouse_button_down() && ApplicationPlatformBackend::is_mouse_button_down(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
-    return MouseDoubleClicked & _Button;
+    return is_mouse_button_hold() && ApplicationPlatformBackend::is_mouse_button_hold(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_down(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
-    return KeyDown & _Button;
+    return is_mouse_button_pressed() && ApplicationPlatformBackend::is_mouse_button_pressed(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_hold(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
-    return KeyHold & _Button;
+    return is_mouse_button_released() && ApplicationPlatformBackend::is_mouse_button_released(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_pressed(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
-    return KeyPressed & _Button;
+    return is_mouse_button_clicked() && ApplicationPlatformBackend::is_mouse_button_clicked(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_released(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const
 {
-    return KeyReleased & _Button;
+    return is_mouse_button_double_clicked() && ApplicationPlatformBackend::is_mouse_button_double_clicked(_Button);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_clicked(const ImmedidateUserInterfaceInputKey& _Button) const
+bool ImmedidateUserInterfaceInput::is_key_down() const
 {
-    return KeyClicked & _Button;
+    return KeyDown.has_value();
+}
+
+bool ImmedidateUserInterfaceInput::is_key_hold() const
+{
+    return KeyHold.has_value();
+}
+
+bool ImmedidateUserInterfaceInput::is_key_pressed() const
+{
+    return KeyPressed.has_value();
+}
+
+bool ImmedidateUserInterfaceInput::is_key_released() const
+{
+    return KeyReleased.has_value();
+}
+
+bool ImmedidateUserInterfaceInput::is_key_clicked() const
+{
+    return KeyClicked.has_value();
+}
+
+bool ImmedidateUserInterfaceInput::is_key_down(const ApplicationPlatformBackendKey::Key& _Button) const
+{
+    return is_key_down() && ApplicationPlatformBackend::is_key_down(_Button);
+}
+
+bool ImmedidateUserInterfaceInput::is_key_hold(const ApplicationPlatformBackendKey::Key& _Button) const
+{
+    return is_key_hold() && ApplicationPlatformBackend::is_key_hold(_Button);
+}
+
+bool ImmedidateUserInterfaceInput::is_key_pressed(const ApplicationPlatformBackendKey::Key& _Button) const
+{
+    return is_key_pressed() && ApplicationPlatformBackend::is_key_pressed(_Button);
+}
+
+bool ImmedidateUserInterfaceInput::is_key_released(const ApplicationPlatformBackendKey::Key& _Button) const
+{
+    return is_key_released() && ApplicationPlatformBackend::is_key_released(_Button);
+}
+
+bool ImmedidateUserInterfaceInput::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Button) const
+{
+    return is_key_clicked() && ApplicationPlatformBackend::is_key_clicked(_Button);
 }
 
 // ImmediateUserInterfaceContextConfiguration
@@ -2696,7 +2709,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         [this, &render_close_button](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
             // construct events
-            ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput::construct_event(_Context);
+            ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput(_Context);
 
             // detect if we are active
             bool active = ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().is_docking_window_active(_Context, _Window);
@@ -4292,9 +4305,9 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
 
         if(verticalScrollBar != nullptr)
         {
-            if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)))
+            if(_Event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
                 verticalScrollBar->set_scroll_offset((-1.f) * gs_min(verticalScrollBar->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
-            else if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)))
+            else if(_Event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
                 verticalScrollBar->set_scroll_offset((+1.f) * gs_min(verticalScrollBar->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
         }
     }
@@ -4307,9 +4320,9 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
 
         if(horizontalScrollBar != nullptr)
         {
-            if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)))
+            if(_Event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
                 horizontalScrollBar->set_scroll_offset((-1.f) * gs_min(horizontalScrollBar->State.ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f);
-            else if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow)))
+            else if(_Event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
                 horizontalScrollBar->set_scroll_offset((+1.f) * gs_min(horizontalScrollBar->State.ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f);
         }
     }
@@ -4391,8 +4404,7 @@ void ImmediateUserInterfaceContextLayer::frame_debug()
     m_Hierarchy.build(m_NodesRenderingList);
 
     // construct events
-    ImmedidateUserInterfaceInput event =
-        ImmedidateUserInterfaceInput::construct_event(this);
+    ImmedidateUserInterfaceInput event = ImmedidateUserInterfaceInput(this);
 
     for(auto& controller : m_Controllers)
         controller->frame_debug(this, event);

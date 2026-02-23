@@ -17,11 +17,11 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    platform_backend_test();
+    //platform_backend_test();
 
     //renderer_test();
     
-    //windows_test();   
+    windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
