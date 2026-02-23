@@ -190,7 +190,6 @@ namespace Frenchie
         typedef int ImmedidateUserInterfaceRenderingOrder;
         typedef int ImmedidateUserInterfaceRenderingLayer;
 
-        typedef unsigned int ImmedidateUserInterfaceInputKey;
         class ImmediateUserInterfaceContextLayer;
 
         // style and events
@@ -271,52 +270,62 @@ namespace Frenchie
             ApplicationRenderingBackendFont  Font;
         };
 
-        struct ImmedidateUserInterfaceInput
+        struct ImmedidateUserInterfaceInput final
         {
-            static ImmedidateUserInterfaceInput construct_event(ImmediateUserInterfaceContextLayer* _Context);
-            static ImmedidateUserInterfaceInputKey to_input_key(const ApplicationPlatformBackendKey::Key& _Key);
-            static ImmedidateUserInterfaceInputKey to_input_mouse(const ApplicationPlatformBackendMouseButton::Button& _Mouse);
+            ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
 
             gs_vec2f get_cusor_position() const;
             gs_vec2f get_cusor_drag_delta() const;
             gs_vec2f get_cusor_scroll_offset() const;
 
-            bool is_mouse_button_down(const ImmedidateUserInterfaceInputKey&           = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_hold(const ImmedidateUserInterfaceInputKey&           = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_pressed(const ImmedidateUserInterfaceInputKey&        = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_released(const ImmedidateUserInterfaceInputKey&       = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_clicked(const ImmedidateUserInterfaceInputKey&        = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_down() const;
+            bool is_mouse_button_hold() const;
+            bool is_mouse_button_pressed() const;
+            bool is_mouse_button_released() const;
+            bool is_mouse_button_clicked() const;
+            bool is_mouse_button_double_clicked() const;
 
-            bool is_key_down(const ImmedidateUserInterfaceInputKey&     = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_hold(const ImmedidateUserInterfaceInputKey&     = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_pressed(const ImmedidateUserInterfaceInputKey&  = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_released(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_clicked(const ImmedidateUserInterfaceInputKey&  = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+
+            bool is_key_down() const;
+            bool is_key_hold() const;
+            bool is_key_pressed() const;
+            bool is_key_released() const;
+            bool is_key_clicked() const;
+
+            bool is_key_down(const ApplicationPlatformBackendKey::Key& _Button) const;
+            bool is_key_hold(const ApplicationPlatformBackendKey::Key& _Button) const;
+            bool is_key_pressed(const ApplicationPlatformBackendKey::Key& _Button) const;
+            bool is_key_released(const ApplicationPlatformBackendKey::Key& _Button) const;
+            bool is_key_clicked(const ApplicationPlatformBackendKey::Key& _Button) const;
 
         private:
-            gs_vec2f CursorPosition   {gs_vec2f(0.f, 0.f)};
-            gs_vec2f CursorDragDelta  {gs_vec2f(0.f, 0.f)};
-            gs_vec2f MouseScrollOffset{gs_vec2f(0.f, 0.f)};
 
-            // mouse input
-            ImmedidateUserInterfaceInputKey MouseDown         {0};
-            ImmedidateUserInterfaceInputKey MouseHold         {0};
-            ImmedidateUserInterfaceInputKey MousePressed      {0};
-            ImmedidateUserInterfaceInputKey MouseClicked      {0};
-            ImmedidateUserInterfaceInputKey MouseDoubleClicked{0};
-            ImmedidateUserInterfaceInputKey MouseReleased     {0};
+            gs_vec2f CursorPosition   {gs_vec2f(0.f, 0.f)}; // cursor position projected onto UI surface
+            gs_vec2f CursorDragDelta  {gs_vec2f(0.f, 0.f)}; // delta between cursor press position and it's current position
+            gs_vec2f MouseScrollOffset{gs_vec2f(0.f, 0.f)}; // normalized mouse scroll offset
 
-            // key input
-            ImmedidateUserInterfaceInputKey KeyDown    {0};
-            ImmedidateUserInterfaceInputKey KeyHold    {0};
-            ImmedidateUserInterfaceInputKey KeyPressed {0};
-            ImmedidateUserInterfaceInputKey KeyClicked {0};
-            ImmedidateUserInterfaceInputKey KeyReleased{0};
+            // last accepted mouse
+            // This variables show if any mouse button has been down, hold, pressed e.t.c
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseReleased;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
+            Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
 
-            // service methods
-            static ImmedidateUserInterfaceInputKey all_mouse_buttons();
-            static ImmedidateUserInterfaceInputKey all_keys();
+            // last accepted key
+            // This variables show if any mouse keyboard key has been down, hold, pressed e.t.c
+            Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyDown;
+            Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyHold;
+            Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyPressed;
+            Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyReleased;
+            Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyClicked;
         };
 
         // nodes
