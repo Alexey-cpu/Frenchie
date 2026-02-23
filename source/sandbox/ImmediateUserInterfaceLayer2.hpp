@@ -377,11 +377,6 @@ namespace Frenchie
 
                 // mouse and keyboard input
                 ImmedidateUserInterfaceInput Input;
-                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
-                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
-                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
-                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseClicked;
-                // Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
             };
 
             Data State;

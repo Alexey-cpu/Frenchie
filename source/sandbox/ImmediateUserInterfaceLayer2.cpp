@@ -4281,7 +4281,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
             scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
 
         if(gs_vector_length(_Event.get_cusor_scroll_offset()) > 0.f)
-            verticalScrollBar->set_scroll_offset(_Event.get_cusor_scroll_offset() * (-1.f) * verticalScrollBar->State.ContentSize.y * 0.05f);
+            verticalScrollBar->set_scroll_offset(_Event.get_cusor_scroll_offset() * (-1.f) * gs_min(verticalScrollBar->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
     }
 
     // adjust vertical scrollbar by arrow keys
@@ -4293,9 +4293,9 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
         if(verticalScrollBar != nullptr)
         {
             if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)))
-                verticalScrollBar->set_scroll_offset((-1.f) * verticalScrollBar->State.ContentSize.y * 0.05f);
+                verticalScrollBar->set_scroll_offset((-1.f) * gs_min(verticalScrollBar->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
             else if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)))
-                verticalScrollBar->set_scroll_offset((+1.f) * verticalScrollBar->State.ContentSize.y * 0.05f);
+                verticalScrollBar->set_scroll_offset((+1.f) * gs_min(verticalScrollBar->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
         }
     }
 
@@ -4308,9 +4308,9 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
         if(horizontalScrollBar != nullptr)
         {
             if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)))
-                horizontalScrollBar->set_scroll_offset((-1.f) * horizontalScrollBar->State.ContentSize.y * 0.05f);
+                horizontalScrollBar->set_scroll_offset((-1.f) * gs_min(horizontalScrollBar->State.ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f);
             else if(_Event.is_key_clicked(ImmedidateUserInterfaceInput::to_input_key(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow)))
-                horizontalScrollBar->set_scroll_offset((+1.f) * horizontalScrollBar->State.ContentSize.y * 0.05f);
+                horizontalScrollBar->set_scroll_offset((+1.f) * gs_min(horizontalScrollBar->State.ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f);
         }
     }
 }
