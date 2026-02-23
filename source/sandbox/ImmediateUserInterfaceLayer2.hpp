@@ -92,20 +92,27 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceScrollAreaSettings_ : int
         {
-            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
+            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar             = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar            = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar          = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
 
-            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar    = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 6,
+            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar           = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
+            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar          = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
+            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar        = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 6,
 
-            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 7,
-            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 8,
+            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 7,
+            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 8,
+
+            ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 9,
+            ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 10,
+            ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 11,
 
             ImmediateUserInterfaceScrollAreaSettings_Defaults                    =
-                ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar |
-                ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar,
+                ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar          |
+                ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar        |
+                ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar |
+                ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar   |
+                ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar,
         };
 
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
@@ -183,9 +190,7 @@ namespace Frenchie
         typedef int ImmedidateUserInterfaceRenderingOrder;
         typedef int ImmedidateUserInterfaceRenderingLayer;
 
-        typedef int ImmedidateUserInterfaceInputKey;
-        typedef int ImmedidateUserInterfaceInputMouseButton;
-
+        typedef unsigned int ImmedidateUserInterfaceInputKey;
         class ImmediateUserInterfaceContextLayer;
 
         // style and events
@@ -269,26 +274,25 @@ namespace Frenchie
         struct ImmedidateUserInterfaceInput
         {
             static ImmedidateUserInterfaceInput construct_event(ImmediateUserInterfaceContextLayer* _Context);
+            static ImmedidateUserInterfaceInputKey to_input_key(const ApplicationPlatformBackendKey::Key& _Key);
+            static ImmedidateUserInterfaceInputKey to_input_mouse(const ApplicationPlatformBackendMouseButton::Button& _Mouse);
 
             gs_vec2f get_cusor_position() const;
             gs_vec2f get_cusor_drag_delta() const;
             gs_vec2f get_cusor_scroll_offset() const;
 
-            static ImmedidateUserInterfaceInputMouseButton all_mouse_buttons();
-            static ImmedidateUserInterfaceInputKey all_keys();
+            bool is_mouse_button_down(const ImmedidateUserInterfaceInputKey&           = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_hold(const ImmedidateUserInterfaceInputKey&           = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_pressed(const ImmedidateUserInterfaceInputKey&        = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_released(const ImmedidateUserInterfaceInputKey&       = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_clicked(const ImmedidateUserInterfaceInputKey&        = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
+            bool is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
 
-            bool is_mouse_button_down(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_hold(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_pressed(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_released(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_clicked(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-            bool is_mouse_button_double_clicked(const ImmedidateUserInterfaceInputMouseButton& = ImmedidateUserInterfaceInput::all_mouse_buttons()) const;
-
-            bool is_key_down(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_hold(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_pressed(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_down(const ImmedidateUserInterfaceInputKey&     = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_hold(const ImmedidateUserInterfaceInputKey&     = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_pressed(const ImmedidateUserInterfaceInputKey&  = ImmedidateUserInterfaceInput::all_keys()) const;
             bool is_key_released(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
-            bool is_key_clicked(const ImmedidateUserInterfaceInputKey& = ImmedidateUserInterfaceInput::all_keys()) const;
+            bool is_key_clicked(const ImmedidateUserInterfaceInputKey&  = ImmedidateUserInterfaceInput::all_keys()) const;
 
         private:
             gs_vec2f CursorPosition   {gs_vec2f(0.f, 0.f)};
@@ -296,12 +300,12 @@ namespace Frenchie
             gs_vec2f MouseScrollOffset{gs_vec2f(0.f, 0.f)};
 
             // mouse input
-            ImmedidateUserInterfaceInputMouseButton MouseDown         {0};
-            ImmedidateUserInterfaceInputMouseButton MouseHold         {0};
-            ImmedidateUserInterfaceInputMouseButton MousePressed      {0};
-            ImmedidateUserInterfaceInputMouseButton MouseClicked      {0};
-            ImmedidateUserInterfaceInputMouseButton MouseDoubleClicked{0};
-            ImmedidateUserInterfaceInputMouseButton MouseReleased     {0};
+            ImmedidateUserInterfaceInputKey MouseDown         {0};
+            ImmedidateUserInterfaceInputKey MouseHold         {0};
+            ImmedidateUserInterfaceInputKey MousePressed      {0};
+            ImmedidateUserInterfaceInputKey MouseClicked      {0};
+            ImmedidateUserInterfaceInputKey MouseDoubleClicked{0};
+            ImmedidateUserInterfaceInputKey MouseReleased     {0};
 
             // key input
             ImmedidateUserInterfaceInputKey KeyDown    {0};
@@ -309,6 +313,10 @@ namespace Frenchie
             ImmedidateUserInterfaceInputKey KeyPressed {0};
             ImmedidateUserInterfaceInputKey KeyClicked {0};
             ImmedidateUserInterfaceInputKey KeyReleased{0};
+
+            // service methods
+            static ImmedidateUserInterfaceInputKey all_mouse_buttons();
+            static ImmedidateUserInterfaceInputKey all_keys();
         };
 
         // nodes
@@ -434,7 +442,7 @@ namespace Frenchie
             float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
             float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
 
-            ImmediateUserInterfaceNode*                      ContentView         = nullptr;
+            ImmediateUserInterfaceNode*                ContentView         = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBar* VerticalScrollBar   = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBar* HorizontalScrollBar = nullptr;
         };
@@ -750,6 +758,14 @@ namespace Frenchie
 
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
             mutable Frenchie::Core::Optional<int> NextLine;
+        };
+
+        class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceScrollBarsController();
+            virtual ~ImmediateUserInterfaceScrollBarsController();
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput&) override;
         };
 
         // context configuration
