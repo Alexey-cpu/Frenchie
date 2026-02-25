@@ -449,6 +449,9 @@ namespace Frenchie
             ImmediateUserInterfaceNode*                ContentView         = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBar* VerticalScrollBar   = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBar* HorizontalScrollBar = nullptr;
+
+        private:
+            void calculate_content_padding(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*, gs_vec2f&);
         };
 
         // widgets

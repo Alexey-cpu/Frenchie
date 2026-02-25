@@ -21,7 +21,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
     //renderer_test();
     
-    windows_test();   
+    //windows_test();   
     //scrollarea_test();
     //panel_test();
     //vertical_stack_test();
@@ -29,7 +29,7 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
     //widgets_test();
 
-    //menu_test();
+    menu_test();
     
     auto FPS = std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
 
