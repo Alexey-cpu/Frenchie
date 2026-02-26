@@ -351,30 +351,30 @@ namespace Frenchie
             struct Data
             {
                 // rendering
-                int            Depth                      {0};
-                int            SelfThickness              {0}; // thickness of self rendered content
-                int            RenderingIndex             {0}; // index of the node within context rendering list
-                int            RenderingOrder             {0};
-                int            MaximumChildDepth          {0};
-                int            MaximumChildThickness      {0};
-                bool           PlaceInFollow              {false};
-                bool           OrderChildrenWhileRendering{false};
+                int                                Depth                      {0};
+                int                                SelfThickness              {0}; // thickness of self rendered content
+                int                                RenderingIndex             {0}; // index of the node within context rendering list
+                int                                RenderingOrder             {0};
+                int                                MaximumChildDepth          {0};
+                int                                MaximumChildThickness      {0};
+                bool                               PlaceInFollow              {false};
+                bool                               OrderChildrenWhileRendering{false};
 
                 // geometry
-                gs_2dboxf      BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
-                gs_vec2f       ContentSize                {gs_vec2f(0.f)};
-                gs_vec2f       MinimumSize                {gs_vec2f(32.f)};
-                gs_vec2f       MaximumSize                {gs_vec2f((float)INT_MAX)};
+                gs_2dboxf                          BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
+                gs_vec2f                           ContentSize                {gs_vec2f(0.f)};
+                gs_vec2f                           MinimumSize                {gs_vec2f(32.f)};
+                gs_vec2f                           MaximumSize                {gs_vec2f((float)INT_MAX)};
 
                 // hierarchy
-                ImmediateUserInterfaceNode*        Parent {nullptr};
-                ImmediateUserInterfaceNode*        Relative {nullptr};
+                ImmediateUserInterfaceNode*        Parent                     {nullptr};
+                ImmediateUserInterfaceNode*        Relative                   {nullptr};
 
                 // settings
-                ImmediateUserInterfaceNodeSettings Settings{ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+                ImmediateUserInterfaceNodeSettings Settings                   {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
                 // events
-                ImmediateUserInterfaceNodeEvents   Events{ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+                ImmediateUserInterfaceNodeEvents   Events                     {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
 
                 // layout hints
                 int NextLine = 0;
@@ -429,8 +429,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceNodeHorizontalStack();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
-
-        // scroll area        
+      
         struct ImmediateUserInterfaceScrollAreaScrollBar;
 
         struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
@@ -455,7 +454,6 @@ namespace Frenchie
         };
 
         // widgets
-
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
         struct ImmediateUserInterfaceColorPickerGradientColorModifier;
 
@@ -757,7 +755,15 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceNextNodeController();
 
             virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
-            mutable Frenchie::Core::Optional<int> NextLine;
+            
+            // API
+            void reset();
+
+            // info
+            mutable Frenchie::Core::Optional<int>      NextLine;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextSize;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextContentPadding;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -845,7 +851,7 @@ namespace Frenchie
             void end_menu();
 
             // widgets
-            bool push_button(const std::string& _ID, const gs_vec2f& _Size = gs_vec2f(256.f, 128.f));
+            bool push_button(const std::string& _ID);
             
             bool check_button(
                 const std::string&                        _ID,
@@ -857,7 +863,11 @@ namespace Frenchie
             void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
 
+            // next node API
             void next_line();
+            void next_size(const gs_vec2f&);
+            void next_position(const gs_vec2f&);
+            void next_content_padding(const gs_vec2f&);
 
             // windows
             bool begin_window(
@@ -916,14 +926,26 @@ namespace Frenchie
                 // setup next rendered node parameters
                 ImmedidateUserInterfaceNextNodeController* controller = get_controller<ImmedidateUserInterfaceNextNodeController>();
 
-                if(!m_NodesRenderingList.empty() && controller != nullptr)
+                if(controller != nullptr)
                 {
                     // next line
-                    if(controller->NextLine.has_value())
-                    {
+                    if(!m_NodesRenderingList.empty() && controller->NextLine.has_value())
                         m_NodesRenderingList[m_NodesRenderingList.size() - 1]->State.NextLine = controller->NextLine.value();
-                        controller->NextLine.reset();
-                    }
+
+                    // next size
+                    if(controller->NextSize.has_value())
+                        node->State.BoundingBox = gs_2dboxf(node->State.BoundingBox.Min, node->State.BoundingBox.Min + controller->NextSize.value());
+
+                    // next position
+                    if(controller->NextPosition.has_value())
+                        node->State.BoundingBox = gs_2dboxf(controller->NextPosition.value(), controller->NextPosition.value() + node->State.BoundingBox.size());
+
+                    // next content padding
+                    if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentPadding.has_value())
+                        dynamic_cast<ImmediateUserInterfaceNodePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
+
+                    // reset next item controller
+                    controller->reset();
                 }
 
                 m_NodesRenderingList.push_back(node);
@@ -967,57 +989,46 @@ namespace Frenchie
 
             // info
             std::vector<std::unique_ptr<ImmediateUserInterfaceContextController>> m_Controllers;
+            std::string                                                           m_CurrentHash;
+            std::string                                                           m_CurrentName;
             std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
 
             // service methods
             template<typename Type> Type* create_node(const std::string& _ID)
             {
-                // TODO: this is not reliable due to duplicated ID's for different strings
-                // // FNV‑1a
-                // auto hashFunction = [](const void* _Data, size_t _Length)->uint32_t
-                // {
-                //     const uint8_t *bytes = (const uint8_t*)_Data;
-                //     uint32_t       hash  = 2166136261u;
+                // clean-up hash and name buffers
+                m_CurrentHash.clear();
+                m_CurrentName.clear();
 
-                //     for (size_t i = 0; i < _Length; i++)
-                //     {
-                //         hash ^= bytes[i];
-                //         hash *= 16777619u;
-                //     }
-                //     return hash;
-                // };
-
-                // determine hashable part of the _ID
+                // determine hashable part of input id
                 int hashable = 0;
 
                 for (;hashable < (int)_ID.size(); hashable++)
                 {
                     // TODO: here we should hash only if there are ### but now it is #
-                    if(_ID[hashable] == '#') break;
+                    if(_ID[hashable] == '#')
+                    {
+                        int sharpCount = 1;
+                        if(hashable + 1 < (int)_ID.size() && _ID[hashable + 1] == '#') ++sharpCount;
+                        if(hashable + 2 < (int)_ID.size() && _ID[hashable + 2] == '#') ++sharpCount;
+                        if(sharpCount >= 3) break;
+                    }
                 }
                 
-                // compute hash
-                std::string hash =
-                    hashable < _ID.size() ?
-                            std::string(_ID.c_str() + hashable, _ID.c_str() + _ID.size()) :
-                                std::string(_ID.c_str(), _ID.c_str() + hashable);
-
                 // create node
-                if(m_Cache.find(hash) == m_Cache.end())
-                {
-                    m_Cache[hash] = std::make_unique<Type>(hash);
+                m_CurrentHash.append(
+                    (hashable < _ID.size() ? _ID.c_str() + hashable : _ID.c_str()),
+                    (hashable < _ID.size() ? _ID.size() - hashable : _ID.size()));
 
-                    // m_Cache[hash] = std::make_unique<Type>(
-                    //     hashable < _ID.size() ?
-                    //         std::string(_ID.c_str() + hashable, _ID.c_str() + _ID.size()) :
-                    //             std::string(_ID.c_str(), _ID.c_str() + hashable));
-                }
-                ImmediateUserInterfaceNode* node = m_Cache[hash].get();
+                if(m_Cache.find(m_CurrentHash) == m_Cache.end())
+                    m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
+                ImmediateUserInterfaceNode* node = m_Cache[m_CurrentHash].get();
                 GS_ASSERT((++node->Count) <= 1);
 
-                // TODO: optimize this !!!
-                if(node->Name != std::string(_ID.c_str(), _ID.c_str() + hashable))
-                    node->Name = std::string(_ID.c_str(), _ID.c_str() + hashable);
+                // setup node name
+                m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
+                if(node->Name != m_CurrentName)
+                    node->Name = m_CurrentName;
 
                 return dynamic_cast<Type*>(node);
             }

@@ -1555,8 +1555,6 @@ namespace Frenchie
                         scrollArea->VerticalScrollBar->get_scroll_offset() :
                             gs_vec2f(0.f, 0.f);
 
-                ContentPadding = gs_vec2f(gs_max(16.f, ContentPadding.x), gs_max(16.f, ContentPadding.y));
-
                 gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
                 gs_vec2f start     = position;
                 float    maxHeight = 0.f;
@@ -4458,7 +4456,16 @@ ImmedidateUserInterfaceNextNodeController::~ImmedidateUserInterfaceNextNodeContr
 void ImmedidateUserInterfaceNextNodeController::frame_start(ImmediateUserInterfaceContextLayer*)
 {
     // reset all
+    reset();
+}
+
+void ImmedidateUserInterfaceNextNodeController::reset()
+{
+    // reset all
     NextLine.reset();
+    NextSize.reset();
+    NextPosition.reset();
+    NextContentPadding.reset();
 }
 
 // ImmediateUserInterfaceScrollBarsController
@@ -4831,7 +4838,7 @@ void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
     end_node<ImmediateUserInterfaceNodeHorizontalStack>();
 }
 
-bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, const gs_vec2f& _Size)
+bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 {
     struct ImmediateUserInterfacePushButton : public ImmediateUserInterfaceNode
     {
@@ -4901,14 +4908,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID, con
                     gs_vec2f(button->State.BoundingBox.center() - m_Renderer->calculate_bounding_box(button->Name.begin(), button->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() * 0.5f)));
         
             m_Renderer->pop_clip_box();
-        }
-
-        // setup
-        {
-            button->State.MaximumSize = _Size;
-            button->State.BoundingBox = gs_2dboxf(
-                button->State.BoundingBox.Min,
-                button->State.BoundingBox.Min + gs_clamp(_Size, button->State.MinimumSize, button->State.MaximumSize));
         }
 
         end_node<ImmediateUserInterfacePushButton>();
@@ -5486,6 +5485,33 @@ void ImmediateUserInterfaceContextLayer::next_line()
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();
 
-    controller->NextLine =
-        controller->NextLine.has_value() ? controller->NextLine.value() + 1 : 1;
+    if(controller != nullptr)
+        controller->NextLine = controller->NextLine.has_value() ? controller->NextLine.value() + 1 : 1;
+}
+
+void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextSize = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextPosition = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextContentPadding = _Value;
 }
