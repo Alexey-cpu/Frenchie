@@ -1005,6 +1005,8 @@ namespace Frenchie
             // setters
             void set_scroll_offset(const gs_vec2f _Value)
             {
+                if(gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f) return;
+
                 PreviousPosition = Position;
                 Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
             }
@@ -1345,23 +1347,20 @@ namespace Frenchie
             {
                 if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
                 // background
                 _Context->m_Renderer->push_rectangle_rounded_filled(
                     State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
                     State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
                     _Context->m_Style.get_frames_radius(),
-                    _Context->m_Hierarchy.get_parent(this) ?
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Hierarchy.get_parent(this) ?
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground) :
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // slider
@@ -1373,7 +1372,7 @@ namespace Frenchie
                         sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
                         sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
                         _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
                 else
@@ -1382,9 +1381,7 @@ namespace Frenchie
                         sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
                         sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
                         _Context->m_Style.get_frames_radius(),
-                        _Context->m_Hierarchy.get_parent(this) ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
             }
@@ -1480,9 +1477,7 @@ namespace Frenchie
                     State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
                     State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
                     _Context->m_Style.get_frames_radius(),
-                    _Context->m_Hierarchy.get_parent(this) ?
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground) :
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
@@ -2523,13 +2518,20 @@ void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer*
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+    // outline
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
-        _Context->m_Hierarchy.get_parent(this) ?
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground):
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
@@ -2624,11 +2626,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    ImmediateUserInterfaceNodePanel::render(_Context);
-}
-
 void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* _Child)
 {
     if(_Child == nullptr) return;
@@ -2690,10 +2687,7 @@ void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Con
     ImmediateUserInterfaceNodePanel::layout(_Context);
 }
 
-void ImmediateUserInterfaceMenu::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    ImmediateUserInterfaceNodePanel::render(_Context);
-}
+void ImmediateUserInterfaceMenu::render(ImmediateUserInterfaceContextLayer*){}
 
 void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child)
 {
@@ -3244,46 +3238,6 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 
 void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
-    // auxiliary lambdas
-    auto setup_as_active_docking_window = [](
-        ImmediateUserInterfaceContextLayer* _Context,
-        ImmediateUserInterfaceWindow*       _Docked)
-    {
-        if(_Context == nullptr || _Docked == nullptr)
-            return;
-
-        _Docked->Activate = true;
-
-        // setup maximum rendering order for docked window within it's docker hierarchy
-        if(_Docked->Docker != nullptr)
-        {
-            int renderingOrder = _Docked->Docker->State.RenderingOrder;
-
-            for(auto it  = _Context->m_Hierarchy.begin(_Docked->Docker);
-                    it != _Context->m_Hierarchy.end(_Docked->Docker);
-                    it++)
-            {
-                (*it)->State.RenderingOrder = renderingOrder;
-            }
-            
-            _Docked->State.RenderingOrder = ++renderingOrder;
-
-            return;
-        }
-
-        // setup maximum rendering order for docker snapper view
-        int renderingOrder = 0;
-
-        for(auto it  = _Context->m_Hierarchy.begin(_Docked->DockerView);
-                it != _Context->m_Hierarchy.end(_Docked->DockerView);
-                it++)
-        {
-            (*it)->State.RenderingOrder = renderingOrder;
-        }
-
-        _Docked->SnapperView->State.RenderingOrder = ++renderingOrder;
-    };
-
     // top most hovered node
     ImmediateUserInterfaceNode* hoveredNode =
         ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
@@ -3394,7 +3348,36 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
         }
 
         if(window->IsActive)
-            setup_as_active_docking_window(_Context, window);
+        {
+            // setup maximum rendering order for docked window within it's docker hierarchy
+            if(window->Docker != nullptr)
+            {
+                int renderingOrder = window->Docker->State.RenderingOrder;
+
+                for(auto it  = _Context->m_Hierarchy.begin(window->Docker);
+                         it != _Context->m_Hierarchy.end(window->Docker);
+                         it++)
+                {
+                    (*it)->State.RenderingOrder = renderingOrder;
+                }
+                
+                window->State.RenderingOrder = ++renderingOrder;
+            }
+            else
+            {
+                // setup maximum rendering order for docker snapper view
+                int renderingOrder = 0;
+
+                for(auto it  = _Context->m_Hierarchy.begin(window->DockerView);
+                         it != _Context->m_Hierarchy.end(window->DockerView);
+                         it++)
+                {
+                    (*it)->State.RenderingOrder = renderingOrder;
+                }
+
+                window->SnapperView->State.RenderingOrder = ++renderingOrder;
+            }
+        }
 
         // reset all
         window->Activate         = false;
@@ -3835,8 +3818,18 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
         _Detached->Docker,
         ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
 
-    if (!dockedWindows.empty())
+    if (dockedWindows.size() > 1)
+    {
         dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindows[0])->IsActive = true;
+    }
+    else
+    {
+        ImmediateUserInterfaceWindow* docker =
+            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Detached->Docker);
+
+        if(docker != nullptr)
+            docker->IsActive = true;
+    }
 
     // detach from docker
     _Detached->TopSnapper    = nullptr;
