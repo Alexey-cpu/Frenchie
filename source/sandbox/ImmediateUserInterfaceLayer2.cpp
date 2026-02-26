@@ -4728,13 +4728,6 @@ bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID
             std::string(_ID).append("/Panel"),
             settings))
         {
-            get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>()->ContentPadding = gs_vec2f(0.f);
-
-            // get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>()->ContentPadding =
-            //     gs_vec2f(
-            //         (scrollArea->get_vertical_scrollbar_width(this) > 0.f ? 16.f : 0.f),
-            //         (scrollArea->get_horizontal_scrollbar_width(this) > 0.f ? 16.f : 0.f));
-
             if(begin_vertial_stack(
                 std::string(_ID).append("/Panel/VerticalStack"),
                 settings))
@@ -5308,6 +5301,9 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
             ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar                  |
             (hasParent ? ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically : 0) |
             ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally                 |
+            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar           |
+            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar             |
+            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar           |
             ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop                   |
             ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft))
         {
@@ -5345,9 +5341,12 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
         if(hasParent && isHovered && menuItem != nullptr)
         {
             if(begin_scrollarea(std::string(_ID).append("/Main/ExternalScrollArea"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent                               |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar    |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar  |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent                                     |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar          |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar        |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar   |
+                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar |
                 ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally))
             {
                 menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
