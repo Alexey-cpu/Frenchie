@@ -874,7 +874,7 @@ void RenderingQueue::push_rectangle(
         ApplicationRenderingBackend::get_default_texture());
 
     // push rendering command
-    push_rendering_command(_Transform, _Color);
+    push_rendering_command(_Transform);
 }
 
 void RenderingQueue::push_rectangle_rounded(

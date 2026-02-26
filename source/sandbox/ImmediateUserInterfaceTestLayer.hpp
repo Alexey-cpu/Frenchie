@@ -17,15 +17,9 @@ namespace Frenchie
             virtual void finish() override;
 
             void windows_test();
-            void scrollarea_test();
-            void panel_test();
-            void vertical_stack_test();
-            void horizontal_stack_test();
-
-            void menu_test();
             void widgets_test();
-
             void renderer_test();
+            void scrollarea_test();
 
             void platform_backend_test();
 

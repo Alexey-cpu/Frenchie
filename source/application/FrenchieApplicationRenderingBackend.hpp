@@ -46,8 +46,8 @@ namespace Frenchie
 
         enum ApplicationRenderingBackendGraphicsApiRenderingHints_ : int
         {
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 1,
-            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 2,
+            ApplicationRenderingBackendGraphicsApiRenderingHints_Lines     = 1 << 0,
+            ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles = 1 << 1,
             ApplicationRenderingBackendGraphicsApiRenderingHints_Default   = ApplicationRenderingBackendGraphicsApiRenderingHints_Triangles
         };
 
