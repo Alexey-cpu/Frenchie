@@ -117,20 +117,20 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
-            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
-            ImmediateUserInterfaceCheckButtonSettings_SliderButton = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3
+            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 12,
+            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 13,
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 14
         };
 
         enum ImmediateUserInterfaceLayoutAlignmentSettings_ : int
         {
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 9,
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 10,
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 11,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 15,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 16,
+            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 17,
 
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 12,
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 13,
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 14,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 18,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 19,
+            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 20,
 
             ImmediateUserInterfaceLayoutAlignmentSettings_Defaults =
                 ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
