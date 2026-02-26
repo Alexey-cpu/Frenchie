@@ -223,12 +223,12 @@ namespace Frenchie
             // getters
             float get_frames_radius() const
             {
-                return gs_max(FramesRadius, 0.f);
+                return gs_min(FramesRadius, 32.f);
             }
 
             float get_frames_width() const
             {
-                return gs_max(FramesWidth, 4.f);
+                return gs_min(gs_max(FramesWidth, 4.f), 16.f);
             }
 
             float get_font_size() const
@@ -261,7 +261,7 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius         = 0.f;
+            float                            FramesRadius         = 32.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 64.f;
             float                            ScrollBarWidth       = 16.f;
