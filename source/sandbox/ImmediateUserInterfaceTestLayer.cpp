@@ -17,48 +17,12 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //platform_backend_test();
-
-    //renderer_test();
-    
-    //windows_test();   
-    //scrollarea_test();
-    //panel_test();
-    //vertical_stack_test();
-    //horizontal_stack_test();
-
     //widgets_test();
-
-    menu_test();
+    scrollarea_test();
     
+    //renderer_test();
+
     auto FPS = std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
-
-    m_ImmediateUserInterface->m_Renderer->push_text(
-        FPS.begin(),
-        FPS.end(),
-        64.f,
-        gs_rgba_color(255, 0, 0, 255),
-        m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-            m_ImmediateUserInterface->m_Renderer->get_far_plane()
-        ));
-
-    // m_ImmediateUserInterface->m_Renderer->push_text(
-    //     std::string("Commands ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount)),
-    //     64.f,
-    //     gs_rgba_color(255, 0, 0, 255),
-    //     m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-    //         m_ImmediateUserInterface->m_Renderer->get_far_plane(),
-    //         gs_vec2f(0.f, 64.f)
-    //     ));
-
-    // m_ImmediateUserInterface->m_Renderer->push_text(
-    //     std::string("Triangles ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount)),
-    //     64.f,
-    //     gs_rgba_color(255, 0, 0, 255),
-    //     m_ImmediateUserInterface->m_Renderer->calculate_transform_matrix(
-    //         m_ImmediateUserInterface->m_Renderer->get_far_plane(),
-    //         gs_vec2f(0.f, 128.f)
-    //     ));
 }
 
 void ImmediateUserInterfaceTestLayer::finish()
@@ -74,6 +38,60 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 
     static bool opened = true;
     static std::string button;
+
+    if(m_ImmediateUserInterface->begin_window("Window"))
+    {
+        if(m_ImmediateUserInterface->begin_menu("Menu-1"))
+        {
+            if(m_ImmediateUserInterface->begin_menu("Menu-2"))
+            {
+                static bool checked = false;
+                m_ImmediateUserInterface->check_button("Checkbox", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &checked);
+                m_ImmediateUserInterface->menu_action("Action-4");
+
+                m_ImmediateUserInterface->check_button("RadioButton", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &checked);
+                m_ImmediateUserInterface->menu_action("Action-5");
+
+                m_ImmediateUserInterface->check_button("SliderButton", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &checked);
+                m_ImmediateUserInterface->menu_action("Action-6");
+
+                m_ImmediateUserInterface->menu_action("Action-7");
+                m_ImmediateUserInterface->menu_action("Action-8");
+                m_ImmediateUserInterface->menu_action("Action-9");
+                m_ImmediateUserInterface->menu_action("Action-10");
+                m_ImmediateUserInterface->menu_action("Action-11");
+                m_ImmediateUserInterface->menu_action("Action-12");
+
+                if(m_ImmediateUserInterface->begin_menu("Menu-333"))
+                {
+                    m_ImmediateUserInterface->menu_action("Action-333-1");
+                    m_ImmediateUserInterface->menu_action("Action-333-22");
+                    m_ImmediateUserInterface->menu_action("Action-333-333");
+                    m_ImmediateUserInterface->menu_action("Action-333-4444");
+                    m_ImmediateUserInterface->menu_action("Action-333-55555");
+
+                    m_ImmediateUserInterface->end_menu();
+                }
+
+                m_ImmediateUserInterface->end_menu();
+            }
+
+            if(m_ImmediateUserInterface->begin_menu("Menu-3333"))
+            {
+                m_ImmediateUserInterface->menu_action("Action-3333-1");
+                m_ImmediateUserInterface->menu_action("Action-3333-22");
+                m_ImmediateUserInterface->menu_action("Action-3333-333");
+                m_ImmediateUserInterface->menu_action("Action-3333-4444");
+                m_ImmediateUserInterface->menu_action("Action-3333-55555");
+
+                m_ImmediateUserInterface->end_menu();
+            }
+
+            m_ImmediateUserInterface->end_menu();
+        }
+
+        m_ImmediateUserInterface->end_window();
+    }
 
     if(m_ImmediateUserInterface->begin_window(
         "Window-1",
@@ -159,10 +177,7 @@ void ImmediateUserInterfaceTestLayer::scrollarea_test()
     if(m_ImmediateUserInterface->begin_scrollarea(
         "ScrollArea",
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-        ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults// |
-        // ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically |
-        // ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally
-    ))
+        ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults))
     {
         int k = 0;
 
@@ -176,131 +191,6 @@ void ImmediateUserInterfaceTestLayer::scrollarea_test()
 
         m_ImmediateUserInterface->end_scrollarea();
     }
-}
-
-void ImmediateUserInterfaceTestLayer::panel_test()
-{
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
-
-    if(m_ImmediateUserInterface->begin_panel(
-        "Panel-1",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter))
-    {
-        m_ImmediateUserInterface->push_button("Panel-1/Button");
-        m_ImmediateUserInterface->end_panel();
-    }
-}
-
-void ImmediateUserInterfaceTestLayer::vertical_stack_test()
-{
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
-
-    if(m_ImmediateUserInterface->begin_vertial_stack(
-        "VerticalStack",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight))
-    {
-        for(int i = 0 ; i < 5; i++)
-            m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
-        m_ImmediateUserInterface->end_vertical_stack();
-    }
-}
-
-void ImmediateUserInterfaceTestLayer::horizontal_stack_test()
-{
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
-
-    if(m_ImmediateUserInterface->begin_horizontal_stack(
-        "VerticalStack",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
-        ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter))
-    {
-        for(int i = 0 ; i < 5; i++)
-            m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(i)));
-        m_ImmediateUserInterface->end_horizontal_stack();
-    }
-}
-
-void ImmediateUserInterfaceTestLayer::menu_test()
-{
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
-
-    if(m_ImmediateUserInterface->begin_window("Window"))
-    {
-        if(m_ImmediateUserInterface->begin_menu("Menu-1"))
-        {
-            if(m_ImmediateUserInterface->begin_menu("Menu-2"))
-            {
-                static bool checked = false;
-                m_ImmediateUserInterface->check_button("Checkbox", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &checked);
-                m_ImmediateUserInterface->menu_action("Action-4");
-
-                m_ImmediateUserInterface->check_button("RadioButton", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &checked);
-                m_ImmediateUserInterface->menu_action("Action-5");
-
-                m_ImmediateUserInterface->check_button("SliderButton", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &checked);
-                m_ImmediateUserInterface->menu_action("Action-6");
-
-                m_ImmediateUserInterface->menu_action("Action-7");
-                m_ImmediateUserInterface->menu_action("Action-8");
-                m_ImmediateUserInterface->menu_action("Action-9");
-                m_ImmediateUserInterface->menu_action("Action-10");
-                m_ImmediateUserInterface->menu_action("Action-11");
-                m_ImmediateUserInterface->menu_action("Action-12");
-
-                if(m_ImmediateUserInterface->begin_menu("Menu-333"))
-                {
-                    m_ImmediateUserInterface->menu_action("Action-333-1");
-                    m_ImmediateUserInterface->menu_action("Action-333-22");
-                    m_ImmediateUserInterface->menu_action("Action-333-333");
-                    m_ImmediateUserInterface->menu_action("Action-333-4444");
-                    m_ImmediateUserInterface->menu_action("Action-333-55555");
-
-                    m_ImmediateUserInterface->end_menu();
-                }
-
-                m_ImmediateUserInterface->end_menu();
-            }
-
-            if(m_ImmediateUserInterface->begin_menu("Menu-3333"))
-            {
-                m_ImmediateUserInterface->menu_action("Action-3333-1");
-                m_ImmediateUserInterface->menu_action("Action-3333-22");
-                m_ImmediateUserInterface->menu_action("Action-3333-333");
-                m_ImmediateUserInterface->menu_action("Action-3333-4444");
-                m_ImmediateUserInterface->menu_action("Action-3333-55555");
-
-                m_ImmediateUserInterface->end_menu();
-            }
-
-            m_ImmediateUserInterface->end_menu();
-        }
-
-        m_ImmediateUserInterface->end_window();
-    }
-
-    // if(m_ImmediateUserInterface->begin_window("Window-1"))
-    // {
-    //     if(m_ImmediateUserInterface->begin_menu("Menu-11"))
-    //     {
-    //         if(m_ImmediateUserInterface->begin_menu("Menu-22"))
-    //         {
-    //             m_ImmediateUserInterface->end_menu();
-    //         }
-
-    //         m_ImmediateUserInterface->end_menu();
-    //     }
-
-    //     m_ImmediateUserInterface->end_window();
-    // }
 }
 
 void ImmediateUserInterfaceTestLayer::widgets_test()
@@ -335,26 +225,16 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 }
 
 void ImmediateUserInterfaceTestLayer::renderer_test()
-{    
+{
     m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
 
-    // m_ImmediateUserInterface->m_Renderer->push_arc(
-    //     gs_vec2f(512.f, 512.f),
-    //     256.f,
-    //     256.f,
-    //     0.f,
-    //     30.f,
-    //     64.f,
-    //     gs_rgba_color(255, 255, 255, 255));
-
-    // m_ImmediateUserInterface->m_Renderer->push_arc_filled(
-    //     gs_vec2f(512.f, 512.f),
-    //     256.f,
-    //     256.f,
-    //     0.f,
-    //     30.f,
-    //     gs_rgba_color(255, 255, 255, 255));
+    m_ImmediateUserInterface->m_Renderer->push_rectangle_rounded(
+        gs_vec2f(512.f, 512.f),
+        gs_vec2f(1024.f, 1024.f),
+        64.f,
+        32.f,
+        gs_rgba_color(255, 0, 0, 255));
 }
 
 void ImmediateUserInterfaceTestLayer::platform_backend_test()

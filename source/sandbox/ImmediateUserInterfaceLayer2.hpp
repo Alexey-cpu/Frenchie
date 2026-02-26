@@ -238,7 +238,7 @@ namespace Frenchie
 
             float get_scrollbar_width() const
             {
-                return gs_max(32.f, get_frames_width(), ScrollBarWidth);
+                return gs_max(32.f, get_frames_radius() * 2.f, get_frames_width(), ScrollBarWidth);
             }
 
             float get_popup_menu_pointer_size() const
@@ -261,10 +261,10 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius         = 32.f;
+            float                            FramesRadius         = 0.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 64.f;
-            float                            ScrollBarWidth       = 64.f;
+            float                            ScrollBarWidth       = 16.f;
             float                            PopupMenuPointerSize = 32.f;
             std::vector<gs_color>            Colors;
             ApplicationRenderingBackendFont  Font;
@@ -455,13 +455,6 @@ namespace Frenchie
         };
 
         // widgets
-        struct ImmediateUserInterfaceWidget : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceWidget(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceWidget();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
 
         struct ImmediateUserInterfaceColorPickerGradientColorSelector;
         struct ImmediateUserInterfaceColorPickerGradientColorModifier;
@@ -885,7 +878,7 @@ namespace Frenchie
                 return nullptr;
             }
 
-            template<typename Type> Type* get_rendering_stack_top() const
+            template<typename Type = ImmediateUserInterfaceNode> Type* get_rendering_stack_top() const
             {
                 if(m_NodesRenderingStack.empty())
                     return nullptr;
@@ -960,10 +953,9 @@ namespace Frenchie
             mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
 
             // rendering
-            mutable std::shared_ptr<RenderingQueue>                                 m_Renderer{nullptr};
-            mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingList;
-            mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingCache;
-            mutable std::vector<ImmediateUserInterfaceNode*>                        m_NodesRenderingStack;
+            mutable std::shared_ptr<RenderingQueue>                                    m_Renderer{nullptr};
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
 
             // ini file
             ImmediateUserInterfaceContextConfiguration                              m_IniFileState;
