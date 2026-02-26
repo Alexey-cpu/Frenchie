@@ -497,18 +497,18 @@ namespace Frenchie
             virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
             virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
 
-            ImmediateUserInterfaceNode* Docker        {nullptr};
-            ImmediateUserInterfaceNode* TopSnapper    {nullptr};
-            ImmediateUserInterfaceNode* LeftSnapper   {nullptr};
-            ImmediateUserInterfaceNode* RightSnapper  {nullptr};
-            ImmediateUserInterfaceNode* BottomSnapper {nullptr};
+            ImmediateUserInterfaceNode* Docker            {nullptr};
+            ImmediateUserInterfaceNode* TopSnapper        {nullptr};
+            ImmediateUserInterfaceNode* LeftSnapper       {nullptr};
+            ImmediateUserInterfaceNode* RightSnapper      {nullptr};
+            ImmediateUserInterfaceNode* BottomSnapper     {nullptr};
+            bool                        IsActive          {true};
+            bool                        Activate          {false};
+            bool                        ReattachChildren  {false};
 
-            gs_2dboxf                   FrameBox;
-
-            gs_2dboxf                   ContentBox;
-
+            gs_2dboxf                   FrameBox          {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2dboxf                   ContentBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             bool*                       Opened            {nullptr};
-
             int                         DockingIndex      {-1};
 
             // docking
@@ -679,8 +679,6 @@ namespace Frenchie
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override;
 
-            void push_event(std::function<void(ImmediateUserInterfaceContextLayer*)> _Event);
-
             std::vector<ImmediateUserInterfaceNode*>&
             retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors);
 
@@ -693,7 +691,6 @@ namespace Frenchie
 
             mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingList;
-            mutable std::stack<std::function<void(ImmediateUserInterfaceContextLayer*)>> m_DockingEventsStack;
             mutable ImmediateUserInterfaceNode*                                          m_WorkspaceDockArea      {nullptr};
             mutable bool                                                                 m_WorkspaceDockAreaOpened{true};
         };
