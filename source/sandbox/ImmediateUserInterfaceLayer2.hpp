@@ -201,12 +201,13 @@ namespace Frenchie
 
                 // window
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]         = gs_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered]  = gs_rgba_color(72, 82, 72, 255);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]        = gs_rgba_color(28, 28, 28, 255);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered] = gs_rgba_color(72, 82, 72, 255);
                 
                 // push button
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]           = gs_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]        = gs_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]           = gs_rgba_color(72, 72, 72, 255);
+                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]        = gs_rgba_color(32, 32, 32, 255);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered] = gs_rgba_color(60, 72, 60, 255);
                 Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed] = gs_rgba_color(120, 128, 120, 255);
 
@@ -439,7 +440,6 @@ namespace Frenchie
             ImmediateUserInterfaceScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceScrollArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
             float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
