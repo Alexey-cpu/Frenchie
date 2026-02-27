@@ -68,18 +68,53 @@ namespace Frenchie
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
-            ImmediateUserInterfaceNodeSettings_None        = 0,
+            ImmediateUserInterfaceNodeSettings_None                                   = 0,
 
-            // settings
-            ImmediateUserInterfaceNodeSettings_Movable     = 1 << 0,
-            ImmediateUserInterfaceNodeSettings_Resizable   = 1 << 1,
-            ImmediateUserInterfaceNodeSettings_NullParent  = 1 << 2,
+            // modifications
+            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0,
+            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1,
+            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2,
 
-            ImmediateUserInterfaceNodeSettings_UserDefined = 1 << 3,
+            // content alignment
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3,
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4,
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5,
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6,
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7,
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8,
 
-            ImmediateUserInterfaceNodeSettings_Defaults  =
+            // scrollbars
+            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,
+            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10,
+            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11,
+            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12,
+            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13,
+            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14,
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15,
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16,
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 17,
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 18,
+            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 19,
+
+            ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                 ImmediateUserInterfaceNodeSettings_Movable |
                 ImmediateUserInterfaceNodeSettings_Resizable,
+
+            ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults                     =
+                ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              |
+                ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            |
+                ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  |
+                ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   |
+                ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment,
+
+            ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults =
+                ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         |
+                ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter,
+
+            ImmediateUserInterfaceNodeSettings_Defaults =
+                ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           |
+                ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults                     |
+                ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
         };
 
         enum ImmediateUserInterfaceContextSettings_ : int
@@ -88,53 +123,16 @@ namespace Frenchie
             ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
             ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
             ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
-        };
 
-        enum ImmediateUserInterfaceScrollAreaSettings_ : int
-        {
-            ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar             = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 1,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar            = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 2,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar          = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 3,
-
-            ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar           = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 4,
-            ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar          = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 5,
-            ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar        = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 6,
-
-            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 7,
-            ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 8,
-
-            ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 9,
-            ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 10,
-            ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 11,
-
-            ImmediateUserInterfaceScrollAreaSettings_Defaults                    =
-                ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar          |
-                ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar        |
-                ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar |
-                ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar   |
-                ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar,
+            // highlighting
+            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3,
         };
 
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
-            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 12,
-            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 13,
-            ImmediateUserInterfaceCheckButtonSettings_SliderButton = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 14
-        };
-
-        enum ImmediateUserInterfaceLayoutAlignmentSettings_ : int
-        {
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop      = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 15,
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 16,
-            ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 17,
-
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft   = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 18,
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 19,
-            ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_UserDefined << 20,
-
-            ImmediateUserInterfaceLayoutAlignmentSettings_Defaults =
-                ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignCenter |
-                ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignCenter,
+            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0,
+            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1,
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2
         };
 
         // mouse hover
@@ -182,9 +180,11 @@ namespace Frenchie
         };
 
         typedef int ImmediateUserInterfaceNodeEvents;
+        typedef int ImmediateUserInterfaceNodeMouseHover;
+
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceContextSettings;
-        typedef int ImmediateUserInterfaceNodeMouseHover;
+        typedef int ImmediateUserInterfaceCheckButtonSettings;
 
         typedef int ImmedidateUserInterfaceDockingAnchor;
         typedef int ImmedidateUserInterfaceRenderingOrder;
@@ -820,9 +820,7 @@ namespace Frenchie
             // scroll area
             bool begin_scrollarea(
                 const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings =
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults            |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_Defaults);
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
 
             // layout
@@ -851,9 +849,9 @@ namespace Frenchie
             bool push_button(const std::string& _ID);
             
             bool check_button(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
-                bool*                                     _Checked  = nullptr);
+                const std::string&                               _ID,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
+                bool*                                            _Checked  = nullptr);
             
             void label(const std::string& _ID, const std::string& _Text);
 
