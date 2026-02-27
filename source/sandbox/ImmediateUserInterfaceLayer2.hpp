@@ -278,6 +278,8 @@ namespace Frenchie
             gs_vec2f get_cusor_position() const;
             gs_vec2f get_cusor_drag_delta() const;
             gs_vec2f get_cusor_scroll_offset() const;
+            bool     has_input_text() const;
+            std::string input_text() const;
 
             bool is_mouse_button_down() const;
             bool is_mouse_button_hold() const;
@@ -312,7 +314,6 @@ namespace Frenchie
             gs_vec2f MouseScrollOffset{gs_vec2f(0.f, 0.f)}; // normalized mouse scroll offset
 
             // last accepted mouse
-            // This variables show if any mouse button has been down, hold, pressed e.t.c
             Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDown;
             Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseHold;
             Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MousePressed;
@@ -321,7 +322,6 @@ namespace Frenchie
             Frenchie::Core::Optional<ApplicationPlatformBackendMouseButton::Button> MouseDoubleClicked;
 
             // last accepted key
-            // This variables show if any mouse keyboard key has been down, hold, pressed e.t.c
             Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyDown;
             Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyHold;
             Frenchie::Core::Optional<ApplicationPlatformBackendKey::Key>            KeyPressed;
@@ -678,6 +678,7 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceWindowController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event) override;
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
             std::vector<ImmediateUserInterfaceNode*>&
             retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors);
@@ -855,6 +856,8 @@ namespace Frenchie
             
             void label(const std::string& _ID, const std::string& _Text);
 
+            void input_string(const std::string& _ID, std::string& _Text);
+
             void color_picker(const std::string& _ID);
             bool menu_action(const std::string& _ID);
 
@@ -978,7 +981,10 @@ namespace Frenchie
             ImmediateUserInterfaceContextConfiguration                              m_IniFileState;
 
             // settings
-            ImmediateUserInterfaceContextSettings                                   m_Settings = ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
+            ImmediateUserInterfaceContextSettings                                   m_Settings =
+                ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking |
+                ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking   |
+                ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
         private:
 

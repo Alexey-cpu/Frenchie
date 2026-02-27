@@ -301,73 +301,107 @@ namespace Frenchie
                 bool            _RoundBottomRightCorner = true,
                 bool            _RoundBottomLeftCorner  = true);
 
-            template<typename Type>
+            struct DefaultSymbolProcessor
+            {
+                void operator()(const gs_2dboxf&, const gs_vec2f&, const int&){}
+            };
+            
+
+            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor>
             void push_text(
+                const gs_vec2f&                        _Position,
                 const Type&                            _Begin,
                 const Type&                            _End,
                 const float&                           _Size,
                 const gs_color&                        _Color,
-                const gs_mat4f&                        _Transform = gs_mat4f(1.f),
-                const ApplicationRenderingBackendFont& _Font      = ApplicationRenderingBackendFont())
+                const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
+                const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
+                ProcessSymbol                          _ProcessSymbol = DefaultSymbolProcessor())
             {
+                // main code
                 ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
 
                 float scale     = _Size / (float)font.SizeInPixels;
                 float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
-                float positionX = 0.f;
-                float positionY = gs_vec2f(0.f, offset).y;
+                float positionX = _Position.x;
+                float positionY = _Position.y + gs_vec2f(0.f, offset).y;
+                Type  start     = _Begin;
+                Type  end       = _End;
 
-                Type start = _Begin;
-                Type end   = _End;
+                gs_2dboxf lastSymbolBox = gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY));
 
                 while (start < end)                
                 {
+                    int cursor = (int)(start - _Begin);
+
                     unsigned int symbol = Frenchie::Core::String::utf8_next(start);
 
                     // fallbacks
                     if(!font.contains_glyph(symbol))
                     {
+                        _ProcessSymbol(
+                            gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
+                            gs_vec2f(lastSymbolBox.Max.x, positionY - offset),
+                            cursor);
+
                         // next line
-                        if(symbol == U'\n')
+                        if(symbol == '\n')
                         {
                             positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
-                            positionX =  0.f;
+                            positionX =  _Position.x;
                         }
                         // carriage return
-                        else if(symbol == U'\r')
-                            positionX =  0.f;
+                        else if(symbol == '\r')
+                        {
+                            positionX =  _Position.x;
+                        }
                         // tab
-                        else if(symbol == U'\t')
+                        else if(symbol == '\t')
+                        {
                             positionX += gs_vec2f(_Size, 0.f).x;
+                        }
                         else
                         {
                             // TODO: do someting here...
                             // May be use fallback font and take fallback character from there ???
                         }
 
+                        lastSymbolBox = gs_2dboxf(
+                            gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
+                            gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset));
+
                         continue;
                     }
 
-                    ApplicationRenderingBackendGlyph glyph    = font.retrieve_glyph(symbol);
-                    float glyphWidth             = glyph.Box.size().x * scale;
-                    float glyphHeight            = glyph.Box.size().y * scale;
-                    float glyphHorizontalBearing = glyph.Bearing.x * scale;
-                    float glyphVerticalBearing   = glyph.Bearing.y * scale;
-                    float glyphAdvance           = glyph.Advance * scale;
+                    // render symbol mesh
+                    ApplicationRenderingBackendGlyph glyph                  = font.retrieve_glyph(symbol);
+                    float                            glyphWidth             = glyph.Box.size().x * scale;
+                    float                            glyphHeight            = glyph.Box.size().y * scale;
+                    float                            glyphHorizontalBearing = glyph.Bearing.x * scale;
+                    float                            glyphVerticalBearing   = glyph.Bearing.y * scale;
+                    float                            glyphAdvance           = glyph.Advance * scale;
+                    gs_vec2f                         min                    = gs_vec2f(positionX, positionY) + gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing);
+                    gs_vec2f                         max                    = min + gs_vec2f(glyphWidth, glyphHeight);
 
-                    auto min = gs_vec2f(positionX, positionY) + gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing);
-                    auto max = min + gs_vec2f(glyphWidth, glyphHeight);
+                    build_rectangle_filled_mesh(min, max, glyph.MinUV, glyph.MaxUV, _Color);
 
-                    build_rectangle_filled_mesh(
-                        min,
-                        max,
-                        glyph.MinUV,
-                        glyph.MaxUV,
-                        _Color);
+                    // calculate last symbol bounding box
+                    lastSymbolBox = gs_2dboxf(min, max);
+                    if(gs_vector_length(lastSymbolBox.size()) <= 0.f)
+                        lastSymbolBox = gs_2dboxf(min - gs_vec2f(0.f, offset), max + gs_vec2f(glyphAdvance, 0.f));
+
+                    // process symbol
+                    _ProcessSymbol(lastSymbolBox, gs_vec2f(min.x, positionY - offset), cursor);
 
                     // move cursor
                     positionX += gs_vec2f(glyphAdvance, 0.f).x;
                 }
+
+                // process last symbol
+                _ProcessSymbol(
+                    gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
+                    gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
+                    (int)(start - _Begin));
 
                 push_rendering_command(font.AtlasTexture, _Color, _Transform);
             }

@@ -958,15 +958,14 @@ namespace Frenchie
 
                         // title
                         _Context->m_Renderer->push_text(
+                            gs_vec2f(
+                                _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
+                                _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
                             _Window->Name.begin(),
                             _Window->Name.end(),
                             _Context->m_Style.get_font_size() * 0.6f,
                             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            _Context->m_Renderer->calculate_transform_matrix(
-                                (float)place_in_follow(),
-                                gs_vec2f(
-                                    _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f)));
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                     }
                 );
             }
@@ -1660,15 +1659,15 @@ namespace Frenchie
 
                 // title
                 _Context->m_Renderer->push_text(
+                    gs_vec2f(
+                        State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
+                        (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
                     Name.begin(),
                     Name.end(),
                     _Context->m_Style.get_font_size(),
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix(
-                        (float)place_in_follow(),
-                        gs_vec2f(
-                            State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
-                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
+                        (float)place_in_follow()));
             }
         };
 
@@ -1706,15 +1705,14 @@ namespace Frenchie
 
                 // title
                 _Context->m_Renderer->push_text(
+                    gs_vec2f(
+                        State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
+                        (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
                     Name.begin(),
                     Name.end(),
                     _Context->m_Style.get_font_size(),
                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix(
-                        (float)place_in_follow(),
-                        gs_vec2f(
-                            State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
-                            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y)));
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // triangle
                 float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
@@ -1784,8 +1782,6 @@ ImmedidateUserInterfaceInput::ImmedidateUserInterfaceInput(ImmediateUserInterfac
         if(ApplicationPlatformBackend::is_key_released((ApplicationPlatformBackendKey::Key)key))
             KeyReleased = (ApplicationPlatformBackendKey::Key)key;
     }
-
-    // catch character input
 }
 
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
@@ -1801,6 +1797,16 @@ gs_vec2f ImmedidateUserInterfaceInput::get_cusor_drag_delta() const
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
 {
     return MouseScrollOffset;
+}
+
+bool ImmedidateUserInterfaceInput::has_input_text() const
+{
+    return ApplicationPlatformBackend::has_input_text();
+}
+
+std::string ImmedidateUserInterfaceInput::input_text() const
+{
+    return ApplicationPlatformBackend::input_text();
 }
 
 bool ImmedidateUserInterfaceInput::is_mouse_button_down() const
@@ -2872,15 +2878,14 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
 
             // title
             _Context->m_Renderer->push_text(
+                gs_vec2f(
+                    _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
+                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
                 _Window->Name.begin(),
                 _Window->Name.end(),
                 _Context->m_Style.get_font_size() * 0.6f,
                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix(
-                    (float)place_in_follow(),
-                    gs_vec2f(
-                        _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                        _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f)));
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
         }
     );
 }
@@ -2913,36 +2918,6 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
 bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context, const ImmedidateUserInterfaceInput& _Event)
 {
     bool defaultPipeline = true;
-
-    // window close event
-    if(Opened != nullptr && !(*Opened))
-    {
-        auto dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
-            _Context,
-            this,
-            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Top    |
-            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Left   |
-            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Right  |
-            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Bottom |
-            ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
-
-        for(auto dockedWindow : dockedWindows)
-        {
-            ImmediateUserInterfaceWindow* window =
-                dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
-
-            if(window == nullptr)
-                continue;
-
-            window->Docker               = nullptr;
-            window->TopSnapper           = nullptr;
-            window->LeftSnapper          = nullptr;
-            window->RightSnapper         = nullptr;
-            window->BottomSnapper        = nullptr;
-            window->DockingIndex         = -1;
-            window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-        }
-    }
 
     // window frame events
     ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
@@ -3148,12 +3123,12 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     const std::string                        id       = std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application");
     const ImmediateUserInterfaceNodeSettings settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
 
+    m_WorkspaceDockAreaOpened =
+        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
+        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
+
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(id, settings, &m_WorkspaceDockAreaOpened))
     {
-        m_WorkspaceDockAreaOpened =
-            (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
-            (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
-
         // retrieve window
         ImmediateUserInterfaceWindow* window = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
         window->Opened                       = &m_WorkspaceDockAreaOpened;
@@ -3382,6 +3357,43 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
         // reset all
         window->Activate         = false;
         window->ReattachChildren = false;
+    }
+}
+
+void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
+{
+    for(auto node : _Context->m_NodesRenderingList)
+    {
+        ImmediateUserInterfaceWindow* window =
+            dynamic_cast<ImmediateUserInterfaceWindow*>(node);
+
+        if(window == nullptr) continue;
+
+        // detach all windows from closed window
+        if(window->Opened != nullptr && !(*window->Opened))
+        {
+            auto dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+                _Context,
+                window,
+                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All);
+
+            for(auto dockedWindow : dockedWindows)
+            {
+                ImmediateUserInterfaceWindow* window =
+                    dynamic_cast<ImmediateUserInterfaceWindow*>(dockedWindow);
+
+                if(window == nullptr)
+                    continue;
+
+                window->Docker               = nullptr;
+                window->TopSnapper           = nullptr;
+                window->LeftSnapper          = nullptr;
+                window->RightSnapper         = nullptr;
+                window->BottomSnapper        = nullptr;
+                window->DockingIndex         = -1;
+                window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+            }
+        }
     }
 }
 
@@ -3957,7 +3969,7 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
     // hover start logic
     if(hoveredNode)
     {
-        if(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes)
+        if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
@@ -4785,13 +4797,12 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
             // title
             m_Renderer->push_text(
+                gs_vec2f(button->State.BoundingBox.center() - m_Renderer->calculate_bounding_box(button->Name.begin(), button->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() * 0.5f),
                 button->Name.begin(),
                 button->Name.end(),
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix(
-                    (float)depth++,
-                    gs_vec2f(button->State.BoundingBox.center() - m_Renderer->calculate_bounding_box(button->Name.begin(), button->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() * 0.5f)));
+                m_Renderer->calculate_transform_matrix((float)depth++));
         
             m_Renderer->pop_clip_box();
         }
@@ -4817,43 +4828,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
         void layout(ImmediateUserInterfaceContextLayer* _Context)
         {
-            // if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-            // // layout checkbox
-            // if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
-            // {
-            //     State.BoundingBox = gs_2dboxf(
-            //         State.BoundingBox.Min,
-            //         State.BoundingBox.Min + _Context->m_Style.get_font_size());
-
-            //     return;
-            // }
-
-            // // layout radio button
-            // if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
-            // {
-            //     State.BoundingBox = gs_2dboxf(
-            //         State.BoundingBox.Min,
-            //         State.BoundingBox.Min + _Context->m_Style.get_font_size());
-
-            //     return;
-            // }
-
-            // // layout slider button
-            // if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
-            // {
-            //     State.BoundingBox = gs_2dboxf(
-            //         State.BoundingBox.Min,
-            //         State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
-
-            //     return;
-            // }
         }
     };
-
-    // ImmediateUserInterfaceNodeSettings settings = _Settings;
-    // settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-    // settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
 
     if(begin_node<ImmediateUserInterfaceCheckButton>(
         _ID,
@@ -5086,11 +5062,12 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
                 m_Style.get_font_size(), m_Style.get_current_font());
 
             m_Renderer->push_text(
+                button->State.BoundingBox.center() - textBoundingBox.size() * 0.5f,
                 _Text.begin(),
                 _Text.end(),
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix((float)depth++, button->State.BoundingBox.center() - textBoundingBox.size() * 0.5f));
+                m_Renderer->calculate_transform_matrix((float)depth++));
 
             m_Renderer->pop_clip_box();
         }
@@ -5109,6 +5086,241 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
         }
 
         end_node<ImmediateUserInterfaceLabel>();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, std::string& _Text)
+{
+    struct ImmediateUserInterfaceInputText : public ImmediateUserInterfaceNode
+    {
+    public:
+        ImmediateUserInterfaceInputText(const std::string& _Name): ImmediateUserInterfaceNode(_Name){}
+        virtual ~ImmediateUserInterfaceInputText(){}
+        virtual void layout(ImmediateUserInterfaceContextLayer*) override{}
+
+        static int move_cursor_left(const int& _Cursor, std::string& _Text)
+        {
+            if(_Text.empty()) return 0;
+
+            auto iterator = _Text.begin() + _Cursor;
+            
+            if(iterator != _Text.begin())
+                Frenchie::Core::String::utf8_prior(iterator);
+            
+            return gs_clamp((int)(iterator - _Text.begin()), 0, gs_max((int)_Text.size(), 0));
+        }
+
+        static int move_cursor_right(const int& _Cursor, std::string& _Text)
+        {
+            if(_Text.empty()) return 0;
+
+            auto iterator = _Text.begin() + _Cursor;
+
+            if(iterator != _Text.end())
+                Frenchie::Core::String::utf8_next(iterator);
+            
+            return gs_clamp((int)(iterator - _Text.begin()), 0, gs_max((int)_Text.size(), 0));
+        }
+
+        int                                            Utf8CursorPosition = 0;
+        std::chrono::high_resolution_clock::time_point CursorAnimtionTimer;
+        std::chrono::high_resolution_clock::time_point CursorMovementTimer;
+    };
+    
+    if(begin_scrollarea(std::string(_ID).append("/ScrollArea")))
+    {
+        if(begin_node<ImmediateUserInterfaceInputText>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+        {
+            ImmediateUserInterfaceInputText* widget =
+                get_rendering_stack_top<ImmediateUserInterfaceInputText>();
+
+            // render
+            struct ImmediateUserInterfaceInputTextRenderingData
+            {
+                gs_vec2f  CursorPosition;
+                gs_2dboxf TextBoundingBox;
+                gs_2dboxf HoveredSymbolBoundingBox;
+            } textRenderingData = 
+            {
+                gs_vec2f(0.f, 0.f),
+                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min),
+                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min)
+            };
+
+            {
+                m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, widget));
+
+                int depth = widget->Cache.Depth;
+
+                m_Renderer->push_rectangle_rounded_filled(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Max,
+                    m_Style.get_frames_radius(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                    m_Renderer->calculate_transform_matrix((float)depth++)
+                );
+
+                m_Renderer->push_text(
+                    widget->State.BoundingBox.Min,
+                    _Text.begin(),
+                    _Text.end(),
+                    m_Style.get_font_size(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++),
+                    m_Style.get_current_font(),
+                    [this, widget, &textRenderingData](const gs_2dboxf& _CurrentSymbolBoundingBox, const gs_vec2f& _CursorPosition, const int& _Utf8IteratorPosition)
+                    {
+                        // calculate text bounding box
+                        textRenderingData.TextBoundingBox = gs_2dboxf(
+                            textRenderingData.TextBoundingBox.Min,
+                            _CurrentSymbolBoundingBox.Min,
+                            textRenderingData.TextBoundingBox.Max,
+                            _CurrentSymbolBoundingBox.Max);
+
+                        // calculate mouse hovered symbol bounding box
+                        if(_CurrentSymbolBoundingBox.contains(m_Renderer->get_cursor_postion()))
+                            textRenderingData.HoveredSymbolBoundingBox = _CurrentSymbolBoundingBox;
+
+                        // move cursor
+                        if(widget->Utf8CursorPosition == _Utf8IteratorPosition)
+                            textRenderingData.CursorPosition = _CursorPosition;
+                    }
+                );
+
+                // render hovered symbol bounding box
+                if(gs_vector_length(textRenderingData.HoveredSymbolBoundingBox.size()) > 0.f)
+                {
+                    m_Renderer->push_rectangle_filled(
+                        textRenderingData.HoveredSymbolBoundingBox.Min,
+                        textRenderingData.HoveredSymbolBoundingBox.Max,
+                        gs_rgba_color(255, 0, 0, 64),
+                        m_Renderer->calculate_transform_matrix((float)depth++));
+                }
+
+
+                // render cursor
+                if(gs_vector_length(textRenderingData.CursorPosition) > 0.f)
+                {
+                    if(widget->CursorAnimtionTimer.time_since_epoch().count() <= 0)
+                    {
+                        widget->CursorAnimtionTimer = Frenchie::Core::tic();
+                    }
+                    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::tic()) > 300)
+                    {
+                        if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::tic()) < 700)
+                        {
+                            m_Renderer->push_rectangle_filled(
+                                textRenderingData.CursorPosition,
+                                textRenderingData.CursorPosition + gs_vec2f(4.f, m_Style.get_font_size()),
+                                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                                m_Renderer->calculate_transform_matrix((float)depth++));
+                        }
+                        else
+                        {
+                            widget->CursorAnimtionTimer = std::chrono::steady_clock::time_point();
+                        }
+                    }
+                }
+
+                // simple event processing
+                if(widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+                {
+                    ImmedidateUserInterfaceInput event(this);
+
+                    const int cursorMovementInterval = 80; // TODO: this MUST BE a setting !!!
+
+                    // move cursor left
+                    if(event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
+                    {
+                        widget->Utf8CursorPosition = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8CursorPosition, _Text);
+                    }
+                    else if(event.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
+                    {
+                        if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                        {
+                            widget->CursorMovementTimer = Frenchie::Core::tic();
+                        }
+                        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
+                        {
+                            widget->Utf8CursorPosition      = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8CursorPosition, _Text);
+                            widget->CursorMovementTimer = std::chrono::steady_clock::time_point();
+                        }
+                    }
+
+                    // move cursor right
+                    else if(event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
+                    {
+                        widget->Utf8CursorPosition = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8CursorPosition, _Text);
+                    }
+                    else if(event.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
+                    {
+                        if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                        {
+                            widget->CursorMovementTimer = Frenchie::Core::tic();
+                        }
+                        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
+                        {
+                            widget->Utf8CursorPosition      = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8CursorPosition, _Text);
+                            widget->CursorMovementTimer = std::chrono::steady_clock::time_point();
+                        }
+                    }
+
+                    // insert text
+                    else if(event.has_input_text())
+                    {
+                        _Text.insert(widget->Utf8CursorPosition, event.input_text());
+                        widget->Utf8CursorPosition = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8CursorPosition, _Text);
+                    }
+
+                    // remove text
+                    else if(event.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
+                    {
+                        int previousCursorPosition = widget->Utf8CursorPosition;
+                        widget->Utf8CursorPosition = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8CursorPosition, _Text);
+
+                        if(previousCursorPosition - widget->Utf8CursorPosition > 0)
+                            _Text.erase(widget->Utf8CursorPosition, previousCursorPosition - widget->Utf8CursorPosition);
+                    }
+                    else if(event.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
+                    {
+                        if(widget->CursorMovementTimer.time_since_epoch().count() <= 0)
+                        {
+                            widget->CursorMovementTimer = Frenchie::Core::tic();
+                        }
+                        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
+                        {
+                            int previousCursorPosition = widget->Utf8CursorPosition;
+                            widget->Utf8CursorPosition = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8CursorPosition, _Text);
+
+                            if(previousCursorPosition - widget->Utf8CursorPosition > 0)
+                                _Text.erase(widget->Utf8CursorPosition, previousCursorPosition - widget->Utf8CursorPosition);
+
+                            widget->CursorMovementTimer = std::chrono::steady_clock::time_point();
+                        }
+                    }
+                }
+
+                m_Renderer->pop_clip_box();
+            }
+
+            // calculate geometry
+            {
+                ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
+
+                gs_vec2f size = gs_vec2f(
+                    gs_max(parent->State.BoundingBox.size().x, textRenderingData.TextBoundingBox.size().x),
+                    gs_max(parent->State.BoundingBox.size().y, textRenderingData.TextBoundingBox.size().y));
+
+                widget->State.MaximumSize = size;
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + gs_clamp(size, widget->State.MinimumSize, widget->State.MaximumSize));
+            }
+
+            end_node<ImmediateUserInterfaceInputText>();
+        }
+
+        end_scrollarea();
     }
 }
 

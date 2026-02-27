@@ -251,37 +251,6 @@ std::string ApplicationPlatformBackend::get_window_name()
     return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context)));
 }
 
-gs_vec2f ApplicationPlatformBackend::get_window_size()
-{
-    int x = 0;
-    int y = 0;
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
-    return {x, y};
-}
-
-gs_vec2f ApplicationPlatformBackend::get_window_position()
-{
-    // window
-    int x = 0;
-    int y = 0;
-    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
-    return {x, y};
-}
-
-gs_vec2f ApplicationPlatformBackend::get_window_framebuffer_size()
-{
-    // execute backend
-    int display_w = 0;
-    int display_h = 0;
-    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
-    return gs_vec2f(display_w, display_h);
-}
-
-gs_vec2f ApplicationPlatformBackend::get_mouse_scroll_offset()
-{
-    return m_Input.MouseScrollOffset;
-}
-
 void ApplicationPlatformBackend::set_window_name(const std::string& _Name)
 {
     glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Name.c_str());
@@ -362,11 +331,22 @@ void ApplicationPlatformBackend::frame_start()
 
 void ApplicationPlatformBackend::frame_update()
 {
-    // execute backend
+    // retrieve frame buffer size
     int display_w = 0;
     int display_h = 0;
     glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
-    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), gs_vec2f(display_w, display_h));
+    m_Input.FrameBufferSize = gs_vec2f(display_w, display_h);
+
+    // retrieve window size
+    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
+    m_Input.WindowSize = gs_vec2f(display_w, display_h);
+
+    // retrieve window position
+    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
+    m_Input.WindowPosition = gs_vec2f(display_w, display_h);
+
+    // adjust viewport
+    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), m_Input.FrameBufferSize);
 }
 
 void ApplicationPlatformBackend::frame_finish()
