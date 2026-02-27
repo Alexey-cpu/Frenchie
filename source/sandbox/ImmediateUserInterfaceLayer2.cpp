@@ -281,17 +281,17 @@ namespace Frenchie
                 gs_vec2f  position = _Position;
 
                 // vertical alignment
-                if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop)
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
                     position = gs_vec2f(position.x, _Position.y);
-                else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignBottom)
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
                     position = gs_vec2f(position.x, (position + parentBoundingBox.size() - _ChildrenSize).y);
                 else // center is default
                     position = gs_vec2f(position.x, (parentBoundingBox.center() - _ChildrenSize * 0.5f).y);
 
                 // horizontal alignment
-                if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft)
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
                     position = gs_vec2f(_Position.x, position.y);
-                else if(_Settings & ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignRight)
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
                     position = gs_vec2f((position + parentBoundingBox.size() - _ChildrenSize).x, position.y);
                 else // center is default
                     position = gs_vec2f((parentBoundingBox.center() - _ChildrenSize * 0.5f).x, position.y);
@@ -1061,7 +1061,7 @@ namespace Frenchie
                         contentArea->ContentView->State.ContentSize,
                         _Context->m_Style.get_scrollbar_width());
 
-                    if((contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar))
+                    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
                     {
                         if((int)gs_abs(scrollbarSliderLength.x - scrollbarMaximumValue.x) < _Context->m_Style.get_frames_width())
                         {
@@ -1075,12 +1075,12 @@ namespace Frenchie
                             return;
                         }
                     }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_NeverHorizontalScrollBar)
+                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
                     {
                         do_not_render_scroll_bar(_Context);
                         return;
                     }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AlwaysHorizontalScrollBar)
+                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
                     {
                     }
                     else
@@ -1099,7 +1099,7 @@ namespace Frenchie
                         contentArea->ContentView->State.ContentSize,
                         _Context->m_Style.get_scrollbar_width());
 
-                    if((contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar))
+                    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
                     {
                         if((int)gs_abs(scrollbarSliderLength.y - scrollbarMaximumValue.y) < _Context->m_Style.get_frames_width())
                         {
@@ -1113,12 +1113,12 @@ namespace Frenchie
                             return;
                         }
                     }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_NeverVerticalScrollBar)
+                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
                     {
                         do_not_render_scroll_bar(_Context);
                         return;
                     }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AlwaysVerticalScrollBar)
+                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
                     {
                     }
                     else
@@ -2601,16 +2601,16 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
     // resize to contents
     State.MinimumSize = gs_vec2f(
-        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally) ?
+        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
             (ContentView->State.ContentSize + get_vertical_scrollbar_width(_Context)).x + padding.x * 2.f :
                 State.MinimumSize.x,
-        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically) ?
+        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
             (ContentView->State.ContentSize + get_horizontal_scrollbar_width(_Context)).y + padding.y :
                 State.MinimumSize.y);
     
     State.MaximumSize = gs_vec2f(
-        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
-        (State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
+        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
+        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
     
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
@@ -3930,7 +3930,6 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
 
         // hover end logic
         gs_2dboxf rect = node->get_visible_rect(_Context);
-        //rect = gs_2dboxf(rect.Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), rect.Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context));
 
         if(!rect.contains(_Event.get_cusor_position()))
         {
@@ -3958,16 +3957,18 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
     // hover start logic
     if(hoveredNode)
     {
-        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
+        if(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes)
+        {
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-        _Context->m_Renderer->push_rectangle_rounded(
-            hoveredNode->get_visible_rect(_Context).Min,
-            hoveredNode->get_visible_rect(_Context).Max,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->m_Renderer->calculate_transform_matrix((float)depth)
-        );
+            _Context->m_Renderer->push_rectangle_rounded(
+                hoveredNode->get_visible_rect(_Context).Min,
+                hoveredNode->get_visible_rect(_Context).Max,
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                _Context->m_Renderer->calculate_transform_matrix((float)depth));
+        }
 
         // check if anythin is already started to be hovered
         if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
@@ -4373,7 +4374,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
         !scrollArea->State.BoundingBox.contains(_Event.get_cusor_position())) return;
 
     // adjust vertical scroll bar by mouse wheel
-    if((scrollArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar))
+    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
     {
         ImmediateUserInterfaceScrollAreaScrollBar* verticalScrollBar =
             scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
@@ -4389,7 +4390,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
     }
 
     // adjust vertical scrollbar by arrow keys
-    if((scrollArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar))
+    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment))
     {
         ImmediateUserInterfaceScrollAreaScrollBar* verticalScrollBar =
             scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
@@ -4420,7 +4421,7 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
     }
 
     // adjust horizontal scrollbar by arrow keys
-    if((scrollArea->State.Settings & ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar))
+    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment))
     {
         ImmediateUserInterfaceScrollAreaScrollBar* horizontalScrollBar =
             scrollArea != nullptr ? scrollArea->HorizontalScrollBar : nullptr; 
@@ -4804,9 +4805,9 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 }
 
 bool ImmediateUserInterfaceContextLayer::check_button(
-    const std::string&                        _ID,
-    const ImmediateUserInterfaceNodeSettings& _Settings,
-    bool*                                     _Checked)
+    const std::string&                               _ID,
+    const ImmediateUserInterfaceCheckButtonSettings& _Settings,
+    bool*                                            _Checked)
 {
     struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceNode
     {
@@ -4816,45 +4817,47 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
         void layout(ImmediateUserInterfaceContextLayer* _Context)
         {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+            // if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-            // layout checkbox
-            if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
-            {
-                State.BoundingBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + _Context->m_Style.get_font_size());
+            // // layout checkbox
+            // if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+            // {
+            //     State.BoundingBox = gs_2dboxf(
+            //         State.BoundingBox.Min,
+            //         State.BoundingBox.Min + _Context->m_Style.get_font_size());
 
-                return;
-            }
+            //     return;
+            // }
 
-            // layout radio button
-            if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
-            {
-                State.BoundingBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + _Context->m_Style.get_font_size());
+            // // layout radio button
+            // if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+            // {
+            //     State.BoundingBox = gs_2dboxf(
+            //         State.BoundingBox.Min,
+            //         State.BoundingBox.Min + _Context->m_Style.get_font_size());
 
-                return;
-            }
+            //     return;
+            // }
 
-            // layout slider button
-            if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
-            {
-                State.BoundingBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
+            // // layout slider button
+            // if(State.Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+            // {
+            //     State.BoundingBox = gs_2dboxf(
+            //         State.BoundingBox.Min,
+            //         State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size()));
 
-                return;
-            }
+            //     return;
+            // }
         }
     };
 
-    ImmediateUserInterfaceNodeSettings settings = _Settings;
-    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-    settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
+    // ImmediateUserInterfaceNodeSettings settings = _Settings;
+    // settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+    // settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
 
-    if(begin_node<ImmediateUserInterfaceCheckButton>(_ID, settings))
+    if(begin_node<ImmediateUserInterfaceCheckButton>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // setup
         ImmediateUserInterfaceCheckButton* widget =  get_rendering_stack_top<ImmediateUserInterfaceCheckButton>();
@@ -5009,6 +5012,31 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 }
             }
         
+            // geometry
+            {
+                // layout checkbox
+                if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+                {
+                    widget->State.BoundingBox = gs_2dboxf(
+                        widget->State.BoundingBox.Min,
+                        widget->State.BoundingBox.Min + m_Style.get_font_size());
+                }
+                // layout radio button
+                else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+                {
+                    widget->State.BoundingBox = gs_2dboxf(
+                        widget->State.BoundingBox.Min,
+                        widget->State.BoundingBox.Min + m_Style.get_font_size());
+                }
+                // layout slider button
+                else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+                {
+                    widget->State.BoundingBox = gs_2dboxf(
+                        widget->State.BoundingBox.Min,
+                        widget->State.BoundingBox.Min + gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size()));
+                }
+            }
+
             m_Renderer->pop_clip_box();
         }
 
@@ -5181,15 +5209,15 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
 
         if(begin_scrollarea(std::string(_ID).append("/Menu/InternalScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults                                                 |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar                    |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar                  |
-            (hasParent ? ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsVertically : 0) |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally                 |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar           |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar             |
-            ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar           |
-            ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_VerticalAlignTop                   |
-            ImmediateUserInterfaceLayoutAlignmentSettings_::ImmediateUserInterfaceLayoutAlignmentSettings_HorizontalAlignLeft))
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar                    |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar                  |
+            (hasParent ? ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically : 0) |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally                 |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment           |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment             |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment           |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop                   |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
             menu->InternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
             menu->InternalScrollArea->State.PlaceInFollow = true;
@@ -5225,13 +5253,13 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
         if(hasParent && isHovered && menuItem != nullptr)
         {
             if(begin_scrollarea(std::string(_ID).append("/Main/ExternalScrollArea"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent                                     |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveVerticalScrollBar          |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_AdaptiveHorizontalScrollBar        |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_MouseWheelAdjustsVerticalScrollBar |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustVerticalScrollBar   |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ArrowKeysAdjustHorizontalScrollBar |
-                ImmediateUserInterfaceScrollAreaSettings_::ImmediateUserInterfaceScrollAreaSettings_ResizeToContentsHorizontally))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent                               |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar          |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar        |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment |
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
             {
                 menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
 
