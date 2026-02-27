@@ -306,6 +306,9 @@ namespace Frenchie
             ApplicationPlatformBackendKey          Keys             [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END]{};
             Frenchie::Core::Optional<unsigned int> Character;
             gs_vec2f                               MouseScrollOffset{gs_vec2f(0.f, 0.f)};
+            gs_vec2f                               WindowSize;
+            gs_vec2f                               WindowPosition;
+            gs_vec2f                               FrameBufferSize;
         };
 
         class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
@@ -329,6 +332,7 @@ namespace Frenchie
             static gs_vec2f    get_window_cursor_dragdelta();
             static gs_vec2f    get_window_framebuffer_size();
             static gs_vec2f    get_mouse_scroll_offset();
+            static bool        has_input_text();
 
             static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&);

@@ -17,6 +17,32 @@ gs_vec2f ApplicationPlatformBackend::get_window_cursor_dragdelta()
 {
     return m_Input.MouseCursor.DragDelta;
 }
+
+gs_vec2f ApplicationPlatformBackend::get_window_size()
+{
+    return m_Input.WindowSize;
+}
+
+gs_vec2f ApplicationPlatformBackend::get_window_position()
+{
+    return m_Input.WindowPosition;
+}
+
+gs_vec2f ApplicationPlatformBackend::get_window_framebuffer_size()
+{
+    return m_Input.FrameBufferSize;
+}
+
+gs_vec2f ApplicationPlatformBackend::get_mouse_scroll_offset()
+{
+    return m_Input.MouseScrollOffset;
+}
+
+bool ApplicationPlatformBackend::has_input_text()
+{
+    return m_Input.Character.has_value();
+}
+
 bool ApplicationPlatformBackend::is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button)
 {
     return m_Input.MouseButtons[_Button].Down;

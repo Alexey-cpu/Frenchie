@@ -60,6 +60,13 @@ namespace Frenchie
                 return utf8::unchecked::next(_Iterator);
             }
 
+            template<typename octet_iterator>
+            unsigned int utf8_prior(octet_iterator& _Iterator)
+            {
+                return utf8::unchecked::prior(_Iterator);
+            }
+
+
             // UTF-8 string formatting
             template<typename ... Args>
             std::string format(const std::string& _Format, Args... _Args)

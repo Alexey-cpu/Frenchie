@@ -61,11 +61,10 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     // update application input input
 
     // TODO: this MUST BE SETTINGS
-    const double KeyClicksCountResetTime = 200;
-    const double KeyHoldDetectionTime    = 100;
-    const double KeyClickDetectionTime   = 500;
+    const double KeyClicksCountResetTime = 200; // ms
+    const double KeyHoldDetectionTime    = 100; // ms
+    const double KeyClickDetectionTime   = 500; // ms
 
-    
     // handle mouse buttons events
     for (int mouseButton = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
              mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
@@ -155,6 +154,14 @@ void ApplicationInstance::ApplicationInstance::frame_start()
     }
 
     // character input
+
+    // catch character '\n'
+    if(ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Enter].Pressed)
+        ApplicationPlatformBackend::m_Input.Character = '\n';
+
+    // catch character '\t'
+    if(ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Tab].Pressed)
+        ApplicationPlatformBackend::m_Input.Character = '\t';
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
