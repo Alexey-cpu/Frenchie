@@ -324,6 +324,20 @@ bool ApplicationPlatformBackend::awake()
 
 void ApplicationPlatformBackend::frame_start()
 {
+    // retrieve frame buffer size
+    int x = 0;
+    int y = 0;
+    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    m_Input.FrameBufferSize = gs_vec2f(x, y);
+
+    // retrieve window size
+    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    m_Input.WindowSize = gs_vec2f(x, y);
+
+    // retrieve window position
+    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &x, &y);
+    m_Input.WindowPosition = gs_vec2f(x, y);
+
     // execute backend
     glfwPollEvents();
     glfwSwapInterval(1);
@@ -331,20 +345,6 @@ void ApplicationPlatformBackend::frame_start()
 
 void ApplicationPlatformBackend::frame_update()
 {
-    // retrieve frame buffer size
-    int display_w = 0;
-    int display_h = 0;
-    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
-    m_Input.FrameBufferSize = gs_vec2f(display_w, display_h);
-
-    // retrieve window size
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
-    m_Input.WindowSize = gs_vec2f(display_w, display_h);
-
-    // retrieve window position
-    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Context), &display_w, &display_h);
-    m_Input.WindowPosition = gs_vec2f(display_w, display_h);
-
     // adjust viewport
     ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), m_Input.FrameBufferSize);
 }
