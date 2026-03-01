@@ -246,6 +246,12 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     This is some really usefull text
     This is some really usefull text
     This is some really usefull text
+
+    class A
+    {
+        int a = 100;
+        int b = 200;
+    };
     )";
 
     m_ImmediateUserInterface->input_string("InputString", text);

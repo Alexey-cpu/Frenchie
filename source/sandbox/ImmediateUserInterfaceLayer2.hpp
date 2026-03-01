@@ -135,6 +135,13 @@ namespace Frenchie
             ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2
         };
 
+        enum ImmediateUserInterfaceInputStringSettings_ : int
+        {
+            ImmediateUserInterfaceInputStringSettings_NoInput     = 1 << 0,
+            ImmediateUserInterfaceInputStringSettings_NoCursor    = 1 << 1,
+            ImmediateUserInterfaceInputStringSettings_NoSelection = 1 << 2,
+        };
+
         // mouse hover
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
@@ -275,11 +282,19 @@ namespace Frenchie
         {
             ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
 
+            // getters
             gs_vec2f    get_cusor_position() const;
             gs_vec2f    get_cusor_drag_delta() const;
             gs_vec2f    get_cusor_scroll_offset() const;
-            bool        has_input_text() const;
-            std::string input_text() const;
+            std::string get_input_text() const;
+            std::string get_clipboard_text() const;
+            
+            // predicates
+            bool has_input_text() const;
+            bool has_clipboard_text() const;
+
+            // setters
+            void set_clipboard_text(const std::string&);
 
             bool is_mouse_button_down() const;
             bool is_mouse_button_hold() const;

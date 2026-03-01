@@ -1714,14 +1714,29 @@ gs_vec2f ImmedidateUserInterfaceInput::get_cusor_scroll_offset() const
     return ApplicationPlatformBackend::get_mouse_scroll_offset();
 }
 
+std::string ImmedidateUserInterfaceInput::get_input_text() const
+{
+    return ApplicationPlatformBackend::input_text();
+}
+
+std::string ImmedidateUserInterfaceInput::get_clipboard_text() const
+{
+    return ApplicationPlatformBackend::get_clipboard_text();
+}
+
 bool ImmedidateUserInterfaceInput::has_input_text() const
 {
     return ApplicationPlatformBackend::has_input_text();
 }
 
-std::string ImmedidateUserInterfaceInput::input_text() const
+bool ImmedidateUserInterfaceInput::has_clipboard_text() const
 {
-    return ApplicationPlatformBackend::input_text();
+    return ApplicationPlatformBackend::has_clipboard_text();
+}
+
+void ImmedidateUserInterfaceInput::set_clipboard_text(const std::string& _Value)
+{
+    ApplicationPlatformBackend::set_clipboard_text(_Value);
 }
 
 bool ImmedidateUserInterfaceInput::is_mouse_button_down() const
@@ -5208,9 +5223,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
     {
         gs_vec2f  CursorPosition;
         gs_2dboxf TextBoundingBox;
-        gs_2dboxf HoveredSymbolBoundingBox;
         gs_2dboxf SelectionRangeBoundingBox;
-        int       HoveredSymbolUtf8CursorPosition;
+        
+        Frenchie::Core::Optional<gs_2dboxf> HoveredSymbolBoundingBox;
+        Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
     };
 
     if(begin_scrollarea(std::string(_ID).append("/ScrollArea"),
@@ -5228,14 +5244,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
             ImmediateUserInterfaceInputText* widget =
                 get_rendering_stack_top<ImmediateUserInterfaceInputText>();
 
-            ImmediateUserInterfaceInputTextRenderingData textRenderingData = 
-            {
-                gs_vec2f(0.f, 0.f),
-                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min),
-                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min),
-                gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min),
-                0
-            };
+            ImmediateUserInterfaceInputTextRenderingData textRenderingData;
+            textRenderingData.CursorPosition            = gs_vec2f(0.f, 0.f);
+            textRenderingData.TextBoundingBox           = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+            textRenderingData.SelectionRangeBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
 
             {
                 m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, widget));
@@ -5361,11 +5373,11 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                 }
 
                 // render hovered symbol bounding box
-                if(gs_vector_length(textRenderingData.HoveredSymbolBoundingBox.size()) > 0.f)
+                if(textRenderingData.HoveredSymbolBoundingBox.has_value())
                 {
                     m_Renderer->push_rectangle_filled(
-                        textRenderingData.HoveredSymbolBoundingBox.Min,
-                        textRenderingData.HoveredSymbolBoundingBox.Max,
+                        textRenderingData.HoveredSymbolBoundingBox.value().Min,
+                        textRenderingData.HoveredSymbolBoundingBox.value().Max,
                         gs_rgba_color(
                             gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                             gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -5532,12 +5544,36 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                         adjust_scroll_bar_position();
                     }
 
-                    // setup cursor position
-                    else if(m_Input.is_mouse_button_clicked())
+                    // set left cursor position
+                    else if(m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)     ||
+                            m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)    ||
+                            m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)  ||
+                            m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
+                            m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
+                            m_Input.is_mouse_button_pressed())
                     {
-                        widget->Utf8LeftCursorPosition  = textRenderingData.HoveredSymbolUtf8CursorPosition;
+                        if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
+                        {
+                            widget->Utf8LeftCursorPosition  = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                            widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
+                        }
+
                         widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                     }
+
+                    // set right cursor position
+                    else if(m_Input.is_mouse_button_down())
+                    {
+                        if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
+                        {
+                            if(textRenderingData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
+                                widget->Utf8RightCursorPosition = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                            else
+                                widget->Utf8LeftCursorPosition = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                        }
+                    }
+
+                    // modifications
 
                     // insert text
                     else if(m_Input.has_input_text())
@@ -5551,7 +5587,7 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                         }
 
                         // insert text after selection
-                        _Text.insert(widget->Utf8LeftCursorPosition, m_Input.input_text());
+                        _Text.insert(widget->Utf8LeftCursorPosition, m_Input.get_input_text());
                         widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                         widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
 
@@ -5604,24 +5640,39 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                         adjust_scroll_bar_position();
                     }
 
-                    // highlight text
-                    else if(m_Input.is_mouse_button_down())
+                    // copy text
+                    if((m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl) ||
+                        m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl)) &&
+                        m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_C)) // Ctrl + C
                     {
-                        if(textRenderingData.HoveredSymbolUtf8CursorPosition > widget->Utf8LeftCursorPosition)
-                            widget->Utf8RightCursorPosition = textRenderingData.HoveredSymbolUtf8CursorPosition;
-                        else
-                            widget->Utf8LeftCursorPosition = textRenderingData.HoveredSymbolUtf8CursorPosition;
+                        if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition))
+                        {
+                            m_Input.set_clipboard_text(
+                                std::string(
+                                    _Text.begin() + widget->Utf8LeftCursorPosition,
+                                    _Text.begin() + gs_clamp(widget->Utf8RightCursorPosition + 1, 0, gs_max(0, (int)_Text.size() - 1))));
+                        }
                     }
 
-                    // reset cursor position
-                    else if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)     ||
-                            m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow)    ||
-                            m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow)  ||
-                            m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
-                            m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
-                            m_Input.is_mouse_button_clicked())
+                    // paste text
+                    if((m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl) ||
+                        m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl)) &&
+                        m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_V)) // Ctrl + V
                     {
-                        widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
+                        if(m_Input.has_clipboard_text())
+                        {
+                            // insert text from clipboard
+                            std::string clipboardText = m_Input.get_clipboard_text();
+
+                            _Text.insert(widget->Utf8LeftCursorPosition, clipboardText);
+                            
+                            for(int i = 0; i < (int)clipboardText.size(); i++)
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
+                            
+                            widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
+
+                            adjust_scroll_bar_position();
+                        }
                     }
                 }
 
