@@ -280,6 +280,7 @@ namespace Frenchie
                     case ApplicationPlatformBackendMouseButtonLeft: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonLeft);
                     case ApplicationPlatformBackendMouseButtonRight: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonRight);
                     case ApplicationPlatformBackendMouseButtonMiddle: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonMiddle);
+                    default: return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonEnd);
                 }
                 return GS_STRINGIFY(ApplicationPlatformBackendMouseButtonEnd);
             }

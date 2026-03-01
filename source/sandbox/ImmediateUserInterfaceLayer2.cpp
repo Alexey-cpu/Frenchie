@@ -1584,7 +1584,7 @@ namespace Frenchie
             ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
             virtual ~ImmediateUserInterfaceMenuAction(){}
 
-            void layout(ImmediateUserInterfaceContextLayer* _Context)
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
                 if(_Context == nullptr) return;
 
@@ -1701,7 +1701,9 @@ ImmedidateUserInterfaceInput::ImmedidateUserInterfaceInput(ImmediateUserInterfac
 
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
 {
-    return m_Context != nullptr && m_Context->m_Renderer != nullptr ? m_Context->m_Renderer->get_cursor_postion() : gs_vec2f(0.f, 0.f);
+    return m_Context != nullptr && m_Context->m_Renderer != nullptr ?
+            gs_vec2f(m_Context->m_Renderer->get_cursor_postion().x, m_Context->m_Renderer->get_cursor_postion().y) :
+                gs_vec2f(0.f, 0.f);
 }
 
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_drag_delta() const
@@ -4834,7 +4836,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
     struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceNode
     {
     public:
-        ImmediateUserInterfaceCheckButton(const std::string& _Name) : ImmediateUserInterfaceNode(Name){}
+        ImmediateUserInterfaceCheckButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
         virtual ~ImmediateUserInterfaceCheckButton(){}
 
         void layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -5165,12 +5167,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                 // move forward
                 while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
                 {
+                    if(*iterator == '\n') break;
                     Frenchie::Core::String::utf8_next(iterator);
                     SymbolsCountTillLineStart--;
                 }
-
-                auto it = iterator;
-                if(it != _Text.end() && Frenchie::Core::String::utf8_next(it) == '\n') iterator = it;
 
                 return (int)(iterator - _Text.begin());
             }
@@ -5552,7 +5552,7 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                             m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
                             m_Input.is_mouse_button_pressed())
                     {
-                        if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
+                        if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value() && m_Input.is_mouse_button_pressed())
                         {
                             widget->Utf8LeftCursorPosition  = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
