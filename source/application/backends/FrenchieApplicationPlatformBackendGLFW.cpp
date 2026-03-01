@@ -251,9 +251,24 @@ std::string ApplicationPlatformBackend::get_window_name()
     return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context)));
 }
 
-void ApplicationPlatformBackend::set_window_name(const std::string& _Name)
+std::string ApplicationPlatformBackend::get_clipboard_text()
 {
-    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Name.c_str());
+    return std::string(glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(m_Context)));
+}
+
+bool ApplicationPlatformBackend::has_clipboard_text()
+{
+    return glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(m_Context)) != nullptr;
+}
+
+void ApplicationPlatformBackend::set_window_name(const std::string& _Value)
+{
+    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Context), _Value.c_str());
+}
+
+void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
+{
+    glfwSetClipboardString(reinterpret_cast<GLFWwindow*>(m_Context), _Value.c_str());
 }
 
 bool ApplicationPlatformBackend::awake()

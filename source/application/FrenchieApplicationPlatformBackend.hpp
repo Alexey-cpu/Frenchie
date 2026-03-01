@@ -326,13 +326,17 @@ namespace Frenchie
 
             // getters
             static std::string get_window_name();
+            static std::string get_clipboard_text();
             static gs_vec2f    get_window_size();
             static gs_vec2f    get_window_position();
             static gs_vec2f    get_window_cursor_position();
             static gs_vec2f    get_window_cursor_dragdelta();
             static gs_vec2f    get_window_framebuffer_size();
             static gs_vec2f    get_mouse_scroll_offset();
-            static bool        has_input_text();
+
+            // predicates
+            static bool has_input_text();
+            static bool has_clipboard_text();
 
             static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&);
@@ -352,7 +356,8 @@ namespace Frenchie
             static std::string input_text();
 
             // setters
-            static void set_window_name(const std::string& _Name);
+            static void set_window_name(const std::string&);
+            static void set_clipboard_text(const std::string&);
 
         private:
 
