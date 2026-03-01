@@ -17,8 +17,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    windows_test();
+    widgets_test();
+    //windows_test();
     //scrollarea_test();
     
     //renderer_test();
@@ -240,10 +240,12 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     //     m_ImmediateUserInterface->end_window();
     // }
 
-    static std::string text = R"(class A
-{
-
-};
+    static std::string text = R"(
+    This is some really usefull text
+    This is some really usefull text
+    This is some really usefull text
+    This is some really usefull text
+    This is some really usefull text
     )";
 
     m_ImmediateUserInterface->input_string("InputString", text);

@@ -249,7 +249,7 @@ namespace Frenchie
 
             ApplicationRenderingBackendFont get_current_font() const
             {
-                return Font;
+                return Font.is_null() ? ApplicationRenderingBackend::get_default_font() : Font;
             }
 
             gs_color get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
