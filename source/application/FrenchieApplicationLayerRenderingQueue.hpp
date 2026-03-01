@@ -303,7 +303,7 @@ namespace Frenchie
 
             struct DefaultSymbolProcessor
             {
-                void operator()(const gs_2dboxf&, const gs_vec2f&, const int&){}
+                void operator()(const gs_2dboxf&, const gs_vec2f&, const int&, const unsigned int&) const{}
             };
             
 
@@ -316,7 +316,8 @@ namespace Frenchie
                 const gs_color&                        _Color,
                 const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
                 const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
-                ProcessSymbol                          _ProcessSymbol = DefaultSymbolProcessor())
+                const ProcessSymbol&                   _ProcessSymbol = DefaultSymbolProcessor(),
+                const bool&                            _DoNotRender   = false)
             {
                 // main code
                 ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
@@ -328,7 +329,7 @@ namespace Frenchie
                 Type  start     = _Begin;
                 Type  end       = _End;
 
-                gs_2dboxf lastSymbolBox = gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY));
+                gs_2dboxf symbolBox = gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY));
 
                 while (start < end)                
                 {
@@ -341,8 +342,9 @@ namespace Frenchie
                     {
                         _ProcessSymbol(
                             gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
-                            gs_vec2f(lastSymbolBox.Max.x, positionY - offset),
-                            cursor);
+                            gs_vec2f(symbolBox.Max.x, positionY - offset),
+                            cursor,
+                            symbol);
 
                         // next line
                         if(symbol == '\n')
@@ -366,7 +368,7 @@ namespace Frenchie
                             // May be use fallback font and take fallback character from there ???
                         }
 
-                        lastSymbolBox = gs_2dboxf(
+                        symbolBox = gs_2dboxf(
                             gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
                             gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset));
 
@@ -383,15 +385,16 @@ namespace Frenchie
                     gs_vec2f                         min                    = gs_vec2f(positionX, positionY) + gs_vec2f(glyphHorizontalBearing, glyphVerticalBearing);
                     gs_vec2f                         max                    = min + gs_vec2f(glyphWidth, glyphHeight);
 
-                    build_rectangle_filled_mesh(min, max, glyph.MinUV, glyph.MaxUV, _Color);
+                    if(!_DoNotRender)
+                        build_rectangle_filled_mesh(min, max, glyph.MinUV, glyph.MaxUV, _Color);
 
                     // calculate last symbol bounding box
-                    lastSymbolBox = gs_2dboxf(min, max);
-                    if(gs_vector_length(lastSymbolBox.size()) <= 0.f)
-                        lastSymbolBox = gs_2dboxf(min - gs_vec2f(0.f, offset), max + gs_vec2f(glyphAdvance, 0.f));
+                    symbolBox = gs_2dboxf(min, max);
+                    if(gs_vector_length(symbolBox.size()) <= 0.f)
+                        symbolBox = gs_2dboxf(min - gs_vec2f(0.f, offset), min + gs_vec2f(glyphAdvance, 0.f));
 
                     // process symbol
-                    _ProcessSymbol(lastSymbolBox, gs_vec2f(min.x, positionY - offset), cursor);
+                    _ProcessSymbol(symbolBox, gs_vec2f(min.x, positionY - offset), cursor, symbol);
 
                     // move cursor
                     positionX += gs_vec2f(glyphAdvance, 0.f).x;
@@ -401,9 +404,11 @@ namespace Frenchie
                 _ProcessSymbol(
                     gs_2dboxf(gs_vec2f(positionX, positionY), gs_vec2f(positionX, positionY)),
                     gs_vec2f(positionX, positionY) - gs_vec2f(0.f, offset),
-                    (int)(start - _Begin));
+                    (int)(start - _Begin),
+                    '\0');
 
-                push_rendering_command(font.AtlasTexture, _Color, _Transform);
+                if(!_DoNotRender)
+                    push_rendering_command(font.AtlasTexture, _Color, _Transform);
             }
 
             void push_arc_filled(
