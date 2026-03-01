@@ -153,6 +153,29 @@ void ApplicationInstance::ApplicationInstance::frame_start()
         }
     }
 
+    // handle key modifiers
+
+    // Ctrl (Command on MacOS)
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftSuper].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightSuper].Down;
+#else
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl].Down;
+#endif
+
+    // Alt (Option on MacOS)
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Alt].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftAlt].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightAlt].Down;
+
+    // Shift
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Shift].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftShift].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightShift].Down;
+
     // character input
 
     // catch character '\n'
@@ -222,6 +245,14 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
         ApplicationPlatformBackend::m_Input.Keys[key].Released = false;
         ApplicationPlatformBackend::m_Input.Keys[key].Pressed  = false;
         ApplicationPlatformBackend::m_Input.Keys[key].Clicked  = false;
+    }
+
+    // restore key modifiers
+    for (int key = ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Begin;
+             key < ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End;
+             key++)
+    {
+        ApplicationPlatformBackend::m_Input.Modifiers[key].Active = false;
     }
 
     // restore scroll position

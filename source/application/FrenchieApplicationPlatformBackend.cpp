@@ -103,6 +103,11 @@ bool ApplicationPlatformBackend::is_key_clicked(const ApplicationPlatformBackend
     return m_Input.Keys[_Key].Clicked;
 }
 
+bool ApplicationPlatformBackend::has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Key)
+{
+    return m_Input.Modifiers[_Key].Active;
+}
+
 int ApplicationPlatformBackend::key_clicks_count(const ApplicationPlatformBackendKey::Key& _Key)
 {
     return m_Input.Keys[_Key].Clicks;

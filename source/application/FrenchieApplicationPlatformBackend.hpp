@@ -9,6 +9,22 @@
 #include <string>
 #include <vector>
 
+#if defined(unix) || defined(__unix) || defined(__unix__)
+#define FRENCHIE_APPLICATION_PLATFORM_IS_LINUX
+#endif
+
+#if defined(__APPLE__) || defined(__MACH__)
+#define FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+#define FRENCHIE_APPLICATION_PLATFORM_IS_WINDOWS
+#endif
+
+#if defined(FRENCHIE_APPLICATION_PLATFORM_IS_LINUX) || defined(FRENCHIE_APPLICATION_PLATFORM_IS_MACOS)
+#define FRENCHIE_APPLICATION_PLATFORM_IS_UNIX
+#endif
+
 namespace Frenchie
 {
     namespace Application
@@ -104,13 +120,6 @@ namespace Frenchie
                 ApplicationPlatformBackendKey_GamepadRStickRight,    //             |         |          | [Analog]
                 ApplicationPlatformBackendKey_GamepadRStickUp,       //             |         |          | [Analog]
                 ApplicationPlatformBackendKey_GamepadRStickDown,     //             |         |          | [Analog]
-
-                // // Aliases: Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
-                // // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
-                // ApplicationPlatformBackendKey_MouseLeft, ApplicationPlatformBackendKey_MouseRight, ApplicationPlatformBackendKey_MouseMiddle, ApplicationPlatformBackendKey_MouseX1, ApplicationPlatformBackendKey_MouseX2, ApplicationPlatformBackendKey_MouseWheelX, ApplicationPlatformBackendKey_MouseWheelY,
-
-                // // [Internal] Reserved for mod storage
-                // ApplicationPlatformBackendKey_ReservedForModCtrl, ApplicationPlatformBackendKey_ReservedForModShift, ApplicationPlatformBackendKey_ReservedForModAlt, ApplicationPlatformBackendKey_ReservedForModSuper,
 
                 // [Internal] If you need to iterate all keys (for e.g. an input mapper) you may use ApplicationPlatformBackendKey_NamedKey_BEGIN..ApplicationPlatformBackendKey_NamedKey_END.
                 ApplicationPlatformBackendKey_NamedKey_END
@@ -252,6 +261,32 @@ namespace Frenchie
             }
         };
 
+        struct ApplicationPlatformBackendKeyModifier
+        {
+            enum Modifier : int
+            {
+                ApplicationPlatformBackendKeyModifier_Begin,
+                ApplicationPlatformBackendKeyModifier_Alt = ApplicationPlatformBackendKeyModifier_Begin,
+                ApplicationPlatformBackendKeyModifier_Ctrl,
+                ApplicationPlatformBackendKeyModifier_Shift,
+                ApplicationPlatformBackendKeyModifier_End,
+            };
+
+            bool Active = false;
+
+            static std::string to_string(const ApplicationPlatformBackendKeyModifier::Modifier& _Button)
+            {
+                switch (_Button)
+                {
+                    case ApplicationPlatformBackendKeyModifier_Alt: return GS_STRINGIFY(ApplicationPlatformBackendKeyModifier_Alt);
+                    case ApplicationPlatformBackendKeyModifier_Ctrl: return GS_STRINGIFY(ApplicationPlatformBackendKeyModifier_Ctrl);
+                    case ApplicationPlatformBackendKeyModifier_Shift: return GS_STRINGIFY(ApplicationPlatformBackendKeyModifier_Shift);
+                    default: return GS_STRINGIFY(ApplicationPlatformBackendKeyModifier_End);
+                }
+                return GS_STRINGIFY(ApplicationPlatformBackendKeyModifier_End);
+            }
+        };
+
         struct ApplicationPlatformBackendMouseButton
         {
             enum Button : int
@@ -304,6 +339,7 @@ namespace Frenchie
             ApplicationPlatformBackendMouseButton  MouseButtons     [ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd]{};
             ApplicationPlatformBackendMouseCursor  MouseCursor      {ApplicationPlatformBackendMouseCursor()};
             ApplicationPlatformBackendWindow       Window           {ApplicationPlatformBackendWindow()};
+            ApplicationPlatformBackendKeyModifier  Modifiers        [ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End]{};
             ApplicationPlatformBackendKey          Keys             [ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END]{};
             Frenchie::Core::Optional<unsigned int> Character;
             gs_vec2f                               MouseScrollOffset{gs_vec2f(0.f, 0.f)};
@@ -338,7 +374,6 @@ namespace Frenchie
             // predicates
             static bool has_input_text();
             static bool has_clipboard_text();
-
             static bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&);
             static bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button&);
@@ -352,6 +387,8 @@ namespace Frenchie
             static bool is_key_pressed(const ApplicationPlatformBackendKey::Key&);
             static bool is_key_released(const ApplicationPlatformBackendKey::Key&);
             static bool is_key_clicked(const ApplicationPlatformBackendKey::Key&);
+            static bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier&);
+
             static int  key_clicks_count(const ApplicationPlatformBackendKey::Key&);
 
             static std::string input_text();
