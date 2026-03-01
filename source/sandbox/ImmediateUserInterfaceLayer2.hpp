@@ -137,9 +137,11 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
-            ImmediateUserInterfaceInputStringSettings_NoInput     = 1 << 0,
-            ImmediateUserInterfaceInputStringSettings_NoCursor    = 1 << 1,
-            ImmediateUserInterfaceInputStringSettings_NoSelection = 1 << 2,
+            ImmediateUserInterfaceInputStringSettings_NoInput     = 1 << 0, // disables input
+            ImmediateUserInterfaceInputStringSettings_NoClipboard = 1 << 1, // disables copy/paste
+            ImmediateUserInterfaceInputStringSettings_NoSelection = 1 << 2, // disables selection capabilities
+
+            ImmediateUserInterfaceInputStringSettings_Defaults    = 0
         };
 
         // mouse hover
@@ -192,6 +194,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceContextSettings;
         typedef int ImmediateUserInterfaceCheckButtonSettings;
+        typedef int ImmediateUserInterfaceInputStringSettings;
 
         typedef int ImmedidateUserInterfaceDockingAnchor;
         typedef int ImmedidateUserInterfaceRenderingOrder;
@@ -303,12 +306,12 @@ namespace Frenchie
             bool is_mouse_button_clicked() const;
             bool is_mouse_button_double_clicked() const;
 
-            bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-            bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-            bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-            bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-            bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
-            bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button& _Button) const;
+            bool is_mouse_button_down(const ApplicationPlatformBackendMouseButton::Button&) const;
+            bool is_mouse_button_hold(const ApplicationPlatformBackendMouseButton::Button&) const;
+            bool is_mouse_button_pressed(const ApplicationPlatformBackendMouseButton::Button&) const;
+            bool is_mouse_button_released(const ApplicationPlatformBackendMouseButton::Button&) const;
+            bool is_mouse_button_clicked(const ApplicationPlatformBackendMouseButton::Button&) const;
+            bool is_mouse_button_double_clicked(const ApplicationPlatformBackendMouseButton::Button&) const;
 
             bool is_key_down() const;
             bool is_key_hold() const;
@@ -316,11 +319,13 @@ namespace Frenchie
             bool is_key_released() const;
             bool is_key_clicked() const;
 
-            bool is_key_down(const ApplicationPlatformBackendKey::Key& _Button) const;
-            bool is_key_hold(const ApplicationPlatformBackendKey::Key& _Button) const;
-            bool is_key_pressed(const ApplicationPlatformBackendKey::Key& _Button) const;
-            bool is_key_released(const ApplicationPlatformBackendKey::Key& _Button) const;
-            bool is_key_clicked(const ApplicationPlatformBackendKey::Key& _Button) const;
+            bool is_key_down(const ApplicationPlatformBackendKey::Key&) const;
+            bool is_key_hold(const ApplicationPlatformBackendKey::Key&) const;
+            bool is_key_pressed(const ApplicationPlatformBackendKey::Key&) const;
+            bool is_key_released(const ApplicationPlatformBackendKey::Key&) const;
+            bool is_key_clicked(const ApplicationPlatformBackendKey::Key&) const;
+
+            bool has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier&) const;
 
         private:
             ImmediateUserInterfaceContextLayer* m_Context = nullptr;
@@ -851,7 +856,11 @@ namespace Frenchie
             
             void label(const std::string& _ID, const std::string& _Text);
 
-            void input_string(const std::string& _ID, std::string& _Text);
+            void input_string(
+                const std::string&                               _ID,
+                std::string&                                     _Text,
+                const ImmediateUserInterfaceInputStringSettings& _InputSettings = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceNodeSettings&        _NodeSettings  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             void color_picker(const std::string& _ID);
 

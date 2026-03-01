@@ -254,7 +254,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     };
     )";
 
-    m_ImmediateUserInterface->input_string("InputString", text);
+    m_ImmediateUserInterface->input_string(
+        "InputString",
+        text,
+        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput);
 
     // m_ImmediateUserInterface->next_position(gs_vec2f(512.f, 512.f));
     // m_ImmediateUserInterface->next_size(gs_vec2f(512.f, 512.f));

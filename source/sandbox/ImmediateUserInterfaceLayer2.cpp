@@ -1920,29 +1920,34 @@ bool ImmedidateUserInterfaceInput::is_key_clicked() const
     return false;
 }
 
-bool ImmedidateUserInterfaceInput::is_key_down(const ApplicationPlatformBackendKey::Key& _Button) const
+bool ImmedidateUserInterfaceInput::is_key_down(const ApplicationPlatformBackendKey::Key& _Key) const
 {
-    return ApplicationPlatformBackend::is_key_down(_Button);
+    return ApplicationPlatformBackend::is_key_down(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_hold(const ApplicationPlatformBackendKey::Key& _Button) const
+bool ImmedidateUserInterfaceInput::is_key_hold(const ApplicationPlatformBackendKey::Key& _Key) const
 {
-    return ApplicationPlatformBackend::is_key_hold(_Button);
+    return ApplicationPlatformBackend::is_key_hold(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_pressed(const ApplicationPlatformBackendKey::Key& _Button) const
+bool ImmedidateUserInterfaceInput::is_key_pressed(const ApplicationPlatformBackendKey::Key& _Key) const
 {
-    return ApplicationPlatformBackend::is_key_pressed(_Button);
+    return ApplicationPlatformBackend::is_key_pressed(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_released(const ApplicationPlatformBackendKey::Key& _Button) const
+bool ImmedidateUserInterfaceInput::is_key_released(const ApplicationPlatformBackendKey::Key& _Key) const
 {
-    return ApplicationPlatformBackend::is_key_released(_Button);
+    return ApplicationPlatformBackend::is_key_released(_Key);
 }
 
-bool ImmedidateUserInterfaceInput::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Button) const
+bool ImmedidateUserInterfaceInput::is_key_clicked(const ApplicationPlatformBackendKey::Key& _Key) const
 {
-    return ApplicationPlatformBackend::is_key_clicked(_Button);
+    return ApplicationPlatformBackend::is_key_clicked(_Key);
+}
+
+bool ImmedidateUserInterfaceInput::has_modifier(const ApplicationPlatformBackendKeyModifier::Modifier& _Modifier) const
+{
+    return ApplicationPlatformBackend::has_modifier(_Modifier);
 }
 
 // ImmediateUserInterfaceContextConfiguration
@@ -5102,7 +5107,11 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
     }
 }
 
-void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, std::string& _Text)
+void ImmediateUserInterfaceContextLayer::input_string(
+    const std::string&                               _ID,
+    std::string&                                     _Text,
+    const ImmediateUserInterfaceInputStringSettings& _InputSettings,
+    const ImmediateUserInterfaceNodeSettings&        _NodeSettings)
 {
     struct ImmediateUserInterfaceInputText : public ImmediateUserInterfaceNode
     {
@@ -5167,7 +5176,6 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                 // move forward
                 while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
                 {
-                    if(*iterator == '\n') break;
                     Frenchie::Core::String::utf8_next(iterator);
                     SymbolsCountTillLineStart--;
                 }
@@ -5229,17 +5237,24 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
         Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
     };
 
+    int scrollAreaSettings = _NodeSettings;
+    scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment;
+    scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment;
+    scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
+    scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+
+    int scrollAreaContentSettings = scrollAreaSettings;
+    scrollAreaContentSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+
     if(begin_scrollarea(std::string(_ID).append("/ScrollArea"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable                    |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults     |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar    |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar  |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
+        scrollAreaSettings))
     {
         ImmediateUserInterfaceScrollArea* scrollArea =
             get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
 
-        if(begin_node<ImmediateUserInterfaceInputText>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+        if(begin_node<ImmediateUserInterfaceInputText>(
+            _ID,
+            scrollAreaContentSettings))
         {
             ImmediateUserInterfaceInputText* widget =
                 get_rendering_stack_top<ImmediateUserInterfaceInputText>();
@@ -5387,7 +5402,9 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                 }
 
                 // render cursor
-                if(gs_vector_length(textRenderingData.CursorPosition) > 0.f)
+                if(
+                    !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
+                    gs_vector_length(textRenderingData.CursorPosition) > 0.f)
                 {
                     if(widget->CursorAnimtionTimer.time_since_epoch().count() <= 0)
                     {
@@ -5562,7 +5579,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                     }
 
                     // set right cursor position
-                    else if(m_Input.is_mouse_button_down())
+                    else if(
+                        !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
+                        
+                        m_Input.is_mouse_button_down())
                     {
                         if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
                         {
@@ -5576,7 +5596,9 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                     // modifications
 
                     // insert text
-                    else if(m_Input.has_input_text())
+                    else if(
+                        !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
+                        m_Input.has_input_text())
                     {
                         if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                         {
@@ -5595,7 +5617,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                     }
 
                     // remove text
-                    else if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace) ||
+                    else if(
+                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
+
+                            m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace) ||
                             m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
                     {
                         // remove selection
@@ -5641,9 +5666,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                     }
 
                     // copy text
-                    if((m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl) ||
-                        m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl)) &&
-                        m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_C)) // Ctrl + C
+                    if( 
+                        !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
+                         m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)              &&
+                         m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_C)) // Ctrl + C
                     {
                         if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition))
                         {
@@ -5655,8 +5681,10 @@ void ImmediateUserInterfaceContextLayer::input_string(const std::string& _ID, st
                     }
 
                     // paste text
-                    if((m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl) ||
-                        m_Input.is_key_down(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl)) &&
+                    if( 
+                        !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput)     &&
+                        !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
+                        m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)               &&
                         m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_V)) // Ctrl + V
                     {
                         if(m_Input.has_clipboard_text())
