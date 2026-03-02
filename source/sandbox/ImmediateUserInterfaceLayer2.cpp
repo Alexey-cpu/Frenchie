@@ -5217,14 +5217,6 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
 
             int depth = button->Cache.Depth;
 
-            // background
-            m_Renderer->push_rectangle_rounded_filled(
-                button->State.BoundingBox.Min,
-                button->State.BoundingBox.Max,
-                m_Style.get_frames_radius(),
-                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                m_Renderer->calculate_transform_matrix((float)depth++));
-
             // title
             gs_2dboxf textBoundingBox = m_Renderer->calculate_bounding_box(
                 _Text.begin(),
@@ -5263,7 +5255,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
     const std::string&                               _ID,
     std::string&                                     _Text,
     const ImmediateUserInterfaceInputStringSettings& _InputSettings,
-    const ImmediateUserInterfaceNodeSettings&        _NodeSettings)
+    const ImmediateUserInterfaceNodeSettings&        _NodeSettings,
+    bool                                           (*_InputTextFilter)(const std::string&))
 {
     struct ImmediateUserInterfaceInputText : public ImmediateUserInterfaceNode
     {
@@ -5781,9 +5774,9 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         }
 
                         // insert text after selection
-                        if((_InputSettings & ImmediateUserInterfaceInputStringSettings_NoMultiLine))
+                        if(_InputTextFilter != nullptr)
                         {
-                            if(m_Input.get_input_text()[0] != '\n')
+                            if(_InputTextFilter(m_Input.get_input_text()))
                             {
                                 _Text.insert(widget->Utf8LeftCursorPosition, m_Input.get_input_text());
                                 widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);

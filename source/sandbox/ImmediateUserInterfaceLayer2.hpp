@@ -866,8 +866,9 @@ namespace Frenchie
             void input_string(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _InputSettings = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-                const ImmediateUserInterfaceNodeSettings&        _NodeSettings  = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+                const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceNodeSettings&        _NodeSettings                         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
             void color_picker(const std::string& _ID);
 
