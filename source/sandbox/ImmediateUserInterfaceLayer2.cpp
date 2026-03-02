@@ -1122,6 +1122,27 @@ namespace Frenchie
 
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
             {
+                // pass focus
+                if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    for (auto node : _Context->m_Hierarchy.Singletons)
+                    {
+                        node->State.RenderingOrder =
+                            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+                    }
+
+                    ImmediateUserInterfaceNode* focused = this;
+                    ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(this);
+
+                    while (parent)
+                    {
+                        focused = parent;
+                        parent  = _Context->m_Hierarchy.get_parent(parent);
+                    }
+                    
+                    focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+                }
+
                 // resize
                 if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
                     !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
@@ -1697,6 +1718,133 @@ namespace Frenchie
     }
 }
 
+// ImmedidateUserInterfaceStyle
+ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
+{
+    Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
+
+    // window
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]        = gs_rgba_color(28, 28, 28, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered] = gs_rgba_color(72, 82, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]         = gs_rgba_color(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered]  = gs_rgba_color(72, 82, 72, 255);
+    
+    // push button
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]           = gs_rgba_color(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]        = gs_rgba_color(32, 32, 32, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered] = gs_rgba_color(60, 72, 60, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed] = gs_rgba_color(120, 128, 120, 255);
+
+    // gizmos
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                  = gs_rgba_color(50, 50, 100, 200);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]           = gs_rgba_color(100, 100, 172, 255);
+
+    // gizmos
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                    = gs_rgba_color(255, 255, 255, 255);
+
+    //
+    ColorsOptional.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
+}
+
+ImmedidateUserInterfaceStyle::~ImmedidateUserInterfaceStyle(){}
+
+float ImmedidateUserInterfaceStyle::get_minimum_frames_radius() const
+{
+    return 0.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_maximum_frames_radius() const
+{
+    return 32.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_frames_radius() const
+{
+    return gs_clamp(FramesRadius, get_minimum_frames_radius(), get_maximum_frames_radius());
+}
+
+float ImmedidateUserInterfaceStyle::get_minimum_frames_width() const
+{
+    return 4.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_maximum_frames_width() const
+{
+    return 16.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_frames_width() const
+{
+    return gs_clamp(FramesWidth, get_minimum_frames_width(), get_maximum_frames_width());
+}
+
+float ImmedidateUserInterfaceStyle::get_minimum_font_size() const
+{
+    return 32.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_maximum_font_size() const
+{
+    return 128.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_font_size() const
+{
+    return gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size());
+}
+
+float ImmedidateUserInterfaceStyle::get_minimum_scrollbar_width() const
+{
+    return 16.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_maximum_scrollbar_width() const
+{
+    return get_maximum_frames_radius() * 2.f;
+}
+
+float ImmedidateUserInterfaceStyle::get_scrollbar_width() const
+{
+    return gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width());
+}
+
+float ImmedidateUserInterfaceStyle::get_popup_menu_pointer_size() const
+{
+    return gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
+}
+
+ApplicationRenderingBackendFont ImmedidateUserInterfaceStyle::get_current_font() const
+{
+    return Font.is_null() ? ApplicationRenderingBackend::get_default_font() : Font;
+}
+
+gs_color ImmedidateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
+{
+    return ColorsOptional[_Color].has_value() ? ColorsOptional[_Color].value() : Colors[_Color];
+}
+
+void ImmedidateUserInterfaceStyle::push_color(const ImmediateUserInterfaceNodeColors_& _Color, const gs_color& _Value)
+{
+    ColorsOptional[_Color] = _Value;
+}
+
+void ImmedidateUserInterfaceStyle::pop_color(const ImmediateUserInterfaceNodeColors_& _Color)
+{
+    ColorsOptional[_Color].reset();
+}
+
+bool ImmedidateUserInterfaceStyle::contains_optional_colors() const
+{
+    for (auto& optionalColor : ColorsOptional)
+    {
+        if(optionalColor.has_value())
+            return true;
+    }
+    
+    return false;
+}
+
+// ImmedidateUserInterfaceInput
 ImmedidateUserInterfaceInput::ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context) : m_Context(_Context){}
 
 gs_vec2f ImmedidateUserInterfaceInput::get_cusor_position() const
@@ -4605,7 +4753,11 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
         node->Count                       = 0;
     }
 
+    // check rendering stack
     GS_ASSERT(m_NodesRenderingStack.empty());
+
+    // check pushed optional style paramers
+    GS_ASSERT(!m_Style.contains_optional_colors());
 
     // clean-up rendering data
     m_NodesRenderingList.clear();

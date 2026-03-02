@@ -42,11 +42,11 @@ namespace Frenchie
         {
             ImmediateUserInterfaceNodeColors_Begin         = 0,
 
-            // windows
-            ImmediateUserInterfaceNodeColors_ChildBackground = ImmediateUserInterfaceNodeColors_Begin,
-            ImmediateUserInterfaceNodeColors_ChildBackgroundHovered,
-            ImmediateUserInterfaceNodeColors_ParentBackground,
-            ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,
+            //
+            ImmediateUserInterfaceNodeColors_ParentBackground = ImmediateUserInterfaceNodeColors_Begin, // parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   // hovered parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ChildBackground,                                           // child UI elements background color
+            ImmediateUserInterfaceNodeColors_ChildBackgroundHovered,                                    //
 
             // push button
             ImmediateUserInterfaceNodeColors_ButtonOutline,
@@ -205,69 +205,45 @@ namespace Frenchie
         // style and events
         struct ImmedidateUserInterfaceStyle
         {
-            ImmedidateUserInterfaceStyle()
-            {
-                Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
-
-                // window
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]         = gs_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered]  = gs_rgba_color(72, 82, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]        = gs_rgba_color(28, 28, 28, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered] = gs_rgba_color(72, 82, 72, 255);
-                
-                // push button
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]           = gs_rgba_color(72, 72, 72, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]        = gs_rgba_color(32, 32, 32, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered] = gs_rgba_color(60, 72, 60, 255);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed] = gs_rgba_color(120, 128, 120, 255);
-
-                // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                  = gs_rgba_color(50, 50, 100, 200);
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]           = gs_rgba_color(100, 100, 172, 255);
-
-                // gizmos
-                Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                    = gs_rgba_color(255, 255, 255, 255);
-            }
-
-            ~ImmedidateUserInterfaceStyle(){}
+            ImmedidateUserInterfaceStyle();
+            ~ImmedidateUserInterfaceStyle();
 
             // getters
-            float get_frames_radius() const
-            {
-                return gs_min(FramesRadius, 32.f);
-            }
 
-            float get_frames_width() const
-            {
-                return gs_min(gs_max(FramesWidth, 4.f), 16.f);
-            }
+            // frames radius
+            float get_minimum_frames_radius() const;
+            float get_maximum_frames_radius() const;
+            float get_frames_radius() const;
 
-            float get_font_size() const
-            {
-                return gs_max(32.f, FontSize);
-            }
+            // frames width
+            float get_minimum_frames_width() const;
+            float get_maximum_frames_width() const;
+            float get_frames_width() const;
 
-            float get_scrollbar_width() const
-            {
-                return gs_max(32.f, get_frames_radius() * 2.f, get_frames_width(), ScrollBarWidth);
-            }
+            // font size
+            float get_minimum_font_size() const;
+            float get_maximum_font_size() const;
+            float get_font_size() const;
 
-            float get_popup_menu_pointer_size() const
-            {
-                return gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
-            }
+            // scrollbar width
+            float get_minimum_scrollbar_width() const;
+            float get_maximum_scrollbar_width() const;
+            float get_scrollbar_width() const;
 
-            ApplicationRenderingBackendFont get_current_font() const
-            {
-                return Font.is_null() ? ApplicationRenderingBackend::get_default_font() : Font;
-            }
+            // menu pointer size
+            float get_popup_menu_pointer_size() const;
 
-            gs_color get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
-            {
-                return Colors[_Color];
-            }
+            // current font
+            ApplicationRenderingBackendFont get_current_font() const;
 
-            // font
+            // color
+            gs_color get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
+
+            // public API
+            void push_color(const ImmediateUserInterfaceNodeColors_& _Color, const gs_color& _Value);
+            void pop_color(const ImmediateUserInterfaceNodeColors_& _Color);
+
+            bool contains_optional_colors() const;
 
         private:
 
@@ -275,10 +251,13 @@ namespace Frenchie
             float                            FramesRadius         = 32.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 64.f;
-            float                            ScrollBarWidth       = 16.f;
+            float                            ScrollBarWidth       = 32.f;
             float                            PopupMenuPointerSize = 32.f;
             std::vector<gs_color>            Colors;
             ApplicationRenderingBackendFont  Font;
+
+            // optional paramters
+            std::vector<Frenchie::Core::Optional<gs_color>> ColorsOptional;
         };
 
         struct ImmedidateUserInterfaceInput final
@@ -816,6 +795,8 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
 
+            // UI API
+
             // scroll area
             bool begin_scrollarea(
                 const std::string&                        _ID,
@@ -864,18 +845,18 @@ namespace Frenchie
 
             void color_picker(const std::string& _ID);
 
-            // next node API
-            void next_line();
-            void next_size(const gs_vec2f&);
-            void next_position(const gs_vec2f&);
-            void next_content_padding(const gs_vec2f&);
-
             // windows
             bool begin_window(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 bool*                                     _Opened = nullptr);
             void end_window();
+
+            // next node API
+            void next_line();
+            void next_size(const gs_vec2f&);
+            void next_position(const gs_vec2f&);
+            void next_content_padding(const gs_vec2f&);
 
             // auxiliary API
             template<typename Type> Type* get_controller() const
@@ -971,14 +952,17 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
+            // hierarchy and cache
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
-            mutable ImmedidateUserInterfaceStyle                                       m_Style;
             mutable ImmedidateUserInterfaceHierarchy                                   m_Hierarchy;
 
             // rendering
             mutable std::shared_ptr<RenderingQueue>                                    m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
+
+            // style
+            mutable ImmedidateUserInterfaceStyle                                       m_Style;
 
             // ini file
             ImmediateUserInterfaceContextConfiguration                                 m_IniFileState;
