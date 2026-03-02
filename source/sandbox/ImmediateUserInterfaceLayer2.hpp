@@ -35,6 +35,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6,
             ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7,
             ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
+
+            // custom event
+            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9,
         };
 
         // colors
@@ -42,17 +45,30 @@ namespace Frenchie
         {
             ImmediateUserInterfaceNodeColors_Begin         = 0,
 
-            //
+            // layouts/windows e.t.c
             ImmediateUserInterfaceNodeColors_ParentBackground = ImmediateUserInterfaceNodeColors_Begin, // parent UI elements background color
             ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   // hovered parent UI elements background color
             ImmediateUserInterfaceNodeColors_ChildBackground,                                           // child UI elements background color
-            ImmediateUserInterfaceNodeColors_ChildBackgroundHovered,                                    //
+            ImmediateUserInterfaceNodeColors_ChildBackgroundHovered,                                    // hovered child UI elements background color
 
-            // push button
-            ImmediateUserInterfaceNodeColors_ButtonOutline,
-            ImmediateUserInterfaceNodeColors_ButtonBackground,
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,
+            // buttons
+            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             // push button, check button, radio button, slider button e.t.c outline color
+            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          // push button, check button, radio button, slider button e.t.c background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   // hovered push button, check button, radio button, slider button e.t.c background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   // pressed push button, check button, radio button, slider button e.t.c background color
+
+            // scroll area
+            ImmediateUserInterfaceNodeColors_ScrollAreaOutline,                                         // scroll area outline
+            ImmediateUserInterfaceNodeColors_ScrollAreaBackground,                                      // scroll area background
+
+            // scrollbar
+            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 // scroll bar slider background color
+            ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          // hovered scroll bar slider background color
+
+            // menus
+            ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      // menu action background
+            ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               // hovered menu action background
+            ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background
 
             // gizmos
             ImmediateUserInterfaceNodeColors_Gizmos,
@@ -95,6 +111,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 17,
             ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 18,
             ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 19,
+
+            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20,
+            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21,
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                 ImmediateUserInterfaceNodeSettings_Movable |
@@ -239,12 +258,6 @@ namespace Frenchie
             // color
             gs_color get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
 
-            // public API
-            void push_color(const ImmediateUserInterfaceNodeColors_& _Color, const gs_color& _Value);
-            void pop_color(const ImmediateUserInterfaceNodeColors_& _Color);
-
-            bool contains_optional_colors() const;
-
         private:
 
             // infos
@@ -255,9 +268,6 @@ namespace Frenchie
             float                            PopupMenuPointerSize = 32.f;
             std::vector<gs_color>            Colors;
             ApplicationRenderingBackendFont  Font;
-
-            // optional paramters
-            std::vector<Frenchie::Core::Optional<gs_color>> ColorsOptional;
         };
 
         struct ImmedidateUserInterfaceInput final
@@ -418,6 +428,7 @@ namespace Frenchie
             ImmediateUserInterfaceScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceScrollArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
 
             float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
