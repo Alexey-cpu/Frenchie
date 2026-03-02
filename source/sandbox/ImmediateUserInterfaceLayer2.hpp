@@ -219,7 +219,7 @@ namespace Frenchie
         class ImmediateUserInterfaceContextLayer;
 
         // style and events
-        struct ImmedidateUserInterfaceStyle
+        struct ImmedidateUserInterfaceStyle final
         {
             ImmedidateUserInterfaceStyle();
             ~ImmedidateUserInterfaceStyle();
@@ -261,7 +261,7 @@ namespace Frenchie
             float                            FramesRadius         = 32.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 64.f;
-            float                            ScrollBarWidth       = 32.f;
+            float                            ScrollBarWidth       = 64.f;
             float                            PopupMenuPointerSize = 32.f;
             std::vector<gs_color>            Colors;
             ApplicationRenderingBackendFont  Font;
