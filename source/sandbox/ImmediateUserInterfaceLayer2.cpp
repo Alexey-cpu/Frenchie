@@ -1565,6 +1565,32 @@ namespace Frenchie
         };
 
         // popups
+        struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceMenuScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+            virtual ~ImmediateUserInterfaceMenuScrollArea(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                ImmediateUserInterfaceMenu* menu =
+                    _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
+
+                if(_Context->m_Hierarchy.get_parent(menu)) return;
+
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+        };
+        
+        
         struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfaceNode
         {
         public:
@@ -1594,7 +1620,7 @@ namespace Frenchie
                         State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
                         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
                         _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
                 else
@@ -1604,8 +1630,8 @@ namespace Frenchie
                         State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
                         _Context->m_Style.get_frames_radius(),
                         (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
+                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
 
@@ -1702,14 +1728,10 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]          = gs_rgba_color(120, 128, 120, 255);
 
     // menus
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline]                      = gs_rgba_color(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground]             = gs_rgba_color(32, 32, 32, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered]      = gs_rgba_color(60, 72, 60, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed]      = gs_rgba_color(120, 128, 120, 255);
-
-    // scroll area
-
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollAreaOutline]                 = gs_rgba_color(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollAreaBackground]              = gs_rgba_color(28, 28, 28, 255);
 
     // scrollbar
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_rgba_color(72, 72, 72, 255);
@@ -2619,6 +2641,11 @@ void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child
         _Child->State.Parent = this;
 }
 
+bool ImmediateUserInterfaceNode::create_contents(ImmediateUserInterfaceContextLayer*, const std::string&, const ImmediateUserInterfaceNodeSettings&, bool*)
+{
+    return true;
+}
+
 void ImmediateUserInterfaceNode::load_state(ImmediateUserInterfaceContextLayer*){}
 void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*){}
 
@@ -2759,26 +2786,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // outline
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollAreaOutline),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollAreaBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-}
+void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer*){}
 
 void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* _Child)
 {
@@ -2792,6 +2800,87 @@ void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* 
 
     if(ContentView)
         ContentView->attach_child(_Child);
+}
+
+bool ImmediateUserInterfaceScrollArea::create_contents(
+    ImmediateUserInterfaceContextLayer*       _Context, 
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings,
+    bool*                                     _Render)
+{
+    if(_Context == nullptr) return false;
+
+    ImmediateUserInterfaceNodeSettings settings   = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
+    ImmediateUserInterfaceScrollArea*  scrollArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+
+    if(_Context->begin_node<ImmediateUserInterfaceScrollAreaPanel>(
+        std::string(_ID).append("/Panel"),
+        settings))
+    {
+        if(_Context->begin_vertial_stack(
+            std::string(_ID).append("/Panel/VerticalStack"),
+            settings))
+        {
+            _Context->get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.PlaceInFollow = true;
+
+            // vertical scrollbar area
+            if(_Context->begin_horizontal_stack(
+                std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea"),
+                settings))
+            {
+                _Context->get_rendering_stack_top<ImmediateUserInterfaceNodeHorizontalStack>()->State.PlaceInFollow = true;
+
+                // contents
+                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaContent>(
+                    std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/Contents"),
+                    settings))
+                {
+                    scrollArea->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->State.PlaceInFollow = scrollArea->State.PlaceInFollow;
+                    
+                    // reset self content padding as it's applied to content view
+                    scrollArea->ContentPadding = gs_vec2f(0.f, 0.f);
+                    
+                    _Context->end_node<ImmediateUserInterfaceScrollAreaContent>();
+                }
+
+                // vertical scrollbar
+                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
+                    std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/VerticalScrollBar"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
+                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+
+                    scrollArea->VerticalScrollBar = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
+
+                    _Context->end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
+                }
+
+                _Context->end_horizontal_stack();
+            }
+
+            // horizontal scrollbar
+            if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
+                std::string(_ID).append("/Panel/VerticalStack/HorizontalScrollBar"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
+                    ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
+
+                scrollArea->HorizontalScrollBar = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
+
+                _Context->end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
+            }
+
+            _Context->end_vertical_stack();
+        }
+    
+        _Context->end_node<ImmediateUserInterfaceScrollAreaPanel>();
+    }
+
+    return true;
 }
 
 float ImmediateUserInterfaceScrollArea::get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer* _Context) const
@@ -2847,7 +2936,7 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
 {
     if(_Child == nullptr) return;
 
-    if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Child))
+    if(dynamic_cast<ImmediateUserInterfaceMenuScrollArea*>(_Child))
     {
         _Child->State.Parent = this;
         return;
@@ -3146,6 +3235,99 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
     }
 }
 
+bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContextLayer* _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render)
+{
+    if(_Context == nullptr) return false;
+
+    ImmediateUserInterfaceNodeSettings settings = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
+
+    ImmediateUserInterfaceWindow* window = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
+    window->Opened                       = _Render;
+
+    if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
+        std::string(_ID).append("/CentralDockerView"),
+        settings))
+    {
+        if(!window->IsActive)
+        {
+            _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+            _Context->end_node<ImmediateUserInterfaceWindow>();
+            return false;
+        }
+
+        window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
+        window->DockerView->State.PlaceInFollow               = true;
+        window->DockerView->State.OrderChildrenWhileRendering = true;
+
+        if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+            std::string(_ID).append("/SnapperView"),
+            settings))
+        {
+            window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+
+            // top
+            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                std::string(_ID).append("/SnapperView/TopSnapperView"),
+                settings))
+            {
+                window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+            }
+
+            // center
+            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                std::string(_ID).append("/SnapperView/CentralSnapperView"),
+                settings))
+            {
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                    std::string(_ID).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
+                    settings))
+                {
+                    window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
+                    std::string(_ID).append("/SnapperView/CentralSnapperView/ContentView"),
+                    settings))
+                {
+                    window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
+                    _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+                }
+
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                    std::string(_ID).append("/SnapperView/CentralSnapperView/RightSnapperView"),
+                    settings))
+                {
+                    window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+            }
+
+            // bottom
+            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
+                std::string(_ID).append("/SnapperView/BottomSnapperView"),
+                settings))
+            {
+                window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+            }
+
+            _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+        }
+
+        _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+    }
+
+    return true;
+}
+
 void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
@@ -3270,92 +3452,17 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     if(_Context == nullptr) return;
 
     // render worksapce dockarea
-    const std::string                        id       = std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application");
-    const ImmediateUserInterfaceNodeSettings settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
+    std::string                        id       = std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application");
+    ImmediateUserInterfaceNodeSettings settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
+    bool                               opened   =
+        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
+        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(id, settings, &m_WorkspaceDockAreaOpened))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(id, settings, &opened))
     {
         // retrieve window
-        ImmediateUserInterfaceWindow* window = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-        window->Opened                       = &m_WorkspaceDockAreaOpened;
-
-        m_WorkspaceDockAreaOpened =
-            (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
-            (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
-
-        // memorize docking area
-        m_WorkspaceDockArea = window;
-
-        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
-            std::string(id).append("/CentralDockerView"),
-            settings))
-        {
-            window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
-            window->DockerView->State.PlaceInFollow               = true;
-            window->DockerView->State.OrderChildrenWhileRendering = true;
-
-            if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
-                std::string(id).append("/SnapperView"),
-                settings))
-            {
-                window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-
-                // top
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(id).append("/SnapperView/TopSnapperView"),
-                    settings))
-                {
-                    window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                // center
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(id).append("/SnapperView/CentralSnapperView"),
-                    settings))
-                {
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                        std::string(id).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
-                        settings))
-                    {
-                        window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                        _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    }
-
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
-                        std::string(id).append("/SnapperView/CentralSnapperView/ContentView"),
-                        settings))
-                    {
-                        window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
-                        _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
-                    }
-
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                        std::string(id).append("/SnapperView/CentralSnapperView/RightSnapperView"),
-                        settings))
-                    {
-                        window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                        _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    }
-
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                // bottom
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(id).append("/SnapperView/BottomSnapperView"),
-                    settings))
-                {
-                    window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
-            }
-
-            _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
-        }
+        m_WorkspaceDockArea         = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
+        m_WorkspaceDockArea->Opened = &opened;
 
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
@@ -4728,83 +4835,7 @@ void ImmediateUserInterfaceContextLayer::finish()
 
 bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    ImmediateUserInterfaceNodeSettings settings = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
-
-    if(begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings))
-    {
-        ImmediateUserInterfaceScrollArea* scrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-
-        if(begin_node<ImmediateUserInterfaceScrollAreaPanel>(
-            std::string(_ID).append("/Panel"),
-            settings))
-        {
-            if(begin_vertial_stack(
-                std::string(_ID).append("/Panel/VerticalStack"),
-                settings))
-            {
-                get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.PlaceInFollow = true;
-
-                // vertical scrollbar area
-                if(begin_horizontal_stack(
-                    std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea"),
-                    settings))
-                {
-                    get_rendering_stack_top<ImmediateUserInterfaceNodeHorizontalStack>()->State.PlaceInFollow = true;
-
-                    // contents
-                    if(begin_node<ImmediateUserInterfaceScrollAreaContent>(
-                        std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/Contents"),
-                        settings))
-                    {
-                        scrollArea->ContentView = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
-                        get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
-                        get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->State.PlaceInFollow = scrollArea->State.PlaceInFollow;
-                        
-                        // reset self content padding as it's applied to content view
-                        scrollArea->ContentPadding = gs_vec2f(0.f, 0.f);
-                        
-                        end_node<ImmediateUserInterfaceScrollAreaContent>();
-                    }
-
-                    // vertical scrollbar
-                    if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                        std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/VerticalScrollBar"),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                    {
-                        get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                            ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
-
-                        scrollArea->VerticalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
-
-                        end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-                    }
-
-                    end_horizontal_stack();
-                }
-
-                // horizontal scrollbar
-                if(begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                    std::string(_ID).append("/Panel/VerticalStack/HorizontalScrollBar"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                {
-                    get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
-
-                    scrollArea->HorizontalScrollBar = get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
-
-                    end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-                }
-
-                end_vertical_stack();
-            }
-        
-            end_node<ImmediateUserInterfaceScrollAreaPanel>();
-        }
-
-        return true;
-    }
-
-    return false;
+    return begin_node<ImmediateUserInterfaceScrollArea>(_ID, _Settings);
 }
 
 void ImmediateUserInterfaceContextLayer::end_scrollarea()
@@ -5920,7 +5951,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
 
-        if(begin_scrollarea(std::string(_ID).append("/Menu/InternalScrollArea"),
+        if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Menu/InternalScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults                                     |
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar                    |
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar                  |
@@ -5948,7 +5979,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
                 }
             }
 
-            end_scrollarea();
+            end_node<ImmediateUserInterfaceMenuScrollArea>();
         }
     }
 
@@ -5965,7 +5996,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
     {
         if(hasParent && isHovered && menuItem != nullptr)
         {
-            if(begin_scrollarea(std::string(_ID).append("/Main/ExternalScrollArea"),
+            if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Main/ExternalScrollArea"),
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent                             |
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              |
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            |
@@ -5996,7 +6027,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
                     gs_vec2f(menuItem->State.BoundingBox.Max.x, menuItem->State.BoundingBox.Min.y),
                     gs_vec2f(menuItem->State.BoundingBox.Max.x, menuItem->State.BoundingBox.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
 
-                end_scrollarea();
+                end_node<ImmediateUserInterfaceMenuScrollArea>();
             }
 
             return true;
@@ -6017,95 +6048,7 @@ void ImmediateUserInterfaceContextLayer::end_menu()
 
 bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
 {
-    ImmediateUserInterfaceNodeSettings settings = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
-
-    if(begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened))
-    {
-        ImmediateUserInterfaceWindow* window = get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-        window->Opened                       = _Opened;
-
-        if(begin_node<ImmediateUserInterfaceWindowCentralDocker>(
-            std::string(_ID).append("/CentralDockerView"),
-            settings))
-        {
-            if(!window->IsActive)
-            {
-                end_node<ImmediateUserInterfaceWindowCentralDocker>();
-                end_node<ImmediateUserInterfaceWindow>();
-                return false;
-            }
-
-            window->DockerView                                    = get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
-            window->DockerView->State.PlaceInFollow               = true;
-            window->DockerView->State.OrderChildrenWhileRendering = true;
-
-            if(begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
-                std::string(_ID).append("/SnapperView"),
-                settings))
-            {
-                window->SnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-
-                // top
-                if(begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(_ID).append("/SnapperView/TopSnapperView"),
-                    settings))
-                {
-                    window->TopSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                // center
-                if(begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView"),
-                    settings))
-                {
-                    if(begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                        std::string(_ID).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
-                        settings))
-                    {
-                        window->LeftSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                        end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    }
-
-                    if(begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
-                        std::string(_ID).append("/SnapperView/CentralSnapperView/ContentView"),
-                        settings))
-                    {
-                        window->ContentView = get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-                        get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = m_Style.get_frames_width();
-                        end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
-                    }
-
-                    if(begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                        std::string(_ID).append("/SnapperView/CentralSnapperView/RightSnapperView"),
-                        settings))
-                    {
-                        window->RightSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                        end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    }
-
-                    end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                // bottom
-                if(begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(_ID).append("/SnapperView/BottomSnapperView"),
-                    settings))
-                {
-                    window->BottomSnapperView = get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
-            }
-
-            end_node<ImmediateUserInterfaceWindowCentralDocker>();
-        }
-
-        return true;
-    }
-
-    return false;
+    return begin_node<ImmediateUserInterfaceWindow>(_ID, _Settings, _Opened);
 }
 
 void ImmediateUserInterfaceContextLayer::end_window()
