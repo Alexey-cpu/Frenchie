@@ -43,7 +43,7 @@ namespace Frenchie
         // colors
         enum ImmediateUserInterfaceNodeColors_ : int
         {
-            ImmediateUserInterfaceNodeColors_Begin         = 0,
+            ImmediateUserInterfaceNodeColors_Begin            = 0,
 
             // layouts/windows e.t.c
             ImmediateUserInterfaceNodeColors_ParentBackground = ImmediateUserInterfaceNodeColors_Begin, // parent UI elements background color
@@ -57,15 +57,12 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   // hovered push button, check button, radio button, slider button e.t.c background color
             ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   // pressed push button, check button, radio button, slider button e.t.c background color
 
-            // scroll area
-            ImmediateUserInterfaceNodeColors_ScrollAreaOutline,                                         // scroll area outline
-            ImmediateUserInterfaceNodeColors_ScrollAreaBackground,                                      // scroll area background
-
             // scrollbar
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 // scroll bar slider background color
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered,                          // hovered scroll bar slider background color
 
             // menus
+            ImmediateUserInterfaceNodeColors_MenuOutline,                                               // menu outline
             ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      // menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               // hovered menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background
@@ -331,6 +328,13 @@ namespace Frenchie
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr);
+            
             virtual void load_state(ImmediateUserInterfaceContextLayer*);
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
 
@@ -398,8 +402,6 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            virtual void create_contents(){} // place contents creation function here...
-
             gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
         };
 
@@ -429,7 +431,14 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceScrollArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override;
 
             float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
             float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
@@ -483,6 +492,13 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override;
+
             virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
             virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
 
@@ -679,10 +695,9 @@ namespace Frenchie
             void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchor);
             void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
 
-            mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingCache;
-            mutable std::vector<ImmediateUserInterfaceNode*>                             m_WindowsDockingList;
-            mutable ImmediateUserInterfaceNode*                                          m_WorkspaceDockArea      {nullptr};
-            mutable bool                                                                 m_WorkspaceDockAreaOpened{true};
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingCache;
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList;
+            mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea {nullptr};
         };
     
         class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
@@ -944,7 +959,7 @@ namespace Frenchie
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
-                return true;
+                return node->create_contents(this, _ID, _Settings, _Render);
             }
 
             template<typename Type>
