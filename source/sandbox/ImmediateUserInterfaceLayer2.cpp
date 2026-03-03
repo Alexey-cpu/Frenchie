@@ -3259,7 +3259,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
     ImmediateUserInterfaceNodeSettings settings = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
 
-    ImmediateUserInterfaceWindow* window = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
+    ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
@@ -3467,17 +3467,18 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     if(_Context == nullptr) return;
 
     // render worksapce dockarea
-    std::string                        id       = std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application");
-    ImmediateUserInterfaceNodeSettings settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults;
-    bool                               opened   =
+    m_DockAreaOpened =
         (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
         (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(id, settings, &opened))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
+        std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &m_DockAreaOpened))
     {
         // retrieve window
         m_WorkspaceDockArea         = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-        m_WorkspaceDockArea->Opened = &opened;
+        m_WorkspaceDockArea->Opened = &m_DockAreaOpened;
 
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
