@@ -17,8 +17,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    widgets_test();
-    //windows_test();
+    //widgets_test();
+    windows_test();
     //scrollarea_test();
     
     //renderer_test();
@@ -35,7 +35,9 @@ void ImmediateUserInterfaceTestLayer::finish()
 void ImmediateUserInterfaceTestLayer::windows_test()
 {
     m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes |
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
     static bool opened = true;
     static std::string button;
@@ -145,13 +147,13 @@ void ImmediateUserInterfaceTestLayer::windows_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable, &opened))
     {
-        if(m_ImmediateUserInterface->begin_horizontal_stack("Window-2/Stack"))
-        {
-            m_ImmediateUserInterface->push_button("Button-1###Window-2/Button-1");
-            m_ImmediateUserInterface->push_button("Button-2###Window-2/Button-2");
+        // if(m_ImmediateUserInterface->begin_horizontal_stack("Window-2/Stack"))
+        // {
+        //     m_ImmediateUserInterface->push_button("Button-1###Window-2/Button-1");
+        //     m_ImmediateUserInterface->push_button("Button-2###Window-2/Button-2");
 
-            m_ImmediateUserInterface->end_horizontal_stack();
-        }
+        //     m_ImmediateUserInterface->end_horizontal_stack();
+        // }
 
         m_ImmediateUserInterface->end_window();
     }
@@ -240,6 +242,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     //     m_ImmediateUserInterface->end_window();
     // }
 
+    //m_ImmediateUserInterface->m_Style.push_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text, gs_rgba_color(255, 0, 0, 255));
+
+    m_ImmediateUserInterface->next_size(gs_vec2f(512.f, 512.f));
+
     static std::string text = R"(
     This is some really usefull text
     This is some really usefull text
@@ -254,10 +260,39 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     };
     )";
 
-    m_ImmediateUserInterface->input_string(
+    // m_ImmediateUserInterface->input_string_multiline(
+    //     "InputString",
+    //     text,
+    //     ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+    //     [](const std::string& _Input)->bool
+    //     {
+    //         for (auto& symbol : _Input)
+    //         {
+    //             if (symbol == '1' || symbol == '2' || symbol == '3')
+    //                 return false;
+    //         }
+
+    //         return true;
+    //     }
+    // );
+
+    m_ImmediateUserInterface->input_string_singleline(
         "InputString",
         text,
-        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput);
+        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+        [](const std::string& _Input)->bool
+        {
+            for (auto& symbol : _Input)
+            {
+                if (symbol == '1' || symbol == '2' || symbol == '3')
+                    return false;
+            }
+
+            return true;
+        }
+    );
+
+    //m_ImmediateUserInterface->m_Style.pop_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text);
 
     // m_ImmediateUserInterface->next_position(gs_vec2f(512.f, 512.f));
     // m_ImmediateUserInterface->next_size(gs_vec2f(512.f, 512.f));
