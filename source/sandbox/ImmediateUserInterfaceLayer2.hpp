@@ -700,6 +700,7 @@ namespace Frenchie
             mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingCache;
             mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList;
             mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea {nullptr};
+            mutable bool                                      m_DockAreaOpened    {false};
         };
     
         class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
