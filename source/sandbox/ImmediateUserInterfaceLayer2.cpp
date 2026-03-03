@@ -785,9 +785,9 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
-                State.BoundingBox = gs_2dboxf(
-                    _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
-                    _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
+                // State.BoundingBox = gs_2dboxf(
+                //     _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
+                //     _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
 
                 ImmediateUserInterfaceWindow::layout(_Context);
             }
@@ -1605,8 +1605,7 @@ namespace Frenchie
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
-        
-        
+
         struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfaceNode
         {
         public:
@@ -4191,6 +4190,11 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
 
     for (auto& node : _Context->m_NodesRenderingList)
     {
+        // deselect node on mouse click
+        if(_Context->m_Input.is_mouse_button_clicked())
+            node->State.Selected = false;
+
+        // unhover node
         if(!node->is_partially_visible(_Context))
         {
             node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
@@ -4223,41 +4227,44 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
         }
     }
 
-    // hover start logic
-    if(hoveredNode)
+    if(hoveredNode == nullptr) return;
+
+    if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
     {
-        if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
-        {
-            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
+        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded(
-                hoveredNode->get_visible_rect(_Context).Min,
-                hoveredNode->get_visible_rect(_Context).Max,
-                _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                _Context->m_Renderer->calculate_transform_matrix((float)depth));
+        _Context->m_Renderer->push_rectangle_rounded(
+            hoveredNode->get_visible_rect(_Context).Min,
+            hoveredNode->get_visible_rect(_Context).Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+            _Context->m_Renderer->calculate_transform_matrix((float)depth));
+    }
+
+    // check if anything is already started to be hovered
+    if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
+    {
+        hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
+        hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
+    }
+    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+        hoveredNode->State.MouseEnterTimer,
+        Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+    {
+        // make this node hovered
+        hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
+
+        // the only one node can be hovered
+        for (auto& node : _Context->m_NodesRenderingList)
+        {
+            if(node != hoveredNode)
+                node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
         }
 
-        // check if anythin is already started to be hovered
-        if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
-        {
-            hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
-            hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
-        }
-        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-            hoveredNode->State.MouseEnterTimer,
-            Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
-        {
-            hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
-
-            // the only one node can be hovered
-            for (auto& node : _Context->m_NodesRenderingList)
-            {
-                if(node != hoveredNode)
-                    node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
-            }
-        }
+        // select this node on mouse click
+        if(_Context->m_Input.is_mouse_button_clicked())
+            hoveredNode->State.Selected = true;
     }
 }
 
@@ -5258,12 +5265,13 @@ void ImmediateUserInterfaceContextLayer::input_string(
     const ImmediateUserInterfaceNodeSettings&        _NodeSettings,
     bool                                           (*_InputTextFilter)(const std::string&))
 {
-    struct ImmediateUserInterfaceInputText : public ImmediateUserInterfaceNode
+    // nested types
+    struct ImmediateUserInterfaceStringContent : public ImmediateUserInterfaceNode
     {
     public:
-        ImmediateUserInterfaceInputText(const std::string& _Name): ImmediateUserInterfaceNode(_Name){}
-        virtual ~ImmediateUserInterfaceInputText(){}
-        virtual void layout(ImmediateUserInterfaceContextLayer*) override{}
+        ImmediateUserInterfaceStringContent(const std::string& _Name): ImmediateUserInterfaceNode(_Name){}
+        virtual ~ImmediateUserInterfaceStringContent(){}
+        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override{}
 
         static int move_cursor_left(const int& _Cursor, std::string& _Text)
         {
@@ -5370,19 +5378,63 @@ void ImmediateUserInterfaceContextLayer::input_string(
         bool                                           HasBeenPressed          = false;
         std::chrono::high_resolution_clock::time_point CursorAnimtionTimer;
         std::chrono::high_resolution_clock::time_point CursorMovementTimer;
-    };
-    
-    // render
-    struct ImmediateUserInterfaceInputTextRenderingData
-    {
-        gs_vec2f  CursorPosition;
-        gs_2dboxf TextBoundingBox;
-        gs_2dboxf SelectionRangeBoundingBox;
-        
-        Frenchie::Core::Optional<gs_2dboxf> HoveredSymbolBoundingBox;
-        Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
+
+        struct ImmediateUserInterfaceInputwidgetTextRenderingData
+        {
+            gs_vec2f                            CursorPosition;
+            gs_2dboxf                           TextBoundingBox;
+            gs_2dboxf                           SelectionRangeBoundingBox;
+            Frenchie::Core::Optional<gs_2dboxf> HoveredSymbolBoundingBox;
+            Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
+        } TextRenderingData;
     };
 
+    struct ImmediateUserInterfaceStringScrollArea : public ImmediateUserInterfaceScrollArea
+    {
+    public:
+        ImmediateUserInterfaceStringScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+        virtual ~ImmediateUserInterfaceStringScrollArea(){}
+
+        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+            ImmediateUserInterfaceMenu* menu =
+                _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
+
+            if(_Context->m_Hierarchy.get_parent(menu)) return;
+
+            // outline
+            _Context->m_Renderer->push_rectangle_rounded_filled(
+                State.BoundingBox.Min,
+                State.BoundingBox.Max,
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+    };
+
+    // auxiliary lambdas
+    auto internalFilter = [_InputTextFilter, _InputSettings](const std::string& _Input)->bool
+    {
+        // internal filter first
+        if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline))
+        {
+            for(auto& symbol : _Input)
+            {
+                if(symbol == '\n')
+                    return false;
+            }
+        }
+
+        // 
+        if(_InputTextFilter != nullptr && !_InputTextFilter(_Input))
+            return false;
+
+        return true;
+    };
+
+    // main code
     int scrollAreaSettings = _NodeSettings;
     scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment;
     scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment;
@@ -5392,30 +5444,36 @@ void ImmediateUserInterfaceContextLayer::input_string(
     int scrollAreaContentSettings = scrollAreaSettings;
     scrollAreaContentSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
 
-    if(begin_scrollarea(std::string(_ID).append("/ScrollArea"),
+    if(begin_node<ImmediateUserInterfaceStringScrollArea>(std::string(_ID).append("/ScrollArea"),
         scrollAreaSettings))
     {
         ImmediateUserInterfaceScrollArea* scrollArea =
             get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
 
-        if(begin_node<ImmediateUserInterfaceInputText>(
+        if(begin_node<ImmediateUserInterfaceStringContent>(
             _ID,
             scrollAreaContentSettings))
         {
-            ImmediateUserInterfaceInputText* widget =
-                get_rendering_stack_top<ImmediateUserInterfaceInputText>();
+            ImmediateUserInterfaceStringContent* widget =
+                get_rendering_stack_top<ImmediateUserInterfaceStringContent>();
 
-            ImmediateUserInterfaceInputTextRenderingData textRenderingData;
-            textRenderingData.CursorPosition            = gs_vec2f(0.f, 0.f);
-            textRenderingData.TextBoundingBox           = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
-            textRenderingData.SelectionRangeBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+            widget->TextRenderingData.CursorPosition            = widget->State.BoundingBox.Min;
+            widget->TextRenderingData.TextBoundingBox           = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+            widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
 
+            // render
             {
                 m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, widget));
 
                 int depth = widget->Cache.Depth;
 
                 // render text
+                if(_Text.empty())
+                {
+                    widget->TextRenderingData.HoveredSymbolBoundingBox        = widget->TextRenderingData.TextBoundingBox;
+                    widget->TextRenderingData.HoveredSymbolUtf8CursorPosition = 0;
+                }
+
                 m_Renderer->push_text(
                     widget->State.BoundingBox.Min + gs_max(m_Style.get_frames_radius() * 0.5f, 4.f),
                     _Text.begin(),
@@ -5437,17 +5495,17 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_current_font(),
-                        [this, widget, &depth, &textRenderingData, &selectionBoxRendered](
+                        [this, widget, &depth, &selectionBoxRendered](
                             const gs_2dboxf&    _CurrentSymbolBoundingBox,
                             const gs_vec2f&     _CursorPosition,
                             const int&          _Utf8IteratorPosition,
                             const unsigned int& _Symbol)
                         {
                             // calculate text bounding box
-                            textRenderingData.TextBoundingBox = gs_2dboxf(
-                                textRenderingData.TextBoundingBox.Min,
+                            widget->TextRenderingData.TextBoundingBox = gs_2dboxf(
+                                widget->TextRenderingData.TextBoundingBox.Min,
                                 _CurrentSymbolBoundingBox.Min,
-                                textRenderingData.TextBoundingBox.Max,
+                                widget->TextRenderingData.TextBoundingBox.Max,
                                 _CurrentSymbolBoundingBox.Max);
 
                             // calculate mouse hovered symbol bounding box
@@ -5458,18 +5516,18 @@ void ImmediateUserInterfaceContextLayer::input_string(
                                 _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
                                 _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(m_Renderer->get_cursor_postion()))
                             {
-                                textRenderingData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
-                                textRenderingData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
+                                widget->TextRenderingData.HoveredSymbolBoundingBox        = _CurrentSymbolBoundingBox;
+                                widget->TextRenderingData.HoveredSymbolUtf8CursorPosition = _Utf8IteratorPosition;
                             }
 
                             // calculate cursor geometrical position
                             if(widget->Utf8LeftCursorPosition == _Utf8IteratorPosition)
-                                textRenderingData.CursorPosition = _CursorPosition;
+                                widget->TextRenderingData.CursorPosition = _CursorPosition;
 
                             // calculate selection bounding box
                             if(_Utf8IteratorPosition == widget->Utf8LeftCursorPosition)
                             {
-                                textRenderingData.SelectionRangeBoundingBox = gs_2dboxf(
+                                widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(
                                     _CursorPosition,
                                     _CursorPosition + gs_vec2f(_CurrentSymbolBoundingBox.size().x, m_Style.get_font_size()));
                             }
@@ -5479,8 +5537,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
                                 if(_Symbol == '\n')
                                 {
                                     m_Renderer->push_rectangle_filled(
-                                        textRenderingData.SelectionRangeBoundingBox.Min,
-                                        textRenderingData.SelectionRangeBoundingBox.Max,
+                                        widget->TextRenderingData.SelectionRangeBoundingBox.Min,
+                                        widget->TextRenderingData.SelectionRangeBoundingBox.Max,
                                         gs_rgba_color(
                                             gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                             gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -5494,15 +5552,15 @@ void ImmediateUserInterfaceContextLayer::input_string(
                                 {
                                     if(selectionBoxRendered)
                                     {
-                                        textRenderingData.SelectionRangeBoundingBox = gs_2dboxf(_CursorPosition, _CursorPosition);
+                                        widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(_CursorPosition, _CursorPosition);
                                         selectionBoxRendered = false;
                                     }
                                     else
                                     {
-                                        textRenderingData.SelectionRangeBoundingBox = gs_2dboxf(
-                                            textRenderingData.SelectionRangeBoundingBox.Min,
+                                        widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(
+                                            widget->TextRenderingData.SelectionRangeBoundingBox.Min,
                                             _CursorPosition,
-                                            textRenderingData.SelectionRangeBoundingBox.Max,
+                                            widget->TextRenderingData.SelectionRangeBoundingBox.Max,
                                              _CursorPosition + gs_vec2f(_CurrentSymbolBoundingBox.size().x, m_Style.get_font_size()));
 
                                         selectionBoxRendered = false;
@@ -5515,8 +5573,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                         {
                             m_Renderer->push_rectangle_filled(
-                                textRenderingData.SelectionRangeBoundingBox.Min,
-                                textRenderingData.SelectionRangeBoundingBox.Max,
+                                widget->TextRenderingData.SelectionRangeBoundingBox.Min,
+                                widget->TextRenderingData.SelectionRangeBoundingBox.Max,
                                 gs_rgba_color(
                                     gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                     gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -5527,11 +5585,11 @@ void ImmediateUserInterfaceContextLayer::input_string(
                 }
 
                 // render hovered symbol bounding box
-                if(textRenderingData.HoveredSymbolBoundingBox.has_value())
+                if(widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
                 {
                     m_Renderer->push_rectangle_filled(
-                        textRenderingData.HoveredSymbolBoundingBox.value().Min,
-                        textRenderingData.HoveredSymbolBoundingBox.value().Max,
+                        widget->TextRenderingData.HoveredSymbolBoundingBox.value().Min,
+                        widget->TextRenderingData.HoveredSymbolBoundingBox.value().Max,
                         gs_rgba_color(
                             gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                             gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
@@ -5543,7 +5601,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                 // render cursor
                 if(
                     !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
-                    gs_vector_length(textRenderingData.CursorPosition) > 0.f)
+                    gs_vector_length(widget->TextRenderingData.CursorPosition) > 0.f)
                 {
                     if(widget->CursorAnimtionTimer.time_since_epoch().count() <= 0)
                     {
@@ -5554,8 +5612,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorAnimtionTimer, Frenchie::Core::tic()) < 700)
                         {
                             m_Renderer->push_rectangle_filled(
-                                textRenderingData.CursorPosition,
-                                textRenderingData.CursorPosition + gs_vec2f(4.f, m_Style.get_font_size()),
+                                widget->TextRenderingData.CursorPosition,
+                                widget->TextRenderingData.CursorPosition + gs_vec2f(4.f, m_Style.get_font_size()),
                                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                                 m_Renderer->calculate_transform_matrix((float)depth++));
                         }
@@ -5566,6 +5624,11 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     }
                 }
 
+                m_Renderer->pop_clip_box();
+            }
+
+            // process events
+            {
                 // simple event processing
                 auto parent = m_Hierarchy.get_parent(widget);
                 bool hovered = (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
@@ -5575,6 +5638,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     hovered = hovered || (parent->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
                     parent  = m_Hierarchy.get_parent(parent);
                 }
+
+                hovered = hovered || widget->State.Selected;
 
                 // adjust scrollbar
                 if(widget->HasBeenPressed)
@@ -5589,27 +5654,27 @@ void ImmediateUserInterfaceContextLayer::input_string(
                 {
                     const int cursorMovementInterval = 80; // TODO: this MUST BE a setting !!!
 
-                    auto adjust_scroll_bar_position  = [this, widget, scrollArea, &textRenderingData]()
+                    auto adjust_scroll_bar_position  = [this, widget, scrollArea]()
                     {
                         // move scroll bar if the text is behind visible area
-                        if(!m_Hierarchy.get_parent(widget)->State.BoundingBox.contains(textRenderingData.CursorPosition))
+                        if(!m_Hierarchy.get_parent(widget)->State.BoundingBox.contains(widget->TextRenderingData.CursorPosition))
                         {
                             // adjust horizontal scrollbar
                             if(scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr)
                             {
-                                if(textRenderingData.CursorPosition.x > m_Hierarchy.get_parent(widget)->Cache.BoundingBox.Max.x)
-                                    scrollArea->HorizontalScrollBar->set_scroll_offset((textRenderingData.CursorPosition.x - m_Hierarchy.get_parent(widget)->State.BoundingBox.Max.x) + m_Style.get_font_size());
-                                if(textRenderingData.CursorPosition.x < m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.x)
-                                    scrollArea->HorizontalScrollBar->set_scroll_offset((textRenderingData.CursorPosition.x - m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.x) - m_Style.get_font_size());
+                                if(widget->TextRenderingData.CursorPosition.x > m_Hierarchy.get_parent(widget)->Cache.BoundingBox.Max.x)
+                                    scrollArea->HorizontalScrollBar->set_scroll_offset((widget->TextRenderingData.CursorPosition.x - m_Hierarchy.get_parent(widget)->State.BoundingBox.Max.x) + m_Style.get_font_size());
+                                if(widget->TextRenderingData.CursorPosition.x < m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.x)
+                                    scrollArea->HorizontalScrollBar->set_scroll_offset((widget->TextRenderingData.CursorPosition.x - m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.x) - m_Style.get_font_size());
                             }
 
                             // adjust vertical scrollbar position
                             if(scrollArea != nullptr && scrollArea->VerticalScrollBar != nullptr)
                             {
-                                if(textRenderingData.CursorPosition.y > m_Hierarchy.get_parent(widget)->State.BoundingBox.Max.y)
-                                    scrollArea->VerticalScrollBar->set_scroll_offset((textRenderingData.CursorPosition.y - m_Hierarchy.get_parent(widget)->State.BoundingBox.Max.y) + m_Style.get_font_size());
-                                if(textRenderingData.CursorPosition.y < m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.y)
-                                    scrollArea->VerticalScrollBar->set_scroll_offset((textRenderingData.CursorPosition.y - m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.y) - m_Style.get_font_size());
+                                if(widget->TextRenderingData.CursorPosition.y > m_Hierarchy.get_parent(widget)->State.BoundingBox.Max.y)
+                                    scrollArea->VerticalScrollBar->set_scroll_offset((widget->TextRenderingData.CursorPosition.y - m_Hierarchy.get_parent(widget)->State.BoundingBox.Max.y) + m_Style.get_font_size());
+                                if(widget->TextRenderingData.CursorPosition.y < m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.y)
+                                    scrollArea->VerticalScrollBar->set_scroll_offset((widget->TextRenderingData.CursorPosition.y - m_Hierarchy.get_parent(widget)->State.BoundingBox.Min.y) - m_Style.get_font_size());
                             }
                         }
                     };
@@ -5626,7 +5691,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     {
                         if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
                         {
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                         }
                         else
@@ -5637,7 +5702,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             }
                             else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
                             {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                                 widget->CursorMovementTimer     = std::chrono::steady_clock::time_point();
                             }
@@ -5652,7 +5717,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     {
                         if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
                         {
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
+                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                         }
                         else
@@ -5663,7 +5728,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             }
                             else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
                             {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                                 widget->CursorMovementTimer     = std::chrono::steady_clock::time_point();
                             }
@@ -5678,7 +5743,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     {
                         if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
                         {
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
+                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                         }
                         else
@@ -5689,7 +5754,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             }
                             else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
                             {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_up(widget->Utf8LeftCursorPosition, _Text);
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                                 widget->CursorMovementTimer     = std::chrono::steady_clock::time_point();
                             }
@@ -5704,7 +5769,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     {
                         if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
                         {
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
+                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                         }
                         else
@@ -5715,7 +5780,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             }
                             else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
                             {
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_down(widget->Utf8LeftCursorPosition, _Text);
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                                 widget->CursorMovementTimer     = std::chrono::steady_clock::time_point();
                             }
@@ -5732,9 +5797,9 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow)  ||
                             m_Input.is_mouse_button_pressed())
                     {
-                        if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value() && m_Input.is_mouse_button_pressed())
+                        if(widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.has_value() && m_Input.is_mouse_button_pressed())
                         {
-                            widget->Utf8LeftCursorPosition  = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                            widget->Utf8LeftCursorPosition  = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                         }
 
@@ -5749,13 +5814,23 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         
                         m_Input.is_mouse_button_down())
                     {
-                        if(textRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
+                        if(widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
                         {
-                            if(textRenderingData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
-                                widget->Utf8RightCursorPosition = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                            if(widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
+                                widget->Utf8RightCursorPosition = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
                             else
-                                widget->Utf8LeftCursorPosition = textRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                                widget->Utf8LeftCursorPosition = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
                         }
+                    }
+
+                    // select all
+                    else if(
+                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
+                            m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)               &&
+                            m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_A))
+                    {
+                        widget->Utf8LeftCursorPosition  = 0;
+                        widget->Utf8RightCursorPosition = (int)_Text.size();
                     }
 
                     // modifications
@@ -5765,28 +5840,26 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
                         m_Input.has_input_text())
                     {
+                        // remove selection
                         if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                         {
-                            // remove selection
-                            _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1);
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                            int position = widget->Utf8LeftCursorPosition;
+                            int count    = gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1;
+
+                            // move cursor
+                            for (int i = 0; i < count; i++)
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
+
+                            // erase selection
+                            _Text.erase(position, count);
                         }
 
                         // insert text after selection
-                        if(_InputTextFilter != nullptr)
-                        {
-                            if(_InputTextFilter(m_Input.get_input_text()))
-                            {
-                                _Text.insert(widget->Utf8LeftCursorPosition, m_Input.get_input_text());
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
-                            }
-                        }
-                        else
+                        if(internalFilter(m_Input.get_input_text()))
                         {
                             _Text.insert(widget->Utf8LeftCursorPosition, m_Input.get_input_text());
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
+                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
                         }
 
@@ -5803,9 +5876,16 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         // remove selection
                         if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                         {
-                            _Text.erase(widget->Utf8LeftCursorPosition, gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1);
-                            widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                            int position = widget->Utf8LeftCursorPosition;
+                            int count    = gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1;
+
+                            // move cursor
+                            for (int i = 0; i < count; i++)
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
+
+                            // erase selection
+                            _Text.erase(position, count);
                         }
                         // remove single symbol
                         else
@@ -5813,7 +5893,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Backspace))
                             {
                                 int previousCursorPosition      = widget->Utf8LeftCursorPosition;
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                                 widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
 
                                 if(previousCursorPosition - widget->Utf8LeftCursorPosition > 0)
@@ -5828,7 +5908,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                                 else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(widget->CursorMovementTimer, Frenchie::Core::tic()) > cursorMovementInterval)
                                 {
                                     int previousCursorPosition      = widget->Utf8LeftCursorPosition;
-                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
+                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
 
                                     if(previousCursorPosition - widget->Utf8LeftCursorPosition > 0)
@@ -5872,7 +5952,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             _Text.insert(widget->Utf8LeftCursorPosition, clipboardText);
                             
                             for(int i = 0; i < (int)clipboardText.size(); i++)
-                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputText::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
+                                widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
                             
                             widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
 
@@ -5880,29 +5960,72 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         }
                     }
                 }
-
-                m_Renderer->pop_clip_box();
             }
 
             // calculate geometry
             {
-                ImmediateUserInterfaceNode* parent = m_Hierarchy.get_parent(widget);
-
-                gs_vec2f size = textRenderingData.TextBoundingBox.size();
-
-                widget->State.MaximumSize = size;
-                widget->State.MinimumSize = size;
+                if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline))
+                {
+                    widget->State.MaximumSize = gs_vec2f(
+                        gs_max(widget->TextRenderingData.TextBoundingBox.size().x, m_Style.get_font_size()) + m_Style.get_font_size(),
+                         m_Style.get_font_size());
+                }
+                else
+                {
+                    widget->State.MaximumSize = gs_vec2f(
+                        gs_max(widget->TextRenderingData.TextBoundingBox.size().x, m_Style.get_font_size()) + m_Style.get_font_size(),
+                        gs_max(widget->TextRenderingData.TextBoundingBox.size().y, m_Style.get_font_size()));
+                }
+                
+                widget->State.MinimumSize = widget->State.MaximumSize;
+                
                 widget->State.BoundingBox = gs_2dboxf(
                     widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Min + gs_clamp(size, widget->State.MinimumSize, widget->State.MaximumSize));
+                    widget->State.BoundingBox.Min + gs_clamp(widget->TextRenderingData.TextBoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
             }
 
-            end_node<ImmediateUserInterfaceInputText>();
+            end_node<ImmediateUserInterfaceStringContent>();
         }
 
-        end_scrollarea();
+        end_node<ImmediateUserInterfaceStringScrollArea>();
     }
 }
+
+void ImmediateUserInterfaceContextLayer::input_string_multiline(
+    const std::string&                               _ID,
+    std::string&                                     _Text,
+    const ImmediateUserInterfaceInputStringSettings& _InputSettings,
+    bool                                           (*_InputTextFilter)(const std::string&))
+{
+    input_string(
+        _ID,
+        _Text,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar  |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar,
+        _InputSettings,
+        _InputTextFilter);
+}
+
+void ImmediateUserInterfaceContextLayer::input_string_singleline(
+    const std::string&                               _ID,
+    std::string&                                     _Text,
+    const ImmediateUserInterfaceInputStringSettings& _InputSettings,
+    bool                                           (*_InputTextFilter)(const std::string&))
+{
+    int settings = _InputSettings | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline;
+
+    input_string(
+        _ID,
+        _Text,
+        (int)(_InputSettings | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically   |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar  |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar,
+        _InputTextFilter);
+}
+
 
 //------------------------------------------------------------------------------------------
 // color picker
