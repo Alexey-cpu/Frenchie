@@ -155,7 +155,8 @@ namespace Frenchie
         {
             ImmediateUserInterfaceInputStringSettings_NoInput     = 1 << 0, // disables input
             ImmediateUserInterfaceInputStringSettings_NoClipboard = 1 << 1, // disables copy/paste
-            ImmediateUserInterfaceInputStringSettings_NoSelection = 1 << 2, // disables selection capabilities
+            ImmediateUserInterfaceInputStringSettings_NoSelection = 1 << 2, // disables selection
+            ImmediateUserInterfaceInputStringSettings_NoMultiline = 1 << 3, // disables multiline text
 
             ImmediateUserInterfaceInputStringSettings_Defaults    = 0
         };
@@ -347,14 +348,14 @@ namespace Frenchie
             struct Data
             {
                 // rendering
-                int                                Depth                      {0};
-                int                                SelfThickness              {0}; // thickness of self rendered content
-                int                                RenderingIndex             {0}; // index of the node within context rendering list
-                int                                RenderingOrder             {0};
-                int                                MaximumChildDepth          {0};
-                int                                MaximumChildThickness      {0};
-                bool                               PlaceInFollow              {false};
-                bool                               OrderChildrenWhileRendering{false};
+                int                                Depth                      {0};     // depth along Z-axis
+                int                                SelfThickness              {0};     // thickness of rendered content
+                int                                RenderingIndex             {0};     // index of the node within context rendering list
+                int                                RenderingOrder             {0};     // index of the node while rendering
+                int                                MaximumChildDepth          {0};     // depth of the deepest child
+                int                                MaximumChildThickness      {0};     // thickness of the 'fattest' child
+                bool                               PlaceInFollow              {false}; // shows if the node places it's children in follow
+                bool                               OrderChildrenWhileRendering{false}; // shows if the node sorts it's children by rendering order index while rendering
 
                 // geometry
                 gs_2dboxf                          BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
@@ -371,6 +372,7 @@ namespace Frenchie
 
                 // events
                 ImmediateUserInterfaceNodeEvents   Events                     {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+                bool                               Selected                   {false};
 
                 // layout hints
                 int NextLine = 0;
@@ -863,11 +865,16 @@ namespace Frenchie
             
             void label(const std::string& _ID, const std::string& _Text);
 
-            void input_string(
+            void input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-                const ImmediateUserInterfaceNodeSettings&        _NodeSettings                         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
+
+            void input_string_singleline(
+                const std::string&                               _ID,
+                std::string&                                     _Text,
+                const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
             void color_picker(const std::string& _ID);
@@ -943,11 +950,19 @@ namespace Frenchie
 
                     // next size
                     if(controller->NextSize.has_value())
-                        node->State.BoundingBox = gs_2dboxf(node->State.BoundingBox.Min, node->State.BoundingBox.Min + controller->NextSize.value());
+                    {
+                        node->State.BoundingBox = gs_2dboxf(
+                            node->State.BoundingBox.Min,
+                            node->State.BoundingBox.Min + gs_clamp(controller->NextSize.value(), node->State.MinimumSize, node->State.MaximumSize));
+                    }
 
                     // next position
                     if(controller->NextPosition.has_value())
-                        node->State.BoundingBox = gs_2dboxf(controller->NextPosition.value(), controller->NextPosition.value() + node->State.BoundingBox.size());
+                    {
+                        node->State.BoundingBox = gs_2dboxf(
+                            controller->NextPosition.value(),
+                            controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
+                    }
 
                     // next content padding
                     if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentPadding.has_value())
@@ -1012,6 +1027,13 @@ namespace Frenchie
             std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
 
             // service methods
+            void input_string(
+                const std::string&                               _ID,
+                std::string&                                     _Text,
+                const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceNodeSettings&        _NodeSettings                         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
+
             template<typename Type> Type* create_node(const std::string& _ID)
             {
                 // clean-up hash and name buffers
