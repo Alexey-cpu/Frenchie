@@ -5397,7 +5397,6 @@ void ImmediateUserInterfaceContextLayer::input_string(
         {
             gs_vec2f                            CursorPosition;
             gs_2dboxf                           TextBoundingBox;
-            gs_2dboxf                           SelectionRangeBoundingBox;
             Frenchie::Core::Optional<gs_2dboxf> HoveredSymbolBoundingBox;
             Frenchie::Core::Optional<int>       HoveredSymbolUtf8CursorPosition;
         } TextRenderingData;
@@ -5477,7 +5476,6 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
             widget->TextRenderingData.CursorPosition            = widget->State.BoundingBox.Min;
             widget->TextRenderingData.TextBoundingBox           = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
-            widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
 
             if(m_Hierarchy.get_parent(widget)->State.Selected)
             {
@@ -5509,8 +5507,6 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
                 // render selection bounding box
                 {
-                    bool selectionBoxRendered = false;
-
                     m_Renderer->push_text(
                         widget->State.BoundingBox.Min + gs_max(m_Style.get_frames_radius() * 0.5f, 4.f),
                         _Text.begin(),
@@ -5519,7 +5515,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_current_font(),
-                        [this, widget, &depth, &selectionBoxRendered](
+                        [this, widget, &depth](
                             const gs_2dboxf&    _CurrentSymbolBoundingBox,
                             const gs_vec2f&     _CursorPosition,
                             const int&          _Utf8IteratorPosition,
@@ -5548,64 +5544,24 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             if(widget->Utf8LeftCursorPosition == _Utf8IteratorPosition)
                                 widget->TextRenderingData.CursorPosition = _CursorPosition;
 
-                            // calculate selection bounding box
-                            if(_Utf8IteratorPosition == widget->Utf8LeftCursorPosition)
+                            if(_Utf8IteratorPosition >= widget->Utf8LeftCursorPosition   &&
+                                _Utf8IteratorPosition <= widget->Utf8RightCursorPosition &&
+                                (widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition))
                             {
-                                widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(
-                                    _CursorPosition,
-                                    _CursorPosition + gs_vec2f(_CurrentSymbolBoundingBox.size().x, m_Style.get_font_size()));
-                            }
-                            else if(_Utf8IteratorPosition >= widget->Utf8LeftCursorPosition &&
-                                    _Utf8IteratorPosition <= widget->Utf8RightCursorPosition)
-                            {
-                                if(_Symbol == '\n')
-                                {
-                                    m_Renderer->push_rectangle_filled(
-                                        widget->TextRenderingData.SelectionRangeBoundingBox.Min,
-                                        widget->TextRenderingData.SelectionRangeBoundingBox.Max,
-                                        gs_rgba_color(
-                                            gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                            gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                            gs_rgba_color_get_b(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                            200),
-                                        m_Renderer->calculate_transform_matrix((float)depth++));
-                                    
-                                    selectionBoxRendered = true;
-                                }
-                                else
-                                {
-                                    if(selectionBoxRendered)
-                                    {
-                                        widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(_CursorPosition, _CursorPosition);
-                                        selectionBoxRendered = false;
-                                    }
-                                    else
-                                    {
-                                        widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(
-                                            widget->TextRenderingData.SelectionRangeBoundingBox.Min,
-                                            _CursorPosition,
-                                            widget->TextRenderingData.SelectionRangeBoundingBox.Max,
-                                             _CursorPosition + gs_vec2f(_CurrentSymbolBoundingBox.size().x, m_Style.get_font_size()));
+                                float glyphAdvance = m_Style.get_current_font().contains_glyph(_Symbol) ? m_Style.get_current_font().retrieve_glyph(_Symbol).Advance * scale : 0.f;
 
-                                        selectionBoxRendered = false;
-                                    }
-                                }
+                                m_Renderer->push_rectangle_filled(
+                                    _CursorPosition - gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f),
+                                    _CursorPosition + gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f) + gs_vec2f(_CurrentSymbolBoundingBox.size().x, m_Style.get_font_size()),
+                                    gs_rgba_color(
+                                        gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                        gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                        gs_rgba_color_get_b(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                        200),
+                                    m_Renderer->calculate_transform_matrix((float)depth++));
                             }
                         },
                         true);
-
-                        if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
-                        {
-                            m_Renderer->push_rectangle_filled(
-                                widget->TextRenderingData.SelectionRangeBoundingBox.Min,
-                                widget->TextRenderingData.SelectionRangeBoundingBox.Max,
-                                gs_rgba_color(
-                                    gs_rgba_color_get_r(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                    gs_rgba_color_get_g(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                    gs_rgba_color_get_b(m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                    128),
-                                m_Renderer->calculate_transform_matrix((float)depth++));
-                        }
                 }
 
                 // render hovered symbol bounding box
