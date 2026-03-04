@@ -238,17 +238,17 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
     if(m_ImmediateUserInterface->begin_window("Window-1"))
     {
-        m_ImmediateUserInterface->next_minimum_size(gs_vec2f(128.f, 128.f));
-        m_ImmediateUserInterface->next_maximum_size(gs_vec2f(512.f, 512.f));
+        // m_ImmediateUserInterface->next_minimum_size(gs_vec2f(128.f, 128.f));
+        // m_ImmediateUserInterface->next_maximum_size(gs_vec2f(512.f, 512.f));
 
         if(m_ImmediateUserInterface->begin_vertial_stack("Window-1/VerticalStack"))
         {
-            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 0.f));
 
             if(m_ImmediateUserInterface->begin_horizontal_stack("Window-1/VerticalStack/Row-1"))
             {
-                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-1", input1);
-                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-2", input2);
+                m_ImmediateUserInterface->label("Window-1/VerticalStack/Row-1/Input-1-Label", "Input-1"); m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-1", input1);
+                m_ImmediateUserInterface->label("Window-1/VerticalStack/Row-1/Input-2-Label", "Input-2"); m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-2", input2);
 
                 m_ImmediateUserInterface->end_horizontal_stack();
             }
