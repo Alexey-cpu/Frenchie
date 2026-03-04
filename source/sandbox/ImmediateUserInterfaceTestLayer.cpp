@@ -227,29 +227,14 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     static std::string input3;
     static std::string input4;
 
-    // if(m_ImmediateUserInterface->begin_window("Window-1"))
-    // {
-    //     m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 0.f));
+    static std::string input5;
 
-    //     if(m_ImmediateUserInterface->begin_scrollarea(
-    //         "Window-1/ScrollArea",
-    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults                       |
-    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter |
-    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
-    //     {
-    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-1", input1);
-    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-2", input2);
+    if(m_ImmediateUserInterface->begin_window("Window-2"))
+    {
+        m_ImmediateUserInterface->input_string_multiline("Window-2/Text", input5);
 
-    //         m_ImmediateUserInterface->next_line();
-
-    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-3", input3);
-    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-4", input4);
-
-    //         m_ImmediateUserInterface->end_scrollarea();
-    //     }
-
-    //     m_ImmediateUserInterface->end_window();
-    // }
+        m_ImmediateUserInterface->end_window();
+    }
 
     if(m_ImmediateUserInterface->begin_window("Window-1"))
     {

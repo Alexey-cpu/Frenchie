@@ -5406,8 +5406,6 @@ void ImmediateUserInterfaceContextLayer::input_string(
         ImmediateUserInterfaceStringScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name)
         {
             State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
-            State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
-            State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
         }
 
         virtual ~ImmediateUserInterfaceStringScrollArea(){}
@@ -5464,8 +5462,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
     if(begin_node<ImmediateUserInterfaceStringScrollArea>(std::string(_ID).append("/ScrollArea"),
         scrollAreaSettings))
     {
-        ImmediateUserInterfaceScrollArea* scrollArea =
-            get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+        ImmediateUserInterfaceStringScrollArea* scrollArea =
+            get_rendering_stack_top<ImmediateUserInterfaceStringScrollArea>();
 
         if(begin_node<ImmediateUserInterfaceStringContent>(
             _ID,
@@ -5477,6 +5475,12 @@ void ImmediateUserInterfaceContextLayer::input_string(
             widget->TextRenderingData.CursorPosition            = widget->State.BoundingBox.Min;
             widget->TextRenderingData.TextBoundingBox           = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
             widget->TextRenderingData.SelectionRangeBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+
+            if(m_Hierarchy.get_parent(widget)->State.Selected)
+            {
+                widget->State.Selected                         = true;
+                m_Hierarchy.get_parent(widget)->State.Selected = false;
+            }
 
             // render
             {
