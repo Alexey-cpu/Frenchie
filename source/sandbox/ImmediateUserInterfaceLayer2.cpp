@@ -318,6 +318,7 @@ namespace Frenchie
                 const Type&           _End,
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
+                const gs_vec2f&       _Padding,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
@@ -325,6 +326,8 @@ namespace Frenchie
                 gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
                 // compute total children size
+                totalsize += _Padding * 2.f;
+
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
@@ -335,7 +338,7 @@ namespace Frenchie
                 gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
 
                 // layout children and compute their bounding box
-                gs_2dboxf childrenBoundingBox = gs_2dboxf(_Position, _Position);
+                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -345,7 +348,7 @@ namespace Frenchie
                     gs_vec2f size = gs_vec2f(_Size.x, ((*it)->State.BoundingBox.size() * scale).y);
                     size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y);
+                    position += gs_vec2f(0.f, size.y + _Padding.y);
 
                     childrenBoundingBox = gs_2dboxf(
                         childrenBoundingBox.Min,
@@ -365,7 +368,7 @@ namespace Frenchie
                     gs_vec2f size = (*it)->State.BoundingBox.size();
 
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y);
+                    position += gs_vec2f(0.f, size.y + _Padding.y);
                 }
             }
 
@@ -375,24 +378,27 @@ namespace Frenchie
                 const Type&           _End,
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
+                const gs_vec2f&       _Padding,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
-                gs_vec2f position   = _Position;
+                gs_vec2f position   = _Position + _Padding;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
                 // compute total size
+                totalsize += _Padding * 2.f;
+
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
-                        totalsize += (*it)->State.BoundingBox.size();
+                        totalsize += (*it)->State.BoundingBox.size() + _Padding;
                 }
 
                 // compute children scale
                 gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
 
                 // layout children and compute their bounding box
-                gs_2dboxf childrenBoundingBox = gs_2dboxf(_Position, _Position);
+                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -402,7 +408,7 @@ namespace Frenchie
                     gs_vec2f size = gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, _Size.y);
                     size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x, 0.f);
+                    position += gs_vec2f(size.x + _Padding.x, 0.f);
 
                     childrenBoundingBox = gs_2dboxf(
                         childrenBoundingBox.Min,
@@ -422,7 +428,7 @@ namespace Frenchie
                     gs_vec2f size = (*it)->State.BoundingBox.size();
 
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x, 0.f);
+                    position += gs_vec2f(size.x + _Padding.x, 0.f);
                 }
             }
 
@@ -2742,8 +2748,9 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + ContentPadding,
-        State.BoundingBox.size() - ContentPadding * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
+        ContentPadding,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
@@ -2760,8 +2767,9 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_horizontal_stack(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + ContentPadding,
-        State.BoundingBox.size() - ContentPadding * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
+        ContentPadding,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
