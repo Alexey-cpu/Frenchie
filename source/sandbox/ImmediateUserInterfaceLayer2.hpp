@@ -342,6 +342,7 @@ namespace Frenchie
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
 
             // getters
+            gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const;
             gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const;
             bool is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const;
 
@@ -368,6 +369,9 @@ namespace Frenchie
                 // hierarchy
                 ImmediateUserInterfaceNode*        Parent                     {nullptr};
                 ImmediateUserInterfaceNode*        Relative                   {nullptr};
+
+                // visibility
+                mutable Frenchie::Core::Optional<gs_2dboxf> ClippingBox;
 
                 // settings
                 ImmediateUserInterfaceNodeSettings Settings                   {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
