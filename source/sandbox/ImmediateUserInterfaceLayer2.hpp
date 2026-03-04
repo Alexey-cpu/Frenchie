@@ -17,30 +17,32 @@ namespace Frenchie
 {
     namespace Application
     {
-        // events
+        // Events
+        // This enum contains boolean flags indicating different node events such as resize, move e.t.c
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeEvents_None                 = 0,
             
             // move
-            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0,
+            ImmediateUserInterfaceNodeEvents_IsMoved              = 1 << 0, // indicates that node is being moved
             
             // resize
-            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1,
-            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2,
-            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5,
-            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7,
-            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8,
+            ImmediateUserInterfaceNodeEvents_IsResizedTop         = 1 << 1, // indicates that node is being resized by dragging top part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedLeft        = 1 << 2, // indicates that node is being resized by dragging left part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedRight       = 1 << 3, // indicates that node is being resized by dragging right part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottom      = 1 << 4, // indicates that node is being resized by dragging bottom part of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTopLeft     = 1 << 5, // indicates that node is being resized by dragging top left corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedTopRight    = 1 << 6, // indicates that node is being resized by dragging top right corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft  = 1 << 7, // indicates that node is being resized by dragging bottom left corner of it's bounding box
+            ImmediateUserInterfaceNodeEvents_IsResizedBottomRight = 1 << 8, // indicates that node is being resized by dragging bottom right corner of it's bounding box
 
             // custom event
-            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9,
+            ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9, // is used for user defined events
         };
 
-        // colors
+        // Colors
+        // This enum contains indexes of the colors used by immediate user interface layer style
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin            = 0,
@@ -68,8 +70,8 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background
 
             // gizmos
-            ImmediateUserInterfaceNodeColors_Gizmos,
-            ImmediateUserInterfaceNodeColors_GizmosHovered,
+            ImmediateUserInterfaceNodeColors_Gizmos,                                                    // gizmos background
+            ImmediateUserInterfaceNodeColors_GizmosHovered,                                             // hovered gizmos background
 
             // text
             ImmediateUserInterfaceNodeColors_Text,
@@ -77,40 +79,39 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_End
         };
 
-        // settings
+        // Settings
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeSettings_None                                   = 0,
 
             // modifications
-            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0,
-            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1,
-            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2,
+            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, // make node movable
+            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, // make node resizable
+            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, // make node ignore it's parent within hierarchy
 
             // content alignment
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3,
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4,
-            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5,
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6,
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7,
-            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8,
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3, // content is aligned top on vertical axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         = 1 << 4, // content is aligned center on vertical axis
+            ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom         = 1 << 5, // content is aligned bottom on vertical axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft         = 1 << 6, // content is aligned left on horizontal axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter       = 1 << 7, // content is aligned center on horizontal axis
+            ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight        = 1 << 8, // content is aligned right on horizontal axis
 
             // scrollbars
-            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,
-            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10,
-            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11,
-            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12,
-            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13,
-            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14,
-            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15,
-            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16,
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 17,
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 18,
-            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 19,
-
-            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20,
-            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21,
+            ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar                 = 1 << 9,  // vertical scrollbar will always be disabled
+            ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar                = 1 << 10, // vertical scrollbar will always be enabled
+            ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              = 1 << 11, // vertical scrollbar will be enabled when needed
+            ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar               = 1 << 12, // horizontal scrollbar will always be disabled
+            ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar              = 1 << 13, // horizontal scrollbar will always be enabled
+            ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, // horizontal scrollbar will be enabled when needed
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, // node with scrollarea will be resized to it's contents vertically
+            ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, // node with scrollarea will be resized to it's contents horizontally
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 17, // vertical scroll bar position will be adjusted by a mouse wheel
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 18, // vertical scroll bar position will be adjusted by up/down keyboard arrows
+            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 19, // horizontal scroll bar position will be adjusted by left/right keyboard arrows
+            ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, // vertical scrollbar will be invisible
+            ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                 ImmediateUserInterfaceNodeSettings_Movable |
@@ -136,48 +137,49 @@ namespace Frenchie
         enum ImmediateUserInterfaceContextSettings_ : int
         {
             // docking
-            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0,
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1,
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2,
+            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0, // disables all docking features
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1, // enables windows mutual docking
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock space
 
             // highlighting
-            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3,
+            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
         };
 
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
-            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0,
-            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1,
-            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2
+            ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, // check button is rendered as checkbox
+            ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1, // check button is rendered as radio button
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2  // check button is rendered as slider button
         };
 
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
-            ImmediateUserInterfaceInputStringSettings_NoInput     = 1 << 0, // disables input
-            ImmediateUserInterfaceInputStringSettings_NoClipboard = 1 << 1, // disables copy/paste
-            ImmediateUserInterfaceInputStringSettings_NoSelection = 1 << 2, // disables selection
-            ImmediateUserInterfaceInputStringSettings_NoMultiline = 1 << 3, // disables multiline text
-
-            ImmediateUserInterfaceInputStringSettings_Defaults    = 0
+            ImmediateUserInterfaceInputStringSettings_NoInput          = 1 << 0, // disables input
+            ImmediateUserInterfaceInputStringSettings_NoClipboard      = 1 << 1, // disables copy/paste
+            ImmediateUserInterfaceInputStringSettings_NoSelection      = 1 << 2, // disables selection
+            ImmediateUserInterfaceInputStringSettings_NoMultiline      = 1 << 3, // disables multiline text
+            ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag = 1 << 4, // disables scrollbar moving when dragging mouse within input string editor            
+            ImmediateUserInterfaceInputStringSettings_Defaults         = 0
         };
 
         // mouse hover
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
             ImmediateUserInterfaceNodeMouseHover_None         = 0,
-            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0,
-            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1,
-            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2,
+            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, // is set when mouse leaves bounding box of previously hovered node
+            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, // is set if mouse is within bounding box of a node
+            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, // is set when mouse enters bounding box of node
         };
 
         // windows docking anchors
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
-            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0,
-            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 2,
-            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 3,
-            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 4,
-            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 5,
+            ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0, // docked window is snapped to the top part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 2, // docked window is snapped to the left part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 3, // docked window is snapped to the right part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 4, // docked window is snapped to the bottom part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 5, // docked window is docked as tab to it's docker
+
             ImmedidateUserInterfaceDockingAnchor_All    =
                 ImmedidateUserInterfaceDockingAnchor_Top    |
                 ImmedidateUserInterfaceDockingAnchor_Left   |
