@@ -225,13 +225,13 @@ namespace Frenchie
                     gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
             }
 
-            gs_2dboxf calculate_current_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+            gs_2dboxf calculate_clipping_box(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
             {
                 const ImmediateUserInterfaceNode* next   = _Node;
                 ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
 
                 if(parent == nullptr)
-                    return _Node->State.BoundingBox;
+                    return _Context->m_Renderer->current_viewport();
 
                 gs_2dboxf clippingBox = next->State.BoundingBox;
 
@@ -2676,12 +2676,12 @@ void ImmediateUserInterfaceNode::save_state(ImmediateUserInterfaceContextLayer*)
 
 gs_2dboxf ImmediateUserInterfaceNode::get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    return State.BoundingBox.clip_with(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(_Context, this));
+    return State.BoundingBox.clip_with(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(_Context, this));
 }
 
 bool ImmediateUserInterfaceNode::is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const
 {
-    return State.BoundingBox.overlaps(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(_Context, this));
+    return State.BoundingBox.overlaps(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(_Context, this));
 }
 
 int ImmediateUserInterfaceNode::place_in_follow()
@@ -4427,7 +4427,7 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 
     // calculate clippingbox
     _Context->m_Renderer->push_clip_box(
-        ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(_Context, _Node));
+        ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(_Context, _Node));
 
     // render self
     _Node->render(_Context);
@@ -4937,7 +4937,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
         // render
         {
-            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, widget));
+            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(this, widget));
 
             int depth = widget->Cache.Depth;
 
@@ -5038,7 +5038,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
         // render
         {
-            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, widget));
+            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(this, widget));
 
             int depth = widget->Cache.Depth;
 
@@ -5235,7 +5235,7 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
 
         // render
         {
-            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, button));
+            m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(this, button));
 
             int depth = button->Cache.Depth;
 
@@ -5485,7 +5485,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
             // render
             {
-                m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_current_clipping_box(this, widget));
+                m_Renderer->push_clip_box(ImmediateUserInterfaceContextLayerHelpers::calculate_clipping_box(this, widget));
 
                 int depth = widget->Cache.Depth;
 
