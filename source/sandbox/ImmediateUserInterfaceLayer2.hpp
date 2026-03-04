@@ -259,7 +259,7 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius         = 32.f;
+            float                            FramesRadius         = 0.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 64.f;
             float                            ScrollBarWidth       = 64.f;
@@ -765,7 +765,8 @@ namespace Frenchie
 
             // info
             mutable Frenchie::Core::Optional<int>      NextLine;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextSize;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextMaximumSize;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
             mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
             mutable Frenchie::Core::Optional<gs_vec2f> NextContentPadding;
         };
@@ -890,6 +891,8 @@ namespace Frenchie
             // next node API
             void next_line();
             void next_size(const gs_vec2f&);
+            void next_minimum_size(const gs_vec2f&);
+            void next_maximum_size(const gs_vec2f&);
             void next_position(const gs_vec2f&);
             void next_content_padding(const gs_vec2f&);
 
@@ -946,16 +949,16 @@ namespace Frenchie
                 if(controller != nullptr)
                 {
                     // next line
-                    if(!m_NodesRenderingList.empty() && controller->NextLine.has_value())
-                        m_NodesRenderingList[m_NodesRenderingList.size() - 1]->State.NextLine = controller->NextLine.value();
+                    if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
+                        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
 
-                    // next size
-                    if(controller->NextSize.has_value())
-                    {
-                        node->State.BoundingBox = gs_2dboxf(
-                            node->State.BoundingBox.Min,
-                            node->State.BoundingBox.Min + gs_clamp(controller->NextSize.value(), node->State.MinimumSize, node->State.MaximumSize));
-                    }
+                    // next minimum size
+                    if(controller->NextMinimumSize.has_value())
+                        node->State.MinimumSize = controller->NextMinimumSize.value();
+
+                    // next maximum size
+                    if(controller->NextMaximumSize.has_value())
+                        node->State.MaximumSize = controller->NextMaximumSize.value();
 
                     // next position
                     if(controller->NextPosition.has_value())
@@ -992,6 +995,8 @@ namespace Frenchie
 
                 GS_ASSERT((dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) != nullptr));
 
+                m_NodesRenderedStack.push_back(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
+                
                 m_NodesRenderingStack.pop_back();
             }
 
@@ -1003,6 +1008,7 @@ namespace Frenchie
             mutable std::shared_ptr<RenderingQueue>                                    m_Renderer{nullptr};
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingList;
             mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderingStack;
+            mutable std::vector<ImmediateUserInterfaceNode*>                           m_NodesRenderedStack;
 
             // style
             mutable ImmedidateUserInterfaceStyle                                       m_Style;

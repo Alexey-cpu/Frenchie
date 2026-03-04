@@ -948,14 +948,30 @@ namespace Frenchie
 
                 if(_Context == nullptr || contentArea == nullptr) return;
 
-                // layout self
+                // calculate self maximum and minimum sizes
                 State.MaximumSize =
                     Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
                         gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
                             gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), _Context->m_Style.get_scrollbar_width());
 
+                if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
+                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
+                {
+                    State.MaximumSize.y = 0.f;
+                    State.MinimumSize = State.MaximumSize;
+                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+                }
+                else if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
+                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+                {
+                    State.MaximumSize.x =  0.f;
+                    State.MinimumSize   = State.MaximumSize;
+                    State.BoundingBox   = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+                }
+
                 State.MinimumSize = State.MaximumSize;
 
+                // calculate self bounding box
                 gs_vec2f offset =
                     Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
                         gs_vec2f(0.f, gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f) :
@@ -965,6 +981,7 @@ namespace Frenchie
                     State.BoundingBox.Min + offset,
                     State.BoundingBox.Min - (Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ? gs_vec2f(0.f, 0.f) : offset) + State.MaximumSize);
 
+                // calculate scrollbar metrics
                 gs_vec2f scrollbarMinimumValue = gs_vec2f(0.f, 0.f);
                 gs_vec2f scrollbarMaximumValue =
                     Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
@@ -1092,22 +1109,6 @@ namespace Frenchie
                 }
 
                 Size = scrollbarSliderLength;
-
-                // adjust size of invisible scrollbar
-                if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
-                {
-                    State.MaximumSize.y = 0.f;
-                    State.MinimumSize = State.MaximumSize;
-                    State.BoundingBox   = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-                }
-                else if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-                {
-                    State.MaximumSize.x =  0.f;
-                    State.MinimumSize   = State.MaximumSize;
-                    State.BoundingBox   = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-                }
             }
 
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
@@ -2826,7 +2827,7 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
     if(_Context == nullptr) return false;
 
     ImmediateUserInterfaceNodeSettings settings   = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
-    ImmediateUserInterfaceScrollArea*  scrollArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+    ImmediateUserInterfaceScrollArea*  scrollArea = this;
 
     if(_Context->begin_node<ImmediateUserInterfaceScrollAreaPanel>(
         std::string(_ID).append("/Panel"),
@@ -4607,7 +4608,8 @@ void ImmedidateUserInterfaceNextNodeController::reset()
 {
     // reset all
     NextLine.reset();
-    NextSize.reset();
+    NextMinimumSize.reset();
+    NextMaximumSize.reset();
     NextPosition.reset();
     NextContentPadding.reset();
 }
@@ -4845,6 +4847,7 @@ void ImmediateUserInterfaceContextLayer::frame_finish()
     // clean-up rendering data
     m_NodesRenderingList.clear();
     m_NodesRenderingStack.clear();
+    m_NodesRenderedStack.clear();
 
     // clear ini file state
     m_IniFileState.clear();
@@ -5376,7 +5379,6 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
         int                                            Utf8LeftCursorPosition  = 0;
         int                                            Utf8RightCursorPosition = 0;
-        bool                                           HasBeenPressed          = false;
         std::chrono::high_resolution_clock::time_point CursorAnimtionTimer;
         std::chrono::high_resolution_clock::time_point CursorMovementTimer;
 
@@ -5393,7 +5395,13 @@ void ImmediateUserInterfaceContextLayer::input_string(
     struct ImmediateUserInterfaceStringScrollArea : public ImmediateUserInterfaceScrollArea
     {
     public:
-        ImmediateUserInterfaceStringScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+        ImmediateUserInterfaceStringScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name)
+        {
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+            State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
+            State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
+        }
+
         virtual ~ImmediateUserInterfaceStringScrollArea(){}
 
         virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
@@ -5586,7 +5594,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                 }
 
                 // render hovered symbol bounding box
-                if(widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
+                if(widget->State.Selected && widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
                 {
                     m_Renderer->push_rectangle_filled(
                         widget->TextRenderingData.HoveredSymbolBoundingBox.value().Min,
@@ -5601,6 +5609,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
                 // render cursor
                 if(
+                    widget->State.Selected                                                                                            &&
                     !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput) &&
                     gs_vector_length(widget->TextRenderingData.CursorPosition) > 0.f)
                 {
@@ -5630,28 +5639,16 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
             // process events
             {
-                // simple event processing
-                auto parent = m_Hierarchy.get_parent(widget);
-                bool hovered = (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
-
-                while (parent)
-                {
-                    hovered = hovered || (parent->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered);
-                    parent  = m_Hierarchy.get_parent(parent);
-                }
-
-                hovered = hovered || widget->State.Selected;
-
                 // adjust scrollbar
-                if(widget->HasBeenPressed)
+                if(widget->State.Selected && m_Input.is_mouse_button_down() && !m_Input.is_mouse_button_pressed())
                 {
-                    if(scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr && !m_Hierarchy.get_parent(widget)->State.BoundingBox.contains(m_Input.get_cusor_position()))
+                    if(scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         scrollArea->HorizontalScrollBar->set_scroll_offset(gs_vector_normalize(m_Input.get_cusor_drag_delta()) * 4.f);
-                    if(scrollArea != nullptr && scrollArea->VerticalScrollBar != nullptr && !m_Hierarchy.get_parent(widget)->State.BoundingBox.contains(m_Input.get_cusor_position()))
+                    if(scrollArea != nullptr && scrollArea->VerticalScrollBar != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         scrollArea->VerticalScrollBar->set_scroll_offset(gs_vector_normalize(m_Input.get_cusor_drag_delta()) * 4.f);
                 }
 
-                if(hovered)
+                if(widget->State.Selected)
                 {
                     const int cursorMovementInterval = 80; // TODO: this MUST BE a setting !!!
 
@@ -5679,12 +5676,6 @@ void ImmediateUserInterfaceContextLayer::input_string(
                             }
                         }
                     };
-
-                    // catch mouse press
-                    if(m_Input.is_mouse_button_pressed())
-                        widget->HasBeenPressed = true;
-                    else if(m_Input.is_mouse_button_released())
-                        widget->HasBeenPressed = false;
 
                     // move cursor left
                     if(m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ||
@@ -5809,7 +5800,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
 
                     // set right cursor position
                     else if(
-                        widget->HasBeenPressed                                                                                                &&
+                        widget->State.Selected                                                                                                &&
                         
                         !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
                         
@@ -6001,9 +5992,9 @@ void ImmediateUserInterfaceContextLayer::input_string_multiline(
     input_string(
         _ID,
         _Text,
+        _InputSettings,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar  |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar,
-        _InputSettings,
         _InputTextFilter);
 }
 
@@ -6222,11 +6213,26 @@ void ImmediateUserInterfaceContextLayer::next_line()
 
 void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
 {
+    next_minimum_size(_Value);
+    next_maximum_size(_Value);
+}
+
+void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Value)
+{
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
-        controller->NextSize = _Value;
+        controller->NextMinimumSize = _Value;
+}
+
+void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextMaximumSize = _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
