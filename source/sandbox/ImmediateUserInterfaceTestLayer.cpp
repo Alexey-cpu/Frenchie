@@ -17,8 +17,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    windows_test();
+    widgets_test();
+    //windows_test();
     //scrollarea_test();
     
     //renderer_test();
@@ -222,81 +222,67 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    // if(m_ImmediateUserInterface->begin_window("Metrics"))
+    static std::string input1;
+    static std::string input2;
+    static std::string input3;
+    static std::string input4;
+
+    // if(m_ImmediateUserInterface->begin_window("Window-1"))
     // {
-    //     m_ImmediateUserInterface->label(
-    //         "Metrics/FPS",
-    //         Frenchie::Core::String::format("Частота кадров %.4f", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
+    //     m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 0.f));
 
-    //     m_ImmediateUserInterface->label(
-    //         "Metrics/Commands",
-    //         Frenchie::Core::String::format("Количество комманд %d", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+    //     if(m_ImmediateUserInterface->begin_scrollarea(
+    //         "Window-1/ScrollArea",
+    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults                       |
+    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter |
+    //         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+    //     {
+    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-1", input1);
+    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-2", input2);
 
-    //     m_ImmediateUserInterface->label(
-    //         "Metrics/Triangles",
-    //         Frenchie::Core::String::format("Количество треугольников в сетке %d", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+    //         m_ImmediateUserInterface->next_line();
 
-    //     m_ImmediateUserInterface->push_button("Button-1###Metrics/Button-1");
-    //     m_ImmediateUserInterface->push_button("Button-2###Metrics/Button-2");
+    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-3", input3);
+    //         m_ImmediateUserInterface->input_string_singleline("Window-1/ScrollArea/Input-4", input4);
+
+    //         m_ImmediateUserInterface->end_scrollarea();
+    //     }
 
     //     m_ImmediateUserInterface->end_window();
     // }
 
-    //m_ImmediateUserInterface->m_Style.push_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text, gs_rgba_color(255, 0, 0, 255));
-
-    m_ImmediateUserInterface->next_size(gs_vec2f(512.f, 512.f));
-
-    static std::string text = R"(
-    This is some really usefull text
-    This is some really usefull text
-    This is some really usefull text
-    This is some really usefull text
-    This is some really usefull text
-
-    class A
+    if(m_ImmediateUserInterface->begin_window("Window-1"))
     {
-        int a = 100;
-        int b = 200;
-    };
-    )";
+        m_ImmediateUserInterface->next_minimum_size(gs_vec2f(128.f, 128.f));
+        m_ImmediateUserInterface->next_maximum_size(gs_vec2f(512.f, 512.f));
 
-    // m_ImmediateUserInterface->input_string_multiline(
-    //     "InputString",
-    //     text,
-    //     ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-    //     [](const std::string& _Input)->bool
-    //     {
-    //         for (auto& symbol : _Input)
-    //         {
-    //             if (symbol == '1' || symbol == '2' || symbol == '3')
-    //                 return false;
-    //         }
-
-    //         return true;
-    //     }
-    // );
-
-    m_ImmediateUserInterface->input_string_singleline(
-        "InputString",
-        text,
-        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-        [](const std::string& _Input)->bool
+        if(m_ImmediateUserInterface->begin_vertial_stack("Window-1/VerticalStack"))
         {
-            for (auto& symbol : _Input)
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_horizontal_stack("Window-1/VerticalStack/Row-1"))
             {
-                if (symbol == '1' || symbol == '2' || symbol == '3')
-                    return false;
+                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-1", input1);
+                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-2", input2);
+
+                m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            return true;
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_vertial_stack("Window-2/VerticalStack/Row-2"))
+            {
+                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-2/Input-3", input3);
+                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-2/Input-4", input4);
+
+                m_ImmediateUserInterface->end_vertical_stack();
+            }
+
+            m_ImmediateUserInterface->end_vertical_stack();
         }
-    );
 
-    //m_ImmediateUserInterface->m_Style.pop_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text);
-
-    // m_ImmediateUserInterface->next_position(gs_vec2f(512.f, 512.f));
-    // m_ImmediateUserInterface->next_size(gs_vec2f(512.f, 512.f));
-    // m_ImmediateUserInterface->push_button("FreeButton");
+        m_ImmediateUserInterface->end_window();
+    }
 }
 
 void ImmediateUserInterfaceTestLayer::renderer_test()
