@@ -3054,10 +3054,13 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         // render self and child frames
         [this, &render_close_button](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
         {
+            ImmedidateUserInterfaceWindowController* windowsController =
+                _Context->get_controller<ImmedidateUserInterfaceWindowController>();
+
             // detect if we are active
             bool active   = _Window->IsActive;
 
-            bool isDocker = !_Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+            bool isDocker = windowsController != nullptr && !windowsController->retrieve_docked_windows(
                 _Context,
                 _Window,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty();
@@ -6102,13 +6105,14 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
     }
 
     // 
-    if(std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) == menusController->ActiveMenus.end())
+    if(menusController != nullptr &&
+        std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) == menusController->ActiveMenus.end())
     {
         if(isHovered)
             menusController->ActiveMenus.push_back(menu);
     }
 
-    isHovered = (std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) != menusController->ActiveMenus.end()) || isHovered;
+    isHovered = (menusController != nullptr && std::find(menusController->ActiveMenus.begin(), menusController->ActiveMenus.end(), menu) != menusController->ActiveMenus.end()) || isHovered;
 
     if(hasParent)
     {
