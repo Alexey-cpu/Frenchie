@@ -322,7 +322,7 @@ namespace Frenchie
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
-                gs_vec2f position  = _Position;
+                gs_vec2f position  = _Position + _Padding;
                 gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
                 // compute total children size
@@ -982,6 +982,9 @@ namespace Frenchie
                     Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
                         gs_vec2f(0.f, gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f) :
                             gs_vec2f(gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f, 0.f);
+
+                if(_Context->m_Style.get_frames_radius() <= 0.f)
+                    offset = gs_vec2f(0.f, 0.f);
 
                 State.BoundingBox = gs_2dboxf(
                     State.BoundingBox.Min + offset,
@@ -5606,7 +5609,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                 }
 
                 // render hovered symbol bounding box
-                if(widget->State.Selected && widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
+                if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
                 {
                     m_Renderer->push_rectangle_filled(
                         widget->TextRenderingData.HoveredSymbolBoundingBox.value().Min,
@@ -6004,8 +6007,9 @@ void ImmediateUserInterfaceContextLayer::input_string_multiline(
     input_string(
         _ID,
         _Text,
-        _InputSettings,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar  |
+        (int)(_InputSettings & ~ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar             |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar,
         _InputTextFilter);
 }
