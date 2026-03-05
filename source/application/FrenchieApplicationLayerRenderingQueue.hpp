@@ -303,11 +303,28 @@ namespace Frenchie
 
             struct DefaultSymbolProcessor
             {
-                void operator()(const gs_2dboxf&, const gs_vec2f&, const int&, const unsigned int&) const{}
+                void operator()(
+                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                    const gs_vec2f&     _CursorPosition,
+                    const int&          _Utf8IteratorPosition,
+                    const unsigned int& _Symbol) const
+                {
+                    (void)_CurrentSymbolBoundingBox;
+                    (void)_CursorPosition;
+                    (void)_Utf8IteratorPosition;
+                    (void)_Symbol;
+                }
             };
-            
 
-            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor>
+            struct DefaultSymbolChanger
+            {
+                unsigned int operator()(const unsigned int& _Symbol) const
+                {
+                    return _Symbol;
+                }
+            };
+
+            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
             void push_text(
                 const gs_vec2f&                        _Position,
                 const Type&                            _Begin,
@@ -316,8 +333,9 @@ namespace Frenchie
                 const gs_color&                        _Color,
                 const gs_mat4f&                        _Transform     = gs_mat4f(1.f),
                 const ApplicationRenderingBackendFont& _Font          = ApplicationRenderingBackendFont(),
+                const bool&                            _DoNotRender   = false,
                 const ProcessSymbol&                   _ProcessSymbol = DefaultSymbolProcessor(),
-                const bool&                            _DoNotRender   = false)
+                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
             {
                 // main code
                 ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
@@ -335,7 +353,7 @@ namespace Frenchie
                 {
                     int cursor = (int)(start - _Begin);
 
-                    unsigned int symbol = Frenchie::Core::String::utf8_next(start);
+                    unsigned int symbol = _ChangeSymbol(Frenchie::Core::String::utf8_next(start));
 
                     // fallbacks
                     if(!font.contains_glyph(symbol))

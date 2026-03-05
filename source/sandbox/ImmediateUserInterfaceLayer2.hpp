@@ -161,7 +161,8 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringSettings_NoClipboard      = 1 << 1, // disables copy/paste
             ImmediateUserInterfaceInputStringSettings_NoSelection      = 1 << 2, // disables selection
             ImmediateUserInterfaceInputStringSettings_NoMultiline      = 1 << 3, // disables multiline text
-            ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag = 1 << 4, // disables scrollbar moving when dragging mouse within input string editor            
+            ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag = 1 << 4, // disables scrollbar moving when dragging mouse within input string editor
+            ImmediateUserInterfaceInputStringSettings_InsertPassword   = 1 << 5, // when this setting is on all input symbols are changed on '*' symbol while rendering
             ImmediateUserInterfaceInputStringSettings_Defaults         = 0
         };
 
@@ -893,14 +894,38 @@ namespace Frenchie
             void end_window();
 
             // next node API
+            
+            // If next node is pushed within scroll area this function pushes it onto a next line by inserting vertica 'next line' indent.
+            // If you call this function several times it inserts several 'next line' indents before the node.
+            // All changes are applied every frame.
             void next_line();
+
+            // This function sets next node size by changing it's bounding box width, height and size constraints (minimum and maximum size).
+            // All changes are applied every frame.
             void next_size(const gs_vec2f&);
+
+            // This function changes minimum size constrain of next node.
+            // All changes are applied every frame.
             void next_minimum_size(const gs_vec2f&);
+
+            // This function changes minimum size constrain of next node.
+            // All changes are applied every frame.
             void next_maximum_size(const gs_vec2f&);
+
+            // This function changes next node position.
+            // All changes are applied every frame.
             void next_position(const gs_vec2f&);
+
+            // If the node is descendant of panel this function changes it's content padding.
+            // All changes are applied every frame.
             void next_content_padding(const gs_vec2f&);
 
-            // auxiliary API
+            // ID API
+            // _Name - is what is going to be displayed as the node title
+            // _Hash - is a unique local node identifier
+            std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
+
+            // This function retrieves controller of a given type
             template<typename Type> Type* get_controller() const
             {
                 for(auto& controller : m_Controllers)
@@ -912,7 +937,9 @@ namespace Frenchie
                 return nullptr;
             }
 
-            template<typename Type = ImmediateUserInterfaceNode> Type* get_rendering_stack_top() const
+            // This function retrieves rendering stack top node
+            template<typename Type = ImmediateUserInterfaceNode>
+            Type* get_rendering_stack_top() const
             {
                 if(m_NodesRenderingStack.empty())
                     return nullptr;
@@ -920,8 +947,8 @@ namespace Frenchie
                 return dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
             }
 
-        // private: // TODO: make this private when finished
-
+            // This function start the new node of a given type.
+            // The function creates the node or retrieves it from cache and then pushes it into rendering stack and rendered items list
             template<typename Type>
             bool begin_node(
                 const std::string&                        _ID,
@@ -986,6 +1013,9 @@ namespace Frenchie
                 return node->create_contents(this, _ID, _Settings, _Render);
             }
 
+            // This function ends the node of a given type.
+            // The function pops the node out of hierarchical rendering stack and pushes it into
+            // already rendered nodes stack
             template<typename Type>
             void end_node()
             {
@@ -1052,24 +1082,26 @@ namespace Frenchie
                 m_CurrentName.clear();
 
                 // determine hashable part of input id
-                int hashable = 0;
+                int hashable   = 0;
+                int sharpCount = 0;
 
                 for (;hashable < (int)_ID.size(); hashable++)
                 {
-                    // TODO: here we should hash only if there are ### but now it is #
                     if(_ID[hashable] == '#')
                     {
-                        int sharpCount = 1;
+                        sharpCount = 1;
                         if(hashable + 1 < (int)_ID.size() && _ID[hashable + 1] == '#') ++sharpCount;
                         if(hashable + 2 < (int)_ID.size() && _ID[hashable + 2] == '#') ++sharpCount;
-                        if(sharpCount >= 3) break;
+                        
+                        if(sharpCount >= 3)
+                            break;
                     }
                 }
                 
                 // create node
                 m_CurrentHash.append(
-                    (hashable < _ID.size() ? _ID.c_str() + hashable : _ID.c_str()),
-                    (hashable < _ID.size() ? _ID.size() - hashable : _ID.size()));
+                    ((hashable + sharpCount) < _ID.size() ? _ID.c_str() + (hashable + sharpCount) : _ID.c_str()),
+                    ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
 
                 if(m_Cache.find(m_CurrentHash) == m_Cache.end())
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
