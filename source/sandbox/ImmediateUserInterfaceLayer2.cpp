@@ -4200,89 +4200,93 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
         }
     }
 
-    if(hoveredNode == nullptr)
-        return;
-
-    // highlight hovered node
-    if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
+    // process hovered node
+    if(hoveredNode != nullptr)
     {
-        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
-
-        _Context->m_Renderer->push_rectangle_rounded(
-            hoveredNode->get_visible_rect(_Context).Min,
-            hoveredNode->get_visible_rect(_Context).Max,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_frames_width(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-            _Context->m_Renderer->calculate_transform_matrix((float)depth));
-    }
-
-    // start hover node
-    if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
-    {
-        hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
-        hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
-    }
-    else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-        hoveredNode->State.MouseEnterTimer,
-        Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
-    {
-        // make this node hovered
-        hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
-
-        // the only one node can be hovered
-        for (auto& node : _Context->m_NodesRenderingList)
+        // highlight hovered node
+        if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
         {
-            if(node != hoveredNode)
-                node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
+
+            _Context->m_Renderer->push_rectangle_rounded(
+                hoveredNode->get_visible_rect(_Context).Min,
+                hoveredNode->get_visible_rect(_Context).Max,
+                _Context->m_Style.get_frames_radius(),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                _Context->m_Renderer->calculate_transform_matrix((float)depth));
         }
 
-        // select this node on mouse click
-        if(_Context->m_Input.is_mouse_button_clicked())
-            hoveredNode->State.Selected = true;
+        // start hover node
+        if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
+        {
+            hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
+            hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered;
+        }
+        else if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+            hoveredNode->State.MouseEnterTimer,
+            Frenchie::Core::tic()) > 10.0) // TODO: this MUST BE A SETTING !!!
+        {
+            // make this node hovered
+            hoveredNode->State.MouseHover |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
+
+            // the only one node can be hovered
+            for (auto& node : _Context->m_NodesRenderingList)
+            {
+                if(node != hoveredNode)
+                    node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
+            }
+
+            // select this node on mouse click
+            if(_Context->m_Input.is_mouse_button_clicked())
+                hoveredNode->State.Selected = true;
+        }
     }
 
     // catch events
-    ImmediateUserInterfaceNode* eventCatcher = eventNode ? eventNode : hoveredNode;
+    ImmediateUserInterfaceNode* eventCatcher = eventNode != nullptr ? eventNode : hoveredNode;
 
-    eventCatcher->events(_Context);
-
-    // check in-parent intersection and process events of intersected nodes
-    for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(eventCatcher));
-                it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(eventCatcher));
-                it++)
+    if(eventCatcher != nullptr)
     {
-        if((*it) == eventCatcher)
-            continue;
+        eventCatcher->events(_Context);
 
-        if(gs_2dboxf(
-            (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
-            (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
+        // check in-parent intersection and process events of intersected nodes
+        for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(eventCatcher));
+                    it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(eventCatcher));
+                    it++)
         {
-            // process events
-            (*it)->events(_Context);
+            if((*it) == eventCatcher)
+                continue;
 
-            // reset event loop if events of parent and it's children are different
-            if((*it)->State.Events != eventCatcher->State.Events)
-                (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+            if(gs_2dboxf(
+                (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
+                (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
+            {
+                // process events
+                (*it)->events(_Context);
+
+                // reset event loop if events of parent and it's children are different
+                if((*it)->State.Events != eventCatcher->State.Events)
+                    (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+            }
         }
-    }
 
-    // pass focus
-    if(_Context->m_Input.is_mouse_button_pressed() ||
-        eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
-    {
-        ImmediateUserInterfaceNode* focused = eventCatcher;
-        ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(eventCatcher);
-
-        while (parent)
+        // pass focus
+        if(_Context->m_Input.is_mouse_button_pressed() ||
+            eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
-            focused = parent;
-            parent  = _Context->m_Hierarchy.get_parent(parent);
+            ImmediateUserInterfaceNode* focused = eventCatcher;
+            ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(eventCatcher);
+
+            while (parent)
+            {
+                focused = parent;
+                parent  = _Context->m_Hierarchy.get_parent(parent);
+            }
+            
+            if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
+                focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
         }
-        
-        if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
-            focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
     }
 }
 
