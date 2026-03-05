@@ -165,6 +165,16 @@ namespace Frenchie
                     Glyphs(_Glyphs),
                     AtlasTexture(_AtlasTexture){}
 
+            float get_scale(const float& _Size) const
+            {
+                return _Size / (float)SizeInPixels;
+            }
+
+            float get_offset(const float& _Size) const
+            {
+                return (Ascent + Descent + LineGap) * get_scale(_Size);
+            }
+            
             int                                               SizeInPixels{0};
             float                                             Ascent      {0.f};
             float                                             Descent     {0.f};
