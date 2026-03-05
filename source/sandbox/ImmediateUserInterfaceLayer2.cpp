@@ -408,22 +408,6 @@ namespace Frenchie
                 }
             }
 
-            void clamp_bounding_box(ImmediateUserInterfaceNode* _Node, gs_2dboxf _BoundingBox)
-            {
-                // handle minimum width
-                float minX = _BoundingBox.size().x > _Node->State.MinimumSize.x ? _BoundingBox.Min.x : _Node->Cache.BoundingBox.Min.x + (_Node->State.BoundingBox.Min.x - _Node->Cache.BoundingBox.Min.x);
-                float maxX = _BoundingBox.size().x > _Node->State.MinimumSize.x ? _BoundingBox.Max.x : _Node->Cache.BoundingBox.Max.x + (_Node->State.BoundingBox.Max.x - _Node->Cache.BoundingBox.Max.x);
-                float minY = _BoundingBox.size().y > _Node->State.MinimumSize.y ? _BoundingBox.Min.y : _Node->Cache.BoundingBox.Min.y + (_Node->State.BoundingBox.Min.y - _Node->Cache.BoundingBox.Min.y);
-                float maxY = _BoundingBox.size().y > _Node->State.MinimumSize.y ? _BoundingBox.Max.y : _Node->Cache.BoundingBox.Max.y + (_Node->State.BoundingBox.Max.y - _Node->Cache.BoundingBox.Max.y);
-                
-                // handle maximum width
-                minX = _BoundingBox.size().x < _Node->State.MaximumSize.x ? _BoundingBox.Min.x : _Node->Cache.BoundingBox.Min.x + (_Node->State.BoundingBox.Min.x - _Node->Cache.BoundingBox.Min.x);
-                maxX = _BoundingBox.size().x < _Node->State.MaximumSize.x ? _BoundingBox.Max.x : _Node->Cache.BoundingBox.Max.x + (_Node->State.BoundingBox.Max.x - _Node->Cache.BoundingBox.Max.x);
-                minY = _BoundingBox.size().y < _Node->State.MaximumSize.y ? _BoundingBox.Min.y : _Node->Cache.BoundingBox.Min.y + (_Node->State.BoundingBox.Min.y - _Node->Cache.BoundingBox.Min.y);
-                maxY = _BoundingBox.size().y < _Node->State.MaximumSize.y ? _BoundingBox.Max.y : _Node->Cache.BoundingBox.Max.y + (_Node->State.BoundingBox.Max.y - _Node->Cache.BoundingBox.Max.y);
-                _Node->State.BoundingBox = gs_2dboxf(gs_vec2f(minX, minY), gs_vec2f(maxX, maxY));
-            }
-
             gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
@@ -661,71 +645,29 @@ namespace Frenchie
 
             void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
-                if(_Node == nullptr) return;
+                if(_Node == nullptr)
+                    return;
+
+                gs_2dboxf box = _Node->State.BoundingBox;
 
                 if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(),
-                        _Node->Cache.BoundingBox.Max));
-                    return;
-                }
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
 
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y),
-                        _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f),
-                        _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min,
-                        _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta()));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y),
-                        _Node->Cache.BoundingBox.Max));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f),
-                        _Node->Cache.BoundingBox.Max));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min,
-                        _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                {
-                    ImmediateUserInterfaceContextLayerHelpers::clamp_bounding_box(_Node, gs_2dboxf(
-                        _Node->Cache.BoundingBox.Min,
-                        _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y)));
-                    return;
-                }
+                _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
             };
         }
 
@@ -3349,7 +3291,7 @@ void ImmediateUserInterfaceWindow::load_state(ImmediateUserInterfaceContextLayer
             _Context->m_IniFileState.get<int>(Hash, "DockingIndex") :
                 -1;
 
-    State.BoundingBox = gs_2dboxf(position, position + size);
+    State.BoundingBox = gs_2dboxf(position, position + gs_clamp(size, State.MinimumSize, State.MaximumSize));
 
     // layout
     if(_Context->m_IniFileState.contains(Hash, "TopSnapperViewSize"))
@@ -4238,7 +4180,7 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
             }
 
             // select this node on mouse click
-            if(_Context->m_Input.is_mouse_button_clicked())
+            if(_Context->m_Input.is_mouse_button_pressed())
                 hoveredNode->State.Selected = true;
         }
     }
@@ -5042,6 +4984,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         m_Renderer->calculate_transform_matrix((float)depth++));
                 }
             }
+            
             // render radio button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
             {
@@ -5084,6 +5027,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         m_Renderer->calculate_transform_matrix((float)depth++));
                 }
             }
+            
             // render slider button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
@@ -5127,6 +5071,9 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 // layout checkbox
                 if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
                 {
+                    widget->State.MinimumSize = m_Style.get_font_size();
+                    widget->State.MaximumSize = widget->State.MinimumSize;
+
                     widget->State.BoundingBox = gs_2dboxf(
                         widget->State.BoundingBox.Min,
                         widget->State.BoundingBox.Min + m_Style.get_font_size());
@@ -5134,6 +5081,9 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 // layout radio button
                 else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
                 {
+                    widget->State.MinimumSize = m_Style.get_font_size();
+                    widget->State.MaximumSize = widget->State.MinimumSize;
+
                     widget->State.BoundingBox = gs_2dboxf(
                         widget->State.BoundingBox.Min,
                         widget->State.BoundingBox.Min + m_Style.get_font_size());
@@ -5141,6 +5091,9 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 // layout slider button
                 else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
                 {
+                    widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
+                    widget->State.MaximumSize = widget->State.MinimumSize;
+
                     widget->State.BoundingBox = gs_2dboxf(
                         widget->State.BoundingBox.Min,
                         widget->State.BoundingBox.Min + gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size()));
@@ -5393,6 +5346,12 @@ void ImmediateUserInterfaceContextLayer::input_string(
         return true;
     };
 
+    auto symbolChanger = [_InputSettings](const unsigned int& _Symbol)->unsigned int
+    {
+        return (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword) && 
+                (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline) ? '*' : _Symbol;
+    };
+
     // main code
     int scrollAreaSettings = _NodeSettings;
     scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment;
@@ -5416,8 +5375,9 @@ void ImmediateUserInterfaceContextLayer::input_string(
             ImmediateUserInterfaceStringContent* widget =
                 get_rendering_stack_top<ImmediateUserInterfaceStringContent>();
 
-            widget->TextRenderingData.CursorPosition            = widget->State.BoundingBox.Min;
-            widget->TextRenderingData.TextBoundingBox           = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+            widget->TextRenderingData.CursorPosition  = widget->State.BoundingBox.Min;
+            widget->TextRenderingData.TextBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
+            widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.reset();
 
             if(m_Hierarchy.get_parent(widget)->State.Selected)
             {
@@ -5445,7 +5405,9 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     m_Style.get_font_size(),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     m_Renderer->calculate_transform_matrix((float)depth++),
-                    m_Style.get_current_font());
+                    m_Style.get_current_font(), false,
+                    RenderingQueue::DefaultSymbolProcessor(),
+                    symbolChanger);
 
                 // render selection bounding box
                 {
@@ -5457,6 +5419,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                         m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                         m_Renderer->calculate_transform_matrix((float)depth++),
                         m_Style.get_current_font(),
+                        true,
                         [this, widget, &depth](
                             const gs_2dboxf&    _CurrentSymbolBoundingBox,
                             const gs_vec2f&     _CursorPosition,
@@ -5503,11 +5466,12 @@ void ImmediateUserInterfaceContextLayer::input_string(
                                     m_Renderer->calculate_transform_matrix((float)depth++));
                             }
                         },
-                        true);
+                        symbolChanger);
                 }
 
                 // render hovered symbol bounding box
-                if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
+                if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+                    widget->TextRenderingData.HoveredSymbolBoundingBox.has_value())
                 {
                     m_Renderer->push_rectangle_filled(
                         widget->TextRenderingData.HoveredSymbolBoundingBox.value().Min,
@@ -5553,7 +5517,9 @@ void ImmediateUserInterfaceContextLayer::input_string(
             // process events
             {
                 // adjust scrollbar
-                if(widget->State.Selected && m_Input.is_mouse_button_down() && !m_Input.is_mouse_button_pressed())
+                if(widget->State.Selected && m_Input.is_mouse_button_hold() &&
+                    !m_Input.is_mouse_button_pressed()                      &&
+                    !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag))
                 {
                     if(scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                         scrollArea->HorizontalScrollBar->set_scroll_offset(gs_vector_normalize(m_Input.get_cusor_drag_delta()) * 4.f);
@@ -5712,20 +5678,15 @@ void ImmediateUserInterfaceContextLayer::input_string(
                     }
 
                     // set right cursor position
-                    else if(
-                        widget->State.Selected                                                                                                &&
-                        
+                    else if(                        
                         !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoSelection) &&
-                        
+                        widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.has_value()                                                 &&
                         m_Input.is_mouse_button_down())
                     {
-                        if(widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.has_value())
-                        {
-                            if(widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
-                                widget->Utf8RightCursorPosition = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
-                            else
-                                widget->Utf8LeftCursorPosition = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
-                        }
+                        if(widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value() > widget->Utf8LeftCursorPosition)
+                            widget->Utf8RightCursorPosition = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
+                        else
+                            widget->Utf8LeftCursorPosition = widget->TextRenderingData.HoveredSymbolUtf8CursorPosition.value();
                     }
 
                     // select all
@@ -5905,7 +5866,9 @@ void ImmediateUserInterfaceContextLayer::input_string_multiline(
     input_string(
         _ID,
         _Text,
-        (int)(_InputSettings & ~ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline),
+        (_InputSettings & ~(
+            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline |
+            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword)),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar             |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar,
@@ -5918,8 +5881,6 @@ void ImmediateUserInterfaceContextLayer::input_string_singleline(
     const ImmediateUserInterfaceInputStringSettings& _InputSettings,
     bool                                           (*_InputTextFilter)(const std::string&))
 {
-    int settings = _InputSettings | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline;
-
     input_string(
         _ID,
         _Text,
@@ -6166,4 +6127,16 @@ void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec2f& _V
 
     if(controller != nullptr)
         controller->NextContentPadding = _Value;
+}
+
+std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
+{
+    ImmediateUserInterfaceNode* top = get_rendering_stack_top();
+
+    if(top == nullptr)
+        return !_Hash.empty() ? std::string(_Name).append("###").append(_Hash) : _Name;
+        
+    return !_Hash.empty() ?
+                std::string(_Name).append("###").append(top->Hash).append("/").append(_Hash) :
+                    std::string(top->Hash).append("/").append(_Name);
 }
