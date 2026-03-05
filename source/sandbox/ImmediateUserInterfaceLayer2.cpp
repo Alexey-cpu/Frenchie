@@ -2656,11 +2656,15 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
     // auxiliary lambdas
     auto calculate_clipping_box = [](ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)->gs_2dboxf
     {
+        if(_Node == nullptr)
+        {
+            return _Context != nullptr ?
+                        _Context->m_Renderer->current_viewport() :
+                            gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f((float)INT_MAX, (float)INT_MAX));
+        }
+
         const ImmediateUserInterfaceNode* next   = _Node;
         ImmediateUserInterfaceNode*       parent = _Context->m_Hierarchy.get_parent(_Node);
-
-        if(parent == nullptr)
-            return _Context->m_Renderer->current_viewport();
 
         gs_2dboxf clippingBox = next->State.BoundingBox;
 
@@ -2680,6 +2684,7 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
     // main code
     if(!State.ClippingBox.has_value())
         State.ClippingBox = calculate_clipping_box(_Context, this);
+
     return State.ClippingBox.value();
 }
 
