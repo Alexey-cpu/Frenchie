@@ -17,8 +17,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    widgets_test();
-    //windows_test();
+    //widgets_test();
+    windows_test();
     //scrollarea_test();
     
     //renderer_test();
@@ -50,7 +50,7 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 
         m_ImmediateUserInterface->label(
             "Metrics/Commands",
-            Frenchie::Core::String::format("Количество комманд %d", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+            Frenchie::Core::String::format("Количество комманд рисовки %d", m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
 
         m_ImmediateUserInterface->label(
             "Metrics/Triangles",
