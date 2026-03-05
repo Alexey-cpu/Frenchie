@@ -2702,11 +2702,20 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     // resize to contents
     State.MinimumSize = gs_vec2f(
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-            (ContentView->State.ContentSize + get_vertical_scrollbar_width(_Context)).x + padding.x * 2.f :
+            ContentView->State.ContentSize.x + padding.x * 2.f :
                 State.MinimumSize.x,
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-            (ContentView->State.ContentSize + get_horizontal_scrollbar_width(_Context)).y + padding.y :
+            ContentView->State.ContentSize.y + padding.y :
                 State.MinimumSize.y);
+
+    // TODO: if something goes wrong --> uncomment this code
+    // State.MinimumSize = gs_vec2f(
+    //     (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
+    //         (ContentView->State.ContentSize + get_vertical_scrollbar_width(_Context)).x + padding.x * 2.f :
+    //             State.MinimumSize.x,
+    //     (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
+    //         (ContentView->State.ContentSize + get_horizontal_scrollbar_width(_Context)).y + padding.y :
+    //             State.MinimumSize.y);
     
     State.MaximumSize = gs_vec2f(
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
@@ -5066,41 +5075,41 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 }
             }
         
-            // geometry
-            {
-                // layout checkbox
-                if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
-                {
-                    widget->State.MinimumSize = m_Style.get_font_size();
-                    widget->State.MaximumSize = widget->State.MinimumSize;
-
-                    widget->State.BoundingBox = gs_2dboxf(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + m_Style.get_font_size());
-                }
-                // layout radio button
-                else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
-                {
-                    widget->State.MinimumSize = m_Style.get_font_size();
-                    widget->State.MaximumSize = widget->State.MinimumSize;
-
-                    widget->State.BoundingBox = gs_2dboxf(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + m_Style.get_font_size());
-                }
-                // layout slider button
-                else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
-                {
-                    widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
-                    widget->State.MaximumSize = widget->State.MinimumSize;
-
-                    widget->State.BoundingBox = gs_2dboxf(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size()));
-                }
-            }
-
             m_Renderer->pop_clip_box();
+        }
+
+        // layout geometry
+        {
+            // layout checkbox
+            if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
+            {
+                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MaximumSize = widget->State.MinimumSize;
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + widget->State.MaximumSize);
+            }
+            // layout radio button
+            else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
+            {
+                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MaximumSize = widget->State.MinimumSize;
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + widget->State.MaximumSize);
+            }
+            // layout slider button
+            else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
+            {
+                widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
+                widget->State.MaximumSize = widget->State.MinimumSize;
+
+                widget->State.BoundingBox = gs_2dboxf(
+                    widget->State.BoundingBox.Min,
+                    widget->State.BoundingBox.Min + widget->State.MaximumSize);
+            }
         }
 
         end_node<ImmediateUserInterfaceCheckButton>();
@@ -5434,8 +5443,8 @@ void ImmediateUserInterfaceContextLayer::input_string(
                                 _CurrentSymbolBoundingBox.Max);
 
                             // calculate mouse hovered symbol bounding box
-                            float scale  = m_Style.get_font_size() / (float)m_Style.get_current_font().SizeInPixels;
-                            float offset = (m_Style.get_current_font().Ascent + m_Style.get_current_font().Descent + m_Style.get_current_font().LineGap) * scale;
+                            float scale  = m_Style.get_current_font().get_scale(m_Style.get_font_size());
+                            float offset = m_Style.get_current_font().get_offset(m_Style.get_font_size());
 
                             if(gs_2dboxf(
                                 _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
@@ -5834,7 +5843,7 @@ void ImmediateUserInterfaceContextLayer::input_string(
                 {
                     widget->State.MaximumSize = gs_vec2f(
                         gs_max(widget->TextRenderingData.TextBoundingBox.size().x, m_Style.get_font_size()) + m_Style.get_font_size(),
-                         m_Style.get_font_size());
+                        m_Style.get_font_size());
                 }
                 else
                 {

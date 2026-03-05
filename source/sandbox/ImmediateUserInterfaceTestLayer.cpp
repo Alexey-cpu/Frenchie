@@ -17,8 +17,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    windows_test();
+    widgets_test();
+    //windows_test();
     //scrollarea_test();
     
     //renderer_test();
@@ -222,49 +222,63 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    static std::string input1;
-    static std::string input2;
-    static std::string input3;
-    static std::string input4;
+    static std::string password;
+    static std::string username;
+    static std::string multiline;
+    static bool        showPassword;
 
-    static std::string input5;
-
-    if(m_ImmediateUserInterface->begin_window("Window-2"))
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Окно авторизации", "AutorizationWindow")))
     {
-        m_ImmediateUserInterface->input_string_multiline("Window-2/Text", input5);
+        m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
-        m_ImmediateUserInterface->end_window();
-    }
-
-    if(m_ImmediateUserInterface->begin_window("Window-1"))
-    {
-        // m_ImmediateUserInterface->next_minimum_size(gs_vec2f(128.f, 128.f));
-        // m_ImmediateUserInterface->next_maximum_size(gs_vec2f(512.f, 512.f));
-
-        if(m_ImmediateUserInterface->begin_vertial_stack("Window-1/VerticalStack"))
+        if(m_ImmediateUserInterface->begin_vertial_stack(m_ImmediateUserInterface->next_id("VerticalStack")))
         {
-            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 0.f));
-
-            if(m_ImmediateUserInterface->begin_horizontal_stack("Window-1/VerticalStack/Row-1"))
+            // user name
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Row-1")))
             {
-                m_ImmediateUserInterface->label("Window-1/VerticalStack/Row-1/Input-1-Label", "Input-1"); m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-1", input1);
-                m_ImmediateUserInterface->label("Window-1/VerticalStack/Row-1/Input-2-Label", "Input-2"); m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-1/Input-2", input2);
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("UserName"), "Имя пользователя");
+                
+                m_ImmediateUserInterface->input_string_singleline(
+                    m_ImmediateUserInterface->next_id("UserNameInput"),
+                    username,
+                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
 
                 m_ImmediateUserInterface->end_horizontal_stack();
             }
 
+            // password
             m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
-            if(m_ImmediateUserInterface->begin_vertial_stack("Window-2/VerticalStack/Row-2"))
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Row-2")))
             {
-                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-2/Input-3", input3);
-                m_ImmediateUserInterface->input_string_singleline("Window-1/VerticalStack/Row-2/Input-4", input4);
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("PasswordLabel"), "Пароль");
+                
+                m_ImmediateUserInterface->input_string_singleline(
+                    m_ImmediateUserInterface->next_id("PasswordInput"),
+                    password,
+                    !showPassword ?
+                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword :
+                            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
 
-                m_ImmediateUserInterface->end_vertical_stack();
+                m_ImmediateUserInterface->check_button(
+                    m_ImmediateUserInterface->next_id("PasswordCheckbox"),
+                    ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
+                    &showPassword);
+
+                m_ImmediateUserInterface->end_horizontal_stack();
             }
 
             m_ImmediateUserInterface->end_vertical_stack();
         }
+
+        m_ImmediateUserInterface->end_window();
+    }
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Многострочный текст", "MultilineTextWindow")))
+    {
+        m_ImmediateUserInterface->input_string_multiline(
+            m_ImmediateUserInterface->next_id("MultilineText"),
+            multiline);
 
         m_ImmediateUserInterface->end_window();
     }
