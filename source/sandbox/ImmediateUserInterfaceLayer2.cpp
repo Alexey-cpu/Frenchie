@@ -101,8 +101,7 @@ namespace Frenchie
                     }
                 }
 
-                ImmediateUserInterfaceWindow*
-                retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
+                ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
                 {
                     ImmediateUserInterfaceNode* parent = _DockerView;
 
@@ -3453,7 +3452,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 {
     if(_Context == nullptr) return;
 
-    // render worksapce dockarea
+    // create worksapce dockarea
     m_DockAreaOpened =
         (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
         (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
@@ -3542,7 +3541,7 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
             }
 
             // activate singletone window
-            if((window->Docker         == nullptr &&
+            if((window->Docker        == nullptr &&
                 window->TopSnapper    == nullptr &&
                 window->LeftSnapper   == nullptr &&
                 window->RightSnapper  == nullptr &&
@@ -3603,7 +3602,7 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
         // detach all windows from closed window
         if(window->Opened != nullptr && !(*window->Opened))
         {
-            auto dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+            auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
                 _Context,
                 window,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All);
@@ -4137,53 +4136,6 @@ ImmedidateUserInterfaceInputController::~ImmedidateUserInterfaceInputController(
 
 void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // auxiliary lambdas
-    // auto catchEvents = [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-    // {
-    //     if(_Context == nullptr || _Node == nullptr) return;
-
-    //     // catch self events
-    //     _Node->events(_Context);
-
-    //     // check in-parent intersection and process events of intersected nodes
-    //     for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(_Node));
-    //               it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(_Node));
-    //               it++)
-    //     {
-    //         if((*it) == _Node)
-    //             continue;
-
-    //         if(gs_2dboxf(
-    //             (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
-    //             (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
-    //         {
-    //             // process events
-    //             (*it)->events(_Context);
-
-    //             // reset event loop if events of parent and it's children are different
-    //             if((*it)->State.Events != _Node->State.Events)
-    //                 (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
-    //         }
-    //     }
-
-    //     // pass focus
-    //     if(_Context->m_Input.is_mouse_button_pressed() ||
-    //         _Node->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
-    //     {
-    //         ImmediateUserInterfaceNode* focused = _Node;
-    //         ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(_Node);
-
-    //         while (parent)
-    //         {
-    //             focused = parent;
-    //             parent  = _Context->m_Hierarchy.get_parent(parent);
-    //         }
-            
-    //         if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
-    //             focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
-    //     }
-    // };
-
     // main code
     if(_Context == nullptr)
         return;
