@@ -113,6 +113,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, // vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
 
+            // ordering
+            ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground                  = 1 << 22, // sets the node to be always on background
+
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                 ImmediateUserInterfaceNodeSettings_Movable |
                 ImmediateUserInterfaceNodeSettings_Resizable,
@@ -715,11 +718,6 @@ namespace Frenchie
             ImmedidateUserInterfaceInputController();
             virtual ~ImmedidateUserInterfaceInputController();
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
-
-        private:
-
-            void catch_hover(ImmediateUserInterfaceContextLayer* _Context);
-            void catch_event(ImmediateUserInterfaceContextLayer* _Context);
         };
     
         class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController

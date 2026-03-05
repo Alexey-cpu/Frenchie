@@ -768,9 +768,9 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
             {
-                // State.BoundingBox = gs_2dboxf(
-                //     _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
-                //     _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
+                State.BoundingBox = gs_2dboxf(
+                    _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
+                    _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
 
                 ImmediateUserInterfaceWindow::layout(_Context);
             }
@@ -873,7 +873,7 @@ namespace Frenchie
                 );
             }
         };
-    
+
         // scrollarea
         struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
         {
@@ -1099,27 +1099,6 @@ namespace Frenchie
 
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
             {
-                // pass focus
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    for (auto node : _Context->m_Hierarchy.Singletons)
-                    {
-                        node->State.RenderingOrder =
-                            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-                    }
-
-                    ImmediateUserInterfaceNode* focused = this;
-                    ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(this);
-
-                    while (parent)
-                    {
-                        focused = parent;
-                        parent  = _Context->m_Hierarchy.get_parent(parent);
-                    }
-                    
-                    focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
-                }
-
                 // resize
                 if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
                     !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
@@ -2360,27 +2339,6 @@ void ImmediateUserInterfaceNode::measure(ImmediateUserInterfaceContextLayer* _Co
 
 bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // pass focus
-    if(_Context->m_Input.is_mouse_button_pressed())
-    {
-        for (auto node : _Context->m_Hierarchy.Singletons)
-        {
-            node->State.RenderingOrder =
-                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-        }
-
-        ImmediateUserInterfaceNode* focused = this;
-        ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(this);
-
-        while (parent)
-        {
-            focused = parent;
-            parent  = _Context->m_Hierarchy.get_parent(parent);
-        }
-        
-        focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
-    }
-
     // resize
     if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable)) &&
         !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
@@ -3501,8 +3459,9 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
         (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
-        std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("Application"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("DockingWorkspace"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground,
         &m_DockAreaOpened))
     {
         // retrieve window
@@ -3515,34 +3474,6 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 
 void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // top most hovered node
-    ImmediateUserInterfaceNode* hoveredNode =
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(_Context, [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
-
-    if(!_Context->m_Input.is_mouse_button_pressed())
-        hoveredNode = nullptr;
-
-    // top most moved node
-    ImmediateUserInterfaceNode* movedNode =
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(
-            _Context,
-            [](const ImmediateUserInterfaceNode* _Node)->bool{return true;});
-
-    // pass focus
-    auto focusedWindow = movedNode ? movedNode : hoveredNode;
-
-    if(focusedWindow != nullptr)
-    {
-        for (auto node : _Context->m_Hierarchy.Singletons)
-        {
-            node->State.RenderingOrder =
-                ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
-        }
-
-        focusedWindow->State.RenderingOrder =
-            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
-    }
-
     if(!(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
         return;
 
@@ -3589,73 +3520,74 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
-        if(window == nullptr) continue;
-
-        // activate window
-        if(window->Activate)
+        if(window != nullptr)
         {
-            // deactivate docker windows
-            ImmediateUserInterfaceWindow* docker =
-                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
-
-            if(docker != nullptr)
-                docker->IsActive = false;
-
-            for(auto node : retrieve_docked_windows(_Context, docker, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center))
+            // activate window
+            if(window->Activate)
             {
-                if(dynamic_cast<ImmediateUserInterfaceWindow*>(node) != nullptr)
-                    dynamic_cast<ImmediateUserInterfaceWindow*>(node)->IsActive = false;
-            }
+                // deactivate docker windows
+                ImmediateUserInterfaceWindow* docker =
+                    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
 
-            window->IsActive = true;
-        }
+                if(docker != nullptr)
+                    docker->IsActive = false;
 
-        // activate singletone window
-        if((window->Docker         == nullptr &&
-             window->TopSnapper    == nullptr &&
-             window->LeftSnapper   == nullptr &&
-             window->RightSnapper  == nullptr &&
-             window->BottomSnapper == nullptr &&
-             retrieve_docked_windows(_Context, window, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All).empty()))
-        {
-            window->IsActive = true;
-        }
-
-        if(window->IsActive)
-        {
-            // setup maximum rendering order for docked window within it's docker hierarchy
-            if(window->Docker != nullptr)
-            {
-                int renderingOrder = window->Docker->State.RenderingOrder;
-
-                for(auto it  = _Context->m_Hierarchy.begin(window->Docker);
-                         it != _Context->m_Hierarchy.end(window->Docker);
-                         it++)
+                for(auto node : retrieve_docked_windows(_Context, docker, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center))
                 {
-                    (*it)->State.RenderingOrder = renderingOrder;
-                }
-                
-                window->State.RenderingOrder = ++renderingOrder;
-            }
-            else
-            {
-                // setup maximum rendering order for docker snapper view
-                int renderingOrder = 0;
-
-                for(auto it  = _Context->m_Hierarchy.begin(window->DockerView);
-                         it != _Context->m_Hierarchy.end(window->DockerView);
-                         it++)
-                {
-                    (*it)->State.RenderingOrder = renderingOrder;
+                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(node) != nullptr)
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(node)->IsActive = false;
                 }
 
-                window->SnapperView->State.RenderingOrder = ++renderingOrder;
+                window->IsActive = true;
             }
-        }
 
-        // reset all
-        window->Activate         = false;
-        window->ReattachChildren = false;
+            // activate singletone window
+            if((window->Docker         == nullptr &&
+                window->TopSnapper    == nullptr &&
+                window->LeftSnapper   == nullptr &&
+                window->RightSnapper  == nullptr &&
+                window->BottomSnapper == nullptr &&
+                retrieve_docked_windows(_Context, window, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All).empty()))
+            {
+                window->IsActive = true;
+            }
+
+            if(window->IsActive)
+            {
+                // setup maximum rendering order for docked window within it's docker hierarchy
+                if(window->Docker != nullptr)
+                {
+                    int renderingOrder = window->Docker->State.RenderingOrder;
+
+                    for(auto it  = _Context->m_Hierarchy.begin(window->Docker);
+                            it != _Context->m_Hierarchy.end(window->Docker);
+                            it++)
+                    {
+                        (*it)->State.RenderingOrder = renderingOrder;
+                    }
+                    
+                    window->State.RenderingOrder = ++renderingOrder;
+                }
+                else
+                {
+                    // setup maximum rendering order for docker snapper view
+                    int renderingOrder = 0;
+
+                    for(auto it  = _Context->m_Hierarchy.begin(window->DockerView);
+                            it != _Context->m_Hierarchy.end(window->DockerView);
+                            it++)
+                    {
+                        (*it)->State.RenderingOrder = renderingOrder;
+                    }
+
+                    window->SnapperView->State.RenderingOrder = ++renderingOrder;
+                }
+            }
+
+            // reset all
+            window->Activate         = false;
+            window->ReattachChildren = false;
+        }
     }
 }
 
@@ -4205,36 +4137,95 @@ ImmedidateUserInterfaceInputController::~ImmedidateUserInterfaceInputController(
 
 void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
 {
-    catch_hover(_Context);
-    catch_event(_Context);
-}
+    // auxiliary lambdas
+    // auto catchEvents = [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+    // {
+    //     if(_Context == nullptr || _Node == nullptr) return;
 
-void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceContextLayer* _Context)
-{
+    //     // catch self events
+    //     _Node->events(_Context);
+
+    //     // check in-parent intersection and process events of intersected nodes
+    //     for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(_Node));
+    //               it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(_Node));
+    //               it++)
+    //     {
+    //         if((*it) == _Node)
+    //             continue;
+
+    //         if(gs_2dboxf(
+    //             (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
+    //             (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
+    //         {
+    //             // process events
+    //             (*it)->events(_Context);
+
+    //             // reset event loop if events of parent and it's children are different
+    //             if((*it)->State.Events != _Node->State.Events)
+    //                 (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
+    //         }
+    //     }
+
+    //     // pass focus
+    //     if(_Context->m_Input.is_mouse_button_pressed() ||
+    //         _Node->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+    //     {
+    //         ImmediateUserInterfaceNode* focused = _Node;
+    //         ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(_Node);
+
+    //         while (parent)
+    //         {
+    //             focused = parent;
+    //             parent  = _Context->m_Hierarchy.get_parent(parent);
+    //         }
+            
+    //         if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
+    //             focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+    //     }
+    // };
+
+    // main code
     if(_Context == nullptr)
         return;
 
     // find the top most node catching the mouse cursor
     ImmediateUserInterfaceNode* hoveredNode  = nullptr;
+    ImmediateUserInterfaceNode* eventNode    = nullptr;
     int                         maximumDepth = INT_MIN;
 
     for (auto& node : _Context->m_NodesRenderingList)
     {
-        // deselect node on mouse click
-        if(_Context->m_Input.is_mouse_button_clicked())
+        if(_Context->m_Input.is_mouse_button_pressed())
+        {
+            // deselect node on mouse press
             node->State.Selected = false;
 
-        // unhover node
+            // setup default rendering order
+            if((node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
+            {
+                node->State.RenderingOrder =
+                    ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background;
+            }
+            else
+            {
+                node->State.RenderingOrder =
+                    ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+            }
+        }
+
+        // unhover invisible node
         if(!node->is_partially_visible(_Context))
         {
             node->State.MouseHover = ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None;
             continue;
         }
 
-        // hover end logic
-        gs_2dboxf rect = node->get_visible_rect(_Context);
+        // find node catching events
+        if(eventNode == nullptr && node->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+            eventNode = node;
 
-        if(!rect.contains(_Context->m_Input.get_cusor_position()))
+        // hover end logic
+        if(!node->get_visible_rect(_Context).contains(_Context->m_Input.get_cusor_position()))
         {
             if(!(node->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseLeft))
             {
@@ -4257,8 +4248,10 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
         }
     }
 
-    if(hoveredNode == nullptr) return;
+    if(hoveredNode == nullptr)
+        return;
 
+    // highlight hovered node
     if((_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes))
     {
         int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
@@ -4272,7 +4265,7 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
             _Context->m_Renderer->calculate_transform_matrix((float)depth));
     }
 
-    // check if anything is already started to be hovered
+    // start hover node
     if(!(hoveredNode->Cache.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseEntered))
     {
         hoveredNode->State.MouseEnterTimer = Frenchie::Core::tic();
@@ -4296,74 +4289,49 @@ void ImmedidateUserInterfaceInputController::catch_hover(ImmediateUserInterfaceC
         if(_Context->m_Input.is_mouse_button_clicked())
             hoveredNode->State.Selected = true;
     }
-}
 
+    // catch events
+    ImmediateUserInterfaceNode* eventCatcher = eventNode ? eventNode : hoveredNode;
 
-void ImmedidateUserInterfaceInputController::catch_event(ImmediateUserInterfaceContextLayer* _Context)
-{
-    // auxiliary lambdas
-    auto inParentEventProcessing = [](ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+    eventCatcher->events(_Context);
+
+    // check in-parent intersection and process events of intersected nodes
+    for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(eventCatcher));
+                it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(eventCatcher));
+                it++)
     {
-        if(_Context == nullptr || _Node == nullptr) return;
-
-        // check in-parent intersection and process events of intersected nodes
-        for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(_Node));
-                  it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(_Node));
-                  it++)
-        {
-            if((*it) == _Node)
-                continue;
-
-            if(gs_2dboxf(
-                (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
-                (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
-            {
-                // process events
-                (*it)->events(_Context);
-
-                // reset event loop if events of parent and it's children are different
-                if((*it)->State.Events != _Node->State.Events)
-                    (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
-            }
-        }
-    };
-
-    if(_Context == nullptr)
-        return;
-
-    // check if anything is already catching event
-    for (auto& node : _Context->m_NodesRenderingList)
-    {
-        if(node->State.Events == ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        if((*it) == eventCatcher)
             continue;
 
-        node->events(_Context);
-        inParentEventProcessing(_Context, node);
-        return;
-    }
-
-    // find the top most hovered node
-    ImmediateUserInterfaceNode* hoveredNode  = nullptr;
-    int                         maximumDepth = INT_MIN;
-
-    for (auto& node : _Context->m_NodesRenderingList)
-    {
-        if(!node->is_partially_visible(_Context) || !node->get_visible_rect(_Context).contains(_Context->m_Input.get_cusor_position()))
-            continue;
-
-        if(node->Cache.Depth > maximumDepth)
+        if(gs_2dboxf(
+            (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
+            (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
         {
-            maximumDepth = node->Cache.Depth;
-            hoveredNode  = node;
+            // process events
+            (*it)->events(_Context);
+
+            // reset event loop if events of parent and it's children are different
+            if((*it)->State.Events != eventCatcher->State.Events)
+                (*it)->State.Events = ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None;
         }
     }
 
-    if (hoveredNode == nullptr)
-        return;
+    // pass focus
+    if(_Context->m_Input.is_mouse_button_pressed() ||
+        eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+    {
+        ImmediateUserInterfaceNode* focused = eventCatcher;
+        ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(eventCatcher);
 
-    // process hovered node events
-    hoveredNode->events(_Context);
-    inParentEventProcessing(_Context, hoveredNode);
+        while (parent)
+        {
+            focused = parent;
+            parent  = _Context->m_Hierarchy.get_parent(parent);
+        }
+        
+        if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
+            focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+    }
 }
 
 // ImmedidateUserInterfaceLayoutController
