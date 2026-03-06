@@ -861,15 +861,19 @@ namespace Frenchie
             void end_menu();
 
             // widgets
+
+            // This function renders push button
             bool push_button(const std::string& _ID);
 
-            bool menu_action(const std::string& _ID);
-            
             bool check_button(
                 const std::string&                               _ID,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
                 bool*                                            _Checked  = nullptr);
             
+            bool menu_action(const std::string& _ID);
+            
+            // This function renders text label. The minimum size of the label equals to text size, maximum size has no limit
+            // on horizontal axis, but is constrained by a text height on vertical axis
             void label(const std::string& _ID, const std::string& _Text);
 
             void input_string_multiline(

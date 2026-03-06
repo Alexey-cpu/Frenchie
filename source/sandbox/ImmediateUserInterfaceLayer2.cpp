@@ -385,12 +385,7 @@ namespace Frenchie
                     size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(size.x + _Padding.x, 0.f);
-
-                    childrenBoundingBox = gs_2dboxf(
-                        childrenBoundingBox.Min,
-                        childrenBoundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
+                    childrenBoundingBox = gs_2dboxf(childrenBoundingBox.Min, childrenBoundingBox.Max, (*it)->State.BoundingBox.Min, (*it)->State.BoundingBox.Max);
                 }
 
                 // align children within parent
@@ -832,11 +827,7 @@ namespace Frenchie
                 ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
             } Type = ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
 
-            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name)
-            {
-                ContentPadding = gs_vec2f(4.f, 4.f);
-            }
-
+            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
             virtual ~ImmediateUserInterfaceScrollAreaScrollBar(){}
 
             // getters
@@ -4812,8 +4803,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         ImmediateUserInterfacePushButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
         {
             State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
-            State.MinimumSize = gs_vec2f(gs_vec2f(128.f, 64.f));
-            State.MaximumSize = gs_vec2f(gs_vec2f(256.f, 128.f));
         }
         
         virtual ~ImmediateUserInterfacePushButton(){}
@@ -4825,8 +4814,8 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        ImmediateUserInterfacePushButton* widget = 
-            get_rendering_stack_top<ImmediateUserInterfacePushButton>();
+        ImmediateUserInterfacePushButton* widget = get_rendering_stack_top<ImmediateUserInterfacePushButton>();
+        gs_vec2f textSize = m_Renderer->calculate_bounding_box(widget->Name.begin(), widget->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
         {
@@ -4865,7 +4854,9 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
             // title
             m_Renderer->push_text(
-                gs_vec2f(widget->State.BoundingBox.center() - m_Renderer->calculate_bounding_box(widget->Name.begin(), widget->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() * 0.5f),
+
+                widget->State.BoundingBox.center() - textSize * 0.5f, // text is aligned on center of the push button
+
                 widget->Name.begin(),
                 widget->Name.end(),
                 m_Style.get_font_size(),
@@ -4875,24 +4866,17 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
             m_Renderer->pop_clip_box();
         }
 
+        // calculate geometry
+        {
+            widget->State.MinimumSize = gs_vec2f(textSize.x, gs_max(textSize.y, m_Style.get_font_size()));
+            widget->State.MaximumSize = gs_vec2f((float)INT_MAX, (float)INT_MAX);
+
+            widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+        }
+
         end_node<ImmediateUserInterfacePushButton>();
-
-        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
-    }
-
-    return false;
-}
-
-bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
-{
-    if(begin_node<ImmediateUserInterfaceMenuAction>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-    {
-        ImmediateUserInterfaceMenuAction* widget =
-            get_rendering_stack_top<ImmediateUserInterfaceMenuAction>();
-
-        end_node<ImmediateUserInterfaceMenuAction>();
 
         return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
     }
@@ -5120,12 +5104,34 @@ bool ImmediateUserInterfaceContextLayer::check_button(
     return false;
 }
 
+bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
+{
+    if(begin_node<ImmediateUserInterfaceMenuAction>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceMenuAction* widget =
+            get_rendering_stack_top<ImmediateUserInterfaceMenuAction>();
+
+        end_node<ImmediateUserInterfaceMenuAction>();
+
+        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+    }
+
+    return false;
+}
+
 void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std::string& _Text)
 {
+    // auxiliary types
     struct ImmediateUserInterfaceLabel : public ImmediateUserInterfaceNode
     {
     public:
-        ImmediateUserInterfaceLabel(const std::string& _Name): ImmediateUserInterfaceNode(_Name){}
+        ImmediateUserInterfaceLabel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+        {
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        }
+
         virtual ~ImmediateUserInterfaceLabel(){}
         virtual void layout(ImmediateUserInterfaceContextLayer*) override{}
     };
@@ -5135,42 +5141,36 @@ void ImmediateUserInterfaceContextLayer::label(const std::string& _ID, const std
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // setup
-        ImmediateUserInterfaceLabel* button = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
+        ImmediateUserInterfaceLabel* widget = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
+        gs_vec2f textBoundingBox = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
         {
-            m_Renderer->push_clip_box(button->get_clipping_box(this));
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = button->Cache.Depth;
-
-            // title
-            gs_2dboxf textBoundingBox = m_Renderer->calculate_bounding_box(
-                _Text.begin(),
-                _Text.end(),
-                m_Style.get_font_size(), m_Style.get_current_font());
+            int depth = widget->Cache.Depth;
 
             m_Renderer->push_text(
-                button->State.BoundingBox.center() - textBoundingBox.size() * 0.5f,
+                gs_vec2f(widget->State.BoundingBox.Min.x, widget->State.BoundingBox.center().y - textBoundingBox.y * 0.5f),
                 _Text.begin(),
                 _Text.end(),
                 m_Style.get_font_size(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                m_Renderer->calculate_transform_matrix((float)depth++));
+                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Style.get_current_font()
+            );
 
             m_Renderer->pop_clip_box();
         }
 
         // calculate geometry
         {
-            gs_vec2f size = m_Renderer->calculate_bounding_box(
-                _Text.begin(),
-                _Text.end(),
-                m_Style.get_font_size(), m_Style.get_current_font()).size() + m_Style.get_font_size() * 0.25f;
+            widget->State.MinimumSize = gs_vec2f(textBoundingBox.x, gs_max(textBoundingBox.y, m_Style.get_font_size()));
+            widget->State.MaximumSize = gs_vec2f((float)INT_MAX, widget->State.MinimumSize.y);
 
-            button->State.MaximumSize = size;
-            button->State.BoundingBox = gs_2dboxf(
-                button->State.BoundingBox.Min,
-                button->State.BoundingBox.Min + gs_clamp(size, button->State.MinimumSize, button->State.MaximumSize));
+            widget->State.BoundingBox = gs_2dboxf(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
         }
 
         end_node<ImmediateUserInterfaceLabel>();
@@ -5188,9 +5188,16 @@ void ImmediateUserInterfaceContextLayer::input_string(
     struct ImmediateUserInterfaceStringContent : public ImmediateUserInterfaceNode
     {
     public:
-        ImmediateUserInterfaceStringContent(const std::string& _Name): ImmediateUserInterfaceNode(_Name){}
+        ImmediateUserInterfaceStringContent(const std::string& _Name): ImmediateUserInterfaceNode(_Name)
+        {
+            State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        }
+
         virtual ~ImmediateUserInterfaceStringContent(){}
-        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override{}
+
+        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+        }
 
         static int move_cursor_left(const int& _Cursor, std::string& _Text)
         {
@@ -5841,22 +5848,24 @@ void ImmediateUserInterfaceContextLayer::input_string(
             {
                 if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline))
                 {
-                    widget->State.MaximumSize = gs_vec2f(
+                    widget->State.MinimumSize = gs_vec2f(
                         gs_max(widget->TextRenderingData.TextBoundingBox.size().x, m_Style.get_font_size()) + m_Style.get_font_size(),
                         m_Style.get_font_size());
+
+                    widget->State.MaximumSize = gs_vec2f((float)INT_MAX, widget->State.MinimumSize.y);
                 }
                 else
                 {
-                    widget->State.MaximumSize = gs_vec2f(
+                    widget->State.MinimumSize = gs_vec2f(
                         gs_max(widget->TextRenderingData.TextBoundingBox.size().x, m_Style.get_font_size()) + m_Style.get_font_size(),
                         gs_max(widget->TextRenderingData.TextBoundingBox.size().y, m_Style.get_font_size()));
+
+                    widget->State.MaximumSize = gs_vec2f((float)INT_MAX, (float)INT_MAX);
                 }
-                
-                widget->State.MinimumSize = widget->State.MaximumSize;
                 
                 widget->State.BoundingBox = gs_2dboxf(
                     widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Min + gs_clamp(widget->TextRenderingData.TextBoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+                    widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
             }
 
             end_node<ImmediateUserInterfaceStringContent>();
