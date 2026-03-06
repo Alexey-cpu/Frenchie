@@ -161,7 +161,35 @@ namespace Frenchie
         class RenderingQueue : public Layer
         {
         public:
+
+            // nested types
+            struct DefaultSymbolProcessor
+            {
+                void operator()(
+                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                    const gs_vec2f&     _CursorPosition,
+                    const int&          _Utf8IteratorPosition,
+                    const unsigned int& _Symbol) const
+                {
+                    (void)_CurrentSymbolBoundingBox;
+                    (void)_CursorPosition;
+                    (void)_Utf8IteratorPosition;
+                    (void)_Symbol;
+                }
+            };
+
+            struct DefaultSymbolChanger
+            {
+                unsigned int operator()(const unsigned int& _Symbol) const
+                {
+                    return _Symbol;
+                }
+            };
+
+            // constructors
             RenderingQueue();
+
+            // destructor
             virtual ~RenderingQueue();
 
             // getters
@@ -205,65 +233,42 @@ namespace Frenchie
                 const float&    _MajorRadius,
                 const float&    _ArcAngle);
 
-            template<typename Type>
+            template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
             gs_2dboxf calculate_bounding_box(
                 const Type&                            _Begin,
                 const Type&                            _End,
                 const float&                           _Size,
-                const ApplicationRenderingBackendFont& _Font)
+                const ApplicationRenderingBackendFont& _Font,
+                const ChangeSymbol&                    _ChangeSymbol  = DefaultSymbolChanger())
             {
-                ApplicationRenderingBackendFont font = _Font.is_null() ? ApplicationRenderingBackend::get_default_font() : _Font;
+                gs_2dboxf textBoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
-                float scale     = _Size / (float)font.SizeInPixels;
-                float offset    = (font.Ascent + font.Descent + font.LineGap) * scale;
-                float positionX = 0.f;
-                float positionY = gs_vec2f(0.f, offset).y;
-
-                gs_vec2f min;
-                gs_vec2f max;
-
-                Type start = _Begin;
-                Type end   = _End;
-
-                while (start < end)
-                {
-                    unsigned int symbol = Frenchie::Core::String::utf8_next(start);
-
-                    // fallbacks
-                    if(!font.contains_glyph(symbol))
+                push_text(
+                    gs_vec2f(0.f, 0.f),
+                    _Begin,
+                    _End,
+                    _Size,
+                    1,
+                    gs_mat4f(1.f),
+                    _Font,
+                    true,
+                    [&textBoundingBox](
+                        const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                        const gs_vec2f&     _CursorPosition,
+                        const int&          _Utf8IteratorPosition,
+                        const unsigned int& _Symbol)
                     {
-                        // next line
-                        if(symbol == '\n')
-                        {
-                            positionY += gs_vec2f(0.f, gs_max(_Size, gs_abs(offset))).y;
-                            positionX =  0.f;
-                        }
-                        // carriage return
-                        else if(symbol == '\r')
-                            positionX =  0.f;
-                        // tab
-                        else if(symbol == '\t')
-                            positionX += gs_vec2f(_Size, 0.f).x;
-                        else
-                        {
-                            // TODO: do someting here...
-                            // May be use fallback font and take fallback character from there ???
-                        }
+                        (void)_CurrentSymbolBoundingBox;
+                        (void)_CursorPosition;
+                        (void)_Utf8IteratorPosition;
+                        (void)_Symbol;
 
-                        continue;
-                    }
+                        // calculate text bounding box
+                        textBoundingBox = gs_2dboxf(textBoundingBox.Min, _CurrentSymbolBoundingBox.Min, textBoundingBox.Max, _CurrentSymbolBoundingBox.Max);
+                    },
+                    _ChangeSymbol);
 
-                    min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
-                    max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
-
-                    // move cursor
-                    positionX += gs_vec2f(font.retrieve_glyph(symbol).Advance * scale, 0.f).x;
-                }
-
-                min = gs_vec2f(gs_min(positionX, min.x, max.x), gs_min(positionY, min.y, max.y));
-                max = gs_vec2f(gs_max(positionX, min.x, max.x), gs_max(positionY, min.y, max.y));
-
-                return gs_2dboxf(min, max);
+                return textBoundingBox;
             }
 
             void push_triangle_filled(
@@ -300,29 +305,6 @@ namespace Frenchie
                 bool            _RoundTopRightCorner    = true,
                 bool            _RoundBottomRightCorner = true,
                 bool            _RoundBottomLeftCorner  = true);
-
-            struct DefaultSymbolProcessor
-            {
-                void operator()(
-                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
-                    const gs_vec2f&     _CursorPosition,
-                    const int&          _Utf8IteratorPosition,
-                    const unsigned int& _Symbol) const
-                {
-                    (void)_CurrentSymbolBoundingBox;
-                    (void)_CursorPosition;
-                    (void)_Utf8IteratorPosition;
-                    (void)_Symbol;
-                }
-            };
-
-            struct DefaultSymbolChanger
-            {
-                unsigned int operator()(const unsigned int& _Symbol) const
-                {
-                    return _Symbol;
-                }
-            };
 
             template<typename Type, typename ProcessSymbol = DefaultSymbolProcessor, typename ChangeSymbol = DefaultSymbolChanger>
             void push_text(
