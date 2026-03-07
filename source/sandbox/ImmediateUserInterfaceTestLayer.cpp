@@ -191,81 +191,52 @@ void ImmediateUserInterfaceTestLayer::windows_test()
     // }
 }
 
-void ImmediateUserInterfaceTestLayer::scrollarea_test()
-{
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_DisableDocking;
-
-    m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f));
-
-    if(m_ImmediateUserInterface->begin_scrollarea(
-        "ScrollArea",
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
-    {
-        int k = 0;
-
-        for(int i = 0 ; i < 5; i++)
-        {
-            for(int j = 0 ; j < 3; j++)
-                m_ImmediateUserInterface->push_button(std::string("Button-").append(std::to_string(k++)));
-
-            m_ImmediateUserInterface->next_line();
-        }
-
-        m_ImmediateUserInterface->end_scrollarea();
-    }
-}
-
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
     m_ImmediateUserInterface->m_Settings =
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    static std::string password;
-    static std::string username;
-    static std::string multiline;
-    static bool        showPassword;
-
-    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Окно авторизации", "AutorizationWindow")))
+    // labels behaviour test
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Нередактируемые текстовые поля", "Labels behaviour testing")))
     {
         m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
         if(m_ImmediateUserInterface->begin_vertial_stack(m_ImmediateUserInterface->next_id("VerticalStack")))
         {
-            // user name
-            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Row-1")))
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStackRow1")))
             {
                 m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("UserName"), "Имя пользователя");
-                
-                m_ImmediateUserInterface->input_string_singleline(
-                    m_ImmediateUserInterface->next_id("UserNameInput"),
-                    username,
-                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
-
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Password"), "Пароль");
                 m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            // password
             m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
-            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Row-2")))
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStackRow2")))
             {
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("PasswordLabel"), "Пароль");
-                
-                m_ImmediateUserInterface->input_string_singleline(
-                    m_ImmediateUserInterface->next_id("PasswordInput"),
-                    password,
-                    !showPassword ?
-                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword :
-                            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
-
-                m_ImmediateUserInterface->check_button(
-                    m_ImmediateUserInterface->next_id("PasswordCheckbox"),
-                    ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
-                    &showPassword);
-
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("UserName"), "Имя пользователя");
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Password"), "Пароль");
                 m_ImmediateUserInterface->end_horizontal_stack();
+            }
+
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
+            {
+                m_ImmediateUserInterface->label(
+                    m_ImmediateUserInterface->next_id("SomeText"),
+                    "Напишем здесь какой-то очень полезный\nмногострочный текст");
+
+                m_ImmediateUserInterface->next_line();
+
+                m_ImmediateUserInterface->label(
+                    m_ImmediateUserInterface->next_id("SomeText1"),
+                    "Напишем здесь какой-то очень полезный\nмногострочный текст");
+
+                m_ImmediateUserInterface->end_scrollarea();
             }
 
             m_ImmediateUserInterface->end_vertical_stack();
@@ -274,136 +245,154 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_ImmediateUserInterface->end_window();
     }
 
-    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Многострочный текст", "MultilineTextWindow")))
+    // singleline text editor testing
+    static std::string username;
+    static std::string password;
+    static std::string multiline;
+    static bool        checkbox;
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Редактируемые текстовые поля", "Input string behaviour testing")))
     {
-        m_ImmediateUserInterface->input_string_multiline(
-            m_ImmediateUserInterface->next_id("MultilineText"),
-            multiline);
+        m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
-        m_ImmediateUserInterface->end_window();
-    }
-}
-
-void ImmediateUserInterfaceTestLayer::renderer_test()
-{
-    m_ImmediateUserInterface->m_Settings &=
-        ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
-
-    m_ImmediateUserInterface->m_Renderer->push_rectangle_rounded(
-        gs_vec2f(512.f, 512.f),
-        gs_vec2f(1024.f, 1024.f),
-        64.f,
-        32.f,
-        gs_rgba_color(255, 0, 0, 255));
-}
-
-void ImmediateUserInterfaceTestLayer::platform_backend_test()
-{
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
-
-    if(m_ImmediateUserInterface->begin_window("Окно тестирования обертки backend-а ОС###PlatformBackendTestWindow"))
-    {
-        if(m_ImmediateUserInterface->begin_scrollarea("PlatformBackendTestWindow/ScrollArea"))
+        if(m_ImmediateUserInterface->begin_vertial_stack(m_ImmediateUserInterface->next_id("VerticalStack")))
         {
-            // key events
-            static std::string keyDownName     = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
-            static std::string keyHoldName     = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
-            static std::string keyPressedName  = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
-            static std::string keyReleasedName = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
-            static std::string keyClickedName  = ApplicationPlatformBackendKey::to_string(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_None);
-            static int         keyClicksCount  = 0;
+            m_ImmediateUserInterface->next_maximum_size(gs_vec2f((float)INT_MAX, 128.f));
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
-            for(int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
-                    key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
-                    key++)
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStackRow1")))
             {
-                if(ApplicationPlatformBackend::is_key_down((ApplicationPlatformBackendKey::Key)key))
-                    keyDownName = ApplicationPlatformBackendKey::to_string((ApplicationPlatformBackendKey::Key)key);
+                m_ImmediateUserInterface->input_string_singleline(m_ImmediateUserInterface->next_id("UserName"), username);
+                m_ImmediateUserInterface->input_string_singleline(
+                    m_ImmediateUserInterface->next_id("Password"), password,
+                    !checkbox ?
+                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword :
+                            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
 
-                if(ApplicationPlatformBackend::is_key_hold((ApplicationPlatformBackendKey::Key)key))
-                    keyHoldName = ApplicationPlatformBackendKey::to_string((ApplicationPlatformBackendKey::Key)key);
+                m_ImmediateUserInterface->check_button(
+                    m_ImmediateUserInterface->next_id("Checkbox"),
+                    ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
+                    &checkbox);
 
-                if(ApplicationPlatformBackend::is_key_pressed((ApplicationPlatformBackendKey::Key)key))
-                    keyPressedName = ApplicationPlatformBackendKey::to_string((ApplicationPlatformBackendKey::Key)key);
-
-                if(ApplicationPlatformBackend::is_key_released((ApplicationPlatformBackendKey::Key)key))
-                    keyReleasedName = ApplicationPlatformBackendKey::to_string((ApplicationPlatformBackendKey::Key)key);
-
-                if(ApplicationPlatformBackend::is_key_clicked((ApplicationPlatformBackendKey::Key)key))
-                {
-                    keyClickedName = ApplicationPlatformBackendKey::to_string((ApplicationPlatformBackendKey::Key)key);
-                    keyClicksCount = ApplicationPlatformBackend::key_clicks_count((ApplicationPlatformBackendKey::Key)key);
-                }
+                m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/KeyEvents", "KeyEvents:"); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyDownName", Frenchie::Core::String::format("Down: [%s]", keyDownName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyHoldName", Frenchie::Core::String::format("Hold: [%s]", keyHoldName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyPressedName", Frenchie::Core::String::format("Pressed: [%s]", keyPressedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyReleasedName", Frenchie::Core::String::format("Released: [%s]", keyReleasedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyClickedName", Frenchie::Core::String::format("Clicked: [%s]", keyClickedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/keyClicks", Frenchie::Core::String::format("Clicks: [%d]", keyClicksCount)); m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->next_maximum_size(gs_vec2f((float)INT_MAX, 128.f));
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
-            // mouse events
-            static std::string mouseButtonDownName          = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonHoldName          = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonPressedName       = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonReleasedName      = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonClickedName       = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static std::string mouseButtonDoubleClickedName = ApplicationPlatformBackendMouseButton::to_string(ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd);
-            static int         mouseButtonClicksCount       = 0;
-
-            for(int key = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
-                    key < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
-                    key++)
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStackRow2")))
             {
-                if(ApplicationPlatformBackend::is_mouse_button_down((ApplicationPlatformBackendMouseButton::Button)key))
-                    mouseButtonDownName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
+                m_ImmediateUserInterface->input_string_singleline(m_ImmediateUserInterface->next_id("UserName"), username);
+                m_ImmediateUserInterface->input_string_singleline(
+                    m_ImmediateUserInterface->next_id("Password"), password,
+                    !checkbox ?
+                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword :
+                            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
 
-                if(ApplicationPlatformBackend::is_mouse_button_hold((ApplicationPlatformBackendMouseButton::Button)key))
-                    mouseButtonHoldName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
+                m_ImmediateUserInterface->check_button(
+                    m_ImmediateUserInterface->next_id("Checkbox"),
+                    ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
+                    &checkbox);
 
-                if(ApplicationPlatformBackend::is_mouse_button_pressed((ApplicationPlatformBackendMouseButton::Button)key))
-                    mouseButtonPressedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
-
-                if(ApplicationPlatformBackend::is_mouse_button_released((ApplicationPlatformBackendMouseButton::Button)key))
-                    mouseButtonReleasedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
-
-                if(ApplicationPlatformBackend::is_mouse_button_clicked((ApplicationPlatformBackendMouseButton::Button)key))
-                {
-                    mouseButtonClickedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
-                    mouseButtonClicksCount = ApplicationPlatformBackend::mouse_button_clicks_count((ApplicationPlatformBackendMouseButton::Button)key);
-                }
-
-                if(ApplicationPlatformBackend::is_mouse_button_double_clicked((ApplicationPlatformBackendMouseButton::Button)key))
-                    mouseButtonDoubleClickedName = ApplicationPlatformBackendMouseButton::to_string((ApplicationPlatformBackendMouseButton::Button)key);
+                m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseEvents", "MouseEvents:"); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseDownName", Frenchie::Core::String::format("Down: [%s]", mouseButtonDownName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseHoldName", Frenchie::Core::String::format("Hold: [%s]", mouseButtonHoldName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MousePressedName", Frenchie::Core::String::format("Pressed: [%s]", mouseButtonPressedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseReleasedName", Frenchie::Core::String::format("Released: [%s]", mouseButtonReleasedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseClickedName", Frenchie::Core::String::format("Clicked: [%s]", mouseButtonClickedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseDoubleClickedName", Frenchie::Core::String::format("Double clicked: [%s]", mouseButtonDoubleClickedName.c_str())); m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/MouseClicksCount", Frenchie::Core::String::format("Clicks: [%d]", mouseButtonClicksCount)); m_ImmediateUserInterface->next_line();
-            
-            // input text test
-            static std::string inputText;
+            //m_ImmediateUserInterface->next_size(gs_vec2f(512.f));
+            m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), multiline);
 
-            if(!ApplicationPlatformBackend::input_text().empty())
-                inputText = ApplicationPlatformBackend::input_text();
-
-            m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->label("PlatformBackendTestWindow/ScrollArea/InputText", Frenchie::Core::String::format("Text: [%s]", inputText.c_str()));
-            
-            m_ImmediateUserInterface->end_scrollarea();
+            m_ImmediateUserInterface->end_vertical_stack();
         }
 
         m_ImmediateUserInterface->end_window();
     }
+
+    // buttons test
+    static bool pushed;
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Кнопки", "Buttons testing")))
+    {
+        m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+        if(m_ImmediateUserInterface->begin_vertial_stack(m_ImmediateUserInterface->next_id("VerticalStack")))
+        {
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStackRow1")))
+            {
+                if(m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Кнопанька", "Button")))
+                    pushed = !pushed;
+
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("Checkbox"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RadioButton"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("SliderButton"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &pushed);
+                m_ImmediateUserInterface->end_horizontal_stack();
+            }
+
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStackRow2")))
+            {
+                if(m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Кнопанька", "Button")))
+                    pushed = !pushed;
+
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("Checkbox"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RadioButton"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("SliderButton"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &pushed);
+                
+                m_ImmediateUserInterface->end_horizontal_stack();
+            }
+
+            m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+            if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
+            {
+                if(m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Кнопанька", "Button")))
+                    pushed = !pushed;
+
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("Checkbox"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RadioButton"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("SliderButton"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &pushed);
+
+                m_ImmediateUserInterface->next_line();
+
+                if(m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Кнопанька", "Button1")))
+                    pushed = !pushed;
+
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("Checkbox1"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RadioButton1"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &pushed);
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("SliderButton1"), ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &pushed);
+
+
+                m_ImmediateUserInterface->end_scrollarea();
+            }
+
+            m_ImmediateUserInterface->end_vertical_stack();
+        }
+
+        m_ImmediateUserInterface->end_window();
+    }
+
+    // numeric inputs
+    static float number1 = 0.f;
+    static float number2 = 0.f;
+    static float number3 = 0.f;
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Числовой ввод/вывод", "Numeric input testing")))
+    {
+        m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
+        {
+            m_ImmediateUserInterface->input_float(m_ImmediateUserInterface->next_id("Number1"), number1);
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->input_float(m_ImmediateUserInterface->next_id("Number2"), number2);
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->input_float(m_ImmediateUserInterface->next_id("Number3"), number3);
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+        
+        m_ImmediateUserInterface->end_window();
+    }
+    
 }

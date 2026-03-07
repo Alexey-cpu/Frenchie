@@ -148,6 +148,12 @@ namespace Frenchie
             ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
         };
 
+        enum ImmediateUserInterfaceLabelSettings_ : int
+        {
+            ImmediateUserInterfaceLabelSettings_None        = 0,
+            ImmediateUserInterfaceLabelSettings_RenderFrame = 1 << 0,
+        };
+
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
             ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, // check button is rendered as checkbox
@@ -157,13 +163,15 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
-            ImmediateUserInterfaceInputStringSettings_NoInput          = 1 << 0, // disables input
-            ImmediateUserInterfaceInputStringSettings_NoClipboard      = 1 << 1, // disables copy/paste
-            ImmediateUserInterfaceInputStringSettings_NoSelection      = 1 << 2, // disables selection
-            ImmediateUserInterfaceInputStringSettings_NoMultiline      = 1 << 3, // disables multiline text
-            ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag = 1 << 4, // disables scrollbar moving when dragging mouse within input string editor
-            ImmediateUserInterfaceInputStringSettings_InsertPassword   = 1 << 5, // when this setting is on all input symbols are changed on '*' symbol while rendering
-            ImmediateUserInterfaceInputStringSettings_Defaults         = 0
+            ImmediateUserInterfaceInputStringSettings_NoInput            = 1 << 0, // disables input
+            ImmediateUserInterfaceInputStringSettings_NoClipboard        = 1 << 1, // disables copy/paste
+            ImmediateUserInterfaceInputStringSettings_NoSelection        = 1 << 2, // disables selection
+            ImmediateUserInterfaceInputStringSettings_NoMultiline        = 1 << 3, // disables multiline text
+            ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag   = 1 << 4, // disables scrollbar moving when dragging mouse within input string editor
+            ImmediateUserInterfaceInputStringSettings_InsertPassword     = 1 << 5, // when this setting is on all input symbols are changed on '*' symbol while rendering
+            ImmediateUserInterfaceInputStringSettings_StopEditingOnEnter = 1 << 6, // stops input string editing when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter  = 1 << 7, // appropriate inpput string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_Defaults           = 0
         };
 
         // mouse hover
@@ -216,6 +224,7 @@ namespace Frenchie
 
         typedef int ImmediateUserInterfaceNodeSettings;
         typedef int ImmediateUserInterfaceContextSettings;
+        typedef int ImmediateUserInterfaceLabelSettings;
         typedef int ImmediateUserInterfaceCheckButtonSettings;
         typedef int ImmediateUserInterfaceInputStringSettings;
 
@@ -874,19 +883,24 @@ namespace Frenchie
             
             // This function renders text label. The minimum size of the label equals to text size, maximum size has no limit
             // on horizontal axis, but is constrained by a text height on vertical axis
-            void label(const std::string& _ID, const std::string& _Text);
+            void label(
+                const std::string&                         _ID,
+                const std::string&                         _Text,
+                const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
 
-            void input_string_multiline(
+            bool input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
-            void input_string_singleline(
+            bool input_string_singleline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
+
+            void input_float(const std::string& _ID, float& _Input);
 
             void color_picker(const std::string& _ID);
 
@@ -950,6 +964,16 @@ namespace Frenchie
 
                 return dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
             }
+
+            template<typename Type = ImmediateUserInterfaceNode>
+            Type* get_rendered_stack_top() const
+            {
+                if(m_NodesRenderedStack.empty())
+                    return nullptr;
+
+                return dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]);
+            }
+
 
             // This function start the new node of a given type.
             // The function creates the node or retrieves it from cache and then pushes it into rendering stack and rendered items list
@@ -1070,14 +1094,6 @@ namespace Frenchie
             std::string                                                           m_CurrentHash;
             std::string                                                           m_CurrentName;
             std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
-
-            // service methods
-            void input_string(
-                const std::string&                               _ID,
-                std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _InputSettings                        = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-                const ImmediateUserInterfaceNodeSettings&        _NodeSettings                         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
             template<typename Type> Type* create_node(const std::string& _ID)
             {
