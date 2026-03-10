@@ -1563,9 +1563,6 @@ namespace Frenchie
                     if(_Text.empty())
                         return 0;
 
-                    if(_Cursor >= (int)_Text.size())
-                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
-
                     auto iterator = _Text.begin() + _Cursor;
                     
                     if(iterator != _Text.begin())
@@ -1579,7 +1576,7 @@ namespace Frenchie
                     if(_Text.empty())
                         return 0;
 
-                    if(_Cursor >= (int)_Text.size())
+                    if(_Cursor > (int)_Text.size())
                         return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
 
                     auto iterator = _Text.begin() + _Cursor;
@@ -1594,9 +1591,6 @@ namespace Frenchie
                 {
                     if(_Text.empty())
                         return 0;
-
-                    if(_Cursor >= (int)_Text.size())
-                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
 
                     int SymbolsCountTillLineStart = 0;
 
@@ -2292,7 +2286,7 @@ namespace Frenchie
         }
 
         template<typename Type>
-        bool input_scalar_internal(ImmediateUserInterfaceContextLayer* _Context, const std::string& _ID, Type& _Input, const std::string& _Format)
+        bool input_scalar_internal(ImmediateUserInterfaceContextLayer* _Context, const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format)
         {
             struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfaceNodePanel
             {
@@ -2322,7 +2316,6 @@ namespace Frenchie
                     return false;
                 }
 
-                ImmediateUserInterfaceNode* Input = nullptr;
                 std::string                 Buffer;
                 bool                        IsEdited = false;
             };
@@ -2355,14 +2348,18 @@ namespace Frenchie
                     {
                         return true;
                     },
-                    [panel, &_Input, &_Format](const std::string& _Value)
+                    [panel, &_Input, &_Format, &_Min, &_Max](const std::string& _Value)
                     {
-                        _Input = Frenchie::Core::String::from_string<Type>(_Value);
+                        Type value = Frenchie::Core::String::from_string<Type>(_Value);
+
+                        if(value < _Min || value > _Max)
+                            panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
+                        else
+                            _Input = gs_clamp(value, _Min, _Max);
                     });
 
-                if(modified || (panel->Input == nullptr || !panel->IsEdited))
+                if(modified || !panel->IsEdited)
                     panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
-                panel->Input = _Context->get_rendered_stack_top();
 
                 // calculate geometry
                 {
@@ -6018,34 +6015,34 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(const std::string& _ID, float& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
 {
-    return input_scalar_internal<float>(this, _ID, _Input, "%.5f");
+    return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, "%.5f");
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const std::string& _ID, double& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
 {
-    return input_scalar_internal<double>(this, _ID, _Input, "%.5f");
+    return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f");
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
 {
-    return input_scalar_internal<int>(this, _ID, _Input, "%d");
+    return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d");
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(const std::string& _ID, short& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
 {
-    return input_scalar_internal<short>(this, _ID, _Input, "%d");
+    return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, "%d");
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(const std::string& _ID, unsigned short& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
 {
-    return input_scalar_internal<unsigned short>(this, _ID, _Input, "%d");
+    return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, "%d");
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
-    return input_scalar_internal<unsigned int>(this, _ID, _Input, "%u");
+    return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u");
 }
 
 void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs_color& _Color)
@@ -6053,7 +6050,13 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
     struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
     {
     public:
-        ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash)
+        {
+            SliderSpectrumRedComponent   = gs_rgba_color_get_r(Color);
+            SliderSpectrumGreenComponent = gs_rgba_color_get_g(Color);
+            SliderSpectrumBlueComponent  = gs_rgba_color_get_b(Color);
+        }
+
         virtual ~ImmediateUserInterfaceColorPicker(){}
 
         virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
@@ -6075,17 +6078,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
             // render vertical color selector
             {
-                gs_color colors[7] =
-                {
-                    gs_rgba_color(255, 0, 0, 255),
-                    gs_rgba_color(255, 255, 0, 255),
-                    gs_rgba_color(0, 255, 0, 255),
-                    gs_rgba_color(0, 255, 255, 255),
-                    gs_rgba_color(0, 0, 255, 255),
-                    gs_rgba_color(255, 0, 255, 255),
-                    gs_rgba_color(255, 0, 0, 255)
-                };
-
                 // color selector
                 gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
                 gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height() / 6.f);
@@ -6098,8 +6090,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 for (int i = 1; i < 7; i++)
                 {
-                    gs_color sourceColor = colors[i-1];
-                    gs_color targetColor = colors[i-0];
+                    gs_color sourceColor = Palette[i-1];
+                    gs_color targetColor = Palette[i-0];
 
                     _Context->m_Renderer->push_rectangle_gradient_mesh(
                         position,
@@ -6112,22 +6104,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                     if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
                     {
-                        int r1 = gs_rgba_color_get_r(sourceColor);
-                        int g1 = gs_rgba_color_get_g(sourceColor);
-                        int b1 = gs_rgba_color_get_b(sourceColor);
-
-                        int r2 = gs_rgba_color_get_r(targetColor);
-                        int g2 = gs_rgba_color_get_g(targetColor);
-                        int b2 = gs_rgba_color_get_b(targetColor);
-
-                        float fraction = (slider.Min.y - position.y) / size.y;
-
-                        Color = gs_rgba_color(
-                            (gs_color)(r1 + (r2 - r1) * fraction),
-                            (gs_color)(g1 + (g2 - g1) * fraction),
-                            (gs_color)(b1 + (b2 - b1) * fraction),
-                            255);
-
+                        Color  = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
                         caught = true;
                     }
 
@@ -6141,13 +6118,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     gs_rgba_color(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
-
-            // retrieve color components
-            {
-                Red   = gs_rgba_color_get_r(Color);
-                Green = gs_rgba_color_get_g(Color);
-                Blue  = gs_rgba_color_get_b(Color);
-            }
         }
 
         virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
@@ -6155,9 +6125,13 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             if(_Context == nullptr || _Context->m_Renderer == nullptr)
                 return false;
 
+            SliderIsBeingMoved = false;
+
             // stop catching
             if(!_Context->m_Input.is_mouse_button_down())
                 return false;
+
+            SliderIsBeingMoved = true;
 
             // vertical color selector event
             gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
@@ -6180,16 +6154,77 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     State.BoundingBox.height() - slider.height());
             }
 
+            // gradient color modifier event
+
             return true;
         }
 
-        float    SliderPreviousPosition = 0.f;
-        float    SliderPosition = 0.f;
-        gs_color Color;
+        void force_color(const gs_color& _Color)
+        {
+            float    minDistance               = (float)INT_MAX;
+            float    minDistanceSliderPosition = 0.f;
+            float    sliderPosition            = 0.f;
+                
+            gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
+            gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height() / 6.f);
 
-        int Red   = 0;
-        int Green = 0;
-        int Blue  = 0;
+            while (sliderPosition < State.BoundingBox.height() - 16.f)
+            {
+                // color selector
+                gs_2dboxf slider = gs_2dboxf(
+                    position + gs_vec2f(0.f, sliderPosition),
+                    position + gs_vec2f(0.f, sliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+
+                for (int i = 1; i < 7; i++)
+                {
+                    gs_color sourceColor = Palette[i-1];
+                    gs_color targetColor = Palette[i-0];
+
+                    gs_color color = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
+                    
+                    float distance = (float)gs_rgb_color_distance(color, _Color);
+
+                    if(distance < minDistance)
+                    {
+                        minDistance               = distance;
+                        minDistanceSliderPosition = sliderPosition;
+                    }
+
+                    position += gs_vec2f(0.f, size.y);
+                }
+
+                sliderPosition += 0.01f;
+            }
+
+            SliderPosition = gs_clamp(
+                minDistanceSliderPosition,
+                0.f,
+                State.BoundingBox.height() - 16.f);
+
+            SliderPreviousPosition = SliderPosition;
+        }
+
+        // color
+        gs_color Color      = gs_rgba_color(255, 255, 255, 255);
+
+        gs_color Palette[7] =
+        {
+            gs_rgba_color(255, 0, 0, 255),
+            gs_rgba_color(255, 255, 0, 255),
+            gs_rgba_color(0, 255, 0, 255),
+            gs_rgba_color(0, 255, 255, 255),
+            gs_rgba_color(0, 0, 255, 255),
+            gs_rgba_color(255, 0, 255, 255),
+            gs_rgba_color(255, 0, 0, 255)
+        };
+        
+        // slider attributes
+        float    SliderPreviousPosition       = 0.f;
+        float    SliderPosition               = 0.f;
+        bool     SliderIsBeingMoved           = false;
+        gs_color SliderSpectrumRedComponent   = 0;
+        gs_color SliderSpectrumGreenComponent = 0;
+        gs_color SliderSpectrumBlueComponent  = 0;
 
     private:
         float gradientColorModifierHorizontalFillWeight = 0.9f;
@@ -6205,21 +6240,35 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             get_rendered_stack_top<ImmediateUserInterfaceColorPicker>();
 
         // currently selected color
+        next_maximum_size(gs_vec2f((float)INT_MAX, 128.f));
+        next_content_padding(gs_vec2f(16.f, 0.f));
+
         if(begin_horizontal_stack(std::string(_ID).append("/HorizontalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            bool colorChanged = false;
+            if(!picker->SliderIsBeingMoved)
+            {
+                picker->force_color(
+                    gs_rgba_color(
+                        picker->SliderSpectrumRedComponent,
+                        picker->SliderSpectrumGreenComponent,
+                        picker->SliderSpectrumBlueComponent,
+                        255));
+            }
+            else
+            {
+                picker->SliderSpectrumRedComponent   = gs_rgba_color_get_r(picker->Color);
+                picker->SliderSpectrumGreenComponent = gs_rgba_color_get_g(picker->Color);
+                picker->SliderSpectrumBlueComponent  = gs_rgba_color_get_b(picker->Color);
+            }
 
             label(std::string(_ID).append("/RedLabel"), "R");
-            colorChanged = colorChanged || input_scalar<int>(std::string(_ID).append("/Red"), picker->Red);
+            input_scalar<gs_color>(std::string(_ID).append("/Red"), picker->SliderSpectrumRedComponent, 0, 255);
             
             label(std::string(_ID).append("/GreenLabel"), "G");
-            colorChanged = colorChanged || input_scalar<int>(std::string(_ID).append("/Green"), picker->Green);
+            input_scalar<gs_color>(std::string(_ID).append("/Green"), picker->SliderSpectrumGreenComponent, 0, 255);
             
             label(std::string(_ID).append("/BlueLabel"), "B");
-            colorChanged = colorChanged || input_scalar<int>(std::string(_ID).append("/Blue"), picker->Blue);
-
-            // if(colorChanged)
-            //     picker->Color = gs_rgba_color(picker->Red, picker->Green, picker->Blue, 255);
+            input_scalar<gs_color>(std::string(_ID).append("/Blue"), picker->SliderSpectrumBlueComponent, 0, 255);
 
             end_horizontal_stack();
         }

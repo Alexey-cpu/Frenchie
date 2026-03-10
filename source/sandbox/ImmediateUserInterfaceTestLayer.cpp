@@ -197,6 +197,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
+    /*
     // labels behaviour test
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Нередактируемые текстовые поля", "Labels behaviour testing")))
     {
@@ -398,6 +399,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_ImmediateUserInterface->end_window();
     }
     
+    */
+
     // color pickers
     static gs_color color = 1;
 
