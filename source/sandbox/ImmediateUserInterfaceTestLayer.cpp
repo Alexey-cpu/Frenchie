@@ -266,7 +266,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 m_ImmediateUserInterface->input_string_singleline(
                     m_ImmediateUserInterface->next_id("Password"), password,
                     !checkbox ?
-                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword :
+                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password :
                             ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
 
                 m_ImmediateUserInterface->check_button(
@@ -286,7 +286,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 m_ImmediateUserInterface->input_string_singleline(
                     m_ImmediateUserInterface->next_id("Password"), password,
                     !checkbox ?
-                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword :
+                        ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password :
                             ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults);
 
                 m_ImmediateUserInterface->check_button(

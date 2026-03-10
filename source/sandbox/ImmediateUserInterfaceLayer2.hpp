@@ -163,15 +163,13 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
-            ImmediateUserInterfaceInputStringSettings_NoInput            = 1 << 0, // disables input
-            ImmediateUserInterfaceInputStringSettings_NoClipboard        = 1 << 1, // disables copy/paste
-            ImmediateUserInterfaceInputStringSettings_NoSelection        = 1 << 2, // disables selection
-            ImmediateUserInterfaceInputStringSettings_NoMultiline        = 1 << 3, // disables multiline text
-            ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag   = 1 << 4, // disables scrollbar moving when dragging mouse within input string editor
-            ImmediateUserInterfaceInputStringSettings_InsertPassword     = 1 << 5, // when this setting is on all input symbols are changed on '*' symbol while rendering
-            ImmediateUserInterfaceInputStringSettings_StopEditingOnEnter = 1 << 6, // stops input string editing when enter key is pressed
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter  = 1 << 7, // appropriate inpput string function returns true when enter key is pressed
-            ImmediateUserInterfaceInputStringSettings_Defaults           = 0
+            ImmediateUserInterfaceInputStringSettings_NoInput           = 1 << 0, // disables input
+            ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, // all input symbols are changed on '*' while rendering
+            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, // disables copy/paste
+            ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, // disables selection
+            ImmediateUserInterfaceInputStringSettings_NoMultiline       = 1 << 4, // disables multiline text
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 5, // appropriate input string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_Defaults          = 0
         };
 
         // mouse hover

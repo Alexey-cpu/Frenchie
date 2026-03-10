@@ -1827,7 +1827,7 @@ namespace Frenchie
 
             auto inputStringCharacterChanger  = [_InputSettings](const unsigned int& _Symbol)->unsigned int
             {
-                return (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword) && 
+                return (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password) && 
                         (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline) ? '*' : _Symbol;
             };
 
@@ -2052,9 +2052,7 @@ namespace Frenchie
                     // process events
                     {
                         // adjust scrollbar
-                        if(widget->State.Selected && _Context->m_Input.is_mouse_button_hold() &&
-                            !_Context->m_Input.is_mouse_button_pressed()                      &&
-                            !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoScrollWhenDrag))
+                        if(widget->State.Selected && _Context->m_Input.is_mouse_button_hold() && !_Context->m_Input.is_mouse_button_pressed())
                         {
                             if(scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
                                 scrollArea->HorizontalScrollBar->set_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
@@ -2119,7 +2117,7 @@ namespace Frenchie
                             }
 
                             // stop editing on enter
-                            else if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditingOnEnter) &&
+                            else if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter) &&
                                     _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter))
                             {
                                 while (parent != nullptr &&
@@ -2424,9 +2422,8 @@ namespace Frenchie
                     panel->Buffer,
 
                     // input settings
-                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults           |
-                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline        |
-                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditingOnEnter |
+                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults         |
+                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline      |
                     ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter,
                     
                     // node settings
@@ -6067,11 +6064,11 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
         _Text,
         (_InputSettings & ~(
             ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline |
-            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_InsertPassword)),
+            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password)),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar             |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar,
-        [_InputTextFilter](const std::string& _Input)->bool{return _InputTextFilter != nullptr && _InputTextFilter(_Input);});
+        [_InputTextFilter](const std::string& _Input)->bool{return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
 bool ImmediateUserInterfaceContextLayer::input_string_singleline(
@@ -6092,7 +6089,7 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar  |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar,
-        [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter != nullptr && _InputTextFilter(_Input);});
+        [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
 void ImmediateUserInterfaceContextLayer::input_float(const std::string& _ID, float& _Input)
