@@ -297,7 +297,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            //m_ImmediateUserInterface->next_size(gs_vec2f(512.f));
+            m_ImmediateUserInterface->next_maximum_size(gs_vec2f((float)INT_MAX, (float)INT_MAX));
             m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), multiline);
 
             m_ImmediateUserInterface->end_vertical_stack();
@@ -373,9 +373,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     }
 
     // numeric inputs
-    static float number1 = 0.f;
-    static float number2 = 0.f;
-    static float number3 = 0.f;
+    static float        number1 = 0.f;
+    static double       number2 = 0.f;
+    static int          number3 = 0;
+    static unsigned int number4 = 0;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Числовой ввод/вывод", "Numeric input testing")))
     {
@@ -383,11 +384,13 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
         {
-            m_ImmediateUserInterface->input_float(m_ImmediateUserInterface->next_id("Number1"), number1);
+            m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("Number1"), number1);
             m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->input_float(m_ImmediateUserInterface->next_id("Number2"), number2);
+            m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("Number2"), number2);
             m_ImmediateUserInterface->next_line();
-            m_ImmediateUserInterface->input_float(m_ImmediateUserInterface->next_id("Number3"), number3);
+            m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("Number3"), number3);
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("Number4"), number4);
 
             m_ImmediateUserInterface->end_scrollarea();
         }
@@ -395,4 +398,20 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_ImmediateUserInterface->end_window();
     }
     
+    // color pickers
+    static gs_color color = 1;
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Модификаторы цвета", "Color input testing")))
+    {
+        m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
+        {
+            m_ImmediateUserInterface->color_picker(m_ImmediateUserInterface->next_id("Color picker"), color);
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+        
+        m_ImmediateUserInterface->end_window();
+    }
 }

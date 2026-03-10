@@ -107,9 +107,11 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, // horizontal scrollbar will be enabled when needed
             ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, // node with scrollarea will be resized to it's contents vertically
             ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, // node with scrollarea will be resized to it's contents horizontally
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 17, // vertical scroll bar position will be adjusted by a mouse wheel
-            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 18, // vertical scroll bar position will be adjusted by up/down keyboard arrows
-            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 19, // horizontal scroll bar position will be adjusted by left/right keyboard arrows
+
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 17, // vertical scroll bar position will be adjusted by up/down keyboard arrows
+            ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 18, // horizontal scroll bar position will be adjusted by left/right keyboard arrows
+            ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 19, // vertical scroll bar position will be adjusted by a mouse wheel
+
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, // vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
 
@@ -470,19 +472,19 @@ namespace Frenchie
             void calculate_content_padding(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*, gs_vec2f&);
         };
 
-        // widgets
-        struct ImmediateUserInterfaceColorPickerGradientColorSelector;
-        struct ImmediateUserInterfaceColorPickerGradientColorModifier;
+        // // widgets
+        // struct ImmediateUserInterfaceColorPickerGradientColorSelector;
+        // struct ImmediateUserInterfaceColorPickerGradientColorModifier;
 
-        struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-            virtual ~ImmediateUserInterfaceColorPicker(){}
+        // struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
+        // {
+        // public:
+        //     ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        //     virtual ~ImmediateUserInterfaceColorPicker(){}
 
-            ImmediateUserInterfaceColorPickerGradientColorSelector*        GradientColorSelector        = nullptr;
-            ImmediateUserInterfaceColorPickerGradientColorModifier* GradientSurfaceColorModifier = nullptr;
-        };
+        //     ImmediateUserInterfaceColorPickerGradientColorSelector*        GradientColorSelector        = nullptr;
+        //     ImmediateUserInterfaceColorPickerGradientColorModifier* GradientSurfaceColorModifier = nullptr;
+        // };
 
         // popups
         struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
@@ -886,21 +888,26 @@ namespace Frenchie
                 const std::string&                         _Text,
                 const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
 
+            // This function renders input multiline text
             bool input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
+            // This function renders input singleline text
             bool input_string_singleline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
-            void input_float(const std::string& _ID, float& _Input);
+            // This function renders input scalar value widget.
+            // Supported scalar types are: float, double, int, short, unsigned int, unsigned short
+            template<typename Type>
+            bool input_scalar(const std::string& _ID, Type& _Input);
 
-            void color_picker(const std::string& _ID);
+            void color_picker(const std::string& _ID, gs_color& _Color);
 
             // windows
             bool begin_window(
