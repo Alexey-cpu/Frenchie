@@ -187,10 +187,10 @@ namespace Frenchie
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
             ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0, // docked window is snapped to the top part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 2, // docked window is snapped to the left part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 3, // docked window is snapped to the right part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 4, // docked window is snapped to the bottom part of it's docker
-            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 5, // docked window is docked as tab to it's docker
+            ImmedidateUserInterfaceDockingAnchor_Left   = 1 << 1, // docked window is snapped to the left part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Right  = 1 << 2, // docked window is snapped to the right part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Bottom = 1 << 3, // docked window is snapped to the bottom part of it's docker
+            ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4, // docked window is docked as tab to it's docker
 
             ImmedidateUserInterfaceDockingAnchor_All    =
                 ImmedidateUserInterfaceDockingAnchor_Top    |
@@ -471,20 +471,6 @@ namespace Frenchie
         private:
             void calculate_content_padding(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*, gs_vec2f&);
         };
-
-        // // widgets
-        // struct ImmediateUserInterfaceColorPickerGradientColorSelector;
-        // struct ImmediateUserInterfaceColorPickerGradientColorModifier;
-
-        // struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
-        // {
-        // public:
-        //     ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-        //     virtual ~ImmediateUserInterfaceColorPicker(){}
-
-        //     ImmediateUserInterfaceColorPickerGradientColorSelector*        GradientColorSelector        = nullptr;
-        //     ImmediateUserInterfaceColorPickerGradientColorModifier* GradientSurfaceColorModifier = nullptr;
-        // };
 
         // popups
         struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
