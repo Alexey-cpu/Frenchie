@@ -891,7 +891,7 @@ namespace Frenchie
             // This function renders input scalar value widget.
             // Supported scalar types are: float, double, int, short, unsigned int, unsigned short
             template<typename Type>
-            bool input_scalar(const std::string& _ID, Type& _Input);
+            bool input_scalar(const std::string& _ID, Type& _Input, const Type& _Min = gs_tiny<Type>(), const Type& _Max = gs_huge<Type>());
 
             void color_picker(const std::string& _ID, gs_color& _Color);
 

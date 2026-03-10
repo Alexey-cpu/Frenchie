@@ -69,4 +69,28 @@ gs_color gs_rgba_color_get_a(const gs_color& _Color)
     return (_Color >> 24) & 0xFF;
 }
 
+gs_color gs_rbg_color_lerp(gs_color _SourceColor, gs_color _TargetColor, float _Fraction)
+{
+    int r1 = gs_rgba_color_get_r(_SourceColor);
+    int g1 = gs_rgba_color_get_g(_SourceColor);
+    int b1 = gs_rgba_color_get_b(_SourceColor);
+
+    int r2 = gs_rgba_color_get_r(_TargetColor);
+    int g2 = gs_rgba_color_get_g(_TargetColor);
+    int b2 = gs_rgba_color_get_b(_TargetColor);
+
+    return gs_rgba_color(
+        (gs_color)(r1 + (r2 - r1) * _Fraction),
+        (gs_color)(g1 + (g2 - g1) * _Fraction),
+        (gs_color)(b1 + (b2 - b1) * _Fraction),
+        255);
+}
+
+double gs_rgb_color_distance(const gs_color _A, const gs_color _B)
+{
+    return gs_vector_length(
+        gs_vec3f(gs_rgba_color_get_r(_A), gs_rgba_color_get_g(_A), gs_rgba_color_get_b(_A)) -
+        gs_vec3f(gs_rgba_color_get_r(_B), gs_rgba_color_get_g(_B), gs_rgba_color_get_b(_B)));
+}
+
 // [ALGEBRA]
