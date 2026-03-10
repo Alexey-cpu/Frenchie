@@ -1350,139 +1350,6 @@ namespace Frenchie
             }
         };
     
-        // widgets
-
-        // color picker
-        struct ImmediateUserInterfaceColorPickerGradientColorSelector : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceColorPickerGradientColorSelector(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-            virtual ~ImmediateUserInterfaceColorPickerGradientColorSelector(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                gs_color colors[7] =
-                {
-                    gs_rgba_color(255, 0, 0, 255),
-                    gs_rgba_color(255, 255, 0, 255),
-                    gs_rgba_color(0, 255, 0, 255),
-                    gs_rgba_color(0, 255, 255, 255),
-                    gs_rgba_color(0, 0, 255, 255),
-                    gs_rgba_color(255, 0, 255, 255),
-                    gs_rgba_color(255, 0, 0, 255)
-                };
-
-                // render vertical color selector
-                gs_vec2f position = State.BoundingBox.Min;
-                gs_vec2f size     = gs_vec2f(State.BoundingBox.width(), State.BoundingBox.height() / 6.f);
-
-                gs_2dboxf slider = gs_2dboxf(
-                    position + gs_vec2f(0.f, SliderPosition),
-                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
-
-                bool caught = false;
-
-                for (int i = 1; i < 7; i++)
-                {
-                    gs_color sourceColor = colors[i-1];
-                    gs_color targetColor = colors[i-0];
-
-                    _Context->m_Renderer->push_rectangle_gradient_mesh(
-                        position,
-                        position + size,
-                        sourceColor,
-                        sourceColor,
-                        targetColor,
-                        targetColor,
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    // calculate color
-                    if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
-                    {
-                        int r1 = gs_rgba_color_get_r(sourceColor);
-                        int g1 = gs_rgba_color_get_g(sourceColor);
-                        int b1 = gs_rgba_color_get_b(sourceColor);
-
-                        int r2 = gs_rgba_color_get_r(targetColor);
-                        int g2 = gs_rgba_color_get_g(targetColor);
-                        int b2 = gs_rgba_color_get_b(targetColor);
-
-                        float fraction = (slider.Min.y - position.y) / size.y;
-
-                        Color = gs_rgba_color(
-                            (gs_color)(r1 + (r2 - r1) * fraction),
-                            (gs_color)(g1 + (g2 - g1) * fraction),
-                            (gs_color)(b1 + (b2 - b1) * fraction),
-                            255);
-
-                        caught = true;
-                    }
-
-                    position += gs_vec2f(0.f, size.y);
-                }
-
-                // render slider
-                _Context->m_Renderer->push_rectangle_filled(
-                    slider.Min,
-                    slider.Max,
-                    gs_rgba_color(255, 255, 255, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
-
-                if(_Context->m_Input.is_mouse_button_pressed())
-                    SliderPreviousPosition = SliderPosition;
-
-                if(!_Context->m_Input.is_mouse_button_down()) return false;
-
-                gs_vec2f position = State.BoundingBox.Min;
-
-                gs_2dboxf slider = gs_2dboxf(
-                    position + gs_vec2f(0.f, SliderPosition),
-                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
-
-                SliderPosition = gs_clamp(
-                    SliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y,
-                    0.f,
-                    State.BoundingBox.height() - slider.height());
-
-                return true;
-            }
-
-            float    SliderPreviousPosition = 0.f;
-            float    SliderPosition = 0.f;
-            gs_color Color;
-        };
-
-        struct ImmediateUserInterfaceColorPickerGradientColorModifier : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceColorPickerGradientColorModifier(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-            virtual ~ImmediateUserInterfaceColorPickerGradientColorModifier(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                _Context->m_Renderer->push_rectangle_gradient_mesh(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    gs_rgba_color(255, 255, 255, 255),
-                    BaseColor, // this is current color
-                    gs_rgba_color(0, 0, 0, 255),
-                    gs_rgba_color(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            gs_color BaseColor;
-            gs_color ModifiedColor;
-        };
-
         // popups
         struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea
         {
@@ -1638,7 +1505,7 @@ namespace Frenchie
         };
 
         template<typename SymbolFilter = DefaultInputTextFilter, typename InputTextCallback = DefaultInputTextCallback>
-        bool input_string1(
+        bool input_string_internal(
             ImmediateUserInterfaceContextLayer*              _Context,
             const std::string&                               _ID,
             std::string&                                     _Text,
@@ -1693,7 +1560,11 @@ namespace Frenchie
 
                 static int move_cursor_left(const int& _Cursor, std::string& _Text)
                 {
-                    if(_Text.empty()) return 0;
+                    if(_Text.empty())
+                        return 0;
+
+                    if(_Cursor >= (int)_Text.size())
+                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
 
                     auto iterator = _Text.begin() + _Cursor;
                     
@@ -1705,7 +1576,11 @@ namespace Frenchie
 
                 static int move_cursor_right(const int& _Cursor, std::string& _Text)
                 {
-                    if(_Text.empty()) return 0;
+                    if(_Text.empty())
+                        return 0;
+
+                    if(_Cursor >= (int)_Text.size())
+                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
 
                     auto iterator = _Text.begin() + _Cursor;
 
@@ -1717,6 +1592,12 @@ namespace Frenchie
 
                 static int move_cursor_up(const int& _Cursor, std::string& _Text)
                 {
+                    if(_Text.empty())
+                        return 0;
+
+                    if(_Cursor >= (int)_Text.size())
+                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
+
                     int SymbolsCountTillLineStart = 0;
 
                     // move backward to find out how many symbols there are till the line start
@@ -1757,6 +1638,12 @@ namespace Frenchie
 
                 static int move_cursor_down(const int& _Cursor, std::string& _Text)
                 {
+                    if(_Text.empty())
+                        return 0;
+
+                    if(_Cursor >= (int)_Text.size())
+                        return gs_clamp(_Cursor, 0, gs_max((int)_Text.size(), 0));
+
                     int SymbolsCountTillLineStart = 0;
 
                     // move backward to find out how many symbols there are till the line start
@@ -1932,9 +1819,20 @@ namespace Frenchie
                         {
                             if(_Text.empty())
                             {
+                                // restore text rendering data
                                 inputStringRenderingData.HoveredSymbolBoundingBox        = inputStringRenderingData.TextBoundingBox;
                                 inputStringRenderingData.HoveredSymbolUtf8CursorPosition = 0;
+
+                                // restore widget state
+                                widget->Utf8LeftCursorPosition  = 0;
+                                widget->Utf8RightCursorPosition = 0;
                             }
+
+                            if(widget->Utf8LeftCursorPosition > (int)_Text.size())
+                                widget->Utf8LeftCursorPosition = (int)_Text.size();
+
+                            if(widget->Utf8RightCursorPosition > (int)_Text.size())
+                                widget->Utf8RightCursorPosition = (int)_Text.size();
 
                             _Context->m_Renderer->push_text(
                                 widget->State.BoundingBox.Min + gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f),
@@ -2394,7 +2292,7 @@ namespace Frenchie
         }
 
         template<typename Type>
-        void input_scalar(ImmediateUserInterfaceContextLayer* _Context, const std::string& _ID, Type& _Input, const std::string& _Format)
+        bool input_scalar_internal(ImmediateUserInterfaceContextLayer* _Context, const std::string& _ID, Type& _Input, const std::string& _Format)
         {
             struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfaceNodePanel
             {
@@ -2403,20 +2301,41 @@ namespace Frenchie
 
                 virtual ~ImmediateUserInterfaceInputScalarPanel(){}
 
+                virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    ImmediateUserInterfaceNodePanel::layout(_Context);
+                    
+                    IsEdited = is_edited(_Context, this);
+                }
+
+                bool is_edited(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
+                {
+                    if(_Node != nullptr && _Node->State.Selected)
+                        return true;
+
+                    for (auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
+                    {
+                        if((*it)->State.Selected || is_edited(_Context, *it))
+                            return true;
+                    }
+
+                    return false;
+                }
+
                 ImmediateUserInterfaceNode* Input = nullptr;
                 std::string                 Buffer;
+                bool                        IsEdited = false;
             };
-            
+
+            bool modified = false;
+
             if(_Context->begin_node<ImmediateUserInterfaceInputScalarPanel>(
                 _ID,
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 ImmediateUserInterfaceInputScalarPanel* panel = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarPanel>();
 
-                if(panel->Input == nullptr)
-                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
-
-                if(input_string1(
+                modified = input_string_internal(
                     _Context,
                     std::string(_ID).append("/Input"),
                     panel->Buffer,
@@ -2439,11 +2358,10 @@ namespace Frenchie
                     [panel, &_Input, &_Format](const std::string& _Value)
                     {
                         _Input = Frenchie::Core::String::from_string<Type>(_Value);
-                    }))
-                {
-                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
-                }
+                    });
 
+                if(modified || (panel->Input == nullptr || !panel->IsEdited))
+                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
                 panel->Input = _Context->get_rendered_stack_top();
 
                 // calculate geometry
@@ -2463,6 +2381,8 @@ namespace Frenchie
 
                 _Context->end_node<ImmediateUserInterfaceInputScalarPanel>();
             }
+
+            return modified;
         }
     }
 }
@@ -6055,19 +5975,23 @@ void ImmediateUserInterfaceContextLayer::label(
 bool ImmediateUserInterfaceContextLayer::input_string_multiline(
     const std::string&                               _ID,
     std::string&                                     _Text,
-    const ImmediateUserInterfaceInputStringSettings& _InputSettings,
+    const ImmediateUserInterfaceInputStringSettings& _Settings,
     bool                                           (*_InputTextFilter)(const std::string&))
 {
-    return input_string1(
+    return input_string_internal(
         this,
         _ID,
         _Text,
-        (_InputSettings & ~(
+
+        // text input settings
+        (_Settings & ~(
             ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline |
             ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password)),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
+
+        // widget settings
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar             |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar           |
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment,
         [_InputTextFilter](const std::string& _Input)->bool{return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
@@ -6077,13 +6001,15 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
     const ImmediateUserInterfaceInputStringSettings& _InputSettings,
     bool                                           (*_InputTextFilter)(const std::string&))
 {
-    return input_string1(
+    return input_string_internal(
         this,
         _ID,
         _Text,
 
+        // text input settings
         _InputSettings | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline,
         
+        // widget settgins
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically   |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
@@ -6092,72 +6018,215 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
-void ImmediateUserInterfaceContextLayer::input_float(const std::string& _ID, float& _Input)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(const std::string& _ID, float& _Input)
 {
-    input_scalar<float>(this, _ID, _Input, "%.5f");
+    return input_scalar_internal<float>(this, _ID, _Input, "%.5f");
 }
 
-//------------------------------------------------------------------------------------------
-// color picker
-//------------------------------------------------------------------------------------------
-
-void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const std::string& _ID, double& _Input)
 {
-    if(begin_node<ImmediateUserInterfaceColorPicker>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable))
+    return input_scalar_internal<double>(this, _ID, _Input, "%.5f");
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input)
+{
+    return input_scalar_internal<int>(this, _ID, _Input, "%d");
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(const std::string& _ID, short& _Input)
+{
+    return input_scalar_internal<short>(this, _ID, _Input, "%d");
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(const std::string& _ID, unsigned short& _Input)
+{
+    return input_scalar_internal<unsigned short>(this, _ID, _Input, "%d");
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input)
+{
+    return input_scalar_internal<unsigned int>(this, _ID, _Input, "%u");
+}
+
+void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs_color& _Color)
+{
+    struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
     {
-        ImmediateUserInterfaceColorPicker* colorPicker =
-            get_rendering_stack_top<ImmediateUserInterfaceColorPicker>();
+    public:
+        ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        virtual ~ImmediateUserInterfaceColorPicker(){}
 
-        if(begin_horizontal_stack(std::string(_ID).append("/ColorPickers")))
+        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
         {
-            // gradient color modifier
-            if(begin_node<ImmediateUserInterfaceColorPickerGradientColorModifier>(
-                std::string(_ID).append("/ColorPickers/GradientColorModifier"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+            // render gradient color modifier
             {
-                colorPicker->GradientSurfaceColorModifier =
-                    get_rendering_stack_top<ImmediateUserInterfaceColorPickerGradientColorModifier>();
-
-                if(colorPicker->GradientColorSelector != nullptr)
-                    colorPicker->GradientSurfaceColorModifier->BaseColor = colorPicker->GradientColorSelector->Color;
-
-                end_node<ImmediateUserInterfaceColorPickerGradientColorModifier>();
+                // gradient box
+                _Context->m_Renderer->push_rectangle_gradient_mesh(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, State.BoundingBox.height()),
+                    gs_rgba_color(255, 255, 255, 255),
+                    Color, // this is current color
+                    gs_rgba_color(0, 0, 0, 255),
+                    gs_rgba_color(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            // spacer
-            if(begin_node<ImmediateUserInterfaceNode>(
-                std::string(_ID).append("/ColorPickers/Spacer"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            // render vertical color selector
             {
-                get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.MinimumSize = gs_vec2f(32.f, 64.f);
-                get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.MaximumSize = gs_vec2f(32.f, 32.f);
+                gs_color colors[7] =
+                {
+                    gs_rgba_color(255, 0, 0, 255),
+                    gs_rgba_color(255, 255, 0, 255),
+                    gs_rgba_color(0, 255, 0, 255),
+                    gs_rgba_color(0, 255, 255, 255),
+                    gs_rgba_color(0, 0, 255, 255),
+                    gs_rgba_color(255, 0, 255, 255),
+                    gs_rgba_color(255, 0, 0, 255)
+                };
 
-                end_node<ImmediateUserInterfaceNode>();
+                // color selector
+                gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
+                gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height() / 6.f);
+
+                gs_2dboxf slider = gs_2dboxf(
+                    position + gs_vec2f(0.f, SliderPosition),
+                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+
+                bool caught = false;
+
+                for (int i = 1; i < 7; i++)
+                {
+                    gs_color sourceColor = colors[i-1];
+                    gs_color targetColor = colors[i-0];
+
+                    _Context->m_Renderer->push_rectangle_gradient_mesh(
+                        position,
+                        position + size,
+                        sourceColor,
+                        sourceColor,
+                        targetColor,
+                        targetColor,
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                    if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
+                    {
+                        int r1 = gs_rgba_color_get_r(sourceColor);
+                        int g1 = gs_rgba_color_get_g(sourceColor);
+                        int b1 = gs_rgba_color_get_b(sourceColor);
+
+                        int r2 = gs_rgba_color_get_r(targetColor);
+                        int g2 = gs_rgba_color_get_g(targetColor);
+                        int b2 = gs_rgba_color_get_b(targetColor);
+
+                        float fraction = (slider.Min.y - position.y) / size.y;
+
+                        Color = gs_rgba_color(
+                            (gs_color)(r1 + (r2 - r1) * fraction),
+                            (gs_color)(g1 + (g2 - g1) * fraction),
+                            (gs_color)(b1 + (b2 - b1) * fraction),
+                            255);
+
+                        caught = true;
+                    }
+
+                    position += gs_vec2f(0.f, size.y);
+                }
+
+                // render slider
+                _Context->m_Renderer->push_rectangle_filled(
+                    slider.Min,
+                    slider.Max,
+                    gs_rgba_color(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            // gradient color selector
-            if(begin_node<ImmediateUserInterfaceColorPickerGradientColorSelector>(
-                std::string(_ID).append("/ColorPickers/GradientColorSelector"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            // retrieve color components
             {
-                colorPicker->GradientColorSelector =
-                    get_rendering_stack_top<ImmediateUserInterfaceColorPickerGradientColorSelector>();
-
-                colorPicker->GradientColorSelector->State.MinimumSize = gs_vec2f(64.f, colorPicker->GradientColorSelector->State.MinimumSize.y);
-                colorPicker->GradientColorSelector->State.MaximumSize = gs_vec2f(64.f, colorPicker->GradientColorSelector->State.MaximumSize.y);
-
-                end_node<ImmediateUserInterfaceColorPickerGradientColorSelector>();
+                Red   = gs_rgba_color_get_r(Color);
+                Green = gs_rgba_color_get_g(Color);
+                Blue  = gs_rgba_color_get_b(Color);
             }
+        }
+
+        virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                return false;
+
+            // stop catching
+            if(!_Context->m_Input.is_mouse_button_down())
+                return false;
+
+            // vertical color selector event
+            gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
+            gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height());
+
+            if(gs_2dboxf(position, position + size).contains(_Context->m_Input.get_cusor_position()))
+            {
+                if(_Context->m_Input.is_mouse_button_pressed())
+                    SliderPreviousPosition = SliderPosition;
+
+                gs_vec2f position = State.BoundingBox.Min;
+
+                gs_2dboxf slider = gs_2dboxf(
+                    position + gs_vec2f(0.f, SliderPosition),
+                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+
+                SliderPosition = gs_clamp(
+                    SliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y,
+                    0.f,
+                    State.BoundingBox.height() - slider.height());
+            }
+
+            return true;
+        }
+
+        float    SliderPreviousPosition = 0.f;
+        float    SliderPosition = 0.f;
+        gs_color Color;
+
+        int Red   = 0;
+        int Green = 0;
+        int Blue  = 0;
+
+    private:
+        float gradientColorModifierHorizontalFillWeight = 0.9f;
+    };
+
+    if(begin_vertial_stack(std::string(_ID).append("/VerticalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        // color picker
+        if(begin_node<ImmediateUserInterfaceColorPicker>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            end_node<ImmediateUserInterfaceColorPicker>();
+
+        ImmediateUserInterfaceColorPicker* picker =
+            get_rendered_stack_top<ImmediateUserInterfaceColorPicker>();
+
+        // currently selected color
+        if(begin_horizontal_stack(std::string(_ID).append("/HorizontalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        {
+            bool colorChanged = false;
+
+            label(std::string(_ID).append("/RedLabel"), "R");
+            colorChanged = colorChanged || input_scalar<int>(std::string(_ID).append("/Red"), picker->Red);
+            
+            label(std::string(_ID).append("/GreenLabel"), "G");
+            colorChanged = colorChanged || input_scalar<int>(std::string(_ID).append("/Green"), picker->Green);
+            
+            label(std::string(_ID).append("/BlueLabel"), "B");
+            colorChanged = colorChanged || input_scalar<int>(std::string(_ID).append("/Blue"), picker->Blue);
+
+            // if(colorChanged)
+            //     picker->Color = gs_rgba_color(picker->Red, picker->Green, picker->Blue, 255);
 
             end_horizontal_stack();
         }
 
-        end_node<ImmediateUserInterfaceColorPicker>();
+        end_vertical_stack();
     }
 }
-//------------------------------------------------------------------------------------------
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
