@@ -895,6 +895,8 @@ namespace Frenchie
 
             void color_picker(const std::string& _ID, gs_color& _Color);
 
+            void image(const std::string& _ID, const ApplicationRenderingBackendTexture& _Texture, const gs_color& _ColorMask);
+
             // windows
             bool begin_window(
                 const std::string&                        _ID,

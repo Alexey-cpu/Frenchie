@@ -6052,9 +6052,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
     public:
         ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash)
         {
-            SliderSpectrumRedComponent   = gs_rgba_color_get_r(Color);
-            SliderSpectrumGreenComponent = gs_rgba_color_get_g(Color);
-            SliderSpectrumBlueComponent  = gs_rgba_color_get_b(Color);
         }
 
         virtual ~ImmediateUserInterfaceColorPicker(){}
@@ -6063,28 +6060,15 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         {
             if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-            // render gradient color modifier
+            // render palette
             {
-                // gradient box
-                _Context->m_Renderer->push_rectangle_gradient_mesh(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, State.BoundingBox.height()),
-                    gs_rgba_color(255, 255, 255, 255),
-                    Color, // this is current color
-                    gs_rgba_color(0, 0, 0, 255),
-                    gs_rgba_color(0, 0, 0, 255),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            // render vertical color selector
-            {
-                // color selector
-                gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
-                gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height() / 6.f);
+                // color palette
+                gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
+                gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height() / 6.f);
 
                 gs_2dboxf slider = gs_2dboxf(
                     position + gs_vec2f(0.f, SliderPosition),
-                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), PaletteSliderHeight));
 
                 bool caught = false;
 
@@ -6104,19 +6088,64 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                     if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
                     {
-                        Color  = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
+                        PaletteColor  = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.center().y - position.y) / size.y));
                         caught = true;
                     }
 
                     position += gs_vec2f(0.f, size.y);
-                }
 
-                // render slider
+                    // palette slider
+                    _Context->m_Renderer->push_rectangle_filled(
+                        slider.Min,
+                        slider.Max,
+                        gs_rgba_color(255, 255, 255, 255),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+            }
+
+            // render gradient box
+            {
+                // gradient box
+                gs_2dboxf gradientBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height()));
+
+                _Context->m_Renderer->push_rectangle_gradient_mesh(
+                    gradientBox.Min,
+                    gradientBox.Max,
+                    gs_rgba_color(255, 255, 255, 255),
+                    PaletteColor, // this is current palette color
+                    gs_rgba_color(0, 0, 0, 255),
+                    gs_rgba_color(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // gradient box slider
+                gs_2dboxf gradientBoxSlider = gs_2dboxf(
+                    State.BoundingBox.Min + GradientSliderPosition,
+                    State.BoundingBox.Min + GradientSliderPosition + gs_vec2f(GradientSliderHeight));
+
                 _Context->m_Renderer->push_rectangle_filled(
-                    slider.Min,
-                    slider.Max,
+                    gradientBoxSlider.Min,
+                    gradientBoxSlider.Max,
                     gs_rgba_color(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    gradientBoxSlider.Min + gs_vec2f(4.f),
+                    gradientBoxSlider.Max - gs_vec2f(4.f),
+                    gs_rgba_color(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // gradient color
+                Color = gs_rbg_color_lerp(
+                    gs_rgba_color(255, 255, 255, 255),
+                    gs_rbg_color_lerp(PaletteColor, gs_rgba_color(0, 0, 0, 255), (gradientBoxSlider.center() - State.BoundingBox.Min).y / gradientBox.height()),
+                    (gradientBoxSlider.Min - State.BoundingBox.Min).x / gradientBox.width()
+                );
+            }
+
+            // render alpha regulator
+            {
             }
         }
 
@@ -6125,28 +6154,27 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             if(_Context == nullptr || _Context->m_Renderer == nullptr)
                 return false;
 
-            SliderIsBeingMoved = false;
-
             // stop catching
             if(!_Context->m_Input.is_mouse_button_down())
                 return false;
 
-            SliderIsBeingMoved = true;
-
-            // vertical color selector event
-            gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
-            gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height());
+            // catch vertical color palette event
+            gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
+            gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height());
 
             if(gs_2dboxf(position, position + size).contains(_Context->m_Input.get_cusor_position()))
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    SliderPosition         = _Context->m_Input.get_cusor_position().y - State.BoundingBox.Min.y;
                     SliderPreviousPosition = SliderPosition;
+                }
 
                 gs_vec2f position = State.BoundingBox.Min;
 
                 gs_2dboxf slider = gs_2dboxf(
                     position + gs_vec2f(0.f, SliderPosition),
-                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), PaletteSliderHeight));
 
                 SliderPosition = gs_clamp(
                     SliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y,
@@ -6154,58 +6182,81 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     State.BoundingBox.height() - slider.height());
             }
 
-            // gradient color modifier event
+            // catch gradient color modifier event
+            if(gs_2dboxf(
+                State.BoundingBox.Min,
+                State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height())).contains(_Context->m_Input.get_cusor_position()))
+            {
+                if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    GradientSliderPosition         = _Context->m_Input.get_cusor_position() - State.BoundingBox.Min;
+                    GradientSliderPreviousPosition = GradientSliderPosition;
+                }
+
+                GradientSliderPosition = GradientSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta();
+            }
 
             return true;
         }
 
-        void force_color(const gs_color& _Color)
-        {
-            float    minDistance               = (float)INT_MAX;
-            float    minDistanceSliderPosition = 0.f;
-            float    sliderPosition            = 0.f;
+        // void force_color(const gs_color& _Color)
+        // {
+        //     float    minDistance               = (float)INT_MAX;
+        //     float    minDistanceSliderPosition = 0.f;
+        //     float    sliderPosition            = 0.f;
                 
-            gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
-            gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height() / 6.f);
+        //     gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * gradientColorModifierHorizontalFillWeight, 0.f);
+        //     gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - gradientColorModifierHorizontalFillWeight), State.BoundingBox.height() / 6.f);
 
-            while (sliderPosition < State.BoundingBox.height() - 16.f)
-            {
-                // color selector
-                gs_2dboxf slider = gs_2dboxf(
-                    position + gs_vec2f(0.f, sliderPosition),
-                    position + gs_vec2f(0.f, sliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
+        //     while (sliderPosition < State.BoundingBox.height() - 16.f)
+        //     {
+        //         // color selector
+        //         gs_2dboxf slider = gs_2dboxf(
+        //             position + gs_vec2f(0.f, sliderPosition),
+        //             position + gs_vec2f(0.f, sliderPosition) + gs_vec2f(State.BoundingBox.width(), 16.f));
 
-                for (int i = 1; i < 7; i++)
-                {
-                    gs_color sourceColor = Palette[i-1];
-                    gs_color targetColor = Palette[i-0];
+        //         for (int i = 1; i < 7; i++)
+        //         {
+        //             gs_color sourceColor = Palette[i-1];
+        //             gs_color targetColor = Palette[i-0];
 
-                    gs_color color = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
+        //             gs_color color = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
                     
-                    float distance = (float)gs_rgb_color_distance(color, _Color);
+        //             float distance = (float)gs_rgb_color_distance(color, _Color);
 
-                    if(distance < minDistance)
-                    {
-                        minDistance               = distance;
-                        minDistanceSliderPosition = sliderPosition;
-                    }
+        //             if(distance < minDistance)
+        //             {
+        //                 minDistance               = distance;
+        //                 minDistanceSliderPosition = sliderPosition;
+        //             }
 
-                    position += gs_vec2f(0.f, size.y);
-                }
+        //             position += gs_vec2f(0.f, size.y);
+        //         }
 
-                sliderPosition += 0.01f;
-            }
+        //         sliderPosition += 0.01f;
+        //     }
 
-            SliderPosition = gs_clamp(
-                minDistanceSliderPosition,
-                0.f,
-                State.BoundingBox.height() - 16.f);
+        //     SliderPosition = gs_clamp(
+        //         minDistanceSliderPosition,
+        //         0.f,
+        //         State.BoundingBox.height() - 16.f);
 
-            SliderPreviousPosition = SliderPosition;
-        }
+        //     SliderPreviousPosition = SliderPosition;
+        // }
 
         // color
-        gs_color Color      = gs_rgba_color(255, 255, 255, 255);
+        //gs_color Color      = gs_rgba_color(255, 255, 255, 255);
+
+        
+        // slider attributes
+
+        gs_color Color = 1;
+
+        gs_color SliderSpectrumRedComponent   = 0;
+        gs_color SliderSpectrumGreenComponent = 0;
+        gs_color SliderSpectrumBlueComponent  = 0;
+
+    private:
 
         gs_color Palette[7] =
         {
@@ -6217,17 +6268,15 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             gs_rgba_color(255, 0, 255, 255),
             gs_rgba_color(255, 0, 0, 255)
         };
-        
-        // slider attributes
-        float    SliderPreviousPosition       = 0.f;
-        float    SliderPosition               = 0.f;
-        bool     SliderIsBeingMoved           = false;
-        gs_color SliderSpectrumRedComponent   = 0;
-        gs_color SliderSpectrumGreenComponent = 0;
-        gs_color SliderSpectrumBlueComponent  = 0;
 
-    private:
-        float gradientColorModifierHorizontalFillWeight = 0.9f;
+        float    SliderPreviousPosition         = 0.f;
+        float    SliderPosition                 = 0.f;
+        gs_vec2f GradientSliderPosition         = gs_vec2f(0.f, 0.f);
+        gs_vec2f GradientSliderPreviousPosition = gs_vec2f(0.f, 0.f);
+        gs_color PaletteColor                   = 1;
+        float    GradientHorizontalFillWeight   = 0.9f;
+        float    PaletteSliderHeight            = 16.f;
+        float    GradientSliderHeight           = 32.f;
     };
 
     if(begin_vertial_stack(std::string(_ID).append("/VerticalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -6245,21 +6294,9 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
         if(begin_horizontal_stack(std::string(_ID).append("/HorizontalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            if(!picker->SliderIsBeingMoved)
-            {
-                picker->force_color(
-                    gs_rgba_color(
-                        picker->SliderSpectrumRedComponent,
-                        picker->SliderSpectrumGreenComponent,
-                        picker->SliderSpectrumBlueComponent,
-                        255));
-            }
-            else
-            {
-                picker->SliderSpectrumRedComponent   = gs_rgba_color_get_r(picker->Color);
-                picker->SliderSpectrumGreenComponent = gs_rgba_color_get_g(picker->Color);
-                picker->SliderSpectrumBlueComponent  = gs_rgba_color_get_b(picker->Color);
-            }
+            picker->SliderSpectrumRedComponent   = gs_rgba_color_get_r(picker->Color);
+            picker->SliderSpectrumGreenComponent = gs_rgba_color_get_g(picker->Color);
+            picker->SliderSpectrumBlueComponent  = gs_rgba_color_get_b(picker->Color);
 
             label(std::string(_ID).append("/RedLabel"), "R");
             input_scalar<gs_color>(std::string(_ID).append("/Red"), picker->SliderSpectrumRedComponent, 0, 255);
@@ -6270,10 +6307,46 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             label(std::string(_ID).append("/BlueLabel"), "B");
             input_scalar<gs_color>(std::string(_ID).append("/Blue"), picker->SliderSpectrumBlueComponent, 0, 255);
 
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            image(std::string(_ID).append("/Color"), ApplicationRenderingBackendTexture(), picker->Color);
+
             end_horizontal_stack();
         }
 
         end_vertical_stack();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const ApplicationRenderingBackendTexture& _Texture, const gs_color& _ColorMask)
+{
+    struct ImmediateUserInterfaceNodeImage : public ImmediateUserInterfaceNode
+    {
+    public:
+        ImmediateUserInterfaceNodeImage(const std::string& _Hash) : ImmediateUserInterfaceNode(_Hash){}
+        virtual ~ImmediateUserInterfaceNodeImage(){}
+
+        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+            _Context->m_Renderer->push_rectangle_filled(
+                State.BoundingBox.Min,
+                State.BoundingBox.Max,
+                ColorMask,
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                Texture);
+        }
+
+        ApplicationRenderingBackendTexture Texture   = ApplicationRenderingBackendTexture();
+        gs_color                           ColorMask = gs_rgba_color(255, 255, 255, 255);
+    };
+
+    if(begin_node<ImmediateUserInterfaceNodeImage>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->Texture   = _Texture;
+        get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->ColorMask = _ColorMask;
+
+        end_node<ImmediateUserInterfaceNodeImage>();
     }
 }
 
