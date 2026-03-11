@@ -49,6 +49,11 @@ gs_color gs_rgba_color(const gs_color& _R, const gs_color& _G, const gs_color& _
     return (((gs_color)(_A)<<24) | ((gs_color)(_B)<<16) | ((gs_color)(_G)<<8) | ((gs_color)(_R)<<0));
 }
 
+gs_color gs_rgba_color(const gs_vec4f& _Color)
+{
+    return gs_rgba_color((gs_color)roundf(_Color.x), (gs_color)roundf(_Color.y), (gs_color)roundf(_Color.z), (gs_color)roundf(_Color.w));
+}
+
 gs_color gs_rgba_color_get_r(const gs_color& _Color)
 {
     return (_Color >> 0) & 0xFF;
@@ -86,11 +91,89 @@ gs_color gs_rbg_color_lerp(gs_color _SourceColor, gs_color _TargetColor, float _
         255);
 }
 
-double gs_rgb_color_distance(const gs_color _A, const gs_color _B)
+double gs_rgb_color_distance(const gs_color& _A, const gs_color& _B)
 {
     return gs_vector_length(
         gs_vec3f(gs_rgba_color_get_r(_A), gs_rgba_color_get_g(_A), gs_rgba_color_get_b(_A)) -
         gs_vec3f(gs_rgba_color_get_r(_B), gs_rgba_color_get_g(_B), gs_rgba_color_get_b(_B)));
+}
+
+gs_color gs_rgb_color(const gs_vec3f& _Color)
+{
+    return gs_rgba_color((gs_color)roundf(_Color.x), (gs_color)roundf(_Color.y), (gs_color)roundf(_Color.z), 255);
+}
+
+gs_vec3f gs_rgb_to_hsv(const gs_vec3f& _RGB)
+{
+    // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
+    // Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
+    auto ColorConvertRGBtoHSV = [](float r, float g, float b, float& out_h, float& out_s, float& out_v)
+    {
+        float K = 0.f;
+        if (g < b)
+        {
+            gs_swap(g, b);
+            K = -1.f;
+        }
+        if (r < g)
+        {
+            gs_swap(r, g);
+            K = -2.f / 6.f - K;
+        }
+
+        const float chroma = r - (g < b ? g : b);
+        out_h = fabs(K + (g - b) / (6.f * chroma + 1e-20f));
+        out_s = chroma / (r + 1e-20f);
+        out_v = r;
+    };
+
+    float h = 0.f;
+    float s = 0.f;
+    float v = 0.f;
+
+    ColorConvertRGBtoHSV(_RGB.x / 255.f, _RGB.y / 255.f, _RGB.z / 255.f, h, s, v);
+
+    return gs_vec3f(h, s, v);
+}
+
+gs_vec3f gs_hsv_to_rgb(const gs_vec3f& _HSV)
+{
+    // Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
+    // also http://en.wikipedia.org/wiki/HSL_and_HSV
+    auto ColorConvertHSVtoRGB = [](float h, float s, float v, float& out_r, float& out_g, float& out_b)
+    {
+        if (s == 0.0f)
+        {
+            // gray
+            out_r = out_g = out_b = v;
+            return;
+        }
+
+        h = fmodf(h, 1.0f) / (60.0f / 360.0f);
+        int   i = (int)h;
+        float f = h - (float)i;
+        float p = v * (1.0f - s);
+        float q = v * (1.0f - s * f);
+        float t = v * (1.0f - s * (1.0f - f));
+
+        switch (i)
+        {
+        case 0: out_r = v; out_g = t; out_b = p; break;
+        case 1: out_r = q; out_g = v; out_b = p; break;
+        case 2: out_r = p; out_g = v; out_b = t; break;
+        case 3: out_r = p; out_g = q; out_b = v; break;
+        case 4: out_r = t; out_g = p; out_b = v; break;
+        case 5: default: out_r = v; out_g = p; out_b = q; break;
+        }
+    };
+
+    float r = 0.f;
+    float g = 0.f;
+    float b = 0.f;
+
+    ColorConvertHSVtoRGB(_HSV.x, _HSV.y, _HSV.z, r, g, b);
+
+    return gs_vec3f(r, g, b) * 255.f;
 }
 
 // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
