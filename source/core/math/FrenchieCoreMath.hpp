@@ -1768,8 +1768,6 @@ typedef unsigned int gs_color;
 
 gs_color gs_rgba_color(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A);
 
-gs_color gs_rgba_color(const gs_vec4f&);
-
 gs_color gs_rgba_color_get_r(const gs_color& _Color);
 
 gs_color gs_rgba_color_get_g(const gs_color& _Color);
@@ -1780,22 +1778,15 @@ gs_color gs_rgba_color_get_a(const gs_color& _Color);
 
 gs_color gs_rbg_color_lerp(gs_color _SourceColor, gs_color _TargetColor, float _Fraction);
 
-
 double gs_rgb_color_distance(const gs_color& _A, const gs_color& _B);
-
-gs_color gs_rgb_color(const gs_vec3f&);
-
-gs_vec3f gs_rgb_to_hsv(const gs_vec3f&);
-
-gs_vec3f gs_hsv_to_rgb(const gs_vec3f&);
 
 // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
 // Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
-void ColorConvertRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v);
+void gs_rgb_to_hsv(float r, float g, float b, float& out_h, float& out_s, float& out_v);
 
 // Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
 // also http://en.wikipedia.org/wiki/HSL_and_HSV
-void ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b);
+void gs_hsv_to_rgb(float h, float s, float v, float& out_r, float& out_g, float& out_b);
 
 // undef all macro
 #undef GS_TO_DEGREES_CONVERSION_MULTIPLYER__
