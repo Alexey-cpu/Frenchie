@@ -6058,7 +6058,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
         virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
         {
-            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+            if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                return;
 
             // render palette
             {
@@ -6088,7 +6089,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                     if(gs_2dboxf(position, position + size).contains(slider.Min) && !caught)
                     {
-                        PaletteColor  = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.center().y - position.y) / size.y));
+                        PaletteColor  = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
                         caught = true;
                     }
 
@@ -6243,18 +6244,12 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
         //     SliderPreviousPosition = SliderPosition;
         // }
-
-        // color
-        //gs_color Color      = gs_rgba_color(255, 255, 255, 255);
-
         
         // slider attributes
-
-        gs_color Color = 1;
-
-        gs_color SliderSpectrumRedComponent   = 0;
-        gs_color SliderSpectrumGreenComponent = 0;
-        gs_color SliderSpectrumBlueComponent  = 0;
+        gs_color Color               = 1;
+        gs_color ColorRedComponent   = 0;
+        gs_color ColorGreenComponent = 0;
+        gs_color ColorBlueComponent  = 0;
 
     private:
 
@@ -6294,21 +6289,21 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
         if(begin_horizontal_stack(std::string(_ID).append("/HorizontalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
-            picker->SliderSpectrumRedComponent   = gs_rgba_color_get_r(picker->Color);
-            picker->SliderSpectrumGreenComponent = gs_rgba_color_get_g(picker->Color);
-            picker->SliderSpectrumBlueComponent  = gs_rgba_color_get_b(picker->Color);
+            picker->ColorRedComponent   = gs_rgba_color_get_r(picker->Color);
+            picker->ColorGreenComponent = gs_rgba_color_get_g(picker->Color);
+            picker->ColorBlueComponent  = gs_rgba_color_get_b(picker->Color);
 
             label(std::string(_ID).append("/RedLabel"), "R");
-            input_scalar<gs_color>(std::string(_ID).append("/Red"), picker->SliderSpectrumRedComponent, 0, 255);
+            input_scalar<gs_color>(std::string(_ID).append("/Red"), picker->ColorRedComponent, 0, 255);
             
             label(std::string(_ID).append("/GreenLabel"), "G");
-            input_scalar<gs_color>(std::string(_ID).append("/Green"), picker->SliderSpectrumGreenComponent, 0, 255);
+            input_scalar<gs_color>(std::string(_ID).append("/Green"), picker->ColorGreenComponent, 0, 255);
             
             label(std::string(_ID).append("/BlueLabel"), "B");
-            input_scalar<gs_color>(std::string(_ID).append("/Blue"), picker->SliderSpectrumBlueComponent, 0, 255);
+            input_scalar<gs_color>(std::string(_ID).append("/Blue"), picker->ColorBlueComponent, 0, 255);
 
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-            image(std::string(_ID).append("/Color"), ApplicationRenderingBackendTexture(), picker->Color);
+            image(std::string(_ID).append("/Color"), picker->Color);
 
             end_horizontal_stack();
         }
@@ -6317,7 +6312,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
     }
 }
 
-void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const ApplicationRenderingBackendTexture& _Texture, const gs_color& _ColorMask)
+void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture)
 {
     struct ImmediateUserInterfaceNodeImage : public ImmediateUserInterfaceNode
     {
@@ -6345,7 +6340,6 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const App
     {
         get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->Texture   = _Texture;
         get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->ColorMask = _ColorMask;
-
         end_node<ImmediateUserInterfaceNodeImage>();
     }
 }

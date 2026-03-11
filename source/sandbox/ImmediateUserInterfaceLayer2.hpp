@@ -893,9 +893,12 @@ namespace Frenchie
             template<typename Type>
             bool input_scalar(const std::string& _ID, Type& _Input, const Type& _Min = gs_tiny<Type>(), const Type& _Max = gs_huge<Type>());
 
+            //
             void color_picker(const std::string& _ID, gs_color& _Color);
 
-            void image(const std::string& _ID, const ApplicationRenderingBackendTexture& _Texture, const gs_color& _ColorMask);
+            // This function renders square image.
+            // If texture is not passed to a function default renderer white pattern image is used.
+            void image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
             // windows
             bool begin_window(
