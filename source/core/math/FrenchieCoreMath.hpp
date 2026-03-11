@@ -52,8 +52,8 @@ template<typename Type> Type gs_epsilon();
 template<typename Type>
 inline Type gs_clamp(const Type& _Value, const Type& _Min, const Type& _Max)
 {
-    if(_Value > _Max) return _Max;
     if(_Value < _Min) return _Min;
+    if(_Value > _Max) return _Max;
     return _Value;
 }
 
