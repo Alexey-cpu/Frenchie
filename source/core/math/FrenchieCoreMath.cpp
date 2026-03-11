@@ -71,18 +71,18 @@ gs_color gs_rgba_color_get_a(const gs_color& _Color)
 
 gs_color gs_rbg_color_lerp(gs_color _SourceColor, gs_color _TargetColor, float _Fraction)
 {
-    int r1 = gs_rgba_color_get_r(_SourceColor);
-    int g1 = gs_rgba_color_get_g(_SourceColor);
-    int b1 = gs_rgba_color_get_b(_SourceColor);
+    float r1 = (float)gs_rgba_color_get_r(_SourceColor);
+    float g1 = (float)gs_rgba_color_get_g(_SourceColor);
+    float b1 = (float)gs_rgba_color_get_b(_SourceColor);
 
-    int r2 = gs_rgba_color_get_r(_TargetColor);
-    int g2 = gs_rgba_color_get_g(_TargetColor);
-    int b2 = gs_rgba_color_get_b(_TargetColor);
+    float r2 = (float)gs_rgba_color_get_r(_TargetColor);
+    float g2 = (float)gs_rgba_color_get_g(_TargetColor);
+    float b2 = (float)gs_rgba_color_get_b(_TargetColor);
 
     return gs_rgba_color(
-        (gs_color)(r1 + (r2 - r1) * _Fraction),
-        (gs_color)(g1 + (g2 - g1) * _Fraction),
-        (gs_color)(b1 + (b2 - b1) * _Fraction),
+        (gs_color)round(r1 + (r2 - r1) * _Fraction),
+        (gs_color)round(g1 + (g2 - g1) * _Fraction),
+        (gs_color)round(b1 + (b2 - b1) * _Fraction),
         255);
 }
 
@@ -91,6 +91,57 @@ double gs_rgb_color_distance(const gs_color _A, const gs_color _B)
     return gs_vector_length(
         gs_vec3f(gs_rgba_color_get_r(_A), gs_rgba_color_get_g(_A), gs_rgba_color_get_b(_A)) -
         gs_vec3f(gs_rgba_color_get_r(_B), gs_rgba_color_get_g(_B), gs_rgba_color_get_b(_B)));
+}
+
+// Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
+// Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
+void ColorConvertRGBtoHSV(float r, float g, float b, float& out_h, float& out_s, float& out_v)
+{
+    float K = 0.f;
+    if (g < b)
+    {
+        gs_swap(g, b);
+        K = -1.f;
+    }
+    if (r < g)
+    {
+        gs_swap(r, g);
+        K = -2.f / 6.f - K;
+    }
+
+    const float chroma = r - (g < b ? g : b);
+    out_h = fabs(K + (g - b) / (6.f * chroma + 1e-20f));
+    out_s = chroma / (r + 1e-20f);
+    out_v = r;
+}
+
+// Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
+// also http://en.wikipedia.org/wiki/HSL_and_HSV
+void ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b)
+{
+    if (s == 0.0f)
+    {
+        // gray
+        out_r = out_g = out_b = v;
+        return;
+    }
+
+    h = fmodf(h, 1.0f) / (60.0f / 360.0f);
+    int   i = (int)h;
+    float f = h - (float)i;
+    float p = v * (1.0f - s);
+    float q = v * (1.0f - s * f);
+    float t = v * (1.0f - s * (1.0f - f));
+
+    switch (i)
+    {
+    case 0: out_r = v; out_g = t; out_b = p; break;
+    case 1: out_r = q; out_g = v; out_b = p; break;
+    case 2: out_r = p; out_g = v; out_b = t; break;
+    case 3: out_r = p; out_g = q; out_b = v; break;
+    case 4: out_r = t; out_g = p; out_b = v; break;
+    case 5: default: out_r = v; out_g = p; out_b = q; break;
+    }
 }
 
 // [ALGEBRA]
