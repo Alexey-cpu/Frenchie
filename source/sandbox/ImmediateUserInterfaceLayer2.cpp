@@ -6069,29 +6069,52 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
         virtual ~ImmediateUserInterfaceColorPicker(){}
 
+        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            ImmediateUserInterfaceNodePanel::layout(_Context);
+
+            // calculate palette box
+            {
+                gs_vec2f position =  State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
+                gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height());
+                PaletteBox = gs_2dboxf(position, position + size);
+            }
+
+            // calculate gradient box
+            {
+                GradientBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height()));
+            }
+        }
+
         virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
         {
             if(_Context == nullptr || _Context->m_Renderer == nullptr)
                 return;
 
-            gs_color paletteColor = 0;
-
-            // render palette
+            // render color palette box
             {
-                // color palette
-                gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
-                gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height() / 6.f);
-
-                gs_2dboxf slider = gs_2dboxf(
-                    position + gs_vec2f(0.f, SliderPosition),
-                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(size.x, PaletteSliderHeight));
-
-                bool caught = false;
-
-                for (int i = 1; i < 7; i++)
+                int      sectors  = (int)(PaletteMaximumHue / PaletteHueStep);
+                gs_vec2f position = PaletteBox.Min;
+                gs_vec2f size     = gs_vec2f(PaletteBox.width(), PaletteBox.height() / (sectors - 1));
+                
+                for (int i = 1; i < sectors; i++)
                 {
-                    gs_color sourceColor = Palette[i-1];
-                    gs_color targetColor = Palette[i-0];
+                    float r = 0.f;
+                    float g = 0.f;
+                    float b = 0.f;
+
+                    float h = gs_to_radians((i - 1) * PaletteHueStep);
+                    float s = 1.f;
+                    float v = 1.f;
+
+                    ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                    gs_color sourceColor = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+
+                    h = gs_to_radians((i - 0) * PaletteHueStep);
+                    ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                    gs_color targetColor = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 
                     _Context->m_Renderer->push_rectangle_gradient_mesh(
                         position,
@@ -6102,43 +6125,71 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                         targetColor,
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-                    if(gs_2dboxf(position, position + size).overlaps(slider) && !caught)
-                    {
-                        paletteColor = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));                        
-                        caught = true;
-                    }
-
                     position += gs_vec2f(0.f, size.y);
+                }
+                
+                // palette slider
+                position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
 
-                    // palette slider
-                    _Context->m_Renderer->push_rectangle_filled(
-                        slider.Min,
-                        slider.Max,
-                        gs_rgba_color(255, 255, 255, 255),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                gs_2dboxf slider = gs_2dboxf(
+                    position + gs_vec2f(0.f, PaletteSliderPosition),
+                    position + gs_vec2f(0.f, PaletteSliderPosition) + gs_vec2f(size.x, PaletteSliderHeight));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    slider.Min,
+                    slider.Max,
+                    gs_rgba_color(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                {
+                    float h = gs_to_radians(PaletteMaximumHue * PaletteSliderPosition / State.BoundingBox.height());
+                    float s = 1.f;
+                    float v = 1.f;
+
+                    float r = 0.f;
+                    float g = 0.f;
+                    float b = 0.f;
+
+                    ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                    Color = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
                 }
             }
 
-            // render gradient box
+            // render color gradient box
             {
-                // gradient box
-                gs_2dboxf gradientBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height()));
+                float h = gs_to_radians(PaletteMaximumHue * PaletteSliderPosition / State.BoundingBox.height());
+                float s = 0.f;
+                float v = 1.f;
 
+                float r = 0.f;
+                float g = 0.f;
+                float b = 0.f;
+
+                ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                gs_color c1 = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+
+                s = 1.f;
+                ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                gs_color c2 = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+
+                v = 0.f;
+                ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                gs_color c3 = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+
+                // gradient box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
-                    gradientBox.Min,
-                    gradientBox.Max,
-                    gs_rgba_color(255, 255, 255, 255),
-                    paletteColor, // this is current palette color
-                    gs_rgba_color(0, 0, 0, 255),
-                    gs_rgba_color(0, 0, 0, 255),
+                    GradientBox.Min,
+                    GradientBox.Max,
+                    c1,
+                    c2,
+                    c3,
+                    c3,
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // gradient box slider
                 gs_2dboxf gradientBoxSlider = gs_2dboxf(
-                    State.BoundingBox.Min + GradientSliderPosition,
-                    State.BoundingBox.Min + GradientSliderPosition + gs_vec2f(GradientSliderHeight));
+                    GradientBox.Min + GradientSliderPosition,
+                    GradientBox.Min + GradientSliderPosition + gs_vec2f(GradientSliderHeight));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min,
@@ -6152,18 +6203,29 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     gs_rgba_color(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-                // compute color color
-                float deltaX = (gradientBoxSlider.center() - State.BoundingBox.Min).x / gradientBox.width();
-                float deltaY = (gradientBoxSlider.center() - State.BoundingBox.Min).y / gradientBox.height();
+                // calculate color
+                {
+                    float x = gradientBoxSlider.Min.x;
+                    float y = gradientBoxSlider.Min.y;
 
-                Color = gs_rbg_color_lerp(
-                    gs_rbg_color_lerp(gs_rgba_color(255, 255, 255, 255), gs_rgba_color(0, 0, 0, 255), deltaY),
-                    gs_rbg_color_lerp(paletteColor, gs_rgba_color(0, 0, 0, 255), deltaY),
-                    deltaX);
-            }
+                    if(gs_abs(gradientBoxSlider.Min.x - GradientBox.Min.x) <= 1.f)
+                        x = gradientBoxSlider.Min.x;
+                    else if(gs_abs(gradientBoxSlider.Max.x - gradientBoxSlider.Max.x) <= 1.f)
+                        x = gradientBoxSlider.Max.x;
 
-            // render alpha regulator
-            {
+                    if(gs_abs(gradientBoxSlider.Min.y - GradientBox.Min.y) <= 1.f)
+                        y = gradientBoxSlider.Min.y;
+                    else if(gs_abs(gradientBoxSlider.Max.y - gradientBoxSlider.Max.y) <= 1.f)
+                        y = gradientBoxSlider.Max.y;
+
+                    gs_vec2f p = gs_vec2f(x, y);
+
+                    s = (p - GradientBox.Min).x / GradientBox.width();
+                    v = 1.f - (p - GradientBox.Min).y / GradientBox.height();
+
+                    ColorConvertHSVtoRGB(h, s, v, r, g, b);
+                    Color = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                }
             }
         }
 
@@ -6177,204 +6239,67 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 return false;
 
             // catch vertical color palette event
-            gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
-            gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height());
-
-            if(gs_2dboxf(position, position + size).contains(_Context->m_Input.get_cusor_position()))
+            if(PaletteBox.contains(_Context->m_Input.get_cusor_position()))
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    SliderPosition         = _Context->m_Input.get_cusor_position().y - State.BoundingBox.Min.y;
-                    SliderPreviousPosition = SliderPosition;
+                    PaletteSliderPosition         = _Context->m_Input.get_cusor_position().y - PaletteBox.Min.y;
+                    PaletteSliderPreviousPosition = PaletteSliderPosition;
                 }
 
-                gs_vec2f position = State.BoundingBox.Min;
-
-                gs_2dboxf slider = gs_2dboxf(
-                    position + gs_vec2f(0.f, SliderPosition),
-                    position + gs_vec2f(0.f, SliderPosition) + gs_vec2f(State.BoundingBox.width(), PaletteSliderHeight));
-
-                SliderPosition = gs_clamp(
-                    SliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - slider.height() * 0.5f,
+                PaletteSliderPosition = gs_clamp(
+                    PaletteSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
                     0.f,
-                    State.BoundingBox.height() - slider.height());
+                    State.BoundingBox.height() - GradientSliderHeight * 0.5f);
             }
 
             // catch gradient color modifier event
-            gs_2dboxf gradientBox =
-                gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height()));
-
-            if(gradientBox.contains(_Context->m_Input.get_cusor_position()))
+            if(GradientBox.contains(_Context->m_Input.get_cusor_position()))
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    GradientSliderPosition         = _Context->m_Input.get_cusor_position() - State.BoundingBox.Min;
+                    GradientSliderPosition         = _Context->m_Input.get_cusor_position() - GradientBox.Min;
                     GradientSliderPreviousPosition = GradientSliderPosition;
                 }
 
                 GradientSliderPosition = gs_clamp(
                     GradientSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f,
                     gs_vec2f(0.f, 0.f),
-                    gradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
+                    GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
             }
 
             return true;
         }
 
-        void force_color(const gs_color& _Color)
+        void force_rgb_color(const gs_color& _Color)
         {
-            auto generatePaletteColor = [this](const gs_color& _Color)->gs_color
-            {
-                gs_vec3f color = gs_vec3f((float)gs_rgba_color_get_r(_Color), (float)gs_rgba_color_get_g(_Color), (float)gs_rgba_color_get_b(_Color));
+            float h = 0.f;
+            float s = 0.f;
+            float v = 0.f;
 
-                float minValue = (float)INT_MAX;
-                int   minIndex = 0;
-                
-                float maxValue = -1.f;
-                int   maxIndex = 0;
+            ColorConvertRGBtoHSV(
+                (float)gs_rgba_color_get_r(_Color) / 255.f,
+                (float)gs_rgba_color_get_g(_Color) / 255.f,
+                (float)gs_rgba_color_get_b(_Color) / 255.f,
+                h,
+                s,
+                v);
 
-                int   midIndex = 0;
+            // setup palette slider position
+            PaletteSliderPosition = gs_clamp(
+                gs_to_degrees(h) / PaletteMaximumHue * State.BoundingBox.height(),
+                0.f,
+                State.BoundingBox.height() - PaletteSliderHeight);
+            
+            PaletteSliderPreviousPosition = PaletteSliderPosition;
 
-                for(int i = 0; i < color.size(); i++)
-                {
-                    if(color[i] < minValue)
-                    {
-                        minValue = color[i];
-                        minIndex = i;
-                    }
+            // setup grdient slider position
+            GradientSliderPosition = gs_clamp(
+                gs_vec2f(GradientBox.width() * s, GradientBox.height() * (1.f - v)) - gs_vec2f(GradientSliderHeight, GradientSliderHeight),
+                gs_vec2f(0.f, 0.f),
+                GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
 
-                    if(color[i] > maxValue)
-                    {
-                        maxValue = color[i];
-                        maxIndex = i;
-                    }
-                }
-
-                for(int i = 0; i < color.size(); i++)
-                {
-                    if(i != minIndex && i != maxIndex)
-                    {
-                        midIndex = i;
-                        break;
-                    }
-                }
-
-                gs_vec3f newColor;
-                newColor[maxIndex] = color[maxIndex];
-                newColor[midIndex] = color[midIndex];
-                newColor[minIndex] = 0;
-
-                return gs_rgba_color((gs_color)newColor.x, (gs_color)newColor.y, (gs_color)newColor.z, 255);
-            };
-
-            gs_color paletteColor = generatePaletteColor(_Color);
-
-            // find nearest palette cursor position
-            {
-                float    minDistance               = (float)INT_MAX;
-                gs_color minDistanceColor          = paletteColor;
-                float    minDistanceSliderPosition = 0.f;
-                float    sliderPosition            = 0.f;
-
-                while (sliderPosition < State.BoundingBox.height() - PaletteSliderHeight)
-                {
-                    // color palette
-                    gs_vec2f position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
-                    gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height() / 6.f);
-
-                    gs_2dboxf slider = gs_2dboxf(
-                        position + gs_vec2f(0.f, sliderPosition),
-                        position + gs_vec2f(0.f, sliderPosition) + gs_vec2f(State.BoundingBox.width(), PaletteSliderHeight));
-
-                    for (int i = 1; i < 7; i++)
-                    {
-                        gs_color sourceColor = Palette[i-1];
-                        gs_color targetColor = Palette[i-0];
-
-                        if(gs_2dboxf(position, position + size).overlaps(slider))
-                        {
-                            gs_color color = gs_rbg_color_lerp(sourceColor, targetColor, ((slider.Min.y - position.y) / size.y));
-                            
-                            float distance = (float)gs_rgb_color_distance(color, paletteColor);
-
-                            if(distance < minDistance)
-                            {
-                                minDistance               = distance;
-                                minDistanceColor          = color;
-                                minDistanceSliderPosition = sliderPosition;
-                            }
-
-                            break;
-                        }
-
-                        position += gs_vec2f(0.f, size.y);
-                    }
-
-                    sliderPosition += 0.01f;
-                }
-
-                SliderPosition = gs_clamp(
-                    minDistanceSliderPosition,
-                    0.f,
-                    State.BoundingBox.height() - PaletteSliderHeight);
-
-                SliderPreviousPosition = SliderPosition;
-
-                paletteColor = minDistanceColor;
-            }
-
-            std::cout << "color " << gs_rgba_color_get_r(_Color) << "\t" << gs_rgba_color_get_g(_Color) << "\t" << gs_rgba_color_get_b(_Color) << "\n";
-            std::cout << "palette " << gs_rgba_color_get_r(paletteColor) << "\t" << gs_rgba_color_get_g(paletteColor) << "\t" << gs_rgba_color_get_b(paletteColor) << "\n";
-
-            // find nearest gradient cursor position
-            {
-                float    minDistance               = (float)INT_MAX;
-                gs_vec2f minDistanceSliderPosition = 0.f;
-                gs_vec2f sliderPosition            = 0.f;
-
-                gs_color approximateColor = 0;
-
-                gs_2dboxf gradientBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height()));
-
-                for(int x = 0; x < State.BoundingBox.width(); x++)
-                {
-                    for(int y = 0; y < State.BoundingBox.height(); y++)
-                    {
-                        sliderPosition = gs_vec2f(x, y);
-
-                        gs_2dboxf gradientBoxSlider = gs_2dboxf(
-                            State.BoundingBox.Min + sliderPosition,
-                            State.BoundingBox.Min + sliderPosition + gs_vec2f(GradientSliderHeight));
-
-                        // compute color color
-                        float deltaX = (gradientBoxSlider.center() - State.BoundingBox.Min).x / gradientBox.width();
-                        float deltaY = (gradientBoxSlider.center() - State.BoundingBox.Min).y / gradientBox.height();
-
-                        gs_color color = gs_rbg_color_lerp(
-                            gs_rbg_color_lerp(gs_rgba_color(255, 255, 255, 255), gs_rgba_color(0, 0, 0, 255), deltaY),
-                            gs_rbg_color_lerp(paletteColor, gs_rgba_color(0, 0, 0, 255), deltaY),
-                            deltaX);
-
-                        float distance = (float)gs_rgb_color_distance(color, _Color);
-
-                        if(distance < minDistance)
-                        {
-                            minDistance               = distance;
-                            minDistanceSliderPosition = sliderPosition;
-                            approximateColor          = color;
-                        }
-                    }
-                }
-
-                GradientSliderPosition         = minDistanceSliderPosition;
-                GradientSliderPreviousPosition = GradientSliderPosition;
-
-                std::cout << "approximateColor " << gs_rgba_color_get_r(approximateColor) << "\t" << gs_rgba_color_get_g(approximateColor) << "\t" << gs_rgba_color_get_b(approximateColor) << "\n";
-            }
+            GradientSliderPreviousPosition = GradientSliderPosition;
         }
         
         // slider attributes
@@ -6385,24 +6310,21 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
     private:
 
-        gs_color Palette[7] =
-        {
-            gs_rgba_color(255, 0, 0, 255),
-            gs_rgba_color(255, 255, 0, 255),
-            gs_rgba_color(0, 255, 0, 255),
-            gs_rgba_color(0, 255, 255, 255),
-            gs_rgba_color(0, 0, 255, 255),
-            gs_rgba_color(255, 0, 255, 255),
-            gs_rgba_color(255, 0, 0, 255)
-        };
+        float     PaletteMaximumHue = 70.f;
+        float     PaletteHueStep    = 10.f;
 
-        float    SliderPreviousPosition         = 0.f;
-        float    SliderPosition                 = 0.f;
+        gs_2dboxf PaletteBox;
+        gs_2dboxf GradientBox;
+
+        float    PaletteSliderPosition          = 0.f;
+        float    PaletteSliderPreviousPosition  = 0.f;
+        
         gs_vec2f GradientSliderPosition         = gs_vec2f(0.f, 0.f);
         gs_vec2f GradientSliderPreviousPosition = gs_vec2f(0.f, 0.f);
-        float    GradientHorizontalFillWeight   = 0.9f;
-        float    PaletteSliderHeight            = 16.f;
-        float    GradientSliderHeight           = 32.f;
+        
+        float    GradientHorizontalFillWeight = 0.9f;
+        float    PaletteSliderHeight          = 16.f;
+        float    GradientSliderHeight         = 32.f;
     };
 
     if(begin_vertial_stack(std::string(_ID).append("/VerticalStack"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -6422,19 +6344,19 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         {
             label(std::string(_ID).append("/RedLabel"), "R");
             if(input_scalar<gs_color>(std::string(_ID).append("/Red"), picker->ColorRedComponent, 0, 255))
-                picker->force_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
+                picker->force_rgb_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
             else
                 picker->ColorRedComponent = gs_rgba_color_get_r(picker->Color);
             
             label(std::string(_ID).append("/GreenLabel"), "G");
             if(input_scalar<gs_color>(std::string(_ID).append("/Green"), picker->ColorGreenComponent, 0, 255))
-                picker->force_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
+                picker->force_rgb_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
             else
                 picker->ColorGreenComponent = gs_rgba_color_get_g(picker->Color);
             
             label(std::string(_ID).append("/BlueLabel"), "B");
             if(input_scalar<gs_color>(std::string(_ID).append("/Blue"), picker->ColorBlueComponent, 0, 255))
-                picker->force_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
+                picker->force_rgb_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
             else
                 picker->ColorBlueComponent = gs_rgba_color_get_b(picker->Color);
 
