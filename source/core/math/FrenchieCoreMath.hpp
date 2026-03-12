@@ -1807,7 +1807,11 @@ gs_color gs_color_hsl_get_l(const gs_color& _HSL);
 // HSV/RGBA
 gs_color gs_color_rgb_to_hsv(const gs_color& _RGB);
 
+gs_color gs_color_rgb_to_hsl(const gs_color& _RGB);
+
 gs_color gs_color_hsv_to_rgb(const gs_color& _HSV);
+
+gs_color gs_color_hsl_to_rgb(const gs_color& _HSL);
 
 gs_color gs_color_hsv_to_hsl(const gs_color& _HSV);
 
