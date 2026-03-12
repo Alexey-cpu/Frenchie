@@ -349,7 +349,7 @@ void RenderingQueue::frame_start()
     m_FrameRateMeasurementStartTimePoint = Frenchie::Core::tic();
 
     // push clear color
-    push_clear_color(gs_rgba_color(150, 150, 150, 150));
+    push_clear_color(gs_color_rgba(150, 150, 150, 150));
     push_clip_box(gs_2dboxf(gs_vec2f(0.f, 0.f), ApplicationPlatformBackend::get_window_size()));
 
     // compute projection matrix
@@ -496,7 +496,7 @@ void RenderingQueue::push_rendering_command(
 {
     push_rendering_command(
         ApplicationRenderingBackend::get_default_texture(),
-        gs_rgba_color(255, 255, 255, 255),
+        gs_color_rgba(255, 255, 255, 255),
         _Transform,
         _MeshRenderingHints);
 }
@@ -594,7 +594,7 @@ gs_color RenderingQueue::current_clear_color() const
 {
     return !m_ClearColors.empty() ?
         m_ClearColors[m_ClearColors.size() - 1] :
-            gs_rgba_color(255, 255, 255, 255);
+            gs_color_rgba(255, 255, 255, 255);
 }
 
 gs_mat4f RenderingQueue::calculate_transform_matrix(const float& _Depth, const gs_vec2f& _Position, const float& _Rotation, const gs_vec2f& _Scale)
