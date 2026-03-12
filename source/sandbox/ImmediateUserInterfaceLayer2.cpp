@@ -6350,7 +6350,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         float     GradientSliderHeight              = 32.f;
 
         // palette
-        float     PaletteMaximumHue                 = 1.05f;
+        float     PaletteMaximumHue                 = 1.00f;
         float     PaletteHueStep                    = 0.05f;
         gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         float     PaletteBoxSliderPosition          = 0.f;
