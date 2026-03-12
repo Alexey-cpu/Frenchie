@@ -171,6 +171,11 @@ gs_color gs_color_rgb_to_hsv(const gs_color& _RGB)
     return gs_color_rgba((gs_color)roundf(h * 255.f), (gs_color)roundf(s * 255.f), (gs_color)roundf(v * 255.f), 255);
 }
 
+gs_color gs_color_rgb_to_hsl(const gs_color& _RGB)
+{
+    return gs_color_hsv_to_hsl(gs_color_rgb_to_hsv(_RGB));
+}
+
 gs_color gs_color_hsv_to_rgb(const gs_color& _HSV)
 {
     // Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
@@ -215,6 +220,11 @@ gs_color gs_color_hsv_to_rgb(const gs_color& _HSV)
         b);
 
     return gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+}
+
+gs_color gs_color_hsl_to_rgb(const gs_color& _HSL)
+{
+    return gs_color_hsv_to_rgb(gs_color_hsl_to_hsv(_HSL));
 }
 
 gs_color gs_color_hsv_to_hsl(const gs_color& _HSV)

@@ -6117,24 +6117,17 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 }
                 
                 // palette slider
-                position = State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
-
-                gs_2dboxf slider = gs_2dboxf(
-                    position + gs_vec2f(0.f, PaletteSliderPosition),
-                    position + gs_vec2f(0.f, PaletteSliderPosition) + gs_vec2f(size.x, PaletteSliderHeight));
-
                 _Context->m_Renderer->push_rectangle_filled(
-                    slider.Min,
-                    slider.Max,
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition),
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) + gs_vec2f(PaletteBox.width(), PaletteSliderHeight),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(PaletteMaximumHue * PaletteSliderPosition / State.BoundingBox.height() * 255.f), 255, 255));
             }
 
             // render color gradient box
             {
-                float h = PaletteMaximumHue * PaletteSliderPosition / State.BoundingBox.height();
+                float h = PaletteMaximumHue * PaletteBoxSliderPosition / State.BoundingBox.height();
+
                 gs_color c1 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 0, 255));
                 gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 255));
                 gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 0));
@@ -6151,8 +6144,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 // gradient box slider
                 gs_2dboxf gradientBoxSlider = gs_2dboxf(
-                    GradientBox.Min + GradientSliderPosition,
-                    GradientBox.Min + GradientSliderPosition + gs_vec2f(GradientSliderHeight));
+                    GradientBox.Min + GradientBoxSliderPosition,
+                    GradientBox.Min + GradientBoxSliderPosition + gs_vec2f(GradientSliderHeight));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min,
@@ -6205,12 +6198,12 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    PaletteSliderPosition         = _Context->m_Input.get_cusor_position().y - PaletteBox.Min.y;
-                    PaletteSliderPreviousPosition = PaletteSliderPosition;
+                    PaletteBoxSliderPosition         = _Context->m_Input.get_cusor_position().y - PaletteBox.Min.y;
+                    PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
                 }
 
-                PaletteSliderPosition = gs_clamp(
-                    PaletteSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
+                PaletteBoxSliderPosition = gs_clamp(
+                    PaletteBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
                     0.f,
                     State.BoundingBox.height() - GradientSliderHeight * 0.5f);
             }
@@ -6220,12 +6213,12 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    GradientSliderPosition         = _Context->m_Input.get_cusor_position() - GradientBox.Min;
-                    GradientSliderPreviousPosition = GradientSliderPosition;
+                    GradientBoxSliderPosition         = _Context->m_Input.get_cusor_position() - GradientBox.Min;
+                    GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
                 }
 
-                GradientSliderPosition = gs_clamp(
-                    GradientSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f,
+                GradientBoxSliderPosition = gs_clamp(
+                    GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f,
                     gs_vec2f(0.f, 0.f),
                     GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
             }
@@ -6236,52 +6229,52 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         void force_rgb_color(const gs_color& _Color)
         {
             gs_color HSV = gs_color_rgb_to_hsv(_Color);
-            float h = (float)gs_color_hsv_get_h(HSV) / 255.f;
-            float s = (float)gs_color_hsv_get_s(HSV) / 255.f;
-            float v = (float)gs_color_hsv_get_v(HSV) / 255.f;
+            float    h   = (float)gs_color_hsv_get_h(HSV) / 255.f;
+            float    s   = (float)gs_color_hsv_get_s(HSV) / 255.f;
+            float    v   = (float)gs_color_hsv_get_v(HSV) / 255.f;
 
             // setup palette slider position
-            PaletteSliderPosition = gs_clamp(
+            PaletteBoxSliderPosition = gs_clamp(
                 h / PaletteMaximumHue * State.BoundingBox.height(),
                 0.f,
                 State.BoundingBox.height() - PaletteSliderHeight);
             
-            PaletteSliderPreviousPosition = PaletteSliderPosition;
+            PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
 
             // setup grdient slider position
-            GradientSliderPosition = gs_clamp(
+            GradientBoxSliderPosition = gs_clamp(
                 gs_vec2f(GradientBox.width() * s, GradientBox.height() * (1.f - v)) - gs_vec2f(GradientSliderHeight, GradientSliderHeight),
                 gs_vec2f(0.f, 0.f),
                 GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
 
-            GradientSliderPreviousPosition = GradientSliderPosition;
+            GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
         }
         
         // slider attributes
         gs_color  Color = 1;
         gs_vec3ui RGB;
         gs_vec3ui HSV;
+        gs_vec3ui HSL;
 
     private:
 
         float     PaletteMaximumHue = 1.05f;
         float     PaletteHueStep    = 0.05f;
 
-        gs_2dboxf PaletteBox;
-        gs_2dboxf GradientBox;
-
-        float    PaletteSliderPosition          = 0.f;
-        float    PaletteSliderPreviousPosition  = 0.f;
+        gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));;
+        float     PaletteBoxSliderPosition          = 0.f;
+        float     PaletteBoxSliderPreviousPosition  = 0.f;
         
-        gs_vec2f GradientSliderPosition         = gs_vec2f(0.f, 0.f);
-        gs_vec2f GradientSliderPreviousPosition = gs_vec2f(0.f, 0.f);
+        gs_2dboxf GradientBox                       = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        gs_vec2f  GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
+        gs_vec2f  GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
         
-        float    GradientHorizontalFillWeight = 0.9f;
-        float    PaletteSliderHeight          = 16.f;
-        float    GradientSliderHeight         = 32.f;
+        float    GradientHorizontalFillWeight       = 0.9f;
+        float    PaletteSliderHeight                = 16.f;
+        float    GradientSliderHeight               = 32.f;
     };
 
-    next_content_padding(gs_vec2f(4.f));
+    next_content_padding(gs_vec2f(2.f));
 
     if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -6334,20 +6327,59 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 next_size(gs_vec2f(m_Style.get_font_size() * 3.f, m_Style.get_font_size()));   
                 label(std::string(_ID).append("/Editors/HSV/Label"), "HSV");
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 255))
-                    picker->force_rgb_color(gs_color_hsv_to_rgb(gs_color_hsv(picker->HSV.x, picker->HSV.y, picker->HSV.z)));
+                bool hsvChanged = false;
+
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360))
+                    hsvChanged = true;
                 else
-                    picker->HSV.x = gs_color_hsv_get_h(gs_color_rgb_to_hsv(picker->Color));
+                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 360.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 255))
-                    picker->force_rgb_color(gs_color_hsv_to_rgb(gs_color_hsv(picker->HSV.x, picker->HSV.y, picker->HSV.z)));
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100))
+                    hsvChanged = true;
                 else
-                    picker->HSV.y = gs_color_hsv_get_s(gs_color_rgb_to_hsv(picker->Color));
+                    picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 255))
-                    picker->force_rgb_color(gs_color_hsv_to_rgb(gs_color_hsv(picker->HSV.x, picker->HSV.y, picker->HSV.z)));
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100))
+                    hsvChanged = true;
                 else
-                    picker->HSV.z = gs_color_hsv_get_v(gs_color_rgb_to_hsv(picker->Color));
+                    picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+
+                if(hsvChanged)
+                    picker->force_rgb_color(gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)picker->HSV.x / 360.f * 255.f), (gs_color)((float)picker->HSV.y / 100.f * 255.f), (gs_color)((float)picker->HSV.z / 100.f * 255.f))));
+
+                end_horizontal_stack();
+            }
+        }
+
+        // HSL
+        {
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            next_content_padding(gs_vec2f(16.f));
+
+            if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                next_size(gs_vec2f(m_Style.get_font_size() * 3.f, m_Style.get_font_size()));   
+                label(std::string(_ID).append("/Editors/HSL/Label"), "HSL");
+
+                bool hsvChanged = false;
+
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360))
+                    hsvChanged = true;
+                else
+                    picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 360.f);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100))
+                    hsvChanged = true;
+                else
+                    picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100))
+                    hsvChanged = true;
+                else
+                    picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+
+                if(hsvChanged)
+                    picker->force_rgb_color(gs_color_hsl_to_rgb(gs_color_hsl((gs_color)((float)picker->HSL.x / 360.f * 255.f), (gs_color)((float)picker->HSL.y / 100.f * 255.f), (gs_color)((float)picker->HSL.z / 100.f * 255.f))));
 
                 end_horizontal_stack();
             }
