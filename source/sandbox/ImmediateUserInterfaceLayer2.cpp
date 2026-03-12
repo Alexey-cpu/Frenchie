@@ -5662,8 +5662,8 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
 bool ImmediateUserInterfaceContextLayer::check_button(
     const std::string&                               _ID,
-    const ImmediateUserInterfaceCheckButtonSettings& _Settings,
-    bool*                                            _Checked)
+    bool&                                            _Checked,
+    const ImmediateUserInterfaceCheckButtonSettings& _Settings)
 {
     struct ImmediateUserInterfaceCheckButton : public ImmediateUserInterfaceNode
     {
@@ -5685,8 +5685,8 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         
         // event processing
         {
-            if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked() && _Checked != nullptr)
-                *_Checked = !(*_Checked);
+            if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked())
+                _Checked = !_Checked;
         }
 
         // render
@@ -5728,7 +5728,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                 }
 
                 // tick
-                if(_Checked != nullptr && (*_Checked))
+                if(_Checked)
                 {
                     gs_vec2f start = gs_vec2f(
                         widget->State.BoundingBox.center().x,
@@ -5786,7 +5786,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                         m_Renderer->calculate_transform_matrix((float)depth++));
                 }
 
-                if(_Checked != nullptr && (*_Checked))
+                if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
                         widget->State.BoundingBox.Min + m_Style.get_frames_width() * 3.f,
@@ -5808,7 +5808,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                     m_Renderer->calculate_transform_matrix((float)depth++));
 
-                if(_Checked != nullptr && (*_Checked))
+                if(_Checked)
                 {
                     m_Renderer->push_rectangle_rounded_filled(
                         widget->State.BoundingBox.Min,
@@ -5874,7 +5874,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
 
         end_node<ImmediateUserInterfaceCheckButton>();
         
-        return (_Checked != nullptr && *_Checked);
+        return _Checked;
     }
 
     return false;
@@ -6060,7 +6060,7 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(c
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u");
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs_color& _Color)
+void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
     {
@@ -6073,18 +6073,41 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         {
             ImmediateUserInterfaceNodePanel::layout(_Context);
 
-            // calculate palette box
-            {
-                gs_vec2f position =  State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, 0.f);
-                gs_vec2f size     = gs_vec2f(State.BoundingBox.width() * (1.f - GradientHorizontalFillWeight), State.BoundingBox.height());
-                PaletteBox = gs_2dboxf(position, position + size);
-            }
+            gs_vec2f gradientBoxSize = gs_vec2f(256.f, 256.f);
+            gs_vec2f paletteBoxSize  = gs_vec2f(32.f, 256.f);
+            gs_vec2f alphaBoxSize    = gs_vec2f((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha) ? 32.f : 0.f, 256.f);
+            gs_vec2f colorBoxSize    = gs_vec2f(32.f, 256.f);
+
+            gs_vec2f padding   = gs_vec2f(8.f);
+            gs_vec2f position  = State.BoundingBox.Min;
+            gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + colorBoxSize;
 
             // calculate gradient box
             {
-                GradientBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * GradientHorizontalFillWeight, State.BoundingBox.height()));
+                gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+                GradientBox   = gs_2dboxf(position, position + size);
+                position     += gs_vec2f(size.x + padding.x, 0.f);
+            }
+
+            // calculate palette box
+            {
+                gs_vec2f size = gs_vec2f((paletteBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+                PaletteBox    = gs_2dboxf(position, position + size);
+                position     += gs_vec2f(size.x + padding.x, 0.f);
+            }
+
+            // calculate alpha box
+            {
+                gs_vec2f size = gs_vec2f((alphaBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+                AlphaBox    = gs_2dboxf(position, position + size);
+                position     += gs_vec2f(size.x + padding.x, 0.f);
+            }
+
+            // calculate color box
+            {
+                gs_vec2f size = gs_vec2f((colorBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
+                ColorBox      = gs_2dboxf(position, position + size);
+                position     += gs_vec2f(size.x + padding.x, 0.f);
             }
         }
 
@@ -6126,7 +6149,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
             // render color gradient box
             {
-                float h = PaletteMaximumHue * PaletteBoxSliderPosition / State.BoundingBox.height();
+                float h = PaletteMaximumHue * PaletteBoxSliderPosition / (PaletteBox.height() - PaletteSliderHeight);
 
                 gs_color c1 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 0, 255));
                 gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 255));
@@ -6182,6 +6205,41 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), (gs_color)(s * 255.f), (gs_color)(v * 255.f)));
                 }
             }
+
+            // render alpha editor
+            {
+                // alpha box
+                _Context->m_Renderer->push_rectangle_gradient_mesh(
+                    AlphaBox.Min,
+                    AlphaBox.Max,
+                    gs_color_rgba(255, 255, 255, 255),
+                    gs_color_rgba(255, 255, 255, 255),
+                    gs_color_rgba(0, 0, 0, 255),
+                    gs_color_rgba(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // alpha box slider
+                _Context->m_Renderer->push_rectangle_filled(
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition),
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) + gs_vec2f(AlphaBox.width(), PaletteSliderHeight),
+                    gs_color_rgba(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                Color = gs_color_rgba(
+                    gs_color_rgba_get_r(Color),
+                    gs_color_rgba_get_g(Color),
+                    gs_color_rgba_get_b(Color),
+                    (gs_color)(255.f * (1.f - AlphaBoxSliderPosition / (AlphaBox.height() - PaletteSliderHeight))));
+            }
+
+            // color box
+            {
+                _Context->m_Renderer->push_rectangle_filled(
+                    ColorBox.Min,
+                    ColorBox.Max,
+                    Color,
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
         }
 
         virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
@@ -6191,10 +6249,15 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
             // stop catching
             if(!_Context->m_Input.is_mouse_button_down())
+            {
+                AlphaBoxSliderIsMoving    = false;
+                PaletteBoxSliderIsMoving  = false;
+                GradientBoxSliderIsMoving = false;
                 return false;
+            }
 
             // catch vertical color palette event
-            if(PaletteBox.contains(_Context->m_Input.get_cusor_position()))
+            if((PaletteBox.contains(_Context->m_Input.get_cusor_position()) || PaletteBoxSliderIsMoving) && !GradientBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -6205,11 +6268,13 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 PaletteBoxSliderPosition = gs_clamp(
                     PaletteBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
                     0.f,
-                    State.BoundingBox.height() - GradientSliderHeight * 0.5f);
+                    PaletteBox.height() - GradientSliderHeight * 0.5f);
+
+                PaletteBoxSliderIsMoving = true;
             }
 
             // catch gradient color modifier event
-            if(GradientBox.contains(_Context->m_Input.get_cusor_position()))
+            if((GradientBox.contains(_Context->m_Input.get_cusor_position()) || GradientBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -6221,12 +6286,32 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f,
                     gs_vec2f(0.f, 0.f),
                     GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
+
+                GradientBoxSliderIsMoving = true;
             }
+
+            // catch
+            if((AlphaBox.contains(_Context->m_Input.get_cusor_position()) || AlphaBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !GradientBoxSliderIsMoving)
+            {
+                if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    AlphaBoxSliderPosition         = _Context->m_Input.get_cusor_position().y - PaletteBox.Min.y;
+                    AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
+                }
+
+                AlphaBoxSliderPosition = gs_clamp(
+                    AlphaBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
+                    0.f,
+                    AlphaBox.height() - GradientSliderHeight * 0.5f);
+
+                AlphaBoxSliderIsMoving = true;
+            }
+
 
             return true;
         }
 
-        void force_rgb_color(const gs_color& _Color)
+        void force_rgba_color(const gs_color& _Color)
         {
             gs_color HSV = gs_color_rgb_to_hsv(_Color);
             float    h   = (float)gs_color_hsv_get_h(HSV) / 255.f;
@@ -6235,9 +6320,9 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
             // setup palette slider position
             PaletteBoxSliderPosition = gs_clamp(
-                h / PaletteMaximumHue * State.BoundingBox.height(),
+                h / PaletteMaximumHue * PaletteBox.height(),
                 0.f,
-                State.BoundingBox.height() - PaletteSliderHeight);
+                PaletteBox.height() - PaletteSliderHeight);
             
             PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
 
@@ -6248,6 +6333,12 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
 
             GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
+
+            // setup alpha slider position
+            AlphaBoxSliderPosition = gs_clamp(
+                (1.f - (float)gs_color_rgba_get_a(_Color) / 255.f) * (AlphaBox.height() - PaletteSliderHeight),
+                0.f,
+                AlphaBox.height() - PaletteSliderHeight);
         }
         
         // slider attributes
@@ -6255,21 +6346,32 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         gs_vec3ui RGB;
         gs_vec3ui HSV;
         gs_vec3ui HSL;
+        gs_color  Alpha = 255;
+
+        ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
     private:
 
         float     PaletteMaximumHue = 1.05f;
         float     PaletteHueStep    = 0.05f;
 
-        gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));;
+        gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         float     PaletteBoxSliderPosition          = 0.f;
         float     PaletteBoxSliderPreviousPosition  = 0.f;
+        bool      PaletteBoxSliderIsMoving          = false;
         
+        gs_2dboxf AlphaBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        float     AlphaBoxSliderPosition            = 0.f;
+        float     AlphaBoxSliderPreviousPosition    = 0.f;
+        bool      AlphaBoxSliderIsMoving            = false;
+
         gs_2dboxf GradientBox                       = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         gs_vec2f  GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
         gs_vec2f  GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
-        
-        float    GradientHorizontalFillWeight       = 0.9f;
+        bool      GradientBoxSliderIsMoving         = false;
+
+        gs_2dboxf ColorBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+
         float    PaletteSliderHeight                = 16.f;
         float    GradientSliderHeight               = 32.f;
     };
@@ -6285,31 +6387,35 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         ImmediateUserInterfaceColorPicker* picker =
             get_rendered_stack_top<ImmediateUserInterfaceColorPicker>();
 
-        next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-        image(std::string(_ID).append("/Color"), picker->Color);
+        picker->Settings = _Settings;
+
+        char a[6] = "Alpha";
+
+        float labelWidth = m_Renderer->calculate_bounding_box(&a[0], &a[6], m_Style.get_font_size(), m_Style.get_current_font()).width();
 
         // RGB
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
         {
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
             if(begin_horizontal_stack(std::string(_ID).append("/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
-                next_size(gs_vec2f(m_Style.get_font_size() * 3.f, m_Style.get_font_size()));
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255))
-                    picker->force_rgb_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, 255));
+                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
                 else
                     picker->RGB.x = gs_color_rgba_get_r(picker->Color);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255))
-                    picker->force_rgb_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, 255));
+                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
                 else
                     picker->RGB.y = gs_color_rgba_get_g(picker->Color);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255))
-                    picker->force_rgb_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, 255));
+                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
                 else
                     picker->RGB.z = gs_color_rgba_get_b(picker->Color);
 
@@ -6318,13 +6424,14 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         }
 
         // HSV
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
         {
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
             if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
-                next_size(gs_vec2f(m_Style.get_font_size() * 3.f, m_Style.get_font_size()));   
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
                 label(std::string(_ID).append("/Editors/HSV/Label"), "HSV");
 
                 bool hsvChanged = false;
@@ -6345,20 +6452,29 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
 
                 if(hsvChanged)
-                    picker->force_rgb_color(gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)picker->HSV.x / 360.f * 255.f), (gs_color)((float)picker->HSV.y / 100.f * 255.f), (gs_color)((float)picker->HSV.z / 100.f * 255.f))));
+                {
+                    gs_color rgb = gs_color_hsv_to_rgb(
+                        gs_color_hsv(
+                            (gs_color)((float)picker->HSV.x / 360.f * 255.f),
+                            (gs_color)((float)picker->HSV.y / 100.f * 255.f),
+                            (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
+
+                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                }
 
                 end_horizontal_stack();
             }
         }
 
         // HSL
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
         {
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
             if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
-                next_size(gs_vec2f(m_Style.get_font_size() * 3.f, m_Style.get_font_size()));   
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 label(std::string(_ID).append("/Editors/HSL/Label"), "HSL");
 
                 bool hsvChanged = false;
@@ -6379,11 +6495,42 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
 
                 if(hsvChanged)
-                    picker->force_rgb_color(gs_color_hsl_to_rgb(gs_color_hsl((gs_color)((float)picker->HSL.x / 360.f * 255.f), (gs_color)((float)picker->HSL.y / 100.f * 255.f), (gs_color)((float)picker->HSL.z / 100.f * 255.f))));
+                {
+                    gs_color rgb = gs_color_hsl_to_rgb(
+                        gs_color_hsl(
+                            (gs_color)((float)picker->HSL.x / 360.f * 255.f),
+                            (gs_color)((float)picker->HSL.y / 100.f * 255.f),
+                            (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
+
+                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                }
 
                 end_horizontal_stack();
             }
         }
+
+        // Alpha
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
+        {
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            next_content_padding(gs_vec2f(16.f));
+
+            if(begin_horizontal_stack(std::string(_ID).append("/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
+
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255))
+                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha));
+                else
+                    picker->Alpha = gs_color_rgba_get_a(picker->Color);
+                
+                end_horizontal_stack();
+            }
+        }
+
+        // setup output color value
+        _Color = picker->Color;
 
         end_vertical_stack();
     }

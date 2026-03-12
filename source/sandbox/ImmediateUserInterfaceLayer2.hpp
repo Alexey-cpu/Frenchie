@@ -174,6 +174,21 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringSettings_Defaults          = 0
         };
 
+        enum ImmediateUserInterfaceColorPickerSettings_ : int
+        {
+            ImmediateUserInterfaceColorPickerSettings_None      = 0,      // sentinel
+            ImmediateUserInterfaceColorPickerSettings_EditRGB   = 1 << 0, // enables RGB   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSV   = 1 << 1, // enables HSV   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSL   = 1 << 2, // enables HSL   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditAlpha = 1 << 3, // enables alpha editor in color picker
+
+            ImmediateUserInterfaceColorPickerSettings_Defaults  =
+                ImmediateUserInterfaceColorPickerSettings_EditRGB |
+                ImmediateUserInterfaceColorPickerSettings_EditHSV |
+                ImmediateUserInterfaceColorPickerSettings_EditHSL |
+                ImmediateUserInterfaceColorPickerSettings_EditAlpha
+        };
+
         // mouse hover
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
@@ -227,6 +242,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceLabelSettings;
         typedef int ImmediateUserInterfaceCheckButtonSettings;
         typedef int ImmediateUserInterfaceInputStringSettings;
+        typedef int ImmediateUserInterfaceColorPickerSettings;
 
         typedef int ImmedidateUserInterfaceDockingAnchor;
         typedef int ImmedidateUserInterfaceRenderingOrder;
@@ -862,8 +878,8 @@ namespace Frenchie
 
             bool check_button(
                 const std::string&                               _ID,
-                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox,
-                bool*                                            _Checked  = nullptr);
+                bool&                                            _Checked,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox);
             
             bool menu_action(const std::string& _ID);
             
@@ -893,8 +909,12 @@ namespace Frenchie
             template<typename Type>
             bool input_scalar(const std::string& _ID, Type& _Input, const Type& _Min = gs_tiny<Type>(), const Type& _Max = gs_huge<Type>());
 
-            //
-            void color_picker(const std::string& _ID, gs_color& _Color);
+            // This function renders classic color picker widget.
+            // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
+            void color_picker(
+                const std::string&                               _ID,
+                gs_color&                                        _Color,
+                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
             // This function renders square image.
             // If texture is not passed to a function default renderer white pattern image is used.
