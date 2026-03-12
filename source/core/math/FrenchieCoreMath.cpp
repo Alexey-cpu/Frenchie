@@ -1,5 +1,79 @@
 #include <FrenchieCoreMath.hpp>
 
+namespace Frenchie
+{
+    namespace Core
+    {
+        namespace Math
+        {
+            // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
+            void gs_rgb_to_hsv(float r, float g, float b, float& out_h, float& out_s, float& out_v)
+            {
+                float K = 0.f;
+                if (g < b)
+                {
+                    gs_swap(g, b);
+                    K = -1.f;
+                }
+                if (r < g)
+                {
+                    gs_swap(r, g);
+                    K = -2.f / 6.f - K;
+                }
+
+                const float chroma = r - (g < b ? g : b);
+                out_h = fabs(K + (g - b) / (6.f * chroma + 1e-20f));
+                out_s = chroma / (r + 1e-20f);
+                out_v = r;
+            };
+
+            // Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
+            void gs_hsv_to_rgb(float h, float s, float v, float& out_r, float& out_g, float& out_b)
+            {
+                if (s == 0.0f)
+                {
+                    // gray
+                    out_r = out_g = out_b = v;
+                    return;
+                }
+
+                h = fmodf(h, 1.0f) / (60.0f / 360.0f);
+                int   i = (int)h;
+                float f = h - (float)i;
+                float p = v * (1.0f - s);
+                float q = v * (1.0f - s * f);
+                float t = v * (1.0f - s * (1.0f - f));
+
+                switch (i)
+                {
+                case 0: out_r = v; out_g = t; out_b = p; break;
+                case 1: out_r = q; out_g = v; out_b = p; break;
+                case 2: out_r = p; out_g = v; out_b = t; break;
+                case 3: out_r = p; out_g = q; out_b = v; break;
+                case 4: out_r = t; out_g = p; out_b = v; break;
+                case 5: default: out_r = v; out_g = p; out_b = q; break;
+                }
+            };
+        
+            // Convert hsv floats ([0-1],[0-1],[0-1]) to hsl floats ([0-1],[0-1],[0-1])
+            void gs_hsv_to_hsl(float h, float s, float v, float& hh, float& ss, float& ll)
+            {
+                hh = h;
+                ll = v - v * s * 0.5f;
+                 ss = ll == 0.f || ll == 1.f ? 0.f : (v - ll) / gs_min(ll, 1 - ll);
+            }
+
+            // Convert hsl floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1])
+            void gs_hsl_to_hsv(float h, float s, float l, float& hh, float& ss, float& vv)
+            {
+                hh = h;
+                vv = l + s * gs_min(l, 1 - l);
+                ss = vv == 0.f ? 0.f : 2.f - 2.f * l / vv;
+            }
+        }
+    }
+}
+
 // [UTILITY]
 
 // huge
@@ -134,40 +208,11 @@ gs_color gs_color_hsl_get_l(const gs_color& _HSL)
 
 gs_color gs_color_rgb_to_hsv(const gs_color& _RGB)
 {
-    // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
-    // Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
-    auto gs_rgb_to_hsv = [](float r, float g, float b, float& out_h, float& out_s, float& out_v)
-    {
-        float K = 0.f;
-        if (g < b)
-        {
-            gs_swap(g, b);
-            K = -1.f;
-        }
-        if (r < g)
-        {
-            gs_swap(r, g);
-            K = -2.f / 6.f - K;
-        }
-
-        const float chroma = r - (g < b ? g : b);
-        out_h = fabs(K + (g - b) / (6.f * chroma + 1e-20f));
-        out_s = chroma / (r + 1e-20f);
-        out_v = r;
-    };
-
     float h = 0.f;
     float s = 0.f;    
     float v = 0.f;
 
-    gs_rgb_to_hsv(
-        (float)gs_color_rgba_get_r(_RGB) / 255.f,
-        (float)gs_color_rgba_get_g(_RGB) / 255.f,
-        (float)gs_color_rgba_get_b(_RGB) / 255.f,
-        h,
-        s,
-        v);
-
+    Frenchie::Core::Math::gs_rgb_to_hsv((float)gs_color_rgba_get_r(_RGB) / 255.f, (float)gs_color_rgba_get_g(_RGB) / 255.f, (float)gs_color_rgba_get_b(_RGB) / 255.f, h, s, v);
     return gs_color_rgba((gs_color)roundf(h * 255.f), (gs_color)roundf(s * 255.f), (gs_color)roundf(v * 255.f), 255);
 }
 
@@ -178,47 +223,11 @@ gs_color gs_color_rgb_to_hsl(const gs_color& _RGB)
 
 gs_color gs_color_hsv_to_rgb(const gs_color& _HSV)
 {
-    // Convert hsv floats ([0-1],[0-1],[0-1]) to rgb floats ([0-1],[0-1],[0-1]), from Foley & van Dam p593
-    // also http://en.wikipedia.org/wiki/HSL_and_HSV
-    auto gs_hsv_to_rgb = [](float h, float s, float v, float& out_r, float& out_g, float& out_b)
-    {
-        if (s == 0.0f)
-        {
-            // gray
-            out_r = out_g = out_b = v;
-            return;
-        }
-
-        h = fmodf(h, 1.0f) / (60.0f / 360.0f);
-        int   i = (int)h;
-        float f = h - (float)i;
-        float p = v * (1.0f - s);
-        float q = v * (1.0f - s * f);
-        float t = v * (1.0f - s * (1.0f - f));
-
-        switch (i)
-        {
-        case 0: out_r = v; out_g = t; out_b = p; break;
-        case 1: out_r = q; out_g = v; out_b = p; break;
-        case 2: out_r = p; out_g = v; out_b = t; break;
-        case 3: out_r = p; out_g = q; out_b = v; break;
-        case 4: out_r = t; out_g = p; out_b = v; break;
-        case 5: default: out_r = v; out_g = p; out_b = q; break;
-        }
-    };
-
     float r = 0.f;
     float g = 0.f;
     float b = 0.f;
 
-    gs_hsv_to_rgb(
-        (float)gs_color_hsv_get_h(_HSV) / 255.f,
-        (float)gs_color_hsv_get_s(_HSV) / 255.f,
-        (float)gs_color_hsv_get_v(_HSV) / 255.f,
-        r,
-        g,
-        b);
-
+    Frenchie::Core::Math::gs_hsv_to_rgb((float)gs_color_hsv_get_h(_HSV) / 255.f, (float)gs_color_hsv_get_s(_HSV) / 255.f, (float)gs_color_hsv_get_v(_HSV) / 255.f, r, g, b);
     return gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 }
 
@@ -229,26 +238,21 @@ gs_color gs_color_hsl_to_rgb(const gs_color& _HSL)
 
 gs_color gs_color_hsv_to_hsl(const gs_color& _HSV)
 {
-    float h = (float)gs_color_hsv_get_h(_HSV) / 255.f;
-    float s = (float)gs_color_hsv_get_s(_HSV) / 255.f;
-    float v = (float)gs_color_hsv_get_v(_HSV) / 255.f;
+    float hh = 0.f;
+    float ss = 0.f;
+    float ll = 0.f;
 
-    float hh = h;
-    float ll = v - v * s * 0.5f;
-    float ss = ll == 0.f || ll == 1.f ? 0.f : (v - ll) / gs_min(ll, 1 - ll);
-
+    Frenchie::Core::Math::gs_hsv_to_hsl((float)gs_color_hsv_get_h(_HSV) / 255.f, (float)gs_color_hsv_get_s(_HSV) / 255.f, (float)gs_color_hsv_get_v(_HSV) / 255.f, hh, ss, ll);
     return gs_color_hsl((gs_color)(hh * 255.f), (gs_color)(ss * 255.f), (gs_color)(ll * 255.f));
 }
 
 gs_color gs_color_hsl_to_hsv(const gs_color& _HSL)
 {
-    float h = (float)gs_color_hsl_get_h(_HSL) / 255.f;
-    float s = (float)gs_color_hsl_get_s(_HSL) / 255.f;
-    float l = (float)gs_color_hsl_get_l(_HSL) / 255.f;
+    float hh = 0.f;
+    float ss = 0.f;
+    float vv = 0.f;
 
-    float hh = h;
-    float vv = l + s * gs_min(l, 1 - l);
-    float ss = vv == 0.f ? 0.f : 2.f - 2.f * l / vv;
+    Frenchie::Core::Math::gs_hsl_to_hsv((float)gs_color_hsl_get_h(_HSL) / 255.f, (float)gs_color_hsl_get_s(_HSL) / 255.f, (float)gs_color_hsl_get_l(_HSL) / 255.f, hh, ss, vv);
 
     return gs_color_hsl((gs_color)(hh * 255.f), (gs_color)(ss * 255.f), (gs_color)(vv * 255.f));
 }
