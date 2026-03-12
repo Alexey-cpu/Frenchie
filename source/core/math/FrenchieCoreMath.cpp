@@ -44,53 +44,46 @@ template<> uint32_t           gs_epsilon(){return 0;           }
 template<> uint64_t           gs_epsilon(){return 0;           }
 template<> unsigned long      gs_epsilon(){return 0;           }
 
-gs_color gs_rgba_color(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A)
+gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A)
 {
     return (((gs_color)(_A)<<24) | ((gs_color)(_B)<<16) | ((gs_color)(_G)<<8) | ((gs_color)(_R)<<0));
 }
 
-gs_color gs_rgba_color_get_r(const gs_color& _Color)
+gs_color gs_color_rgba_get_r(const gs_color& _Color)
 {
     return (_Color >> 0) & 0xFF;
 }
 
-gs_color gs_rgba_color_get_g(const gs_color& _Color)
+gs_color gs_color_rgba_get_g(const gs_color& _Color)
 {
     return (_Color >> 8) & 0xFF;
 }
 
-gs_color gs_rgba_color_get_b(const gs_color& _Color)
+gs_color gs_color_rgba_get_b(const gs_color& _Color)
 {
     return (_Color >> 16) & 0xFF;
 }
 
-gs_color gs_rgba_color_get_a(const gs_color& _Color)
+gs_color gs_color_rgba_get_a(const gs_color& _Color)
 {
     return (_Color >> 24) & 0xFF;
 }
 
-gs_color gs_rbg_color_lerp(gs_color _SourceColor, gs_color _TargetColor, float _Fraction)
+gs_color gs_color_rbg_lerp(gs_color& _SourceColor, gs_color& _TargetColor, float& _Fraction)
 {
-    float r1 = (float)gs_rgba_color_get_r(_SourceColor);
-    float g1 = (float)gs_rgba_color_get_g(_SourceColor);
-    float b1 = (float)gs_rgba_color_get_b(_SourceColor);
+    float r1 = (float)gs_color_rgba_get_r(_SourceColor);
+    float g1 = (float)gs_color_rgba_get_g(_SourceColor);
+    float b1 = (float)gs_color_rgba_get_b(_SourceColor);
 
-    float r2 = (float)gs_rgba_color_get_r(_TargetColor);
-    float g2 = (float)gs_rgba_color_get_g(_TargetColor);
-    float b2 = (float)gs_rgba_color_get_b(_TargetColor);
+    float r2 = (float)gs_color_rgba_get_r(_TargetColor);
+    float g2 = (float)gs_color_rgba_get_g(_TargetColor);
+    float b2 = (float)gs_color_rgba_get_b(_TargetColor);
 
-    return gs_rgba_color(
+    return gs_color_rgba(
         (gs_color)round(r1 + (r2 - r1) * _Fraction),
         (gs_color)round(g1 + (g2 - g1) * _Fraction),
         (gs_color)round(b1 + (b2 - b1) * _Fraction),
         255);
-}
-
-double gs_rgb_color_distance(const gs_color& _A, const gs_color& _B)
-{
-    return gs_vector_length(
-        gs_vec3f(gs_rgba_color_get_r(_A), gs_rgba_color_get_g(_A), gs_rgba_color_get_b(_A)) -
-        gs_vec3f(gs_rgba_color_get_r(_B), gs_rgba_color_get_g(_B), gs_rgba_color_get_b(_B)));
 }
 
 // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592

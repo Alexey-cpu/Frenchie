@@ -1889,10 +1889,10 @@ namespace Frenchie
                                         _Context->m_Renderer->push_rectangle_filled(
                                             _CursorPosition - gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f),
                                             _CursorPosition + gs_vec2f(gs_abs(_CurrentSymbolBoundingBox.size().x - glyphAdvance), 0.f) + gs_vec2f(_CurrentSymbolBoundingBox.size().x, _Context->m_Style.get_font_size()),
-                                            gs_rgba_color(
-                                                gs_rgba_color_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                                gs_rgba_color_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                                gs_rgba_color_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                            gs_color_rgba(
+                                                gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                                gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                                gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                                 200),
                                             _Context->m_Renderer->calculate_transform_matrix((float)depth++));
                                     }
@@ -1906,10 +1906,10 @@ namespace Frenchie
                             _Context->m_Renderer->push_rectangle_filled(
                                 inputStringRenderingData.HoveredSymbolBoundingBox.value().Min,
                                 inputStringRenderingData.HoveredSymbolBoundingBox.value().Max,
-                                gs_rgba_color(
-                                    gs_rgba_color_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                    gs_rgba_color_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                                    gs_rgba_color_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                gs_color_rgba(
+                                    gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                    gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                                    gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                                     200),
                                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
                         }
@@ -2404,33 +2404,33 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
     // general ui elements
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]                 = gs_rgba_color(28, 28, 28, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]          = gs_rgba_color(72, 82, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                  = gs_rgba_color(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered]           = gs_rgba_color(72, 82, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]                 = gs_color_rgba(28, 28, 28, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]          = gs_color_rgba(72, 82, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                  = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered]           = gs_color_rgba(72, 82, 72, 255);
     
     // push button
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                    = gs_rgba_color(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]                 = gs_rgba_color(32, 32, 32, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]          = gs_rgba_color(60, 72, 60, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]          = gs_rgba_color(120, 128, 120, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                    = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground]                 = gs_color_rgba(32, 32, 32, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered]          = gs_color_rgba(60, 72, 60, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed]          = gs_color_rgba(120, 128, 120, 255);
 
     // menus
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline]                      = gs_rgba_color(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground]             = gs_rgba_color(32, 32, 32, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered]      = gs_rgba_color(60, 72, 60, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed]      = gs_rgba_color(120, 128, 120, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline]                      = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground]             = gs_color_rgba(32, 32, 32, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered]      = gs_color_rgba(60, 72, 60, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed]      = gs_color_rgba(120, 128, 120, 255);
 
     // scrollbar
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_rgba_color(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered] = gs_rgba_color(72, 82, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered] = gs_color_rgba(72, 82, 72, 255);
 
     // gizmos
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_rgba_color(50, 50, 100, 200);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                    = gs_rgba_color(100, 100, 172, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                    = gs_color_rgba(100, 100, 172, 255);
 
     // gizmos
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                    = gs_rgba_color(255, 255, 255, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                    = gs_color_rgba(255, 255, 255, 255);
 }
 
 ImmedidateUserInterfaceStyle::~ImmedidateUserInterfaceStyle(){}
@@ -3683,11 +3683,11 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
     {
         if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
-            return gs_rgba_color(255, 0, 0, 255);
+            return gs_color_rgba(255, 0, 0, 255);
 
         return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
-            gs_rgba_color(128, 0, 0, 255) : // TODO: this MUST BE a setting
-            gs_rgba_color(64, 0, 0, 255);
+            gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
+            gs_color_rgba(64, 0, 0, 255);
     };
 
     auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box)
@@ -4515,10 +4515,10 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
                 dockingGizmo.Min,
                 dockingGizmo.Max,
                 _Context->m_Style.get_frames_radius(),
-                gs_rgba_color(
-                    gs_rgba_color_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    gs_rgba_color_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    gs_rgba_color_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                gs_color_rgba(
+                    gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
                     128),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
@@ -6110,11 +6110,11 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     float v = 1.f;
 
                     gs_hsv_to_rgb(h, s, v, r, g, b);
-                    gs_color sourceColor = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                    gs_color sourceColor = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 
                     h = (i - 0) * PaletteHueStep;
                     gs_hsv_to_rgb(h, s, v, r, g, b);
-                    gs_color targetColor = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                    gs_color targetColor = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 
                     _Context->m_Renderer->push_rectangle_gradient_mesh(
                         position,
@@ -6138,7 +6138,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 _Context->m_Renderer->push_rectangle_filled(
                     slider.Min,
                     slider.Max,
-                    gs_rgba_color(255, 255, 255, 255),
+                    gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 {
@@ -6151,7 +6151,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     float b = 0.f;
 
                     gs_hsv_to_rgb(h, s, v, r, g, b);
-                    Color = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                    Color = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
                 }
             }
 
@@ -6166,15 +6166,15 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 float b = 0.f;
 
                 gs_hsv_to_rgb(h, s, v, r, g, b);
-                gs_color c1 = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                gs_color c1 = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 
                 s = 1.f;
                 gs_hsv_to_rgb(h, s, v, r, g, b);
-                gs_color c2 = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                gs_color c2 = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 
                 v = 0.f;
                 gs_hsv_to_rgb(h, s, v, r, g, b);
-                gs_color c3 = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                gs_color c3 = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
 
                 // gradient box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
@@ -6194,13 +6194,13 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min,
                     gradientBoxSlider.Max,
-                    gs_rgba_color(255, 255, 255, 255),
+                    gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min + gs_vec2f(4.f),
                     gradientBoxSlider.Max - gs_vec2f(4.f),
-                    gs_rgba_color(0, 0, 0, 255),
+                    gs_color_rgba(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // calculate color
@@ -6224,7 +6224,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     v = 1.f - (p - GradientBox.Min).y / GradientBox.height();
 
                     gs_hsv_to_rgb(h, s, v, r, g, b);
-                    Color = gs_rgba_color((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
+                    Color = gs_color_rgba((gs_color)roundf(r * 255.f), (gs_color)roundf(g * 255.f), (gs_color)roundf(b * 255.f), 255);
                 }
             }
         }
@@ -6278,9 +6278,9 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             float v = 0.f;
 
             gs_rgb_to_hsv(
-                (float)gs_rgba_color_get_r(_Color) / 255.f,
-                (float)gs_rgba_color_get_g(_Color) / 255.f,
-                (float)gs_rgba_color_get_b(_Color) / 255.f,
+                (float)gs_color_rgba_get_r(_Color) / 255.f,
+                (float)gs_color_rgba_get_g(_Color) / 255.f,
+                (float)gs_color_rgba_get_b(_Color) / 255.f,
                 h,
                 s,
                 v);
@@ -6354,21 +6354,21 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             {
                 label(std::string(_ID).append("RGB/RedLabel"), "R");
                 if(input_scalar<gs_color>(std::string(_ID).append("RGB/RedValue"), picker->ColorRedComponent, 0, 255))
-                    picker->force_rgb_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
+                    picker->force_rgb_color(gs_color_rgba(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
                 else
-                    picker->ColorRedComponent = gs_rgba_color_get_r(picker->Color);
+                    picker->ColorRedComponent = gs_color_rgba_get_r(picker->Color);
                 
                 label(std::string(_ID).append("RGB/GreenLabel"), "G");
                 if(input_scalar<gs_color>(std::string(_ID).append("RGB/GreenValue"), picker->ColorGreenComponent, 0, 255))
-                    picker->force_rgb_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
+                    picker->force_rgb_color(gs_color_rgba(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
                 else
-                    picker->ColorGreenComponent = gs_rgba_color_get_g(picker->Color);
+                    picker->ColorGreenComponent = gs_color_rgba_get_g(picker->Color);
                 
                 label(std::string(_ID).append("RGB/BlueLabel"), "B");
                 if(input_scalar<gs_color>(std::string(_ID).append("RGB/BlueValue"), picker->ColorBlueComponent, 0, 255))
-                    picker->force_rgb_color(gs_rgba_color(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
+                    picker->force_rgb_color(gs_color_rgba(picker->ColorRedComponent, picker->ColorGreenComponent, picker->ColorBlueComponent, 255));
                 else
-                    picker->ColorBlueComponent = gs_rgba_color_get_b(picker->Color);
+                    picker->ColorBlueComponent = gs_color_rgba_get_b(picker->Color);
 
                 end_horizontal_stack();
             }
@@ -6390,13 +6390,13 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 float b = 0.f;
 
                 gs_rgb_to_hsv(
-                    (float)gs_rgba_color_get_r(picker->Color) / 255.f, (float)gs_rgba_color_get_g(picker->Color) / 255.f, (float)gs_rgba_color_get_b(picker->Color) / 255.f, h, s, v);
+                    (float)gs_color_rgba_get_r(picker->Color) / 255.f, (float)gs_color_rgba_get_g(picker->Color) / 255.f, (float)gs_color_rgba_get_b(picker->Color) / 255.f, h, s, v);
 
                 label(std::string(_ID).append("HSV/HueLabel"), "H");
                 if(input_scalar<float>(std::string(_ID).append("HSV/HueValue"), picker->ColorHueComponent, 0, 255))
                 {
                     gs_hsv_to_rgb(picker->ColorHueComponent, picker->ColorSaturationComponent, picker->ColorBrightnessComponent, r, g, b);
-                    picker->force_rgb_color(gs_rgba_color((gs_color)(r * 255.f), (gs_color)(g * 255.f), (gs_color)(b * 255.f), 255));
+                    picker->force_rgb_color(gs_color_rgba((gs_color)(r * 255.f), (gs_color)(g * 255.f), (gs_color)(b * 255.f), 255));
                 }
                 else
                 {
@@ -6407,7 +6407,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 if(input_scalar<float>(std::string(_ID).append("HSV/SaturationValue"), picker->ColorSaturationComponent, 0, 255))
                 {
                     gs_hsv_to_rgb(picker->ColorHueComponent, picker->ColorSaturationComponent, picker->ColorBrightnessComponent, r, g, b);
-                    picker->force_rgb_color(gs_rgba_color((gs_color)(r * 255.f), (gs_color)(g * 255.f), (gs_color)(b * 255.f), 255));
+                    picker->force_rgb_color(gs_color_rgba((gs_color)(r * 255.f), (gs_color)(g * 255.f), (gs_color)(b * 255.f), 255));
                 }
                 else
                 {
@@ -6418,7 +6418,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 if(input_scalar<float>(std::string(_ID).append("HSV/BrightnessValue"), picker->ColorBrightnessComponent, 0, 255))
                 {
                     gs_hsv_to_rgb(picker->ColorHueComponent, picker->ColorSaturationComponent, picker->ColorBrightnessComponent, r, g, b);
-                    picker->force_rgb_color(gs_rgba_color((gs_color)(r * 255.f), (gs_color)(g * 255.f), (gs_color)(b * 255.f), 255));
+                    picker->force_rgb_color(gs_color_rgba((gs_color)(r * 255.f), (gs_color)(g * 255.f), (gs_color)(b * 255.f), 255));
                 }
                 else
                 {
@@ -6454,7 +6454,7 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
         }
 
         ApplicationRenderingBackendTexture Texture   = ApplicationRenderingBackendTexture();
-        gs_color                           ColorMask = gs_rgba_color(255, 255, 255, 255);
+        gs_color                           ColorMask = gs_color_rgba(255, 255, 255, 255);
     };
 
     if(begin_node<ImmediateUserInterfaceNodeImage>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))

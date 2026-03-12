@@ -454,10 +454,10 @@ void ApplicationRenderingBackend::end_render()
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)
 {
     glClearColor(
-        (float)gs_rgba_color_get_r(_Color) / 255.f,
-        (float)gs_rgba_color_get_g(_Color) / 255.f,
-        (float)gs_rgba_color_get_b(_Color) / 255.f,
-        (float)gs_rgba_color_get_a(_Color) / 255.f);
+        (float)gs_color_rgba_get_r(_Color) / 255.f,
+        (float)gs_color_rgba_get_g(_Color) / 255.f,
+        (float)gs_color_rgba_get_b(_Color) / 255.f,
+        (float)gs_color_rgba_get_a(_Color) / 255.f);
 }
 
 void ApplicationRenderingBackend::scissor_box(const gs_2dboxf& _ClippingRect)

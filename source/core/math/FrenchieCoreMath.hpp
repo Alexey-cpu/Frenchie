@@ -1766,19 +1766,17 @@ typedef gs_matrix<int,    4, 4> gs_mat4i;
 typedef unsigned int gs_color;
 
 
-gs_color gs_rgba_color(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A);
+gs_color gs_color_rgba(const gs_color& _R, const gs_color& _G, const gs_color& _B, const gs_color& _A);
 
-gs_color gs_rgba_color_get_r(const gs_color& _Color);
+gs_color gs_color_rgba_get_r(const gs_color& _Color);
 
-gs_color gs_rgba_color_get_g(const gs_color& _Color);
+gs_color gs_color_rgba_get_g(const gs_color& _Color);
 
-gs_color gs_rgba_color_get_b(const gs_color& _Color);
+gs_color gs_color_rgba_get_b(const gs_color& _Color);
 
-gs_color gs_rgba_color_get_a(const gs_color& _Color);
+gs_color gs_color_rgba_get_a(const gs_color& _Color);
 
-gs_color gs_rbg_color_lerp(gs_color _SourceColor, gs_color _TargetColor, float _Fraction);
-
-double gs_rgb_color_distance(const gs_color& _A, const gs_color& _B);
+gs_color gs_color_rbg_lerp(gs_color& _SourceColor, gs_color& _TargetColor, float& _Fraction);
 
 // Convert rgb floats ([0-1],[0-1],[0-1]) to hsv floats ([0-1],[0-1],[0-1]), from Foley & van Dam p592
 // Optimized http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
