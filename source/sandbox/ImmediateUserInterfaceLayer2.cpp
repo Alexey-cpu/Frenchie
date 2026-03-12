@@ -6277,11 +6277,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
                 }
 
-                PaletteBoxSliderPosition = gs_clamp(
-                    PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / PaletteBoxSliderPositionScale,
-                    0.f,
-                    1.f);
-
+                PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / PaletteBoxSliderPositionScale, 0.f, 1.f);
                 PaletteBoxSliderIsMoving = true;
             }
 
@@ -6294,11 +6290,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
                 }
 
-                GradientBoxSliderPosition = gs_clamp(
-                    GradientBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f) / GradientBoxSliderPositionScale,
-                    gs_vec2f(0.f, 0.f),
-                    gs_vec2f(1.f, 1.f));
-
+                GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f) / GradientBoxSliderPositionScale, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
                 GradientBoxSliderIsMoving = true;
             }
 
@@ -6311,11 +6303,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
                 }
 
-                AlphaBoxSliderPosition = gs_clamp(
-                    AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / AlphaBoxSliderPositionScale,
-                    0.f,
-                    AlphaBox.height() - GradientSliderHeight * 0.5f);
-
+                AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / AlphaBoxSliderPositionScale, 0.f, 1.f);
                 AlphaBoxSliderIsMoving = true;
             }
 
