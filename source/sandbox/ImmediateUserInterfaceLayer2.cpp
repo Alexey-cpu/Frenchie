@@ -325,6 +325,8 @@ namespace Frenchie
 
                     gs_vec2f size = gs_vec2f(_Size.x, ((*it)->State.BoundingBox.size() * scale).y);
                     size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    size = gs_vec2f(_Size.x, size.y);
+
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(0.f, size.y + _Padding.y);
 
@@ -385,6 +387,7 @@ namespace Frenchie
 
                     gs_vec2f size = gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, _Size.y);
                     size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    size = gs_vec2f(size.x, _Size.y);
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                     position += gs_vec2f(size.x + _Padding.x, 0.f);
                     childrenBoundingBox = gs_2dboxf(childrenBoundingBox.Min, childrenBoundingBox.Max, (*it)->State.BoundingBox.Min, (*it)->State.BoundingBox.Max);
@@ -6082,6 +6085,9 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             gs_vec2f position  = State.BoundingBox.Min;
             gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + colorBoxSize;
 
+            PaletteSliderHeight  = gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.1f;
+            GradientSliderHeight = gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.1f;
+
             // calculate gradient box
             {
                 gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
@@ -6094,6 +6100,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 gs_vec2f size = gs_vec2f((paletteBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 PaletteBox    = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
+
+                PaletteBoxSliderPositionScale = PaletteBox.height() - PaletteSliderHeight;
             }
 
             // calculate alpha box
@@ -6101,6 +6109,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 gs_vec2f size = gs_vec2f((alphaBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 AlphaBox    = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
+
+                AlphaBoxSliderPositionScale = AlphaBox.height() - PaletteSliderHeight;
             }
 
             // calculate color box
@@ -6108,6 +6118,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 gs_vec2f size = gs_vec2f((colorBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 ColorBox      = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
+
+                GradientBoxSliderPositionScale = GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight);
             }
         }
 
@@ -6141,15 +6153,15 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 
                 // palette slider
                 _Context->m_Renderer->push_rectangle_filled(
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition),
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) + gs_vec2f(PaletteBox.width(), PaletteSliderHeight),
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale,
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale + gs_vec2f(PaletteBox.width(), PaletteSliderHeight),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
             // render color gradient box
             {
-                float h = PaletteMaximumHue * PaletteBoxSliderPosition / (PaletteBox.height() - PaletteSliderHeight);
+                float h = PaletteMaximumHue * PaletteBoxSliderPosition;
 
                 gs_color c1 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 0, 255));
                 gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), 255, 255));
@@ -6167,8 +6179,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 // gradient box slider
                 gs_2dboxf gradientBoxSlider = gs_2dboxf(
-                    GradientBox.Min + GradientBoxSliderPosition,
-                    GradientBox.Min + GradientBoxSliderPosition + gs_vec2f(GradientSliderHeight));
+                    GradientBox.Min + GradientBoxSliderPosition * GradientBoxSliderPositionScale,
+                    GradientBox.Min + GradientBoxSliderPosition * GradientBoxSliderPositionScale + gs_vec2f(GradientSliderHeight));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min,
@@ -6184,8 +6196,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 // calculate color
                 {
-                    float x = gradientBoxSlider.Min.x;
-                    float y = gradientBoxSlider.Min.y;
+                    float x = gradientBoxSlider.center().x;
+                    float y = gradientBoxSlider.center().y;
 
                     if(gs_abs(gradientBoxSlider.Min.x - GradientBox.Min.x) <= 1.f)
                         x = gradientBoxSlider.Min.x;
@@ -6220,8 +6232,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 // alpha box slider
                 _Context->m_Renderer->push_rectangle_filled(
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition),
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) + gs_vec2f(AlphaBox.width(), PaletteSliderHeight),
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale,
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale + gs_vec2f(AlphaBox.width(), PaletteSliderHeight),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
@@ -6229,7 +6241,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     gs_color_rgba_get_r(Color),
                     gs_color_rgba_get_g(Color),
                     gs_color_rgba_get_b(Color),
-                    (gs_color)(255.f * (1.f - AlphaBoxSliderPosition / (AlphaBox.height() - PaletteSliderHeight))));
+                    (gs_color)(255.f * (1.f - AlphaBoxSliderPosition)));
             }
 
             // color box
@@ -6261,14 +6273,14 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    PaletteBoxSliderPosition         = _Context->m_Input.get_cusor_position().y - PaletteBox.Min.y;
+                    PaletteBoxSliderPosition         = (_Context->m_Input.get_cusor_position().y - PaletteBox.Min.y) / PaletteBoxSliderPositionScale;
                     PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
                 }
 
                 PaletteBoxSliderPosition = gs_clamp(
-                    PaletteBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
+                    PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / PaletteBoxSliderPositionScale,
                     0.f,
-                    PaletteBox.height() - GradientSliderHeight * 0.5f);
+                    1.f);
 
                 PaletteBoxSliderIsMoving = true;
             }
@@ -6278,14 +6290,14 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    GradientBoxSliderPosition         = _Context->m_Input.get_cusor_position() - GradientBox.Min;
+                    GradientBoxSliderPosition         = (_Context->m_Input.get_cusor_position() - GradientBox.Min) / GradientBoxSliderPositionScale;
                     GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
                 }
 
                 GradientBoxSliderPosition = gs_clamp(
-                    GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f,
+                    GradientBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f) / GradientBoxSliderPositionScale,
                     gs_vec2f(0.f, 0.f),
-                    GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
+                    gs_vec2f(1.f, 1.f));
 
                 GradientBoxSliderIsMoving = true;
             }
@@ -6295,12 +6307,12 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    AlphaBoxSliderPosition         = _Context->m_Input.get_cusor_position().y - PaletteBox.Min.y;
+                    AlphaBoxSliderPosition         = (_Context->m_Input.get_cusor_position().y - PaletteBox.Min.y) / AlphaBoxSliderPositionScale;
                     AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
                 }
 
                 AlphaBoxSliderPosition = gs_clamp(
-                    AlphaBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f,
+                    AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / AlphaBoxSliderPositionScale,
                     0.f,
                     AlphaBox.height() - GradientSliderHeight * 0.5f);
 
@@ -6319,61 +6331,55 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             float    v   = (float)gs_color_hsv_get_v(HSV) / 255.f;
 
             // setup palette slider position
-            PaletteBoxSliderPosition = gs_clamp(
-                h / PaletteMaximumHue * PaletteBox.height(),
-                0.f,
-                PaletteBox.height() - PaletteSliderHeight);
-            
+            PaletteBoxSliderPosition         = gs_clamp(h / PaletteMaximumHue, 0.f, 1.f);
             PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
 
             // setup grdient slider position
-            GradientBoxSliderPosition = gs_clamp(
-                gs_vec2f(GradientBox.width() * s, GradientBox.height() * (1.f - v)) - gs_vec2f(GradientSliderHeight, GradientSliderHeight),
-                gs_vec2f(0.f, 0.f),
-                GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight));
-
+            GradientBoxSliderPosition         = gs_clamp(gs_vec2f(s, (1.f - v)), gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
             GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
 
             // setup alpha slider position
-            AlphaBoxSliderPosition = gs_clamp(
-                (1.f - (float)gs_color_rgba_get_a(_Color) / 255.f) * (AlphaBox.height() - PaletteSliderHeight),
-                0.f,
-                AlphaBox.height() - PaletteSliderHeight);
+            AlphaBoxSliderPosition         = gs_clamp((1.f - (float)gs_color_rgba_get_a(_Color) / 255.f), 0.f, 1.f);
+            AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
         }
         
         // slider attributes
-        gs_color  Color = 1;
-        gs_vec3ui RGB;
-        gs_vec3ui HSV;
-        gs_vec3ui HSL;
-        gs_color  Alpha = 255;
-
+        gs_color                                  Color    = 1;
+        gs_vec3ui                                 RGB      = {0, 0, 0};
+        gs_vec3ui                                 HSV      = {0, 0, 0};
+        gs_vec3ui                                 HSL      = {0, 0, 0};
+        gs_color                                  Alpha    = 255;
         ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
     private:
 
-        float     PaletteMaximumHue = 1.05f;
-        float     PaletteHueStep    = 0.05f;
-
-        gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-        float     PaletteBoxSliderPosition          = 0.f;
-        float     PaletteBoxSliderPreviousPosition  = 0.f;
-        bool      PaletteBoxSliderIsMoving          = false;
-        
-        gs_2dboxf AlphaBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-        float     AlphaBoxSliderPosition            = 0.f;
-        float     AlphaBoxSliderPreviousPosition    = 0.f;
-        bool      AlphaBoxSliderIsMoving            = false;
-
+        // gradient
         gs_2dboxf GradientBox                       = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         gs_vec2f  GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
         gs_vec2f  GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
+        gs_vec2f  GradientBoxSliderPositionScale    = gs_vec2f(0.f, 0.f);
         bool      GradientBoxSliderIsMoving         = false;
+        float     GradientSliderHeight              = 32.f;
 
+        // palette
+        float     PaletteMaximumHue                 = 1.05f;
+        float     PaletteHueStep                    = 0.05f;
+        gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        float     PaletteBoxSliderPosition          = 0.f;
+        float     PaletteBoxSliderPreviousPosition  = 0.f;
+        float     PaletteBoxSliderPositionScale     = 0.f;
+        bool      PaletteBoxSliderIsMoving          = false;
+        float     PaletteSliderHeight               = 16.f;
+        
+        // alpha box
+        gs_2dboxf AlphaBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        float     AlphaBoxSliderPosition            = 0.f;
+        float     AlphaBoxSliderPreviousPosition    = 0.f;
+        float     AlphaBoxSliderPositionScale       = 0.f;
+        bool      AlphaBoxSliderIsMoving            = false;
+
+        // color box
         gs_2dboxf ColorBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-
-        float    PaletteSliderHeight                = 16.f;
-        float    GradientSliderHeight               = 32.f;
     };
 
     next_content_padding(gs_vec2f(2.f));
@@ -6396,6 +6402,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         // RGB
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
         {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
@@ -6426,6 +6433,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         // HSV
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
         {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
@@ -6469,6 +6477,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         // HSL
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
         {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
@@ -6512,6 +6521,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         // Alpha
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
         {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
             next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
             next_content_padding(gs_vec2f(16.f));
 
