@@ -95,13 +95,13 @@ void ImmediateUserInterfaceTestLayer::windows_test()
             if(m_ImmediateUserInterface->begin_menu("Menu-2"))
             {
                 static bool checked = false;
-                m_ImmediateUserInterface->check_button("Checkbox", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox, &checked);
+                m_ImmediateUserInterface->check_button("Checkbox", checked, ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox);
                 m_ImmediateUserInterface->menu_action("Action-4");
 
-                m_ImmediateUserInterface->check_button("RadioButton", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton, &checked);
+                m_ImmediateUserInterface->check_button("RadioButton", checked, ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton);
                 m_ImmediateUserInterface->menu_action("Action-5");
 
-                m_ImmediateUserInterface->check_button("SliderButton", ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton, &checked);
+                m_ImmediateUserInterface->check_button("SliderButton", checked, ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton);
                 m_ImmediateUserInterface->menu_action("Action-6");
 
                 m_ImmediateUserInterface->menu_action("Action-7");
@@ -404,16 +404,46 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     // color pickers
     static gs_color color = 1;
 
+    m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
+
+    static bool EnableRGB   = true;
+    static bool EnableHSV   = true;
+    static bool EnableHSL   = true;
+    static bool EnableAlpha = true;
+    
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Модификаторы цвета", "Color input testing")))
     {
-        m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
-
-        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
+        if(m_ImmediateUserInterface->begin_scrollarea(
+            m_ImmediateUserInterface->next_id("Regulators"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
-            m_ImmediateUserInterface->color_picker(m_ImmediateUserInterface->next_id("Color picker"), color);
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), EnableRGB);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableRGBLabel"), "Регулировать RGB");
+            
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSV"), EnableHSV);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSVLabel"), "Регулировать HSV");
+
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSL"), EnableHSL);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSLLabel"), "Регулировать HSL");
+
+            m_ImmediateUserInterface->next_line();
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), EnableAlpha);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Регулировать alpha канал");
 
             m_ImmediateUserInterface->end_scrollarea();
         }
+
+        m_ImmediateUserInterface->color_picker(
+            m_ImmediateUserInterface->next_id("Color picker"),
+            color,
+              (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
+            | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
+            | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
+            | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+        );
         
         m_ImmediateUserInterface->end_window();
     }
