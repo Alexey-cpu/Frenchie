@@ -6093,6 +6093,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 GradientBox   = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
+
+                GradientBoxSliderPositionScale = GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight);
             }
 
             // calculate palette box
@@ -6118,8 +6120,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 gs_vec2f size = gs_vec2f((colorBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 ColorBox      = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
-
-                GradientBoxSliderPositionScale = GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight);
             }
         }
 
@@ -6136,8 +6136,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 
                 for (int i = 1; i < sectors; i++)
                 {
-                    gs_color sourceColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((i - 1) * PaletteHueStep * 255.f), 255, 255));
-                    gs_color targetColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((i - 0) * PaletteHueStep * 255.f), 255, 255));
+                    gs_color sourceColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 1) * PaletteHueStep * 255.f), 255, 255));
+                    gs_color targetColor = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((float)(i - 0) * PaletteHueStep * 255.f), 255, 255));
 
                     _Context->m_Renderer->push_rectangle_gradient_mesh(
                         position,
@@ -6193,29 +6193,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     gradientBoxSlider.Max - gs_vec2f(4.f),
                     gs_color_rgba(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // calculate color
-                {
-                    float x = gradientBoxSlider.center().x;
-                    float y = gradientBoxSlider.center().y;
-
-                    if(gs_abs(gradientBoxSlider.Min.x - GradientBox.Min.x) <= 1.f)
-                        x = gradientBoxSlider.Min.x;
-                    else if(gs_abs(gradientBoxSlider.Max.x - gradientBoxSlider.Max.x) <= 1.f)
-                        x = gradientBoxSlider.Max.x;
-
-                    if(gs_abs(gradientBoxSlider.Min.y - GradientBox.Min.y) <= 1.f)
-                        y = gradientBoxSlider.Min.y;
-                    else if(gs_abs(gradientBoxSlider.Max.y - gradientBoxSlider.Max.y) <= 1.f)
-                        y = gradientBoxSlider.Max.y;
-
-                    gs_vec2f p = gs_vec2f(x, y);
-
-                    float s = (p - GradientBox.Min).x / GradientBox.width();
-                    float v = 1.f - (p - GradientBox.Min).y / GradientBox.height();
-
-                    Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), (gs_color)(s * 255.f), (gs_color)(v * 255.f)));
-                }
             }
 
             // render alpha editor
@@ -6236,12 +6213,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale + gs_vec2f(AlphaBox.width(), PaletteSliderHeight),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                Color = gs_color_rgba(
-                    gs_color_rgba_get_r(Color),
-                    gs_color_rgba_get_g(Color),
-                    gs_color_rgba_get_b(Color),
-                    (gs_color)(255.f * (1.f - AlphaBoxSliderPosition)));
             }
 
             // color box
@@ -6251,6 +6222,17 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     ColorBox.Max,
                     Color,
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            // calculate color
+            {
+                float h = PaletteMaximumHue * PaletteBoxSliderPosition;
+                float s = GradientBoxSliderPosition.x;
+                float v = 1.f - GradientBoxSliderPosition.y;
+                float a = 1.f - AlphaBoxSliderPosition;
+
+                Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h * 255.f), (gs_color)(s * 255.f), (gs_color)(v * 255.f)));
+                Color = gs_color_rgba(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color), (gs_color)roundf(255.f * a));
             }
         }
 
@@ -6314,9 +6296,10 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         void force_rgba_color(const gs_color& _Color)
         {
             gs_color HSV = gs_color_rgb_to_hsv(_Color);
-            float    h   = (float)gs_color_hsv_get_h(HSV) / 255.f;
-            float    s   = (float)gs_color_hsv_get_s(HSV) / 255.f;
-            float    v   = (float)gs_color_hsv_get_v(HSV) / 255.f;
+            float    h   = (float)(gs_color_hsv_get_h(HSV) / 255.f);
+            float    s   = (float)(gs_color_hsv_get_s(HSV) / 255.f);
+            float    v   = (float)(gs_color_hsv_get_v(HSV) / 255.f);
+            float    a   = (float)(gs_color_rgba_get_a(_Color) / 255.f);
 
             // setup palette slider position
             PaletteBoxSliderPosition         = gs_clamp(h / PaletteMaximumHue, 0.f, 1.f);
@@ -6327,7 +6310,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
 
             // setup alpha slider position
-            AlphaBoxSliderPosition         = gs_clamp((1.f - (float)gs_color_rgba_get_a(_Color) / 255.f), 0.f, 1.f);
+            AlphaBoxSliderPosition         = gs_clamp((1.f - a), 0.f, 1.f);
             AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
         }
         
