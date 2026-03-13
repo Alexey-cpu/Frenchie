@@ -6069,7 +6069,6 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
     {
     public:
         ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-
         virtual ~ImmediateUserInterfaceColorPicker(){}
 
         virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
@@ -6083,7 +6082,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
             gs_vec2f padding   = gs_vec2f(8.f);
             gs_vec2f position  = State.BoundingBox.Min;
-            gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + colorBoxSize;
+            gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + colorBoxSize + padding * 2.f;
 
             PaletteSliderHeight  = gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.1f;
             GradientSliderHeight = gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.1f;
@@ -6152,9 +6151,19 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 }
                 
                 // palette slider
-                _Context->m_Renderer->push_rectangle_filled(
+                gs_2dboxf paletteSlider = gs_2dboxf(
                     PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale,
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale + gs_vec2f(PaletteBox.width(), PaletteSliderHeight),
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale + gs_vec2f(PaletteBox.width(), PaletteSliderHeight));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    paletteSlider.Min,
+                    paletteSlider.Max,
+                    gs_color_rgba(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    paletteSlider.Min + gs_vec2f(4.f),
+                    paletteSlider.Max - gs_vec2f(4.f),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
@@ -6196,6 +6205,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             }
 
             // render alpha editor
+            if(Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
             {
                 // alpha box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
@@ -6203,14 +6213,24 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                     AlphaBox.Max,
                     gs_color_rgba(255, 255, 255, 255),
                     gs_color_rgba(255, 255, 255, 255),
-                    gs_color_rgba(0, 0, 0, 255),
-                    gs_color_rgba(0, 0, 0, 255),
+                    gs_color_rgba(255, 255, 255, 0),
+                    gs_color_rgba(255, 255, 255, 0),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // alpha box slider
-                _Context->m_Renderer->push_rectangle_filled(
+                gs_2dboxf aphaSlider = gs_2dboxf(
                     AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale,
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale + gs_vec2f(AlphaBox.width(), PaletteSliderHeight),
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale + gs_vec2f(AlphaBox.width(), PaletteSliderHeight));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    aphaSlider.Min,
+                    aphaSlider.Max,
+                    gs_color_rgba(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    aphaSlider.Min + gs_vec2f(4.f),
+                    aphaSlider.Max - gs_vec2f(4.f),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
@@ -6260,7 +6280,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
                 }
 
                 PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / PaletteBoxSliderPositionScale, 0.f, 1.f);
-                PaletteBoxSliderIsMoving = true;
+
+                return true;
             }
 
             // catch gradient color modifier event
@@ -6274,6 +6295,8 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f) / GradientBoxSliderPositionScale, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
                 GradientBoxSliderIsMoving = true;
+
+                return true;
             }
 
             // catch
@@ -6287,10 +6310,11 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
 
                 AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / AlphaBoxSliderPositionScale, 0.f, 1.f);
                 AlphaBoxSliderIsMoving = true;
+
+                return true;
             }
 
-
-            return true;
+            return false;
         }
 
         void force_rgba_color(const gs_color& _Color)
@@ -6514,6 +6538,192 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
         _Color = picker->Color;
 
         end_vertical_stack();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::color_picker_(
+    const std::string&                               _ID,
+    gs_color&                                        _Color,
+    const ImmediateUserInterfaceColorPickerSettings& _Settings)
+{
+    struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
+    {
+    public:
+        ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        virtual ~ImmediateUserInterfaceColorPicker(){}
+
+        virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+            gs_vec2f ellpseBoxSize       = gs_vec2f(256.f, 256.f);
+            gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
+            gs_vec2f transparencyBoxSize = gs_vec2f(32.f, 256.f);
+            gs_vec2f padding             = gs_vec2f(8.f);
+            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + padding;
+            gs_vec2f position            = State.BoundingBox.Min;
+
+            // ellipse
+            {
+                gs_2dboxf ellipseBox = gs_2dboxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+
+                Ellipse = gs_2d_ellipsef(
+                    gs_2dboxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height())).center(),
+                    gs_min(ellipseBox.width(), ellipseBox.height()) * 0.5f);
+
+                EllipseSlider = gs_2d_ellipsef(
+                    Ellipse.Center + EllipseSliderPosition * Ellipse.Radius,
+                    Ellipse.Radius * 0.1f);
+
+                position += gs_vec2f(ellipseBox.width() + padding.x, 0.f);
+            }
+
+            // brightness box
+            {
+                BrightnessBox = gs_2dboxf(position, position + gs_vec2f((brightnessBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+                
+                position     += gs_vec2f(BrightnessBox.width() + padding.x, 0.f);
+            }
+
+            // transparent box
+            {
+                TransparencyBox = gs_2dboxf(position, position + gs_vec2f((transparencyBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+                position       += gs_vec2f(TransparencyBox.width(), 0.f);
+            }
+
+            
+        }
+
+        virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+            // render ellipse
+            {
+                // ellipse
+                const float sourceAngle = 0.f;
+                const float targetAngle = 360.f;
+                const float delta       = 360.f / 64.f;
+
+                for (float angle = sourceAngle; angle < targetAngle; angle += delta)
+                {
+                    gs_color c1 = gs_color_rgba(255, 255, 255, 255);
+                    gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(angle / 360.f * 255.f), 255, 255));
+                    gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, 255));
+
+                    _Context->m_Renderer->build_triangle_gradient_mesh(
+                        Ellipse.Center,
+                        gs_vec2f(Ellipse.Center.x + Ellipse.Radius * cos(gs_to_radians(angle)), Ellipse.Center.y + Ellipse.Radius * sin(gs_to_radians(angle))),
+                        gs_vec2f(Ellipse.Center.x + Ellipse.Radius * cos(gs_to_radians(angle + delta)), Ellipse.Center.y + Ellipse.Radius * sin(gs_to_radians(angle + delta))),
+                        c1,
+                        c2,
+                        c3);
+                }
+
+                _Context->m_Renderer->push_rendering_command(
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // slider
+                _Context->m_Renderer->push_arc_filled(
+                    EllipseSlider.Center,
+                    EllipseSlider.Radius,
+                    EllipseSlider.Radius,
+                    0.f,
+                    360.f,
+                    gs_color_rgba(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                float s = (float)gs_vector_length(EllipseSliderPosition);
+                float h = (float)gs_vector_argument(EllipseSliderPosition);
+                if(h < 0.f) h += (float)PI2;
+
+                Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h / PI2 * 255.f), (gs_color)(s * 255.f), 255));
+
+                _Context->m_Renderer->push_arc_filled(
+                    EllipseSlider.Center,
+                    EllipseSlider.Radius * 0.8f,
+                    EllipseSlider.Radius * 0.8f,
+                    0.f,
+                    360.f,
+                    Color,
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            // render brightness slider
+            {
+                gs_color HSV = gs_color_rgb_to_hsv(Color);
+
+                _Context->m_Renderer->push_rectangle_gradient_mesh(
+                    BrightnessBox.Min,
+                    BrightnessBox.Max,
+                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 255)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 255)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 0)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 0)),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            // render brightness alpha slider
+            {
+                _Context->m_Renderer->push_rectangle_gradient_mesh(
+                    TransparencyBox.Min,
+                    TransparencyBox.Max,
+                    gs_color_rgba(255, 255, 255, 255),
+                    gs_color_rgba(255, 255, 255, 255),
+                    gs_color_rgba(255, 255, 255, 0),
+                    gs_color_rgba(255, 255, 255, 0),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+        }
+
+        virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+        {
+            if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+
+            if(!_Context->m_Input.is_mouse_button_down())
+            {
+                EllipseSliderIsMoving = false;
+
+                return false;
+            }
+
+            if(Ellipse.contains(_Context->m_Input.get_cusor_position()) || EllipseSliderIsMoving)
+            {
+                if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    EllipseSliderPosition         = (_Context->m_Input.get_cusor_position() - Ellipse.Center) / Ellipse.Radius;
+                    EllipseSliderPreviousPosition = EllipseSliderPosition;
+                }
+
+                EllipseSliderPosition =
+                    Ellipse.contains(_Context->m_Input.get_cusor_position()) ?
+                        (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / Ellipse.Radius) :
+                            gs_vector_normalize(_Context->m_Input.get_cusor_position() - Ellipse.Center);
+
+                EllipseSliderIsMoving = true;
+            }
+
+            return false;
+        }
+
+        gs_color Color = 1;
+
+        gs_vec2f EllipseSliderPosition         = gs_vec2f(0.f, 0.f);
+        gs_vec2f EllipseSliderPreviousPosition = gs_vec2f(0.f, 0.f);
+
+    private:
+        gs_2d_ellipsef EllipseSlider = gs_2d_ellipsef(0.f, 0.f);
+        gs_2d_ellipsef Ellipse = gs_2d_ellipsef(0.f, 0.f);
+
+        gs_2dboxf BrightnessBox   = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        gs_2dboxf TransparencyBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+
+        bool EllipseSliderIsMoving = false;
+    };
+
+    if(begin_node<ImmediateUserInterfaceColorPicker>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        end_node<ImmediateUserInterfaceColorPicker>();
     }
 }
 

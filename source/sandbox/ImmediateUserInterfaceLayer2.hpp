@@ -916,6 +916,13 @@ namespace Frenchie
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
+            // This function renders classic color picker widget.
+            // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
+            void color_picker_(
+                const std::string&                               _ID,
+                gs_color&                                        _Color,
+                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
+
             // This function renders square image.
             // If texture is not passed to a function default renderer white pattern image is used.
             void image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());

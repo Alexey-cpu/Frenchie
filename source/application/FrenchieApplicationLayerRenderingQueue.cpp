@@ -954,6 +954,41 @@ void RenderingQueue::build_triangle_filled_mesh(
         m_MeshVertexesIndexes.push_back(i);
 }
 
+void RenderingQueue::build_triangle_gradient_mesh(
+    const gs_vec2f& _P1,
+    const gs_vec2f& _P2,
+    const gs_vec2f& _P3,
+    const gs_color& _Color1,
+    const gs_color& _Color2,
+    const gs_color& _Color3)
+{
+    const ApplicationRenderingBackendMeshVertexIndex size = (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size();
+
+    m_MeshVertexes.push_back(
+        ApplicationRenderingBackendVertex(
+            gs_vec3f(_P1.x, _P1.y, 0.f),
+            gs_vec3f(0.f),
+            gs_vec3f(0.f),
+            _Color1));
+    
+    m_MeshVertexes.push_back(
+        ApplicationRenderingBackendVertex(
+            gs_vec3f(_P2.x, _P2.y, 0.f),
+            gs_vec3f(0.f),
+            gs_vec3f(0.f),
+            _Color2));
+    
+    m_MeshVertexes.push_back(
+        ApplicationRenderingBackendVertex(
+            gs_vec3f(_P3.x, _P3.y, 0.f),
+            gs_vec3f(0.f),
+            gs_vec3f(0.f),
+            _Color3));
+    
+    for (ApplicationRenderingBackendMeshVertexIndex i = size; i < (ApplicationRenderingBackendMeshVertexIndex)m_MeshVertexes.size(); ++i)
+        m_MeshVertexesIndexes.push_back(i);
+}
+
 void RenderingQueue::build_rectangle_filled_mesh(
     const gs_vec2f&                           _Min,
     const gs_vec2f&                           _Max,

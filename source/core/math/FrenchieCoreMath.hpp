@@ -711,6 +711,13 @@ inline gs_vector<Type, Size> gs_vector_normalize(const gs_vector<Type, Size>& _V
 }
 
 template<typename Type, int Size>
+inline double gs_vector_argument(const gs_vector<Type, Size>& _Vector)
+{
+    gs_vector<Type, Size> normalized = gs_vector_normalize(_Vector);
+    return atan2(normalized.y, normalized.x);
+}
+
+template<typename Type, int Size>
 inline Type gs_vectors_dot(const gs_vector<Type, Size>& _A, const gs_vector<Type, Size>& _B)
 {
     Type dot = 0;
@@ -1330,10 +1337,7 @@ struct gs_2d_ellipse
 
     bool contains(const gs_vector<Type, 2>& _Point) const
     {
-        return _Point.x >= Center.x - Radius &&
-               _Point.y >= Center.y - Radius &&
-               _Point.x <= Center.x + Radius &&
-               _Point.y <= Center.y + Radius;
+        return gs_vector_length(_Point - Center) < Radius;
     }
 
     gs_2d_ellipse<Type> transform(const gs_matrix<Type, 4, 4>& _Transform)
