@@ -6306,11 +6306,11 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
             PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
 
             // setup grdient slider position
-            GradientBoxSliderPosition         = gs_clamp(gs_vec2f(s, (1.f - v)), gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
+            GradientBoxSliderPosition         = gs_clamp(gs_vec2f(s, 1.f - v), gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
             GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
 
             // setup alpha slider position
-            AlphaBoxSliderPosition         = gs_clamp((1.f - a), 0.f, 1.f);
+            AlphaBoxSliderPosition         = gs_clamp(1.f - a, 0.f, 1.f);
             AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
         }
         
