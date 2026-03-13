@@ -480,8 +480,6 @@ namespace Frenchie
                 const gs_color&                                             _ClearColor,
                 const gs_2dboxf&                                            _ClippinBox);
 
-        protected:
-
             // auxiliary mesh building API
             void build_triangle_filled_mesh(
                 const gs_vec2f&                           _P1,
@@ -489,6 +487,14 @@ namespace Frenchie
                 const gs_vec2f&                           _P3,
                 const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture);
+
+            void build_triangle_gradient_mesh(
+                const gs_vec2f& _P1,
+                const gs_vec2f& _P2,
+                const gs_vec2f& _P3,
+                const gs_color& _Color1,
+                const gs_color& _Color2,
+                const gs_color& _Color3);
 
             void build_rectangle_filled_mesh(
                 const gs_vec2f&                           _Min,
@@ -537,6 +543,8 @@ namespace Frenchie
                 const float&    _Width,
                 const gs_color& _Color,
                 const int&      _SegmentsCount = 36);
+
+        protected:
 
             // rendering queue data
             gs_2dboxf                                               m_Viewport                           {gs_vec2f(-gs_huge<float>(), -gs_huge<float>()), gs_vec2f(+gs_huge<float>(), +gs_huge<float>())};
