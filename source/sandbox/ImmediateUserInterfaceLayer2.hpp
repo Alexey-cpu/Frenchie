@@ -69,10 +69,6 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               // hovered menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background
 
-            // comboboxes
-            ImmediateUserInterfaceNodeColors_ComboboxOutline,
-            ImmediateUserInterfaceNodeColors_ComboboxBackground,
-
             // gizmos
             ImmediateUserInterfaceNodeColors_Gizmos,                                                    // gizmos background
             ImmediateUserInterfaceNodeColors_GizmosHovered,                                             // hovered gizmos background
