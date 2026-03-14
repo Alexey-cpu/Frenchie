@@ -1374,14 +1374,8 @@ namespace Frenchie
 
             return modified;
         }
-    }
-}
-
-// implementation
-namespace Frenchie
-{
-    namespace Application
-    {
+    
+        // helpers
         namespace ImmediateUserInterfaceContextLayerHelpers
         {
             class ImmedidateUserInterfaceMovedNodeSearcher
@@ -4472,8 +4466,8 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("DockingWorkspace"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup,
         &m_DockAreaOpened))
     {
         // retrieve window
@@ -4493,10 +4487,6 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
         return;
 
     place_on_dockers(_Context);
-
-    // setup rendering order of docking area
-    if(m_WorkspaceDockArea != nullptr)
-        m_WorkspaceDockArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background;
 
     // rebuild hierarchy
     m_WindowsDockingList.clear();
@@ -4589,8 +4579,8 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
                     int renderingOrder = 0;
 
                     for(auto it  = _Context->m_Hierarchy.begin(window->DockerView);
-                            it != _Context->m_Hierarchy.end(window->DockerView);
-                            it++)
+                             it != _Context->m_Hierarchy.end(window->DockerView);
+                             it++)
                     {
                         (*it)->State.RenderingOrder = renderingOrder;
                     }
@@ -4637,7 +4627,9 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
                 window->RightSnapper         = nullptr;
                 window->BottomSnapper        = nullptr;
                 window->DockingIndex         = -1;
-                window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
+                
+                if(!(window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
+                    window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
             }
         }
     }
@@ -5168,8 +5160,9 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
             // deselect node on mouse press
             node->State.Selected = false;
 
-            // setup default rendering order
-            if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
+            // setup default rendering order for all singletone nodes
+            if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup) &&
+                _Context->m_Hierarchy.get_parent(node) == nullptr)
             {
                 node->State.RenderingOrder =
                     ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
@@ -5285,11 +5278,11 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
         }
 
         // pass focus
-        if(_Context->m_Input.is_mouse_button_pressed() ||
-            eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        if(_Context->m_Input.is_mouse_button_pressed() || eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
             // find top most relative of event catcher node
             ImmediateUserInterfaceNode* relative = eventCatcher;
+            ImmediateUserInterfaceNode* focused  = eventCatcher;
             ImmediateUserInterfaceNode* parent   = eventCatcher->State.Relative;
 
             while (parent)
@@ -5297,11 +5290,10 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
                 relative = parent;
                 parent   = parent->State.Relative;
             }
-            
-            // find top most parental node of the top most relative
-            ImmediateUserInterfaceNode* focused = eventCatcher;
 
-            parent = _Context->m_Hierarchy.get_parent(relative);
+            // find top most parent of event catcher relative node
+            focused = relative;
+            parent  = _Context->m_Hierarchy.get_parent(relative);
 
             while (parent)
             {
@@ -5450,8 +5442,6 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
     // layout menu actions
     for(auto node : _Context->m_NodesRenderingList)
     {
-        if(!node->is_partially_visible(_Context)) continue;
-
         ImmediateUserInterfaceMenu* menu =
             dynamic_cast<ImmediateUserInterfaceMenu*>(node);
 
@@ -5527,7 +5517,7 @@ void ImmedidateUserInterfaceMenusController::detect_maximum_width(
     {
         for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
         {
-            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr && (*it)->is_partially_visible(_Context))
+            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
             {
                 gs_vec2f size =
                     _Context->m_Renderer->calculate_bounding_box(
@@ -5559,7 +5549,7 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
     {
         for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
         {
-            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr && (*it)->is_partially_visible(_Context))
+            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
             {
                 gs_vec2f size =
                     _Context->m_Renderer->calculate_bounding_box(
@@ -7423,9 +7413,11 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
                 menu->ExternalScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
 
                 // calculate rect
+                gs_2dboxf box = menuItem->get_visible_rect(this);
+                
                 menu->ExternalScrollArea->State.BoundingBox = gs_2dboxf(
-                    gs_vec2f(menuItem->State.BoundingBox.Max.x, menuItem->State.BoundingBox.Min.y),
-                    gs_vec2f(menuItem->State.BoundingBox.Max.x, menuItem->State.BoundingBox.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                    gs_vec2f(box.Max.x, box.Min.y),
+                    gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
 
                 end_node<ImmediateUserInterfaceMenuScrollArea>();
             }
