@@ -376,11 +376,60 @@ namespace Frenchie
                 if(_Context == nullptr || _Context->m_Renderer == nullptr)
                     return;
 
-                // render 
-                _Context->m_Renderer->push_rectangle_filled(
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded_filled(
                     State.BoundingBox.Min,
                     State.BoundingBox.Max,
-                    gs_color_rgba(255, 255, 255, 255),
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // open button
+                gs_2dboxf openButtonBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * 0.25f, State.BoundingBox.height()));
+
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    openButtonBox.Min,
+                    openButtonBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                if(openButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_down())
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        openButtonBox.Min + _Context->m_Style.get_frames_width(),
+                        openButtonBox.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+                else
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        openButtonBox.Min + _Context->m_Style.get_frames_width(),
+                        openButtonBox.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                            openButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
+                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+
+                _Context->m_Renderer->push_triangle_filled(
+                    openButtonBox.center() + gs_vec2f(-openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(+openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(0.f, openButtonBox.height() * 0.25f * 0.5f),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -406,7 +455,17 @@ namespace Frenchie
 
                 // activate self
                 if(_Context->m_Input.is_mouse_button_pressed())
-                    Active = true;
+                {
+                    if(Active)
+                    {
+                        Active  = false;
+                        Hovered = false;
+                    }
+                    else
+                    {
+                        Active  = true;
+                    }
+                }
 
                 return true;
             }
