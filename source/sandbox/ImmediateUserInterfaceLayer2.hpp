@@ -116,7 +116,7 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
 
             // ordering
-            ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground                  = 1 << 22, // sets the node to be always on background
+            ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, // declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
 
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                 ImmediateUserInterfaceNodeSettings_Movable |
@@ -223,6 +223,7 @@ namespace Frenchie
             ImmedidateUserInterfaceRenderingOrder_Main,
             ImmedidateUserInterfaceRenderingOrder_Focus,
             ImmedidateUserInterfaceRenderingOrder_Modal,
+            ImmedidateUserInterfaceRenderingOrder_Popup,
             ImmedidateUserInterfaceRenderingOrder_End,
         };
 
