@@ -622,37 +622,47 @@ namespace Frenchie
 
             // UI API
 
-            // Hierarchical elements
+            // Hierarchical UI elements
 
-            // scroll area
+            // This function creates a window
+            bool begin_window(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool*                                     _Opened = nullptr);
+            void end_window();
+
+            // This function creates scrollarea box
             bool begin_scrollarea(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
 
-            // layout
+            // This function creates panel layout box that stretches all it's children to it's size.
             bool begin_panel(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
 
+            // This function creates vertical stack layout box that places all it's child nodes vertically.
             bool begin_vertial_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
 
+            // This function creates horizontal stack layout box that places all it's child nodes horizontally.
             bool begin_horizontal_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
-            // menus
+            // This function creates menu.
+            // Menu is a scrollarea that pushes menu action items next line. All other child items behave like they are in a scrollarea. 
             bool begin_menu(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_menu();
 
-            // widgets
+            // Non hierarchical UI elements
 
             // This function renders push button
             bool push_button(const std::string& _ID);
@@ -707,13 +717,6 @@ namespace Frenchie
             // This function renders square image.
             // If texture is not passed to a function default renderer white pattern image is used.
             void image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
-
-            // windows
-            bool begin_window(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-                bool*                                     _Opened = nullptr);
-            void end_window();
 
             // next node API
             
