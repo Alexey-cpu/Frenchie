@@ -5523,8 +5523,7 @@ void ImmedidateUserInterfaceMenusController::detect_maximum_width(
                     _Context->m_Renderer->calculate_bounding_box(
                         (*it)->Name.begin(),
                         (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
                 _MaximumWidth = gs_max(_MaximumWidth, size.x);
             }
@@ -5555,8 +5554,7 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
                     _Context->m_Renderer->calculate_bounding_box(
                         (*it)->Name.begin(),
                         (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
                 (*it)->State.BoundingBox =
                     gs_2dboxf(
