@@ -909,16 +909,16 @@ namespace Frenchie
             template<typename Type>
             bool input_scalar(const std::string& _ID, Type& _Input, const Type& _Min = gs_tiny<Type>(), const Type& _Max = gs_huge<Type>());
 
-            // This function renders classic color picker widget.
+            // This function renders classic RGBA color picker widget.
             // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
-            void color_picker(
+            void color_picker_rgba(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
-            // This function renders classic color picker widget.
+            // This function renders rounded HSV color picker widget.
             // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
-            void color_picker_(
+            void color_picker_hsva(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);

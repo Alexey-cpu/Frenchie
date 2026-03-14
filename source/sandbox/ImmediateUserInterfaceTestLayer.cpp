@@ -436,7 +436,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
             m_ImmediateUserInterface->end_scrollarea();
         }
 
-        m_ImmediateUserInterface->color_picker(
+        m_ImmediateUserInterface->color_picker_rgba(
             m_ImmediateUserInterface->next_id("Color picker"),
             color,
               (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
@@ -449,7 +449,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Модификаторы цвета", "Color1 input testing")))
     {
-        m_ImmediateUserInterface->color_picker_(
+        m_ImmediateUserInterface->color_picker_hsva(
             m_ImmediateUserInterface->next_id("Color picker"),
             color,
               (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
