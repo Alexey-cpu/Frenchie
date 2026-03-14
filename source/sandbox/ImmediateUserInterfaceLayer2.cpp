@@ -2229,22 +2229,35 @@ namespace Frenchie
                                 !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoInput)     &&
                                 !(_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoClipboard) &&
                                 _Context->m_Input.has_modifier(ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Ctrl)     &&
-                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_V)) // Ctrl + V
+                                _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_V)                      &&
+                                _Context->m_Input.has_clipboard_text()) // Ctrl + V
                             {
-                                if(_Context->m_Input.has_clipboard_text())
+                                // remove selection
+                                if(gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) > 0)
                                 {
-                                    // insert text from clipboard
-                                    std::string clipboardText = _Context->m_Input.get_clipboard_text();
+                                    int position = widget->Utf8LeftCursorPosition;
+                                    int count    = gs_abs(widget->Utf8RightCursorPosition - widget->Utf8LeftCursorPosition) + 1;
 
-                                    _Text.insert(widget->Utf8LeftCursorPosition, clipboardText);
-                                    
-                                    for(int i = 0; i < (int)clipboardText.size(); i++)
-                                        widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
-                                    
+                                    // move cursor
+                                    for (int i = 0; i < count; i++)
+                                        widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_left(widget->Utf8LeftCursorPosition, _Text);
                                     widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
 
-                                    inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
+                                    // erase selection
+                                    _Text.erase(position, count);
                                 }
+
+                                // insert text from clipboard
+                                std::string clipboardText = _Context->m_Input.get_clipboard_text();
+
+                                _Text.insert(widget->Utf8LeftCursorPosition, clipboardText);
+                                
+                                for(int i = 0; i < (int)clipboardText.size(); i++)
+                                    widget->Utf8LeftCursorPosition  = ImmediateUserInterfaceInputStringContent::move_cursor_right(widget->Utf8LeftCursorPosition, _Text);
+                                
+                                widget->Utf8RightCursorPosition = widget->Utf8LeftCursorPosition;
+
+                                inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
 
                                 _InputTextCallback(_Text);
                             }
@@ -2353,26 +2366,17 @@ namespace Frenchie
                     },
                     [panel, &modified, &_Input, &_Format, &_Min, &_Max](const std::string& _Value)
                     {
-                        Type value = Frenchie::Core::String::from_string<Type>(_Value);
-
-                        if(value < _Min || value > _Max)
-                            panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
-                        else
-                            _Input = gs_clamp(value, _Min, _Max);
+                        _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(_Value), _Min, _Max);
                     });
-
-                if(!panel->IsEdited)
-                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
 
                 if(modified)
                 {
-                    Type value = Frenchie::Core::String::from_string<Type>(panel->Buffer);
-
-                    if(value < _Min || value > _Max)
-                        panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
-                    else
-                        _Input = gs_clamp(value, _Min, _Max);
+                    _Input        = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
+                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
                 }
+
+                if(!panel->IsEdited)
+                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
 
                 // calculate geometry
                 {

@@ -843,6 +843,8 @@ namespace Frenchie
 
             // UI API
 
+            // Hierarchical elements
+
             // scroll area
             bool begin_scrollarea(
                 const std::string&                        _ID,
