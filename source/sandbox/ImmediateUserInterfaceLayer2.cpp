@@ -27,633 +27,302 @@ void showHierarchy(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserIn
 }
 #endif
 
+// declaration
 namespace Frenchie
 {
     namespace Application
     {
-        namespace ImmediateUserInterfaceContextLayerHelpers
+        // layouts
+        struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
         {
-            class ImmediateUserInterfaceWindowUtility
-            {
-            public:
-
-                template<typename FrameProcessor>
-                void process_window_frame(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window, const FrameProcessor& _FrameProcessor)
-                {
-                    if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
-                        return;
-
-                    // calculate total windows frames size and frames count
-                    gs_vec2f totalFramesSize  = gs_vec2f(0.f, 0.f);
-                    int      totalFramesCount = 0;
-
-                    for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                             it != _Context->m_Hierarchy.end(_Window->DockerView);
-                             it++)
-                    {
-                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
-
-                        totalFramesSize += gs_vec2f(
-                            _Context->m_Renderer->calculate_bounding_box((*it)->Name.begin(), (*it)->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
-                            0.f);
-                        totalFramesCount++;
-                    }
-
-                    totalFramesSize += gs_vec2f(
-                        _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
-                        0.f);
-                    totalFramesCount++;
-
-                    totalFramesSize = gs_vec2f(
-                        gs_min(totalFramesSize.x, _Window->FrameBox.width() * 0.8f), // TODO: 0.8f MUST BE A SETTING !!!
-                        _Window->FrameBox.height());
-
-                    // calculate frame unlocking and dragging panes
-                    gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
-
-                    // process frameboxes
-                    gs_vec2f position = frameBoxUnlockingPane.Min;
-                    gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
-
-                    // process self frame
-                    gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
-                    _FrameProcessor(_Context, _Window->FrameBox, boundingBox, _Window);
-                    position += gs_vec2f(size.x, 0.f);
-
-                    // process docked windows frames
-                    for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                             it != _Context->m_Hierarchy.end(_Window->DockerView);
-                             it++)
-                    {
-                        ImmediateUserInterfaceWindow* window =
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
-
-                        if(window == nullptr || window->Docker == nullptr)
-                            continue;
-
-                        _FrameProcessor(
-                            _Context,
-                            gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
-                            gs_2dboxf(position, position + size),
-                            dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
-
-                        position += gs_vec2f(size.x, 0.f);
-                    }
-                }
-
-                ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
-                {
-                    ImmediateUserInterfaceNode* parent = _DockerView;
-
-                    while (parent)
-                    {
-                        if(dynamic_cast<ImmediateUserInterfaceWindow*>(parent))
-                            return dynamic_cast<ImmediateUserInterfaceWindow*>(parent);
-                        parent = _Context->m_Hierarchy.get_parent(parent);
-                    }
-                    
-                    return nullptr;
-                }
-            };
-
-            class ImmedidateUserInterfaceMovedNodeSearcher
-            {
-            public:
-                template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
-                {
-                    if(_Context == nullptr)
-                        return nullptr;
-
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
-                    {
-                        if(!_Filter(singleton))
-                            continue;
-
-                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, singleton, _Filter);
-
-                        if(moved != nullptr)
-                            return moved;
-                    }
-
-                    return nullptr;
-                };
-
-            private:
-
-                template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
-                {
-                    if(_Context == nullptr || _Moved == nullptr)
-                        return nullptr;
-
-                    // check self
-                    if((_Moved->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved) && _Filter(_Moved))
-                        return _Moved;
-
-                    // check children
-                    for(auto it = _Context->m_Hierarchy.begin(_Moved); it != _Context->m_Hierarchy.end(_Moved); it++)
-                    {
-                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, *it, _Filter);
-
-                        if(moved != nullptr)
-                            return moved;
-                    }
-
-                    return nullptr;
-                }
-            };
-
-            class ImmedidateUserInterfaceHoveredNodeSearcher
-            {
-            public:
-
-                template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
-                {
-                    // find top most hovered singleton window or a snapped window not equal to the moved one
-                    ImmediateUserInterfaceNode* hovered  = nullptr;
-
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
-                        search_recursive(_Context, singleton, &hovered, _Filter);
-
-                    return hovered;
-                };
-
-            private:
-
-                template<typename FrameProcessor>
-                void search_recursive(
-                    ImmediateUserInterfaceContextLayer* _Context,
-                    ImmediateUserInterfaceNode*         _Next,
-                    ImmediateUserInterfaceNode**        _Hovered,
-                    const FrameProcessor&               _Filter)
-                {
-                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()))
-                        return;
-
-                    // check self
-                    if(_Filter(_Next))
-                    {
-                        if(*_Hovered == nullptr || _Next->Cache.Depth > (*_Hovered)->Cache.Depth)
-                            *_Hovered = _Next;
-                    }
-
-                    // check children
-                    for(auto it = _Context->m_Hierarchy.begin(_Next); it != _Context->m_Hierarchy.end(_Next); it++)
-                        search_recursive(_Context, *it, _Hovered, _Filter);
-                }
-            };
-
-            // helper functions
-            int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Node == nullptr)
-                    return 0;
-
-                return gs_max(
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.SelfThickness + 1,
-                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
-            }
-
-            int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
-            {
-                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
-            };
-
-            // layouting
-            gs_vec2f layout_compute_aligned_position(
-                const int       _Settings,
-                const gs_vec2f& _Position,
-                const gs_vec2f& _Size,
-                gs_vec2f        _ChildrenSize)
-            {
-                gs_2dboxf parentBoundingBox = gs_2dboxf(_Position, _Position + _Size);
-                gs_vec2f  position = _Position;
-
-                // vertical alignment
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
-                    position = gs_vec2f(position.x, _Position.y);
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
-                    position = gs_vec2f(position.x, (position + parentBoundingBox.size() - _ChildrenSize).y);
-                else // center is default
-                    position = gs_vec2f(position.x, (parentBoundingBox.center() - _ChildrenSize * 0.5f).y);
-
-                // horizontal alignment
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
-                    position = gs_vec2f(_Position.x, position.y);
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                    position = gs_vec2f((position + parentBoundingBox.size() - _ChildrenSize).x, position.y);
-                else // center is default
-                    position = gs_vec2f((parentBoundingBox.center() - _ChildrenSize * 0.5f).x, position.y);
-
-                return position;
-            }
-
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_panel(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
-            {
-                // layout children
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) == nullptr || !_Filter(*it)) continue;
-
-                    gs_vec2f size     = gs_clamp(_Size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    gs_vec2f position = layout_compute_aligned_position( _Settings, _Position, _Size, size);
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                }
-            }
-
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_vertical_stack(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec2f&       _Padding,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
-            {
-                gs_vec2f position  = _Position + _Padding;
-                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
-
-                // compute total children size
-                totalsize += _Padding * 2.f;
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) != nullptr && _Filter(*it))
-                        totalsize += (*it)->State.BoundingBox.size();
-                }
-
-                // compute children size scale
-                gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-
-                // layout children and compute their bounding box
-                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-
-                    gs_vec2f size = gs_vec2f(_Size.x, ((*it)->State.BoundingBox.size() * scale).y);
-                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    size = gs_vec2f(_Size.x, size.y);
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y + _Padding.y);
-
-                    childrenBoundingBox = gs_2dboxf(
-                        childrenBoundingBox.Min,
-                        childrenBoundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
-                }
-
-                // align children within parent
-                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-
-                    gs_vec2f size = (*it)->State.BoundingBox.size();
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y + _Padding.y);
-                }
-            }
-
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_horizontal_stack(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec2f&       _Padding,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
-            {
-                gs_vec2f position   = _Position + _Padding;
-                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-
-                // compute total size
-                totalsize += _Padding * 2.f;
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) != nullptr && _Filter(*it))
-                        totalsize += (*it)->State.BoundingBox.size() + _Padding;
-                }
-
-                // compute children scale
-                gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-
-                // layout children and compute their bounding box
-                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-
-                    gs_vec2f size = gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, _Size.y);
-                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    size = gs_vec2f(size.x, _Size.y);
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x + _Padding.x, 0.f);
-                    childrenBoundingBox = gs_2dboxf(childrenBoundingBox.Min, childrenBoundingBox.Max, (*it)->State.BoundingBox.Min, (*it)->State.BoundingBox.Max);
-                }
-
-                // align children within parent
-                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-
-                    gs_vec2f size = (*it)->State.BoundingBox.size();
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x + _Padding.x, 0.f);
-                }
-            }
-
-            // gizmos
-            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min, WindowResizeAngleGizmoRadius);
-            }
-
-            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
-            }
-
-            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
-            };
-
-            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max, WindowResizeAngleGizmoRadius);
-            };
-
-            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), WindowResizeSideGizmoWidth));
-            };
-
-            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->get_visible_rect(_Context).height()));
-            };
-
-            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
-                    _Node->get_visible_rect(_Context).Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
-            };
-
-            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
-                    _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
-            };
-        
-            void render_resize_gizmo(
-                ImmediateUserInterfaceContextLayer*     _Context,
-                ImmediateUserInterfaceNode*             _Node,
-                const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Context == nullptr || _Node == nullptr) return;
-
-                int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Node);
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                {
-                    auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeTopLeft.Center,
-                        resizeTopLeft.Radius,
-                        resizeTopLeft.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                {
-                    auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeTopRight.Center,
-                        resizeTopRight.Radius,
-                        resizeTopRight.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                {
-                    auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeBottomLeft.Center,
-                        resizeBottomLeft.Radius,
-                        resizeBottomLeft.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                {
-                    auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeBottomRight.Center,
-                        resizeBottomRight.Radius,
-                        resizeBottomRight.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                {
-                    auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeTop.Min,
-                        resizeTop.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                {
-                    auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeLeft.Min,
-                        resizeLeft.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                {
-                    auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeRight.Min,
-                        resizeRight.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                {
-                    auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeBottom.Min,
-                        resizeBottom.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            };
-
-            bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Context == nullptr || _Node == nullptr) return false;
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-                
-                return false;
-            };
-
-            ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Context == nullptr || _Node == nullptr) return nullptr;
-
-                // find resizable node
-                ImmediateUserInterfaceNode* resizable = _Node;
-
-                // pass event to a parent
-                while (_Context->m_Hierarchy.get_parent(resizable) &&
-                        check_cursor_intersection_with_resize_gizmo(_Context, _Context->m_Hierarchy.get_parent(resizable), _ResizeEventType))
-                    resizable = _Context->m_Hierarchy.get_parent(resizable);
-
-                return resizable;
-            };
-
-            void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Node == nullptr)
-                    return;
-
-                gs_2dboxf box = _Node->State.BoundingBox;
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
-
-                _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
-            };
-        }
+        public:
+            ImmediateUserInterfaceNodePanel(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodePanel();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
+        };
+
+        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodeVerticalStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceNodeHorizontalStack();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+   
+        // scroll area
+        struct ImmediateUserInterfaceScrollAreaScrollBar;
+
+        enum ImmediateUserInterfaceScrollAreaScrollBarType_
+        {
+            ImmediateUserInterfaceScrollAreaScrollBarType_Vertical,
+            ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
+        };
+
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+
+            ImmediateUserInterfaceScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollArea();
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override;
+
+            float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
+            float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
+
+            ImmediateUserInterfaceNode*                ContentView         = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBar* VerticalScrollBar   = nullptr;
+            ImmediateUserInterfaceScrollAreaScrollBar* HorizontalScrollBar = nullptr;
+
+        private:
+            void calculate_content_padding(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*, gs_vec2f&);
+        };
+
+        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaPanel();
+        };
+
+        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaContent(const std::string& _Name);
+            ~ImmediateUserInterfaceScrollAreaContent();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceScrollAreaScrollBar();
+
+            // getters
+            gs_vec2f get_scroll_offset() const;
+
+            // setters
+            void set_scroll_offset(const gs_vec2f _Value);
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            ImmediateUserInterfaceScrollAreaScrollBarType_ Type =
+                ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+
+        private:
+
+            // info
+            gs_vec2f Size             = gs_vec2f(0.f, 0.f);
+            gs_vec2f Position         = gs_vec2f(0.f, 0.f);
+            gs_vec2f PositionScale    = gs_vec2f(1.f, 1.f);
+            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
+
+            ImmediateUserInterfaceScrollArea* retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context);
+        };
+
+        // popups
+        struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceMenu(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenu();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            ImmediateUserInterfaceScrollArea* InternalScrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea* ExternalScrollArea = nullptr;
+        };
+    
+        struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceMenuScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenuScrollArea();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceMenuAction(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenuAction();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceMenuItem : public ImmediateUserInterfaceMenuAction
+        {
+        public:
+            ImmediateUserInterfaceMenuItem(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenuItem();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
 
         // windows
+        struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNode
+        {
+        public:
+
+            ImmediateUserInterfaceWindow(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindow();
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override;
+
+            virtual void load_state(ImmediateUserInterfaceContextLayer*) override;
+            virtual void save_state(ImmediateUserInterfaceContextLayer*) override;
+
+            ImmediateUserInterfaceNode* Docker            {nullptr};
+            ImmediateUserInterfaceNode* TopSnapper        {nullptr};
+            ImmediateUserInterfaceNode* LeftSnapper       {nullptr};
+            ImmediateUserInterfaceNode* RightSnapper      {nullptr};
+            ImmediateUserInterfaceNode* BottomSnapper     {nullptr};
+            bool                        IsActive          {true};
+            bool                        Activate          {false};
+            bool                        ReattachChildren  {false};
+
+            gs_2dboxf                   FrameBox          {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2dboxf                   ContentBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            bool*                       Opened            {nullptr};
+            int                         DockingIndex      {-1};
+
+            // docking
+            ImmediateUserInterfaceNode* DockerView        {nullptr};
+
+            // snapping
+            ImmediateUserInterfaceNode* SnapperView       {nullptr};
+            ImmediateUserInterfaceNode* TopSnapperView    {nullptr};
+            ImmediateUserInterfaceNode* LeftSnapperView   {nullptr};
+            ImmediateUserInterfaceNode* RightSnapperView  {nullptr};
+            ImmediateUserInterfaceNode* BottomSnapperView {nullptr};
+
+            // content
+            ImmediateUserInterfaceNode* ContentView       {nullptr};
+
+            template<typename FrameProcessor>
+            void process_window_frame(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window, const FrameProcessor& _FrameProcessor)
+            {
+                if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
+                    return;
+
+                // calculate total windows frames size and frames count
+                gs_vec2f totalFramesSize  = gs_vec2f(0.f, 0.f);
+                int      totalFramesCount = 0;
+
+                for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+                            it != _Context->m_Hierarchy.end(_Window->DockerView);
+                            it++)
+                {
+                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
+
+                    totalFramesSize += gs_vec2f(
+                        _Context->m_Renderer->calculate_bounding_box((*it)->Name.begin(), (*it)->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
+                        0.f);
+                    totalFramesCount++;
+                }
+
+                totalFramesSize += gs_vec2f(
+                    _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
+                    0.f);
+                totalFramesCount++;
+
+                totalFramesSize = gs_vec2f(
+                    gs_min(totalFramesSize.x, _Window->FrameBox.width() * 0.8f), // TODO: 0.8f MUST BE A SETTING !!!
+                    _Window->FrameBox.height());
+
+                // calculate frame unlocking and dragging panes
+                gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
+
+                // process frameboxes
+                gs_vec2f position = frameBoxUnlockingPane.Min;
+                gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
+
+                // process self frame
+                gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
+                _FrameProcessor(_Context, _Window->FrameBox, boundingBox, _Window);
+                position += gs_vec2f(size.x, 0.f);
+
+                // process docked windows frames
+                for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+                            it != _Context->m_Hierarchy.end(_Window->DockerView);
+                            it++)
+                {
+                    ImmediateUserInterfaceWindow* window =
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+
+                    if(window == nullptr || window->Docker == nullptr)
+                        continue;
+
+                    _FrameProcessor(
+                        _Context,
+                        gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
+                        gs_2dboxf(position, position + size),
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+
+                    position += gs_vec2f(size.x, 0.f);
+                }
+            }
+
+            static ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
+            {
+                ImmediateUserInterfaceNode* parent = _DockerView;
+
+                while (parent)
+                {
+                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(parent))
+                        return dynamic_cast<ImmediateUserInterfaceWindow*>(parent);
+                    parent = _Context->m_Hierarchy.get_parent(parent);
+                }
+                
+                return nullptr;
+            }
+        };
+
+        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
+        {
+            ImmediateUserInterfaceWindowDockArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindowDockArea();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfaceNodePanel
         {
             ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
@@ -683,836 +352,136 @@ namespace Frenchie
                     State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(512.f, 512.f));
             }
         };
-    
-        struct ImmediateUserInterfaceWindowDockArea : public ImmediateUserInterfaceWindow
-        {
-            ImmediateUserInterfaceWindowDockArea(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
-            virtual ~ImmediateUserInterfaceWindowDockArea(){}
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                State.BoundingBox = gs_2dboxf(
-                    _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
-                    _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
-
-                ImmediateUserInterfaceWindow::layout(_Context);
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
-
-                // content background and outline frame
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    FrameBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-                    FrameBox.Max - _Context->m_Style.get_frames_width() * 2.f,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // frame
-                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
-                    _Context,
-                    this,
-
-                    // render self and child frames
-                    [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
-                    {
-                        // detect if we are active
-                        bool active = _Window->IsActive;
-
-                        // render frame
-                        if(_Window->Docker == nullptr &&
-                            _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
-                                _Context,
-                                _Window,
-                                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
-                        {
-                            // frame
-                            if(_Frame.contains(_Context->m_Input.get_cusor_position()) &&
-                                (_Window->TopSnapper    != nullptr ||
-                                _Window->LeftSnapper   != nullptr ||
-                                _Window->RightSnapper  != nullptr ||
-                                _Window->BottomSnapper != nullptr))
-                            {
-                                _Context->m_Renderer->push_rectangle_rounded_filled(
-                                    _Frame.Min + _Context->m_Style.get_frames_width(),
-                                    _Frame.Max - _Context->m_Style.get_frames_width(),
-                                    _Context->m_Style.get_frames_radius(),
-                                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                            }
-                        }
-                        else
-                        {
-                            // frame
-                            if(active)
-                            {
-                                _Context->m_Renderer->push_rectangle_rounded_filled(
-                                    _Frame.Min + _Context->m_Style.get_frames_width(),
-                                    _Frame.Max - _Context->m_Style.get_frames_width(),
-                                    _Context->m_Style.get_frames_radius(),
-                                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                                    true,
-                                    true,
-                                    false,
-                                    false);
-                            }
-                            else if(_Frame.contains(_Context->m_Input.get_cusor_position()))
-                            {
-                                _Context->m_Renderer->push_rectangle_rounded_filled(
-                                    _Frame.Min + _Context->m_Style.get_frames_width(),
-                                    _Frame.Max - _Context->m_Style.get_frames_width(),
-                                    _Context->m_Style.get_frames_radius(),
-                                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                                    true,
-                                    true,
-                                    false,
-                                    false);
-                            }
-                        }
-
-                        // title
-                        _Context->m_Renderer->push_text(
-                            gs_vec2f(
-                                _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                                _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
-                            _Window->Name.begin(),
-                            _Window->Name.end(),
-                            _Context->m_Style.get_font_size() * 0.6f,
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                    }
-                );
-            }
-        };
-
-        // scrollarea
-        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNodePanel
+        // controllers
+        class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
         {
         public:
-            enum ImmediateUserInterfaceScrollAreaScrollBarType_
-            {
-                ImmediateUserInterfaceScrollAreaScrollBarType_Vertical,
-                ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
-            } Type = ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+            ImmedidateUserInterfaceWindowController();
+            virtual ~ImmedidateUserInterfaceWindowController();
+            virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
-            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-            virtual ~ImmediateUserInterfaceScrollAreaScrollBar(){}
-
-            // getters
-            gs_vec2f get_scroll_offset() const
-            {
-                return Position * PositionScale;
-            }
-
-            // setters
-            void set_scroll_offset(const gs_vec2f _Value)
-            {
-                if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f) return;
-
-                PreviousPosition = Position;
-                Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
-            }
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                // auxiliary lambdas
-                auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
-                {
-                    // clamp self
-                    State.MaximumSize = gs_vec2f(0.f, 0.f);
-                    State.MinimumSize = gs_vec2f(0.f, 0.f);
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-
-                    // reset slider
-                    Position = gs_vec2f(0.f, 0.f);
-                };
-
-                auto calculate_scrollbar_length = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)->gs_vec2f
-                {
-                    return gs_vec2f(
-                        gs_min(gs_max(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * scrollbarMaximumValue.x, scrollbarMinimumSize.x), scrollbarMaximumValue.x),
-                        gs_min(gs_max(gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * scrollbarMaximumValue.y, scrollbarMinimumSize.y), scrollbarMaximumValue.y));
-                };
-
-                auto calculate_scrollbar_slider_position_scale = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)->gs_vec2f
-                {
-                    return gs_vec2f(
-                        gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x),
-                        gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
-                };
-
-                // main code
-                ImmediateUserInterfaceScrollArea* contentArea = retrieve_scroll_area(_Context);
-
-                if(_Context == nullptr || contentArea == nullptr)
-                    return;
-
-                // calculate self maximum and minimum sizes
-                State.MaximumSize =
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-                        gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
-                            gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), _Context->m_Style.get_scrollbar_width());
-
-                if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
-                {
-                    State.MaximumSize.y = 0.f;
-                    State.MinimumSize = State.MaximumSize;
-                    State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-                }
-                else if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-                {
-                    State.MaximumSize.x =  0.f;
-                    State.MinimumSize   = State.MaximumSize;
-                    State.BoundingBox   = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-                }
-
-                State.MinimumSize = State.MaximumSize;
-
-                // calculate self bounding box
-                gs_vec2f offset =
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-                        gs_vec2f(0.f, gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f) :
-                            gs_vec2f(gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f, 0.f);
-
-                if(_Context->m_Style.get_frames_radius() <= 0.f)
-                    offset = gs_vec2f(0.f, 0.f);
-
-                State.BoundingBox = gs_2dboxf(
-                    State.BoundingBox.Min + offset,
-                    State.BoundingBox.Min - (Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ? gs_vec2f(0.f, 0.f) : offset) + State.MaximumSize);
-
-                // calculate scrollbar metrics
-                gs_vec2f scrollbarMinimumValue = gs_vec2f(0.f, 0.f);
-                gs_vec2f scrollbarMaximumValue =
-                    Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-                        gs_vec2f(_Context->m_Style.get_scrollbar_width(), State.BoundingBox.size().y) :
-                            gs_vec2f(State.BoundingBox.size().x, _Context->m_Style.get_scrollbar_width());
-
-                // do not render scrollbar out of scrollarea
-                if(contentArea == nullptr)
-                {
-                    do_not_render_scroll_bar(_Context);
-                    return;
-                }
-
-                // manage horizontal scrollbar
-                if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
-                {
-                    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
-                    {
-                        do_not_render_scroll_bar(_Context);
-                        return;
-                    }
-
-                    gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-                        scrollbarMinimumValue,
-                        scrollbarMaximumValue,
-                        contentArea->ContentView->State.ContentSize,
-                        _Context->m_Style.get_scrollbar_width());
-
-                    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
-                    {
-                        if((int)gs_abs(scrollbarSliderLength.x - scrollbarMaximumValue.x) < _Context->m_Style.get_frames_width())
-                        {
-                            do_not_render_scroll_bar(_Context);
-                            return;
-                        }
-
-                        if((int)scrollbarSliderLength.x >= (int)scrollbarMaximumValue.x)
-                        {
-                            do_not_render_scroll_bar(_Context);
-                            return;
-                        }
-                    }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
-                    {
-                        do_not_render_scroll_bar(_Context);
-                        return;
-                    }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
-                    {
-                    }
-                    else
-                    {
-                        do_not_render_scroll_bar(_Context);
-                        return;
-                    }
-                }
-
-                // manage vertical scrollbar
-                if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-                {
-                    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
-                    {
-                        do_not_render_scroll_bar(_Context);
-                        return;
-                    }
-
-                    gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-                        scrollbarMinimumValue,
-                        scrollbarMaximumValue,
-                        contentArea->ContentView->State.ContentSize,
-                        _Context->m_Style.get_scrollbar_width());
-
-                    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
-                    {
-                        if((int)gs_abs(scrollbarSliderLength.y - scrollbarMaximumValue.y) < _Context->m_Style.get_frames_width())
-                        {
-                            do_not_render_scroll_bar(_Context);
-                            return;
-                        }
-
-                        if((int)scrollbarSliderLength.y >= (int)scrollbarMaximumValue.y)
-                        {
-                            do_not_render_scroll_bar(_Context);
-                            return;
-                        }
-                    }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
-                    {
-                        do_not_render_scroll_bar(_Context);
-                        return;
-                    }
-                    else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
-                    {
-                    }
-                    else
-                    {
-                        do_not_render_scroll_bar(_Context);
-                        return;
-                    }
-                }
-
-                // layout child sliders
-                gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-                    scrollbarMinimumValue,
-                    scrollbarMaximumValue,
-                    contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y),
-                    _Context->m_Style.get_scrollbar_width());
-
-                gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
-                    scrollbarMinimumValue,
-                    scrollbarMaximumValue,
-                    contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y));
-
-                gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
-                
-                if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-                {
-                    if(sliderPosition.y > State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
-                        PositionScale = scrollbarSliderScale;
-                }
-                else
-                {
-                    if(sliderPosition.x > State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
-                        PositionScale = scrollbarSliderScale;
-                }
-
-                Size = scrollbarSliderLength;
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                // resize
-                if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
-                    !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-                {
-                    auto scrollArea = retrieve_scroll_area(_Context);
-
-                    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-                    {
-                        if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight) ||
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
-                        {
-                            ImmediateUserInterfaceNode* resizable =
-                                ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-
-                            ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-
-                            // trigger event
-                            if(resizable != nullptr)
-                            {
-                                if(_Context->m_Input.is_mouse_button_pressed())
-                                {
-                                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                                    return true;
-                                }
-
-                                // execute event
-                                if(_Context->m_Input.is_mouse_button_down() &&
-                                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
-                                {
-                                    ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-                                    return true;
-                                }
-                            }
-                        }
-                        else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight) ||
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
-                        {
-                            ImmediateUserInterfaceNode* resizable =
-                                ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
-
-                            ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
-
-                            // trigger event
-                            if(resizable != nullptr)
-                            {
-                                if(_Context->m_Input.is_mouse_button_pressed())
-                                {
-                                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
-                                    return true;
-                                }
-
-                                // execute event
-                                if(_Context->m_Input.is_mouse_button_down() &&
-                                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
-                                {
-                                    ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
-                                    return true;
-                                }
-                            }
-                        }
-                        else if((scrollArea != nullptr && (int)scrollArea->get_horizontal_scrollbar_width(_Context) <= 0.f) &&
-                                ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                        {
-                            ImmediateUserInterfaceNode* resizable =
-                                ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                            ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                            // trigger event
-                            if(resizable != nullptr)
-                            {
-                                if(_Context->m_Input.is_mouse_button_pressed())
-                                {
-                                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
-                                    return true;
-                                }
-
-                                // execute event
-                                if(_Context->m_Input.is_mouse_button_down() &&
-                                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                                {
-                                    ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft) ||
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
-                        {
-                            ImmediateUserInterfaceNode* resizable =
-                                ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
-
-                            ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
-
-                            // trigger event
-                            if(resizable != nullptr)
-                            {
-                                if(_Context->m_Input.is_mouse_button_pressed())
-                                {
-                                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
-                                    return true;
-                                }
-
-                                // execute event
-                                if(_Context->m_Input.is_mouse_button_down() &&
-                                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
-                                {
-                                    ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
-                                    return true;
-                                }
-                            }
-                        }
-                        else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                        {
-                            ImmediateUserInterfaceNode* resizable =
-                                ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                            ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                            // trigger event
-                            if(resizable != nullptr)
-                            {
-                                if(_Context->m_Input.is_mouse_button_pressed())
-                                {
-                                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
-                                    return true;
-                                }
-
-                                // execute event
-                                if(_Context->m_Input.is_mouse_button_down() &&
-                                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                                {
-                                    ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-                                    return true;
-                                }
-                            }
-                        }
-                        else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom) ||
-                            (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
-                        {
-                            ImmediateUserInterfaceNode* resizable =
-                                ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
-
-                            ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
-
-                            // trigger event
-                            if(resizable != nullptr)
-                            {
-                                if(_Context->m_Input.is_mouse_button_pressed())
-                                {
-                                    resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
-                                    return true;
-                                }
-
-                                // execute event
-                                if(_Context->m_Input.is_mouse_button_down() &&
-                                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
-                                {
-                                    ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // move slider on mouse press event
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - Size * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
-                    PreviousPosition = Position;
-                    State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
-                }
-
-                // move slider on mouse drag event
-                if(_Context->m_Input.is_mouse_button_down())
-                {
-                    Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
-                    State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
-                }
-
-                return true;
-            }
-
-            void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // outline
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // background
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // slider
-                gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - Size);
-
-                if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
-                        sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
-                        sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-            }
+            std::vector<ImmediateUserInterfaceNode*>&
+            retrieve_docked_windows(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Docker, const ImmedidateUserInterfaceDockingAnchor& _Anchors);
 
         private:
 
+            void place_on_dockers(ImmediateUserInterfaceContextLayer* _Context);
+            bool can_be_docked(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked);
+            void attach_to_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Docker, ImmediateUserInterfaceWindow* _Docked, const ImmedidateUserInterfaceDockingAnchor& _Anchor);
+            void detach_from_docker(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Detached);
+
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingCache;
+            mutable std::vector<ImmediateUserInterfaceNode*>  m_WindowsDockingList;
+            mutable ImmediateUserInterfaceWindow*             m_WorkspaceDockArea {nullptr};
+            mutable bool                                      m_DockAreaOpened    {false};
+        };
+    
+        class ImmedidateUserInterfaceInputController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceInputController();
+            virtual ~ImmedidateUserInterfaceInputController();
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+    
+        class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceLayoutController();
+            virtual ~ImmedidateUserInterfaceLayoutController();
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+
+        private:
+            void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
+        };
+
+        class ImmedidateUserInterfaceRenderingController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceRenderingController();
+            virtual ~ImmedidateUserInterfaceRenderingController();
+            virtual void frame_render(ImmediateUserInterfaceContextLayer*) override;
+
+        private:
+
+            static void render_node(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*);
+
+            mutable std::vector<ImmediateUserInterfaceNode*> m_NodesRenderingCache;
+        };
+
+        class ImmedidateUserInterfaceMenusController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceMenusController();
+            virtual ~ImmedidateUserInterfaceMenusController();
+
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            mutable std::vector<ImmediateUserInterfaceMenu*> ActiveMenus;
+
+        private:
+
+            void detect_maximum_width(
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceNode*         _Node,
+                float&                              _MaximumWidth);
+
+            void setup_maximum_with(
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceNode*         _Node,
+                float&                              _MaximumWidth);
+        };
+    
+        class ImmedidateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmedidateUserInterfaceNextNodeController();
+            virtual ~ImmedidateUserInterfaceNextNodeController();
+
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*) override;
+            
+            // API
+            void reset();
+
             // info
-            gs_vec2f Size             = gs_vec2f(0.f, 0.f);
-            gs_vec2f Position         = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale    = gs_vec2f(1.f, 1.f);
-            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-
-            ImmediateUserInterfaceScrollArea* retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context)
-            {
-                if(_Context == nullptr) return nullptr;
-
-                auto parent = _Context->m_Hierarchy.get_parent(this);
-
-                while (parent)
-                {
-                    ImmediateUserInterfaceScrollArea* contentArea =
-                        dynamic_cast<ImmediateUserInterfaceScrollArea*>(parent);
-
-                    if(contentArea != nullptr)
-                        return contentArea;
-                        
-                    parent = _Context->m_Hierarchy.get_parent(parent);
-                }
-
-                return nullptr;
-            }
+            mutable Frenchie::Core::Optional<int>      NextLine;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextMaximumSize;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextContentPadding;
         };
 
-        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
+        class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
         {
         public:
-            ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-            virtual ~ImmediateUserInterfaceScrollAreaPanel(){}
-        };
-
-        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaContent(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-            ~ImmediateUserInterfaceScrollAreaContent(){}
-
-            void layout(ImmediateUserInterfaceContextLayer* _Context)
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                ImmediateUserInterfaceScrollArea* scrollArea = nullptr;
-                ImmediateUserInterfaceNode*       parent     = _Context->m_Hierarchy.get_parent(this);
-
-                while (parent)
-                {
-                    scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(parent);
-                    if(scrollArea != nullptr) break;
-                    parent = _Context->m_Hierarchy.get_parent(parent);
-                }
-                
-                gs_vec2f horizontalScrollBarPosition =
-                    scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ?
-                        scrollArea->HorizontalScrollBar->get_scroll_offset() :
-                            gs_vec2f(0.f, 0.f);
-
-                gs_vec2f verticalScrollBarPosition =
-                    scrollArea != nullptr ?
-                        scrollArea->VerticalScrollBar->get_scroll_offset() :
-                            gs_vec2f(0.f, 0.f);
-
-                gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
-                gs_vec2f start     = position;
-                float    maxHeight = 0.f;
-
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                {
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position,
-                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
-                    maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
-
-                    if((*it)->State.NextLine > 0)
-                    {
-                        position  = gs_vec2f(start.x, position.y + maxHeight * (*it)->State.NextLine + ContentPadding.y);
-                        maxHeight = 0.f;
-                    }
-                    else
-                    {
-                        position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.x, 0.f);
-                    }
-                }
-            }
+            ImmediateUserInterfaceScrollBarsController();
+            virtual ~ImmediateUserInterfaceScrollBarsController();
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
         };
     
-        // popups
-        struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea
-        {
-        public:
-            ImmediateUserInterfaceMenuScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
-            virtual ~ImmediateUserInterfaceMenuScrollArea(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                ImmediateUserInterfaceMenu* menu =
-                    _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
-
-                if(_Context->m_Hierarchy.get_parent(menu)) return;
-
-                // outline
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-        };
-
-        struct ImmediateUserInterfaceMenuAction : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceMenuAction(){}
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr) return;
-
-                gs_vec2f size =
-                    _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-                    gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
-                State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
-                State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                // title
-                _Context->m_Renderer->push_text(
-                    gs_vec2f(
-                        State.BoundingBox.Min.x, 
-                        (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
-                    Name.begin(),
-                    Name.end(),
-                    _Context->m_Style.get_font_size(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix(
-                        (float)place_in_follow()));
-            }
-        };
-
-        struct ImmediateUserInterfaceMenuItem : public ImmediateUserInterfaceMenuAction
-        {
-        public:
-            ImmediateUserInterfaceMenuItem(const std::string& _Name) : ImmediateUserInterfaceMenuAction(_Name){}
-            virtual ~ImmediateUserInterfaceMenuItem(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // background
-                if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                // title
-                _Context->m_Renderer->push_text(
-                    gs_vec2f(
-                        State.BoundingBox.Min.x, 
-                        (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
-                    Name.begin(),
-                    Name.end(),
-                    _Context->m_Style.get_font_size(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // triangle
-                float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
-
-                _Context->m_Renderer->push_triangle_filled(
-                    gs_vec2f(0.f, 0.0),
-                    gs_vec2f(0.f, triangleWidth),
-                    gs_vec2f(triangleWidth * 0.5f, triangleWidth * 0.5f),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix(
-                        (float)place_in_follow(),
-                        gs_vec2f(
-                            State.BoundingBox.Max.x - triangleWidth,
-                            State.BoundingBox.center().y - triangleWidth * 0.5f)));
-            }
-        };
-    
-        // auxiliary functions
-        struct DefaultInputTextFilter
+        // internal
+        struct ImmedidateUserInterfaceDefaultInputTextFilter
         {
             bool operator()(const std::string&) const{return true;}
         };
 
-        struct DefaultInputTextCallback
+        struct ImmedidateUserInterfaceDefaultInputTextCallback
         {
             void operator()(const std::string&) const{}
         };
 
-        template<typename SymbolFilter = DefaultInputTextFilter, typename InputTextCallback = DefaultInputTextCallback>
+        template<typename SymbolFilter = ImmedidateUserInterfaceDefaultInputTextFilter, typename InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback>
         bool input_string_internal(
             ImmediateUserInterfaceContextLayer*              _Context,
             const std::string&                               _ID,
             std::string&                                     _Text,
             const ImmediateUserInterfaceInputStringSettings& _InputSettings,
             const ImmediateUserInterfaceNodeSettings&        _NodeSettings,
-            const SymbolFilter&                              _InputTextFilter   = DefaultInputTextFilter(),
-            const InputTextCallback&                         _InputTextCallback = DefaultInputTextCallback())
+            const SymbolFilter&                              _InputTextFilter   = ImmedidateUserInterfaceDefaultInputTextFilter(),
+            const InputTextCallback&                         _InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback())
         {
             // nested types
             struct ImmediateUserInterfaceInputString : public ImmediateUserInterfaceScrollArea
@@ -2299,7 +1268,13 @@ namespace Frenchie
         }
 
         template<typename Type>
-        bool input_scalar_internal(ImmediateUserInterfaceContextLayer* _Context, const std::string& _ID, Type& _Input, const Type& _Min, const Type& _Max, const std::string& _Format)
+        bool input_scalar_internal(
+            ImmediateUserInterfaceContextLayer* _Context,
+            const std::string&                  _ID,
+            Type&                               _Input,
+            const Type&                         _Min,
+            const Type&                         _Max,
+            const std::string&                  _Format)
         {
             struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfaceNodePanel
             {
@@ -2398,6 +1373,552 @@ namespace Frenchie
             }
 
             return modified;
+        }
+    }
+}
+
+// implementation
+namespace Frenchie
+{
+    namespace Application
+    {
+        namespace ImmediateUserInterfaceContextLayerHelpers
+        {
+            class ImmedidateUserInterfaceMovedNodeSearcher
+            {
+            public:
+                template<typename FrameProcessor>
+                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
+                {
+                    if(_Context == nullptr)
+                        return nullptr;
+
+                    for(auto singleton : _Context->m_Hierarchy.Singletons)
+                    {
+                        if(!_Filter(singleton))
+                            continue;
+
+                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, singleton, _Filter);
+
+                        if(moved != nullptr)
+                            return moved;
+                    }
+
+                    return nullptr;
+                };
+
+            private:
+
+                template<typename FrameProcessor>
+                ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
+                {
+                    if(_Context == nullptr || _Moved == nullptr)
+                        return nullptr;
+
+                    // check self
+                    if((_Moved->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved) && _Filter(_Moved))
+                        return _Moved;
+
+                    // check children
+                    for(auto it = _Context->m_Hierarchy.begin(_Moved); it != _Context->m_Hierarchy.end(_Moved); it++)
+                    {
+                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, *it, _Filter);
+
+                        if(moved != nullptr)
+                            return moved;
+                    }
+
+                    return nullptr;
+                }
+            };
+
+            class ImmedidateUserInterfaceHoveredNodeSearcher
+            {
+            public:
+
+                template<typename FrameProcessor>
+                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
+                {
+                    // find top most hovered singleton window or a snapped window not equal to the moved one
+                    ImmediateUserInterfaceNode* hovered  = nullptr;
+
+                    for(auto singleton : _Context->m_Hierarchy.Singletons)
+                        search_recursive(_Context, singleton, &hovered, _Filter);
+
+                    return hovered;
+                };
+
+            private:
+
+                template<typename FrameProcessor>
+                void search_recursive(
+                    ImmediateUserInterfaceContextLayer* _Context,
+                    ImmediateUserInterfaceNode*         _Next,
+                    ImmediateUserInterfaceNode**        _Hovered,
+                    const FrameProcessor&               _Filter)
+                {
+                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()))
+                        return;
+
+                    // check self
+                    if(_Filter(_Next))
+                    {
+                        if(*_Hovered == nullptr || _Next->Cache.Depth > (*_Hovered)->Cache.Depth)
+                            *_Hovered = _Next;
+                    }
+
+                    // check children
+                    for(auto it = _Context->m_Hierarchy.begin(_Next); it != _Context->m_Hierarchy.end(_Next); it++)
+                        search_recursive(_Context, *it, _Hovered, _Filter);
+                }
+            };
+
+            // helper functions
+            int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Node == nullptr)
+                    return 0;
+
+                return gs_max(
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.SelfThickness + 1,
+                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
+            }
+
+            int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
+            {
+                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
+            };
+
+            // layouting
+            gs_vec2f layout_compute_aligned_position(
+                const int       _Settings,
+                const gs_vec2f& _Position,
+                const gs_vec2f& _Size,
+                gs_vec2f        _ChildrenSize)
+            {
+                gs_2dboxf parentBoundingBox = gs_2dboxf(_Position, _Position + _Size);
+                gs_vec2f  position = _Position;
+
+                // vertical alignment
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
+                    position = gs_vec2f(position.x, _Position.y);
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
+                    position = gs_vec2f(position.x, (position + parentBoundingBox.size() - _ChildrenSize).y);
+                else // center is default
+                    position = gs_vec2f(position.x, (parentBoundingBox.center() - _ChildrenSize * 0.5f).y);
+
+                // horizontal alignment
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
+                    position = gs_vec2f(_Position.x, position.y);
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
+                    position = gs_vec2f((position + parentBoundingBox.size() - _ChildrenSize).x, position.y);
+                else // center is default
+                    position = gs_vec2f((parentBoundingBox.center() - _ChildrenSize * 0.5f).x, position.y);
+
+                return position;
+            }
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_panel(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
+            {
+                // layout children
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) == nullptr || !_Filter(*it)) continue;
+
+                    gs_vec2f size     = gs_clamp(_Size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    gs_vec2f position = layout_compute_aligned_position( _Settings, _Position, _Size, size);
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                }
+            }
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_vertical_stack(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const gs_vec2f&       _Padding,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
+            {
+                gs_vec2f position  = _Position + _Padding;
+                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+
+                // compute total children size
+                totalsize += _Padding * 2.f;
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) != nullptr && _Filter(*it))
+                        totalsize += (*it)->State.BoundingBox.size();
+                }
+
+                // compute children size scale
+                gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+
+                // layout children and compute their bounding box
+                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+
+                    gs_vec2f size = gs_vec2f(_Size.x, ((*it)->State.BoundingBox.size() * scale).y);
+                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    size = gs_vec2f(_Size.x, size.y);
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(0.f, size.y + _Padding.y);
+
+                    childrenBoundingBox = gs_2dboxf(
+                        childrenBoundingBox.Min,
+                        childrenBoundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within parent
+                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+
+                    gs_vec2f size = (*it)->State.BoundingBox.size();
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(0.f, size.y + _Padding.y);
+                }
+            }
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_horizontal_stack(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const gs_vec2f&       _Padding,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
+            {
+                gs_vec2f position   = _Position + _Padding;
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+
+                // compute total size
+                totalsize += _Padding * 2.f;
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) != nullptr && _Filter(*it))
+                        totalsize += (*it)->State.BoundingBox.size() + _Padding;
+                }
+
+                // compute children scale
+                gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+
+                // layout children and compute their bounding box
+                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+
+                    gs_vec2f size = gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, _Size.y);
+                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    size = gs_vec2f(size.x, _Size.y);
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(size.x + _Padding.x, 0.f);
+                    childrenBoundingBox = gs_2dboxf(childrenBoundingBox.Min, childrenBoundingBox.Max, (*it)->State.BoundingBox.Min, (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within parent
+                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+
+                    gs_vec2f size = (*it)->State.BoundingBox.size();
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    position += gs_vec2f(size.x + _Padding.x, 0.f);
+                }
+            }
+
+            // gizmos
+            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min, WindowResizeAngleGizmoRadius);
+            }
+
+            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
+            }
+
+            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
+            };
+
+            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max, WindowResizeAngleGizmoRadius);
+            };
+
+            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), WindowResizeSideGizmoWidth));
+            };
+
+            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->get_visible_rect(_Context).height()));
+            };
+
+            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
+                    _Node->get_visible_rect(_Context).Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
+            };
+
+            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
+                    _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
+            };
+        
+            void render_resize_gizmo(
+                ImmediateUserInterfaceContextLayer*     _Context,
+                ImmediateUserInterfaceNode*             _Node,
+                const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Context == nullptr || _Node == nullptr) return;
+
+                int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Node);
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+                {
+                    auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeTopLeft.Center,
+                        resizeTopLeft.Radius,
+                        resizeTopLeft.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                {
+                    auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeTopRight.Center,
+                        resizeTopRight.Radius,
+                        resizeTopRight.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                {
+                    auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeBottomLeft.Center,
+                        resizeBottomLeft.Radius,
+                        resizeBottomLeft.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                {
+                    auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeBottomRight.Center,
+                        resizeBottomRight.Radius,
+                        resizeBottomRight.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                {
+                    auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeTop.Min,
+                        resizeTop.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                {
+                    auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeLeft.Min,
+                        resizeLeft.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                {
+                    auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeRight.Min,
+                        resizeRight.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                {
+                    auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeBottom.Min,
+                        resizeBottom.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            };
+
+            bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Context == nullptr || _Node == nullptr) return false;
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+                
+                return false;
+            };
+
+            ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Context == nullptr || _Node == nullptr) return nullptr;
+
+                // find resizable node
+                ImmediateUserInterfaceNode* resizable = _Node;
+
+                // pass event to a parent
+                while (_Context->m_Hierarchy.get_parent(resizable) &&
+                        check_cursor_intersection_with_resize_gizmo(_Context, _Context->m_Hierarchy.get_parent(resizable), _ResizeEventType))
+                    resizable = _Context->m_Hierarchy.get_parent(resizable);
+
+                return resizable;
+            };
+
+            void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Node == nullptr)
+                    return;
+
+                gs_2dboxf box = _Node->State.BoundingBox;
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+
+                _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+            };
         }
     }
 }
@@ -3571,7 +3092,7 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                        ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
+                        ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
 
                     scrollArea->VerticalScrollBar = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
 
@@ -3587,7 +3108,7 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                    ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
+                    ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
 
                 scrollArea->HorizontalScrollBar = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
 
@@ -3634,6 +3155,532 @@ void ImmediateUserInterfaceScrollArea::calculate_content_padding(ImmediateUserIn
         calculate_content_padding(_Context, *it, _Padding);
 }
 
+ImmediateUserInterfaceScrollAreaPanel::ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollAreaPanel::~ImmediateUserInterfaceScrollAreaPanel(){}
+
+// ImmediateUserInterfaceScrollAreaContent
+ImmediateUserInterfaceScrollAreaContent::ImmediateUserInterfaceScrollAreaContent(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollAreaContent::~ImmediateUserInterfaceScrollAreaContent(){}
+
+void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    ImmediateUserInterfaceScrollArea* scrollArea = nullptr;
+    ImmediateUserInterfaceNode*       parent     = _Context->m_Hierarchy.get_parent(this);
+
+    while (parent)
+    {
+        scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(parent);
+        if(scrollArea != nullptr) break;
+        parent = _Context->m_Hierarchy.get_parent(parent);
+    }
+    
+    gs_vec2f horizontalScrollBarPosition =
+        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ?
+            scrollArea->HorizontalScrollBar->get_scroll_offset() :
+                gs_vec2f(0.f, 0.f);
+
+    gs_vec2f verticalScrollBarPosition =
+        scrollArea != nullptr ?
+            scrollArea->VerticalScrollBar->get_scroll_offset() :
+                gs_vec2f(0.f, 0.f);
+
+    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
+    gs_vec2f start     = position;
+    float    maxHeight = 0.f;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        (*it)->State.BoundingBox = gs_2dboxf(
+            position,
+            position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+        maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
+
+        if((*it)->State.NextLine > 0)
+        {
+            position  = gs_vec2f(start.x, position.y + maxHeight * (*it)->State.NextLine + ContentPadding.y);
+            maxHeight = 0.f;
+        }
+        else
+        {
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.x, 0.f);
+        }
+    }
+}
+
+// ImmediateUserInterfaceScrollAreaScrollBar
+ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollAreaScrollBar::~ImmediateUserInterfaceScrollAreaScrollBar(){}
+
+gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset() const
+{
+    return Position * PositionScale;
+}
+
+void ImmediateUserInterfaceScrollAreaScrollBar::set_scroll_offset(const gs_vec2f _Value)
+{
+    if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f) return;
+
+    PreviousPosition = Position;
+    Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+}
+
+void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // auxiliary lambdas
+    auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
+    {
+        // clamp self
+        State.MaximumSize = gs_vec2f(0.f, 0.f);
+        State.MinimumSize = gs_vec2f(0.f, 0.f);
+        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+
+        // reset slider
+        Position = gs_vec2f(0.f, 0.f);
+    };
+
+    auto calculate_scrollbar_length = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)->gs_vec2f
+    {
+        return gs_vec2f(
+            gs_min(gs_max(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * scrollbarMaximumValue.x, scrollbarMinimumSize.x), scrollbarMaximumValue.x),
+            gs_min(gs_max(gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * scrollbarMaximumValue.y, scrollbarMinimumSize.y), scrollbarMaximumValue.y));
+    };
+
+    auto calculate_scrollbar_slider_position_scale = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)->gs_vec2f
+    {
+        return gs_vec2f(
+            gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x),
+            gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
+    };
+
+    // main code
+    ImmediateUserInterfaceScrollArea* contentArea = retrieve_scroll_area(_Context);
+
+    if(_Context == nullptr || contentArea == nullptr)
+        return;
+
+    // calculate self maximum and minimum sizes
+    State.MaximumSize =
+        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
+            gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
+                gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), _Context->m_Style.get_scrollbar_width());
+
+    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
+        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
+    {
+        State.MaximumSize.y = 0.f;
+        State.MinimumSize = State.MaximumSize;
+        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+    }
+    else if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
+        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+    {
+        State.MaximumSize.x =  0.f;
+        State.MinimumSize   = State.MaximumSize;
+        State.BoundingBox   = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
+    }
+
+    State.MinimumSize = State.MaximumSize;
+
+    // calculate self bounding box
+    gs_vec2f offset =
+        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
+            gs_vec2f(0.f, gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f) :
+                gs_vec2f(gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f, 0.f);
+
+    if(_Context->m_Style.get_frames_radius() <= 0.f)
+        offset = gs_vec2f(0.f, 0.f);
+
+    State.BoundingBox = gs_2dboxf(
+        State.BoundingBox.Min + offset,
+        State.BoundingBox.Min - (Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ? gs_vec2f(0.f, 0.f) : offset) + State.MaximumSize);
+
+    // calculate scrollbar metrics
+    gs_vec2f scrollbarMinimumValue = gs_vec2f(0.f, 0.f);
+    gs_vec2f scrollbarMaximumValue =
+        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
+            gs_vec2f(_Context->m_Style.get_scrollbar_width(), State.BoundingBox.size().y) :
+                gs_vec2f(State.BoundingBox.size().x, _Context->m_Style.get_scrollbar_width());
+
+    // do not render scrollbar out of scrollarea
+    if(contentArea == nullptr)
+    {
+        do_not_render_scroll_bar(_Context);
+        return;
+    }
+
+    // manage horizontal scrollbar
+    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
+    {
+        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        {
+            do_not_render_scroll_bar(_Context);
+            return;
+        }
+
+        gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
+            scrollbarMinimumValue,
+            scrollbarMaximumValue,
+            contentArea->ContentView->State.ContentSize,
+            _Context->m_Style.get_scrollbar_width());
+
+        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+        {
+            if((int)gs_abs(scrollbarSliderLength.x - scrollbarMaximumValue.x) < _Context->m_Style.get_frames_width())
+            {
+                do_not_render_scroll_bar(_Context);
+                return;
+            }
+
+            if((int)scrollbarSliderLength.x >= (int)scrollbarMaximumValue.x)
+            {
+                do_not_render_scroll_bar(_Context);
+                return;
+            }
+        }
+        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
+        {
+            do_not_render_scroll_bar(_Context);
+            return;
+        }
+        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
+        {
+        }
+        else
+        {
+            do_not_render_scroll_bar(_Context);
+            return;
+        }
+    }
+
+    // manage vertical scrollbar
+    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+    {
+        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+        {
+            do_not_render_scroll_bar(_Context);
+            return;
+        }
+
+        gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
+            scrollbarMinimumValue,
+            scrollbarMaximumValue,
+            contentArea->ContentView->State.ContentSize,
+            _Context->m_Style.get_scrollbar_width());
+
+        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+        {
+            if((int)gs_abs(scrollbarSliderLength.y - scrollbarMaximumValue.y) < _Context->m_Style.get_frames_width())
+            {
+                do_not_render_scroll_bar(_Context);
+                return;
+            }
+
+            if((int)scrollbarSliderLength.y >= (int)scrollbarMaximumValue.y)
+            {
+                do_not_render_scroll_bar(_Context);
+                return;
+            }
+        }
+        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
+        {
+            do_not_render_scroll_bar(_Context);
+            return;
+        }
+        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
+        {
+        }
+        else
+        {
+            do_not_render_scroll_bar(_Context);
+            return;
+        }
+    }
+
+    // layout child sliders
+    gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
+        scrollbarMinimumValue,
+        scrollbarMaximumValue,
+        contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y),
+        _Context->m_Style.get_scrollbar_width());
+
+    gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
+        scrollbarMinimumValue,
+        scrollbarMaximumValue,
+        contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y));
+
+    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
+    
+    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+    {
+        if(sliderPosition.y > State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
+            PositionScale = scrollbarSliderScale;
+    }
+    else
+    {
+        if(sliderPosition.x > State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
+            PositionScale = scrollbarSliderScale;
+    }
+
+    Size = scrollbarSliderLength;
+}
+
+bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // resize
+    if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
+        !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+    {
+        auto scrollArea = retrieve_scroll_area(_Context);
+
+        if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+        {
+            if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight) ||
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+            {
+                ImmediateUserInterfaceNode* resizable =
+                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
+
+                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
+
+                // trigger event
+                if(resizable != nullptr)
+                {
+                    if(_Context->m_Input.is_mouse_button_pressed())
+                    {
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
+                        return true;
+                    }
+
+                    // execute event
+                    if(_Context->m_Input.is_mouse_button_down() &&
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
+                        return true;
+                    }
+                }
+            }
+            else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight) ||
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+            {
+                ImmediateUserInterfaceNode* resizable =
+                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
+
+                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
+
+                // trigger event
+                if(resizable != nullptr)
+                {
+                    if(_Context->m_Input.is_mouse_button_pressed())
+                    {
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
+                        return true;
+                    }
+
+                    // execute event
+                    if(_Context->m_Input.is_mouse_button_down() &&
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
+                        return true;
+                    }
+                }
+            }
+            else if((scrollArea != nullptr && (int)scrollArea->get_horizontal_scrollbar_width(_Context) <= 0.f) &&
+                    ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+            {
+                ImmediateUserInterfaceNode* resizable =
+                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
+
+                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
+
+                // trigger event
+                if(resizable != nullptr)
+                {
+                    if(_Context->m_Input.is_mouse_button_pressed())
+                    {
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
+                        return true;
+                    }
+
+                    // execute event
+                    if(_Context->m_Input.is_mouse_button_down() &&
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
+                        return true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft) ||
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+            {
+                ImmediateUserInterfaceNode* resizable =
+                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
+
+                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
+
+                // trigger event
+                if(resizable != nullptr)
+                {
+                    if(_Context->m_Input.is_mouse_button_pressed())
+                    {
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
+                        return true;
+                    }
+
+                    // execute event
+                    if(_Context->m_Input.is_mouse_button_down() &&
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
+                        return true;
+                    }
+                }
+            }
+            else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+            {
+                ImmediateUserInterfaceNode* resizable =
+                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
+
+                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
+
+                // trigger event
+                if(resizable != nullptr)
+                {
+                    if(_Context->m_Input.is_mouse_button_pressed())
+                    {
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
+                        return true;
+                    }
+
+                    // execute event
+                    if(_Context->m_Input.is_mouse_button_down() &&
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
+                        return true;
+                    }
+                }
+            }
+            else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom) ||
+                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+            {
+                ImmediateUserInterfaceNode* resizable =
+                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
+
+                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
+
+                // trigger event
+                if(resizable != nullptr)
+                {
+                    if(_Context->m_Input.is_mouse_button_pressed())
+                    {
+                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
+                        return true;
+                    }
+
+                    // execute event
+                    if(_Context->m_Input.is_mouse_button_down() &&
+                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
+                    {
+                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    // move slider on mouse press event
+    if(_Context->m_Input.is_mouse_button_pressed())
+    {
+        Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - Size * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+        PreviousPosition = Position;
+        State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
+    }
+
+    // move slider on mouse drag event
+    if(_Context->m_Input.is_mouse_button_down())
+    {
+        Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+        State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
+    }
+
+    return true;
+}
+
+void ImmediateUserInterfaceScrollAreaScrollBar::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // outline
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // slider
+    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - Size);
+
+    if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
+            sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
+            sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+}
+
+ImmediateUserInterfaceScrollArea* ImmediateUserInterfaceScrollAreaScrollBar::retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return nullptr;
+
+    auto parent = _Context->m_Hierarchy.get_parent(this);
+
+    while (parent)
+    {
+        ImmediateUserInterfaceScrollArea* contentArea =
+            dynamic_cast<ImmediateUserInterfaceScrollArea*>(parent);
+
+        if(contentArea != nullptr)
+            return contentArea;
+            
+        parent = _Context->m_Hierarchy.get_parent(parent);
+    }
+
+    return nullptr;
+}
+
 // ImmediateUserInterfaceMenu
 ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
@@ -3672,6 +3719,139 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
     }
     else 
         InternalScrollArea->attach_child(_Child);
+}
+
+// ImmediateUserInterfaceMenuScrollArea
+ImmediateUserInterfaceMenuScrollArea::ImmediateUserInterfaceMenuScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+ImmediateUserInterfaceMenuScrollArea::~ImmediateUserInterfaceMenuScrollArea(){}
+
+void ImmediateUserInterfaceMenuScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    ImmediateUserInterfaceMenu* menu =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
+
+    if(_Context->m_Hierarchy.get_parent(menu)) return;
+
+    // outline
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
+// ImmediateUserInterfaceMenuAction
+ImmediateUserInterfaceMenuAction::ImmediateUserInterfaceMenuAction(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceMenuAction::~ImmediateUserInterfaceMenuAction(){}
+
+void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    gs_vec2f size =
+        _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
+}
+
+void ImmediateUserInterfaceMenuAction::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // title
+    _Context->m_Renderer->push_text(
+        gs_vec2f(
+            State.BoundingBox.Min.x, 
+            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix(
+            (float)place_in_follow()));
+}
+
+// ImmediateUserInterfaceMenuItem
+ImmediateUserInterfaceMenuItem::ImmediateUserInterfaceMenuItem(const std::string& _Name) : ImmediateUserInterfaceMenuAction(_Name){}
+ImmediateUserInterfaceMenuItem::~ImmediateUserInterfaceMenuItem(){}
+
+void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // title
+    _Context->m_Renderer->push_text(
+        gs_vec2f(
+            State.BoundingBox.Min.x, 
+            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // triangle
+    float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
+
+    _Context->m_Renderer->push_triangle_filled(
+        gs_vec2f(0.f, 0.0),
+        gs_vec2f(0.f, triangleWidth),
+        gs_vec2f(triangleWidth * 0.5f, triangleWidth * 0.5f),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix(
+            (float)place_in_follow(),
+            gs_vec2f(
+                State.BoundingBox.Max.x - triangleWidth,
+                State.BoundingBox.center().y - triangleWidth * 0.5f)));
 }
 
 // ImmediateUserInterfaceWindow
@@ -3740,7 +3920,7 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // frame
-    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
+    process_window_frame(
         _Context,
         this,
 
@@ -3882,7 +4062,7 @@ bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _C
     bool defaultPipeline = true;
 
     // window frame events
-    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().process_window_frame(
+    process_window_frame(
         _Context,
         this,
 
@@ -4128,7 +4308,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "Docker",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, Docker)->Hash);
+            retrieve_docker_by_view(_Context, Docker)->Hash);
     }
     
     if(TopSnapper)
@@ -4136,7 +4316,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "TopSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, TopSnapper)->Hash);
+            retrieve_docker_by_view(_Context, TopSnapper)->Hash);
     }
     
     if(LeftSnapper)
@@ -4144,7 +4324,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "LeftSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, LeftSnapper)->Hash);
+            retrieve_docker_by_view(_Context, LeftSnapper)->Hash);
     }
     
     if(RightSnapper)
@@ -4152,7 +4332,7 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "RightSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, RightSnapper)->Hash);
+            retrieve_docker_by_view(_Context, RightSnapper)->Hash);
     }
     
     if(BottomSnapper)
@@ -4160,10 +4340,121 @@ void ImmediateUserInterfaceWindow::save_state(ImmediateUserInterfaceContextLayer
         _Context->m_IniFileState.set<std::string>(
             Hash,
             "BottomSnapper",
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, BottomSnapper)->Hash);
+            retrieve_docker_by_view(_Context, BottomSnapper)->Hash);
     }
 
     _Context->m_IniFileState.set<bool>(Hash, "IsActive", IsActive);
+}
+
+// ImmediateUserInterfaceWindowDockArea
+ImmediateUserInterfaceWindowDockArea::ImmediateUserInterfaceWindowDockArea(const std::string& _Name) : ImmediateUserInterfaceWindow(_Name){}
+ImmediateUserInterfaceWindowDockArea::~ImmediateUserInterfaceWindowDockArea(){}
+
+void ImmediateUserInterfaceWindowDockArea::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    State.BoundingBox = gs_2dboxf(
+        _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
+        _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
+
+    ImmediateUserInterfaceWindow::layout(_Context);
+}
+
+void ImmediateUserInterfaceWindowDockArea::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // content background and outline frame
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        FrameBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        FrameBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // frame
+    process_window_frame(
+        _Context,
+        this,
+
+        // render self and child frames
+        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
+        {
+            // detect if we are active
+            bool active = _Window->IsActive;
+
+            // render frame
+            if(_Window->Docker == nullptr &&
+                _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+                    _Context,
+                    _Window,
+                    ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
+            {
+                // frame
+                if(_Frame.contains(_Context->m_Input.get_cusor_position()) &&
+                    (_Window->TopSnapper    != nullptr ||
+                    _Window->LeftSnapper   != nullptr ||
+                    _Window->RightSnapper  != nullptr ||
+                    _Window->BottomSnapper != nullptr))
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Frame.Min + _Context->m_Style.get_frames_width(),
+                        _Frame.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                }
+            }
+            else
+            {
+                // frame
+                if(active)
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Frame.Min + _Context->m_Style.get_frames_width(),
+                        _Frame.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                        true,
+                        true,
+                        false,
+                        false);
+                }
+                else if(_Frame.contains(_Context->m_Input.get_cusor_position()))
+                {
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        _Frame.Min + _Context->m_Style.get_frames_width(),
+                        _Frame.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                        true,
+                        true,
+                        false,
+                        false);
+                }
+            }
+
+            // title
+            _Context->m_Renderer->push_text(
+                gs_vec2f(
+                    _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
+                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
+                _Window->Name.begin(),
+                _Window->Name.end(),
+                _Context->m_Style.get_font_size() * 0.6f,
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+    );
 }
 
 // ImmedidateUserInterfaceWindowController
@@ -4248,7 +4539,7 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
             {
                 // deactivate docker windows
                 ImmediateUserInterfaceWindow* docker =
-                    ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
+                    ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, (window->Docker ? window->Docker : window));
 
                 if(docker != nullptr)
                     docker->IsActive = false;
@@ -4645,7 +4936,7 @@ void ImmedidateUserInterfaceWindowController::attach_to_docker(ImmediateUserInte
     {
         ImmediateUserInterfaceWindow * docker =
             _Docker->Docker ?
-                ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Docker->Docker) :
+                ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, _Docker->Docker) :
                     _Docker;
 
         // move child docked windows and self to windows docking cache
@@ -4777,7 +5068,7 @@ void ImmedidateUserInterfaceWindowController::detach_from_docker(ImmediateUserIn
     else
     {
         ImmediateUserInterfaceWindow* docker =
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Detached->Docker);
+            ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, _Detached->Docker);
 
         if(docker != nullptr)
             docker->IsActive = true;
@@ -4799,7 +5090,7 @@ std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowControlle
 
     ImmediateUserInterfaceWindow* docker =
         dynamic_cast<ImmediateUserInterfaceWindow*>(
-            ImmediateUserInterfaceContextLayerHelpers::ImmediateUserInterfaceWindowUtility().retrieve_docker_by_view(_Context, _Docker));
+            ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, _Docker));
 
     if(docker == nullptr)
         return m_WindowsDockingList;
