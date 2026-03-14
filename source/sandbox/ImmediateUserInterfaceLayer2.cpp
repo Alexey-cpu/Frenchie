@@ -6084,16 +6084,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             gs_vec2f position  = State.BoundingBox.Min;
             gs_vec2f totalSize = gradientBoxSize + paletteBoxSize + alphaBoxSize + colorBoxSize + padding * 2.f;
 
-            PaletteSliderHeight  = gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.1f;
-            GradientSliderHeight = gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) * 0.1f;
-
             // calculate gradient box
             {
                 gs_vec2f size = gs_vec2f((gradientBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 GradientBox   = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
-
-                GradientBoxSliderPositionScale = GradientBox.size() - gs_vec2f(GradientSliderHeight, GradientSliderHeight);
             }
 
             // calculate palette box
@@ -6101,8 +6096,6 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 gs_vec2f size = gs_vec2f((paletteBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 PaletteBox    = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
-
-                PaletteBoxSliderPositionScale = PaletteBox.height() - PaletteSliderHeight;
             }
 
             // calculate alpha box
@@ -6110,8 +6103,6 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 gs_vec2f size = gs_vec2f((alphaBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height());
                 AlphaBox    = gs_2dboxf(position, position + size);
                 position     += gs_vec2f(size.x + padding.x, 0.f);
-
-                AlphaBoxSliderPositionScale = AlphaBox.height() - PaletteSliderHeight;
             }
 
             // calculate color box
@@ -6152,8 +6143,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 
                 // palette slider
                 gs_2dboxf paletteSlider = gs_2dboxf(
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale,
-                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBoxSliderPositionScale + gs_vec2f(PaletteBox.width(), PaletteSliderHeight));
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f,
+                    PaletteBox.Min + gs_vec2f(0.f, PaletteBoxSliderPosition) * PaletteBox.size() * 0.9f + gs_vec2f(PaletteBox.width(), PaletteBox.height() * 0.1f));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     paletteSlider.Min,
@@ -6188,8 +6179,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 // gradient box slider
                 gs_2dboxf gradientBoxSlider = gs_2dboxf(
-                    GradientBox.Min + GradientBoxSliderPosition * GradientBoxSliderPositionScale,
-                    GradientBox.Min + GradientBoxSliderPosition * GradientBoxSliderPositionScale + gs_vec2f(GradientSliderHeight));
+                    GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f,
+                    GradientBox.Min + GradientBoxSliderPosition * GradientBox.size() * 0.9f + GradientBox.size() * 0.1f);
 
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min,
@@ -6219,8 +6210,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 // alpha box slider
                 gs_2dboxf aphaSlider = gs_2dboxf(
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale,
-                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBoxSliderPositionScale + gs_vec2f(AlphaBox.width(), PaletteSliderHeight));
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f,
+                    AlphaBox.Min + gs_vec2f(0.f, AlphaBoxSliderPosition) * AlphaBox.size() * 0.9f + gs_vec2f(AlphaBox.width(), AlphaBox.height() * 0.1f));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     aphaSlider.Min,
@@ -6275,11 +6266,12 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    PaletteBoxSliderPosition         = (_Context->m_Input.get_cusor_position().y - PaletteBox.Min.y) / PaletteBoxSliderPositionScale;
+                    PaletteBoxSliderPosition         = ((_Context->m_Input.get_cusor_position() - PaletteBox.Min - PaletteBox.size() * 0.1f * 0.5f) / PaletteBox.size() / 0.9f).y;
                     PaletteBoxSliderPreviousPosition = PaletteBoxSliderPosition;
                 }
 
-                PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / PaletteBoxSliderPositionScale, 0.f, 1.f);
+                PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / PaletteBox.size() / 0.9f).y, 0.f, 1.f);
+                PaletteBoxSliderIsMoving = true;
 
                 return true;
             }
@@ -6289,11 +6281,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    GradientBoxSliderPosition         = (_Context->m_Input.get_cusor_position() - GradientBox.Min) / GradientBoxSliderPositionScale;
+                    GradientBoxSliderPosition         = (_Context->m_Input.get_cusor_position() - GradientBox.Min - GradientBox.size() * 0.1f * 0.5f) / GradientBox.size() / 0.9f;
                     GradientBoxSliderPreviousPosition = GradientBoxSliderPosition;
                 }
 
-                GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() - gs_vec2f(GradientSliderHeight, GradientSliderHeight) * 0.5f) / GradientBoxSliderPositionScale, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
+                GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / GradientBox.size() / 0.9f, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
                 GradientBoxSliderIsMoving = true;
 
                 return true;
@@ -6304,11 +6296,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    AlphaBoxSliderPosition         = (_Context->m_Input.get_cusor_position().y - PaletteBox.Min.y) / AlphaBoxSliderPositionScale;
+                    AlphaBoxSliderPosition         = ((_Context->m_Input.get_cusor_position() - AlphaBox.Min - AlphaBox.size() * 0.1f * 0.5f) / AlphaBox.size() / 0.9f).y;
                     AlphaBoxSliderPreviousPosition = AlphaBoxSliderPosition;
                 }
 
-                AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta().y - GradientSliderHeight * 0.5f) / AlphaBoxSliderPositionScale, 0.f, 1.f);
+                AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / AlphaBox.size() / 0.9f).y, 0.f, 1.f);
                 AlphaBoxSliderIsMoving = true;
 
                 return true;
@@ -6348,29 +6340,25 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
     private:
 
-        // gradient
+        // gradient box
         gs_2dboxf GradientBox                       = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         gs_vec2f  GradientBoxSliderPosition         = gs_vec2f(0.f, 0.f);
         gs_vec2f  GradientBoxSliderPreviousPosition = gs_vec2f(0.f, 0.f);
-        gs_vec2f  GradientBoxSliderPositionScale    = gs_vec2f(0.f, 0.f);
         bool      GradientBoxSliderIsMoving         = false;
-        float     GradientSliderHeight              = 32.f;
 
-        // palette
+        // palette box
         float     PaletteMaximumHue                 = 1.00f;
         float     PaletteHueStep                    = 0.05f;
+        
         gs_2dboxf PaletteBox                        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         float     PaletteBoxSliderPosition          = 0.f;
         float     PaletteBoxSliderPreviousPosition  = 0.f;
-        float     PaletteBoxSliderPositionScale     = 0.f;
         bool      PaletteBoxSliderIsMoving          = false;
-        float     PaletteSliderHeight               = 16.f;
         
         // alpha box
         gs_2dboxf AlphaBox                          = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
         float     AlphaBoxSliderPosition            = 0.f;
         float     AlphaBoxSliderPreviousPosition    = 0.f;
-        float     AlphaBoxSliderPositionScale       = 0.f;
         bool      AlphaBoxSliderIsMoving            = false;
 
         // color box
@@ -6805,28 +6793,37 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
             return false;
         }
 
-        gs_color Color = 1;
-
-        gs_vec2f EllipseSliderPosition              = gs_vec2f(0.f, 0.f);
-        gs_vec2f EllipseSliderPreviousPosition      = gs_vec2f(0.f, 0.f);
-
-        float    BrightnessSliderPosition           = 0.f;
-        float    BrightnessSliderPreviousPosition   = 0.f;
-
-        float    TransparencySliderPosition         = 0.f;
-        float    TransparencySliderPreviousPosition = 0.f;
+        // public attributes
+        gs_vec3ui                                 RGB      = {0, 0, 0};
+        gs_vec3ui                                 HSV      = {0, 0, 0};
+        gs_vec3ui                                 HSL      = {0, 0, 0};
+        gs_color                                  Alpha    = 255;
+        ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
     private:
-        gs_2d_ellipsef EllipseSlider = gs_2d_ellipsef(0.f, 0.f);
-        gs_2d_ellipsef Ellipse = gs_2d_ellipsef(0.f, 0.f);
+        // info
+        
+        // ellipse
+        gs_2d_ellipsef Ellipse                            = gs_2d_ellipsef(0.f, 0.f);
+        gs_2d_ellipsef EllipseSlider                      = gs_2d_ellipsef(0.f, 0.f);
+        gs_vec2f       EllipseSliderPosition              = gs_vec2f(0.f, 0.f);
+        gs_vec2f       EllipseSliderPreviousPosition      = gs_vec2f(0.f, 0.f);
+        bool           EllipseSliderIsMoving              = false;
 
-        gs_2dboxf BrightnessBox   = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
-        gs_2dboxf TransparencyBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
-        gs_2dboxf ColorBox        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        // brightness
+        gs_2dboxf      BrightnessBox                      = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        float          BrightnessSliderPosition           = 0.f;
+        float          BrightnessSliderPreviousPosition   = 0.f;
+        bool           BrightnessSliderIsMoving           = false;
 
-        bool EllipseSliderIsMoving      = false;
-        bool BrightnessSliderIsMoving   = false;
-        bool TransparencySliderIsMoving = false;
+        // transparency
+        gs_2dboxf      TransparencyBox                    = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        float          TransparencySliderPosition         = 0.f;
+        float          TransparencySliderPreviousPosition = 0.f;
+        bool           TransparencySliderIsMoving         = false;
+
+        // color
+        gs_2dboxf      ColorBox                           = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
     };
 
     if(begin_node<ImmediateUserInterfaceColorPicker>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
