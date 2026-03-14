@@ -6063,7 +6063,7 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(c
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u");
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
     {
@@ -6541,7 +6541,7 @@ void ImmediateUserInterfaceContextLayer::color_picker(const std::string& _ID, gs
     }
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker_(
+void ImmediateUserInterfaceContextLayer::color_picker_hsva(
     const std::string&                               _ID,
     gs_color&                                        _Color,
     const ImmediateUserInterfaceColorPickerSettings& _Settings)
@@ -6559,8 +6559,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
             gs_vec2f ellpseBoxSize       = gs_vec2f(256.f, 256.f);
             gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
             gs_vec2f transparencyBoxSize = gs_vec2f(32.f, 256.f);
+            gs_vec2f colorBoxSize        = gs_vec2f(32.f, 256.f);
             gs_vec2f padding             = gs_vec2f(8.f);
-            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + padding;
+            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + colorBoxSize + padding;
             gs_vec2f position            = State.BoundingBox.Min;
 
             // ellipse
@@ -6581,17 +6582,20 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
             // brightness box
             {
                 BrightnessBox = gs_2dboxf(position, position + gs_vec2f((brightnessBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
-                
                 position     += gs_vec2f(BrightnessBox.width() + padding.x, 0.f);
             }
 
-            // transparent box
+            // transparency box
             {
                 TransparencyBox = gs_2dboxf(position, position + gs_vec2f((transparencyBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
-                position       += gs_vec2f(TransparencyBox.width(), 0.f);
+                position       += gs_vec2f(TransparencyBox.width() + padding.x, 0.f);
             }
 
-            
+            // color box
+            {
+                ColorBox = gs_2dboxf(position, position + gs_vec2f((colorBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
+                position += gs_vec2f(ColorBox.width() + padding.x, 0.f);
+            }
         }
 
         virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
@@ -6649,10 +6653,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
-            // render brightness slider
+            // render brightness box
             {
                 gs_color HSV = gs_color_rgb_to_hsv(Color);
 
+                // box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
                     BrightnessBox.Min,
                     BrightnessBox.Max,
@@ -6661,10 +6666,34 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
                     gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 0)),
                     gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 0)),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // slider
+                gs_2dboxf brightnessBoxSlider = gs_2dboxf(
+                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height()),
+                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height()) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.05f));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    brightnessBoxSlider.Min,
+                    brightnessBoxSlider.Max,
+                    gs_color_rgba(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    brightnessBoxSlider.Min + gs_vec2f(4.f),
+                    brightnessBoxSlider.Max - gs_vec2f(4.f),
+                    gs_color_rgba(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // calculate color
+                Color = gs_color_hsv_to_rgb(gs_color_hsv(
+                    gs_color_hsv_get_h(HSV),
+                    gs_color_hsv_get_s(HSV),
+                    gs_color((1.f - BrightnessSliderPosition) * 255.f)));
             }
 
-            // render brightness alpha slider
+            // render transparency box
             {
+                // box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
                     TransparencyBox.Min,
                     TransparencyBox.Max,
@@ -6672,6 +6701,42 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
                     gs_color_rgba(255, 255, 255, 255),
                     gs_color_rgba(255, 255, 255, 0),
                     gs_color_rgba(255, 255, 255, 0),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // slider
+                gs_2dboxf transparencyBoxSlider = gs_2dboxf(
+                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height()),
+                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height()) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.05f));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    transparencyBoxSlider.Min,
+                    transparencyBoxSlider.Max,
+                    gs_color_rgba(0, 0, 0, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                _Context->m_Renderer->push_rectangle_filled(
+                    transparencyBoxSlider.Min + gs_vec2f(4.f),
+                    transparencyBoxSlider.Max - gs_vec2f(4.f),
+                    gs_color_rgba(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // calculate color
+                gs_color RGB = gs_color_hsv_to_rgb(gs_color_rgb_to_hsv(Color));
+
+                Color = gs_color_rgba(
+                    gs_color_rgba_get_r(RGB),
+                    gs_color_rgba_get_g(RGB),
+                    gs_color_rgba_get_b(RGB),
+                    (gs_color)((1.f - TransparencySliderPosition) * 255.f)
+                );
+            }
+
+            // color box
+            {
+                _Context->m_Renderer->push_rectangle_filled(
+                    ColorBox.Min,
+                    ColorBox.Max,
+                    Color,
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         }
@@ -6682,12 +6747,14 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
 
             if(!_Context->m_Input.is_mouse_button_down())
             {
-                EllipseSliderIsMoving = false;
-
+                EllipseSliderIsMoving      = false;
+                BrightnessSliderIsMoving   = false;
+                TransparencySliderIsMoving = false;
                 return false;
             }
 
-            if(Ellipse.contains(_Context->m_Input.get_cusor_position()) || EllipseSliderIsMoving)
+            // catch ellipse slider event
+            if((Ellipse.contains(_Context->m_Input.get_cusor_position()) || EllipseSliderIsMoving) && !BrightnessSliderIsMoving && !TransparencySliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -6701,6 +6768,38 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
                             gs_vector_normalize(_Context->m_Input.get_cusor_position() - Ellipse.Center);
 
                 EllipseSliderIsMoving = true;
+
+                return true;
+            }
+
+            // catch brightness slider event
+            if((BrightnessBox.contains(_Context->m_Input.get_cusor_position()) || BrightnessSliderIsMoving) && !EllipseSliderIsMoving && !TransparencySliderIsMoving)
+            {
+                if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    BrightnessSliderPosition         = ((_Context->m_Input.get_cusor_position() - BrightnessBox.Min) / BrightnessBox.size()).y;
+                    BrightnessSliderPreviousPosition = BrightnessSliderPosition;
+                }
+
+                BrightnessSliderPosition = gs_clamp(BrightnessSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / BrightnessBox.size()).y, 0.f, 1.f);
+                BrightnessSliderIsMoving = true;
+
+                return true;
+            }
+
+            // catch transparency slider event
+            if((TransparencyBox.contains(_Context->m_Input.get_cusor_position()) || TransparencySliderIsMoving) && !EllipseSliderIsMoving && !BrightnessSliderIsMoving)
+            {
+                if(_Context->m_Input.is_mouse_button_pressed())
+                {
+                    TransparencySliderPosition         = ((_Context->m_Input.get_cusor_position() - TransparencyBox.Min) / TransparencyBox.size()).y;
+                    TransparencySliderPreviousPosition = TransparencySliderPosition;
+                }
+
+                TransparencySliderPosition = gs_clamp(TransparencySliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / TransparencyBox.size()).y, 0.f, 1.f);
+                TransparencySliderIsMoving = true;
+
+                return true;
             }
 
             return false;
@@ -6708,8 +6807,14 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
 
         gs_color Color = 1;
 
-        gs_vec2f EllipseSliderPosition         = gs_vec2f(0.f, 0.f);
-        gs_vec2f EllipseSliderPreviousPosition = gs_vec2f(0.f, 0.f);
+        gs_vec2f EllipseSliderPosition              = gs_vec2f(0.f, 0.f);
+        gs_vec2f EllipseSliderPreviousPosition      = gs_vec2f(0.f, 0.f);
+
+        float    BrightnessSliderPosition           = 0.f;
+        float    BrightnessSliderPreviousPosition   = 0.f;
+
+        float    TransparencySliderPosition         = 0.f;
+        float    TransparencySliderPreviousPosition = 0.f;
 
     private:
         gs_2d_ellipsef EllipseSlider = gs_2d_ellipsef(0.f, 0.f);
@@ -6717,8 +6822,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_(
 
         gs_2dboxf BrightnessBox   = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
         gs_2dboxf TransparencyBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
+        gs_2dboxf ColorBox        = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
 
-        bool EllipseSliderIsMoving = false;
+        bool EllipseSliderIsMoving      = false;
+        bool BrightnessSliderIsMoving   = false;
+        bool TransparencySliderIsMoving = false;
     };
 
     if(begin_node<ImmediateUserInterfaceColorPicker>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
