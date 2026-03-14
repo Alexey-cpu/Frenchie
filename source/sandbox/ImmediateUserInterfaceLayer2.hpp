@@ -766,6 +766,18 @@ namespace Frenchie
             virtual void frame_finish(ImmediateUserInterfaceContextLayer* _Context) override;
 
             mutable std::vector<ImmediateUserInterfaceMenu*> ActiveMenus;
+
+        private:
+
+            void detect_maximum_width(
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceNode*         _Node,
+                float&                              _MaximumWidth);
+
+            void setup_maximum_with(
+                ImmediateUserInterfaceContextLayer* _Context,
+                ImmediateUserInterfaceNode*         _Node,
+                float&                              _MaximumWidth);
         };
     
         class ImmedidateUserInterfaceNextNodeController : public ImmediateUserInterfaceContextController
