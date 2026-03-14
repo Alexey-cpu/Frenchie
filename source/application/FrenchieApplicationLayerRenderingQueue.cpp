@@ -309,6 +309,11 @@ RenderingQueueMetrics RenderingQueue::get_rendering_queue_metrics() const
     return m_Metrics;
 }
 
+float RenderingQueue::get_minimum_line_width() const
+{
+    return m_MinimumLineWidth;
+}
+
 gs_vec3f RenderingQueue::get_cursor_postion() const
 {
     gs_vec2f size   = ApplicationPlatformBackend::get_window_size();

@@ -206,25 +206,6 @@ namespace Frenchie
             };
 
             // helper functions
-            float calculate_offset(ImmediateUserInterfaceContextLayer* _Context)
-            {
-                return _Context != nullptr ? gs_max(4.f, _Context->m_Style.get_frames_width()) : 16.f;
-            }
-
-            gs_vec2f calculate_scrollbar_length(gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)
-            {
-                return gs_vec2f(
-                    gs_min(gs_max(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * scrollbarMaximumValue.x, scrollbarMinimumSize.x), scrollbarMaximumValue.x),
-                    gs_min(gs_max(gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * scrollbarMaximumValue.y, scrollbarMinimumSize.y), scrollbarMaximumValue.y));
-            }
-
-            gs_vec2f calculate_scrollbar_slider_position_scale(gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)
-            {
-                return gs_vec2f(
-                    gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x),
-                    gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
-            }
-
             int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
             {
                 if(_Node == nullptr)
@@ -817,13 +798,6 @@ namespace Frenchie
         };
 
         // scrollarea
-        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-            virtual ~ImmediateUserInterfaceScrollAreaPanel(){}
-        };
-
         struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNodePanel
         {
         public:
@@ -865,9 +839,25 @@ namespace Frenchie
                     Position = gs_vec2f(0.f, 0.f);
                 };
 
+                auto calculate_scrollbar_length = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)->gs_vec2f
+                {
+                    return gs_vec2f(
+                        gs_min(gs_max(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * scrollbarMaximumValue.x, scrollbarMinimumSize.x), scrollbarMaximumValue.x),
+                        gs_min(gs_max(gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * scrollbarMaximumValue.y, scrollbarMinimumSize.y), scrollbarMaximumValue.y));
+                };
+
+                auto calculate_scrollbar_slider_position_scale = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)->gs_vec2f
+                {
+                    return gs_vec2f(
+                        gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x),
+                        gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
+                };
+
+                // main code
                 ImmediateUserInterfaceScrollArea* contentArea = retrieve_scroll_area(_Context);
 
-                if(_Context == nullptr || contentArea == nullptr) return;
+                if(_Context == nullptr || contentArea == nullptr)
+                    return;
 
                 // calculate self maximum and minimum sizes
                 State.MaximumSize =
@@ -928,7 +918,7 @@ namespace Frenchie
                         return;
                     }
 
-                    gs_vec2f scrollbarSliderLength = ImmediateUserInterfaceContextLayerHelpers::calculate_scrollbar_length(
+                    gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
                         scrollbarMinimumValue,
                         scrollbarMaximumValue,
                         contentArea->ContentView->State.ContentSize,
@@ -972,7 +962,7 @@ namespace Frenchie
                         return;
                     }
 
-                    gs_vec2f scrollbarSliderLength = ImmediateUserInterfaceContextLayerHelpers::calculate_scrollbar_length(
+                    gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
                         scrollbarMinimumValue,
                         scrollbarMaximumValue,
                         contentArea->ContentView->State.ContentSize,
@@ -1008,13 +998,13 @@ namespace Frenchie
                 }
 
                 // layout child sliders
-                gs_vec2f scrollbarSliderLength = ImmediateUserInterfaceContextLayerHelpers::calculate_scrollbar_length(
+                gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
                     scrollbarMinimumValue,
                     scrollbarMaximumValue,
                     contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y),
                     _Context->m_Style.get_scrollbar_width());
 
-                gs_vec2f scrollbarSliderScale = ImmediateUserInterfaceContextLayerHelpers::calculate_scrollbar_slider_position_scale(
+                gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
                     scrollbarMinimumValue,
                     scrollbarMaximumValue,
                     contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y));
@@ -1298,6 +1288,13 @@ namespace Frenchie
             }
         };
 
+        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+            virtual ~ImmediateUserInterfaceScrollAreaPanel(){}
+        };
+
         struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfaceNodePanel
         {
         public:
@@ -1426,7 +1423,7 @@ namespace Frenchie
                 // title
                 _Context->m_Renderer->push_text(
                     gs_vec2f(
-                        State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
+                        State.BoundingBox.Min.x, 
                         (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
                     Name.begin(),
                     Name.end(),
@@ -1472,7 +1469,7 @@ namespace Frenchie
                 // title
                 _Context->m_Renderer->push_text(
                     gs_vec2f(
-                        State.BoundingBox.Min.x + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context), 
+                        State.BoundingBox.Min.x, 
                         (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
                     Name.begin(),
                     Name.end(),
@@ -2220,7 +2217,7 @@ namespace Frenchie
                                     _Context->m_Input.set_clipboard_text(
                                         std::string(
                                             _Text.begin() + widget->Utf8LeftCursorPosition,
-                                            _Text.begin() + gs_clamp(widget->Utf8RightCursorPosition + 1, 0, gs_max(0, (int)_Text.size() - 1))));
+                                            _Text.begin() + gs_clamp(widget->Utf8RightCursorPosition + 1, 0, (int)_Text.size())));
                                 }
                             }
 
@@ -4977,15 +4974,17 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
 
         // check in-parent intersection and process events of intersected nodes
         for (auto it  = _Context->m_Hierarchy.begin(_Context->m_Hierarchy.get_parent(eventCatcher));
-                    it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(eventCatcher));
-                    it++)
+                  it != _Context->m_Hierarchy.end(_Context->m_Hierarchy.get_parent(eventCatcher));
+                  it++)
         {
             if((*it) == eventCatcher)
                 continue;
 
+            float offset = gs_max(_Context->m_Renderer->get_minimum_line_width(), _Context->m_Style.get_frames_width());
+
             if(gs_2dboxf(
-                (*it)->get_visible_rect(_Context).Min - ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context),
-                (*it)->get_visible_rect(_Context).Max + ImmediateUserInterfaceContextLayerHelpers::calculate_offset(_Context)).contains(_Context->m_Input.get_cusor_position()))
+                (*it)->get_visible_rect(_Context).Min - gs_vec2f(offset, offset),
+                (*it)->get_visible_rect(_Context).Max + gs_vec2f(offset, offset)).contains(_Context->m_Input.get_cusor_position()))
             {
                 // process events
                 (*it)->events(_Context);
@@ -5000,15 +4999,27 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
         if(_Context->m_Input.is_mouse_button_pressed() ||
             eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
         {
+            // find top most relative of event catcher node
+            ImmediateUserInterfaceNode* relative = eventCatcher;
+            ImmediateUserInterfaceNode* parent   = eventCatcher->State.Relative;
+
+            while (parent)
+            {
+                relative = parent;
+                parent   = parent->State.Relative;
+            }
+            
+            // find top most parental node of the top most relative
             ImmediateUserInterfaceNode* focused = eventCatcher;
-            ImmediateUserInterfaceNode* parent  = _Context->m_Hierarchy.get_parent(eventCatcher);
+
+            parent = _Context->m_Hierarchy.get_parent(relative);
 
             while (parent)
             {
                 focused = parent;
                 parent  = _Context->m_Hierarchy.get_parent(parent);
             }
-            
+
             if(!(focused->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ForceMoveOnBackground))
                 focused->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
         }
@@ -5143,69 +5154,6 @@ void ImmedidateUserInterfaceRenderingController::render_node(ImmediateUserInterf
 ImmedidateUserInterfaceMenusController::ImmedidateUserInterfaceMenusController(){}
 ImmedidateUserInterfaceMenusController::~ImmedidateUserInterfaceMenusController(){}
 
-void detect_maximum_width(
-    ImmediateUserInterfaceContextLayer* _Context,
-    ImmediateUserInterfaceNode*         _Node,
-    float&                              _MaximumWidth)
-{
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
-
-    if(scrollArea != nullptr && scrollArea->ContentView != nullptr)
-    {
-        for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
-        {
-            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it))
-            {
-                gs_vec2f size =
-                    _Context->m_Renderer->calculate_bounding_box(
-                        (*it)->Name.begin(),
-                        (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
-                _MaximumWidth = gs_max(_MaximumWidth, size.x);
-            }
-        }
-    }
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
-        detect_maximum_width(_Context, *it, _MaximumWidth);
-}
-
-void setup_maximum_with(
-    ImmediateUserInterfaceContextLayer* _Context,
-    ImmediateUserInterfaceNode*         _Node,
-    float&                              _MaximumWidth)
-{
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
-
-    if(scrollArea != nullptr && scrollArea->ContentView != nullptr)
-    {
-        for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
-        {
-            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it))
-            {
-                gs_vec2f size =
-                    _Context->m_Renderer->calculate_bounding_box(
-                        (*it)->Name.begin(),
-                        (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
-                dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->State.BoundingBox =
-                    gs_2dboxf(
-                        dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->State.BoundingBox.Min,
-                        dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, size.y));
-            }
-        }
-    }
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
-        setup_maximum_with(_Context, *it, _MaximumWidth);
-}
-
 void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
     ActiveMenus.clear();
@@ -5213,6 +5161,8 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
     // layout menu actions
     for(auto node : _Context->m_NodesRenderingList)
     {
+        if(!node->is_partially_visible(_Context)) continue;
+
         ImmediateUserInterfaceMenu* menu =
             dynamic_cast<ImmediateUserInterfaceMenu*>(node);
 
@@ -5222,13 +5172,13 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
             ImmediateUserInterfaceScrollArea* scroll = nullptr;
             ImmediateUserInterfaceScrollArea* parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(menu);
 
-            while (parent)
+            while (parent != nullptr)
             {
                 scroll = parent;
                 parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(parent);
             }
             
-            if(scroll)
+            if(scroll != nullptr)
             {
                 // manage internal scroll area
                 float internal = 0.f;
@@ -5259,15 +5209,86 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
         // collect active menus
         if(!(node->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)) continue;
 
-        auto relative = node;
+        ImmediateUserInterfaceNode* relative = node;
 
-        while (relative)
+        while (relative != nullptr)
         {
-            if(dynamic_cast<ImmediateUserInterfaceMenu*>(relative))
-                ActiveMenus.push_back(dynamic_cast<ImmediateUserInterfaceMenu*>(relative));
+            ImmediateUserInterfaceMenu* menu =
+                dynamic_cast<ImmediateUserInterfaceMenu*>(relative);
+
+            if(menu != nullptr)
+                ActiveMenus.push_back(menu);
+
             relative = relative->State.Relative;
         }
     }
+}
+
+void ImmedidateUserInterfaceMenusController::detect_maximum_width(
+    ImmediateUserInterfaceContextLayer* _Context,
+    ImmediateUserInterfaceNode*         _Node,
+    float&                              _MaximumWidth)
+{
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
+
+    if(scrollArea != nullptr && scrollArea->ContentView != nullptr)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr && (*it)->is_partially_visible(_Context))
+            {
+                gs_vec2f size =
+                    _Context->m_Renderer->calculate_bounding_box(
+                        (*it)->Name.begin(),
+                        (*it)->Name.end(),
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+                _MaximumWidth = gs_max(_MaximumWidth, size.x);
+            }
+        }
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
+        detect_maximum_width(_Context, *it, _MaximumWidth);
+}
+
+void ImmedidateUserInterfaceMenusController::setup_maximum_with(
+    ImmediateUserInterfaceContextLayer* _Context,
+    ImmediateUserInterfaceNode*         _Node,
+    float&                              _MaximumWidth)
+{
+    if(_Context == nullptr) return;
+
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
+
+    if(scrollArea != nullptr && scrollArea->ContentView != nullptr)
+    {
+        for(auto it = _Context->m_Hierarchy.begin(scrollArea->ContentView); it != _Context->m_Hierarchy.end(scrollArea->ContentView); it++)
+        {
+            if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr && (*it)->is_partially_visible(_Context))
+            {
+                gs_vec2f size =
+                    _Context->m_Renderer->calculate_bounding_box(
+                        (*it)->Name.begin(),
+                        (*it)->Name.end(),
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+                        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+                (*it)->State.BoundingBox =
+                    gs_2dboxf(
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, size.y));
+            }
+        }
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
+        setup_maximum_with(_Context, *it, _MaximumWidth);
 }
 
 // ImmedidateUserInterfaceNextNodeController

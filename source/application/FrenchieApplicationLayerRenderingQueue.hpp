@@ -194,6 +194,7 @@ namespace Frenchie
 
             // getters
             RenderingQueueMetrics get_rendering_queue_metrics() const;
+            float                 get_minimum_line_width() const;
             gs_vec3f              get_cursor_postion() const;
             float                 get_near_plane() const;
             float                 get_far_plane() const;
