@@ -411,7 +411,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     static bool EnableHSL   = true;
     static bool EnableAlpha = true;
     
-    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Модификаторы цвета", "Color input testing")))
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Регулятор цвета RGBA", "RGBA color picker")))
     {
         if(m_ImmediateUserInterface->begin_scrollarea(
             m_ImmediateUserInterface->next_id("Regulators"),
@@ -436,6 +436,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
             m_ImmediateUserInterface->end_scrollarea();
         }
 
+        m_ImmediateUserInterface->next_content_padding(32.f);
+
         m_ImmediateUserInterface->color_picker_rgba(
             m_ImmediateUserInterface->next_id("Color picker"),
             color,
@@ -447,7 +449,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_ImmediateUserInterface->end_window();
     }
 
-    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Модификаторы цвета", "Color1 input testing")))
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Регулятор цвета HSVA", "HSVA color picker")))
     {
         m_ImmediateUserInterface->color_picker_hsva(
             m_ImmediateUserInterface->next_id("Color picker"),

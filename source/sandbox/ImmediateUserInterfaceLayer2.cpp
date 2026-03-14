@@ -6065,11 +6065,11 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(c
 
 void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
+    struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfaceNodePanel
     {
     public:
-        ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-        virtual ~ImmediateUserInterfaceColorPicker(){}
+        ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        virtual ~ImmediateUserInterfaceColorPickerRGBA(){}
 
         virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
         {
@@ -6185,13 +6185,13 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min,
                     gradientBoxSlider.Max,
-                    gs_color_rgba(255, 255, 255, 255),
+                    gs_color_rgba(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     gradientBoxSlider.Min + gs_vec2f(4.f),
                     gradientBoxSlider.Max - gs_vec2f(4.f),
-                    gs_color_rgba(0, 0, 0, 255),
+                    gs_color_rgb(gs_color_rgba_get_r(Color), gs_color_rgba_get_g(Color), gs_color_rgba_get_b(Color)),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
@@ -6370,11 +6370,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
     if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // color picker
-        if(begin_node<ImmediateUserInterfaceColorPicker>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            end_node<ImmediateUserInterfaceColorPicker>();
+        if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            end_node<ImmediateUserInterfaceColorPickerRGBA>();
 
-        ImmediateUserInterfaceColorPicker* picker =
-            get_rendered_stack_top<ImmediateUserInterfaceColorPicker>();
+        ImmediateUserInterfaceColorPickerRGBA* picker =
+            get_rendered_stack_top<ImmediateUserInterfaceColorPickerRGBA>();
 
         picker->Settings = _Settings;
 
@@ -6529,16 +6529,13 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
     }
 }
 
-void ImmediateUserInterfaceContextLayer::color_picker_hsva(
-    const std::string&                               _ID,
-    gs_color&                                        _Color,
-    const ImmediateUserInterfaceColorPickerSettings& _Settings)
+void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    struct ImmediateUserInterfaceColorPicker : public ImmediateUserInterfaceNodePanel
+    struct ImmediateUserInterfaceColorPickerHSVA : public ImmediateUserInterfaceNodePanel
     {
     public:
-        ImmediateUserInterfaceColorPicker(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
-        virtual ~ImmediateUserInterfaceColorPicker(){}
+        ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        virtual ~ImmediateUserInterfaceColorPickerHSVA(){}
 
         virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
         {
@@ -6546,10 +6543,10 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
 
             gs_vec2f ellpseBoxSize       = gs_vec2f(256.f, 256.f);
             gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
-            gs_vec2f transparencyBoxSize = gs_vec2f(32.f, 256.f);
+            gs_vec2f transparencyBoxSize = gs_vec2f((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha ? 32.f : 0.f), 256.f);
             gs_vec2f colorBoxSize        = gs_vec2f(32.f, 256.f);
             gs_vec2f padding             = gs_vec2f(8.f);
-            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + colorBoxSize + padding;
+            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + colorBoxSize + padding * 2.f;
             gs_vec2f position            = State.BoundingBox.Min;
 
             // ellipse
@@ -6590,6 +6587,15 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
         {
             if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+            float s = (float)gs_vector_length(EllipseSliderPosition);
+            float h = (float)gs_vector_argument(EllipseSliderPosition);
+            if(h < 0.f) h += (float)PI2;
+
+            gs_color transparency = (gs_color)((1.f - TransparencySliderPosition) * 255.f);
+            gs_color brightness   = (gs_color)((1.f - BrightnessSliderPosition) * 255.f);
+            gs_color saturation   = (gs_color)(s * 255.f);
+            gs_color hue          = (gs_color)(h / PI2 * 255.f);
+
             // render ellipse
             {
                 // ellipse
@@ -6600,8 +6606,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
                 for (float angle = sourceAngle; angle < targetAngle; angle += delta)
                 {
                     gs_color c1 = gs_color_rgba(255, 255, 255, 255);
-                    gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(angle / 360.f * 255.f), 255, 255));
-                    gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, 255));
+                    gs_color c2 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(angle / 360.f * 255.f), 255, brightness));
+                    gs_color c3 = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)((angle + delta) / 360.f * 255.f), 255, brightness));
 
                     _Context->m_Renderer->build_triangle_gradient_mesh(
                         Ellipse.Center,
@@ -6625,40 +6631,32 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
                     gs_color_rgba(0, 0, 0, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-                float s = (float)gs_vector_length(EllipseSliderPosition);
-                float h = (float)gs_vector_argument(EllipseSliderPosition);
-                if(h < 0.f) h += (float)PI2;
-
-                Color = gs_color_hsv_to_rgb(gs_color_hsv((gs_color)(h / PI2 * 255.f), (gs_color)(s * 255.f), 255));
-
                 _Context->m_Renderer->push_arc_filled(
                     EllipseSlider.Center,
                     EllipseSlider.Radius * 0.8f,
                     EllipseSlider.Radius * 0.8f,
                     0.f,
                     360.f,
-                    Color,
+                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness)),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
 
             // render brightness box
             {
-                gs_color HSV = gs_color_rgb_to_hsv(Color);
-
                 // box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
                     BrightnessBox.Min,
                     BrightnessBox.Max,
-                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 255)),
-                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 255)),
-                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 0)),
-                    gs_color_hsv_to_rgb(gs_color_hsv(gs_color_hsv_get_h(HSV), gs_color_hsv_get_s(HSV), 0)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 255)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 255)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 0)),
+                    gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, 0)),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // slider
                 gs_2dboxf brightnessBoxSlider = gs_2dboxf(
-                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height()),
-                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height()) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.05f));
+                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f),
+                    BrightnessBox.Min + gs_vec2f(0.f, BrightnessSliderPosition * BrightnessBox.height() * 0.9f) + gs_vec2f(BrightnessBox.width(), BrightnessBox.height() * 0.1f));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     brightnessBoxSlider.Min,
@@ -6671,15 +6669,10 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
                     brightnessBoxSlider.Max - gs_vec2f(4.f),
                     gs_color_rgba(255, 255, 255, 255),
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // calculate color
-                Color = gs_color_hsv_to_rgb(gs_color_hsv(
-                    gs_color_hsv_get_h(HSV),
-                    gs_color_hsv_get_s(HSV),
-                    gs_color((1.f - BrightnessSliderPosition) * 255.f)));
             }
 
             // render transparency box
+            if(Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
             {
                 // box
                 _Context->m_Renderer->push_rectangle_gradient_mesh(
@@ -6693,8 +6686,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
 
                 // slider
                 gs_2dboxf transparencyBoxSlider = gs_2dboxf(
-                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height()),
-                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height()) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.05f));
+                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f),
+                    TransparencyBox.Min + gs_vec2f(0.f, TransparencySliderPosition * TransparencyBox.height() * 0.9f) + gs_vec2f(TransparencyBox.width(), TransparencyBox.height() * 0.1f));
 
                 _Context->m_Renderer->push_rectangle_filled(
                     transparencyBoxSlider.Min,
@@ -6709,14 +6702,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                 // calculate color
-                gs_color RGB = gs_color_hsv_to_rgb(gs_color_rgb_to_hsv(Color));
-
-                Color = gs_color_rgba(
-                    gs_color_rgba_get_r(RGB),
-                    gs_color_rgba_get_g(RGB),
-                    gs_color_rgba_get_b(RGB),
-                    (gs_color)((1.f - TransparencySliderPosition) * 255.f)
-                );
+                gs_color RGB = gs_color_hsv_to_rgb(gs_color_hsv(hue, saturation, brightness));
+                Color = gs_color_rgba(gs_color_rgba_get_r(RGB), gs_color_rgba_get_g(RGB), gs_color_rgba_get_b(RGB), transparency);
             }
 
             // color box
@@ -6765,11 +6752,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    BrightnessSliderPosition         = ((_Context->m_Input.get_cusor_position() - BrightnessBox.Min) / BrightnessBox.size()).y;
+                    BrightnessSliderPosition         = ((_Context->m_Input.get_cusor_position() - BrightnessBox.Min - BrightnessBox.size() * 0.1f * 0.5f) / BrightnessBox.size() / 0.9f).y;
                     BrightnessSliderPreviousPosition = BrightnessSliderPosition;
                 }
 
-                BrightnessSliderPosition = gs_clamp(BrightnessSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / BrightnessBox.size()).y, 0.f, 1.f);
+                BrightnessSliderPosition = gs_clamp(BrightnessSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / BrightnessBox.size() / 0.9f).y, 0.f, 1.f);
                 BrightnessSliderIsMoving = true;
 
                 return true;
@@ -6780,11 +6767,11 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
-                    TransparencySliderPosition         = ((_Context->m_Input.get_cusor_position() - TransparencyBox.Min) / TransparencyBox.size()).y;
+                    TransparencySliderPosition         = ((_Context->m_Input.get_cusor_position() - TransparencyBox.Min - TransparencyBox.size() * 0.1f * 0.5f) / TransparencyBox.size() / 0.9f).y;
                     TransparencySliderPreviousPosition = TransparencySliderPosition;
                 }
 
-                TransparencySliderPosition = gs_clamp(TransparencySliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / TransparencyBox.size()).y, 0.f, 1.f);
+                TransparencySliderPosition = gs_clamp(TransparencySliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / TransparencyBox.size() / 0.9f).y, 0.f, 1.f);
                 TransparencySliderIsMoving = true;
 
                 return true;
@@ -6793,7 +6780,20 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
             return false;
         }
 
+        void force_rgba_color(const gs_color& _Color)
+        {
+            gs_color HSV            = gs_color_rgb_to_hsv(_Color);
+            gs_color Alpha          = gs_color_rgba_get_a(_Color);
+            float    vectorLength   = (float)gs_color_hsv_get_s(HSV) / 255.f;
+            float    vectorArgument = (float)gs_color_hsv_get_h(HSV) / 255.f * (float)PI2;
+
+            EllipseSliderPosition      = gs_vec2f(cos(vectorArgument), sin(vectorArgument)) * vectorLength;
+            BrightnessSliderPosition   = 1.f - (float)gs_color_hsv_get_v(HSV) / 255.f;
+            TransparencySliderPosition = 1.f - (float)(Alpha / 255.f);
+        }
+
         // public attributes
+        gs_color                                  Color    = 1;
         gs_vec3ui                                 RGB      = {0, 0, 0};
         gs_vec3ui                                 HSV      = {0, 0, 0};
         gs_vec3ui                                 HSL      = {0, 0, 0};
@@ -6826,10 +6826,176 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(
         gs_2dboxf      ColorBox                           = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.0, 0.f));
     };
 
-    if(begin_node<ImmediateUserInterfaceColorPicker>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    next_content_padding(gs_vec2f(2.f));
+
+    if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        end_node<ImmediateUserInterfaceColorPicker>();
+        // color picker
+        if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            end_node<ImmediateUserInterfaceColorPickerHSVA>();
+
+        ImmediateUserInterfaceColorPickerHSVA* picker =
+            get_rendered_stack_top<ImmediateUserInterfaceColorPickerHSVA>();
+
+        picker->Settings = _Settings;
+
+        char a[6] = "Alpha";
+
+        float labelWidth = m_Renderer->calculate_bounding_box(&a[0], &a[6], m_Style.get_font_size(), m_Style.get_current_font()).width();
+
+        // RGB
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
+        {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            next_content_padding(gs_vec2f(16.f));
+
+            if(begin_horizontal_stack(std::string(_ID).append("/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255))
+                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                else
+                    picker->RGB.x = gs_color_rgba_get_r(picker->Color);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255))
+                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                else
+                    picker->RGB.y = gs_color_rgba_get_g(picker->Color);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255))
+                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                else
+                    picker->RGB.z = gs_color_rgba_get_b(picker->Color);
+
+                end_horizontal_stack();
+            }
+        }
+
+        // HSV
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
+        {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            next_content_padding(gs_vec2f(16.f));
+
+            if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                label(std::string(_ID).append("/Editors/HSV/Label"), "HSV");
+
+                bool hsvChanged = false;
+
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360))
+                    hsvChanged = true;
+                else
+                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 360.f);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100))
+                    hsvChanged = true;
+                else
+                    picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100))
+                    hsvChanged = true;
+                else
+                    picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+
+                if(hsvChanged)
+                {
+                    gs_color rgb = gs_color_hsv_to_rgb(
+                        gs_color_hsv(
+                            (gs_color)((float)picker->HSV.x / 360.f * 255.f),
+                            (gs_color)((float)picker->HSV.y / 100.f * 255.f),
+                            (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
+
+                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                }
+
+                end_horizontal_stack();
+            }
+        }
+
+        // HSL
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
+        {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            next_content_padding(gs_vec2f(16.f));
+
+            if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                label(std::string(_ID).append("/Editors/HSL/Label"), "HSL");
+
+                bool hsvChanged = false;
+
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360))
+                    hsvChanged = true;
+                else
+                    picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 360.f);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100))
+                    hsvChanged = true;
+                else
+                    picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+                
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100))
+                    hsvChanged = true;
+                else
+                    picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+
+                if(hsvChanged)
+                {
+                    gs_color rgb = gs_color_hsl_to_rgb(
+                        gs_color_hsl(
+                            (gs_color)((float)picker->HSL.x / 360.f * 255.f),
+                            (gs_color)((float)picker->HSL.y / 100.f * 255.f),
+                            (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
+
+                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                }
+
+                end_horizontal_stack();
+            }
+        }
+
+        // Alpha
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
+        {
+            next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+            next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+            next_content_padding(gs_vec2f(16.f));
+
+            if(begin_horizontal_stack(std::string(_ID).append("/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
+
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255))
+                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha));
+                else
+                    picker->Alpha = gs_color_rgba_get_a(picker->Color);
+                
+                end_horizontal_stack();
+            }
+        }
+
+        // setup output color value
+        _Color = picker->Color;
+
+        end_vertical_stack();
     }
+
+    // if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    // {
+    //     if(begin_node<ImmediateUserInterfaceColorPicker>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    //         end_node<ImmediateUserInterfaceColorPicker>();
+
+    //     end_vertical_stack();
+    // }
 }
 
 void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture)
