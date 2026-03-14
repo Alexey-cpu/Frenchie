@@ -417,6 +417,14 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
+            if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox")))
+            {
+                m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));m_ImmediateUserInterface->next_line();
+                m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));m_ImmediateUserInterface->next_line();
+                m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));m_ImmediateUserInterface->next_line();
+                m_ImmediateUserInterface->end_combobox();
+            }
+
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), EnableRGB);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableRGBLabel"), "RGB");
             

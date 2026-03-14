@@ -353,6 +353,84 @@ namespace Frenchie
             }
         };
 
+        // widgets
+        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+            virtual ~ImmediateUserInterfaceComboboxScrollArea(){}
+        };
+
+        struct ImmediateUserInterfaceCombobox : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceCombobox(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+            {
+                State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+            }
+
+            virtual ~ImmediateUserInterfaceCombobox(){}
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                    return;
+
+                // render 
+                _Context->m_Renderer->push_rectangle_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    gs_color_rgba(255, 255, 255, 255),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                    return;
+
+                State.BoundingBox = gs_2dboxf(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_maximum_font_size() * 0.5f));
+            }
+
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                ImmediateUserInterfaceNode::measure(_Context);
+            }
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                    return false;
+
+                // activate self
+                if(_Context->m_Input.is_mouse_button_pressed())
+                    Active = true;
+
+                return true;
+            }
+
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
+            {
+                if(dynamic_cast<ImmediateUserInterfaceComboboxScrollArea*>(_Child))
+                {
+                    _Child->State.Parent = this;
+                    return;
+                }
+
+                if(ScrollArea != nullptr)
+                    ScrollArea->attach_child(_Child);
+            }
+
+            ImmediateUserInterfaceScrollArea* ScrollArea = nullptr;
+
+            bool Active  = false;
+            bool Hovered = false;
+
+            std::chrono::high_resolution_clock::time_point HoverTime;
+        };
+
         // controllers
         class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
         {
@@ -7330,6 +7408,76 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
         get_rendering_stack_top<ImmediateUserInterfaceNodeImage>()->ColorMask = _ColorMask;
         end_node<ImmediateUserInterfaceNodeImage>();
     }
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID)
+{
+    if(begin_node<ImmediateUserInterfaceCombobox>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceCombobox* combobox =
+            get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
+
+        if((combobox->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+        {
+            combobox->HoverTime = Frenchie::Core::tic();
+        }
+        else if(
+             combobox->ScrollArea != nullptr                                                &&
+            !combobox->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()) &&
+            Frenchie::Core::elapsed<std::chrono::microseconds>(combobox->HoverTime, Frenchie::Core::tic()) > 100)
+        {
+            combobox->Active  = false;
+            combobox->Hovered = false;
+        }
+
+        if(!combobox->Active)
+        {
+            end_combobox();
+            return false;
+        }
+
+        if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(std::string(_ID).append("/ScrollArea"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        {
+            combobox->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+            combobox->ScrollArea->State.PlaceInFollow  = true;
+            combobox->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
+
+            // calculate rect
+            gs_2dboxf box = combobox->get_visible_rect(this);
+            
+            combobox->ScrollArea->State.BoundingBox = gs_2dboxf(
+                gs_vec2f(box.Min.x, box.Max.y),
+                gs_vec2f(box.Min.x, box.Max.y) + combobox->ScrollArea->State.BoundingBox.size());
+
+            if(combobox->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
+            {
+                combobox->Active  = true;
+                combobox->Hovered = true;
+            }
+            else if(combobox->Hovered && combobox->Active)
+            {
+                combobox->Active  = false;
+                combobox->Hovered = false;
+            }
+
+            end_node<ImmediateUserInterfaceComboboxScrollArea>();
+        }
+    }
+
+    return true;
+}
+
+void ImmediateUserInterfaceContextLayer::end_combobox()
+{
+    end_node<ImmediateUserInterfaceCombobox>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
