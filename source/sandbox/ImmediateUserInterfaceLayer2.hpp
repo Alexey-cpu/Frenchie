@@ -413,8 +413,8 @@ namespace Frenchie
                 bool                                           Selected                   {false};
 
                 // layout hints
-                int                                            NextLine = 0; // vertical indents count which need to be placed after this node within scrollarea
-                int                                            Indent   = 0; // horizontal indents count which  need to be placed after this node within scrollarea
+                int                                            NextLine{0};   // vertical indents count which need to be placed after this node within scrollarea
+                float                                          Indent  {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
                 ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
@@ -728,10 +728,15 @@ namespace Frenchie
 
             // next node API
             
-            // If next node is pushed within scroll area this function pushes it onto a next line by inserting vertica 'next line' indent.
+            // If next node is pushed within scroll area this function pushes it onto a next line by inserting vertical 'next line' indent.
             // If you call this function several times it inserts several 'next line' indents before the node.
             // All changes are applied every frame.
             void next_line();
+
+            // If next node is pushed within scroll area this function adds horizontal indent before it equal to the 3 font sizes.
+            // If you call this function several times it inserts several horizontal indents before the node.
+            // All changes are applied every frame.
+            void indent(const float& = 32.f);
 
             // This function sets next node size by changing it's bounding box width, height and size constraints (minimum and maximum size).
             // All changes are applied every frame.
@@ -825,6 +830,10 @@ namespace Frenchie
                     // next line
                     if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
                         m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
+
+                    // next indent
+                    if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
+                        m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
 
                     // next minimum size
                     if(controller->NextMinimumSize.has_value())

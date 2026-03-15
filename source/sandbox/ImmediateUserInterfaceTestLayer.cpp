@@ -24,6 +24,13 @@ void ImmediateUserInterfaceTestLayer::frame_update()
     //renderer_test();
 
     auto FPS = std::string("FPS ").append(std::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
+
+    m_ImmediateUserInterface->m_Renderer->push_text(
+        gs_vec2f(0.f, 0.f),
+        FPS.begin(),
+        FPS.end(),
+        32.f,
+        gs_color_rgba(255, 255, 255, 255));
 }
 
 void ImmediateUserInterfaceTestLayer::finish()
@@ -401,7 +408,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     }
 
     // color pickers
-    static gs_color color = 1;
+    static gs_color color = gs_color_rgba(255, 0, 0, 255);
 
     m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f, 16.f));
 
@@ -413,11 +420,15 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Регуляторы цвета", "RGBA color picker")))
     {
+        float indent = 64.f;
+
         if(m_ImmediateUserInterface->begin_scrollarea(
             m_ImmediateUserInterface->next_id("Regulators"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ColorPickerType"), "Type");
+
             if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), RGBA ? "RGBA" : "HSVA"))
             {
                 bool rgbaSelected = RGBA;
@@ -432,17 +443,19 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 m_ImmediateUserInterface->end_combobox();
             }
 
-            m_ImmediateUserInterface->next_line();
-
+            m_ImmediateUserInterface->indent(indent);
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), EnableRGB);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableRGBLabel"), "RGB");
             
+            m_ImmediateUserInterface->indent(indent);
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSV"), EnableHSV);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSVLabel"), "HSV");
 
+            m_ImmediateUserInterface->indent(indent);
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSL"), EnableHSL);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSLLabel"), "HSL");
 
+            m_ImmediateUserInterface->indent(indent);
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), EnableAlpha);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Alpha");
 
