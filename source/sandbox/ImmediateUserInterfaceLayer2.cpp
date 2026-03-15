@@ -92,6 +92,7 @@ namespace Frenchie
             float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
 
             ImmediateUserInterfaceNode*                ContentView         = nullptr;
+            ImmediateUserInterfaceNode*                ContentPanel        = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBar* VerticalScrollBar   = nullptr;
             ImmediateUserInterfaceScrollAreaScrollBar* HorizontalScrollBar = nullptr;
 
@@ -475,9 +476,10 @@ namespace Frenchie
 
             // info
             mutable Frenchie::Core::Optional<int>      NextLine;
+            mutable Frenchie::Core::Optional<float>    NextIndent;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
             mutable Frenchie::Core::Optional<gs_vec2f> NextMaximumSize;
             mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
             mutable Frenchie::Core::Optional<gs_vec2f> NextContentPadding;
         };
 
@@ -3079,6 +3081,8 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
         std::string(_ID).append("/Panel"),
         settings))
     {
+        scrollArea->ContentPanel = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>();
+
         if(_Context->begin_vertial_stack(
             std::string(_ID).append("/Panel/VerticalStack"),
             settings))
@@ -3207,8 +3211,13 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
             scrollArea->VerticalScrollBar->get_scroll_offset() :
                 gs_vec2f(0.f, 0.f);
 
-    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
-    gs_vec2f start     = position;
+    float indent =
+        scrollArea != nullptr && scrollArea->ContentPanel != nullptr ?
+            scrollArea->ContentPanel->State.Indent :
+                0.f; 
+
+    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding + gs_vec2f(indent, 0.f);
+    gs_vec2f start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
     float    maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -3221,12 +3230,15 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
 
         if((*it)->State.NextLine > 0)
         {
-            position  = gs_vec2f(start.x, position.y + maxHeight * (*it)->State.NextLine + ContentPadding.y);
+            position  = gs_vec2f(
+                start.x + (*it)->State.Indent,
+                position.y + maxHeight * (*it)->State.NextLine + ContentPadding.y);
+            
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.x, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.x + (*it)->State.Indent, 0.f);
         }
     }
 }
@@ -5740,9 +5752,10 @@ void ImmedidateUserInterfaceNextNodeController::reset()
 {
     // reset all
     NextLine.reset();
+    NextIndent.reset();
+    NextPosition.reset();
     NextMinimumSize.reset();
     NextMaximumSize.reset();
-    NextPosition.reset();
     NextContentPadding.reset();
 }
 
@@ -6400,8 +6413,8 @@ void ImmediateUserInterfaceContextLayer::label(
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // setup
-        ImmediateUserInterfaceLabel* widget = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
-        gs_vec2f textBoundingBox = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
+        ImmediateUserInterfaceLabel* widget   = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
+        gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() + gs_vec2f(m_Style.get_font_size() * 0.5f, 0.f);
 
         // render
         {
@@ -6439,7 +6452,7 @@ void ImmediateUserInterfaceContextLayer::label(
             }
 
             m_Renderer->push_text(
-                gs_vec2f(widget->State.BoundingBox.Min.x, widget->State.BoundingBox.center().y - textBoundingBox.y * 0.5f),
+                gs_vec2f(widget->State.BoundingBox.Min.x, widget->State.BoundingBox.center().y - textSize.y * 0.5f),
                 _Text.begin(),
                 _Text.end(),
                 m_Style.get_font_size(),
@@ -6452,7 +6465,7 @@ void ImmediateUserInterfaceContextLayer::label(
 
         // calculate geometry
         {
-            widget->State.MinimumSize = gs_vec2f(gs_max(textBoundingBox.x, widget->State.MinimumSize.x), gs_max(textBoundingBox.y, m_Style.get_font_size()));
+            widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), gs_max(textSize.y, m_Style.get_font_size()));
             widget->State.MaximumSize = gs_vec2f(widget->State.MaximumSize.x, widget->State.MinimumSize.y);
 
             widget->State.BoundingBox = gs_2dboxf(
@@ -7040,8 +7053,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 gs_2dboxf ellipseBox = gs_2dboxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height()));
 
                 Ellipse = gs_2d_ellipsef(
-                    gs_2dboxf(position, position + gs_vec2f((ellpseBoxSize / totalSize * State.BoundingBox.size()).x, State.BoundingBox.height())).center(),
-                    gs_min(ellipseBox.width(), ellipseBox.height()) * 0.5f);
+                    ellipseBox.center(),
+                    gs_min(ellipseBox.width(), ellipseBox.height()) * 0.4f);
 
                 EllipseSlider = gs_2d_ellipsef(
                     Ellipse.Center + EllipseSliderPosition * Ellipse.Radius,
@@ -7644,8 +7657,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             gs_2dboxf box = combobox->get_visible_rect(this);
             
             combobox->ScrollArea->State.BoundingBox = gs_2dboxf(
-                gs_vec2f(box.Min.x, box.Max.y - m_Style.get_frames_width()),
-                gs_vec2f(box.Min.x, box.Max.y - m_Style.get_frames_width()) + combobox->ScrollArea->State.BoundingBox.size());
+                gs_vec2f(box.Min.x, box.Max.y) - m_Style.get_frames_width(),
+                gs_vec2f(box.Min.x, box.Max.y) - m_Style.get_frames_width() + combobox->ScrollArea->State.BoundingBox.size());
 
             if(combobox->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
             {
@@ -7791,6 +7804,15 @@ void ImmediateUserInterfaceContextLayer::next_line()
 
     if(controller != nullptr)
         controller->NextLine = controller->NextLine.has_value() ? controller->NextLine.value() + 1 : 1;
+}
+
+void ImmediateUserInterfaceContextLayer::indent(const float& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextIndent = controller->NextIndent.has_value() ? controller->NextIndent.value() + _Value : _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
