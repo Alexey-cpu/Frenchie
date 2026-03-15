@@ -409,6 +409,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     static bool EnableHSV   = true;
     static bool EnableHSL   = true;
     static bool EnableAlpha = true;
+    static bool RGBA        = true;
     
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Регуляторы цвета", "RGBA color picker")))
     {
@@ -417,26 +418,31 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
-            if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox")))
+            if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), RGBA ? "RGBA" : "HSVA"))
             {
-                m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));m_ImmediateUserInterface->next_line();
-                m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));m_ImmediateUserInterface->next_line();
-                m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));m_ImmediateUserInterface->next_line();
+                bool rgbaSelected = RGBA;
+                bool hsvaSelected = !RGBA;
+
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RGBASelected"), rgbaSelected);
+                if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("RGBA", "RGBA"))) RGBA = true;
+
+                m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HSVASelected"), hsvaSelected);
+                if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("HSVA", "HSVA"))) RGBA = false;
+
                 m_ImmediateUserInterface->end_combobox();
             }
+
+            m_ImmediateUserInterface->next_line();
 
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), EnableRGB);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableRGBLabel"), "RGB");
             
-            m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSV"), EnableHSV);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSVLabel"), "HSV");
 
-            m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSL"), EnableHSL);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSLLabel"), "HSL");
 
-            m_ImmediateUserInterface->next_line();
             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), EnableAlpha);
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Alpha");
 
@@ -446,22 +452,27 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Pickers")))
         {
             // RGBA
-            m_ImmediateUserInterface->color_picker_rgba(
-                m_ImmediateUserInterface->next_id("RGBAColorPicker"),
-                color,
-                (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0));
-
+            if(RGBA)
+            {
+                m_ImmediateUserInterface->color_picker_rgba(
+                    m_ImmediateUserInterface->next_id("RGBAColorPicker"),
+                    color,
+                      (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
+                    | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
+                    | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
+                    | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0));
+            }
             // HSVA
-            m_ImmediateUserInterface->color_picker_hsva(
-                m_ImmediateUserInterface->next_id("HSVAColorPicker"),
-                color,
-                (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0));
+            else
+            {
+                m_ImmediateUserInterface->color_picker_hsva(
+                    m_ImmediateUserInterface->next_id("HSVAColorPicker"),
+                    color,
+                      (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
+                    | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
+                    | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
+                    | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0));
+            }
 
             // Color
             m_ImmediateUserInterface->image("ColorImage", color);
