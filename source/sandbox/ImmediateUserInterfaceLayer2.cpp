@@ -7558,32 +7558,34 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 {
     if(begin_node<ImmediateUserInterfaceCombobox>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        ImmediateUserInterfaceCombobox* combobox = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
+        ImmediateUserInterfaceCombobox* widget = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
         // render
         {
-            int depth = combobox->Cache.Depth;
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+
+            int depth = widget->Cache.Depth;
 
             // outline
             m_Renderer->push_rectangle_rounded_filled(
-                combobox->State.BoundingBox.Min,
-                combobox->State.BoundingBox.Max,
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Max,
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // background
             m_Renderer->push_rectangle_rounded_filled(
-                combobox->State.BoundingBox.Min + m_Style.get_frames_width(),
-                combobox->State.BoundingBox.Max - m_Style.get_frames_width(),
+                widget->State.BoundingBox.Min + m_Style.get_frames_width(),
+                widget->State.BoundingBox.Max - m_Style.get_frames_width(),
                 m_Style.get_frames_radius(),
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                 m_Renderer->calculate_transform_matrix((float)depth++));
 
             // open button
             gs_2dboxf openButtonBox = gs_2dboxf(
-                combobox->State.BoundingBox.Min,
-                combobox->State.BoundingBox.Min + gs_vec2f(combobox->State.BoundingBox.width() * 0.25f, combobox->State.BoundingBox.height()));
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Min + gs_vec2f(widget->State.BoundingBox.width() * 0.25f, widget->State.BoundingBox.height()));
 
             m_Renderer->push_rectangle_rounded_filled(
                 openButtonBox.Min,
@@ -7613,7 +7615,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                     m_Renderer->calculate_transform_matrix((float)depth++));
             }
 
-            if(combobox->Active)
+            if(widget->Active)
             {
                 m_Renderer->push_triangle_filled(
                     openButtonBox.center() + gs_vec2f(-openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
@@ -7641,23 +7643,25 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                 m_Renderer->calculate_transform_matrix((float)depth++),
                 m_Style.get_current_font());
+
+            m_Renderer->pop_clip_box();
         }
 
         // activate
-        if((combobox->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+        if((widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
         {
-            combobox->HoverTime = Frenchie::Core::tic();
+            widget->HoverTime = Frenchie::Core::tic();
         }
         else if(
-             combobox->ScrollArea != nullptr                                                &&
-            !combobox->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()) &&
-            Frenchie::Core::elapsed<std::chrono::microseconds>(combobox->HoverTime, Frenchie::Core::tic()) > 100)
+             widget->ScrollArea != nullptr                                                &&
+            !widget->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()) &&
+            Frenchie::Core::elapsed<std::chrono::microseconds>(widget->HoverTime, Frenchie::Core::tic()) > 100)
         {
-            combobox->Active  = false;
-            combobox->Hovered = false;
+            widget->Active  = false;
+            widget->Hovered = false;
         }
 
-        if(!combobox->Active)
+        if(!widget->Active)
         {
             end_combobox();
             return false;
@@ -7673,26 +7677,26 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
-            combobox->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-            combobox->ScrollArea->State.PlaceInFollow  = true;
-            combobox->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
+            widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+            widget->ScrollArea->State.PlaceInFollow  = true;
+            widget->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
 
             // calculate rect
-            gs_2dboxf box = combobox->get_visible_rect(this);
+            gs_2dboxf box = widget->get_visible_rect(this);
             
-            combobox->ScrollArea->State.BoundingBox = gs_2dboxf(
+            widget->ScrollArea->State.BoundingBox = gs_2dboxf(
                 gs_vec2f(box.Min.x, box.Max.y) - m_Style.get_frames_width(),
-                gs_vec2f(box.Min.x, box.Max.y) - m_Style.get_frames_width() + combobox->ScrollArea->State.BoundingBox.size());
+                gs_vec2f(box.Min.x, box.Max.y) - m_Style.get_frames_width() + widget->ScrollArea->State.BoundingBox.size());
 
-            if(combobox->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
+            if(widget->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
             {
-                combobox->Active  = true;
-                combobox->Hovered = true;
+                widget->Active  = true;
+                widget->Hovered = true;
             }
-            else if(combobox->Hovered && combobox->Active)
+            else if(widget->Hovered && widget->Active)
             {
-                combobox->Active  = false;
-                combobox->Hovered = false;
+                widget->Active  = false;
+                widget->Hovered = false;
             }
 
             end_node<ImmediateUserInterfaceComboboxScrollArea>();
