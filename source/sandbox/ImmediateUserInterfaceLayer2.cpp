@@ -354,140 +354,30 @@ namespace Frenchie
         };
 
         // widgets
-        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
-        {
-        public:
-            ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
-            virtual ~ImmediateUserInterfaceComboboxScrollArea(){}
-        };
-
         struct ImmediateUserInterfaceCombobox : public ImmediateUserInterfaceNode
         {
         public:
-            ImmediateUserInterfaceCombobox(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
-            {
-                State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
-            }
+            ImmediateUserInterfaceCombobox(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceCombobox();
 
-            virtual ~ImmediateUserInterfaceCombobox(){}
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
+            ImmediateUserInterfaceScrollArea*              ScrollArea{nullptr};
+            bool                                           Active    {false};
+            bool                                           Hovered   {false};
+            std::chrono::high_resolution_clock::time_point HoverTime {std::chrono::high_resolution_clock::time_point()};
+        };
 
-                // outline
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        struct ImmediateUserInterfaceComboboxItem : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceComboboxItem(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceComboboxItem();
 
-                // background
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // open button
-                gs_2dboxf openButtonBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width() * 0.25f, State.BoundingBox.height()));
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    openButtonBox.Min,
-                    openButtonBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                if(openButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_down())
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        openButtonBox.Min + _Context->m_Style.get_frames_width(),
-                        openButtonBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-                else
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        openButtonBox.Min + _Context->m_Style.get_frames_width(),
-                        openButtonBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                            openButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                _Context->m_Renderer->push_triangle_filled(
-                    openButtonBox.center() + gs_vec2f(-openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
-                    openButtonBox.center() + gs_vec2f(+openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
-                    openButtonBox.center() + gs_vec2f(0.f, openButtonBox.height() * 0.25f * 0.5f),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
-
-                State.BoundingBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_maximum_font_size() * 0.5f));
-            }
-
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                ImmediateUserInterfaceNode::measure(_Context);
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return false;
-
-                // activate self
-                if(_Context->m_Input.is_mouse_button_pressed())
-                {
-                    if(Active)
-                    {
-                        Active  = false;
-                        Hovered = false;
-                    }
-                    else
-                    {
-                        Active  = true;
-                    }
-                }
-
-                return true;
-            }
-
-            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
-            {
-                if(dynamic_cast<ImmediateUserInterfaceComboboxScrollArea*>(_Child))
-                {
-                    _Child->State.Parent = this;
-                    return;
-                }
-
-                if(ScrollArea != nullptr)
-                    ScrollArea->attach_child(_Child);
-            }
-
-            ImmediateUserInterfaceScrollArea* ScrollArea = nullptr;
-
-            bool Active  = false;
-            bool Hovered = false;
-
-            std::chrono::high_resolution_clock::time_point HoverTime;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         // controllers
@@ -3985,6 +3875,137 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
                 State.BoundingBox.center().y - triangleWidth * 0.5f)));
 }
 
+// ImmediateUserInterfaceCombobox
+ImmediateUserInterfaceCombobox::ImmediateUserInterfaceCombobox(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
+{
+    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 128.f));
+}
+
+ImmediateUserInterfaceCombobox::~ImmediateUserInterfaceCombobox(){}
+
+void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // layout self
+    State.BoundingBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
+
+    // resize children
+    float MaximumWidth = 0.f;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceComboboxItem* comboboxItem =
+            dynamic_cast<ImmediateUserInterfaceComboboxItem*>(*it);
+
+        if(comboboxItem != nullptr)
+            MaximumWidth = gs_max(MaximumWidth, comboboxItem->State.BoundingBox.width());
+    }
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceComboboxItem* comboboxItem =
+            dynamic_cast<ImmediateUserInterfaceComboboxItem*>(*it);
+
+        if(comboboxItem != nullptr)
+        {
+            comboboxItem->State.BoundingBox = gs_2dboxf(
+                comboboxItem->State.BoundingBox.Min,
+                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, comboboxItem->State.BoundingBox.height()));
+        }
+    }
+}
+
+bool ImmediateUserInterfaceCombobox::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return false;
+
+    // activate self
+    if(_Context->m_Input.is_mouse_button_pressed() && State.BoundingBox.contains(_Context->m_Input.get_cusor_position()))
+    {
+        if(Active)
+        {
+            Active  = false;
+            Hovered = false;
+        }
+        else
+        {
+            Active  = true;
+        }
+    }
+
+    return true;
+}
+
+void ImmediateUserInterfaceCombobox::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if(dynamic_cast<ImmediateUserInterfaceComboboxItem*>(_Child) != nullptr ||
+        dynamic_cast<ImmediateUserInterfaceMenuAction*>(_Child) != nullptr)
+        _Child->State.NextLine = 1;
+
+    if(ScrollArea != nullptr)
+        ScrollArea->attach_child(_Child);
+}
+
+// ImmediateUserInterfaceComboboxItem
+ImmediateUserInterfaceComboboxItem::ImmediateUserInterfaceComboboxItem(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceComboboxItem::~ImmediateUserInterfaceComboboxItem(){}
+
+void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr) return;
+
+    gs_vec2f size =
+        _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
+        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+
+    State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), size.y);
+    State.MaximumSize = gs_vec2f(gs_min(size.x, State.MaximumSize.x), size.y);
+}
+
+void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // background
+    if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && _Context->m_Input.is_mouse_button_down())
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+    else
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            (State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) ?
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered) :
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // title
+    _Context->m_Renderer->push_text(
+        gs_vec2f(
+            State.BoundingBox.Min.x, 
+            (State.BoundingBox.center() - _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() * 0.5f).y),
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix(
+            (float)place_in_follow()));
+}
+
 // ImmediateUserInterfaceWindow
 ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceWindow::~ImmediateUserInterfaceWindow(){}
@@ -5420,12 +5441,12 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
             // find top most relative of event catcher node
             ImmediateUserInterfaceNode* relative = eventCatcher;
             ImmediateUserInterfaceNode* focused  = eventCatcher;
-            ImmediateUserInterfaceNode* parent   = eventCatcher->State.Relative;
+            ImmediateUserInterfaceNode* parent   = eventCatcher->State.Scope;
 
             while (parent)
             {
                 relative = parent;
-                parent   = parent->State.Relative;
+                parent   = parent->State.Scope;
             }
 
             // find top most parent of event catcher relative node
@@ -5635,7 +5656,7 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
             if(menu != nullptr)
                 ActiveMenus.push_back(menu);
 
-            relative = relative->State.Relative;
+            relative = relative->State.Scope;
         }
     }
 }
@@ -6339,6 +6360,23 @@ bool ImmediateUserInterfaceContextLayer::menu_action(const std::string& _ID)
     return false;
 }
 
+bool ImmediateUserInterfaceContextLayer::combobox_item(const std::string& _ID)
+{
+    if(begin_node<ImmediateUserInterfaceComboboxItem>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceComboboxItem* widget =
+            get_rendering_stack_top<ImmediateUserInterfaceComboboxItem>();
+
+        end_node<ImmediateUserInterfaceComboboxItem>();
+
+        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+    }
+
+    return false;
+}
+
 void ImmediateUserInterfaceContextLayer::label(
     const std::string&                         _ID,
     const std::string&                         _Text,
@@ -6516,8 +6554,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
             gs_vec2f gradientBoxSize = gs_vec2f(256.f, 256.f);
             gs_vec2f paletteBoxSize  = gs_vec2f(32.f, 256.f);
-            gs_vec2f alphaBoxSize    = gs_vec2f((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha) ? 32.f : 0.f, 256.f);
-            gs_vec2f colorBoxSize    = gs_vec2f(32.f, 256.f);
+            gs_vec2f alphaBoxSize    = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
+            gs_vec2f colorBoxSize    = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) ? 32.f : 0.f), 256.f);
 
             gs_vec2f padding   = gs_vec2f(8.f);
             gs_vec2f position  = State.BoundingBox.Min;
@@ -6666,6 +6704,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             }
 
             // color box
+            if((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
             {
                 _Context->m_Renderer->push_rectangle_filled(
                     ColorBox.Min,
@@ -6697,6 +6736,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 AlphaBoxSliderIsMoving    = false;
                 PaletteBoxSliderIsMoving  = false;
                 GradientBoxSliderIsMoving = false;
+                Edited                    = false;
                 return false;
             }
 
@@ -6711,6 +6751,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 PaletteBoxSliderPosition = gs_clamp(PaletteBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / PaletteBox.size() / 0.9f).y, 0.f, 1.f);
                 PaletteBoxSliderIsMoving = true;
+                Edited                   = true;
 
                 return true;
             }
@@ -6726,6 +6767,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 GradientBoxSliderPosition = gs_clamp(GradientBoxSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / GradientBox.size() / 0.9f, gs_vec2f(0.f, 0.f), gs_vec2f(1.f, 1.f));
                 GradientBoxSliderIsMoving = true;
+                Edited                    = true;
 
                 return true;
             }
@@ -6741,6 +6783,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 AlphaBoxSliderPosition = gs_clamp(AlphaBoxSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / AlphaBox.size() / 0.9f).y, 0.f, 1.f);
                 AlphaBoxSliderIsMoving = true;
+                Edited                 = true;
 
                 return true;
             }
@@ -6775,6 +6818,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
         gs_vec3ui                                 HSV      = {0, 0, 0};
         gs_vec3ui                                 HSL      = {0, 0, 0};
         gs_color                                  Alpha    = 255;
+        bool                                      Edited   = false;
         ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
     private:
@@ -6834,19 +6878,19 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                    _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
-                    picker->RGB.x = gs_color_rgba_get_r(picker->Color);
+                    picker->RGB.x = gs_color_rgba_get_r(_Color);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                    _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
-                    picker->RGB.y = gs_color_rgba_get_g(picker->Color);
+                    picker->RGB.y = gs_color_rgba_get_g(_Color);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                    _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
-                    picker->RGB.z = gs_color_rgba_get_b(picker->Color);
+                    picker->RGB.z = gs_color_rgba_get_b(_Color);
 
                 end_horizontal_stack();
             }
@@ -6869,17 +6913,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360))
                     hsvChanged = true;
                 else
-                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 360.f);
+                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+                    picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+                    picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
 
                 if(hsvChanged)
                 {
@@ -6889,7 +6933,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                             (gs_color)((float)picker->HSV.y / 100.f * 255.f),
                             (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
 
-                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                    _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
                 }
 
                 end_horizontal_stack();
@@ -6913,17 +6957,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360))
                     hsvChanged = true;
                 else
-                    picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 360.f);
+                    picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+                    picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+                    picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
 
                 if(hsvChanged)
                 {
@@ -6933,7 +6977,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                             (gs_color)((float)picker->HSL.y / 100.f * 255.f),
                             (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
 
-                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                    _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
                 }
 
                 end_horizontal_stack();
@@ -6953,16 +6997,19 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha));
+                    _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
                 else
-                    picker->Alpha = gs_color_rgba_get_a(picker->Color);
+                    picker->Alpha = gs_color_rgba_get_a(_Color);
                 
                 end_horizontal_stack();
             }
         }
 
         // setup output color value
-        _Color = picker->Color;
+        if(!picker->Edited)
+            picker->force_rgba_color(_Color);
+        else
+            _Color = picker->Color;
 
         end_vertical_stack();
     }
@@ -6982,8 +7029,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
             gs_vec2f ellpseBoxSize       = gs_vec2f(256.f, 256.f);
             gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
-            gs_vec2f transparencyBoxSize = gs_vec2f((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha ? 32.f : 0.f), 256.f);
-            gs_vec2f colorBoxSize        = gs_vec2f(32.f, 256.f);
+            gs_vec2f transparencyBoxSize = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
+            gs_vec2f colorBoxSize        = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) ? 32.f : 0.f), 256.f);
             gs_vec2f padding             = gs_vec2f(8.f);
             gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + colorBoxSize + padding * 2.f;
             gs_vec2f position            = State.BoundingBox.Min;
@@ -7146,6 +7193,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             }
 
             // color box
+            if((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
             {
                 _Context->m_Renderer->push_rectangle_filled(
                     ColorBox.Min,
@@ -7164,6 +7212,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 EllipseSliderIsMoving      = false;
                 BrightnessSliderIsMoving   = false;
                 TransparencySliderIsMoving = false;
+                Edited                     = false;
                 return false;
             }
 
@@ -7182,6 +7231,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                             gs_vector_normalize(_Context->m_Input.get_cusor_position() - Ellipse.Center);
 
                 EllipseSliderIsMoving = true;
+                Edited                = true;
 
                 return true;
             }
@@ -7197,6 +7247,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
                 BrightnessSliderPosition = gs_clamp(BrightnessSliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / BrightnessBox.size() / 0.9f).y, 0.f, 1.f);
                 BrightnessSliderIsMoving = true;
+                Edited                   = true;
 
                 return true;
             }
@@ -7212,6 +7263,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
                 TransparencySliderPosition = gs_clamp(TransparencySliderPreviousPosition + (_Context->m_Input.get_cusor_drag_delta() / TransparencyBox.size() / 0.9f).y, 0.f, 1.f);
                 TransparencySliderIsMoving = true;
+                Edited                     = true;
 
                 return true;
             }
@@ -7237,6 +7289,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
         gs_vec3ui                                 HSV      = {0, 0, 0};
         gs_vec3ui                                 HSL      = {0, 0, 0};
         gs_color                                  Alpha    = 255;
+        bool                                      Edited   = false;
         ImmediateUserInterfaceColorPickerSettings Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults;
 
     private:
@@ -7295,19 +7348,19 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                    _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
-                    picker->RGB.x = gs_color_rgba_get_r(picker->Color);
+                    picker->RGB.x = gs_color_rgba_get_r(_Color);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                    _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
-                    picker->RGB.y = gs_color_rgba_get_g(picker->Color);
+                    picker->RGB.y = gs_color_rgba_get_g(_Color);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha));
+                    _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
-                    picker->RGB.z = gs_color_rgba_get_b(picker->Color);
+                    picker->RGB.z = gs_color_rgba_get_b(_Color);
 
                 end_horizontal_stack();
             }
@@ -7330,17 +7383,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360))
                     hsvChanged = true;
                 else
-                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 360.f);
+                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+                    picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(picker->Color)) / 255.f * 100.f);
+                    picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
 
                 if(hsvChanged)
                 {
@@ -7350,7 +7403,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                             (gs_color)((float)picker->HSV.y / 100.f * 255.f),
                             (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
 
-                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                    _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
                 }
 
                 end_horizontal_stack();
@@ -7374,17 +7427,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360))
                     hsvChanged = true;
                 else
-                    picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 360.f);
+                    picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+                    picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100))
                     hsvChanged = true;
                 else
-                    picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(picker->Color)) / 255.f * 100.f);
+                    picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
 
                 if(hsvChanged)
                 {
@@ -7394,7 +7447,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                             (gs_color)((float)picker->HSL.y / 100.f * 255.f),
                             (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
 
-                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha));
+                    _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
                 }
 
                 end_horizontal_stack();
@@ -7414,27 +7467,22 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
 
                 if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255))
-                    picker->force_rgba_color(gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha));
+                    _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
                 else
-                    picker->Alpha = gs_color_rgba_get_a(picker->Color);
+                    picker->Alpha = gs_color_rgba_get_a(_Color);
                 
                 end_horizontal_stack();
             }
         }
 
         // setup output color value
-        _Color = picker->Color;
+        if(!picker->Edited)
+            picker->force_rgba_color(_Color);
+        else
+            _Color = picker->Color;
 
         end_vertical_stack();
     }
-
-    // if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-    // {
-    //     if(begin_node<ImmediateUserInterfaceColorPicker>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-    //         end_node<ImmediateUserInterfaceColorPicker>();
-
-    //     end_vertical_stack();
-    // }
 }
 
 void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture)
@@ -7469,13 +7517,96 @@ void ImmediateUserInterfaceContextLayer::image(const std::string& _ID, const gs_
     }
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID)
+bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, const std::string& _Preview)
 {
     if(begin_node<ImmediateUserInterfaceCombobox>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
-        ImmediateUserInterfaceCombobox* combobox =
-            get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
+        ImmediateUserInterfaceCombobox* combobox = get_rendering_stack_top<ImmediateUserInterfaceCombobox>();
 
+        // render
+        {
+            int depth = combobox->Cache.Depth;
+
+            // outline
+            m_Renderer->push_rectangle_rounded_filled(
+                combobox->State.BoundingBox.Min,
+                combobox->State.BoundingBox.Max,
+                m_Style.get_frames_radius(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // background
+            m_Renderer->push_rectangle_rounded_filled(
+                combobox->State.BoundingBox.Min + m_Style.get_frames_width(),
+                combobox->State.BoundingBox.Max - m_Style.get_frames_width(),
+                m_Style.get_frames_radius(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            // open button
+            gs_2dboxf openButtonBox = gs_2dboxf(
+                combobox->State.BoundingBox.Min,
+                combobox->State.BoundingBox.Min + gs_vec2f(combobox->State.BoundingBox.width() * 0.25f, combobox->State.BoundingBox.height()));
+
+            m_Renderer->push_rectangle_rounded_filled(
+                openButtonBox.Min,
+                openButtonBox.Max,
+                m_Style.get_frames_radius(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                m_Renderer->calculate_transform_matrix((float)depth++));
+
+            if(openButtonBox.contains(m_Input.get_cusor_position()) && m_Input.is_mouse_button_down())
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    openButtonBox.Min + m_Style.get_frames_width(),
+                    openButtonBox.Max - m_Style.get_frames_width(),
+                    m_Style.get_frames_radius(),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+            else
+            {
+                m_Renderer->push_rectangle_rounded_filled(
+                    openButtonBox.Min + m_Style.get_frames_width(),
+                    openButtonBox.Max - m_Style.get_frames_width(),
+                    m_Style.get_frames_radius(),
+                        openButtonBox.contains(m_Input.get_cusor_position()) ?
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered) :
+                            m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+
+            if(combobox->Active)
+            {
+                m_Renderer->push_triangle_filled(
+                    openButtonBox.center() + gs_vec2f(-openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(+openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(0.f, openButtonBox.height() * 0.25f * 0.5f),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+            else
+            {
+                m_Renderer->push_triangle_filled(
+                    openButtonBox.center() + gs_vec2f(0.f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(0.f * 0.25f, +openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(+openButtonBox.width() * 0.25f, 0.f),
+                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    m_Renderer->calculate_transform_matrix((float)depth++));
+            }
+
+            // preview text
+            m_Renderer->push_text(
+                gs_vec2f(openButtonBox.Max.x, openButtonBox.center().y - m_Renderer->calculate_bounding_box(_Preview.begin(), _Preview.end(), m_Style.get_font_size(), m_Style.get_current_font()).height() * 0.5f),
+                _Preview.begin(),
+                _Preview.end(),
+                m_Style.get_font_size(),
+                m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                m_Renderer->calculate_transform_matrix((float)depth++),
+                m_Style.get_current_font());
+        }
+
+        // activate
         if((combobox->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
         {
             combobox->HoverTime = Frenchie::Core::tic();
@@ -7495,7 +7626,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID)
             return false;
         }
 
-        if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(std::string(_ID).append("/ScrollArea"),
+        if(begin_scrollarea(std::string(_ID).append("/ScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -7513,8 +7644,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID)
             gs_2dboxf box = combobox->get_visible_rect(this);
             
             combobox->ScrollArea->State.BoundingBox = gs_2dboxf(
-                gs_vec2f(box.Min.x, box.Max.y),
-                gs_vec2f(box.Min.x, box.Max.y) + combobox->ScrollArea->State.BoundingBox.size());
+                gs_vec2f(box.Min.x, box.Max.y - m_Style.get_frames_width()),
+                gs_vec2f(box.Min.x, box.Max.y - m_Style.get_frames_width()) + combobox->ScrollArea->State.BoundingBox.size());
 
             if(combobox->ScrollArea->State.BoundingBox.contains(m_Input.get_cusor_position()))
             {
@@ -7527,7 +7658,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID)
                 combobox->Hovered = false;
             }
 
-            end_node<ImmediateUserInterfaceComboboxScrollArea>();
+            end_scrollarea();
         }
     }
 

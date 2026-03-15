@@ -176,17 +176,19 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceColorPickerSettings_ : int
         {
-            ImmediateUserInterfaceColorPickerSettings_None      = 0,      // sentinel
-            ImmediateUserInterfaceColorPickerSettings_EditRGB   = 1 << 0, // enables RGB   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSV   = 1 << 1, // enables HSV   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditHSL   = 1 << 2, // enables HSL   editor in color picker
-            ImmediateUserInterfaceColorPickerSettings_EditAlpha = 1 << 3, // enables alpha editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_None         = 0,      // sentinel
+            ImmediateUserInterfaceColorPickerSettings_EditRGB      = 1 << 0, // enables RGB   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSV      = 1 << 1, // enables HSV   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditHSL      = 1 << 2, // enables HSL   editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_EditAlpha    = 1 << 3, // enables alpha editor in color picker
+            ImmediateUserInterfaceColorPickerSettings_PreviewColor = 1 << 4, // enables color preview image
 
             ImmediateUserInterfaceColorPickerSettings_Defaults  =
-                ImmediateUserInterfaceColorPickerSettings_EditRGB |
-                ImmediateUserInterfaceColorPickerSettings_EditHSV |
-                ImmediateUserInterfaceColorPickerSettings_EditHSL |
-                ImmediateUserInterfaceColorPickerSettings_EditAlpha
+                  ImmediateUserInterfaceColorPickerSettings_EditRGB
+                | ImmediateUserInterfaceColorPickerSettings_EditHSV
+                | ImmediateUserInterfaceColorPickerSettings_EditHSL
+                | ImmediateUserInterfaceColorPickerSettings_EditAlpha
+                | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
         // mouse hover
@@ -381,37 +383,38 @@ namespace Frenchie
             struct Data
             {
                 // rendering
-                int                                Depth                      {0};     // depth along Z-axis
-                int                                SelfThickness              {0};     // thickness of rendered content
-                int                                RenderingIndex             {0};     // index of the node within context rendering list
-                int                                RenderingOrder             {0};     // index of the node while rendering
-                int                                MaximumChildDepth          {0};     // depth of the deepest child
-                int                                MaximumChildThickness      {0};     // thickness of the 'fattest' child
-                bool                               PlaceInFollow              {false}; // shows if the node places it's children in follow
-                bool                               OrderChildrenWhileRendering{false}; // shows if the node sorts it's children by rendering order index while rendering
+                int                                            Depth                      {0};     // depth along Z-axis
+                int                                            SelfThickness              {0};     // thickness of rendered content
+                int                                            RenderingIndex             {0};     // index of the node within context rendering list
+                int                                            RenderingOrder             {0};     // index of the node while rendering
+                int                                            MaximumChildDepth          {0};     // depth of the deepest child
+                int                                            MaximumChildThickness      {0};     // thickness of the 'fattest' child
+                bool                                           PlaceInFollow              {false}; // shows if the node places it's children in follow along Z-axis
+                bool                                           OrderChildrenWhileRendering{false}; // shows if the node sorts  it's children by rendering order index while rendering
 
                 // geometry
-                gs_2dboxf                          BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))};
-                gs_vec2f                           ContentSize                {gs_vec2f(0.f)};
-                gs_vec2f                           MinimumSize                {gs_vec2f(32.f)};
-                gs_vec2f                           MaximumSize                {gs_vec2f((float)INT_MAX)};
+                gs_2dboxf                                      BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
+                gs_vec2f                                       ContentSize                {gs_vec2f(0.f)};                                            // node contents size
+                gs_vec2f                                       MinimumSize                {gs_vec2f(32.f)};                                           // node minimum size
+                gs_vec2f                                       MaximumSize                {gs_vec2f((float)INT_MAX)};                                 // node maximum size
 
                 // hierarchy
-                ImmediateUserInterfaceNode*        Parent                     {nullptr};
-                ImmediateUserInterfaceNode*        Relative                   {nullptr};
+                ImmediateUserInterfaceNode*                    Parent                     {nullptr}; // node hierarchical parent
+                ImmediateUserInterfaceNode*                    Scope                      {nullptr}; // node from which scope this node was created
 
                 // visibility
-                mutable Frenchie::Core::Optional<gs_2dboxf> ClippingBox;
+                mutable Frenchie::Core::Optional<gs_2dboxf>    ClippingBox;
 
                 // settings
-                ImmediateUserInterfaceNodeSettings Settings                   {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+                ImmediateUserInterfaceNodeSettings             Settings                   {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
                 // events
-                ImmediateUserInterfaceNodeEvents   Events                     {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
-                bool                               Selected                   {false};
+                ImmediateUserInterfaceNodeEvents               Events                     {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+                bool                                           Selected                   {false};
 
                 // layout hints
-                int NextLine = 0;
+                int                                            NextLine = 0; // vertical indents count which need to be placed after this node within scrollarea
+                int                                            Indent   = 0; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
                 ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
@@ -662,7 +665,7 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_menu();
 
-            bool begin_combobox(const std::string& _ID);
+            bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
             void end_combobox();
 
             // Non hierarchical UI elements
@@ -676,6 +679,8 @@ namespace Frenchie
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox);
             
             bool menu_action(const std::string& _ID);
+
+            bool combobox_item(const std::string& _ID);
             
             // This function renders text label. The minimum size of the label equals to text size, maximum size has no limit
             // on horizontal axis, but is constrained by a text height on vertical axis
@@ -809,7 +814,7 @@ namespace Frenchie
                 {
                     if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
                         m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
-                    node->State.Relative = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+                    node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
                 }
 
                 // setup next rendered node parameters
@@ -857,17 +862,28 @@ namespace Frenchie
             template<typename Type>
             void end_node()
             {
+                // reset next node controller
+                ImmedidateUserInterfaceNextNodeController* controller =
+                    get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+                if(controller != nullptr)
+                    controller->reset();
+
+                // clean up rendering stack and filled rendered nodes stack
                 if(m_NodesRenderingStack.empty())
                     return;
+
+                ImmediateUserInterfaceNode* node =
+                    m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
 
                 // as the node can contain nested items and store pointers to them
                 // we need to load state when the node finishes it's hierarchy
                 if(!m_IniFileState.empty())
-                    m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->load_state(this);
+                    node->load_state(this);
 
-                GS_ASSERT((dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) != nullptr));
+                GS_ASSERT((dynamic_cast<Type*>(node) != nullptr));
 
-                m_NodesRenderedStack.push_back(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
+                m_NodesRenderedStack.push_back(node);
                 
                 m_NodesRenderingStack.pop_back();
             }
