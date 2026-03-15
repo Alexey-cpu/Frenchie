@@ -381,6 +381,14 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
+        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceComboboxScrollArea();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
         // controllers
         class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
         {
@@ -4018,6 +4026,22 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
             (float)place_in_follow()));
 }
 
+// ImmediateUserInterfaceComboboxItemScrollArea
+ImmediateUserInterfaceComboboxScrollArea::ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+ImmediateUserInterfaceComboboxScrollArea::~ImmediateUserInterfaceComboboxScrollArea(){}
+void ImmediateUserInterfaceComboboxScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // outline
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
 // ImmediateUserInterfaceWindow
 ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceWindow::~ImmediateUserInterfaceWindow(){}
@@ -7639,7 +7663,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             return false;
         }
 
-        if(begin_scrollarea(std::string(_ID).append("/ScrollArea"),
+        if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(std::string(_ID).append("/ScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -7671,7 +7695,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 combobox->Hovered = false;
             }
 
-            end_scrollarea();
+            end_node<ImmediateUserInterfaceComboboxScrollArea>();
         }
     }
 
