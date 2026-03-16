@@ -511,7 +511,7 @@ namespace Frenchie
 
                 TitleBox = gs_2dboxf(
                     State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.ContentSize.x, _Context->m_Style.get_font_size()));
+                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
 
                 IconBox = gs_2dboxf(
                     TitleBox.Min,
@@ -6649,7 +6649,7 @@ void ImmediateUserInterfaceContextLayer::label(
     {
         // setup
         ImmediateUserInterfaceLabel* widget   = get_rendering_stack_top<ImmediateUserInterfaceLabel>();
-        gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size() + gs_vec2f(m_Style.get_font_size() * 0.5f, 0.f);
+        gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
         {
@@ -6701,7 +6701,7 @@ void ImmediateUserInterfaceContextLayer::label(
         // calculate geometry
         {
             widget->State.MinimumSize = gs_vec2f(gs_max(textSize.x, widget->State.MinimumSize.x), gs_max(textSize.y, m_Style.get_font_size()));
-            widget->State.MaximumSize = gs_vec2f(widget->State.MaximumSize.x, widget->State.MinimumSize.y);
+            widget->State.MaximumSize = gs_vec2f(gs_max(widget->State.MaximumSize.x, widget->State.MinimumSize.x), widget->State.MinimumSize.y);
 
             widget->State.BoundingBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
@@ -6768,6 +6768,11 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const s
     return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f");
 }
 
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+{
+    return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, "%.5f");
+}
+
 template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
 {
     return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d");
@@ -6786,6 +6791,11 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>
 template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
 {
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u");
+}
+
+bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color)
+{
+    return true;
 }
 
 void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
@@ -7109,9 +7119,13 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
         picker->Settings = _Settings;
 
-        char a[6] = "Alpha";
+        char longestLabel[] = "Alpha";
 
-        float labelWidth = m_Renderer->calculate_bounding_box(&a[0], &a[6], m_Style.get_font_size(), m_Style.get_current_font()).width();
+        float labelWidth = m_Renderer->calculate_bounding_box(
+            &longestLabel[0],
+            &longestLabel[sizeof(longestLabel) / sizeof(char)],
+            m_Style.get_font_size(),
+            m_Style.get_current_font()).width();
 
         // RGB
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -7579,9 +7593,13 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
         picker->Settings = _Settings;
 
-        char a[6] = "Alpha";
+        char longestLabel[] = "Alpha";
 
-        float labelWidth = m_Renderer->calculate_bounding_box(&a[0], &a[6], m_Style.get_font_size(), m_Style.get_current_font()).width();
+        float labelWidth = m_Renderer->calculate_bounding_box(
+            &longestLabel[0],
+            &longestLabel[sizeof(longestLabel) / sizeof(char)],
+            m_Style.get_font_size(),
+            m_Style.get_current_font()).width();
 
         // RGB
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
