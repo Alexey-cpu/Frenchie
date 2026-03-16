@@ -174,47 +174,74 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
-    {
+    { 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
+            auto windowSize = m_ImmediateUserInterface->get_rendering_stack_top()->State.BoundingBox.size() * 0.8f;
+
             // widgets
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Widgets", "Widgets")))
             {
                 // scalar input
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Scalar input", "ScalarInput")))
                 {
-                    static float        floatScalar       = 0.f;
-                    static double       doubleScalar      = 0.f;
-                    static int          intScalar         = 0;
-                    static unsigned int unsignedIntScalar = 0;
+                    static float          floatScalar       = 0.f;
+                    static double         doubleScalar      = 0.0;
+                    static long double    longDoubleScalar  = 0.0;
+                    static int            intScalar         = 0;
+                    static short          shortScalar       = 0;
+                    static unsigned int   unsignedIntScalar = 0;
+                    static unsigned short unsignedShortScalar = 0;
 
-                    char label[] = "unsigned int";
+                    char label[] = "unsigned short";
                     
                     gs_vec2f labelSize = m_ImmediateUserInterface->m_Renderer->calculate_bounding_box(
                         &label[0],
-                        &label[13],
+                        &label[sizeof(label) / sizeof(char)],
                         m_ImmediateUserInterface->m_Style.get_font_size(),
                         m_ImmediateUserInterface->m_Style.get_current_font()).size() + gs_vec2f(m_ImmediateUserInterface->m_Style.get_font_size(), 0.f);
 
+                    // float
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("floatScalarLabel"), "float");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("floatScalarValue"), floatScalar);
 
+                    // double
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("doubleScalarLabel"), "double");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("doubleScalarValue"), doubleScalar);
 
+                    // long double
+                    m_ImmediateUserInterface->next_size(labelSize);
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("longDoubleScalarLabel"), "long double");
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("longDoubleScalarValue"), longDoubleScalar);
+
+                    // int
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("intScalarLabel"), "int");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("intScalarValue"), intScalar);
 
+                    // short
+                    m_ImmediateUserInterface->next_size(labelSize);
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("shortScalarLabel"), "short");
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("shortScalarValue"), shortScalar);
+
+                    // unsigned int
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("unsignedIntScalarLabel"), "unsigned int");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedIntScalarValue"), unsignedIntScalar);
+
+                    // unsigned short
+                    m_ImmediateUserInterface->next_size(labelSize);
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("unsignedShortScalarLabel"), "unsigned short");
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedShortScalarValue"), unsignedShortScalar);
 
                     m_ImmediateUserInterface->end_tree_node();
                 }
@@ -255,8 +282,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Alpha");
 
                     m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent(indent);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ColorPickerType"), "Type");
                     m_ImmediateUserInterface->same_line();
+
                     if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), RGBA ? "RGBA" : "HSVA"))
                     {
                         bool rgbaSelected     = RGBA;
@@ -273,6 +302,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                         m_ImmediateUserInterface->end_combobox();
                     }
+
+                    m_ImmediateUserInterface->next_line();
+                    m_ImmediateUserInterface->next_line();
+                    m_ImmediateUserInterface->next_size(gs_vec2f(1024.f, 512.f));
 
                     if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Pickers")))
                     {
@@ -308,7 +341,17 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_tree_node();
                 }
 
-                //
+                // text input
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Text input", "TextInput")))
+                {
+                    static std::string multilineString;
+
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("MultilineText"), "MultilineText");
+                    m_ImmediateUserInterface->next_size(gs_vec2f(windowSize.x, 256.f));
+                    m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), multilineString);
+
+                    m_ImmediateUserInterface->end_tree_node();
+                }
 
                 m_ImmediateUserInterface->end_tree_node();
             }

@@ -642,10 +642,8 @@ namespace Frenchie
             virtual void finish() override;
 
             // UI API
-
-            //--------------------------------------------------------------------------------------------------------------------------------
+            //
             // Hierarchical UI elements
-            //--------------------------------------------------------------------------------------------------------------------------------
             //
             // This section contains API for creating hierarchical UI elements such as windows, scroll areas, layouts e.t.c.
             // Each hierarchical element has it's own scope that defines it's bounding box and where all children are layouted.
@@ -656,8 +654,8 @@ namespace Frenchie
             // you MUST end this scope with dedicated 'end_' function call. The programm asserts if you don't do this.
 
             // This function declares the window scope
-            // _ID       - window unique ID
-            // _Settings - window settings
+            // _ID       - unique ID
+            // _Settings - settings
             // _Opened   - if this is not nullptr then window becomes closable and close button appears
             bool begin_window(
                 const std::string&                        _ID,
@@ -666,47 +664,66 @@ namespace Frenchie
             void end_window();
 
             // This function declares scroll area layout box scope
-            // _ID       - scroll area unique ID
-            // _Settings - scroll area settings
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_scrollarea(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
 
             // This function declares panel layout box scope
-            // _ID       - panel unique ID
-            // _Settings - panel settings
             // Panel stretches it's child nodes to fill it's bounding box.
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_panel(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
 
-            // This declares scope of vertical stack layout box
-
+            // This function declares scope of vertical stack layout box
             // Vertical stack layout box places all it's child nodes vertically in the way they fill it's bounding box.
             // The fill weight of every child node is calculated as a fill rate within total size.
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_vertial_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
 
-            // This function creates horizontal stack layout box that places all it's child nodes horizontally.
+            // This function declares scope of horizontal stack layout box
+            // Horizontal stack layout box places all it's child nodes horizontally in the way they fill it's bounding box.
+            // The fill weight of every child node is calculated as a fill rate within total size.
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_horizontal_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
-            // This function creates menu.
-            // Menu is a scrollarea that pushes menu action items next line. All other child items behave like they are in a scrollarea. 
+            // This function declares scope of menu.
+            // Menu is a scrollarea that pushes menu action items next line.
+            // All other child items behave like they are in a scrollarea.
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_menu(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_menu();
 
+            // This function declares scope of combobox.
+            // Combobox is a layout box that defines popup scrollable list.
+            // Combobox pushes combobox items next line. All other child items behave like they are in a scrollarea.
+            // _ID      - unique ID
+            // _Preview - preview string shown within wrapped combobox.
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
             void end_combobox();
 
+            // This function declares scrope of the tree
+            // _ID            - unique ID
+            // _Settings      - settings
+            // _TextureOpened - tree item texture when it's opened
+            // _TextureClosed - tree item texture when it's closed
+            // If no open and close tree item textures are set then arrows are drawn.
             bool begin_tree_node(
                 const std::string&                            _ID,
                 const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
@@ -714,28 +731,52 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
             void end_tree_node();
 
+            //
             // Non hierarchical UI elements
+            //
+            // This section contains API for creating non-hierarchical items called widgets.
+            // Widgets do not have scope with child nodes and they are created by calling appropriate function.
 
             // This function renders push button
+            // _ID - unique ID
+            // Returns true when button is clicked.
             bool push_button(const std::string& _ID);
 
+            // This function renders check button
+            // _ID       - unique ID
+            // _Checked  - boolean flag that can be chaged by a check button
+            // _Settings - check button settings
+            // Checkbutton can be rendered as radio button, checkbox or slider button depending on it's settings.
+            // Input boolean flag sets up check button checked or unchecked state and can be changed on ceheck button click event
+            // depending on settings.
             bool check_button(
                 const std::string&                               _ID,
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
             
+            // This function renders menu action
+            // _ID - unique ID
+            // Menu action is actually a kind of a push button but it's forced to be pushed onto a next line within menu scope.
             bool menu_action(const std::string& _ID);
 
+            // This function renders menu action
+            // _ID - unique ID
+            // Combobox item is actually a kind of a push button but it's forced to be pushed onto a next line within combobox scope.
             bool combobox_item(const std::string& _ID);
             
-            // This function renders text label. The minimum size of the label equals to text size, maximum size has no limit
+            // This function renders text label.
+            // The minimum size of the label equals to text size, maximum size has no limit
             // on horizontal axis, but is constrained by a text height on vertical axis
+            // _ID       - unique ID
+            // _Text     - displayed text
+            // _Settings - settings
             void label(
                 const std::string&                         _ID,
                 const std::string&                         _Text,
                 const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
 
             // This function renders input multiline text
+
             bool input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
@@ -753,6 +794,8 @@ namespace Frenchie
             // Supported scalar types are: float, double, int, short, unsigned int, unsigned short
             template<typename Type>
             bool input_scalar(const std::string& _ID, Type& _Input, const Type& _Min = gs_tiny<Type>(), const Type& _Max = gs_huge<Type>());
+
+            bool input_color(const std::string& _ID, gs_color& _Color);
 
             // This function renders classic RGBA color picker widget.
             // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
@@ -779,6 +822,7 @@ namespace Frenchie
             // All changes are applied every frame.
             void next_line();
 
+            //
             void same_line();
 
             // If next node is pushed within scroll area this function adds horizontal indent before it equal to the 3 font sizes.
@@ -789,7 +833,6 @@ namespace Frenchie
             // This function sets next node size by changing it's bounding box width, height and size constraints (minimum and maximum size).
             // All changes are applied every frame.
             void next_size(const gs_vec2f&);
-            
 
             // This function changes minimum size constrain of next node.
             // All changes are applied every frame.
