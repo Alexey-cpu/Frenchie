@@ -1591,15 +1591,17 @@ namespace Frenchie
                     });
 
                 // auxiliary lambdas
-                auto writeValue = [](ImmediateUserInterfaceInputScalarPanel* panel, const Type& _Input, const std::string& _Format)
+                auto writeValue = [](ImmediateUserInterfaceInputScalarPanel* _Panel, const Type& _Input, const std::string& _Format)
                 {
+                    if(_Panel == nullptr) return;
+
                     std::string  currentValue = Frenchie::Core::String::format(_Format, _Input);
                     const size_t maximumSize  = 16;
 
                     if(currentValue.size() < maximumSize)
-                        panel->Buffer = currentValue;
+                        _Panel->Buffer = currentValue;
                     else
-                        panel->Buffer = std::string(currentValue.c_str(), maximumSize);
+                        _Panel->Buffer = std::string(currentValue.c_str(), maximumSize);
                 };
 
                 if(modified)
