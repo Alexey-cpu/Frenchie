@@ -176,7 +176,15 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, // disables selection
             ImmediateUserInterfaceInputStringSettings_NoMultiline       = 1 << 4, // disables multiline text
             ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 5, // appropriate input string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 6, // appropriate input string function returns true when text is being edited
             ImmediateUserInterfaceInputStringSettings_Defaults          = 0
+        };
+
+        enum ImmediateUserInterfaceInputScalarSettings_ : int
+        {
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, // appropriate input scalar function returns true when enter key is pressed
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, // appropriate input scalar function returns true when text is being edited
+            ImmediateUserInterfaceInputScalarSettings_Defaults          = 0
         };
 
         enum ImmediateUserInterfaceColorPickerSettings_ : int
@@ -261,6 +269,7 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceTreeNodeSettings;
         typedef int ImmediateUserInterfaceCheckButtonSettings;
         typedef int ImmediateUserInterfaceInputStringSettings;
+        typedef int ImmediateUserInterfaceInputScalarSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
 
         typedef int ImmediateUserInterfaceContextSettings;
@@ -313,7 +322,7 @@ namespace Frenchie
             // infos
             float                            FramesRadius         = 0.f;
             float                            FramesWidth          = 0.f;
-            float                            FontSize             = 64.f;
+            float                            FontSize             = 32.f;
             float                            ScrollBarWidth       = 64.f;
             float                            PopupMenuPointerSize = 32.f;
             std::vector<gs_color>            Colors;
@@ -793,9 +802,17 @@ namespace Frenchie
             // This function renders input scalar value widget.
             // Supported scalar types are: float, double, int, short, unsigned int, unsigned short
             template<typename Type>
-            bool input_scalar(const std::string& _ID, Type& _Input, const Type& _Min = gs_tiny<Type>(), const Type& _Max = gs_huge<Type>());
+            bool input_scalar(
+                const std::string&                               _ID,
+                Type&                                            _Input,
+                const Type&                                      _Min      = gs_tiny<Type>(),
+                const Type&                                      _Max      = gs_huge<Type>(),
+                const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
-            bool input_color(const std::string& _ID, gs_color& _Color);
+            bool input_color(
+                const std::string&                               _ID,
+                gs_color&                                        _Color,
+                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
             // This function renders classic RGBA color picker widget.
             // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
