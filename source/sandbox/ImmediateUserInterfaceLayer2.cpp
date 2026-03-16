@@ -745,10 +745,10 @@ namespace Frenchie
                 {
                     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-                    ImmediateUserInterfaceMenu* menu =
-                        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
+                    // ImmediateUserInterfaceMenu* menu =
+                    //     _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
 
-                    if(_Context->m_Hierarchy.get_parent(menu)) return;
+                    // if(_Context->m_Hierarchy.get_parent(menu)) return;
 
                     // outline
                     _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -903,7 +903,7 @@ namespace Frenchie
             };
 
             // auxiliary lambdas
-            auto inputStringCharacterFilter = [_InputTextFilter, _InputSettings](const std::string& _Input)->bool
+            auto inputStringCharacterFilter   = [_InputTextFilter, _InputSettings](const std::string& _Input)->bool
             {
                 // internal filter first
                 if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline))
@@ -970,7 +970,8 @@ namespace Frenchie
             };
 
             // main code
-            if(_Context == nullptr) return false;
+            if(_Context == nullptr)
+                return false;
 
             ImmediateUserInterfaceInputStringRenderingData inputStringRenderingData;
 
@@ -988,6 +989,7 @@ namespace Frenchie
             // begin widgets
             ImmediateUserInterfaceInputString*        scrollArea = nullptr;
             ImmediateUserInterfaceInputStringContent* widget     = nullptr;
+            bool                                      edited     = false;
 
             if(_Context->begin_node<ImmediateUserInterfaceInputString>(std::string(_ID).append("/ScrollArea"),
                 scrollAreaSettings))
@@ -1362,6 +1364,8 @@ namespace Frenchie
                                 inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
 
                                 _InputTextCallback(_Text);
+
+                                edited = true;
                             }
 
                             // remove text
@@ -1384,6 +1388,8 @@ namespace Frenchie
 
                                     // erase selection
                                     _Text.erase(position, count);
+
+                                    edited = true;
                                 }
                                 // remove single symbol
                                 else
@@ -1473,6 +1479,8 @@ namespace Frenchie
                                 inputStringScrollBarAdjuster(_Context, widget, scrollArea, inputStringRenderingData);
 
                                 _InputTextCallback(_Text);
+
+                                edited = true;
                             }
                         }
                     }
@@ -1507,21 +1515,30 @@ namespace Frenchie
                 _Context->end_node<ImmediateUserInterfaceInputString>();
             }
 
-            return _Context != nullptr    &&
+            if(widget != nullptr && widget->Cache.Selected && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit))
+                return edited;
+
+            if(_Context != nullptr    &&
                    widget   != nullptr    &&
                    widget->Cache.Selected &&
                    _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) &&
-                   (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter);
+                   (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter))
+            {                    
+                return true;
+            }
+
+            return false;
         }
 
         template<typename Type>
         bool input_scalar_internal(
-            ImmediateUserInterfaceContextLayer* _Context,
-            const std::string&                  _ID,
-            Type&                               _Input,
-            const Type&                         _Min,
-            const Type&                         _Max,
-            const std::string&                  _Format)
+            ImmediateUserInterfaceContextLayer*              _Context,
+            const std::string&                               _ID,
+            Type&                                            _Input,
+            const Type&                                      _Min,
+            const Type&                                      _Max,
+            const std::string&                               _Format,
+            const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
             // nested types
             struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfaceNodePanel
@@ -1573,7 +1590,8 @@ namespace Frenchie
                     // input settings
                     ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults
                     | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline
-                    | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter,
+                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
+                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit : 0),
                     
                     // node settings
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
@@ -1585,13 +1603,13 @@ namespace Frenchie
                     {
                         return true;
                     },
-                    [panel, &modified, &_Input, &_Format, &_Min, &_Max](const std::string& _Value)
+                    [panel, &_Input, &_Format, &_Min, &_Max](const std::string& _Value)
                     {
                         _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(_Value), _Min, _Max);
                     });
 
                 // auxiliary lambdas
-                auto writeValue = [](ImmediateUserInterfaceInputScalarPanel* _Panel, const Type& _Input, const std::string& _Format)
+                auto writeValueToBuffer = [](ImmediateUserInterfaceInputScalarPanel* _Panel, const Type& _Input, const std::string& _Format)
                 {
                     if(_Panel == nullptr) return;
 
@@ -1602,13 +1620,18 @@ namespace Frenchie
                         _Panel->Buffer = currentValue;
                     else
                         _Panel->Buffer = std::string(currentValue.c_str(), maximumSize);
+
+                    
                 };
 
                 if(modified)
-                    writeValue(panel, gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max), _Format);
+                {
+                    _Input = Frenchie::Core::String::from_string<Type>(panel->Buffer);
+                    writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
+                }
 
                 if(!panel->IsEdited)
-                    writeValue(panel, _Input, _Format);
+                    writeValueToBuffer(panel, _Input, _Format);
 
                 // calculate geometry
                 {
@@ -2209,7 +2232,7 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered]                    = gs_color_rgba(100, 100, 172, 255);
 
     // gizmos
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                    = gs_color_rgba(255, 255, 255, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text]                             = gs_color_rgba(255, 255, 255, 255);
 }
 
 ImmedidateUserInterfaceStyle::~ImmedidateUserInterfaceStyle(){}
@@ -2246,7 +2269,7 @@ float ImmedidateUserInterfaceStyle::get_frames_width() const
 
 float ImmedidateUserInterfaceStyle::get_minimum_font_size() const
 {
-    return 32.f;
+    return 32.f + get_minimum_frames_width();
 }
 
 float ImmedidateUserInterfaceStyle::get_maximum_font_size() const
@@ -6758,43 +6781,233 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, "%.5f");
+    return input_scalar_internal<float>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f");
+    return input_scalar_internal<double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, "%.5f");
+    return input_scalar_internal<long double>(this, _ID, _Input, _Min, _Max, "%.5f", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d");
+    return input_scalar_internal<int>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, "%d");
+    return input_scalar_internal<short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, "%d");
+    return input_scalar_internal<unsigned short>(this, _ID, _Input, _Min, _Max, "%d", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u");
+    return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u", _Settings);
 }
 
-bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color)
+bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
+    struct ImmediateUserInterfaceInputColor : public ImmediateUserInterfaceNodeHorizontalStack
+    {
+    public:
+        ImmediateUserInterfaceInputColor(const std::string& _Hash) : ImmediateUserInterfaceNodeHorizontalStack(_Hash){}
+        virtual ~ImmediateUserInterfaceInputColor(){}
+
+        gs_vec3ui RGB   = {255, 255, 255};
+        gs_vec3ui HSV   = {255, 255, 255};
+        gs_vec3ui HSL   = {255, 255, 255};
+        gs_color  Alpha = 255;
+    };
+
+    next_maximum_size(gs_vec2f(
+        (float)INT_MAX,
+        ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
+         (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
+         (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
+         (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size()));
+
+    ImmediateUserInterfaceInputScalarSettings settings =
+        ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit |
+        ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter;
+
+    if(begin_node<ImmediateUserInterfaceInputColor>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceInputColor* picker =
+            get_rendering_stack_top<ImmediateUserInterfaceInputColor>();
+
+        if(begin_vertial_stack(std::string(_ID).append("/Stack")))
+        {
+            char longestLabel[] = "Alpha";
+
+            float labelWidth    = m_Renderer->calculate_bounding_box(
+                &longestLabel[0],
+                &longestLabel[sizeof(longestLabel) / sizeof(char)],
+                m_Style.get_font_size(),
+                m_Style.get_current_font()).width();
+
+            // RGB
+            if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
+            {
+                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+                next_content_padding(gs_vec2f(16.f));
+
+                if(begin_horizontal_stack(std::string(_ID).append("/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
+
+                    if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255, settings))
+                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                    else
+                        picker->RGB.x = gs_color_rgba_get_r(_Color);
+                    
+                    if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255, settings))
+                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                    else
+                        picker->RGB.y = gs_color_rgba_get_g(_Color);
+                    
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255, settings))
+                        _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                    else
+                        picker->RGB.z = gs_color_rgba_get_b(_Color);
+
+                    end_horizontal_stack();
+                }
+            }
+
+            // HSV
+            if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)
+            {
+                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+                next_content_padding(gs_vec2f(16.f));
+
+                if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(std::string(_ID).append("/Editors/HSV/Label"), "HSV");
+
+                    bool hsvChanged = false;
+
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360, settings))
+                        hsvChanged = true;
+                    else
+                        picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
+                    
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100, settings))
+                        hsvChanged = true;
+                    else
+                        picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
+                    
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100, settings))
+                        hsvChanged = true;
+                    else
+                        picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
+
+                    if(hsvChanged)
+                    {
+                        gs_color rgb = gs_color_hsv_to_rgb(
+                            gs_color_hsv(
+                                (gs_color)((float)picker->HSV.x / 360.f * 255.f),
+                                (gs_color)((float)picker->HSV.y / 100.f * 255.f),
+                                (gs_color)((float)picker->HSV.z / 100.f * 255.f)));
+
+                        _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
+                    }
+
+                    end_horizontal_stack();
+                }
+            }
+
+            // HSL
+            if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)
+            {
+                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+                next_content_padding(gs_vec2f(16.f));
+
+                if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    label(std::string(_ID).append("/Editors/HSL/Label"), "HSL");
+
+                    bool hsvChanged = false;
+
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360, settings))
+                        hsvChanged = true;
+                    else
+                        picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
+                    
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100, settings))
+                        hsvChanged = true;
+                    else
+                        picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
+                    
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100, settings))
+                        hsvChanged = true;
+                    else
+                        picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
+
+                    if(hsvChanged)
+                    {
+                        gs_color rgb = gs_color_hsl_to_rgb(
+                            gs_color_hsl(
+                                (gs_color)((float)picker->HSL.x / 360.f * 255.f),
+                                (gs_color)((float)picker->HSL.y / 100.f * 255.f),
+                                (gs_color)((float)picker->HSL.z / 100.f * 255.f)));
+
+                        _Color = gs_color_rgba(gs_color_rgba_get_r(rgb), gs_color_rgba_get_g(rgb), gs_color_rgba_get_b(rgb), picker->Alpha);
+                    }
+
+                    end_horizontal_stack();
+                }
+            }
+
+            // Alpha
+            if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)
+            {
+                next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
+                next_content_padding(gs_vec2f(16.f));
+
+                if(begin_horizontal_stack(std::string(_ID).append("/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                {
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
+
+                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255, settings))
+                        _Color = gs_color_rgba(gs_color_rgba_get_r(_Color), gs_color_rgba_get_g(_Color), gs_color_rgba_get_b(_Color), picker->Alpha);
+                    else
+                        picker->Alpha = gs_color_rgba_get_a(_Color);
+                    
+                    end_horizontal_stack();
+                }
+            }
+
+            end_vertical_stack();
+        }
+
+        // preview color
+        if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
+            image(std::string(_ID).append("/Image"), _Color);
+
+        end_node<ImmediateUserInterfaceInputColor>();
+    }
+
     return true;
 }
 
@@ -7127,6 +7340,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             m_Style.get_font_size(),
             m_Style.get_current_font()).width();
 
+        ImmediateUserInterfaceInputScalarSettings settings =
+            ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter;
+
         // RGB
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
         {
@@ -7139,17 +7355,21 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255, settings))
+                {
+                    std::cout << "picker->RGB.x " << picker->RGB.x << "\n";
+
                     _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
+                }
                 else
                     picker->RGB.x = gs_color_rgba_get_r(_Color);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255, settings))
                     _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
                     picker->RGB.y = gs_color_rgba_get_g(_Color);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255, settings))
                     _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
                     picker->RGB.z = gs_color_rgba_get_b(_Color);
@@ -7172,17 +7392,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 bool hsvChanged = false;
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360, settings))
                     hsvChanged = true;
                 else
-                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
+                    picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f, settings);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
@@ -7216,17 +7436,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
                 bool hsvChanged = false;
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360, settings))
                     hsvChanged = true;
                 else
                     picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
@@ -7258,7 +7478,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255, settings))
                     _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
                 else
                     picker->Alpha = gs_color_rgba_get_a(_Color);
@@ -7601,6 +7821,9 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             m_Style.get_font_size(),
             m_Style.get_current_font()).width();
 
+        ImmediateUserInterfaceInputScalarSettings settings =
+            ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit;
+
         // RGB
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
         {
@@ -7613,17 +7836,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255, settings))
                     _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
                     picker->RGB.x = gs_color_rgba_get_r(_Color);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255, settings))
                     _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
                     picker->RGB.y = gs_color_rgba_get_g(_Color);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255, settings))
                     _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                 else
                     picker->RGB.z = gs_color_rgba_get_b(_Color);
@@ -7646,17 +7869,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
                 bool hsvChanged = false;
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360, settings))
                     hsvChanged = true;
                 else
                     picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
@@ -7690,17 +7913,17 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
                 bool hsvChanged = false;
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360, settings))
                     hsvChanged = true;
                 else
                     picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100, settings))
                     hsvChanged = true;
                 else
                     picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
@@ -7732,7 +7955,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
 
-                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255))
+                if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255, settings))
                     _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
                 else
                     picker->Alpha = gs_color_rgba_get_a(_Color);

@@ -247,17 +247,25 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 }
 
                 // color input
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color input", "ColorInput")))
+                {
+                    static gs_color inputColor = gs_color_rgba(255, 255, 255, 255);
+
+                    m_ImmediateUserInterface->input_color(m_ImmediateUserInterface->next_id("ColorInput"), inputColor);
+
+                    m_ImmediateUserInterface->end_tree_node();
+                }
 
                 // color pickers
-                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color Pickers", "ColorPickers")))
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color pickers", "ColorPickers")))
                 {
-                    static gs_color color       = gs_color_rgba(255, 0, 0, 255);
-                    static bool     EnableRGB   = true;
-                    static bool     EnableHSV   = true;
-                    static bool     EnableHSL   = true;
-                    static bool     EnableAlpha = true;
-                    static bool     RGBA        = true;
-                    static float    indent      = 64.f;
+                    static gs_color colorPickerColor = gs_color_rgba(255, 0, 0, 255);
+                    static bool     EnableRGB        = true;
+                    static bool     EnableHSV        = true;
+                    static bool     EnableHSL        = true;
+                    static bool     EnableAlpha      = true;
+                    static bool     RGBA             = true;
+                    static float    indent           = 64.f;
 
                     m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), EnableRGB);
                     m_ImmediateUserInterface->same_line();
@@ -314,7 +322,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         {
                             m_ImmediateUserInterface->color_picker_rgba(
                                 m_ImmediateUserInterface->next_id("RGBAColorPicker"),
-                                color,
+                                colorPickerColor,
                                 (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
                                 | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
                                 | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
@@ -325,7 +333,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         {
                             m_ImmediateUserInterface->color_picker_hsva(
                                 m_ImmediateUserInterface->next_id("HSVAColorPicker"),
-                                color,
+                                colorPickerColor,
                                 (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
                                 | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
                                 | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
@@ -333,7 +341,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         }
 
                         // Color
-                        m_ImmediateUserInterface->image("ColorImage", color);
+                        m_ImmediateUserInterface->image("ColorImage", colorPickerColor);
 
                         m_ImmediateUserInterface->end_horizontal_stack();
                     }
