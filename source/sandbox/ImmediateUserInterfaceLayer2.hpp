@@ -123,31 +123,20 @@ namespace Frenchie
                 ImmediateUserInterfaceNodeSettings_Resizable,
 
             ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults                     =
-                ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar              |
-                ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            |
-                ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  |
-                ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   |
-                ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment,
+                  ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
+                | ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+                | ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment
+                | ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
+                | ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment,
 
             ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults =
-                ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter         |
-                ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter,
+                  ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter,
 
             ImmediateUserInterfaceNodeSettings_Defaults =
-                ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           |
-                ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults                     |
-                ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
-        };
-
-        enum ImmediateUserInterfaceContextSettings_ : int
-        {
-            // docking
-            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0, // disables all docking features
-            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1, // enables windows mutual docking
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock space
-
-            // highlighting
-            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
+                  ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults
+                | ImmediateUserInterfaceNodeSettings_ScrollAreaDefaults
+                | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
         };
 
         enum ImmediateUserInterfaceLabelSettings_ : int
@@ -156,11 +145,27 @@ namespace Frenchie
             ImmediateUserInterfaceLabelSettings_RenderFrame = 1 << 0,
         };
 
+        enum ImmediateUserInterfaceTreeNodeSettings_ : int
+        {
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0,
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1,
+            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2,
+
+            ImmediateUserInterfaceTreeNodeSettings_Defaults              =
+                  ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick
+                | ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines
+        };
+
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
             ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, // check button is rendered as checkbox
             ImmediateUserInterfaceCheckButtonSettings_RadioButton  = 1 << 1, // check button is rendered as radio button
-            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2  // check button is rendered as slider button
+            ImmediateUserInterfaceCheckButtonSettings_SliderButton = 1 << 2, // check button is rendered as slider button
+            ImmediateUserInterfaceCheckButtonSettings_Checkable    = 1 << 3, // check button changes boolean variable passed to it
+
+            ImmediateUserInterfaceCheckButtonSettings_Defaults     =
+                ImmediateUserInterfaceCheckButtonSettings_Checkbox
+                | ImmediateUserInterfaceCheckButtonSettings_Checkable,
         };
 
         enum ImmediateUserInterfaceInputStringSettings_ : int
@@ -191,6 +196,17 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
+        enum ImmediateUserInterfaceContextSettings_ : int
+        {
+            // docking
+            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0, // disables all docking features
+            ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1, // enables windows mutual docking
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock space
+
+            // highlighting
+            ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
+        };
+
         // mouse hover
         enum ImmediateUserInterfaceNodeMouseHover_ : int
         {
@@ -210,11 +226,11 @@ namespace Frenchie
             ImmedidateUserInterfaceDockingAnchor_Center = 1 << 4, // docked window is docked as tab to it's docker
 
             ImmedidateUserInterfaceDockingAnchor_All    =
-                ImmedidateUserInterfaceDockingAnchor_Top    |
-                ImmedidateUserInterfaceDockingAnchor_Left   |
-                ImmedidateUserInterfaceDockingAnchor_Right  |
-                ImmedidateUserInterfaceDockingAnchor_Bottom |
-                ImmedidateUserInterfaceDockingAnchor_Center
+                  ImmedidateUserInterfaceDockingAnchor_Top
+                | ImmedidateUserInterfaceDockingAnchor_Left
+                | ImmedidateUserInterfaceDockingAnchor_Right
+                | ImmedidateUserInterfaceDockingAnchor_Bottom
+                | ImmedidateUserInterfaceDockingAnchor_Center
         };
 
         // rendering order and rendering layer
@@ -241,11 +257,13 @@ namespace Frenchie
         typedef int ImmediateUserInterfaceNodeMouseHover;
 
         typedef int ImmediateUserInterfaceNodeSettings;
-        typedef int ImmediateUserInterfaceContextSettings;
         typedef int ImmediateUserInterfaceLabelSettings;
+        typedef int ImmediateUserInterfaceTreeNodeSettings;
         typedef int ImmediateUserInterfaceCheckButtonSettings;
         typedef int ImmediateUserInterfaceInputStringSettings;
         typedef int ImmediateUserInterfaceColorPickerSettings;
+
+        typedef int ImmediateUserInterfaceContextSettings;
 
         typedef int ImmedidateUserInterfaceDockingAnchor;
         typedef int ImmedidateUserInterfaceRenderingOrder;
@@ -383,41 +401,41 @@ namespace Frenchie
             struct Data
             {
                 // rendering
-                int                                            Depth                      {0};     // depth along Z-axis
-                int                                            SelfThickness              {0};     // thickness of rendered content
-                int                                            RenderingIndex             {0};     // index of the node within context rendering list
-                int                                            RenderingOrder             {0};     // index of the node while rendering
-                int                                            MaximumChildDepth          {0};     // depth of the deepest child
-                int                                            MaximumChildThickness      {0};     // thickness of the 'fattest' child
-                bool                                           PlaceInFollow              {false}; // shows if the node places it's children in follow along Z-axis
-                bool                                           OrderChildrenWhileRendering{false}; // shows if the node sorts  it's children by rendering order index while rendering
+                int                                            Depth                       {0};     // depth along Z-axis
+                int                                            SelfThickness               {0};     // thickness of rendered content
+                int                                            RenderingIndex              {0};     // index of the node within context rendering list
+                int                                            RenderingOrder              {0};     // index of the node while rendering
+                int                                            MaximumChildDepth           {0};     // depth of the deepest child
+                int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
+                bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
+                bool                                           OrderChildrenWhileRendering {false}; // shows if the node sorts  it's children by rendering order index while rendering
 
                 // geometry
-                gs_2dboxf                                      BoundingBox                {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                                       ContentSize                {gs_vec2f(0.f)};                                            // node contents size
-                gs_vec2f                                       MinimumSize                {gs_vec2f(32.f)};                                           // node minimum size
-                gs_vec2f                                       MaximumSize                {gs_vec2f((float)INT_MAX)};                                 // node maximum size
+                gs_2dboxf                                      BoundingBox                 {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
+                gs_vec2f                                       ContentSize                 {gs_vec2f(0.f)};                                            // node contents size
+                gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f)};                                           // node minimum size
+                gs_vec2f                                       MaximumSize                 {gs_vec2f((float)INT_MAX)};                                 // node maximum size
 
                 // hierarchy
-                ImmediateUserInterfaceNode*                    Parent                     {nullptr}; // node hierarchical parent
-                ImmediateUserInterfaceNode*                    Scope                      {nullptr}; // node from which scope this node was created
+                ImmediateUserInterfaceNode*                    Parent                      {nullptr}; // node hierarchical parent
+                ImmediateUserInterfaceNode*                    Scope                       {nullptr}; // node from which scope this node was created
 
                 // visibility
                 mutable Frenchie::Core::Optional<gs_2dboxf>    ClippingBox;
 
                 // settings
-                ImmediateUserInterfaceNodeSettings             Settings                   {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
+                ImmediateUserInterfaceNodeSettings             Settings                    {ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable};
 
                 // events
-                ImmediateUserInterfaceNodeEvents               Events                     {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
-                bool                                           Selected                   {false};
+                ImmediateUserInterfaceNodeEvents               Events                      {ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None};
+                bool                                           Selected                    {false};
 
                 // layout hints
-                int                                            NextLine{0};   // vertical indents count which need to be placed after this node within scrollarea
-                float                                          Indent  {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
+                int                                            NextLine                    {1  }; // vertical indents count which need to be placed after this node within scrollarea
+                float                                          Indent                      {0.f}; // horizontal indents count which  need to be placed after this node within scrollarea
 
                 // mouse hover
-                ImmediateUserInterfaceNodeMouseHover           MouseHover{ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
+                ImmediateUserInterfaceNodeMouseHover           MouseHover                  {ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_None};
                 std::chrono::high_resolution_clock::time_point MouseEnterTimer;
                 std::chrono::high_resolution_clock::time_point MouseLeaveTimer;
             };
@@ -625,28 +643,49 @@ namespace Frenchie
 
             // UI API
 
+            //--------------------------------------------------------------------------------------------------------------------------------
             // Hierarchical UI elements
+            //--------------------------------------------------------------------------------------------------------------------------------
+            //
+            // This section contains API for creating hierarchical UI elements such as windows, scroll areas, layouts e.t.c.
+            // Each hierarchical element has it's own scope that defines it's bounding box and where all children are layouted.
+            // The scope of some hierarchical element starts when dedicated 'begin_' function is called.
+            // The end of the scope is declared by dedicated 'end_' function call.
+            //
+            // If you start a scope of some hierarchical UI element by a dedicated 'begin_' function call
+            // you MUST end this scope with dedicated 'end_' function call. The programm asserts if you don't do this.
 
-            // This function creates a window
+            // This function declares the window scope
+            // _ID       - window unique ID
+            // _Settings - window settings
+            // _Opened   - if this is not nullptr then window becomes closable and close button appears
             bool begin_window(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
                 bool*                                     _Opened = nullptr);
             void end_window();
 
-            // This function creates scrollarea box
+            // This function declares scroll area layout box scope
+            // _ID       - scroll area unique ID
+            // _Settings - scroll area settings
             bool begin_scrollarea(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
 
-            // This function creates panel layout box that stretches all it's children to it's size.
+            // This function declares panel layout box scope
+            // _ID       - panel unique ID
+            // _Settings - panel settings
+            // Panel stretches it's child nodes to fill it's bounding box.
             bool begin_panel(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
 
-            // This function creates vertical stack layout box that places all it's child nodes vertically.
+            // This declares scope of vertical stack layout box
+
+            // Vertical stack layout box places all it's child nodes vertically in the way they fill it's bounding box.
+            // The fill weight of every child node is calculated as a fill rate within total size.
             bool begin_vertial_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
@@ -668,6 +707,13 @@ namespace Frenchie
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
             void end_combobox();
 
+            bool begin_tree_node(
+                const std::string&                            _ID,
+                const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
+                const ApplicationRenderingBackendTexture&     _TextureOpened = ApplicationRenderingBackendTexture(),
+                const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
+            void end_tree_node();
+
             // Non hierarchical UI elements
 
             // This function renders push button
@@ -676,7 +722,7 @@ namespace Frenchie
             bool check_button(
                 const std::string&                               _ID,
                 bool&                                            _Checked,
-                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox);
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
             
             bool menu_action(const std::string& _ID);
 
@@ -733,6 +779,8 @@ namespace Frenchie
             // All changes are applied every frame.
             void next_line();
 
+            void same_line();
+
             // If next node is pushed within scroll area this function adds horizontal indent before it equal to the 3 font sizes.
             // If you call this function several times it inserts several horizontal indents before the node.
             // All changes are applied every frame.
@@ -741,6 +789,7 @@ namespace Frenchie
             // This function sets next node size by changing it's bounding box width, height and size constraints (minimum and maximum size).
             // All changes are applied every frame.
             void next_size(const gs_vec2f&);
+            
 
             // This function changes minimum size constrain of next node.
             // All changes are applied every frame.
