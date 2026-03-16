@@ -1523,6 +1523,7 @@ namespace Frenchie
             const Type&                         _Max,
             const std::string&                  _Format)
         {
+            // nested types
             struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfaceNodePanel
             {
             public:
@@ -1555,6 +1556,7 @@ namespace Frenchie
                 bool        IsEdited = false;
             };
 
+            // main code
             bool modified = false;
 
             if(_Context->begin_node<ImmediateUserInterfaceInputScalarPanel>(
@@ -1588,14 +1590,23 @@ namespace Frenchie
                         _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(_Value), _Min, _Max);
                     });
 
-                if(modified)
+                // auxiliary lambdas
+                auto writeValue = [](ImmediateUserInterfaceInputScalarPanel* panel, const Type& _Input, const std::string& _Format)
                 {
-                    _Input        = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
-                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
-                }
+                    std::string  currentValue = Frenchie::Core::String::format(_Format, _Input);
+                    const size_t maximumSize  = 16;
+
+                    if(currentValue.size() < maximumSize)
+                        panel->Buffer = currentValue;
+                    else
+                        panel->Buffer = std::string(currentValue.c_str(), maximumSize);
+                };
+
+                if(modified)
+                    writeValue(panel, gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max), _Format);
 
                 if(!panel->IsEdited)
-                    panel->Buffer = Frenchie::Core::String::format(_Format, _Input);
+                    writeValue(panel, _Input, _Format);
 
                 // calculate geometry
                 {
