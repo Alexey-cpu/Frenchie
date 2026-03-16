@@ -147,9 +147,9 @@ namespace Frenchie
 
         enum ImmediateUserInterfaceTreeNodeSettings_ : int
         {
-            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0,
-            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1,
-            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2,
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0, // tree node opened on mouse click
+            ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick     = 1 << 1, // tree node opened on mouse double click
+            ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines = 1 << 2, // tree node siblings connection lines are drawn
 
             ImmediateUserInterfaceTreeNodeSettings_Defaults              =
                   ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick
@@ -710,8 +710,6 @@ namespace Frenchie
             void end_horizontal_stack();
 
             // This function declares scope of menu.
-            // Menu is a scrollarea that pushes menu action items next line.
-            // All other child items behave like they are in a scrollarea.
             // _ID       - unique ID
             // _Settings - settings
             bool begin_menu(
@@ -720,8 +718,6 @@ namespace Frenchie
             void end_menu();
 
             // This function declares scope of combobox.
-            // Combobox is a layout box that defines popup scrollable list.
-            // Combobox pushes combobox items next line. All other child items behave like they are in a scrollarea.
             // _ID      - unique ID
             // _Preview - preview string shown within wrapped combobox.
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
@@ -756,8 +752,7 @@ namespace Frenchie
             // _Checked  - boolean flag that can be chaged by a check button
             // _Settings - check button settings
             // Checkbutton can be rendered as radio button, checkbox or slider button depending on it's settings.
-            // Input boolean flag sets up check button checked or unchecked state and can be changed on ceheck button click event
-            // depending on settings.
+            // Input boolean flag sets up check button checked state and can be changed on check button click event.
             bool check_button(
                 const std::string&                               _ID,
                 bool&                                            _Checked,

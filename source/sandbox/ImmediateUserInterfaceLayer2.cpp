@@ -7707,10 +7707,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     EllipseSliderPreviousPosition = EllipseSliderPosition;
                 }
 
-                EllipseSliderPosition =
-                    Ellipse.contains(_Context->m_Input.get_cusor_position()) ?
-                        (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / Ellipse.Radius) :
-                            gs_vector_normalize(_Context->m_Input.get_cusor_position() - Ellipse.Center);
+                gs_vec2f radiusVector = (EllipseSliderPreviousPosition + _Context->m_Input.get_cusor_drag_delta() / Ellipse.Radius);
+                EllipseSliderPosition = gs_vector_normalize(radiusVector) * gs_clamp((float)gs_vector_length(radiusVector), 0.f, 1.f);
 
                 EllipseSliderIsMoving = true;
                 Edited                = true;
@@ -8037,7 +8035,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             // open button
             gs_2dboxf openButtonBox = gs_2dboxf(
                 widget->State.BoundingBox.Min,
-                widget->State.BoundingBox.Min + gs_vec2f(widget->State.BoundingBox.width() * 0.25f, widget->State.BoundingBox.height()));
+                widget->State.BoundingBox.Min + gs_min(widget->State.BoundingBox.width(), widget->State.BoundingBox.height()));
 
             m_Renderer->push_rectangle_rounded_filled(
                 openButtonBox.Min,
@@ -8070,8 +8068,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             if(widget->Active)
             {
                 m_Renderer->push_triangle_filled(
-                    openButtonBox.center() + gs_vec2f(-openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
-                    openButtonBox.center() + gs_vec2f(+openButtonBox.width() * 0.25f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(-openButtonBox.height() * 0.25f, -openButtonBox.height() * 0.25f),
+                    openButtonBox.center() + gs_vec2f(+openButtonBox.height() * 0.25f, -openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(0.f, openButtonBox.height() * 0.25f * 0.5f),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     m_Renderer->calculate_transform_matrix((float)depth++));
@@ -8081,7 +8079,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 m_Renderer->push_triangle_filled(
                     openButtonBox.center() + gs_vec2f(0.f, -openButtonBox.height() * 0.25f),
                     openButtonBox.center() + gs_vec2f(0.f * 0.25f, +openButtonBox.height() * 0.25f),
-                    openButtonBox.center() + gs_vec2f(+openButtonBox.width() * 0.25f, 0.f),
+                    openButtonBox.center() + gs_vec2f(+openButtonBox.height() * 0.25f, 0.f),
                     m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                     m_Renderer->calculate_transform_matrix((float)depth++));
             }
@@ -8130,6 +8128,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
             widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+            widget->ScrollArea->State.MaximumSize    = gs_vec2f(256.f, 256.f);
             widget->ScrollArea->State.PlaceInFollow  = true;
             widget->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
 
