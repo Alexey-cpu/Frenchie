@@ -184,16 +184,16 @@ ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_textur
     return image;
 }
 
-ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const unsigned char* _Memory, const int& _SizeInPixels)
+ApplicationRenderingBackendFont ApplicationRenderingBackend::construct_font(const void* _Memory, const int& _SizeInPixels)
 {
-    auto load_font_from_memory = [](const unsigned char* fontBuffer)->stbtt_fontinfo*
+    auto load_font_from_memory = [](const void* fontBuffer)->stbtt_fontinfo*
     {
         // prepare font
         stbtt_fontinfo* info = new stbtt_fontinfo();
         info->userdata = nullptr;
         info->data     = nullptr;
 
-        if (!stbtt_InitFont(info, fontBuffer, stbtt_GetFontOffsetForIndex((unsigned char*)fontBuffer, 0)))
+        if (!stbtt_InitFont(info, (unsigned char*)fontBuffer, stbtt_GetFontOffsetForIndex((unsigned char*)fontBuffer, 0)))
         {
             free(info);
             return nullptr;

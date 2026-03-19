@@ -226,7 +226,7 @@ namespace Frenchie
             static void set_viewport(const gs_vec2f&, const gs_vec2f&);
 
             // font API
-            static ApplicationRenderingBackendFont construct_font(const unsigned char* _Memory, const int& _Size);
+            static ApplicationRenderingBackendFont construct_font(const void* _Memory, const int& _Size);
             static ApplicationRenderingBackendFont construct_font(const void* _CompressedTTF, const unsigned int& _CompressedTTFSize, const int& _Size);
             static ApplicationRenderingBackendFont construct_font(const char* _FilePath, const int& _Size);
             static void destroy_font(const ApplicationRenderingBackendFont& _Font);

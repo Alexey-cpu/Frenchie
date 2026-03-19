@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    develop_test();
+    widgets_test();
+    //develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -250,24 +250,15 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_tree_node();
                 }
 
-                // color input
-                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color input", "ColorInput")))
-                {
-                    static gs_color inputColor = gs_color_rgba(255, 255, 255, 255);
-
-                    m_ImmediateUserInterface->input_color(m_ImmediateUserInterface->next_id("ColorInput"), inputColor);
-
-                    m_ImmediateUserInterface->end_tree_node();
-                }
-
                 // color pickers
-                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color pickers", "ColorPickers")))
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color modifiers", "ColorModifiers")))
                 {
                     static gs_color colorPickerColor = gs_color_rgba(255, 0, 0, 255);
                     static bool     EnableRGB        = true;
                     static bool     EnableHSV        = true;
                     static bool     EnableHSL        = true;
                     static bool     EnableAlpha      = true;
+                    static bool     PreviewColor     = true;
                     static bool     RGBA             = true;
                     static float    indent           = 64.f;
 
@@ -289,65 +280,91 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent(indent);
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), EnableAlpha);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("PreviewColor"), PreviewColor);
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Alpha");
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("PreviewColorLabel"), "Preview color");
 
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent(indent);
-                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ColorPickerType"), "Type");
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), EnableAlpha);
                     m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Alpha");
+                    m_ImmediateUserInterface->next_line();
 
-                    if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), RGBA ? "RGBA" : "HSVA"))
+                    if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color picker", "ColorPicker")))
                     {
-                        bool rgbaSelected     = RGBA;
-                        bool hsvaSelected     = !RGBA;
-                        int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
-
-                        m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ColorPickerType"), "Type");
                         m_ImmediateUserInterface->same_line();
-                        if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("RGBA", "RGBA"))) RGBA = true;
 
-                        m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
-                        m_ImmediateUserInterface->same_line();
-                        if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("HSVA", "HSVA"))) RGBA = false;
+                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), RGBA ? "RGBA" : "HSVA"))
+                        {
+                            bool rgbaSelected     = RGBA;
+                            bool hsvaSelected     = !RGBA;
+                            int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
-                        m_ImmediateUserInterface->end_combobox();
+                            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
+                            m_ImmediateUserInterface->same_line();
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("RGBA", "RGBA"))) RGBA = true;
+
+                            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
+                            m_ImmediateUserInterface->same_line();
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("HSVA", "HSVA"))) RGBA = false;
+
+                            m_ImmediateUserInterface->end_combobox();
+                        }
+
+                        m_ImmediateUserInterface->next_line();
+                        m_ImmediateUserInterface->next_line();
+                        m_ImmediateUserInterface->next_size(gs_vec2f(1024.f, 512.f));
+
+                        if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Pickers")))
+                        {
+                            // RGBA
+                            if(RGBA)
+                            {
+                                m_ImmediateUserInterface->color_picker_rgba(
+                                    m_ImmediateUserInterface->next_id("RGBAColorPicker"),
+                                    colorPickerColor,
+                                      (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
+                                    | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
+                                    | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
+                                    | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+                                    | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
+                                );
+                            }
+                            // HSVA
+                            else
+                            {
+                                m_ImmediateUserInterface->color_picker_hsva(
+                                    m_ImmediateUserInterface->next_id("HSVAColorPicker"),
+                                    colorPickerColor,
+                                      (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
+                                    | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
+                                    | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
+                                    | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+                                    | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
+                                );
+                            }
+
+                            m_ImmediateUserInterface->end_horizontal_stack();
+                        }
+
+                        m_ImmediateUserInterface->end_tree_node();
                     }
 
-                    m_ImmediateUserInterface->next_line();
-                    m_ImmediateUserInterface->next_line();
-                    m_ImmediateUserInterface->next_size(gs_vec2f(1024.f, 512.f));
-
-                    if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Pickers")))
+                    if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color input", "ColorInput")))
                     {
-                        // RGBA
-                        if(RGBA)
-                        {
-                            m_ImmediateUserInterface->color_picker_rgba(
-                                m_ImmediateUserInterface->next_id("RGBAColorPicker"),
-                                colorPickerColor,
-                                (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                                | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                                | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                                | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0));
-                        }
-                        // HSVA
-                        else
-                        {
-                            m_ImmediateUserInterface->color_picker_hsva(
-                                m_ImmediateUserInterface->next_id("HSVAColorPicker"),
-                                colorPickerColor,
-                                (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                                | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                                | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                                | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0));
-                        }
+                        m_ImmediateUserInterface->input_color(
+                            m_ImmediateUserInterface->next_id("ColorInput"),
+                            colorPickerColor,
+                              (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
+                            | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
+                            | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
+                            | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+                            | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
+                        );
 
-                        // Color
-                        m_ImmediateUserInterface->image("ColorImage", colorPickerColor);
-
-                        m_ImmediateUserInterface->end_horizontal_stack();
+                        m_ImmediateUserInterface->end_tree_node();
                     }
 
                     m_ImmediateUserInterface->end_tree_node();
@@ -357,6 +374,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Text input", "TextInput")))
                 {
                     static std::string multilineString;
+                    static std::string singleLineString;
 
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("MultilineText"), "MultilineText");
                     m_ImmediateUserInterface->next_size(gs_vec2f(windowSize.x, 256.f));
