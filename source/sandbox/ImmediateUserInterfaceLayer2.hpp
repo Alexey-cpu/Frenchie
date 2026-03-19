@@ -18,7 +18,6 @@ namespace Frenchie
     namespace Application
     {
         // Events
-        // This enum contains boolean flags indicating different node events such as resize, move e.t.c
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             // sentinel
@@ -42,7 +41,6 @@ namespace Frenchie
         };
 
         // Colors
-        // This enum contains indexes of the colors used by immediate user interface layer style
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin            = 0,
@@ -642,270 +640,18 @@ namespace Frenchie
             ImmediateUserInterfaceContextLayer();
             virtual ~ImmediateUserInterfaceContextLayer();
 
+            // Layer API
             virtual bool awake()        override;
             virtual void frame_start()  override;
             virtual void frame_update() override;
-            virtual void frame_debug()  override;
+            virtual void frame_input()  override;
             virtual void frame_render() override;
             virtual void frame_finish() override;
             virtual void finish() override;
 
             // UI API
-            //
-            // Hierarchical UI elements
-            //
-            // This section contains API for creating hierarchical UI elements such as windows, scroll areas, layouts e.t.c.
-            // Each hierarchical element has it's own scope that defines it's bounding box and where all children are layouted.
-            // The scope of some hierarchical element starts when dedicated 'begin_' function is called.
-            // The end of the scope is declared by dedicated 'end_' function call.
-            //
-            // If you start a scope of some hierarchical UI element by a dedicated 'begin_' function call
-            // you MUST end this scope with dedicated 'end_' function call. The programm asserts if you don't do this.
-
-            // This function declares the window scope
-            // _ID       - unique ID
-            // _Settings - settings
-            // _Opened   - if this is not nullptr then window becomes closable and close button appears
-            bool begin_window(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-                bool*                                     _Opened = nullptr);
-            void end_window();
-
-            // This function declares scroll area layout box scope
-            // _ID       - unique ID
-            // _Settings - settings
-            bool begin_scrollarea(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_scrollarea();
-
-            // This function declares panel layout box scope
-            // Panel stretches it's child nodes to fill it's bounding box.
-            // _ID       - unique ID
-            // _Settings - settings
-            bool begin_panel(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_panel();
-
-            // This function declares scope of vertical stack layout box
-            // Vertical stack layout box places all it's child nodes vertically in the way they fill it's bounding box.
-            // The fill weight of every child node is calculated as a fill rate within total size.
-            // _ID       - unique ID
-            // _Settings - settings
-            bool begin_vertial_stack(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_vertical_stack();
-
-            // This function declares scope of horizontal stack layout box
-            // Horizontal stack layout box places all it's child nodes horizontally in the way they fill it's bounding box.
-            // The fill weight of every child node is calculated as a fill rate within total size.
-            // _ID       - unique ID
-            // _Settings - settings
-            bool begin_horizontal_stack(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_horizontal_stack();
-
-            // This function declares scope of menu.
-            // _ID       - unique ID
-            // _Settings - settings
-            bool begin_menu(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_menu();
-
-            // This function declares scope of combobox.
-            // _ID      - unique ID
-            // _Preview - preview string shown within wrapped combobox.
-            bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
-            void end_combobox();
-
-            // This function declares scrope of the tree
-            // _ID            - unique ID
-            // _Settings      - settings
-            // _TextureOpened - tree item texture when it's opened
-            // _TextureClosed - tree item texture when it's closed
-            // If no open and close tree item textures are set then arrows are drawn.
-            bool begin_tree_node(
-                const std::string&                            _ID,
-                const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
-                const ApplicationRenderingBackendTexture&     _TextureOpened = ApplicationRenderingBackendTexture(),
-                const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
-            void end_tree_node();
-
-            //
-            // Non hierarchical UI elements
-            //
-            // This section contains API for creating non-hierarchical items called widgets.
-            // Widgets do not have scope with child nodes and they are created by calling appropriate function.
-
-            // This function renders push button
-            // _ID - unique ID
-            // Returns true when button is clicked.
-            bool push_button(const std::string& _ID);
-
-            // This function renders check button
-            // _ID       - unique ID
-            // _Checked  - boolean flag that can be chaged by a check button
-            // _Settings - check button settings
-            // Checkbutton can be rendered as radio button, checkbox or slider button depending on it's settings.
-            // Input boolean flag sets up check button checked state and can be changed on check button click event.
-            bool check_button(
-                const std::string&                               _ID,
-                bool&                                            _Checked,
-                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
-            
-            // This function renders menu action
-            // _ID - unique ID
-            // Menu action is actually a kind of a push button but it's forced to be pushed onto a next line within menu scope.
-            bool menu_action(const std::string& _ID);
-
-            // This function renders menu action
-            // _ID - unique ID
-            // Combobox item is actually a kind of a push button but it's forced to be pushed onto a next line within combobox scope.
-            bool combobox_item(const std::string& _ID);
-            
-            // This function renders text label.
-            // The minimum size of the label equals to text size, maximum size has no limit
-            // on horizontal axis, but is constrained by a text height on vertical axis
-            // _ID       - unique ID
-            // _Text     - displayed text
-            // _Settings - settings
-            void label(
-                const std::string&                         _ID,
-                const std::string&                         _Text,
-                const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
-
-            // This function renders input multiline text
-
-            bool input_string_multiline(
-                const std::string&                               _ID,
-                std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
-
-            // This function renders input singleline text
-            bool input_string_singleline(
-                const std::string&                               _ID,
-                std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
-                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
-
-            // This function renders input scalar value widget.
-            // Supported scalar types are: float, double, int, short, unsigned int, unsigned short
             template<typename Type>
-            bool input_scalar(
-                const std::string&                               _ID,
-                Type&                                            _Input,
-                const Type&                                      _Min      = gs_tiny<Type>(),
-                const Type&                                      _Max      = gs_huge<Type>(),
-                const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
-
-            bool input_color(
-                const std::string&                               _ID,
-                gs_color&                                        _Color,
-                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
-
-            // This function renders classic RGBA color picker widget.
-            // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
-            void color_picker_rgba(
-                const std::string&                               _ID,
-                gs_color&                                        _Color,
-                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
-
-            // This function renders rounded HSV color picker widget.
-            // The widget supports RGB, HSV, HSL color formats and alpha channel value regulation.
-            void color_picker_hsva(
-                const std::string&                               _ID,
-                gs_color&                                        _Color,
-                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
-
-            // This function renders square image.
-            // If texture is not passed to a function default renderer white pattern image is used.
-            void image(const std::string& _ID, const gs_color& _ColorMask, const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
-
-            // next node API
-            
-            // If next node is pushed within scroll area this function pushes it onto a next line by inserting vertical 'next line' indent.
-            // If you call this function several times it inserts several 'next line' indents before the node.
-            // All changes are applied every frame.
-            void next_line();
-
-            //
-            void same_line();
-
-            // If next node is pushed within scroll area this function adds horizontal indent before it equal to the 3 font sizes.
-            // If you call this function several times it inserts several horizontal indents before the node.
-            // All changes are applied every frame.
-            void indent(const float& = 32.f);
-
-            // This function sets next node size by changing it's bounding box width, height and size constraints (minimum and maximum size).
-            // All changes are applied every frame.
-            void next_size(const gs_vec2f&);
-
-            // This function changes minimum size constrain of next node.
-            // All changes are applied every frame.
-            void next_minimum_size(const gs_vec2f&);
-
-            // This function changes minimum size constrain of next node.
-            // All changes are applied every frame.
-            void next_maximum_size(const gs_vec2f&);
-
-            // This function changes next node position.
-            // All changes are applied every frame.
-            void next_position(const gs_vec2f&);
-
-            // If the node is descendant of panel this function changes it's content padding.
-            // All changes are applied every frame.
-            void next_content_padding(const gs_vec2f&);
-
-            // ID API
-            // _Name - is what is going to be displayed as the node title
-            // _Hash - is a unique local node identifier
-            std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
-
-            // This function retrieves controller of a given type
-            template<typename Type> Type* get_controller() const
-            {
-                for(auto& controller : m_Controllers)
-                {
-                    if(dynamic_cast<Type*>(controller.get()))
-                        return dynamic_cast<Type*>(controller.get());
-                }
-
-                return nullptr;
-            }
-
-            // This function retrieves rendering stack top node
-            template<typename Type = ImmediateUserInterfaceNode>
-            Type* get_rendering_stack_top() const
-            {
-                if(m_NodesRenderingStack.empty())
-                    return nullptr;
-
-                return dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
-            }
-
-            template<typename Type = ImmediateUserInterfaceNode>
-            Type* get_rendered_stack_top() const
-            {
-                if(m_NodesRenderedStack.empty())
-                    return nullptr;
-
-                return dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]);
-            }
-
-
-            // This function start the new node of a given type.
-            // The function creates the node or retrieves it from cache and then pushes it into rendering stack and rendered items list
-            template<typename Type>
-            bool begin_node(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr)
+            bool begin_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
@@ -969,9 +715,6 @@ namespace Frenchie
                 return node->create_contents(this, _ID, _Settings, _Render);
             }
 
-            // This function ends the node of a given type.
-            // The function pops the node out of hierarchical rendering stack and pushes it into
-            // already rendered nodes stack
             template<typename Type>
             void end_node()
             {
@@ -1000,6 +743,148 @@ namespace Frenchie
                 
                 m_NodesRenderingStack.pop_back();
             }
+
+            bool begin_window(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool*                                     _Opened = nullptr);
+            void end_window();
+
+            bool begin_scrollarea(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_scrollarea();
+
+            bool begin_panel(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_panel();
+
+            bool begin_vertial_stack(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_vertical_stack();
+
+            bool begin_horizontal_stack(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_horizontal_stack();
+
+            bool begin_menu(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_menu();
+
+            bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
+            void end_combobox();
+
+            bool begin_tree_node(
+                const std::string&                            _ID,
+                const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
+                const ApplicationRenderingBackendTexture&     _TextureOpened = ApplicationRenderingBackendTexture(),
+                const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
+            void end_tree_node();
+
+            // Widgets API
+            bool push_button(const std::string& _ID);
+
+            bool check_button(
+                const std::string&                               _ID,
+                bool&                                            _Checked,
+                const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
+
+            bool menu_action(const std::string& _ID);
+
+            bool combobox_item(const std::string& _ID);
+
+            void label(
+                const std::string&                         _ID,
+                const std::string&                         _Text,
+                const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
+
+            bool input_string_multiline(
+                const std::string&                               _ID,
+                std::string&                                     _Text,
+                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
+
+            bool input_string_singleline(
+                const std::string&                               _ID,
+                std::string&                                     _Text,
+                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
+
+            template<typename Type>
+            bool input_scalar(
+                const std::string&                               _ID,
+                Type&                                            _Input,
+                const Type&                                      _Min      = gs_tiny<Type>(),
+                const Type&                                      _Max      = gs_huge<Type>(),
+                const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
+
+            bool input_color(
+                const std::string&                               _ID,
+                gs_color&                                        _Color,
+                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
+
+            void color_picker_rgba(
+                const std::string&                               _ID,
+                gs_color&                                        _Color,
+                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
+
+            void color_picker_hsva(
+                const std::string&                               _ID,
+                gs_color&                                        _Color,
+                const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
+
+            void image(
+                const std::string&                        _ID,
+                const gs_color&                           _ColorMask,
+                const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
+
+            // next node API
+            std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
+            void next_line();
+            void same_line();
+            void indent(const float& = 32.f);
+            void next_size(const gs_vec2f&);
+            void next_minimum_size(const gs_vec2f&);
+            void next_maximum_size(const gs_vec2f&);
+            void next_position(const gs_vec2f&);
+            void next_content_padding(const gs_vec2f&);
+
+            // Controllers API
+            template<typename Type> Type* get_controller() const
+            {
+                for(auto& controller : m_Controllers)
+                {
+                    if(dynamic_cast<Type*>(controller.get()))
+                        return dynamic_cast<Type*>(controller.get());
+                }
+
+                return nullptr;
+            }
+
+            // Rendering stack API
+            template<typename Type = ImmediateUserInterfaceNode>
+            Type* get_rendering_stack_top() const
+            {
+                if(m_NodesRenderingStack.empty())
+                    return nullptr;
+
+                return dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
+            }
+
+            template<typename Type = ImmediateUserInterfaceNode>
+            Type* get_rendered_stack_top() const
+            {
+                if(m_NodesRenderedStack.empty())
+                    return nullptr;
+
+                return dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]);
+            }
+
+            // info
 
             // hierarchy and cache
             mutable std::map<std::string, std::unique_ptr<ImmediateUserInterfaceNode>> m_Cache;
@@ -1034,7 +919,8 @@ namespace Frenchie
             std::string                                                           m_CurrentName;
             std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
 
-            template<typename Type> Type* create_node(const std::string& _ID)
+            template<typename Type>
+            Type* create_node(const std::string& _ID)
             {
                 // clean-up hash and name buffers
                 m_CurrentHash.clear();
@@ -1074,6 +960,7 @@ namespace Frenchie
 
                 return dynamic_cast<Type*>(node);
             }
+        
         };
     };
 }

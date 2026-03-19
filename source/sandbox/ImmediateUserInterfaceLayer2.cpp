@@ -146,7 +146,7 @@ namespace Frenchie
             ImmediateUserInterfaceScrollArea* retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context);
         };
 
-        // popups
+        // menu
         struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
         {
         public:
@@ -185,6 +185,62 @@ namespace Frenchie
             ImmediateUserInterfaceMenuItem(const std::string& _Name);
             virtual ~ImmediateUserInterfaceMenuItem();
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // combobox
+        struct ImmediateUserInterfaceCombobox : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceCombobox(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceCombobox();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            ImmediateUserInterfaceScrollArea*              ScrollArea{nullptr};
+            bool                                           Active    {false};
+            bool                                           Hovered   {false};
+            std::chrono::high_resolution_clock::time_point HoverTime {std::chrono::high_resolution_clock::time_point()};
+        };
+
+        struct ImmediateUserInterfaceComboboxItem : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceComboboxItem(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceComboboxItem();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceComboboxScrollArea();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        // tree
+        struct ImmediateUserInterfaceTreeNode : public ImmediateUserInterfaceNode
+        {
+        public:
+            ImmediateUserInterfaceTreeNode(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTreeNode();
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            // info
+            bool                               Opened        {false};
+            gs_2dboxf                          TitleBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2dboxf                          IconBox       {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            ApplicationRenderingBackendTexture TextureOpened {ApplicationRenderingBackendTexture()};
+            ApplicationRenderingBackendTexture TextureClosed {ApplicationRenderingBackendTexture()};
+            int                                TreeSettings  {0};
         };
 
         // windows
@@ -352,251 +408,6 @@ namespace Frenchie
                 else if(gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 1.f)
                     State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + gs_vec2f(512.f, 512.f));
             }
-        };
-
-        // widgets
-        struct ImmediateUserInterfaceCombobox : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceCombobox(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceCombobox();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-
-            ImmediateUserInterfaceScrollArea*              ScrollArea{nullptr};
-            bool                                           Active    {false};
-            bool                                           Hovered   {false};
-            std::chrono::high_resolution_clock::time_point HoverTime {std::chrono::high_resolution_clock::time_point()};
-        };
-
-        struct ImmediateUserInterfaceComboboxItem : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceComboboxItem(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceComboboxItem();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
-
-        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
-        {
-        public:
-            ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceComboboxScrollArea();
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
-
-        // trees
-        struct ImmediateUserInterfaceTreeNode : public ImmediateUserInterfaceNode
-        {
-        public:
-            ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceTreeNode(){}
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
-                
-                // background
-                if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && TitleBox.contains(_Context->m_Input.get_cusor_position()))
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        TitleBox.Min,
-                        TitleBox.Max,
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                // lines
-                int childrenCount = 0;
-
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                {
-                    childrenCount++;
-
-                    if(!(TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines))
-                        continue;
-
-                    ImmediateUserInterfaceTreeNode* treeNode =
-                        dynamic_cast<ImmediateUserInterfaceTreeNode*>(*it);
-
-                    if(treeNode == nullptr)
-                        continue;
-
-                    _Context->m_Renderer->push_line(
-                        gs_vec2f(IconBox.center().x, IconBox.Max.y),
-                        gs_vec2f(IconBox.center().x, treeNode->IconBox.center().y),
-                        _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    _Context->m_Renderer->push_line(
-                        gs_vec2f(IconBox.center().x, treeNode->IconBox.center().y),
-                        gs_vec2f(treeNode->IconBox.Min.x, treeNode->IconBox.center().y),
-                        _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                // icons
-                if(!TextureOpened.is_null() && !TextureClosed.is_null())
-                {
-                    if(Opened && childrenCount > 0)
-                    {
-                        _Context->m_Renderer->push_rectangle_filled(
-                            IconBox.Min,
-                            IconBox.Max,
-                            gs_color_rgba(255, 255, 255, 255),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                            TextureOpened);
-                    }
-                    else
-                    {
-                        _Context->m_Renderer->push_rectangle_filled(
-                            IconBox.Min,
-                            IconBox.Max,
-                            gs_color_rgba(255, 255, 255, 255),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                            TextureClosed);
-                    }
-                }
-                else
-                {
-                    // dots
-                    // triangles
-                    if(Opened && childrenCount > 0)
-                    {
-                        _Context->m_Renderer->push_triangle_filled(
-                            IconBox.center() + gs_vec2f(-IconBox.width() * 0.25f, -IconBox.height() * 0.25f),
-                            IconBox.center() + gs_vec2f(+IconBox.width() * 0.25f, -IconBox.height() * 0.25f),
-                            IconBox.center() + gs_vec2f(0.f, IconBox.height() * 0.25f * 0.5f),
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                    }
-                    else
-                    {
-                        _Context->m_Renderer->push_triangle_filled(
-                            IconBox.center() + gs_vec2f(0.f, -IconBox.height() * 0.25f),
-                            IconBox.center() + gs_vec2f(0.f, +IconBox.height() * 0.25f),
-                            IconBox.center() + gs_vec2f(+IconBox.width() * 0.25f, 0.f),
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                    }
-                }
-
-                // title
-                _Context->m_Renderer->push_text(
-                    gs_vec2f(IconBox.Max.x, IconBox.Min.y),
-                    Name.begin(),
-                    Name.end(),
-                    _Context->m_Style.get_font_size(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
-
-                // layout self
-                State.BoundingBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + State.ContentSize);
-
-                TitleBox = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
-
-                IconBox = gs_2dboxf(
-                    TitleBox.Min,
-                    TitleBox.Min + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
-
-                // layout children
-                gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
-                gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
-                float    maxHeight = 0.f;
-
-                for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                {
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position,
-                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
-                    maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
-
-                    if((*it)->State.NextLine > 0)
-                    {
-                        position  = gs_vec2f(
-                            start.x + (*it)->State.Indent,
-                            position.y + maxHeight * (*it)->State.NextLine);
-                        
-                        maxHeight = 0.f;
-                    }
-                    else
-                    {
-                        position += gs_vec2f((*it)->State.BoundingBox.size().x + (*it)->State.Indent, 0.f);
-                    }
-                }
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return false;
-
-                if((TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnClick))
-                {
-                    if(_Context->m_Input.is_mouse_button_clicked() && TitleBox.contains(_Context->m_Input.get_cusor_position()))
-                        Opened = !Opened;
-                }
-                else if((TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick))
-                {
-                    if(_Context->m_Input.is_mouse_button_double_clicked() && TitleBox.contains(_Context->m_Input.get_cusor_position()))
-                        Opened = !Opened;
-                }
-
-                return true;
-            }
-
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context)
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                    return;
-
-                // this is the title box
-                gs_2dboxf box = gs_2dboxf(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Min + _Context->m_Renderer->calculate_bounding_box(
-                        Name.begin(),
-                        Name.end(),
-                        _Context->m_Style.get_font_size(),
-                        _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
-
-                // this are children
-                for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-                {
-                    box = gs_2dboxf(
-                        box.Min,
-                        (*it)->State.BoundingBox.Min,
-                        box.Max,
-                        (*it)->State.BoundingBox.Max);
-                }
-
-                State.ContentSize = box.size();
-            }
-
-            bool                               Opened        {false};
-            gs_2dboxf                          TitleBox      {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_2dboxf                          IconBox       {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            ApplicationRenderingBackendTexture TextureOpened {ApplicationRenderingBackendTexture()};
-            ApplicationRenderingBackendTexture TextureClosed {ApplicationRenderingBackendTexture()};
-            int                                TreeSettings  {0};
         };
 
         // controllers
@@ -4284,6 +4095,209 @@ void ImmediateUserInterfaceComboboxScrollArea::render(ImmediateUserInterfaceCont
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
+// ImmediateUserInterfaceTreeNode
+ImmediateUserInterfaceTreeNode::ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceTreeNode::~ImmediateUserInterfaceTreeNode(){}
+
+void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+    
+    // background
+    if((State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) &&
+        TitleBox.contains(_Context->m_Input.get_cusor_position()))
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            TitleBox.Min,
+            TitleBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // lines
+    int childrenCount = 0;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        childrenCount++;
+
+        if(!(TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines))
+            continue;
+
+        ImmediateUserInterfaceTreeNode* treeNode =
+            dynamic_cast<ImmediateUserInterfaceTreeNode*>(*it);
+
+        if(treeNode == nullptr)
+            continue;
+
+        _Context->m_Renderer->push_line(
+            gs_vec2f(IconBox.center().x, IconBox.Max.y),
+            gs_vec2f(IconBox.center().x, treeNode->IconBox.center().y),
+            _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_line(
+            gs_vec2f(IconBox.center().x, treeNode->IconBox.center().y),
+            gs_vec2f(treeNode->IconBox.Min.x, treeNode->IconBox.center().y),
+            _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // user-defined icons
+    if(!TextureOpened.is_null() && !TextureClosed.is_null())
+    {
+        if(Opened && childrenCount > 0)
+        {
+            _Context->m_Renderer->push_rectangle_filled(
+                IconBox.Min,
+                IconBox.Max,
+                gs_color_rgba(255, 255, 255, 255),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                TextureOpened);
+        }
+        else
+        {
+            _Context->m_Renderer->push_rectangle_filled(
+                IconBox.Min,
+                IconBox.Max,
+                gs_color_rgba(255, 255, 255, 255),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+                TextureClosed);
+        }
+    }
+    
+    // default icons
+    else
+    {
+        // TODO: dots ???
+        
+        // triangles
+        if(Opened && childrenCount > 0)
+        {
+            _Context->m_Renderer->push_triangle_filled(
+                IconBox.center() + gs_vec2f(-IconBox.width() * 0.25f, -IconBox.height() * 0.25f),
+                IconBox.center() + gs_vec2f(+IconBox.width() * 0.25f, -IconBox.height() * 0.25f),
+                IconBox.center() + gs_vec2f(0.f, IconBox.height() * 0.25f * 0.5f),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+        else
+        {
+            _Context->m_Renderer->push_triangle_filled(
+                IconBox.center() + gs_vec2f(0.f, -IconBox.height() * 0.25f),
+                IconBox.center() + gs_vec2f(0.f, +IconBox.height() * 0.25f),
+                IconBox.center() + gs_vec2f(+IconBox.width() * 0.25f, 0.f),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+        }
+    }
+
+    // title
+    _Context->m_Renderer->push_text(
+        gs_vec2f(IconBox.Max.x, IconBox.Min.y),
+        Name.begin(),
+        Name.end(),
+        _Context->m_Style.get_font_size(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
+void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // layout self
+    State.BoundingBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + State.ContentSize);
+
+    TitleBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
+
+    IconBox = gs_2dboxf(
+        TitleBox.Min,
+        TitleBox.Min + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
+
+    // layout children
+    gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
+    float    maxHeight = 0.f;
+
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        (*it)->State.BoundingBox = gs_2dboxf(
+            position,
+            position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+        maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
+
+        if((*it)->State.NextLine > 0)
+        {
+            position  = gs_vec2f(
+                start.x + (*it)->State.Indent,
+                position.y + maxHeight * (*it)->State.NextLine);
+            
+            maxHeight = 0.f;
+        }
+        else
+        {
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (*it)->State.Indent, 0.f);
+        }
+    }
+}
+
+bool ImmediateUserInterfaceTreeNode::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return false;
+
+    if((TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnClick))
+    {
+        if(_Context->m_Input.is_mouse_button_clicked() && TitleBox.contains(_Context->m_Input.get_cusor_position()))
+            Opened = !Opened;
+    }
+    else if((TreeSettings & ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_OpenOnDoubleClick))
+    {
+        if(_Context->m_Input.is_mouse_button_double_clicked() && TitleBox.contains(_Context->m_Input.get_cusor_position()))
+            Opened = !Opened;
+    }
+
+    return ImmediateUserInterfaceNode::events(_Context);
+}
+
+void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // this is the title box
+    gs_2dboxf box = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + _Context->m_Renderer->calculate_bounding_box(
+            Name.begin(),
+            Name.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
+
+    // this are children
+    for (auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        box = gs_2dboxf(
+            box.Min,
+            (*it)->State.BoundingBox.Min,
+            box.Max,
+            (*it)->State.BoundingBox.Max);
+    }
+
+    State.ContentSize = box.size();
+}
+
 // ImmediateUserInterfaceWindow
 ImmediateUserInterfaceWindow::ImmediateUserInterfaceWindow(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
 ImmediateUserInterfaceWindow::~ImmediateUserInterfaceWindow(){}
@@ -6195,7 +6209,7 @@ void ImmediateUserInterfaceContextLayer::frame_update()
 {
 }
 
-void ImmediateUserInterfaceContextLayer::frame_debug()
+void ImmediateUserInterfaceContextLayer::frame_input()
 {
     // build hierarchy
     m_Hierarchy.build(m_NodesRenderingList);
@@ -6663,7 +6677,9 @@ void ImmediateUserInterfaceContextLayer::label(
         }
 
         virtual ~ImmediateUserInterfaceLabel(){}
+
         virtual void layout(ImmediateUserInterfaceContextLayer*) override{}
+        virtual void render(ImmediateUserInterfaceContextLayer*) override{}
     };
 
     if(begin_node<ImmediateUserInterfaceLabel>(
@@ -8308,6 +8324,18 @@ void ImmediateUserInterfaceContextLayer::end_window()
     end_node<ImmediateUserInterfaceWindow>();
 }
 
+std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
+{
+    ImmediateUserInterfaceNode* top = get_rendering_stack_top();
+
+    if(top == nullptr)
+        return !_Hash.empty() ? std::string(_Name).append("###").append(_Hash) : _Name;
+        
+    return !_Hash.empty() ?
+                std::string(_Name).append("###").append(top->Hash).append("/").append(_Hash) :
+                    std::string(top->Hash).append("/").append(_Name);
+}
+
 void ImmediateUserInterfaceContextLayer::next_line()
 {
     ImmedidateUserInterfaceNextNodeController* controller =
@@ -8375,16 +8403,4 @@ void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec2f& _V
 
     if(controller != nullptr)
         controller->NextContentPadding = _Value;
-}
-
-std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
-{
-    ImmediateUserInterfaceNode* top = get_rendering_stack_top();
-
-    if(top == nullptr)
-        return !_Hash.empty() ? std::string(_Name).append("###").append(_Hash) : _Name;
-        
-    return !_Hash.empty() ?
-                std::string(_Name).append("###").append(top->Hash).append("/").append(_Hash) :
-                    std::string(top->Hash).append("/").append(_Name);
 }

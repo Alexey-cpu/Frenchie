@@ -28,37 +28,31 @@ namespace Frenchie
             void hide();
             void show();
 
-            // this is layer initialization function
-            // that is called once when the layer is 
-            // pushed into application pipeline
+            // This is layer initialization function that is called once when the layer is pushed into application pipeline
             virtual bool awake();
 
-            // this function is needed to prepare layer
-            // for current frame processing:
-            // compute geometry, compute projection matrixes, detect events e.t.c
+            // In this function we prepare layer for current frame processing. Ususally we compute projection and camera matrixes here
             virtual void frame_start();
 
-            // this function is needed to update the layer
-            // within current frame: modify geometry,
-            // compute transform matrixes, prepare rendering commands queue e.t.c
+            // In this function we usually modify geometry, compute transform matrixes, prepare rendering commands e.t.c
             virtual void frame_update();
 
-            // TODO: this is not a debug function !!!
-            virtual void frame_debug();
+            // In this function we usually catch application input and events
+            virtual void frame_input();
 
-            // this function is needed to execute rendering commands
+            // In this function rendering commands are executed. Essentially in sends all geometry and shader paramters onto GPU
             virtual void frame_render();
 
-            // this function is needed basically for application events processing
+            // In this function we usually do post processing after rendering
             virtual void frame_finish();
 
-            // this function is needed for safe and reliable layer processing stop
+            // In this function we safelly stop layer before it's poped out of application pipeline
             virtual void finish();
 
-            // this function is needed for application layer resources clean-up
+            // In this functrion we safelly clean-up layer resources when application is closedf
             virtual void quit();
 
-            // 
+            // This function indentified if the layer can have multiple instances
             virtual bool allows_multiple_instances() const;
 
         protected:

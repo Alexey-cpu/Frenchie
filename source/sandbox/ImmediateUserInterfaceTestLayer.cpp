@@ -12,13 +12,17 @@ bool ImmediateUserInterfaceTestLayer::awake()
     if(m_ImmediateUserInterface == nullptr)
         m_ImmediateUserInterface = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
 
+    m_FolderClosedTexture = ApplicationRenderingBackend::construct_texture("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder.png");
+    m_FolderOpenedTexture = ApplicationRenderingBackend::construct_texture("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_folder_opened.png");
+    m_FileTexture         = ApplicationRenderingBackend::construct_texture("C:/SDK/Qt_Projects/OpenGL/shared/appData/themes/icons/default_file.png");
+
     return true;
 }
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    widgets_test();
-    //develop_test();
+    //widgets_test();
+    develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -170,8 +174,8 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
     m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
+        | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     { 
@@ -363,6 +367,48 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                 m_ImmediateUserInterface->end_tree_node();
             }
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+
+        m_ImmediateUserInterface->end_window();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::renderDirectory(const std::filesystem::path& _Path)
+{
+    auto textureOpened = std::filesystem::is_directory(_Path) ? m_FolderOpenedTexture : m_FileTexture;
+    auto textureClosed = std::filesystem::is_directory(_Path) ? m_FolderClosedTexture : m_FileTexture;
+
+    if(m_ImmediateUserInterface->begin_tree_node(
+        m_ImmediateUserInterface->next_id(_Path.filename().string(), _Path.string()),
+        ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
+        textureOpened,
+        textureClosed))
+    {
+        if(std::filesystem::is_directory(_Path))
+        {
+            for(const auto& directory : std::filesystem::directory_iterator(_Path, std::filesystem::directory_options::skip_permission_denied))
+                renderDirectory(directory.path());
+        }
+
+        m_ImmediateUserInterface->end_tree_node();
+    }
+}
+
+void ImmediateUserInterfaceTestLayer::develop_test()
+{
+    m_ImmediateUserInterface->m_Settings =
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
+        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
+
+    std::filesystem::path currentPath = std::filesystem::current_path();
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
+    {
+        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
+        {
+            renderDirectory(currentPath);
 
             m_ImmediateUserInterface->end_scrollarea();
         }

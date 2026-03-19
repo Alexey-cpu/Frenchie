@@ -2,6 +2,8 @@
 
 #include <ImmediateUserInterfaceLayer2.hpp>
 
+#include <filesystem>
+
 namespace Frenchie
 {
     namespace Application
@@ -18,8 +20,16 @@ namespace Frenchie
 
             void windows_test();
             void widgets_test();
+            void develop_test();
 
         protected:
+
+            void renderDirectory(const std::filesystem::path& _Path);
+
+            ApplicationRenderingBackendTexture m_FolderClosedTexture;
+            ApplicationRenderingBackendTexture m_FolderOpenedTexture;
+            ApplicationRenderingBackendTexture m_FileTexture;
+
             std::shared_ptr<ImmediateUserInterfaceContextLayer> m_ImmediateUserInterface{nullptr};
         };
     }

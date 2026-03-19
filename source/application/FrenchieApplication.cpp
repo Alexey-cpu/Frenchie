@@ -214,7 +214,7 @@ void ApplicationInstance::ApplicationInstance::frame_debug()
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden())
-            layer->frame_debug();
+            layer->frame_input();
     }
 }
 
