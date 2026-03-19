@@ -58,7 +58,7 @@ void Layer::frame_update()
 {
 }
 
-void Layer::frame_debug()
+void Layer::frame_input()
 {
 }
 
