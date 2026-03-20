@@ -449,6 +449,7 @@ namespace Frenchie
             Data State;
             Data Cache;
             bool Loaded{false};
+            bool Dirty {true }; // indicates that geometry has not been yet computed
 
         //private:
             std::string Name  = "UINode";

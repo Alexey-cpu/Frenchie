@@ -836,6 +836,7 @@ namespace Frenchie
                     }
 
                     // render
+                    if(!widget->Dirty)
                     {
                         _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
@@ -5707,6 +5708,9 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
     }
 
     // catch events
+    if(eventNode != nullptr)
+        eventNode->Dirty = true;
+
     ImmediateUserInterfaceNode* eventCatcher = eventNode != nullptr ? eventNode : hoveredNode;
 
     if(eventCatcher != nullptr)
@@ -5784,6 +5788,8 @@ void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterface
 
     _Node->layout(_Context);
     _Node->measure(_Context);
+
+    _Node->Dirty = false;
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
         node_layout(_Context, (*it));
@@ -6358,6 +6364,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         gs_vec2f textSize = m_Renderer->calculate_bounding_box(widget->Name.begin(), widget->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
+        if(!widget->Dirty)
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -6448,6 +6455,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         }
 
         // render
+        if(!widget->Dirty)
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -6701,6 +6709,7 @@ void ImmediateUserInterfaceContextLayer::label(
         gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
+        if(!widget->Dirty)
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
