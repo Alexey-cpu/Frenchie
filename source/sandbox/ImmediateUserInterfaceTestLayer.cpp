@@ -181,15 +181,41 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     { 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
-            auto windowSize = m_ImmediateUserInterface->get_rendering_stack_top()->State.BoundingBox.size() * 0.8f;
+            static float verticalPadding;
+            static float horizontalPadding;
+            static float verticalMargin;
+            static float horizontalMargin;
+
+            float minimum = 0.f;
+            float maximum = 128.f;
 
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Layouts", "Layouts")))
             {
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("VerticalPaddingSlider"), verticalPadding, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalPaddingSliderLabel"), "Vertical padding");
+                
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("HorizontalPaddingSlider"), horizontalPadding, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HorizontalPaddingSliderLabel"), "Horizontal padding");
+
+                m_ImmediateUserInterface->next_line();
+
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("VerticalMarginSlider"), verticalMargin, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalMarginSliderLabel"), "Vertical margin");
+
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("HorizontalMarginSlider"), horizontalMargin, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HorizontalMarginSliderLabel"), "Horizontal margin");
+
+                m_ImmediateUserInterface->next_line();
+
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("HorizontalStack", "Horizontal stack")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f));
-                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(16.f));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(horizontalPadding, verticalPadding));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(horizontalMargin, verticalMargin));
 
                     if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
                     {
@@ -206,8 +232,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f));
-                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(16.f));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(horizontalPadding, verticalPadding));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(horizontalMargin, verticalMargin));
 
                     if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
                     {
@@ -489,17 +515,29 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    std::filesystem::path currentPath = std::filesystem::current_path();
+    static float slided;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
-        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
-        {
-            renderDirectory(currentPath);
+        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("Slider"), slided, 0.f, 100.f, 5);
 
-            m_ImmediateUserInterface->end_scrollarea();
-        }
+
+        m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("SliderValue"), slided);
 
         m_ImmediateUserInterface->end_window();
     }
+
+    // std::filesystem::path currentPath = std::filesystem::current_path();
+
+    // if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
+    // {
+    //     if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
+    //     {
+    //         renderDirectory(currentPath);
+
+    //         m_ImmediateUserInterface->end_scrollarea();
+    //     }
+
+    //     m_ImmediateUserInterface->end_window();
+    // }
 }

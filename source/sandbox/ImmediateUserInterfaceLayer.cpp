@@ -1481,48 +1481,130 @@ namespace Frenchie
             Type&                                            _Input,
             const Type&                                      _Min,
             const Type&                                      _Max,
-            const Type&                                      _Delta,
-            const std::string&                               _Format,
+            const int&                                       _Delta,
             const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
-            if(_Context->begin_node<ImmediateUserInterfaceNode>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            // nested types
+            struct ImmediateUserInterfaceInputScalarSlider : public ImmediateUserInterfaceNode
             {
-                ImmediateUserInterfaceNode* widget = _Context->get_rendering_stack_top();
-
-                // render
-                if(!widget->Dirty)
+            public:
+                ImmediateUserInterfaceInputScalarSlider(const std::string& _Name) : ImmediateUserInterfaceNode(_Name)
                 {
-                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
-                    int depth = widget->Cache.Depth;
-
-                    // render slider box
-                    gs_2dboxf sliderBox = gs_2dboxf(
-                        widget->State.BoundingBox.Min,
-                        widget->State.BoundingBox.Min + gs_vec2f(widget->State.BoundingBox.width(), widget->State.BoundingBox.height() * 0.5f));
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        sliderBox.Min,
-                        sliderBox.Max,
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        sliderBox.Min - _Context->m_Style.get_frames_width(),
-                        sliderBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
-
-                    // render slider
-                    gs_2dboxf labelBox = gs_2dboxf(
-                        widget->State.BoundingBox.Min + gs_vec2f(0.f, sliderBox.height()),
-                        widget->State.BoundingBox.Min + gs_vec2f(0.f, sliderBox.height()) + gs_vec2f(sliderBox.width(), sliderBox.height()));
-
-                    _Context->m_Renderer->pop_clip_box();
+                    State.BoundingBox = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(256.f, 64.f));
+                    State.MinimumSize = gs_vec2f(0.f, 64.f);
+                    State.MaximumSize = gs_vec2f(gs_huge<float>(), 64.f);
                 }
 
-                _Context->end_node<ImmediateUserInterfaceNode>();
+                virtual ~ImmediateUserInterfaceInputScalarSlider(){}
+
+                virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    // render slider box
+                    {
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            State.BoundingBox.Min,
+                            State.BoundingBox.Max,
+                            _Context->m_Style.get_frames_radius(),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                            _Context->m_Style.get_frames_radius(),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    }
+
+                    // render slider
+                    {
+                        // palette slider
+                        gs_2dboxf paletteSlider = gs_2dboxf(
+                            State.BoundingBox.Min + gs_vec2f(SliderPosition, 0.f) * State.BoundingBox.size() * 0.9f,
+                            State.BoundingBox.Min + gs_vec2f(SliderPosition, 0.f) * State.BoundingBox.size() * 0.9f + gs_vec2f(State.BoundingBox.width() * 0.1f, State.BoundingBox.height()));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            paletteSlider.Min,
+                            paletteSlider.Max,
+                            _Context->m_Style.get_frames_radius(),
+                            gs_color_rgba(0, 0, 0, 255),
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            paletteSlider.Min + gs_vec2f(4.f),
+                            paletteSlider.Max - gs_vec2f(4.f),
+                            _Context->m_Style.get_frames_radius(),
+                            gs_color_rgba(255, 255, 255, 255),
+                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    }
+                }
+
+                virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
+                {
+                    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+                        return false;
+
+                    if(!_Context->m_Input.is_mouse_button_down())
+                    {
+                        SliderIsMoving = false;
+                        Edited         = false;
+                        return false;
+                    }
+
+                    // catch vertical color palette event
+                    if((State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) || SliderIsMoving))
+                    {
+                        if(_Context->m_Input.is_mouse_button_pressed())
+                        {
+                            SliderPosition = gs_clamp(
+                                ceil(((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min - State.BoundingBox.size() * 0.1f * 0.5f) / State.BoundingBox.size() / 0.9f).x * 100.f / (float)Delta),
+                                1.f / (float)Delta,
+                                100.f) * (float)Delta / 100.f;
+                            
+                            SliderPreviousPosition = SliderPosition;
+                        }
+
+                        SliderPosition = gs_clamp(
+                            SliderPreviousPosition + gs_clamp(
+                                ceil( (_Context->m_Input.get_cusor_drag_delta() / State.BoundingBox.size() / 0.9f).x * 100.f / (float)Delta),
+                                -100.f,
+                                +100.f) * (float)Delta / 100.f,
+                            0.f,
+                            1.f);
+                        
+                        SliderIsMoving = true;
+                        Edited         = true;
+
+                        return true;
+                    }
+                    
+                    return false;
+                }
+                
+                float SliderPosition         {0.f};
+                float SliderPreviousPosition {0.f};
+                int   Delta                  {1};
+                bool  SliderIsMoving         {false};
+                bool  Edited                 {false};
+            };
+
+            if(_Context->begin_node<ImmediateUserInterfaceInputScalarSlider>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceInputScalarSlider* slider =
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
+
+                slider->Delta = _Delta;
+
+                if(slider->Edited)
+                {
+                    _Input = _Min + (_Max - _Min) * slider->SliderPosition;
+                }
+                else
+                {
+                    slider->SliderPosition = _Input / (_Max - _Min);
+                }
+
+                _Context->end_node<ImmediateUserInterfaceInputScalarSlider>();
             }
 
             return true;
@@ -6909,17 +6991,9 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(c
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u", _Settings);
 }
 
-template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max, const float& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
 {
-    return input_scalar_slider_internal<float>(
-        this,
-        _ID,
-        _Input,
-        _Min,
-        _Max,
-        _Delta,
-        "%.5f",
-        _Settings);
+    return input_scalar_slider_internal<float>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
 bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
@@ -8333,7 +8407,7 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
 {
     ImmediateUserInterfaceMenu*       menu      = nullptr;
     ImmediateUserInterfaceMenuAction* menuItem  = nullptr;
@@ -8344,13 +8418,15 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
     ImmedidateUserInterfaceMenusController* menusController =
         get_controller<ImmedidateUserInterfaceMenusController>();
 
-    if(begin_node<ImmediateUserInterfaceMenu>(std::string(_ID).append("/Menu"), _Settings))
+    if(begin_node<ImmediateUserInterfaceMenu>(
+        std::string(_ID).append("/Menu"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
 
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Menu/InternalScrollArea"),
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
@@ -8397,7 +8473,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID, cons
         if(hasParent && isHovered && menuItem != nullptr)
         {
             if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Main/ExternalScrollArea"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
+                  ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
