@@ -748,40 +748,69 @@ namespace Frenchie
                 m_NodesRenderingStack.pop_back();
             }
 
+            // This function creates window
+            // _ID       - unique ID
+            // _Settings - settings
+            // _Opened   - if this pointer is passed the close button is activated and window becomes closable
             bool begin_window(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-                bool*                                     _Opened = nullptr);
+                bool*                                     _Opened   = nullptr);
             void end_window();
 
+            // This function creates scrollable area that places it's contents one by one vertically unless
+            // same_line(), next_line() or indent() functions are called (see appropriate functions descriptions)
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_scrollarea(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
 
+            // This function creates UI panel that stretches it's content to fill all available space
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_panel(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
 
+            // This function creates layout box that places it's elements one by one vertically. The width of all elements equals to vertical stack width.
+            // The height of each element is calculated as a fill rate height relative to the all elements heights summ.
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_vertical_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
 
+            // This function creates layout box that places it's elements one by one horizontally. The height of all elements equals to horizontal stack height.
+            // The width of each element is calculated as a fill rate height relative to the all elements widths summ.
+            // _ID       - unique ID
+            // _Settings - settings
             bool begin_horizontal_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_horizontal_stack();
 
-            bool begin_menu(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            // This fuction creates popup menu that can be called by a right mouse click and that can play role of window menu.
+            // _Settings - settings
+            bool begin_menu(const std::string& _ID);
             void end_menu();
 
+            // this function creates combobox widget.
+            // _ID      - unique ID
+            // _Preview - preview text of combobox widget
             bool begin_combobox(const std::string& _ID, const std::string& _Preview = "None");
             void end_combobox();
 
+            // This function creates tree node. Tree node supports custom opened/closed state textures.
+            // When no custom opened/closed state textures provided simple triangle is rendered.
+            // You also can optionally render connection lines between tree nodes.
+            // _ID            - unique ID
+            // _Settings      - settings
+            // _TextureOpened - texture displayed on the left side of a tree node when it's opened
+            // _TextureClosed - texture displayed on the left side of a tree node when it's closed
             bool begin_tree_node(
                 const std::string&                            _ID,
                 const ImmediateUserInterfaceTreeNodeSettings& _Settings      = ImmediateUserInterfaceTreeNodeSettings_::ImmediateUserInterfaceTreeNodeSettings_Defaults,
@@ -790,34 +819,66 @@ namespace Frenchie
             void end_tree_node();
 
             // Widgets API
+
+            // This function creates a simple push button widget
+            // _ID - unique ID
             bool push_button(const std::string& _ID);
 
+            // This function creates checkbutton that can be redered as checkbox, radiobutton or slider button depending on the settings.
+            //  _ID      - unique ID
+            // _Checked  - input boolean that defines checkbutton state, checkbutton may or may not change this variable depending on settings
+            // _Settings - checkbutton settings
             bool check_button(
                 const std::string&                               _ID,
                 bool&                                            _Checked,
                 const ImmediateUserInterfaceCheckButtonSettings& _Settings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Defaults);
 
+            // This function creates menu action button
+            // _ID - unique ID
             bool menu_action(const std::string& _ID);
 
+            // This function creates combobox action button
+            // _ID - unique ID
             bool combobox_item(const std::string& _ID);
 
+            // This function creates a simple textual label
+            // _ID       - unique ID
+            // _Text     - text string to display
+            // _Settings - label settings
             void label(
                 const std::string&                         _ID,
                 const std::string&                         _Text,
                 const ImmediateUserInterfaceLabelSettings& _Settings = ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_None);
 
+            // This function creates editable multiline text widget
+            // _ID              - unique ID
+            // _Text            - text string to display and edit
+            // _Settings        - settings
+            // _InputTextFilter - input text filtering function
             bool input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
+            // This function creates editable singleline text widget
+            // _ID              - unique ID
+            // _Text            - text string to display and edit
+            // _Settings        - settings
+            // _InputTextFilter - input text filtering function
             bool input_string_singleline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
                 const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
+            // This function creates widget aimed at scalar values editing
+            // The following scalar data types supported: float, double, long double, int, short, unsigned int, unsigned short
+            // _ID       - unique ID
+            // _Input    - input scalar value
+            // _Min      - input scalar value minimum value
+            // _Max      - input scalar value maximum value
+            // _Settings - settings
             template<typename Type>
             bool input_scalar(
                 const std::string&                               _ID,
@@ -826,37 +887,68 @@ namespace Frenchie
                 const Type&                                      _Max      = gs_huge<Type>(),
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
+            // This function creates a slider that can change input scalar value
+            // The following scalar data types supported: float, double, long double, int, short, unsigned int, unsigned short
+            // _ID       - unique ID
+            // _Input    - input scalar value
+            // _Min      - input scalar value minimum value
+            // _Max      - input scalar value maximum value
+            // _Delta    - input scalar value step in % of (_Max - Min)
+            // _Settings - settings
             template<typename Type>
             bool input_scalar_slider(
                 const std::string&                               _ID,
                 Type&                                            _Input,
                 const Type&                                      _Min      = gs_tiny<Type>(),
                 const Type&                                      _Max      = gs_huge<Type>(),
-                const Type&                                      _Delta    = (Type)1,
+                const int&                                       _Delta    = 1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
+            // This function creates widget for color eiditing
+            // _ID       - unique ID
+            // _Color    - input color
+            // _Settings - settings
             bool input_color(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
+            // This function creates classic RGBA color picker widget
+            // _ID       - unique ID
+            // _Color    - input color
+            // _Settings - settings
             void color_picker_rgba(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
+            // This function creates classic HSVA color picker widget
+            // _ID       - unique ID
+            // _Color    - input color
+            // _Settings - settings
             void color_picker_hsva(
                 const std::string&                               _ID,
                 gs_color&                                        _Color,
                 const ImmediateUserInterfaceColorPickerSettings& _Settings = ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_Defaults);
 
+            // This function creates image display widget
+            // _ID       - unique ID
+            // _Color    - image mask color
+            // _Texture  - texture
             void image(
                 const std::string&                        _ID,
-                const gs_color&                           _ColorMask,
+                const gs_color&                           _Color,
                 const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
 
             // next node API
+
+            // This function generates a unique ID for UI element. It constructs ID as {Name}###{Hash} where Name is what is going to be diplayed and Hash is what is going to be used as a widget unique ID.
+            // If no Hash passed to a function it generates unique ID as {Name}
+            // _Name       - UI element name
+            // _Hash       - UI element hash
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
+
+            // 
             void next_line();
             void same_line();
             void indent(const float& = 32.f);
