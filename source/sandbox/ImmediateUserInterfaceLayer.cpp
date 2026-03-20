@@ -1474,6 +1474,60 @@ namespace Frenchie
             return modified;
         }
     
+        template<typename Type>
+        bool input_scalar_slider_internal(
+            ImmediateUserInterfaceContextLayer*              _Context,
+            const std::string&                               _ID,
+            Type&                                            _Input,
+            const Type&                                      _Min,
+            const Type&                                      _Max,
+            const Type&                                      _Delta,
+            const std::string&                               _Format,
+            const ImmediateUserInterfaceInputScalarSettings& _Settings)
+        {
+            if(_Context->begin_node<ImmediateUserInterfaceNode>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                ImmediateUserInterfaceNode* widget = _Context->get_rendering_stack_top();
+
+                // render
+                if(!widget->Dirty)
+                {
+                    _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
+                    int depth = widget->Cache.Depth;
+
+                    // render slider box
+                    gs_2dboxf sliderBox = gs_2dboxf(
+                        widget->State.BoundingBox.Min,
+                        widget->State.BoundingBox.Min + gs_vec2f(widget->State.BoundingBox.width(), widget->State.BoundingBox.height() * 0.5f));
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        sliderBox.Min,
+                        sliderBox.Max,
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        sliderBox.Min - _Context->m_Style.get_frames_width(),
+                        sliderBox.Max - _Context->m_Style.get_frames_width(),
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                        _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                    // render slider
+                    gs_2dboxf labelBox = gs_2dboxf(
+                        widget->State.BoundingBox.Min + gs_vec2f(0.f, sliderBox.height()),
+                        widget->State.BoundingBox.Min + gs_vec2f(0.f, sliderBox.height()) + gs_vec2f(sliderBox.width(), sliderBox.height()));
+
+                    _Context->m_Renderer->pop_clip_box();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceNode>();
+            }
+
+            return true;
+        }
+
         // helpers
         namespace ImmediateUserInterfaceContextLayerHelpers
         {
@@ -1715,7 +1769,7 @@ namespace Frenchie
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
-                        totalsize += (*it)->State.BoundingBox.size() + _Padding;
+                        totalsize += (*it)->State.BoundingBox.size();
                 }
 
                 // compute children scale
@@ -3158,7 +3212,7 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
     {
         scrollArea->ContentPanel = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>();
 
-        if(_Context->begin_vertial_stack(
+        if(_Context->begin_vertical_stack(
             std::string(_ID).append("/Panel/VerticalStack"),
             settings))
         {
@@ -4224,7 +4278,7 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     // layout self
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
-        State.BoundingBox.Min + State.ContentSize);
+        State.BoundingBox.Min + gs_clamp(State.ContentSize, State.MinimumSize, State.MaximumSize));
 
     TitleBox = gs_2dboxf(
         State.BoundingBox.Min,
@@ -6323,7 +6377,7 @@ void ImmediateUserInterfaceContextLayer::end_panel()
     end_node<ImmediateUserInterfaceNodePanel>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_vertial_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_vertical_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfaceNodeVerticalStack>(_Name, _Settings);
 }
@@ -6855,6 +6909,19 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar<unsigned int>(c
     return input_scalar_internal<unsigned int>(this, _ID, _Input, _Min, _Max, "%u", _Settings);
 }
 
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(const std::string& _ID, float& _Input, const float& _Min, const float& _Max, const float& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<float>(
+        this,
+        _ID,
+        _Input,
+        _Min,
+        _Max,
+        _Delta,
+        "%.5f",
+        _Settings);
+}
+
 bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceInputColor : public ImmediateUserInterfaceNodeHorizontalStack
@@ -6896,7 +6963,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
-        if(begin_vertial_stack(std::string(_ID).append("/Stack")))
+        if(begin_vertical_stack(std::string(_ID).append("/Stack")))
         {
             char longestLabel[] = "Alpha";
 
@@ -7350,7 +7417,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
     next_content_padding(gs_vec2f(2.f));
 
-    if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // color picker
         if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -7390,7 +7457,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             // editors
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
-            if(begin_vertial_stack(std::string(_ID).append("/Panel/Editors")))
+            if(begin_vertical_stack(std::string(_ID).append("/Panel/Editors")))
             {
                 // RGB
                 if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -7838,7 +7905,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
     next_content_padding(gs_vec2f(2.f));
 
-    if(begin_vertial_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // color picker
         if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -7878,7 +7945,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             // editors
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
-            if(begin_vertial_stack(std::string(_ID).append("/Panel/Editors"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            if(begin_vertical_stack(std::string(_ID).append("/Panel/Editors"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 // RGB
                 if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)

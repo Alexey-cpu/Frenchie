@@ -183,6 +183,47 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         {
             auto windowSize = m_ImmediateUserInterface->get_rendering_stack_top()->State.BoundingBox.size() * 0.8f;
 
+            if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Layouts", "Layouts")))
+            {
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("HorizontalStack", "Horizontal stack")))
+                {
+                    m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(16.f));
+
+                    if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
+                    {
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 255, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(255, 255, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(255, 255, 255));
+
+                        m_ImmediateUserInterface->end_horizontal_stack();
+                    }
+
+                    m_ImmediateUserInterface->end_tree_node();
+                }
+
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
+                {
+                    m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(16.f));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(16.f));
+
+                    if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
+                    {
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 255, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(255, 255, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(255, 255, 255));
+
+                        m_ImmediateUserInterface->end_vertical_stack();
+                    }
+
+                    m_ImmediateUserInterface->end_tree_node();
+                }
+
+                m_ImmediateUserInterface->end_tree_node();
+            }
+
             // widgets
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Widgets", "Widgets")))
             {
