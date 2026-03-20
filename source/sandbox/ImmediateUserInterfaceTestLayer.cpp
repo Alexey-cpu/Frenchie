@@ -325,10 +325,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                                 m_ImmediateUserInterface->color_picker_rgba(
                                     m_ImmediateUserInterface->next_id("RGBAColorPicker"),
                                     colorPickerColor,
-                                      (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                                    | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                                    | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                                    | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+                                      (EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
+                                    | (EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
+                                    | (EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
+                                    | (EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
                                     | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
                                 );
                             }
@@ -338,10 +338,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                                 m_ImmediateUserInterface->color_picker_hsva(
                                     m_ImmediateUserInterface->next_id("HSVAColorPicker"),
                                     colorPickerColor,
-                                      (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                                    | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                                    | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                                    | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+                                      (EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
+                                    | (EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
+                                    | (EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
+                                    | (EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
                                     | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
                                 );
                             }
@@ -354,13 +354,15 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                     if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color input", "ColorInput")))
                     {
+                        m_ImmediateUserInterface->next_size(gs_vec2f(1024.f, 512.f));
+                        
                         m_ImmediateUserInterface->input_color(
                             m_ImmediateUserInterface->next_id("ColorInput"),
                             colorPickerColor,
-                              (EnableRGB ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB : 0)
-                            | (EnableHSV ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV : 0)
-                            | (EnableHSL ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL : 0)
-                            | (EnableAlpha ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha : 0)
+                              (EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
+                            | (EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
+                            | (EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
+                            | (EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
                             | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
                         );
 
@@ -374,11 +376,37 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Text input", "TextInput")))
                 {
                     static std::string multilineString;
-                    static std::string singleLineString;
+                    static std::string multilineBuffer;
+                    static std::string singlelineString;
+                    static bool        password;
 
-                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("MultilineText"), "MultilineText");
-                    m_ImmediateUserInterface->next_size(gs_vec2f(windowSize.x, 256.f));
-                    m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), multilineString);
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("SingleLineText"), "Single line text");
+
+                    m_ImmediateUserInterface->input_string_singleline(
+                        m_ImmediateUserInterface->next_id("SingleLine"),
+                        singlelineString,
+                        (password ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password : 0));
+
+                    m_ImmediateUserInterface->indent(32.f);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("DisplayAsPassword"), password);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("DisplayAsPasswordLabel"), "Password");
+
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("MultilineText"), "Multiline text");
+                    
+                    m_ImmediateUserInterface->next_content_padding(16.f);
+
+                    if(m_ImmediateUserInterface->begin_horizontal_stack(
+                        m_ImmediateUserInterface->next_id("MultilineTextEditors"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    {
+                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), multilineString);
+
+                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Buffer"), multilineBuffer);
+
+                        m_ImmediateUserInterface->end_horizontal_stack();
+                    }
 
                     m_ImmediateUserInterface->end_tree_node();
                 }

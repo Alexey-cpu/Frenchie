@@ -172,9 +172,8 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, // all input symbols are changed on '*' while rendering
             ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, // disables copy/paste
             ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, // disables selection
-            ImmediateUserInterfaceInputStringSettings_NoMultiline       = 1 << 4, // disables multiline text
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 5, // appropriate input string function returns true when enter key is pressed
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 6, // appropriate input string function returns true when text is being edited
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, // appropriate input string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // appropriate input string function returns true when text is being edited
             ImmediateUserInterfaceInputStringSettings_Defaults          = 0
         };
 
@@ -701,6 +700,10 @@ namespace Frenchie
                             controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
                     }
 
+                    // next content margin
+                    if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentMargin.has_value())
+                        dynamic_cast<ImmediateUserInterfaceNodePanel*>(node)->ContentMargin = controller->NextContentMargin.value();
+
                     // next content padding
                     if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentPadding.has_value())
                         dynamic_cast<ImmediateUserInterfaceNodePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
@@ -848,9 +851,10 @@ namespace Frenchie
             void same_line();
             void indent(const float& = 32.f);
             void next_size(const gs_vec2f&);
+            void next_position(const gs_vec2f&);
             void next_minimum_size(const gs_vec2f&);
             void next_maximum_size(const gs_vec2f&);
-            void next_position(const gs_vec2f&);
+            void next_content_margin(const gs_vec2f&);
             void next_content_padding(const gs_vec2f&);
 
             // Controllers API

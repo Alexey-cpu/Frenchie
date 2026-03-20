@@ -43,7 +43,8 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f);
+            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f); // creates border inside between child elements
+            gs_vec2f ContentMargin  = gs_vec2f(0.f, 0.f); // creates border outside
         };
 
         struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
@@ -509,6 +510,7 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
             mutable Frenchie::Core::Optional<gs_vec2f> NextMaximumSize;
             mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextContentMargin;
             mutable Frenchie::Core::Optional<gs_vec2f> NextContentPadding;
         };
 
@@ -531,15 +533,23 @@ namespace Frenchie
             void operator()(const std::string&) const{}
         };
 
+        enum ImmediateUserInterfaceInputStringInternalSettings_ : int
+        {
+            ImmediateUserInterfaceInputStringInternalSettings_NoMultiline = 1 << 4,
+        };
+
+        typedef int ImmediateUserInterfaceInputStringInternalSettings;
+
         template<typename SymbolFilter = ImmedidateUserInterfaceDefaultInputTextFilter, typename InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback>
         bool input_string_internal(
-            ImmediateUserInterfaceContextLayer*              _Context,
-            const std::string&                               _ID,
-            std::string&                                     _Text,
-            const ImmediateUserInterfaceInputStringSettings& _InputSettings,
-            const ImmediateUserInterfaceNodeSettings&        _NodeSettings,
-            const SymbolFilter&                              _InputTextFilter   = ImmedidateUserInterfaceDefaultInputTextFilter(),
-            const InputTextCallback&                         _InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback())
+            ImmediateUserInterfaceContextLayer*                      _Context,
+            const std::string&                                       _ID,
+            std::string&                                             _Text,
+            const ImmediateUserInterfaceInputStringSettings&         _InputSettings,
+            const ImmediateUserInterfaceInputStringInternalSettings& _InternalSettings,
+            const ImmediateUserInterfaceNodeSettings&                _NodeSettings,
+            const SymbolFilter&                                      _InputTextFilter   = ImmedidateUserInterfaceDefaultInputTextFilter(),
+            const InputTextCallback&                                 _InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback())
         {
             // nested types
             struct ImmediateUserInterfaceInputString : public ImmediateUserInterfaceScrollArea
@@ -708,10 +718,10 @@ namespace Frenchie
             };
 
             // auxiliary lambdas
-            auto inputStringCharacterFilter   = [_InputTextFilter, _InputSettings](const std::string& _Input)->bool
+            auto inputStringCharacterFilter   = [_InputTextFilter, _InternalSettings](const std::string& _Input)->bool
             {
                 // internal filter first
-                if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline))
+                if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
                 {
                     for(auto& symbol : _Input)
                     {
@@ -729,8 +739,7 @@ namespace Frenchie
 
             auto inputStringCharacterChanger  = [_InputSettings](const unsigned int& _Symbol)->unsigned int
             {
-                return (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password) && 
-                        (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline) ? '*' : _Symbol;
+                return _InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password ? '*' : _Symbol;
             };
 
             auto inputStringScrollBarAdjuster = [](
@@ -1292,7 +1301,7 @@ namespace Frenchie
 
                     // calculate geometry
                     {
-                        if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline))
+                        if((_InternalSettings & ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline))
                         {
                             widget->State.MinimumSize = gs_vec2f(
                                 gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()) + _Context->m_Style.get_font_size(),
@@ -1311,7 +1320,7 @@ namespace Frenchie
                         
                         widget->State.BoundingBox = gs_2dboxf(
                             widget->State.BoundingBox.Min,
-                            widget->State.BoundingBox.Min + gs_clamp(widget->State.BoundingBox.size(), widget->State.MinimumSize, widget->State.MaximumSize));
+                            widget->State.BoundingBox.Min + gs_clamp(widget->State.MinimumSize, widget->State.MinimumSize, widget->State.MaximumSize));
                     }
 
                     _Context->end_node<ImmediateUserInterfaceInputStringContent>();
@@ -1394,10 +1403,11 @@ namespace Frenchie
 
                     // input settings
                     ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults
-                    | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit : 0),
                     
+                    ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
+
                     // node settings
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
@@ -1628,14 +1638,15 @@ namespace Frenchie
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
                 const gs_vec2f&       _Padding,
+                const gs_vec2f&       _Margin,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
-                gs_vec2f position  = _Position + _Padding;
+                gs_vec2f position  = _Position + _Margin;
                 gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
                 // compute total children size
-                totalsize += _Padding * 2.f;
+                totalsize += _Margin * 2.f;
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -1690,14 +1701,15 @@ namespace Frenchie
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
                 const gs_vec2f&       _Padding,
+                const gs_vec2f&       _Margin,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
-                gs_vec2f position   = _Position + _Padding;
+                gs_vec2f position   = _Position + _Margin;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
                 // compute total size
-                totalsize += _Padding * 2.f;
+                totalsize += _Margin * 2.f;
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -3040,6 +3052,7 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
         State.BoundingBox.Min,
         State.BoundingBox.size(),
         ContentPadding,
+        ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
@@ -3059,6 +3072,7 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
         State.BoundingBox.Min,
         State.BoundingBox.size(),
         ContentPadding,
+        ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
@@ -3091,7 +3105,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     //         (ContentView->State.ContentSize + get_horizontal_scrollbar_width(_Context)).y + padding.y :
     //             State.MinimumSize.y);
     
-    State.MaximumSize = gs_vec2f(
+    State.MaximumSize =
+     gs_vec2f(
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
     
@@ -6030,6 +6045,7 @@ void ImmedidateUserInterfaceNextNodeController::reset()
     NextPosition.reset();
     NextMinimumSize.reset();
     NextMaximumSize.reset();
+    NextContentMargin.reset();
     NextContentPadding.reset();
 }
 
@@ -6757,9 +6773,10 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
         _Text,
 
         // text input settings
-        (_Settings & ~(
-            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline |
-            ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password)),
+        _Settings,
+
+        // interanl settings
+        0,
 
         // widget settings
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar             |
@@ -6771,7 +6788,7 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
 bool ImmediateUserInterfaceContextLayer::input_string_singleline(
     const std::string&                               _ID,
     std::string&                                     _Text,
-    const ImmediateUserInterfaceInputStringSettings& _InputSettings,
+    const ImmediateUserInterfaceInputStringSettings& _Settings,
     bool                                           (*_InputTextFilter)(const std::string&))
 {
     return input_string_internal(
@@ -6780,8 +6797,11 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         _Text,
 
         // text input settings
-        _InputSettings | ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_NoMultiline,
+        _Settings,
         
+        // interanl settings
+        ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
+
         // widget settgins
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically   |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
@@ -6840,15 +6860,6 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         gs_color  Alpha = 255;
     };
 
-    float height =
-        ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
-        (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV)  +
-        (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL)  +
-        (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
-
-    next_minimum_size(gs_vec2f((float)0.f, height));
-    next_maximum_size(gs_vec2f((float)INT_MAX, height));
-
     ImmediateUserInterfaceInputScalarSettings settings =
         ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit |
         ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter;
@@ -6859,6 +6870,15 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
     {
         ImmediateUserInterfaceInputColor* picker =
             get_rendering_stack_top<ImmediateUserInterfaceInputColor>();
+
+        float height =
+            ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB) +
+             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
+             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
+             (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
+
+        picker->State.MinimumSize = gs_vec2f((float)picker->State.MinimumSize.x, height);
+        picker->State.MaximumSize = gs_vec2f((float)picker->State.MaximumSize.x, height);
 
         gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
 
@@ -8396,6 +8416,15 @@ void ImmediateUserInterfaceContextLayer::next_size(const gs_vec2f& _Value)
     next_maximum_size(_Value);
 }
 
+void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextPosition = _Value;
+}
+
 void ImmediateUserInterfaceContextLayer::next_minimum_size(const gs_vec2f& _Value)
 {
     ImmedidateUserInterfaceNextNodeController* controller =
@@ -8414,13 +8443,13 @@ void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Valu
         controller->NextMaximumSize = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_position(const gs_vec2f& _Value)
+void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec2f& _Value)
 {
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();
 
     if(controller != nullptr)
-        controller->NextPosition = _Value;
+        controller->NextContentMargin = _Value;
 }
 
 void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec2f& _Value)
