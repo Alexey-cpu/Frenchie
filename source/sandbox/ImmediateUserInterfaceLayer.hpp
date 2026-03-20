@@ -764,7 +764,7 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_panel();
 
-            bool begin_vertial_stack(
+            bool begin_vertical_stack(
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_vertical_stack();
@@ -824,6 +824,15 @@ namespace Frenchie
                 Type&                                            _Input,
                 const Type&                                      _Min      = gs_tiny<Type>(),
                 const Type&                                      _Max      = gs_huge<Type>(),
+                const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
+
+            template<typename Type>
+            bool input_scalar_slider(
+                const std::string&                               _ID,
+                Type&                                            _Input,
+                const Type&                                      _Min      = gs_tiny<Type>(),
+                const Type&                                      _Max      = gs_huge<Type>(),
+                const Type&                                      _Delta    = (Type)1,
                 const ImmediateUserInterfaceInputScalarSettings& _Settings = ImmediateUserInterfaceInputScalarSettings_Defaults);
 
             bool input_color(
