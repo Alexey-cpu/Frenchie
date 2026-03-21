@@ -956,8 +956,8 @@ namespace Frenchie
             void next_position(const gs_vec2f&);
             void next_minimum_size(const gs_vec2f&);
             void next_maximum_size(const gs_vec2f&);
-            void next_content_margin(const gs_vec2f&);
-            void next_content_padding(const gs_vec2f&);
+            void next_content_margin(const gs_vec4f&);
+            void next_content_padding(const gs_vec4f&);
 
             // Controllers API
             template<typename Type> Type* get_controller() const

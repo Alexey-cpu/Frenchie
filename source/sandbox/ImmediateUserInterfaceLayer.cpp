@@ -43,8 +43,24 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f); // creates border inside between child elements
-            gs_vec2f ContentMargin  = gs_vec2f(0.f, 0.f); // creates border outside
+            gs_vec4f ContentPadding
+            {
+                0.f, // top
+                0.f, // left
+                0.f, // right
+                0.f  // bottom
+            };
+
+            gs_vec4f ContentMargin
+            {
+                0.f, // top
+                0.f, // left
+                0.f, // right
+                0.f  // bottom
+            };
+
+            // gs_vec2f ContentPadding = gs_vec2f(0.f, 0.f); // creates border inside between child elements
+            // gs_vec2f ContentMargin  = gs_vec2f(0.f, 0.f); // creates border outside
         };
 
         struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
@@ -510,8 +526,8 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f> NextPosition;
             mutable Frenchie::Core::Optional<gs_vec2f> NextMaximumSize;
             mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextContentMargin;
-            mutable Frenchie::Core::Optional<gs_vec2f> NextContentPadding;
+            mutable Frenchie::Core::Optional<gs_vec4f> NextContentMargin;
+            mutable Frenchie::Core::Optional<gs_vec4f> NextContentPadding;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -1754,16 +1770,36 @@ namespace Frenchie
                 const Type&           _End,
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // calculate parental bounding box
+                gs_2dboxf parentalBox = gs_2dboxf(
+                    _Position + gs_vec2f(leftMargin, topMargin),
+                    _Position + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + _Size);
+
                 // layout children
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) == nullptr || !_Filter(*it)) continue;
 
-                    gs_vec2f size     = gs_clamp(_Size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    gs_vec2f position = layout_compute_aligned_position( _Settings, _Position, _Size, size);
+                    gs_vec2f size     = gs_clamp(parentalBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    gs_vec2f position = layout_compute_aligned_position(_Settings, parentalBox.Min, parentalBox.size(), size);
+                    
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
                 }
             }
@@ -1774,25 +1810,44 @@ namespace Frenchie
                 const Type&           _End,
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
-                const gs_vec2f&       _Padding,
-                const gs_vec2f&       _Margin,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
-                gs_vec2f position  = _Position + _Margin;
-                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // calculate parental bounding box
+                gs_2dboxf parentalBox = gs_2dboxf(
+                    _Position + gs_vec2f(leftMargin, topMargin),
+                    _Position + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + _Size);
 
                 // compute total children size
-                totalsize += _Margin * 2.f;
+                gs_vec2f position  = parentalBox.Min;
+                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
-                        totalsize += (*it)->State.BoundingBox.size();
+                    {
+                        totalsize += gs_2dboxf(
+                            position - gs_vec2f(leftPadding, topPadding),
+                            position - gs_vec2f(leftPadding, topPadding) + gs_vec2f(rightPadding, bottomPadding) + (*it)->State.BoundingBox.size()).size();
+                    }
                 }
 
                 // compute children size scale
-                gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                gs_vec2f scale = parentalBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
 
                 // layout children and compute their bounding box
                 gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
@@ -1801,33 +1856,39 @@ namespace Frenchie
                 {
                     if(*it == nullptr || !_Filter(*it))
                         continue;
-
-                    gs_vec2f size = gs_vec2f(_Size.x, ((*it)->State.BoundingBox.size() * scale).y);
-                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    size = gs_vec2f(_Size.x, size.y);
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y + _Padding.y);
+                    
+                    gs_vec2f size = gs_clamp(
+                        gs_vec2f(parentalBox.width(), ((*it)->State.BoundingBox.size() * scale).y),
+                        (*it)->State.MinimumSize, (*it)->State.MaximumSize);
+                    
+                    size = gs_vec2f(parentalBox.width(), size.y);
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position + gs_vec2f(leftPadding - rightPadding, 0.f),
+                        position + gs_vec2f(leftPadding - rightPadding, 0.f) + size);
 
                     childrenBoundingBox = gs_2dboxf(
                         childrenBoundingBox.Min,
                         childrenBoundingBox.Max,
                         (*it)->State.BoundingBox.Min,
                         (*it)->State.BoundingBox.Max);
+
+                    position += gs_vec2f(0.f, size.y + bottomPadding - topPadding);
                 }
 
                 // align children within parent
-                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
+                position = layout_compute_aligned_position(_Settings, parentalBox.Min, parentalBox.size(), childrenBoundingBox.size());
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if(*it == nullptr || !_Filter(*it))
                         continue;
 
-                    gs_vec2f size = (*it)->State.BoundingBox.size();
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position + gs_vec2f(leftPadding - rightPadding, 0.f),
+                        position + gs_vec2f(leftPadding - rightPadding, 0.f) + (*it)->State.BoundingBox.size());
 
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(0.f, size.y + _Padding.y);
+                    position += gs_vec2f(0.f, (*it)->State.BoundingBox.size().y + bottomPadding - topPadding);
                 }
             }
 
@@ -1837,21 +1898,40 @@ namespace Frenchie
                 const Type&           _End,
                 const gs_vec2f&       _Position,
                 const gs_vec2f&       _Size,
-                const gs_vec2f&       _Padding,
-                const gs_vec2f&       _Margin,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
                 const int             _Settings,
                 const FrameProcessor& _Filter)
             {
-                gs_vec2f position   = _Position + _Margin;
-                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // calculate parental bounding box
+                gs_2dboxf parentalBox = gs_2dboxf(
+                    _Position + gs_vec2f(leftMargin, topMargin),
+                    _Position + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + _Size);
 
                 // compute total size
-                totalsize += _Margin * 2.f;
+                gs_vec2f position   = parentalBox.Min;
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
-                        totalsize += (*it)->State.BoundingBox.size();
+                    {
+                        totalsize += gs_2dboxf(
+                            position - gs_vec2f(leftPadding, topPadding),
+                            position - gs_vec2f(leftPadding, topPadding) + gs_vec2f(rightPadding, bottomPadding) + (*it)->State.BoundingBox.size()).size();
+                    }
                 }
 
                 // compute children scale
@@ -1864,27 +1944,37 @@ namespace Frenchie
                 {
                     if(*it == nullptr || !_Filter(*it))
                         continue;
+                    
+                    gs_vec2f size = gs_vec2f(
+                        (gs_clamp(gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, parentalBox.height()), (*it)->State.MinimumSize, (*it)->State.MaximumSize)).x,
+                        _Size.y);
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position + gs_vec2f(0.f, topPadding - bottomPadding),
+                        position + gs_vec2f(0.f, topPadding - bottomPadding) + size);
 
-                    gs_vec2f size = gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, _Size.y);
-                    size = gs_clamp(size, (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    size = gs_vec2f(size.x, _Size.y);
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x + _Padding.x, 0.f);
-                    childrenBoundingBox = gs_2dboxf(childrenBoundingBox.Min, childrenBoundingBox.Max, (*it)->State.BoundingBox.Min, (*it)->State.BoundingBox.Max);
+                    childrenBoundingBox = gs_2dboxf(
+                        childrenBoundingBox.Min,
+                        childrenBoundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+
+                    position += gs_vec2f(size.x + leftPadding - rightPadding, 0.f);
                 }
 
                 // align children within parent
-                position = layout_compute_aligned_position(_Settings, _Position, _Size, childrenBoundingBox.size());
+                position = layout_compute_aligned_position(_Settings, parentalBox.Min, parentalBox.size(), childrenBoundingBox.size());
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if(*it == nullptr || !_Filter(*it))
                         continue;
 
-                    gs_vec2f size = (*it)->State.BoundingBox.size();
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position + gs_vec2f(0.f, topPadding - bottomPadding),
+                        position + gs_vec2f(0.f, topPadding - bottomPadding) + (*it)->State.BoundingBox.size());
 
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-                    position += gs_vec2f(size.x + _Padding.x, 0.f);
+                    position += gs_vec2f((*it)->State.BoundingBox.size().x + leftPadding - rightPadding, 0.f);
                 }
             }
 
@@ -3136,8 +3226,10 @@ void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer*
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + ContentPadding,
-        State.BoundingBox.size() - ContentPadding * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
+        ContentPadding,
+        ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
@@ -3220,10 +3312,6 @@ ImmediateUserInterfaceScrollArea::~ImmediateUserInterfaceScrollArea(){}
 
 void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // TODO: if something goes wrong --> uncomment this code
-    // gs_vec2f padding = gs_vec2f(0.f, 0.f);
-    // calculate_content_padding(_Context, this, padding);
-
     // resize to contents
     State.MinimumSize = gs_vec2f(
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
@@ -3232,15 +3320,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
             ContentView->State.ContentSize.y :
                 State.MinimumSize.y);
-
-    // TODO: if something goes wrong --> uncomment this code
-    // State.MinimumSize = gs_vec2f(
-    //     (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-    //         (ContentView->State.ContentSize + get_vertical_scrollbar_width(_Context)).x + padding.x * 2.f :
-    //             State.MinimumSize.x,
-    //     (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-    //         (ContentView->State.ContentSize + get_horizontal_scrollbar_width(_Context)).y + padding.y :
-    //             State.MinimumSize.y);
     
     State.MaximumSize =
      gs_vec2f(
@@ -3255,8 +3334,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
-        State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.size() - _Context->m_Style.get_frames_width() * 2.f,
+        ContentPadding,
+        ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
 }
@@ -3427,8 +3508,8 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
             scrollArea->ContentPanel->State.Indent :
                 0.f; 
 
-    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding + gs_vec2f(indent, 0.f);
-    gs_vec2f start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + ContentPadding;
+    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(ContentMargin.y, ContentMargin.x) + gs_vec2f(indent, 0.f);
+    gs_vec2f start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(ContentMargin.y, ContentMargin.x);
     float    maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -3443,13 +3524,13 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
         {
             position  = gs_vec2f(
                 start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine + ContentPadding.y);
+                position.y + maxHeight * (*it)->State.NextLine + ContentPadding.x);
             
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.x + (*it)->State.Indent, 0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.y + (*it)->State.Indent, 0.f);
         }
     }
 }
@@ -4643,6 +4724,8 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Hierarchy.end(this),
         ContentBox.Min,
         ContentBox.size(),
+        gs_vec4f(0.f),
+        gs_vec4f(0.f),
         State.Settings,
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
@@ -7489,7 +7572,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
         bool      AlphaBoxSliderIsMoving            = false;
     };
 
-    next_content_padding(gs_vec2f(2.f));
+    next_content_margin(gs_vec4f(4.f));
 
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
@@ -7538,7 +7621,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(gs_vec4f(16.f));
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7569,7 +7652,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(gs_vec4f(16.f));
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7613,7 +7696,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(gs_vec4f(16.f));
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7657,7 +7740,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(gs_vec4f(16.f));
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -8595,7 +8678,7 @@ void ImmediateUserInterfaceContextLayer::next_maximum_size(const gs_vec2f& _Valu
         controller->NextMaximumSize = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec2f& _Value)
+void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec4f& _Value)
 {
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();
@@ -8604,7 +8687,7 @@ void ImmediateUserInterfaceContextLayer::next_content_margin(const gs_vec2f& _Va
         controller->NextContentMargin = _Value;
 }
 
-void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec2f& _Value)
+void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _Value)
 {
     ImmedidateUserInterfaceNextNodeController* controller =
         get_controller<ImmedidateUserInterfaceNextNodeController>();

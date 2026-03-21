@@ -181,47 +181,117 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     { 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
-            static float verticalPadding;
-            static float horizontalPadding;
-            static float verticalMargin;
-            static float horizontalMargin;
+            // margin
+            static float topMargin;
+            static float leftMargin;
+            static float rightMargin;
+            static float bottomMargin;
+
+            // padding
+            static float topPadding;
+            static float leftPadding;
+            static float rightPadding;
+            static float bottomPadding;
 
             float minimum = 0.f;
             float maximum = 128.f;
 
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Layouts", "Layouts")))
             {
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("VerticalPaddingSlider"), verticalPadding, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalPaddingSliderLabel"), "Vertical padding");
-                
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("HorizontalPaddingSlider"), horizontalPadding, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HorizontalPaddingSliderLabel"), "Horizontal padding");
+                m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), m_ImmediateUserInterface->m_Style.get_font_size() * 8.f));
 
-                m_ImmediateUserInterface->next_line();
+                if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("LayoutTweakers")))
+                {
+                    int settings =
+                          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
+                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("VerticalMarginSlider"), verticalMargin, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalMarginSliderLabel"), "Vertical margin");
+                    if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
+                    {
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Margin"), "Margin");
 
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("HorizontalMarginSlider"), horizontalMargin, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HorizontalMarginSliderLabel"), "Horizontal margin");
+                        // top
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopMarginValue"), topMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopMarginLabel"), "Top margin");
 
-                m_ImmediateUserInterface->next_line();
+                        // left
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftMarginValue"), leftMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftMarginLabel"), "Left margin");
+
+                        // right
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightMarginValue"), rightMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightMarginLabel"), "Right margin");
+
+                        // bottom
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomMarginValue"), bottomMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomMarginLabel"), "Bottom margin");
+
+                        m_ImmediateUserInterface->end_scrollarea();
+                    }
+
+                    if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Padding"), settings))
+                    {
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Padding"), "Padding");
+
+                        // top
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopPaddingValue"), topPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopPaddingLabel"), "Top padding");
+
+                        // left
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftPaddingValue"), leftPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftPaddingLabel"), "Left padding");
+
+                        // right
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightPaddingValue"), rightPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightPaddingLabel"), "Right padding");
+
+                        // bottom
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomPaddingValue"), bottomPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomPaddingLabel"), "Bottom padding");
+
+                        m_ImmediateUserInterface->end_scrollarea();
+                    }
+
+                    m_ImmediateUserInterface->end_horizontal_stack();
+                }
+
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
+                {
+                    m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+
+                    if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack")))
+                    {
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+
+                        m_ImmediateUserInterface->end_vertical_stack();
+                    }
+
+                    m_ImmediateUserInterface->end_tree_node();
+                }
 
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("HorizontalStack", "Horizontal stack")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(horizontalPadding, verticalPadding));
-                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(horizontalMargin, verticalMargin));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
 
                     if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
                     {
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 255, 255));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(255, 255, 255));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(255, 255, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
 
                         m_ImmediateUserInterface->end_horizontal_stack();
                     }
@@ -229,19 +299,22 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_tree_node();
                 }
 
-                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                 {
-                    m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec2f(horizontalPadding, verticalPadding));
-                    m_ImmediateUserInterface->next_content_margin(gs_vec2f(horizontalMargin, verticalMargin));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
 
-                    if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
+                    if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                     {
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 255, 255));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(255, 255, 255));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(255, 255, 255));
+                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
 
-                        m_ImmediateUserInterface->end_vertical_stack();
+                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
+                        m_ImmediateUserInterface->same_line();
+                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-4", "Button-4"));
+
+                        m_ImmediateUserInterface->end_scrollarea();
                     }
 
                     m_ImmediateUserInterface->end_tree_node();
@@ -515,14 +588,83 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    static float slided;
+            // margin
+            static float topMargin;
+            static float leftMargin;
+            static float rightMargin;
+            static float bottomMargin;
+
+            // padding
+            static float topPadding;
+            static float leftPadding;
+            static float rightPadding;
+            static float bottomPadding;
+
+            float minimum = 0.f;
+            float maximum = 128.f;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
-        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("Slider"), slided, 0.f, 100.f, 5);
+        if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("LayoutTweaks")))
+        {
+            int settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
+            if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
+            {
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Margin"), "Margin");
 
-        m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("SliderValue"), slided);
+                // top
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopMarginValue"), topMargin, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopMarginLabel"), "Top margin");
+
+                // left
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftMarginValue"), leftMargin, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftMarginLabel"), "Left margin");
+
+                // right
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightMarginValue"), rightMargin, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightMarginLabel"), "Right margin");
+
+                // bottom
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomMarginValue"), bottomMargin, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomMarginLabel"), "Bottom margin");
+
+                m_ImmediateUserInterface->end_scrollarea();
+            }
+
+            if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Padding"), settings))
+            {
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Padding"), "Padding");
+
+                // top
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopPaddingValue"), topPadding, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopPaddingLabel"), "Top padding");
+
+                // left
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftPaddingValue"), leftPadding, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftPaddingLabel"), "Left padding");
+
+                // right
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightPaddingValue"), rightPadding, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightPaddingLabel"), "Right padding");
+
+                // bottom
+                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomPaddingValue"), bottomPadding, minimum, maximum, 1);
+                m_ImmediateUserInterface->same_line();
+                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomPaddingLabel"), "Bottom padding");
+
+                m_ImmediateUserInterface->end_scrollarea();
+            }
+
+            m_ImmediateUserInterface->end_horizontal_stack();
+        }
 
         m_ImmediateUserInterface->end_window();
     }
