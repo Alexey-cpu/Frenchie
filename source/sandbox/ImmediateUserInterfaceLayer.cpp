@@ -240,7 +240,7 @@ namespace Frenchie
         };
 
         // tree
-        struct ImmediateUserInterfaceTreeNode : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfaceTreeNode : public ImmediateUserInterfaceNodePanel
         {
         public:
             ImmediateUserInterfaceTreeNode(const std::string& _Name);
@@ -588,7 +588,7 @@ namespace Frenchie
                         State.BoundingBox.Min,
                         State.BoundingBox.Max,
                         _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
                 }
             };
@@ -653,7 +653,7 @@ namespace Frenchie
                     }
 
                     {
-                        // move backward
+                        // move backward to find prvious line end
                         auto iterator = _Text.begin() + _Cursor;
 
                         while (iterator > _Text.begin())
@@ -661,6 +661,7 @@ namespace Frenchie
                             if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
                         }
 
+                        // move backward to find previous line start
                         while (iterator > _Text.begin())
                         {
                             if(Frenchie::Core::String::utf8_prior(iterator) == '\n') break;
@@ -699,7 +700,7 @@ namespace Frenchie
                     }
 
                     {
-                        // move forward
+                        // move forward to find next line start
                         auto iterator = _Text.begin() + _Cursor;
 
                         while (iterator < _Text.end())
@@ -707,7 +708,7 @@ namespace Frenchie
                             if(Frenchie::Core::String::utf8_next(iterator) == '\n') break;
                         }
 
-                        // move forward
+                        // move forward to find next line end
                         while (iterator < _Text.end() && SymbolsCountTillLineStart > 0)
                         {
                             if(*iterator == '\n') break;
@@ -1058,8 +1059,9 @@ namespace Frenchie
                             }
 
                             // stop editing on enter
-                            else if((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter) &&
-                                    _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter))
+                            else if( 
+                                ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter) && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter)) ||
+                                ((_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape) && _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Escape)))
                             {
                                 while (parent != nullptr &&
                                         dynamic_cast<ImmediateUserInterfaceInputString*>(parent) == nullptr)
@@ -1349,7 +1351,7 @@ namespace Frenchie
             if(widget != nullptr && widget->Cache.Selected && (_InputSettings & ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit))
                 return edited;
 
-            if(_Context != nullptr    &&
+            if(_Context != nullptr        &&
                    widget   != nullptr    &&
                    widget->Cache.Selected &&
                    _Context->m_Input.is_key_pressed(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_Enter) &&
@@ -1420,8 +1422,9 @@ namespace Frenchie
 
                     // input settings
                     ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults
+                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape   : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
-                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit : 0),
+                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  : 0),
                     
                     ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
 
@@ -1434,10 +1437,6 @@ namespace Frenchie
                     [](const std::string&)->bool
                     {
                         return true;
-                    },
-                    [panel, &_Input, &_Format, &_Min, &_Max](const std::string& _Value)
-                    {
-                        _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(_Value), _Min, _Max);
                     });
 
                 // auxiliary lambdas
@@ -1452,8 +1451,6 @@ namespace Frenchie
                         _Panel->Buffer = currentValue;
                     else
                         _Panel->Buffer = std::string(currentValue.c_str(), maximumSize);
-
-                    
                 };
 
                 if(modified)
@@ -1568,7 +1565,7 @@ namespace Frenchie
                     }
 
                     // catch vertical color palette event
-                    if((State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) || SliderIsMoving))
+                    if((State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || SliderIsMoving)
                     {
                         if(_Context->m_Input.is_mouse_button_pressed())
                         {
@@ -1613,11 +1610,11 @@ namespace Frenchie
 
                 if(slider->Edited)
                 {
-                    _Input = _Min + (_Max - _Min) * slider->SliderPosition;
+                    _Input = (Type)((float)_Min + (float)(_Max - _Min) * slider->SliderPosition);
                 }
                 else
                 {
-                    slider->SliderPosition = _Input / (_Max - _Min);
+                    slider->SliderPosition = (float)_Input / (float)(_Max - _Min);
                 }
 
                 _Context->end_node<ImmediateUserInterfaceInputScalarSlider>();
@@ -2270,6 +2267,10 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     // scrollbar
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered] = gs_color_rgba(72, 82, 72, 255);
+
+    // // comboboxes
+    // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ComboboxOutline]                  = gs_color_rgba(72, 72, 72, 255);
+    // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ComboboxBackground]               = gs_color_rgba(32, 32, 32, 255);
 
     // gizmos
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
@@ -3483,6 +3484,23 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
+    // extract padding
+    float topPadding    = ContentPadding.x;
+    float leftPadding   = ContentPadding.y;
+    float rightPadding  = ContentPadding.z;
+    float bottomPadding = ContentPadding.w;
+    
+    // extract margin
+    float topMargin     = ContentMargin.x;
+    float leftMargin    = ContentMargin.y;
+    float rightMargin   = ContentMargin.z;
+    float bottomMargin  = ContentMargin.w;
+
+    gs_2dboxf parentalBox = gs_2dboxf(
+        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
+        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + State.BoundingBox.size());
+
+    // extract scroll area
     ImmediateUserInterfaceScrollArea* scrollArea = nullptr;
     ImmediateUserInterfaceNode*       parent     = _Context->m_Hierarchy.get_parent(this);
 
@@ -3493,6 +3511,7 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
         parent = _Context->m_Hierarchy.get_parent(parent);
     }
     
+    // extract horizontal and vertical scrollbars
     gs_vec2f horizontalScrollBarPosition =
         scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ?
             scrollArea->HorizontalScrollBar->get_scroll_offset() :
@@ -3508,8 +3527,9 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
             scrollArea->ContentPanel->State.Indent :
                 0.f; 
 
-    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(ContentMargin.y, ContentMargin.x) + gs_vec2f(indent, 0.f);
-    gs_vec2f start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(ContentMargin.y, ContentMargin.x);
+    // layout
+    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(indent, 0.f);
+    gs_vec2f start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
     float    maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -3522,15 +3542,17 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
 
         if((*it)->State.NextLine > 0)
         {
-            position  = gs_vec2f(
+            position = gs_vec2f(
                 start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine + ContentPadding.x);
+                position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
             
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + ContentPadding.y + (*it)->State.Indent, 0.f);
+            position += gs_vec2f(
+                (*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent,
+                0.f);
         }
     }
 }
@@ -4318,12 +4340,12 @@ void ImmediateUserInterfaceComboboxScrollArea::render(ImmediateUserInterfaceCont
         State.BoundingBox.Min,
         State.BoundingBox.Max,
         _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
 // ImmediateUserInterfaceTreeNode
-ImmediateUserInterfaceTreeNode::ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceTreeNode::ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceTreeNode::~ImmediateUserInterfaceTreeNode(){}
 
 void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4438,6 +4460,18 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
+    // extract padding
+    float topPadding    = ContentPadding.x;
+    float leftPadding   = ContentPadding.y;
+    float rightPadding  = ContentPadding.z;
+    float bottomPadding = ContentPadding.w;
+    
+    // extract margin
+    float topMargin     = ContentMargin.x;
+    float leftMargin    = ContentMargin.y;
+    float rightMargin   = ContentMargin.z;
+    float bottomMargin  = ContentMargin.w;
+
     // layout self
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
@@ -4452,8 +4486,8 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         TitleBox.Min + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
 
     // layout children
-    gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
-    gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(IconBox.width(), 0.f);
     float    maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -4466,15 +4500,17 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
 
         if((*it)->State.NextLine > 0)
         {
-            position  = gs_vec2f(
+            position = gs_vec2f(
                 start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine);
+                position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
             
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f((*it)->State.BoundingBox.size().x + (*it)->State.Indent, 0.f);
+            position += gs_vec2f(
+                (*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent,
+                0.f);
         }
     }
 }
@@ -5891,12 +5927,16 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded(
+            _Context->m_Renderer->push_rectangle_rounded_filled(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 _Context->m_Style.get_frames_radius(),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                //_Context->m_Style.get_frames_width(),
+                gs_color_rgba(
+                    gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
+                    32),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth));
         }
 
@@ -7079,6 +7119,36 @@ template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<float>(c
     return input_scalar_slider_internal<float>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
 }
 
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<double>(const std::string& _ID, double& _Input, const double& _Min, const double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<long double>(const std::string& _ID, long double& _Input, const long double& _Min, const long double& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<long double>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<int>(const std::string& _ID, int& _Input, const int& _Min, const int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<short>(const std::string& _ID, short& _Input, const short& _Min, const short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned short>(const std::string& _ID, unsigned short& _Input, const unsigned short& _Min, const unsigned short& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<unsigned short>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
+template<> bool ImmediateUserInterfaceContextLayer::input_scalar_slider<unsigned int>(const std::string& _ID, unsigned int& _Input, const unsigned int& _Min, const unsigned int& _Max, const int& _Delta, const ImmediateUserInterfaceInputScalarSettings& _Settings)
+{
+    return input_scalar_slider_internal<unsigned int>(this, _ID, _Input, _Min, _Max, _Delta, _Settings);
+}
+
 bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
     struct ImmediateUserInterfaceInputColor : public ImmediateUserInterfaceNodeHorizontalStack
@@ -7468,7 +7538,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             }
 
             // catch vertical color palette event
-            if((PaletteBox.contains(_Context->m_Input.get_cusor_position()) || PaletteBoxSliderIsMoving) && !GradientBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
+            if(((PaletteBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || PaletteBoxSliderIsMoving) && !GradientBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -7484,7 +7554,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             }
 
             // catch gradient color modifier event
-            if((GradientBox.contains(_Context->m_Input.get_cusor_position()) || GradientBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
+            if(((GradientBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || GradientBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !AlphaBoxSliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -7500,7 +7570,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             }
 
             // catch
-            if((AlphaBox.contains(_Context->m_Input.get_cusor_position()) || AlphaBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !GradientBoxSliderIsMoving)
+            if(((AlphaBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || AlphaBoxSliderIsMoving) && !PaletteBoxSliderIsMoving && !GradientBoxSliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -7964,7 +8034,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             }
 
             // catch ellipse slider event
-            if((Ellipse.contains(_Context->m_Input.get_cusor_position()) || EllipseSliderIsMoving) && !BrightnessSliderIsMoving && !TransparencySliderIsMoving)
+            if(((Ellipse.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || EllipseSliderIsMoving) && !BrightnessSliderIsMoving && !TransparencySliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -7982,7 +8052,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             }
 
             // catch brightness slider event
-            if((BrightnessBox.contains(_Context->m_Input.get_cusor_position()) || BrightnessSliderIsMoving) && !EllipseSliderIsMoving && !TransparencySliderIsMoving)
+            if(((BrightnessBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || BrightnessSliderIsMoving) && !EllipseSliderIsMoving && !TransparencySliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {
@@ -7998,7 +8068,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             }
 
             // catch transparency slider event
-            if((TransparencyBox.contains(_Context->m_Input.get_cusor_position()) || TransparencySliderIsMoving) && !EllipseSliderIsMoving && !BrightnessSliderIsMoving)
+            if(((TransparencyBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_pressed()) || TransparencySliderIsMoving) && !EllipseSliderIsMoving && !BrightnessSliderIsMoving)
             {
                 if(_Context->m_Input.is_mouse_button_pressed())
                 {

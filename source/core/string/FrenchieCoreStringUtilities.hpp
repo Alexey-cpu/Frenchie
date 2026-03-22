@@ -18,6 +18,7 @@ namespace Frenchie
     {
         namespace String
         {
+            // string utility functions
             std::string    utf8_to_lower(std::string _Input);
             std::u16string utf16_to_lower(std::u16string _Input);
             std::u32string utf32_to_lower(std::u32string _Input);
@@ -38,6 +39,7 @@ namespace Frenchie
             bool utf16_string_contains_substring(const std::u16string& _String, const std::u16string& _Substring);
             bool utf32_string_contains_substring(const std::u32string& _String, const std::u32string& _Substring);
 
+            // from string convertion
             template<typename Type> 
             Type from_string(const std::string& _Input);
 
