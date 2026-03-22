@@ -306,13 +306,20 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                     if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                     {
-                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
-                        m_ImmediateUserInterface->same_line();
-                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
+                        for(int i = 0; i < 10; i++)
+                        {
+                            for(int j = 0; j < 10; j++)
+                            {
+                                m_ImmediateUserInterface->push_button(
+                                    m_ImmediateUserInterface->next_id(
+                                        "Button-1",
+                                        std::string("Button-").append(std::to_string(i)).append("_").append(std::to_string(j))));
 
-                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
-                        m_ImmediateUserInterface->same_line();
-                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-4", "Button-4"));
+                                m_ImmediateUserInterface->same_line();
+                            }
+
+                            m_ImmediateUserInterface->next_line();
+                        }
 
                         m_ImmediateUserInterface->end_scrollarea();
                     }

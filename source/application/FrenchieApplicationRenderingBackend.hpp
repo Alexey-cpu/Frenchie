@@ -13,13 +13,15 @@ namespace Frenchie
 {
     namespace Application
     {
+        // Texture foramt enum
         enum ApplicationRenderingBackendTextureFormat_ : int
         {
-            ApplicationRenderingBackendTextureFormat_ALPHA,
-            ApplicationRenderingBackendTextureFormat_RGB,
-            ApplicationRenderingBackendTextureFormat_RGBA,
+            ApplicationRenderingBackendTextureFormat_ALPHA, // 8 bit alpha only
+            ApplicationRenderingBackendTextureFormat_RGB,   // 8 bit RGB
+            ApplicationRenderingBackendTextureFormat_RGBA,  // 8 bit RGBA
         };
 
+        // Texture wrap mode enum
         enum ApplicationRenderingBackendTextureWrapMode_ : int
         {
             ApplicationRenderingBackendTextureWrapMode_Repeat,

@@ -18,6 +18,8 @@ namespace Frenchie
     namespace Application
     {
         // Events
+
+        // This enum declares basic UI node events
         enum ImmediateUserInterfaceNodeEvents_ : int
         {
             // sentinel
@@ -40,7 +42,18 @@ namespace Frenchie
             ImmediateUserInterfaceNodeEvents_Custom               = 1 << 9, // is used for user defined events
         };
 
+        // This enum declares immediate user interface contextual layer settings
+        enum ImmediateUserInterfaceNodeMouseHover_ : int
+        {
+            ImmediateUserInterfaceNodeMouseHover_None         = 0,
+            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, // is set when mouse leaves bounding box of previously hovered node
+            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, // is set if mouse is within bounding box of a node
+            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, // is set when mouse enters bounding box of node
+        };
+
         // Colors
+
+        // This enum declares basic UI colors
         enum ImmediateUserInterfaceNodeColors_ : int
         {
             ImmediateUserInterfaceNodeColors_Begin            = 0,
@@ -52,10 +65,10 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_ChildBackgroundHovered,                                    // hovered child UI elements background color
 
             // buttons
-            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             // push button, check button, radio button, slider button e.t.c outline color
-            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          // push button, check button, radio button, slider button e.t.c background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   // hovered push button, check button, radio button, slider button e.t.c background color
-            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   // pressed push button, check button, radio button, slider button e.t.c background color
+            ImmediateUserInterfaceNodeColors_ButtonOutline,                                             // push button, check button, radio button, slider button, combobox, input text outline color
+            ImmediateUserInterfaceNodeColors_ButtonBackground,                                          // push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered,                                   // hovered push button, check button, radio button, slider button, combobox, input text background color
+            ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed,                                   // pressed push button, check button, radio button, slider button, combobox, input text background color
 
             // scrollbar
             ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground,                                 // scroll bar slider background color
@@ -72,21 +85,23 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_GizmosHovered,                                             // hovered gizmos background
 
             // text
-            ImmediateUserInterfaceNodeColors_Text,
+            ImmediateUserInterfaceNodeColors_Text,                                                      // text color
             
             ImmediateUserInterfaceNodeColors_End
         };
 
         // Settings
+
+        // This enum declares basic UI node settings
         enum ImmediateUserInterfaceNodeSettings_ : int
         {
             // sentinel
             ImmediateUserInterfaceNodeSettings_None                                   = 0,
 
             // modifications
-            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, // make node movable
-            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, // make node resizable
-            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, // make node ignore it's parent within hierarchy
+            ImmediateUserInterfaceNodeSettings_Movable                                = 1 << 0, // makes node movable
+            ImmediateUserInterfaceNodeSettings_Resizable                              = 1 << 1, // makes node resizable
+            ImmediateUserInterfaceNodeSettings_NullParent                             = 1 << 2, // makes node ignore it's parent within hierarchy
 
             // content alignment
             ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop            = 1 << 3, // content is aligned top on vertical axis
@@ -127,7 +142,7 @@ namespace Frenchie
                 | ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment
                 | ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment,
 
-            ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults =
+            ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults               =
                   ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
                 | ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter,
 
@@ -137,12 +152,14 @@ namespace Frenchie
                 | ImmediateUserInterfaceNodeSettings_ContentAlignmentDefaults,
         };
 
+        // This enum declares text label settings
         enum ImmediateUserInterfaceLabelSettings_ : int
         {
             ImmediateUserInterfaceLabelSettings_None        = 0,
-            ImmediateUserInterfaceLabelSettings_RenderFrame = 1 << 0,
+            ImmediateUserInterfaceLabelSettings_RenderFrame = 1 << 0, // if this is on the outline frame is rendered around text label
         };
 
+        // This enum declares tree node settings
         enum ImmediateUserInterfaceTreeNodeSettings_ : int
         {
             ImmediateUserInterfaceTreeNodeSettings_OpenOnClick           = 1 << 0, // tree node opened on mouse click
@@ -154,6 +171,7 @@ namespace Frenchie
                 | ImmediateUserInterfaceTreeNodeSettings_RenderConnectionLines
         };
 
+        // This enum declares check button settings
         enum ImmediateUserInterfaceCheckButtonSettings_ : int
         {
             ImmediateUserInterfaceCheckButtonSettings_Checkbox     = 1 << 0, // check button is rendered as checkbox
@@ -166,24 +184,35 @@ namespace Frenchie
                 | ImmediateUserInterfaceCheckButtonSettings_Checkable,
         };
 
+        // This enum declares input string settings
         enum ImmediateUserInterfaceInputStringSettings_ : int
         {
             ImmediateUserInterfaceInputStringSettings_NoInput           = 1 << 0, // disables input
             ImmediateUserInterfaceInputStringSettings_Password          = 1 << 1, // all input symbols are changed on '*' while rendering
-            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, // disables copy/paste
+            ImmediateUserInterfaceInputStringSettings_NoClipboard       = 1 << 2, // disables copy/paste actions
             ImmediateUserInterfaceInputStringSettings_NoSelection       = 1 << 3, // disables selection
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, // appropriate input string function returns true when enter key is pressed
-            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // appropriate input string function returns true when text is being edited
-            ImmediateUserInterfaceInputStringSettings_Defaults          = 0
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, // input string function returns true when enter key is pressed
+            ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // input string function returns true when text is being edited
+            ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, // input string function stops editing when escape key is pressed
+            
+            ImmediateUserInterfaceInputStringSettings_Defaults          =
+                  ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
+                | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter
         };
 
+        // This enum declares input scalar widget settings
         enum ImmediateUserInterfaceInputScalarSettings_ : int
         {
-            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, // appropriate input scalar function returns true when enter key is pressed
-            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, // appropriate input scalar function returns true when text is being edited
-            ImmediateUserInterfaceInputScalarSettings_Defaults          = 0
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter = 1 << 0, // input scalar function returns true when enter key is pressed
+            ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit  = 1 << 1, // input scalar function returns true when text is being edited
+            ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape  = 1 << 2, // input scalar function stops editing when escape key is pressed
+
+            ImmediateUserInterfaceInputScalarSettings_Defaults          =
+                  ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter
+                | ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
         };
 
+        // This enum declares color picker widgets settings
         enum ImmediateUserInterfaceColorPickerSettings_ : int
         {
             ImmediateUserInterfaceColorPickerSettings_None         = 0,      // sentinel
@@ -201,27 +230,19 @@ namespace Frenchie
                 | ImmediateUserInterfaceColorPickerSettings_PreviewColor
         };
 
+        // This enum declares immediate user interface contextual layer settings
         enum ImmediateUserInterfaceContextSettings_ : int
         {
             // docking
             ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0, // disables all docking features
             ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1, // enables windows mutual docking
-            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock space
+            ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock area
 
             // highlighting
             ImmediateUserInterfaceContextSettings_HighlighHoveredNodes   = 1 << 3, // enables hovered node highligting by a semi-transparent rectangle
         };
 
-        // mouse hover
-        enum ImmediateUserInterfaceNodeMouseHover_ : int
-        {
-            ImmediateUserInterfaceNodeMouseHover_None         = 0,
-            ImmediateUserInterfaceNodeMouseHover_MouseLeft    = 1 << 0, // is set when mouse leaves bounding box of previously hovered node
-            ImmediateUserInterfaceNodeMouseHover_MouseHovered = 1 << 1, // is set if mouse is within bounding box of a node
-            ImmediateUserInterfaceNodeMouseHover_MouseEntered = 1 << 2, // is set when mouse enters bounding box of node
-        };
-
-        // windows docking anchors
+        // This enum declares dock anchors for windows
         enum ImmedidateUserInterfaceDockingAnchor_ : int
         {
             ImmedidateUserInterfaceDockingAnchor_Top    = 1 << 0, // docked window is snapped to the top part of it's docker
@@ -238,7 +259,8 @@ namespace Frenchie
                 | ImmedidateUserInterfaceDockingAnchor_Center
         };
 
-        // rendering order and rendering layer
+        // This enum declares rendering orders for UI elements.
+        // Every value defines the order of rendering for UI elements
         enum ImmedidateUserInterfaceRenderingOrder_ : int
         {
             ImmedidateUserInterfaceRenderingOrder_Begin      = 0,
@@ -250,6 +272,8 @@ namespace Frenchie
             ImmedidateUserInterfaceRenderingOrder_End,
         };
 
+        // This enum declares rendering orders for UI elements.
+        // Every value defines the depth along Z-axis at which UI elements are rendered
         enum ImmedidateUserInterfaceRenderingLayer_ : int
         {
             ImmedidateUserInterfaceRenderingLayer_Begin   = 0,
@@ -277,7 +301,8 @@ namespace Frenchie
 
         class ImmediateUserInterfaceContextLayer;
 
-        // style and events
+        // This class defines overall UI style.
+        // It incapsulates font, color scheme settings e.t.c
         struct ImmedidateUserInterfaceStyle final
         {
             ImmedidateUserInterfaceStyle();
@@ -326,6 +351,8 @@ namespace Frenchie
             ApplicationRenderingBackendFont  Font;
         };
 
+        // This class plays role of input catcher for UI.
+        // It collects input, mouse cursor position, viewport size e.t.c every frame
         struct ImmedidateUserInterfaceInput final
         {
             ImmedidateUserInterfaceInput(ImmediateUserInterfaceContextLayer* _Context = nullptr);
@@ -376,7 +403,7 @@ namespace Frenchie
             ImmediateUserInterfaceContextLayer* m_Context = nullptr;
         };
 
-        // nodes
+        // This is the base UI node class that stores UI node state
         struct ImmediateUserInterfaceNode
         {
             ImmediateUserInterfaceNode(const std::string& _Name);
@@ -398,9 +425,9 @@ namespace Frenchie
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
 
             // getters
-            gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer* _Context) const;
-            gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const;
-            bool is_partially_visible(ImmediateUserInterfaceContextLayer* _Context) const;
+            gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
+            gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
+            bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
 
             int place_in_follow();
 
@@ -457,7 +484,8 @@ namespace Frenchie
             int         Count = 0;
         };
 
-        // hierarchy
+        // This class plays role of UI nodes hierarchy tree.
+        // It's built and sorted once and is used for events processing, layoputing e.t.c
         struct ImmedidateUserInterfaceHierarchy
         {
             ImmedidateUserInterfaceHierarchy(const std::function<ImmediateUserInterfaceNode*(const ImmediateUserInterfaceNode*)> _GetParent =
@@ -589,20 +617,7 @@ namespace Frenchie
             }
         };
 
-        class ImmediateUserInterfaceContextController
-        {
-        public:
-            ImmediateUserInterfaceContextController(){}
-            virtual ~ImmediateUserInterfaceContextController(){}
-
-            virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
-            virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
-            virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
-        };
-
-        // context configuration
+        // This class is used for UI state serialization and deserialization
         class ImmediateUserInterfaceContextConfiguration final
         {
         public:
@@ -633,6 +648,20 @@ namespace Frenchie
                 > m_Configuration; 
         };
 
+        // This is the base UI controller class.
+        class ImmediateUserInterfaceContextController
+        {
+        public:
+            ImmediateUserInterfaceContextController(){}
+            virtual ~ImmediateUserInterfaceContextController(){}
+
+            virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
+            virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
+            virtual void frame_debug(ImmediateUserInterfaceContextLayer*){}
+            virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
+            virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
+        };
+
         // context layer
         class ImmediateUserInterfaceContextLayer : public Layer
         {
@@ -650,6 +679,11 @@ namespace Frenchie
             virtual void finish() override;
 
             // UI API
+
+            // This is the base function that creates UI nodes
+            // _ID       - unique node ID
+            // _Settings - node settings
+            // _Render   - boolean that defines if to push the node within rendering queue or not
             template<typename Type>
             bool begin_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr)
             {
@@ -719,6 +753,7 @@ namespace Frenchie
                 return node->create_contents(this, _ID, _Settings, _Render);
             }
 
+            // This is the base function that ends the scope of UI node
             template<typename Type>
             void end_node()
             {
@@ -942,22 +977,48 @@ namespace Frenchie
 
             // next node API
 
-            // This function generates a unique ID for UI element. It constructs ID as {Name}###{Hash} where Name is what is going to be diplayed and Hash is what is going to be used as a widget unique ID.
+            // This function generates a unique ID for UI element. It constructs ID as {Name}###{Hash} where {Name} is what is going to be diplayed and {Hash} is what is going to be used as a widget unique ID.
             // If no Hash passed to a function it generates unique ID as {Name}
             // _Name       - UI element name
             // _Hash       - UI element hash
             std::string next_id(const std::string& _Name, const std::string& _Hash = std::string());
 
-            // 
+            // This function pushes the node onto a next line if it's within scollarea.
+            // All nodes are actually pushed onto next line by default but if you call this function several times
+            // it adds vertical indent equal to N * maxHeight where N is the number of calls of next_line()
+            // and maxHeight is maximum height within current scroll area row.
             void next_line();
+
+            // This function pushes the node onto a same line with it's neighbours if it's within scollarea
             void same_line();
-            void indent(const float& = 32.f);
-            void next_size(const gs_vec2f&);
-            void next_position(const gs_vec2f&);
-            void next_minimum_size(const gs_vec2f&);
-            void next_maximum_size(const gs_vec2f&);
-            void next_content_margin(const gs_vec4f&);
-            void next_content_padding(const gs_vec4f&);
+
+            // This function adds horizontal indent between nodes within scroll area.
+            // _Value - horizontal indent value
+            void indent(const float& _Value = 32.f);
+
+            // This function sets the size of the next created node. The value is set every frame.
+            // _Value - next node size
+            void next_size(const gs_vec2f& _Value);
+
+            // This function sets the position of the next created node. The value is set every frame.
+            // _Value - next node size
+            void next_position(const gs_vec2f& _Value);
+
+            // This function sets the minimum size of the next created node. The value is set every frame.
+            // _Value - next node minimum size
+            void next_minimum_size(const gs_vec2f& _Value);
+
+            // This function sets the maximum size of the next created node. The value is set every frame.
+            // _Value - next node maximum size
+            void next_maximum_size(const gs_vec2f& _Value);
+
+            // This function sets content margin of the next created node. The value is set every frame.
+            // _Value - content margin values {top, left, right, bottom}
+            void next_content_margin(const gs_vec4f& _Value);
+
+            // This function sets content pading of the next created node. The value is set every frame.
+            // _Value - content padding values {top, left, right, bottom}
+            void next_content_padding(const gs_vec4f& _Value);
 
             // Controllers API
             template<typename Type> Type* get_controller() const
