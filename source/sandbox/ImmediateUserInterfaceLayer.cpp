@@ -1912,30 +1912,45 @@ namespace Frenchie
                 float rightMargin   = _Margin.z;
                 float bottomMargin  = _Margin.w;
 
-                // calculate parental bounding box
-                gs_2dboxf parentalBox = gs_2dboxf(
-                    _Position + gs_vec2f(leftMargin, topMargin),
-                    _Position + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + _Size);
-
                 // compute total size
-                gs_vec2f position   = parentalBox.Min;
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
-                    {
-                        totalsize += gs_2dboxf(
-                            position - gs_vec2f(leftPadding, topPadding),
-                            position - gs_vec2f(leftPadding, topPadding) + gs_vec2f(rightPadding, bottomPadding) + (*it)->State.BoundingBox.size()).size();
-                    }
+                        totalsize += (*it)->State.BoundingBox.size();
                 }
 
-                // compute children scale
-                gs_vec2f scale = _Size / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                // layout children
+                gs_2dboxf parentalBox = gs_2dboxf(
+                    _Position + gs_vec2f(leftMargin, topMargin),
+                    _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
 
-                // layout children and compute their bounding box
-                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
+                gs_2dboxf sizeBox = gs_2dboxf(
+                    parentalBox.Min + gs_vec2f(leftPadding, topPadding),
+                    parentalBox.Max - gs_vec2f(rightPadding, bottomPadding));
+
+                gs_vec2f  scale  = sizeBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                gs_vec2f  scale1 = parentalBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+
+                float x = parentalBox.Min.x;
+                float y = parentalBox.Min.y;
+
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
+                    x = parentalBox.Min.x;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
+                    x = parentalBox.center().x - sizeBox.size().x * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
+                    x = parentalBox.Max.x - sizeBox.size().x;
+                
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
+                    y = parentalBox.Min.y;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
+                    y = parentalBox.center().y - sizeBox.size().y * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
+                    y = parentalBox.Max.y - sizeBox.size().y;
+
+                gs_vec2f position = gs_vec2f(x, y);// + gs_vec2f((leftPadding - rightPadding), (topPadding - bottomPadding));
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -1943,35 +1958,16 @@ namespace Frenchie
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
-                        (gs_clamp(gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, parentalBox.height()), (*it)->State.MinimumSize, (*it)->State.MaximumSize)).x,
-                        _Size.y);
+                        (gs_clamp(gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, sizeBox.height()), (*it)->State.MinimumSize, (*it)->State.MaximumSize)).x,
+                        sizeBox.height());
                     
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position + gs_vec2f(0.f, topPadding - bottomPadding),
-                        position + gs_vec2f(0.f, topPadding - bottomPadding) + size);
+                    gs_vec2f size1 = gs_vec2f(
+                        (gs_clamp(gs_vec2f(((*it)->State.BoundingBox.size() * scale1).x, parentalBox.height()), (*it)->State.MinimumSize, (*it)->State.MaximumSize)).x,
+                        parentalBox.height());
 
-                    childrenBoundingBox = gs_2dboxf(
-                        childrenBoundingBox.Min,
-                        childrenBoundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
 
-                    position += gs_vec2f(size.x + leftPadding - rightPadding, 0.f);
-                }
-
-                // align children within parent
-                position = layout_compute_aligned_position(_Settings, parentalBox.Min, parentalBox.size(), childrenBoundingBox.size());
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position + gs_vec2f(0.f, topPadding - bottomPadding),
-                        position + gs_vec2f(0.f, topPadding - bottomPadding) + (*it)->State.BoundingBox.size());
-
-                    position += gs_vec2f((*it)->State.BoundingBox.size().x + leftPadding - rightPadding, 0.f);
+                    position += gs_vec2f(size.x, 0.f);
                 }
             }
 
@@ -4460,18 +4456,6 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    // extract padding
-    float topPadding    = ContentPadding.x;
-    float leftPadding   = ContentPadding.y;
-    float rightPadding  = ContentPadding.z;
-    float bottomPadding = ContentPadding.w;
-    
-    // extract margin
-    float topMargin     = ContentMargin.x;
-    float leftMargin    = ContentMargin.y;
-    float rightMargin   = ContentMargin.z;
-    float bottomMargin  = ContentMargin.w;
-
     // layout self
     State.BoundingBox = gs_2dboxf(
         State.BoundingBox.Min,
@@ -4486,8 +4470,8 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         TitleBox.Min + gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size()));
 
     // layout children
-    gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(IconBox.width(), 0.f);
-    gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f position  = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
+    gs_vec2f start     = State.BoundingBox.Min + gs_vec2f(0.f, _Context->m_Style.get_font_size()) + gs_vec2f(IconBox.width(), 0.f);
     float    maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
@@ -4502,14 +4486,14 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         {
             position = gs_vec2f(
                 start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
+                position.y + maxHeight * (*it)->State.NextLine);
             
             maxHeight = 0.f;
         }
         else
         {
             position += gs_vec2f(
-                (*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent,
+                (*it)->State.BoundingBox.size().x + (*it)->State.Indent,
                 0.f);
         }
     }
@@ -5927,16 +5911,12 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
         {
             int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(hoveredNode);
 
-            _Context->m_Renderer->push_rectangle_rounded_filled(
+            _Context->m_Renderer->push_rectangle_rounded(
                 hoveredNode->get_visible_rect(_Context).Min,
                 hoveredNode->get_visible_rect(_Context).Max,
                 _Context->m_Style.get_frames_radius(),
-                //_Context->m_Style.get_frames_width(),
-                gs_color_rgba(
-                    gs_color_rgba_get_r(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    gs_color_rgba_get_g(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    gs_color_rgba_get_b(_Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos)),
-                    32),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
                 _Context->m_Renderer->calculate_transform_matrix((float)depth));
         }
 
@@ -7187,12 +7167,14 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         float weight = 1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
 
+        gs_vec4f padding = gs_vec4f(0.f, 0.f, 0.f, 0.f);
+
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
         if(begin_vertical_stack(std::string(_ID).append("/Stack")))
         {
-            char longestLabel[] = "Alpha";
+            char longestLabel[] = "Alpha\t";
 
             float labelWidth    = m_Renderer->calculate_bounding_box(
                 &longestLabel[0],
@@ -7205,7 +7187,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                next_content_padding(gs_vec2f(16.f));
+                next_content_padding(padding);
 
                 if(begin_horizontal_stack(std::string(_ID).append("/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -7236,7 +7218,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                next_content_padding(gs_vec2f(16.f));
+                next_content_padding(padding);
 
                 if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -7280,7 +7262,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                next_content_padding(gs_vec2f(16.f));
+                next_content_padding(padding);
 
                 if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -7324,7 +7306,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
             {
                 next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                next_content_padding(gs_vec2f(16.f));
+                next_content_padding(padding);
 
                 if(begin_horizontal_stack(std::string(_ID).append("/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
@@ -7655,7 +7637,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
         picker->Settings = _Settings;
 
-        char longestLabel[] = "Alpha";
+        char longestLabel[] = "Alpha\t";
 
         float labelWidth = m_Renderer->calculate_bounding_box(
             &longestLabel[0],
@@ -7671,6 +7653,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
+
+        gs_vec4f padding = gs_vec4f(0.f, 0.f, 0.f, 0.f);
 
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
@@ -7691,7 +7675,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec4f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7722,7 +7706,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec4f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7766,7 +7750,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec4f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7810,7 +7794,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec4f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -7864,7 +7848,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             gs_vec2f brightnessBoxSize   = gs_vec2f(32.f, 256.f);
             gs_vec2f transparencyBoxSize = gs_vec2f(((Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)    ? 32.f : 0.f), 256.f);
             gs_vec2f padding             = gs_vec2f(8.f);
-            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + padding * 2.f;
+            gs_vec2f totalSize           = ellpseBoxSize + brightnessBoxSize + transparencyBoxSize + padding;
             gs_vec2f position            = State.BoundingBox.Min;
 
             // ellipse
@@ -8143,7 +8127,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
 
         picker->Settings = _Settings;
 
-        char longestLabel[] = "Alpha";
+        char longestLabel[] = "Alpha\t";
 
         float labelWidth = m_Renderer->calculate_bounding_box(
             &longestLabel[0],
@@ -8159,6 +8143,8 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
+
+        gs_vec4f padding = gs_vec4f(0.f, 0.f, 0.f, 0.f);
 
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
@@ -8179,7 +8165,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -8210,7 +8196,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("Panel/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -8254,7 +8240,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("Panel/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
@@ -8298,7 +8284,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                 {
                     next_minimum_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
-                    next_content_padding(gs_vec2f(16.f));
+                    next_content_padding(padding);
 
                     if(begin_horizontal_stack(std::string(_ID).append("Panel/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {

@@ -182,30 +182,34 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
             // margin
-            static float topMargin;
-            static float leftMargin;
-            static float rightMargin;
-            static float bottomMargin;
+            static float topMargin = 0.f;
+            static float leftMargin = 0.f;
+            static float rightMargin = 0.f;
+            static float bottomMargin = 0.f;
 
             // padding
-            static float topPadding;
-            static float leftPadding;
-            static float rightPadding;
-            static float bottomPadding;
+            static float topPadding = 0.f;
+            static float leftPadding = 0.f;
+            static float rightPadding = 0.f;
+            static float bottomPadding = 0.f;
+
+            // alignment
+            static int         horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+            static int         verticalAlignmentSettings         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+            static std::string horizontalAligmentComboboxPreview = "None";
+            static std::string verticalAligmentComboboxPreview   = "None";
 
             float minimum = 0.f;
             float maximum = 128.f;
 
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Layouts", "Layouts")))
             {
-                m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), m_ImmediateUserInterface->m_Style.get_font_size() * 8.f));
+                int settings =
+                      ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
-                if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("LayoutTweakers")))
+                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("LayoutConfigurator"), settings))
                 {
-                    int settings =
-                          ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
-                        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
-
                     if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
                     {
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Margin"), "Margin");
@@ -232,6 +236,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                         m_ImmediateUserInterface->end_scrollarea();
                     }
+
+                    m_ImmediateUserInterface->same_line();
 
                     if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Padding"), settings))
                     {
@@ -260,16 +266,87 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         m_ImmediateUserInterface->end_scrollarea();
                     }
 
-                    m_ImmediateUserInterface->end_horizontal_stack();
+                    m_ImmediateUserInterface->same_line();
+
+                    if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Alignment"), settings))
+                    {
+                        // horizontal alignment
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HorizontalAlignment"), "Horizontal alignment");
+
+                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("HorizontalAlignemntType"), horizontalAligmentComboboxPreview))
+                        {
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Left", "Left")) ||
+                                (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
+                            {
+                                horizontalAligmentComboboxPreview = "Left";
+                                horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
+                            }
+                            
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Center", "Center")) ||
+                                (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+                            {
+                                horizontalAligmentComboboxPreview = "Center";
+                                horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+                            }
+                            
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Bottom", "Bottom")) ||
+                                (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
+                            {
+                                horizontalAligmentComboboxPreview = "Right";
+                                horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
+                            }
+
+                            m_ImmediateUserInterface->end_combobox();
+                        }
+
+                        m_ImmediateUserInterface->next_line();
+                        m_ImmediateUserInterface->next_line();
+
+                        // vertical alignment
+                        m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalAlignment"), "Vertical alignment");
+
+                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("VerticalAlignemntType"), verticalAligmentComboboxPreview))
+                        {
+                            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalAlignment"), "Vertical alignment");
+
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Top", "Top")) ||
+                                (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop))
+                            {
+                                verticalAligmentComboboxPreview   = "Top";
+                                verticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
+                            }
+                            
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Center", "Center")) ||
+                                (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
+                            {
+                                verticalAligmentComboboxPreview   = "Center";
+                                verticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
+                            }
+                            
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Bottom", "Bottom")) ||
+                                (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom))
+                            {
+                                verticalAligmentComboboxPreview   = "Bottom";
+                                verticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
+                            }
+
+                            m_ImmediateUserInterface->end_combobox();
+                        }
+
+                        m_ImmediateUserInterface->end_scrollarea();
+                    }
+
+                    m_ImmediateUserInterface->end_scrollarea();
                 }
 
+                /*
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
                     m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
                     m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
 
-                    if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack")))
+                    if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack"), verticalAlignmentSettings))
                     {
                         m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
                         m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
@@ -280,24 +357,36 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                     m_ImmediateUserInterface->end_tree_node();
                 }
+                */
+
 
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("HorizontalStack", "Horizontal stack")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
 
-                    if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack")))
+                    if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("Panel")))
                     {
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Background"), gs_color_rgb(255, 255, 255));
 
-                        m_ImmediateUserInterface->end_horizontal_stack();
+                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
+                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+
+                        if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        {
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+
+                            m_ImmediateUserInterface->end_horizontal_stack();
+                        }
+
+                        m_ImmediateUserInterface->end_panel();
                     }
 
                     m_ImmediateUserInterface->end_tree_node();
                 }
+
+                /*
 
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                 {
@@ -327,8 +416,12 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_tree_node();
                 }
 
+                */
+
                 m_ImmediateUserInterface->end_tree_node();
             }
+
+            /*
 
             // widgets
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Widgets", "Widgets")))
@@ -561,6 +654,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 m_ImmediateUserInterface->end_tree_node();
             }
 
+            */
+
             m_ImmediateUserInterface->end_scrollarea();
         }
 
@@ -595,83 +690,49 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-            // margin
-            static float topMargin;
-            static float leftMargin;
-            static float rightMargin;
-            static float bottomMargin;
-
-            // padding
-            static float topPadding;
-            static float leftPadding;
-            static float rightPadding;
-            static float bottomPadding;
-
-            float minimum = 0.f;
-            float maximum = 128.f;
+    int settings =
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
-        if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("LayoutTweaks")))
+        if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("LayoutTweaks", "LayoutTweaks")))
         {
-            int settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
-
-            if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
+            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Child-2")))
             {
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Margin"), "Margin");
+                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
+                {
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
 
-                // top
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopMarginValue"), topMargin, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopMarginLabel"), "Top margin");
+                    m_ImmediateUserInterface->end_scrollarea();
+                }
 
-                // left
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftMarginValue"), leftMargin, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftMarginLabel"), "Left margin");
+                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin1"), settings))
+                {
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
 
-                // right
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightMarginValue"), rightMargin, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightMarginLabel"), "Right margin");
+                    m_ImmediateUserInterface->end_scrollarea();
+                }
 
-                // bottom
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomMarginValue"), bottomMargin, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomMarginLabel"), "Bottom margin");
+                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin2"), settings))
+                {
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
 
-                m_ImmediateUserInterface->end_scrollarea();
+                    m_ImmediateUserInterface->end_scrollarea();
+                }
+
+                m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Padding"), settings))
-            {
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Padding"), "Padding");
-
-                // top
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopPaddingValue"), topPadding, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopPaddingLabel"), "Top padding");
-
-                // left
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftPaddingValue"), leftPadding, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftPaddingLabel"), "Left padding");
-
-                // right
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightPaddingValue"), rightPadding, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightPaddingLabel"), "Right padding");
-
-                // bottom
-                m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomPaddingValue"), bottomPadding, minimum, maximum, 1);
-                m_ImmediateUserInterface->same_line();
-                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomPaddingLabel"), "Bottom padding");
-
-                m_ImmediateUserInterface->end_scrollarea();
-            }
-
-            m_ImmediateUserInterface->end_horizontal_stack();
+            m_ImmediateUserInterface->end_tree_node();
         }
+
 
         m_ImmediateUserInterface->end_window();
     }
