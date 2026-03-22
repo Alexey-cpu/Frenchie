@@ -445,9 +445,9 @@ namespace Frenchie
 
                 // geometry
                 gs_2dboxf                                      BoundingBox                 {gs_2dboxf(gs_vec2f(32.f, 32.f), gs_vec2f(1024.f, 512.f))}; // node bounding box
-                gs_vec2f                                       ContentSize                 {gs_vec2f(0.f)};                                            // node contents size
-                gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f)};                                           // node minimum size
-                gs_vec2f                                       MaximumSize                 {gs_vec2f((float)INT_MAX)};                                 // node maximum size
+                gs_vec2f                                       ContentSize                 {gs_vec2f(0.f, 0.f)};                                       // node contents size
+                gs_vec2f                                       MinimumSize                 {gs_vec2f(32.f, 32.f)};                                     // node minimum size
+                gs_vec2f                                       MaximumSize                 {gs_vec2f(gs_huge<float>(), gs_huge<float>())};             // node maximum size
 
                 // hierarchy
                 ImmediateUserInterfaceNode*                    Parent                      {nullptr}; // node hierarchical parent
@@ -649,6 +649,7 @@ namespace Frenchie
         };
 
         // This is the base UI controller class.
+        // UI context has controllers list that are processed every frame
         class ImmediateUserInterfaceContextController
         {
         public:
