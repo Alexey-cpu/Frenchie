@@ -1914,11 +1914,15 @@ namespace Frenchie
 
                 // compute total size
                 gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                int      childCount = 0;
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
+                    {
                         totalsize += (*it)->State.BoundingBox.size();
+                        childCount++;
+                    }
                 }
 
                 // layout children
@@ -1950,7 +1954,7 @@ namespace Frenchie
                 else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
                     y = parentalBox.Max.y - sizeBox.size().y;
 
-                gs_vec2f position = gs_vec2f(x, y);// + gs_vec2f((leftPadding - rightPadding), (topPadding - bottomPadding));
+                gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
