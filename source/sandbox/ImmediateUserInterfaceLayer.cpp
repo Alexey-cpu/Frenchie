@@ -1864,7 +1864,7 @@ namespace Frenchie
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
-                        paddingBox.width(),
+                        gs_clamp(paddingBox.width(), (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
                         gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
 
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
@@ -1942,7 +1942,7 @@ namespace Frenchie
                     
                     gs_vec2f size = gs_vec2f(
                         gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
-                        paddingBox.height());
+                        gs_clamp(paddingBox.height(), (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
 
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
 
@@ -3165,7 +3165,7 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
             parent = _Context->m_Hierarchy.get_parent(parent);
         }
 
-        return clippingBox;
+        return gs_2dboxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
     };
 
     // main code
@@ -5171,9 +5171,6 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 
 void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(!(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
-        return;
-
     place_on_dockers(_Context);
 
     // rebuild hierarchy
@@ -5387,6 +5384,9 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
             [](const ImmediateUserInterfaceNode*)->bool{return true;}));
 
     detach_from_docker(_Context, moved);
+
+    if(!(_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking))
+        return;
 
     // find top most hovered node not equal to the moved one
     ImmediateUserInterfaceNode* hoveredNode = 
@@ -5968,8 +5968,14 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
             }
         }
 
-        // pass focus
-        if(_Context->m_Input.is_mouse_button_pressed() || eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        // pass focus on event
+        if(eventCatcher->State.Events != ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_None)
+        {
+            if(!(eventCatcher->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
+                eventCatcher->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Focus;
+        }
+        // pass focus on mouse press
+        else if(_Context->m_Input.is_mouse_button_pressed())
         {
             // find top most relative of event catcher node
             ImmediateUserInterfaceNode* relative = eventCatcher;
