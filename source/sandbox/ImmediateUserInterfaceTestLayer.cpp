@@ -173,24 +173,66 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
-    m_ImmediateUserInterface->m_Settings =
-        ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
-        | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
+    // m_ImmediateUserInterface->m_Settings =
+    //     ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
+    //     | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
-    { 
+    static bool openWindow1 = false;
+    static bool openWindow2 = false;
+    static bool openWindow3 = false;
+
+    if(m_ImmediateUserInterface->begin_window(
+        m_ImmediateUserInterface->next_id("Window1", "Window-1"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &openWindow1))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
+
+    if(m_ImmediateUserInterface->begin_window(
+        m_ImmediateUserInterface->next_id("Window2", "Window-2"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &openWindow2))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
+
+    if(m_ImmediateUserInterface->begin_window(
+        m_ImmediateUserInterface->next_id("Window3", "Window-3"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &openWindow3))
+    {
+        m_ImmediateUserInterface->end_window();
+    }
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Test window", "Window")))
+    {
+        if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu")))
+        {
+            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 1", "OpenWindow1")))
+                openWindow1 = true;
+
+            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 2", "OpenWindow2")))
+                openWindow2 = true;
+
+            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 3", "OpenWindow3")))
+                openWindow3 = true;
+
+            m_ImmediateUserInterface->end_menu();
+        }
+
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
             // margin
-            static float topMargin = 0.f;
-            static float leftMargin = 0.f;
-            static float rightMargin = 0.f;
+            static float topMargin    = 0.f;
+            static float leftMargin   = 0.f;
+            static float rightMargin  = 0.f;
             static float bottomMargin = 0.f;
 
             // padding
-            static float topPadding = 0.f;
-            static float leftPadding = 0.f;
-            static float rightPadding = 0.f;
+            static float topPadding    = 0.f;
+            static float leftPadding   = 0.f;
+            static float rightPadding  = 0.f;
             static float bottomPadding = 0.f;
 
             // alignment
@@ -289,7 +331,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                                 horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
                             }
                             
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Bottom", "Bottom")) ||
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Right", "Right")) ||
                                 (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
                             {
                                 horizontalAligmentComboboxPreview = "Right";
@@ -307,8 +349,6 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                         if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("VerticalAlignemntType"), verticalAligmentComboboxPreview))
                         {
-                            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalAlignment"), "Vertical alignment");
-
                             if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Top", "Top")) ||
                                 (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop))
                             {
@@ -339,27 +379,59 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_scrollarea();
                 }
 
-                /*
-                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
+                // panel
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Panel", "Panel")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
-                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
 
-                    if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack"), verticalAlignmentSettings))
+                    if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("Panel")))
                     {
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
-                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Background"), gs_color_rgb(255, 255, 255));
 
-                        m_ImmediateUserInterface->end_vertical_stack();
+                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
+                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+
+                        if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("VerticalStack"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        {
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+                            m_ImmediateUserInterface->end_panel();
+                        }
+
+                        m_ImmediateUserInterface->end_panel();
                     }
 
                     m_ImmediateUserInterface->end_tree_node();
                 }
-                */
 
+                // vertical stack
+                if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("VerticalStack", "Vertical stack")))
+                {
+                    m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
 
+                    if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("Panel")))
+                    {
+                        m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Background"), gs_color_rgb(255, 255, 255));
+
+                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
+                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+
+                        if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        {
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Four"), gs_color_rgb(0, 255, 255));
+
+                            m_ImmediateUserInterface->end_vertical_stack();
+                        }
+
+                        m_ImmediateUserInterface->end_panel();
+                    }
+
+                    m_ImmediateUserInterface->end_tree_node();
+                }
+
+                // horizontal stack
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("HorizontalStack", "Horizontal stack")))
                 {
                     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), 256.f));
@@ -376,6 +448,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+                            m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Four"), gs_color_rgb(0, 255, 255));
 
                             m_ImmediateUserInterface->end_horizontal_stack();
                         }
@@ -386,8 +459,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_tree_node();
                 }
 
-                /*
-
+                // scrollarea
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                 {
                     m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
@@ -416,12 +488,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->end_tree_node();
                 }
 
-                */
-
                 m_ImmediateUserInterface->end_tree_node();
             }
-
-            /*
 
             // widgets
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Widgets", "Widgets")))
@@ -653,8 +721,6 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                 m_ImmediateUserInterface->end_tree_node();
             }
-
-            */
 
             m_ImmediateUserInterface->end_scrollarea();
         }

@@ -822,6 +822,12 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringContent* widget     = nullptr;
             bool                                      edited     = false;
 
+            _Context->next_content_margin(gs_vec4f(
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_width(),
+                _Context->m_Style.get_frames_width()));
+
             if(_Context->begin_node<ImmediateUserInterfaceInputString>(std::string(_ID).append("/ScrollArea"),
                 scrollAreaSettings))
             {
@@ -1324,7 +1330,7 @@ namespace Frenchie
                         {
                             widget->State.MinimumSize = gs_vec2f(
                                 gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()) + _Context->m_Style.get_font_size(),
-                                _Context->m_Style.get_font_size());
+                                _Context->m_Style.get_font_size() + _Context->m_Style.get_frames_width());
 
                             widget->State.MaximumSize = gs_vec2f((float)INT_MAX, widget->State.MinimumSize.y);
                         }
@@ -1332,7 +1338,7 @@ namespace Frenchie
                         {
                             widget->State.MinimumSize = gs_vec2f(
                                 gs_max(inputStringRenderingData.TextBoundingBox.size().x, _Context->m_Style.get_font_size()) + _Context->m_Style.get_font_size(),
-                                gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size()));
+                                gs_max(inputStringRenderingData.TextBoundingBox.size().y, _Context->m_Style.get_font_size()) + _Context->m_Style.get_frames_width());
 
                             widget->State.MaximumSize = gs_vec2f((float)INT_MAX, (float)INT_MAX);
                         }
@@ -1429,7 +1435,7 @@ namespace Frenchie
                     ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
 
                     // node settings
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
+                      ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
@@ -1733,34 +1739,6 @@ namespace Frenchie
             };
 
             // layouting
-            gs_vec2f layout_compute_aligned_position(
-                const int       _Settings,
-                const gs_vec2f& _Position,
-                const gs_vec2f& _Size,
-                gs_vec2f        _ChildrenSize)
-            {
-                gs_2dboxf parentBoundingBox = gs_2dboxf(_Position, _Position + _Size);
-                gs_vec2f  position = _Position;
-
-                // vertical alignment
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
-                    position = gs_vec2f(position.x, _Position.y);
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
-                    position = gs_vec2f(position.x, (position + parentBoundingBox.size() - _ChildrenSize).y);
-                else // center is default
-                    position = gs_vec2f(position.x, (parentBoundingBox.center() - _ChildrenSize * 0.5f).y);
-
-                // horizontal alignment
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
-                    position = gs_vec2f(_Position.x, position.y);
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                    position = gs_vec2f((position + parentBoundingBox.size() - _ChildrenSize).x, position.y);
-                else // center is default
-                    position = gs_vec2f((parentBoundingBox.center() - _ChildrenSize * 0.5f).x, position.y);
-
-                return position;
-            }
-
             template<typename Type, typename FrameProcessor>
             void layout_nodes_as_panel(
                 const Type&           _Begin,
@@ -1784,20 +1762,37 @@ namespace Frenchie
                 float rightMargin   = _Margin.z;
                 float bottomMargin  = _Margin.w;
 
-                // calculate parental bounding box
-                gs_2dboxf parentalBox = gs_2dboxf(
-                    _Position + gs_vec2f(leftMargin, topMargin),
-                    _Position + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + _Size);
-
                 // layout children
+                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+
+                float x = marginBox.Min.x;
+                float y = marginBox.Min.y;
+
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
+                    x = marginBox.Min.x;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
+                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
+                    x = marginBox.Max.x - paddingBox.size().x;
+                
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
+                    y = marginBox.Min.y;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
+                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
+                    y = marginBox.Max.y - paddingBox.size().y;
+
+                gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+
                 for(auto it = _Begin; it != _End; ++it)
                 {
-                    if((*it) == nullptr || !_Filter(*it)) continue;
-
-                    gs_vec2f size     = gs_clamp(parentalBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    gs_vec2f position = layout_compute_aligned_position(_Settings, parentalBox.Min, parentalBox.size(), size);
+                    if((*it) == nullptr || !_Filter(*it))
+                        continue;
                     
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
                 }
             }
 
@@ -1824,68 +1819,57 @@ namespace Frenchie
                 float rightMargin   = _Margin.z;
                 float bottomMargin  = _Margin.w;
 
-                // calculate parental bounding box
-                gs_2dboxf parentalBox = gs_2dboxf(
-                    _Position + gs_vec2f(leftMargin, topMargin),
-                    _Position + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + _Size);
-
-                // compute total children size
-                gs_vec2f position  = parentalBox.Min;
-                gs_vec2f totalsize = gs_vec2f(0.f, 0.f);
+                // compute total size
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                int      childCount = 0;
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if((*it) != nullptr && _Filter(*it))
                     {
-                        totalsize += gs_2dboxf(
-                            position - gs_vec2f(leftPadding, topPadding),
-                            position - gs_vec2f(leftPadding, topPadding) + gs_vec2f(rightPadding, bottomPadding) + (*it)->State.BoundingBox.size()).size();
+                        totalsize += (*it)->State.BoundingBox.size();
+                        childCount++;
                     }
                 }
 
-                // compute children size scale
-                gs_vec2f scale = parentalBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                totalsize += gs_vec2f(0.f, (float)(childCount - 1) * (topPadding + bottomPadding) * 0.5f);
 
-                // layout children and compute their bounding box
-                gs_2dboxf childrenBoundingBox = gs_2dboxf(position, position);
+                // layout children
+                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
 
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    gs_vec2f size = gs_clamp(
-                        gs_vec2f(parentalBox.width(), ((*it)->State.BoundingBox.size() * scale).y),
-                        (*it)->State.MinimumSize, (*it)->State.MaximumSize);
-                    
-                    size = gs_vec2f(parentalBox.width(), size.y);
-                    
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position + gs_vec2f(leftPadding - rightPadding, 0.f),
-                        position + gs_vec2f(leftPadding - rightPadding, 0.f) + size);
+                float x = marginBox.Min.x;
+                float y = marginBox.Min.y;
 
-                    childrenBoundingBox = gs_2dboxf(
-                        childrenBoundingBox.Min,
-                        childrenBoundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
+                    x = marginBox.Min.x;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
+                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
+                    x = marginBox.Max.x - paddingBox.size().x;
+                
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
+                    y = marginBox.Min.y;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
+                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
+                    y = marginBox.Max.y - paddingBox.size().y;
 
-                    position += gs_vec2f(0.f, size.y + bottomPadding - topPadding);
-                }
-
-                // align children within parent
-                position = layout_compute_aligned_position(_Settings, parentalBox.Min, parentalBox.size(), childrenBoundingBox.size());
+                gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
                     if(*it == nullptr || !_Filter(*it))
                         continue;
+                    
+                    gs_vec2f size = gs_vec2f(
+                        paddingBox.width(),
+                        gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
 
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position + gs_vec2f(leftPadding - rightPadding, 0.f),
-                        position + gs_vec2f(leftPadding - rightPadding, 0.f) + (*it)->State.BoundingBox.size());
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
 
-                    position += gs_vec2f(0.f, (*it)->State.BoundingBox.size().y + bottomPadding - topPadding);
+                    position += gs_vec2f(0.f, size.y + (topPadding + bottomPadding) * 0.5f);
                 }
             }
 
@@ -1925,34 +1909,29 @@ namespace Frenchie
                     }
                 }
 
+                totalsize += gs_vec2f((float)(childCount - 1) * (leftPadding + rightPadding) * 0.5f, 0.f);
+
                 // layout children
-                gs_2dboxf parentalBox = gs_2dboxf(
-                    _Position + gs_vec2f(leftMargin, topMargin),
-                    _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
 
-                gs_2dboxf sizeBox = gs_2dboxf(
-                    parentalBox.Min + gs_vec2f(leftPadding, topPadding),
-                    parentalBox.Max - gs_vec2f(rightPadding, bottomPadding));
-
-                gs_vec2f  scale  = sizeBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-                gs_vec2f  scale1 = parentalBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-
-                float x = parentalBox.Min.x;
-                float y = parentalBox.Min.y;
+                float x = marginBox.Min.x;
+                float y = marginBox.Min.y;
 
                 if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
-                    x = parentalBox.Min.x;
+                    x = marginBox.Min.x;
                 else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
-                    x = parentalBox.center().x - sizeBox.size().x * 0.5f;
+                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
                 else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                    x = parentalBox.Max.x - sizeBox.size().x;
+                    x = marginBox.Max.x - paddingBox.size().x;
                 
                 if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
-                    y = parentalBox.Min.y;
+                    y = marginBox.Min.y;
                 else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
-                    y = parentalBox.center().y - sizeBox.size().y * 0.5f;
+                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
                 else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
-                    y = parentalBox.Max.y - sizeBox.size().y;
+                    y = marginBox.Max.y - paddingBox.size().y;
 
                 gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
 
@@ -1962,16 +1941,12 @@ namespace Frenchie
                         continue;
                     
                     gs_vec2f size = gs_vec2f(
-                        (gs_clamp(gs_vec2f(((*it)->State.BoundingBox.size() * scale).x, sizeBox.height()), (*it)->State.MinimumSize, (*it)->State.MaximumSize)).x,
-                        sizeBox.height());
-                    
-                    gs_vec2f size1 = gs_vec2f(
-                        (gs_clamp(gs_vec2f(((*it)->State.BoundingBox.size() * scale1).x, parentalBox.height()), (*it)->State.MinimumSize, (*it)->State.MaximumSize)).x,
-                        parentalBox.height());
+                        gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
+                        paddingBox.height());
 
                     (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
 
-                    position += gs_vec2f(size.x, 0.f);
+                    position += gs_vec2f(size.x + (leftPadding + rightPadding) * 0.5f, 0.f);
                 }
             }
 
@@ -3335,8 +3310,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.size() - _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Min,
+        State.BoundingBox.size(),
         ContentPadding,
         ContentMargin,
         State.Settings,
@@ -3484,22 +3459,6 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
-    // extract padding
-    float topPadding    = ContentPadding.x;
-    float leftPadding   = ContentPadding.y;
-    float rightPadding  = ContentPadding.z;
-    float bottomPadding = ContentPadding.w;
-    
-    // extract margin
-    float topMargin     = ContentMargin.x;
-    float leftMargin    = ContentMargin.y;
-    float rightMargin   = ContentMargin.z;
-    float bottomMargin  = ContentMargin.w;
-
-    gs_2dboxf parentalBox = gs_2dboxf(
-        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin),
-        State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + State.BoundingBox.size());
-
     // extract scroll area
     ImmediateUserInterfaceScrollArea* scrollArea = nullptr;
     ImmediateUserInterfaceNode*       parent     = _Context->m_Hierarchy.get_parent(this);
@@ -3528,9 +3487,23 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
                 0.f; 
 
     // layout
-    gs_vec2f position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(indent, 0.f);
-    gs_vec2f start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
-    float    maxHeight = 0.f;
+
+    // extract padding
+    float topPadding    = ContentPadding.x;
+    float leftPadding   = ContentPadding.y;
+    float rightPadding  = ContentPadding.z;
+    float bottomPadding = ContentPadding.w;
+    
+    // extract margin
+    float topMargin     = ContentMargin.x;
+    float leftMargin    = ContentMargin.y;
+    float rightMargin   = ContentMargin.z;
+    float bottomMargin  = ContentMargin.w;
+
+    gs_2dboxf marginBox = gs_2dboxf(State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin), State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + State.BoundingBox.size());
+    gs_vec2f  position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(indent, 0.f);
+    gs_vec2f  start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
+    float     maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
@@ -4219,28 +4192,40 @@ void ImmediateUserInterfaceCombobox::layout(ImmediateUserInterfaceContextLayer* 
         State.BoundingBox.Min,
         State.BoundingBox.Min + gs_vec2f(State.BoundingBox.width(), _Context->m_Style.get_font_size()));
 
+    if(ScrollArea == nullptr || ScrollArea->ContentView == nullptr)
+        return;
+
     // resize children
     float MaximumWidth = 0.f;
 
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    for(auto it = _Context->m_Hierarchy.begin(ScrollArea->ContentView); it != _Context->m_Hierarchy.end(ScrollArea->ContentView); it++)
     {
         ImmediateUserInterfaceComboboxItem* comboboxItem =
             dynamic_cast<ImmediateUserInterfaceComboboxItem*>(*it);
 
-        if(comboboxItem != nullptr)
-            MaximumWidth = gs_max(MaximumWidth, comboboxItem->State.BoundingBox.width());
+        if(comboboxItem == nullptr)
+            continue;
+
+        MaximumWidth = _Context->m_Renderer->calculate_bounding_box(
+            comboboxItem->Name.begin(),
+            comboboxItem->Name.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size();
     }
 
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    for(auto it = _Context->m_Hierarchy.begin(ScrollArea->ContentView); it != _Context->m_Hierarchy.end(ScrollArea->ContentView); it++)
     {
         ImmediateUserInterfaceComboboxItem* comboboxItem =
             dynamic_cast<ImmediateUserInterfaceComboboxItem*>(*it);
 
         if(comboboxItem != nullptr)
         {
+            comboboxItem->State.MinimumSize = gs_vec2f(MaximumWidth, _Context->m_Style.get_font_size());
+            comboboxItem->State.MaximumSize = comboboxItem->State.MinimumSize;
+
             comboboxItem->State.BoundingBox = gs_2dboxf(
                 comboboxItem->State.BoundingBox.Min,
-                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, comboboxItem->State.BoundingBox.height()));
+                comboboxItem->State.BoundingBox.Min + gs_vec2f(MaximumWidth, _Context->m_Style.get_font_size()));
         }
     }
 }
@@ -4286,7 +4271,7 @@ void ImmediateUserInterfaceComboboxItem::layout(ImmediateUserInterfaceContextLay
         gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
 
     State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), size.y);
-    State.MaximumSize = gs_vec2f(gs_min(size.x, State.MaximumSize.x), size.y);
+    State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), size.y);
 }
 
 void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -6852,7 +6837,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout checkbox
             if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox)
             {
-                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MinimumSize = m_Style.get_font_size() + m_Style.get_frames_width();
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -6862,7 +6847,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout radio button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_RadioButton)
             {
-                widget->State.MinimumSize = m_Style.get_font_size();
+                widget->State.MinimumSize = m_Style.get_font_size() + m_Style.get_frames_width();
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -6872,7 +6857,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
             // layout slider button
             else if(_Settings & ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_SliderButton)
             {
-                widget->State.MinimumSize = gs_vec2f(m_Style.get_font_size() * 2.f, m_Style.get_font_size());
+                widget->State.MinimumSize = gs_vec2f((m_Style.get_font_size() + m_Style.get_frames_width()) * 2.f, m_Style.get_font_size() + m_Style.get_frames_width());
                 widget->State.MaximumSize = widget->State.MinimumSize;
 
                 widget->State.BoundingBox = gs_2dboxf(
@@ -7171,7 +7156,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         float weight = 1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
 
-        gs_vec4f padding = gs_vec4f(0.f, 0.f, 0.f, 0.f);
+        gs_vec4f padding = gs_vec4f(0.f, m_Style.get_frames_width() * 2.f, 0.f, 0.f);
 
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
@@ -7658,7 +7643,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
 
-        gs_vec4f padding = gs_vec4f(0.f, 0.f, 0.f, 0.f);
+        gs_vec4f padding = gs_vec4f(0.f, m_Style.get_frames_width() * 2.f, 0.f, 0.f);
 
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
@@ -8148,7 +8133,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
 
-        gs_vec4f padding = gs_vec4f(0.f, 0.f, 0.f, 0.f);
+        gs_vec4f padding = gs_vec4f(0.f, m_Style.get_frames_width() * 2.f, 0.f, 0.f);
 
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
