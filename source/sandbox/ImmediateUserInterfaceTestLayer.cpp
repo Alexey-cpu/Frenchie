@@ -173,19 +173,54 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
-    // m_ImmediateUserInterface->m_Settings =
-    //     ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking
-    //     | ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
-
-    static bool openWindow1 = false;
+    static bool contextSettings = false;
     static bool openWindow2 = false;
     static bool openWindow3 = false;
 
     if(m_ImmediateUserInterface->begin_window(
-        m_ImmediateUserInterface->next_id("Window1", "Window-1"),
+        m_ImmediateUserInterface->next_id("ContextSettings", "Context settings"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        &openWindow1))
+        &contextSettings))
     {
+        static bool windowsMutualDockingEnabled    = true;
+        static bool windowsWorkspaceDockingEnabled = true;
+        static bool highlightHoveredNodes          = true;
+
+        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Settings")))
+        {
+            // windows mutual docking
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("WindowsMutualDocking"), windowsMutualDockingEnabled);
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("WindowsMutualDockingLabel"), "Windows mutual docking");
+
+            if(windowsMutualDockingEnabled)
+                m_ImmediateUserInterface->m_Settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
+            else
+                m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
+
+            // windows workspace docking
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("WindowsWorkspaceDocking"), windowsWorkspaceDockingEnabled);
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("WindowsWorkspaceDockingLabel"), "Windows workspace docking");
+
+            if(windowsWorkspaceDockingEnabled)
+                m_ImmediateUserInterface->m_Settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+            else
+                m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
+
+            // highlight hovered nodes
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HighlightHoveredNodes"), highlightHoveredNodes);
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HighlightHoveredNodesLabel"), "Highlight hovered nodes");
+
+            if(highlightHoveredNodes)
+                m_ImmediateUserInterface->m_Settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
+            else
+                m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+
         m_ImmediateUserInterface->end_window();
     }
 
@@ -209,14 +244,14 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     {
         if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu")))
         {
-            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 1", "OpenWindow1")))
-                openWindow1 = true;
+            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
+                contextSettings = true;
 
-            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 2", "OpenWindow2")))
-                openWindow2 = true;
+            // if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 2", "OpenWindow2")))
+            //     openWindow2 = true;
 
-            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 3", "OpenWindow3")))
-                openWindow3 = true;
+            // if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 3", "OpenWindow3")))
+            //     openWindow3 = true;
 
             m_ImmediateUserInterface->end_menu();
         }

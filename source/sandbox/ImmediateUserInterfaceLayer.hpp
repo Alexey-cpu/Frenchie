@@ -234,7 +234,7 @@ namespace Frenchie
         enum ImmediateUserInterfaceContextSettings_ : int
         {
             // docking
-            ImmediateUserInterfaceContextSettings_DisableDocking         = 1 << 0, // disables all docking features
+            ImmediateUserInterfaceContextSettings_None                   = 1 << 0, // disables all docking features
             ImmediateUserInterfaceContextSettings_EnableWindowsDocking   = 1 << 1, // enables windows mutual docking
             ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking = 1 << 2, // enables workspace dock area
 
