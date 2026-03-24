@@ -141,6 +141,7 @@ namespace Frenchie
 
             // getters
             gs_vec2f get_scroll_offset() const;
+            gs_vec2f get_scroll_scale() const;
 
             // setters
             void set_scroll_offset(const gs_vec2f _Value);
@@ -258,6 +259,38 @@ namespace Frenchie
             ApplicationRenderingBackendTexture TextureOpened {ApplicationRenderingBackendTexture()};
             ApplicationRenderingBackendTexture TextureClosed {ApplicationRenderingBackendTexture()};
             int                                TreeSettings  {0};
+        };
+
+        // grid
+        struct ImmediateUserInterfaceLayerGridCell;
+        struct ImmediateUserInterfaceLayerGrid;
+
+        struct ImmediateUserInterfaceLayerGridCell : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceLayerGridCell(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceLayerGridCell();
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            int Row    = 0;
+            int Column = 0;
+        };
+
+        struct ImmediateUserInterfaceLayerGrid : public ImmediateUserInterfaceNodePanel
+        {
+        public:
+            ImmediateUserInterfaceLayerGrid(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceLayerGrid();
+            
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_vec2f CellSize = gs_vec2f(256.f, 64.f);
+            int      MaxRow   = 0;
+            int      MaxCol   = 0;
         };
 
         // windows
@@ -1735,33 +1768,8 @@ namespace Frenchie
             };
 
             // layouting
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_panel(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
+            gs_vec2f compute_aligned_position(const gs_2dboxf& marginBox, const gs_2dboxf& paddingBox, const int& _Settings)
             {
-                // extract padding
-                float topPadding    = _Padding.x;
-                float leftPadding   = _Padding.y;
-                float rightPadding  = _Padding.z;
-                float bottomPadding = _Padding.w;
-                
-                // extract margin
-                float topMargin     = _Margin.x;
-                float leftMargin    = _Margin.y;
-                float rightMargin   = _Margin.z;
-                float bottomMargin  = _Margin.w;
-
-                // layout children
-                gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
-                gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
-
                 float x = marginBox.Min.x;
                 float y = marginBox.Min.y;
 
@@ -1779,7 +1787,37 @@ namespace Frenchie
                 else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
                     y = marginBox.Max.y - paddingBox.size().y;
 
-                gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                return gs_vec2f(x, y);
+            };
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_panel(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
+                const int&            _Settings,
+                const FrameProcessor& _Filter)
+            {
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // layout children
+                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                gs_2dboxf boundingBox = gs_2dboxf(position, position);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -1789,6 +1827,31 @@ namespace Frenchie
                     (*it)->State.BoundingBox = gs_2dboxf(
                         position,
                         position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+                    boundingBox = gs_2dboxf(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within padding box
+                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+                    boundingBox = gs_2dboxf(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
                 }
             }
 
@@ -1834,25 +1897,7 @@ namespace Frenchie
                 gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
                 gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
                 gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-
-                float x = marginBox.Min.x;
-                float y = marginBox.Min.y;
-
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
-                    x = marginBox.Min.x;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
-                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                    x = marginBox.Max.x - paddingBox.size().x;
-                
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
-                    y = marginBox.Min.y;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
-                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
-                    y = marginBox.Max.y - paddingBox.size().y;
-
-                gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                gs_vec2f  position   = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -1911,25 +1956,7 @@ namespace Frenchie
                 gs_2dboxf marginBox  = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
                 gs_2dboxf paddingBox = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
                 gs_vec2f  scale      = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-
-                float x = marginBox.Min.x;
-                float y = marginBox.Min.y;
-
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
-                    x = marginBox.Min.x;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
-                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                    x = marginBox.Max.x - paddingBox.size().x;
-                
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
-                    y = marginBox.Min.y;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
-                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
-                    y = marginBox.Max.y - paddingBox.size().y;
-
-                gs_vec2f position = gs_vec2f(x, y) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                gs_vec2f  position   = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
 
                 for(auto it = _Begin; it != _End; ++it)
                 {
@@ -3535,12 +3562,17 @@ gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset() const
     return Position * PositionScale;
 }
 
+gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_scale() const
+{
+    return PositionScale;
+}
+
 void ImmediateUserInterfaceScrollAreaScrollBar::set_scroll_offset(const gs_vec2f _Value)
 {
     if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f) return;
 
     PreviousPosition = Position;
-    Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+    Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size());
 }
 
 void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3566,9 +3598,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
 
     auto calculate_scrollbar_slider_position_scale = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)->gs_vec2f
     {
-        return gs_vec2f(
-            gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x),
-            gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
+        return gs_vec2f(gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x), gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
     };
 
     // main code
@@ -3627,6 +3657,8 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
         return;
     }
 
+    gs_vec2f minimumSliderSize = _Context->m_Style.get_scrollbar_width();
+
     // manage horizontal scrollbar
     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
     {
@@ -3640,7 +3672,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
             scrollbarMinimumValue,
             scrollbarMaximumValue,
             contentArea->ContentView->State.ContentSize,
-            _Context->m_Style.get_scrollbar_width());
+            minimumSliderSize);
 
         if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
         {
@@ -3684,7 +3716,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
             scrollbarMinimumValue,
             scrollbarMaximumValue,
             contentArea->ContentView->State.ContentSize,
-            _Context->m_Style.get_scrollbar_width());
+            minimumSliderSize);
 
         if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
         {
@@ -3719,16 +3751,16 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
         scrollbarMinimumValue,
         scrollbarMaximumValue,
-        contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y),
-        _Context->m_Style.get_scrollbar_width());
+        contentArea->ContentView->State.ContentSize,
+        minimumSliderSize);
 
     gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
         scrollbarMinimumValue,
         scrollbarMaximumValue,
-        contentArea->ContentView->State.ContentSize + gs_min(State.BoundingBox.size().x, State.BoundingBox.size().y));
+        contentArea->ContentView->State.ContentSize);
 
     gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
-    
+
     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
     {
         if(sliderPosition.y > State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
@@ -3919,7 +3951,7 @@ bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceCon
     // move slider on mouse press event
     if(_Context->m_Input.is_mouse_button_pressed())
     {
-        Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - Size * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+        Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - Size * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size());
         PreviousPosition = Position;
         State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
     }
@@ -3927,7 +3959,7 @@ bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceCon
     // move slider on mouse drag event
     if(_Context->m_Input.is_mouse_button_down())
     {
-        Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - Size);
+        Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size());
         State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
     }
 
@@ -4528,6 +4560,98 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
     }
 
     State.ContentSize = box.size();
+}
+
+// ImmediateUserInterfaceLayerGridCell
+ImmediateUserInterfaceLayerGridCell::ImmediateUserInterfaceLayerGridCell(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceLayerGridCell::~ImmediateUserInterfaceLayerGridCell(){}
+
+void ImmediateUserInterfaceLayerGridCell::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // outline
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    // background
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
+        State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width()),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
+void ImmediateUserInterfaceLayerGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceLayerGrid*>(
+        _Context->m_Hierarchy.get_parent(this)) != nullptr);
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
+        State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
+        ContentPadding,
+        ContentMargin,
+        State.Settings,
+        [this](const ImmediateUserInterfaceNode* _Node){return true;});
+}
+
+// ImmediateUserInterfaceLayerGridNode
+ImmediateUserInterfaceLayerGrid::ImmediateUserInterfaceLayerGrid(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceLayerGrid::~ImmediateUserInterfaceLayerGrid(){}
+
+void ImmediateUserInterfaceLayerGrid::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    ImmediateUserInterfaceLayerGridCell* cell =
+        dynamic_cast<ImmediateUserInterfaceLayerGridCell*>(_Child);
+
+    GS_ASSERT(cell != nullptr);
+
+    MaxRow = gs_max(MaxRow, cell->Row);
+    MaxCol = gs_max(MaxCol, cell->Column);
+
+    cell->State.Parent = this;
+}
+
+void ImmediateUserInterfaceLayerGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    // layout self
+    State.BoundingBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        State.BoundingBox.Min + State.ContentSize);
+
+    // layout children
+    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
+    {
+        ImmediateUserInterfaceLayerGridCell* cell =
+            dynamic_cast<ImmediateUserInterfaceLayerGridCell*>(*it);
+
+        if(cell == nullptr)
+            continue;
+
+        cell->State.BoundingBox = gs_2dboxf(
+            State.BoundingBox.Min + CellSize * gs_vec2f((float)cell->Column, (float)cell->Row),
+            State.BoundingBox.Min + CellSize * gs_vec2f((float)cell->Column + 1.f, (float)cell->Row + 1.f));
+    }
+}
+
+void ImmediateUserInterfaceLayerGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+    
+    State.ContentSize = CellSize * gs_vec2f((float)MaxCol, (float)MaxRow);
 }
 
 // ImmediateUserInterfaceWindow
@@ -6402,6 +6526,35 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
             }
         }
     }
+}
+
+// ImmediateUserInterfaceContextLayer
+ImmediateUserInterfaceGridClipper::ImmediateUserInterfaceGridClipper(
+    const ImmediateUserInterfaceNode* _ScorllArea,
+    const int&                        _RowsCount,
+    const int&                        _ColsCount,
+    const gs_vec2f&                   _CellSize)
+{
+    // auxiliary lambdas
+    auto current_scrollbar_offset = [](const ImmediateUserInterfaceScrollArea* scrollArea)
+    {
+        return gs_vec2f(
+            scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset().x : 0.f,
+            scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset().y   : 0.f);
+    };
+
+    const ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
+
+    if(scrollArea == nullptr) return;
+
+    gs_vec2f scrollOffset = current_scrollbar_offset(scrollArea);
+    gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
+
+    SourceRow = gs_min((int)roundf(scrollOffset.y / _CellSize.y), _RowsCount);
+    TargetRow = gs_min((int)roundf((scrollOffset + visibleSize).y / _CellSize.y), _RowsCount);
+    SourceCol = gs_min((int)roundf(scrollOffset.x / _CellSize.x), _ColsCount);
+    TargetCol = gs_min((int)roundf((scrollOffset + visibleSize).x / _CellSize.x), _ColsCount);
 }
 
 // ImmediateUserInterfaceContextLayer2
@@ -8561,6 +8714,53 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
+bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f _CellSize)
+{
+    if(begin_node<ImmediateUserInterfaceLayerGrid>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+    {
+        ImmediateUserInterfaceLayerGrid* grid =
+            get_rendering_stack_top<ImmediateUserInterfaceLayerGrid>();
+
+        grid->CellSize = _CellSize;
+        grid->MaxRow   = _RowsCount;
+        grid->MaxCol   = _ColumnsCount;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_grid()
+{
+    end_node<ImmediateUserInterfaceLayerGrid>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceLayerGridCell>(
+        next_id(std::string("Cell-").append(Frenchie::Core::String::to_string(_Row)).append("-").append(Frenchie::Core::String::to_string(_Column))),
+        _Settings))
+    {
+        ImmediateUserInterfaceLayerGridCell* cell =
+            get_rendering_stack_top<ImmediateUserInterfaceLayerGridCell>();
+
+        cell->Row    = _Row;
+        cell->Column = _Column;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_grid_cell()
+{
+    end_node<ImmediateUserInterfaceLayerGridCell>();
+}
+
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
 {
     ImmediateUserInterfaceMenu*       menu      = nullptr;
@@ -8770,4 +8970,14 @@ void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _V
 
     if(controller != nullptr)
         controller->NextContentPadding = _Value;
+}
+
+gs_vec2f ImmediateUserInterfaceContextLayer::current_scrollbar_offset() const
+{
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+
+    return gs_vec2f(
+        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset().x : 0.f,
+        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset().y   : 0.f);
 }

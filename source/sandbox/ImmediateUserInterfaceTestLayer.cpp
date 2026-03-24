@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    widgets_test();
-    //develop_test();
+    //widgets_test();
+    develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -174,11 +174,43 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
     static bool contextSettings = false;
-    static bool openWindow2 = false;
-    static bool openWindow3 = false;
+    static bool showOverlay     = true;
+    // static bool openWindow2     = false;
+    // static bool openWindow3     = false;
+
+    if(showOverlay)
+    {
+        m_ImmediateUserInterface->next_position(gs_vec2f(0.f, 0.f));
+
+        if(m_ImmediateUserInterface->begin_scrollarea(
+            m_ImmediateUserInterface->next_id("Overlay"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically |
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        {
+            // FPS
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("FPSLabel"), "FPS");
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->indent(32.f);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("FPSValue"), Frenchie::Core::String::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().FrameRate));
+
+            // CMD
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("CMDLabel"), "CMD");
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->indent(32.f);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("CMDValue"), Frenchie::Core::String::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderingCommandsCount));
+
+            // Triangles
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TrianglesLabel"), "Triangles");
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->indent(32.f);
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TrianglesValue"), Frenchie::Core::String::to_string(m_ImmediateUserInterface->m_Renderer->get_rendering_queue_metrics().RenderedTrianglesCount));
+
+            m_ImmediateUserInterface->end_scrollarea();
+        }
+    }
 
     if(m_ImmediateUserInterface->begin_window(
-        m_ImmediateUserInterface->next_id("ContextSettings", "Context settings"),
+        m_ImmediateUserInterface->next_id("Context settings", "ContextSettings"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
         &contextSettings))
     {
@@ -224,21 +256,21 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_ImmediateUserInterface->end_window();
     }
 
-    if(m_ImmediateUserInterface->begin_window(
-        m_ImmediateUserInterface->next_id("Window2", "Window-2"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        &openWindow2))
-    {
-        m_ImmediateUserInterface->end_window();
-    }
+    // if(m_ImmediateUserInterface->begin_window(
+    //     m_ImmediateUserInterface->next_id("Window2", "Window-2"),
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+    //     &openWindow2))
+    // {
+    //     m_ImmediateUserInterface->end_window();
+    // }
 
-    if(m_ImmediateUserInterface->begin_window(
-        m_ImmediateUserInterface->next_id("Window3", "Window-3"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        &openWindow3))
-    {
-        m_ImmediateUserInterface->end_window();
-    }
+    // if(m_ImmediateUserInterface->begin_window(
+    //     m_ImmediateUserInterface->next_id("Window3", "Window-3"),
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+    //     &openWindow3))
+    // {
+    //     m_ImmediateUserInterface->end_window();
+    // }
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Test window", "Window")))
     {
@@ -246,12 +278,6 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         {
             if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
                 contextSettings = true;
-
-            // if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 2", "OpenWindow2")))
-            //     openWindow2 = true;
-
-            // if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open window 3", "OpenWindow3")))
-            //     openWindow3 = true;
 
             m_ImmediateUserInterface->end_menu();
         }
@@ -278,6 +304,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
             float minimum = 0.f;
             float maximum = 128.f;
+
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("ShowOverlay"), showOverlay);
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ShowOverlayLabel"), "Show overlay");
 
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Layouts", "Layouts")))
             {
@@ -426,8 +456,9 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
                         m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
 
-                        if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("VerticalStack"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("Panel"), horizontalAlignmentSettings | verticalAlignmentSettings))
                         {
+                            m_ImmediateUserInterface->next_size(gs_vec2f(256.f, 256.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
                             m_ImmediateUserInterface->end_panel();
                         }
@@ -791,49 +822,48 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    int settings =
-            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
-        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
-
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
-        if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("LayoutTweaks", "LayoutTweaks")))
+        int      rowsCount = 1000;
+        int      colsCount = 1000;
+        gs_vec2f cellSize  = gs_vec2f(256.f, 128.f);
+
+        if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
         {
-            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Child-2")))
+            ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, colsCount, cellSize);
+
+            if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, colsCount, cellSize))
             {
-                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
-                {
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
+                for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
+                { 
+                    for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+                    {
+                        int cellSettings = 
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
 
-                    m_ImmediateUserInterface->end_scrollarea();
+                        if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
+                        {
+                            if(i == 0)
+                                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+                            else if(j == 0)
+                                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(i));
+                            else
+                            {
+                                m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
+                                m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Title"), gs_color_rgb(255, 255, 255));
+                            }
+
+                            m_ImmediateUserInterface->end_grid_cell();
+                        }
+                    }
                 }
 
-                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin1"), settings))
-                {
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
-
-                    m_ImmediateUserInterface->end_scrollarea();
-                }
-
-                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin2"), settings))
-                {
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-1", "Button-1"));
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-2", "Button-2"));
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button-3", "Button-3"));
-
-                    m_ImmediateUserInterface->end_scrollarea();
-                }
-
-                m_ImmediateUserInterface->end_horizontal_stack();
+                m_ImmediateUserInterface->end_grid();
             }
 
-            m_ImmediateUserInterface->end_tree_node();
+            m_ImmediateUserInterface->end_scrollarea();
         }
-
 
         m_ImmediateUserInterface->end_window();
     }
