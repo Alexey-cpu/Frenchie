@@ -663,7 +663,21 @@ namespace Frenchie
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
         };
 
-        // context layer
+        struct ImmediateUserInterfaceGridClipper final
+        {
+            ImmediateUserInterfaceGridClipper(
+                const ImmediateUserInterfaceNode* _ScorllArea,
+                const int&                        _RowsCount,
+                const int&                        _ColumnsCount,
+                const gs_vec2f&                   _CellSize);
+
+            int SourceRow = 0;
+            int TargetRow = 0;
+            int SourceCol = 0;
+            int TargetCol = 0;
+        };
+
+        // This class plays role of UI context
         class ImmediateUserInterfaceContextLayer : public Layer
         {
         public:
@@ -854,7 +868,13 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
             void end_tree_node();
 
-            // UI Widgets API
+            bool begin_grid(const std::string& _ID, const int& _RowsCount = 0, const int& _ColumnsCount = 0, const gs_vec2f _CellSize = gs_vec2f(256.f, 64.f));
+            void end_grid();
+
+            bool begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_grid_cell();
+
+            // UI widgets API
 
             // This function creates a simple push button widget
             // _ID - unique ID
@@ -1020,6 +1040,9 @@ namespace Frenchie
             // This function sets content pading of the next created node. The value is set every frame.
             // _Value - content padding values {top, left, right, bottom}
             void next_content_padding(const gs_vec4f& _Value);
+
+            // getters
+            gs_vec2f current_scrollbar_offset() const;
 
             // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const
