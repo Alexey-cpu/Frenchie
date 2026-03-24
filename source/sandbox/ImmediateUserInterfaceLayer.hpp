@@ -679,7 +679,7 @@ namespace Frenchie
             virtual void frame_finish() override;
             virtual void finish() override;
 
-            // UI API
+            // UI scoped elements API
 
             // This is the base function that creates UI nodes
             // _ID       - unique node ID
@@ -854,7 +854,7 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
             void end_tree_node();
 
-            // Widgets API
+            // UI Widgets API
 
             // This function creates a simple push button widget
             // _ID - unique ID
@@ -1021,7 +1021,7 @@ namespace Frenchie
             // _Value - content padding values {top, left, right, bottom}
             void next_content_padding(const gs_vec4f& _Value);
 
-            // Controllers API
+            // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const
             {
                 for(auto& controller : m_Controllers)
@@ -1033,23 +1033,18 @@ namespace Frenchie
                 return nullptr;
             }
 
-            // Rendering stack API
+            // This function retrieves the node from the top of rendering nodes stack and tries to cast to a type 'Type'
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_rendering_stack_top() const
             {
-                if(m_NodesRenderingStack.empty())
-                    return nullptr;
-
-                return dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]);
+                return !m_NodesRenderingStack.empty() ? dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) : nullptr;
             }
 
+            // This function retrieves the node from the top of rendered nodes stack and tries to cast to a type 'Type'
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_rendered_stack_top() const
             {
-                if(m_NodesRenderedStack.empty())
-                    return nullptr;
-
-                return dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]);
+                return !m_NodesRenderedStack.empty() ? dynamic_cast<Type*>(m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]) : nullptr;
             }
 
             // info
@@ -1087,6 +1082,12 @@ namespace Frenchie
             std::string                                                           m_CurrentName;
             std::u32string                                                        m_IniFilePath = U"Frenchie.ini";
 
+            // This function creates the node of a type 'Type' and saves it into cache.
+            // If the node has already been created earlier the function retrieves if from cache.
+            // A unique _ID is used as key by which the function looks for the node within cache.
+            // A unique _ID can contain a unique hashable part and changable naming part. 
+            // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
+            // _ID - the unique ID of the node
             template<typename Type>
             Type* create_node(const std::string& _ID)
             {

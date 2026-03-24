@@ -320,8 +320,8 @@ namespace Frenchie
                 int      totalFramesCount = 0;
 
                 for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                            it != _Context->m_Hierarchy.end(_Window->DockerView);
-                            it++)
+                         it != _Context->m_Hierarchy.end(_Window->DockerView);
+                         it++)
                 {
                     if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
 
@@ -822,11 +822,7 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringContent* widget     = nullptr;
             bool                                      edited     = false;
 
-            _Context->next_content_margin(gs_vec4f(
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_width(),
-                _Context->m_Style.get_frames_width()));
+            _Context->next_content_margin(gs_vec4f(_Context->m_Style.get_frames_width()));
 
             if(_Context->begin_node<ImmediateUserInterfaceInputString>(std::string(_ID).append("/ScrollArea"),
                 scrollAreaSettings))
@@ -1981,7 +1977,7 @@ namespace Frenchie
             gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
                 return gs_2dboxf(
                     _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
@@ -1991,7 +1987,7 @@ namespace Frenchie
             gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
                 return gs_2dboxf(
                     _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
@@ -2001,7 +1997,7 @@ namespace Frenchie
             gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
                 return gs_2dboxf(
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
@@ -2011,7 +2007,7 @@ namespace Frenchie
             gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = _Context->m_Style.get_frames_width() * 2.f;
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
 
                 return gs_2dboxf(
                     _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
@@ -4821,9 +4817,9 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
 }
 
 bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContextLayer* _Context, 
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render)
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings,
+    bool*                                     _Render)
 {
     if(_Context == nullptr) return false;
 
@@ -5149,8 +5145,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
 
     // create worksapce dockarea
     m_DockAreaOpened =
-        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking) &&
-        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking);
+        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking);
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("DockingWorkspace"),
@@ -5283,19 +5278,42 @@ void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterface
 
 void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfaceContextLayer* _Context)
 {
+    // extract opened windows
+    std::set<ImmediateUserInterfaceNode*> openedWindows;
+    
+    for(auto node : _Context->m_NodesRenderingList)
+    {
+        if(dynamic_cast<ImmediateUserInterfaceWindow*>(node))
+            openedWindows.insert(node);
+    }
+
+    // detach all windows from closed window 
     for(auto node : _Context->m_NodesRenderingList)
     {
         ImmediateUserInterfaceWindow* window =
             dynamic_cast<ImmediateUserInterfaceWindow*>(node);
 
-        if(window == nullptr) continue;
+        if(window == nullptr)
+            continue;
+        
+        ImmediateUserInterfaceWindow* docker = nullptr;
 
-        // detach all windows from closed window
-        if(window->Opened != nullptr && !(*window->Opened))
+        if(window->Docker != nullptr)
+            docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->Docker);
+        else if(window->TopSnapper != nullptr)
+            docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->TopSnapper);
+        else if(window->LeftSnapper != nullptr)
+            docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->LeftSnapper);
+        else if(window->RightSnapper != nullptr)
+            docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->RightSnapper);
+        else if(window->BottomSnapper != nullptr)
+            docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->BottomSnapper);
+
+        if(docker != nullptr && openedWindows.find(docker) == openedWindows.end())
         {
             auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
                 _Context,
-                window,
+                docker,
                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_All);
 
             for(auto dockedWindow : dockedWindows)
@@ -8464,6 +8482,8 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             return false;
         }
 
+        next_content_margin(gs_vec4f(m_Style.get_frames_width()));
+
         if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(std::string(_ID).append("/ScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
@@ -8559,6 +8579,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
 
+        next_content_margin(gs_vec4f(m_Style.get_frames_width()));
+
         if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Menu/InternalScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
@@ -8606,6 +8628,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     {
         if(hasParent && isHovered && menuItem != nullptr)
         {
+            next_content_margin(gs_vec4f(m_Style.get_frames_width()));
+
             if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Main/ExternalScrollArea"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
@@ -8633,6 +8657,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
 
             return true;
         }
+        else menu->ExternalScrollArea = nullptr;
 
         // do not render children
         end_menu();
