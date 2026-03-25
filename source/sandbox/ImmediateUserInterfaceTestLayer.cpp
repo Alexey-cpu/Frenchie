@@ -881,8 +881,8 @@ void ImmediateUserInterfaceTestLayer::develop_test()
                 // cells
                 if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Cells")))
                 {
-                    scrollOffset   = m_ImmediateUserInterface->current_scrollbar_offset(false);
-                    scrollViewport = m_ImmediateUserInterface->current_scrollbar_viewport();
+                    scrollOffset   = m_ImmediateUserInterface->current_scroll_offset(false);
+                    scrollViewport = m_ImmediateUserInterface->current_scroll_viewport();
 
                     ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, colsCount, cellSize);
 

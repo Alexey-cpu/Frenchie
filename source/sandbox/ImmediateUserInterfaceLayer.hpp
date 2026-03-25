@@ -1078,8 +1078,11 @@ namespace Frenchie
             // current node API
 
             // This function returns current scrollarea scrollbar offset
-            gs_vec2f  current_scrollbar_offset(const bool& _Scaled = true) const;
-            gs_2dboxf current_scrollbar_viewport() const;
+            // _Scaled - if true returns content relative scroll offset, if false returns scroll area size relative offset
+            gs_vec2f  current_scroll_offset(const bool& _Scaled = true) const;
+
+            // This function returns current scrollarea viewport bounding box
+            gs_2dboxf current_scroll_viewport() const;
 
             // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const
