@@ -120,11 +120,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar            = 1 << 14, // horizontal scrollbar will be enabled when needed
             ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically             = 1 << 15, // node with scrollarea will be resized to it's contents vertically
             ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally           = 1 << 16, // node with scrollarea will be resized to it's contents horizontally
-
             ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment   = 1 << 17, // vertical scroll bar position will be adjusted by up/down keyboard arrows
             ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment = 1 << 18, // horizontal scroll bar position will be adjusted by left/right keyboard arrows
             ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment  = 1 << 19, // vertical scroll bar position will be adjusted by a mouse wheel
-
             ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar             = 1 << 20, // vertical scrollbar will be invisible
             ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar           = 1 << 21, // horizontal scrollbar will be invisible
 
@@ -868,9 +866,24 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
             void end_tree_node();
 
+            // This function renders grid (table)
+            // _ID           - unique ID
+            // _RowsCount    - number of rows within grid
+            // _ColumnsCount - number of columns within grid
+            // _CellSize     - grid cell size
+            // The content size of grid is computed as Size = gs_vec2f(_RowsCount, _ColumnsCount) * _CellSize
+            // If the _RowsCount and _ColumnsCount are not passed then they are computed dynamically as the cells are added to the grid.
+            // For large grids use scroll area plus ImmediateUserInterfaceGridClipper. Only grid cells can be added to the grid.
+            // If you try to add some other UI element to grid the function asserts.
             bool begin_grid(const std::string& _ID, const int& _RowsCount = 0, const int& _ColumnsCount = 0, const gs_vec2f _CellSize = gs_vec2f(256.f, 64.f));
             void end_grid();
 
+            // This function renders grid cell within grid
+            // _ID           - unique ID
+            // _RowsCount    - cell row number
+            // _ColumnsCount - cell column number
+            // Cells are essentially the panels, so you can add any content you want to cells.
+            // Cells can be added only to grid. If you try to use cell outside the grid this function asserts.
             bool begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_grid_cell();
 
@@ -1041,7 +1054,9 @@ namespace Frenchie
             // _Value - content padding values {top, left, right, bottom}
             void next_content_padding(const gs_vec4f& _Value);
 
-            // getters
+            // current node API
+
+            // This function returns current scrollarea scrollbar offset
             gs_vec2f current_scrollbar_offset() const;
 
             // This function returns controller of a type 'Type'
