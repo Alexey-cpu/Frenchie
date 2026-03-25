@@ -141,7 +141,6 @@ namespace Frenchie
 
             // getters
             gs_vec2f get_scroll_offset() const;
-            gs_vec2f get_scroll_scale() const;
 
             // setters
             void set_scroll_offset(const gs_vec2f _Value);
@@ -156,12 +155,11 @@ namespace Frenchie
         private:
 
             // info
-            gs_vec2f Size             = gs_vec2f(0.f, 0.f);
-            gs_vec2f Position         = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale    = gs_vec2f(1.f, 1.f);
-            gs_vec2f PreviousPosition = gs_vec2f(0.f, 0.f);
-
-            ImmediateUserInterfaceScrollArea* retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context);
+            gs_vec2f Position          = gs_vec2f(0.f, 0.f);
+            gs_vec2f PositionScale     = gs_vec2f(1.f, 1.f);
+            gs_vec2f PreviousPosition  = gs_vec2f(0.f, 0.f);
+            gs_vec2f ConstrainedSize   = gs_vec2f(0.f, 0.f);
+            gs_vec2f UnconstrainedSize = gs_vec2f(0.f, 0.f);
         };
 
         // menu
@@ -3618,17 +3616,13 @@ gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset() const
     return Position * PositionScale;
 }
 
-gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_scale() const
-{
-    return PositionScale;
-}
-
 void ImmediateUserInterfaceScrollAreaScrollBar::set_scroll_offset(const gs_vec2f _Value)
 {
-    if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f) return;
+    if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f)
+        return;
 
     PreviousPosition = Position;
-    Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size());
+    Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
 }
 
 void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3658,7 +3652,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     };
 
     // main code
-    ImmediateUserInterfaceScrollArea* contentArea = retrieve_scroll_area(_Context);
+    ImmediateUserInterfaceScrollArea* contentArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
 
     if(_Context == nullptr || contentArea == nullptr)
         return;
@@ -3819,16 +3813,22 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
 
     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
     {
-        if(sliderPosition.y > State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
+        if(sliderPosition.y >= State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
             PositionScale = scrollbarSliderScale;
     }
     else
     {
-        if(sliderPosition.x > State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
+        if(sliderPosition.x >= State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
             PositionScale = scrollbarSliderScale;
     }
 
-    Size = scrollbarSliderLength;
+    ConstrainedSize = scrollbarSliderLength;
+
+    UnconstrainedSize = calculate_scrollbar_length(
+        scrollbarMinimumValue,
+        scrollbarMaximumValue,
+        contentArea->ContentView->State.ContentSize,
+        0.f);
 }
 
 bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -3837,7 +3837,7 @@ bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceCon
     if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
         !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
     {
-        auto scrollArea = retrieve_scroll_area(_Context);
+        auto scrollArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
 
         if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
         {
@@ -4007,7 +4007,7 @@ bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceCon
     // move slider on mouse press event
     if(_Context->m_Input.is_mouse_button_pressed())
     {
-        Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - Size * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size());
+        Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - ConstrainedSize * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
         PreviousPosition = Position;
         State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
     }
@@ -4015,7 +4015,7 @@ bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceCon
     // move slider on mouse drag event
     if(_Context->m_Input.is_mouse_button_down())
     {
-        Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size());
+        Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
         State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
     }
 
@@ -4043,13 +4043,13 @@ void ImmediateUserInterfaceScrollAreaScrollBar::render(ImmediateUserInterfaceCon
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // slider
-    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - Size);
+    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - ConstrainedSize);
 
     if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
             sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
-            sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
+            sliderPosition + ConstrainedSize - _Context->m_Style.get_frames_width() * 2.f,
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -4058,31 +4058,11 @@ void ImmediateUserInterfaceScrollAreaScrollBar::render(ImmediateUserInterfaceCon
     {
         _Context->m_Renderer->push_rectangle_rounded_filled(
             sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
-            sliderPosition + Size - _Context->m_Style.get_frames_width() * 2.f,
+            sliderPosition + ConstrainedSize - _Context->m_Style.get_frames_width() * 2.f,
             _Context->m_Style.get_frames_radius(),
             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
     }
-}
-
-ImmediateUserInterfaceScrollArea* ImmediateUserInterfaceScrollAreaScrollBar::retrieve_scroll_area(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr) return nullptr;
-
-    auto parent = _Context->m_Hierarchy.get_parent(this);
-
-    while (parent)
-    {
-        ImmediateUserInterfaceScrollArea* contentArea =
-            dynamic_cast<ImmediateUserInterfaceScrollArea*>(parent);
-
-        if(contentArea != nullptr)
-            return contentArea;
-            
-        parent = _Context->m_Hierarchy.get_parent(parent);
-    }
-
-    return nullptr;
 }
 
 // ImmediateUserInterfaceMenu

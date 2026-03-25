@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    widgets_test();
-    //develop_test();
+    //widgets_test();
+    develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -798,8 +798,8 @@ void ImmediateUserInterfaceTestLayer::develop_test()
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
-        int      rowsCount = 1000;
-        int      colsCount = 1000;
+        int      rowsCount = 10000;
+        int      colsCount = 10000;
         gs_vec2f cellSize  = gs_vec2f(256.f, 128.f);
 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("ScrollArea")))
@@ -814,14 +814,24 @@ void ImmediateUserInterfaceTestLayer::develop_test()
                     {
                         int cellSettings = 
                             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
+                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+                            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
                         if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
                         {
+                            // render column title
                             if(i == 0)
+                            {
                                 m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+                            }
+
+                            // render row title
                             else if(j == 0)
+                            {
                                 m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(i));
+                            }
+                            // cell render contents
                             else
                             {
                                 m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
