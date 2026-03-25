@@ -1084,6 +1084,9 @@ namespace Frenchie
             // This function returns current scrollarea viewport bounding box
             gs_2dboxf current_scroll_viewport() const;
 
+            // this function returns current node bounding box
+            gs_2dboxf current_bounding_box() const;
+
             // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const
             {
@@ -1096,14 +1099,16 @@ namespace Frenchie
                 return nullptr;
             }
 
-            // This function retrieves the node from the top of rendering nodes stack and tries to cast to a type 'Type'
+            // This function retrieves the node from the top of currently
+            // rendered nodes stack and tries to cast it to a type 'Type'
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_rendering_stack_top() const
             {
                 return !m_NodesRenderingStack.empty() ? dynamic_cast<Type*>(m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]) : nullptr;
             }
 
-            // This function retrieves the node from the top of rendered nodes stack and tries to cast to a type 'Type'
+            // This function retrieves the node from the top of
+            // rendered nodes stack and tries to cast it to a type 'Type'
             template<typename Type = ImmediateUserInterfaceNode>
             Type* get_rendered_stack_top() const
             {

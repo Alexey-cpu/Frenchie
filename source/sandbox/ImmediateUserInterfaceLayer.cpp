@@ -9048,3 +9048,10 @@ gs_2dboxf ImmediateUserInterfaceContextLayer::current_scroll_viewport() const
 
     return scrollArea != nullptr ? scrollArea->ContentView->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
+
+gs_2dboxf ImmediateUserInterfaceContextLayer::current_bounding_box() const
+{
+    ImmediateUserInterfaceNode* node = get_rendered_stack_top();
+
+    return node != nullptr ? node->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+}
