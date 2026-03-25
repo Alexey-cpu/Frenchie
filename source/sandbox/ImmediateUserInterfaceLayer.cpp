@@ -9031,7 +9031,7 @@ void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Val
         controller->NextScrollOffset = _Value;
 }
 
-gs_vec2f ImmediateUserInterfaceContextLayer::current_scrollbar_offset(const bool& _Scaled) const
+gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const bool& _Scaled) const
 {
     ImmediateUserInterfaceScrollArea* scrollArea =
         get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
@@ -9041,7 +9041,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_scrollbar_offset(const bool
         scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(_Scaled).y   : 0.f);
 }
 
-gs_2dboxf ImmediateUserInterfaceContextLayer::current_scrollbar_viewport() const
+gs_2dboxf ImmediateUserInterfaceContextLayer::current_scroll_viewport() const
 {
     ImmediateUserInterfaceScrollArea* scrollArea =
         get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
