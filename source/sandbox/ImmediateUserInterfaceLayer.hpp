@@ -756,6 +756,16 @@ namespace Frenchie
                     if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentPadding.has_value())
                         dynamic_cast<ImmediateUserInterfaceNodePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
 
+                    // next content padding
+                    if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
+                    {
+                        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->HorizontalScrollBar)
+                            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->HorizontalScrollBar->set_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
+                        
+                        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->VerticalScrollBar)
+                            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->VerticalScrollBar->set_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
+                    }
+
                     // reset next item controller
                     controller->reset();
                 }
@@ -888,6 +898,13 @@ namespace Frenchie
             void end_grid_cell();
 
             // UI widgets API
+
+            // This function creates empty placeholder node
+            // _ID           - unique ID
+            // _Settings     - settings
+            void empty_node(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
 
             // This function creates a simple push button widget
             // _ID - unique ID
@@ -1054,10 +1071,15 @@ namespace Frenchie
             // _Value - content padding values {top, left, right, bottom}
             void next_content_padding(const gs_vec4f& _Value);
 
+            // This function sets scroll offset of the next created scrollarea. The value is set every frame.
+            // _Value - scroll offset {horizontal, vertical}
+            void next_scroll_offset(const gs_vec2f& _Value);
+
             // current node API
 
             // This function returns current scrollarea scrollbar offset
-            gs_vec2f current_scrollbar_offset() const;
+            gs_vec2f  current_scrollbar_offset(const bool& _Scaled = true) const;
+            gs_2dboxf current_scrollbar_viewport() const;
 
             // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const
