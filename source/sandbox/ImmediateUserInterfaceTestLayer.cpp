@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    develop_test();
+    widgets_test();
+    //develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -173,12 +173,7 @@ void ImmediateUserInterfaceTestLayer::windows_test()
 
 void ImmediateUserInterfaceTestLayer::widgets_test()
 {
-    static bool contextSettings = false;
-    static bool showOverlay     = true;
-    // static bool openWindow2     = false;
-    // static bool openWindow3     = false;
-
-    if(showOverlay)
+    if(State.ShowContextOverlay)
     {
         m_ImmediateUserInterface->next_position(gs_vec2f(0.f, 0.f));
 
@@ -212,40 +207,36 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
     if(m_ImmediateUserInterface->begin_window(
         m_ImmediateUserInterface->next_id("Context settings", "ContextSettings"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-        &contextSettings))
+        &State.ShowContextSettings))
     {
-        static bool windowsMutualDockingEnabled    = true;
-        static bool windowsWorkspaceDockingEnabled = true;
-        static bool highlightHoveredNodes          = true;
-
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Settings")))
         {
             // windows mutual docking
-            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("WindowsMutualDocking"), windowsMutualDockingEnabled);
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("WindowsMutualDocking"), State.ContextWindowsDockingEnabled);
             m_ImmediateUserInterface->same_line();
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("WindowsMutualDockingLabel"), "Windows mutual docking");
 
-            if(windowsMutualDockingEnabled)
+            if(State.ContextWindowsDockingEnabled)
                 m_ImmediateUserInterface->m_Settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
             else
                 m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking;
 
             // windows workspace docking
-            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("WindowsWorkspaceDocking"), windowsWorkspaceDockingEnabled);
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("WindowsWorkspaceDocking"), State.ContextWorkspaceDockingEnabled);
             m_ImmediateUserInterface->same_line();
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("WindowsWorkspaceDockingLabel"), "Windows workspace docking");
 
-            if(windowsWorkspaceDockingEnabled)
+            if(State.ContextWorkspaceDockingEnabled)
                 m_ImmediateUserInterface->m_Settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
             else
                 m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking;
 
             // highlight hovered nodes
-            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HighlightHoveredNodes"), highlightHoveredNodes);
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HighlightHoveredNodes"), State.ContextHighlightHoveredNodes);
             m_ImmediateUserInterface->same_line();
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HighlightHoveredNodesLabel"), "Highlight hovered nodes");
 
-            if(highlightHoveredNodes)
+            if(State.ContextHighlightHoveredNodes)
                 m_ImmediateUserInterface->m_Settings |= ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
             else
                 m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
@@ -256,56 +247,22 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_ImmediateUserInterface->end_window();
     }
 
-    // if(m_ImmediateUserInterface->begin_window(
-    //     m_ImmediateUserInterface->next_id("Window2", "Window-2"),
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-    //     &openWindow2))
-    // {
-    //     m_ImmediateUserInterface->end_window();
-    // }
-
-    // if(m_ImmediateUserInterface->begin_window(
-    //     m_ImmediateUserInterface->next_id("Window3", "Window-3"),
-    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
-    //     &openWindow3))
-    // {
-    //     m_ImmediateUserInterface->end_window();
-    // }
-
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Test window", "Window")))
     {
         if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu")))
         {
             if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
-                contextSettings = true;
+                State.ShowContextSettings = true;
 
             m_ImmediateUserInterface->end_menu();
         }
 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
-            // margin
-            static float topMargin    = 0.f;
-            static float leftMargin   = 0.f;
-            static float rightMargin  = 0.f;
-            static float bottomMargin = 0.f;
-
-            // padding
-            static float topPadding    = 0.f;
-            static float leftPadding   = 0.f;
-            static float rightPadding  = 0.f;
-            static float bottomPadding = 0.f;
-
-            // alignment
-            static int         horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
-            static int         verticalAlignmentSettings         = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
-            static std::string horizontalAligmentComboboxPreview = "None";
-            static std::string verticalAligmentComboboxPreview   = "None";
-
             float minimum = 0.f;
             float maximum = 128.f;
 
-            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("ShowOverlay"), showOverlay);
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("ShowOverlay"), State.ShowContextOverlay);
             m_ImmediateUserInterface->same_line();
             m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ShowOverlayLabel"), "Show overlay");
 
@@ -315,29 +272,29 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                       ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically;
 
-                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("LayoutConfigurator"), settings))
+                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Configuration"), settings))
                 {
                     if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Margin"), settings))
                     {
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Margin"), "Margin");
 
                         // top
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopMarginValue"), topMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopMarginValue"), State.TopMargin, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopMarginLabel"), "Top margin");
 
                         // left
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftMarginValue"), leftMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftMarginValue"), State.LeftMargin, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftMarginLabel"), "Left margin");
 
                         // right
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightMarginValue"), rightMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightMarginValue"), State.RightMargin, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightMarginLabel"), "Right margin");
 
                         // bottom
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomMarginValue"), bottomMargin, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomMarginValue"), State.BottomMargin, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomMarginLabel"), "Bottom margin");
 
@@ -351,22 +308,22 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Padding"), "Padding");
 
                         // top
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopPaddingValue"), topPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("TopPaddingValue"), State.TopPadding, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("TopPaddingLabel"), "Top padding");
 
                         // left
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftPaddingValue"), leftPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("LeftPaddingValue"), State.LeftPadding, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("LeftPaddingLabel"), "Left padding");
 
                         // right
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightPaddingValue"), rightPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("RightPaddingValue"), State.RightPadding, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("RightPaddingLabel"), "Right padding");
 
                         // bottom
-                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomPaddingValue"), bottomPadding, minimum, maximum, 1);
+                        m_ImmediateUserInterface->input_scalar_slider(m_ImmediateUserInterface->next_id("BottomPaddingValue"), State.BottomPadding, minimum, maximum, 1);
                         m_ImmediateUserInterface->same_line();
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("BottomPaddingLabel"), "Bottom padding");
 
@@ -380,31 +337,28 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         // horizontal alignment
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("HorizontalAlignment"), "Horizontal alignment");
 
-                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("HorizontalAlignemntType"), horizontalAligmentComboboxPreview))
+                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("HorizontalAlignemntType"), State.HorizontalAligmentComboboxPreview))
                         {
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Left", "Left")) ||
-                                (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
-                            {
-                                horizontalAligmentComboboxPreview = "Left";
-                                horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
-                            }
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Left", "Left")))
+                                State.HorizontalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft;
                             
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Center", "Center")) ||
-                                (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
-                            {
-                                horizontalAligmentComboboxPreview = "Center";
-                                horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
-                            }
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Center", "Center")))
+                                State.HorizontalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter;
                             
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Right", "Right")) ||
-                                (horizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
-                            {
-                                horizontalAligmentComboboxPreview = "Right";
-                                horizontalAlignmentSettings       = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
-                            }
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Right", "Right")))
+                                State.HorizontalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight;
 
                             m_ImmediateUserInterface->end_combobox();
                         }
+
+                        if((State.HorizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
+                            State.HorizontalAligmentComboboxPreview = "Left";
+                        
+                        if((State.HorizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter))
+                            State.HorizontalAligmentComboboxPreview = "Center";
+                        
+                        if((State.HorizontalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight))
+                            State.HorizontalAligmentComboboxPreview = "Right";
 
                         m_ImmediateUserInterface->next_line();
                         m_ImmediateUserInterface->next_line();
@@ -412,31 +366,28 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         // vertical alignment
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("VerticalAlignment"), "Vertical alignment");
 
-                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("VerticalAlignemntType"), verticalAligmentComboboxPreview))
+                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("VerticalAlignemntType"), State.VerticalAligmentComboboxPreview))
                         {
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Top", "Top")) ||
-                                (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop))
-                            {
-                                verticalAligmentComboboxPreview   = "Top";
-                                verticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
-                            }
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Top", "Top")))
+                                State.VerticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop;
                             
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Center", "Center")) ||
-                                (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
-                            {
-                                verticalAligmentComboboxPreview   = "Center";
-                                verticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
-                            }
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Center", "Center")))
+                                State.VerticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter;
                             
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Bottom", "Bottom")) ||
-                                (verticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom))
-                            {
-                                verticalAligmentComboboxPreview   = "Bottom";
-                                verticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
-                            }
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("Bottom", "Bottom")))
+                                State.VerticalAlignmentSettings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom;
 
                             m_ImmediateUserInterface->end_combobox();
                         }
+
+                        if((State.VerticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop))
+                            State.VerticalAligmentComboboxPreview = "Top";
+                        
+                        if((State.VerticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter))
+                            State.VerticalAligmentComboboxPreview = "Center";
+                        
+                        if((State.VerticalAlignmentSettings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom))
+                            State.VerticalAligmentComboboxPreview = "Bottom";
 
                         m_ImmediateUserInterface->end_scrollarea();
                     }
@@ -453,10 +404,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     {
                         m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Background"), gs_color_rgb(255, 255, 255));
 
-                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
-                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(State.TopMargin, State.LeftMargin, State.RightMargin, State.BottomMargin));
+                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(State.TopPadding, State.LeftPadding, State.RightPadding, State.BottomPadding));
 
-                        if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("Panel"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        if(m_ImmediateUserInterface->begin_panel(m_ImmediateUserInterface->next_id("Panel"), State.HorizontalAlignmentSettings | State.VerticalAlignmentSettings))
                         {
                             m_ImmediateUserInterface->next_size(gs_vec2f(256.f, 256.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
@@ -478,14 +429,21 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     {
                         m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Background"), gs_color_rgb(255, 255, 255));
 
-                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
-                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(State.TopMargin, State.LeftMargin, State.RightMargin, State.BottomMargin));
+                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(State.TopPadding, State.LeftPadding, State.RightPadding, State.BottomPadding));
 
-                        if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("VerticalStack"), State.HorizontalAlignmentSettings | State.VerticalAlignmentSettings))
                         {
+                            m_ImmediateUserInterface->next_size(gs_vec2f(256.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+                            
+                            m_ImmediateUserInterface->next_size(gs_vec2f(256.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
+                            
+                            m_ImmediateUserInterface->next_size(gs_vec2f(256.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+                            
+                            m_ImmediateUserInterface->next_size(gs_vec2f(256.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Four"), gs_color_rgb(0, 255, 255));
 
                             m_ImmediateUserInterface->end_vertical_stack();
@@ -506,14 +464,21 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     {
                         m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Background"), gs_color_rgb(255, 255, 255));
 
-                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
-                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+                        m_ImmediateUserInterface->next_content_margin(gs_vec4f(State.TopMargin, State.LeftMargin, State.RightMargin, State.BottomMargin));
+                        m_ImmediateUserInterface->next_content_padding(gs_vec4f(State.TopPadding, State.LeftPadding, State.RightPadding, State.BottomPadding));
 
-                        if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack"), horizontalAlignmentSettings | verticalAlignmentSettings))
+                        if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("HorizontalStack"), State.HorizontalAlignmentSettings | State.VerticalAlignmentSettings))
                         {
+                            m_ImmediateUserInterface->next_size(gs_vec2f(128.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("One"), gs_color_rgb(255, 0, 0));
+
+                            m_ImmediateUserInterface->next_size(gs_vec2f(128.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Two"), gs_color_rgb(0, 255, 0));
+
+                            m_ImmediateUserInterface->next_size(gs_vec2f(128.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Three"), gs_color_rgb(0, 0, 255));
+
+                            m_ImmediateUserInterface->next_size(gs_vec2f(128.f, 64.f));
                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Four"), gs_color_rgb(0, 255, 255));
 
                             m_ImmediateUserInterface->end_horizontal_stack();
@@ -528,8 +493,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 // scrollarea
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                 {
-                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(topMargin, leftMargin, rightMargin, bottomMargin));
-                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(topPadding, leftPadding, rightPadding, bottomPadding));
+                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(State.TopMargin, State.LeftMargin, State.RightMargin, State.BottomMargin));
+                    m_ImmediateUserInterface->next_content_padding(gs_vec4f(State.TopPadding, State.LeftPadding, State.RightPadding, State.BottomPadding));
 
                     if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Scrollarea", "Scrollarea")))
                     {
@@ -563,14 +528,6 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 // scalar input
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Scalar input", "ScalarInput")))
                 {
-                    static float          floatScalar       = 0.f;
-                    static double         doubleScalar      = 0.0;
-                    static long double    longDoubleScalar  = 0.0;
-                    static int            intScalar         = 0;
-                    static short          shortScalar       = 0;
-                    static unsigned int   unsignedIntScalar = 0;
-                    static unsigned short unsignedShortScalar = 0;
-
                     char label[] = "unsigned short";
                     
                     gs_vec2f labelSize = m_ImmediateUserInterface->m_Renderer->calculate_bounding_box(
@@ -578,48 +535,77 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         &label[sizeof(label) / sizeof(char)],
                         m_ImmediateUserInterface->m_Style.get_font_size(),
                         m_ImmediateUserInterface->m_Style.get_current_font()).size() + gs_vec2f(m_ImmediateUserInterface->m_Style.get_font_size(), 0.f);
-
+                    
                     // float
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("floatScalarLabel"), "float");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("floatScalarValue"), floatScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("floatScalarValue"), State.FloatScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<float>(m_ImmediateUserInterface->next_id("floatScalarSlider"), State.FloatScalar, 0.f, 256.f, 1);
 
                     // double
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("doubleScalarLabel"), "double");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("doubleScalarValue"), doubleScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("doubleScalarValue"), State.DoubleScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<double>(m_ImmediateUserInterface->next_id("doubleScalarSlider"), State.DoubleScalar, 0.0, 256.0, 1);
 
                     // long double
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("longDoubleScalarLabel"), "long double");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("longDoubleScalarValue"), longDoubleScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("longDoubleScalarValue"), State.LongDoubleScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<long double>(m_ImmediateUserInterface->next_id("longDoubleScalarSlider"), State.LongDoubleScalar, 0, 256, 1);
 
                     // int
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("intScalarLabel"), "int");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("intScalarValue"), intScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("intScalarValue"), State.IntScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<int>(m_ImmediateUserInterface->next_id("intScalarSlider"), State.IntScalar, 0, 256, 1);
 
                     // short
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("shortScalarLabel"), "short");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("shortScalarValue"), shortScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("shortScalarValue"), State.ShortScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<short>(m_ImmediateUserInterface->next_id("shortScalarSlider"), State.ShortScalar, 0, 256, 1);
+                    
 
                     // unsigned int
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("unsignedIntScalarLabel"), "unsigned int");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedIntScalarValue"), unsignedIntScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedIntScalarValue"), State.UnsignedIntScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<unsigned int>(m_ImmediateUserInterface->next_id("unsignedIntScalarSlider"), State.UnsignedIntScalar, 0, 256, 1);
 
                     // unsigned short
                     m_ImmediateUserInterface->next_size(labelSize);
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("unsignedShortScalarLabel"), "unsigned short");
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedShortScalarValue"), unsignedShortScalar);
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedShortScalarValue"), State.UnsignedShortScalar);
+                    m_ImmediateUserInterface->same_line();
+                    m_ImmediateUserInterface->indent();
+                    m_ImmediateUserInterface->input_scalar_slider<unsigned short>(m_ImmediateUserInterface->next_id("UnsignedShortSlider"), State.UnsignedShortScalar, 0, 256, 1);
 
                     m_ImmediateUserInterface->end_tree_node();
                 }
@@ -627,40 +613,33 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 // color pickers
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Color modifiers", "ColorModifiers")))
                 {
-                    static gs_color colorPickerColor = gs_color_rgba(255, 0, 0, 255);
-                    static bool     EnableRGB        = true;
-                    static bool     EnableHSV        = true;
-                    static bool     EnableHSL        = true;
-                    static bool     EnableAlpha      = true;
-                    static bool     PreviewColor     = true;
-                    static bool     RGBA             = true;
-                    static float    indent           = 64.f;
+                    float indent = 64.f;
 
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), EnableRGB);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableRGB"), State.EnableRGB);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableRGBLabel"), "RGB");
                     
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent(indent);
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSV"), EnableHSV);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSV"), State.EnableHSV);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSVLabel"), "HSV");
 
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent(indent);
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSL"), EnableHSL);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableHSL"), State.EnableHSL);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableHSLLabel"), "HSL");
 
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent(indent);
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("PreviewColor"), PreviewColor);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("PreviewColor"), State.PreviewColor);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("PreviewColorLabel"), "Preview color");
 
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent(indent);
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), EnableAlpha);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("EnableAlpha"), State.EnableAlpha);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("EnableAlphaLabel"), "Alpha");
                     m_ImmediateUserInterface->next_line();
@@ -670,19 +649,19 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ColorPickerType"), "Type");
                         m_ImmediateUserInterface->same_line();
 
-                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), RGBA ? "RGBA" : "HSVA"))
+                        if(m_ImmediateUserInterface->begin_combobox(m_ImmediateUserInterface->next_id("Combobox"), State.RGBA ? "RGBA" : "HSVA"))
                         {
-                            bool rgbaSelected     = RGBA;
-                            bool hsvaSelected     = !RGBA;
+                            bool rgbaSelected     = State.RGBA;
+                            bool hsvaSelected     = !State.RGBA;
                             int  checkboxSettings = ImmediateUserInterfaceCheckButtonSettings_::ImmediateUserInterfaceCheckButtonSettings_Checkbox;
 
                             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("RGBASelected"), rgbaSelected, checkboxSettings);
                             m_ImmediateUserInterface->same_line();
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("RGBA", "RGBA"))) RGBA = true;
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("RGBA", "RGBA"))) State.RGBA = true;
 
                             m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("HSVASelected"), hsvaSelected, checkboxSettings);
                             m_ImmediateUserInterface->same_line();
-                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("HSVA", "HSVA"))) RGBA = false;
+                            if(m_ImmediateUserInterface->combobox_item(m_ImmediateUserInterface->next_id("HSVA", "HSVA"))) State.RGBA = false;
 
                             m_ImmediateUserInterface->end_combobox();
                         }
@@ -694,16 +673,16 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Pickers")))
                         {
                             // RGBA
-                            if(RGBA)
+                            if(State.RGBA)
                             {
                                 m_ImmediateUserInterface->color_picker_rgba(
                                     m_ImmediateUserInterface->next_id("RGBAColorPicker"),
-                                    colorPickerColor,
-                                      (EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
-                                    | (EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
-                                    | (EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
-                                    | (EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
-                                    | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
+                                    State.ColorPickerColor,
+                                      (State.EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
+                                    | (State.EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
+                                    | (State.EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
+                                    | (State.EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
+                                    | (State.PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
                                 );
                             }
                             // HSVA
@@ -711,12 +690,12 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                             {
                                 m_ImmediateUserInterface->color_picker_hsva(
                                     m_ImmediateUserInterface->next_id("HSVAColorPicker"),
-                                    colorPickerColor,
-                                      (EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
-                                    | (EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
-                                    | (EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
-                                    | (EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
-                                    | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
+                                    State.ColorPickerColor,
+                                      (State.EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
+                                    | (State.EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
+                                    | (State.EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
+                                    | (State.EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
+                                    | (State.PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
                                 );
                             }
 
@@ -732,12 +711,12 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         
                         m_ImmediateUserInterface->input_color(
                             m_ImmediateUserInterface->next_id("ColorInput"),
-                            colorPickerColor,
-                              (EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
-                            | (EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
-                            | (EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
-                            | (EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
-                            | (PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
+                            State.ColorPickerColor,
+                              (State.EnableRGB    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB      : 0)
+                            | (State.EnableHSV    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSV      : 0)
+                            | (State.EnableHSL    ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL      : 0)
+                            | (State.EnableAlpha  ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha    : 0)
+                            | (State.PreviewColor ? ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor : 0)
                         );
 
                         m_ImmediateUserInterface->end_tree_node();
@@ -749,21 +728,16 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 // text input
                 if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Text input", "TextInput")))
                 {
-                    static std::string multilineString;
-                    static std::string multilineBuffer;
-                    static std::string singlelineString;
-                    static bool        password;
-
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("SingleLineText"), "Single line text");
 
                     m_ImmediateUserInterface->input_string_singleline(
                         m_ImmediateUserInterface->next_id("SingleLine"),
-                        singlelineString,
-                        (password ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password : 0));
+                        State.SinglelineString,
+                        (State.RenderSingleLineAsPassword ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password : 0));
 
                     m_ImmediateUserInterface->indent(32.f);
                     m_ImmediateUserInterface->same_line();
-                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("DisplayAsPassword"), password);
+                    m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("DisplayAsPassword"), State.RenderSingleLineAsPassword);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("DisplayAsPasswordLabel"), "Password");
 
@@ -775,9 +749,9 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         m_ImmediateUserInterface->next_id("MultilineTextEditors"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
-                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), multilineString);
+                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), State.MultilineString);
 
-                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Buffer"), multilineBuffer);
+                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Buffer"), State.MultilineBuffer);
 
                         m_ImmediateUserInterface->end_horizontal_stack();
                     }
