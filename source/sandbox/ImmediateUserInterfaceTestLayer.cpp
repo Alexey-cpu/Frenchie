@@ -798,6 +798,7 @@ void ImmediateUserInterfaceTestLayer::develop_test()
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
+        // table
         static gs_vec2f  scrollOffset   = gs_vec2f(0.f, 0.f);
         static gs_2dboxf scrollViewport = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 
@@ -814,14 +815,14 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("Table")))
         {
             m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), cellSize.y));
+            m_ImmediateUserInterface->next_content_padding(gs_vec4f(4.f, 0.f, 0.f, 4.f));
 
+            // columns titles
             if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Cols")))
             {
-                // filler
                 m_ImmediateUserInterface->next_size(cellSize);
                 m_ImmediateUserInterface->empty_node(m_ImmediateUserInterface->next_id("Corner"));
 
-                // column titles
                 m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
 
                 if(m_ImmediateUserInterface->begin_scrollarea(
@@ -852,12 +853,13 @@ void ImmediateUserInterfaceTestLayer::develop_test()
 
             if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Rows")))
             {
+                // rows titles
                 m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
                 m_ImmediateUserInterface->next_maximum_size(scrollViewport.size());
 
                 if(m_ImmediateUserInterface->begin_scrollarea(
                     m_ImmediateUserInterface->next_id("Rows"),
-                    ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
                 {
                     ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, 1, cellSize);
 
