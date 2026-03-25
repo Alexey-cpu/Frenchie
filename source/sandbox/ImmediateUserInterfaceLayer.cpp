@@ -140,10 +140,10 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceScrollAreaScrollBar();
 
             // getters
-            gs_vec2f get_scroll_offset() const;
+            gs_vec2f get_scroll_offset(const bool& = true) const;
 
             // setters
-            void set_scroll_offset(const gs_vec2f _Value);
+            void set_scroll_offset(const gs_vec2f _Value, const bool& _Relative = true);
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -559,6 +559,7 @@ namespace Frenchie
             mutable Frenchie::Core::Optional<gs_vec2f> NextMinimumSize;
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentMargin;
             mutable Frenchie::Core::Optional<gs_vec4f> NextContentPadding;
+            mutable Frenchie::Core::Optional<gs_vec2f> NextScrollOffset;
         };
 
         class ImmediateUserInterfaceScrollBarsController : public ImmediateUserInterfaceContextController
@@ -3537,15 +3538,7 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     // extract scroll area
-    ImmediateUserInterfaceScrollArea* scrollArea = nullptr;
-    ImmediateUserInterfaceNode*       parent     = _Context->m_Hierarchy.get_parent(this);
-
-    while (parent)
-    {
-        scrollArea = dynamic_cast<ImmediateUserInterfaceScrollArea*>(parent);
-        if(scrollArea != nullptr) break;
-        parent = _Context->m_Hierarchy.get_parent(parent);
-    }
+    ImmediateUserInterfaceScrollArea* scrollArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
     
     // extract horizontal and vertical scrollbars
     gs_vec2f horizontalScrollBarPosition =
@@ -3554,7 +3547,7 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
                 gs_vec2f(0.f, 0.f);
 
     gs_vec2f verticalScrollBarPosition =
-        scrollArea != nullptr ?
+        scrollArea != nullptr && scrollArea->VerticalScrollBar != nullptr ?
             scrollArea->VerticalScrollBar->get_scroll_offset() :
                 gs_vec2f(0.f, 0.f);
 
@@ -3611,18 +3604,26 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
 ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceScrollAreaScrollBar::~ImmediateUserInterfaceScrollAreaScrollBar(){}
 
-gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset() const
+gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset(const bool& _Scaled) const
 {
-    return Position * PositionScale;
+    return _Scaled ? Position * PositionScale : Position;
 }
 
-void ImmediateUserInterfaceScrollAreaScrollBar::set_scroll_offset(const gs_vec2f _Value)
+void ImmediateUserInterfaceScrollAreaScrollBar::set_scroll_offset(const gs_vec2f _Value, const bool& _Relative)
 {
     if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f)
         return;
 
-    PreviousPosition = Position;
-    Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
+    if(_Relative)
+    {
+        PreviousPosition = Position;
+        Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
+    }
+    else
+    {
+        PreviousPosition = Position;
+        Position         = gs_clamp(_Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
+    }
 }
 
 void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3631,8 +3632,11 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
     {
         // clamp self
-        State.MaximumSize = gs_vec2f(0.f, 0.f);
-        State.MinimumSize = gs_vec2f(0.f, 0.f);
+        State.MinimumSize = gs_vec2f(
+            Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal ? State.BoundingBox.size().x : 0.f,
+            Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ? State.BoundingBox.size().y : 0.f);
+
+        State.MaximumSize = State.MinimumSize;
         State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
 
         // reset slider
@@ -3708,6 +3712,41 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     }
 
     gs_vec2f minimumSliderSize = _Context->m_Style.get_scrollbar_width();
+
+    // compute slider metrics
+    {
+        gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
+            scrollbarMinimumValue,
+            scrollbarMaximumValue,
+            contentArea->ContentView->State.ContentSize + ConstrainedSize,
+            minimumSliderSize);
+
+        gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
+            scrollbarMinimumValue,
+            scrollbarMaximumValue,
+            contentArea->ContentView->State.ContentSize + ConstrainedSize);
+
+        gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
+
+        if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
+        {
+            if(sliderPosition.y >= State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
+                PositionScale = scrollbarSliderScale;
+        }
+        else
+        {
+            if(sliderPosition.x >= State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
+                PositionScale = scrollbarSliderScale;
+        }
+
+        ConstrainedSize   = scrollbarSliderLength;
+
+        UnconstrainedSize = calculate_scrollbar_length(
+            scrollbarMinimumValue,
+            scrollbarMaximumValue,
+            contentArea->ContentView->State.ContentSize,
+            0.f);
+    }
 
     // manage horizontal scrollbar
     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
@@ -3796,39 +3835,6 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
             return;
         }
     }
-
-    // layout child sliders
-    gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-        scrollbarMinimumValue,
-        scrollbarMaximumValue,
-        contentArea->ContentView->State.ContentSize,
-        minimumSliderSize);
-
-    gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
-        scrollbarMinimumValue,
-        scrollbarMaximumValue,
-        contentArea->ContentView->State.ContentSize);
-
-    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
-
-    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-    {
-        if(sliderPosition.y >= State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
-            PositionScale = scrollbarSliderScale;
-    }
-    else
-    {
-        if(sliderPosition.x >= State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
-            PositionScale = scrollbarSliderScale;
-    }
-
-    ConstrainedSize = scrollbarSliderLength;
-
-    UnconstrainedSize = calculate_scrollbar_length(
-        scrollbarMinimumValue,
-        scrollbarMaximumValue,
-        contentArea->ContentView->State.ContentSize,
-        0.f);
 }
 
 bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceContextLayer* _Context)
@@ -6465,6 +6471,7 @@ void ImmedidateUserInterfaceNextNodeController::reset()
     NextMaximumSize.reset();
     NextContentMargin.reset();
     NextContentPadding.reset();
+    NextScrollOffset.reset();
 }
 
 // ImmediateUserInterfaceScrollBarsController
@@ -6783,6 +6790,12 @@ bool ImmediateUserInterfaceContextLayer::begin_horizontal_stack(const std::strin
 void ImmediateUserInterfaceContextLayer::end_horizontal_stack()
 {
     end_node<ImmediateUserInterfaceNodeHorizontalStack>();
+}
+
+void ImmediateUserInterfaceContextLayer::empty_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceNode>(_ID, _Settings))
+        end_node<ImmediateUserInterfaceNode>();
 }
 
 bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
@@ -9009,12 +9022,29 @@ void ImmediateUserInterfaceContextLayer::next_content_padding(const gs_vec4f& _V
         controller->NextContentPadding = _Value;
 }
 
-gs_vec2f ImmediateUserInterfaceContextLayer::current_scrollbar_offset() const
+void ImmediateUserInterfaceContextLayer::next_scroll_offset(const gs_vec2f& _Value)
+{
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->NextScrollOffset = _Value;
+}
+
+gs_vec2f ImmediateUserInterfaceContextLayer::current_scrollbar_offset(const bool& _Scaled) const
 {
     ImmediateUserInterfaceScrollArea* scrollArea =
         get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
 
     return gs_vec2f(
-        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset().x : 0.f,
-        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset().y   : 0.f);
+        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset(_Scaled).x : 0.f,
+        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(_Scaled).y   : 0.f);
+}
+
+gs_2dboxf ImmediateUserInterfaceContextLayer::current_scrollbar_viewport() const
+{
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
+
+    return scrollArea != nullptr ? scrollArea->ContentView->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
 }
