@@ -302,6 +302,8 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr);
 
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             gs_2dboxf                         ScrollViewport {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
@@ -351,6 +353,27 @@ namespace Frenchie
                 GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTable>(this));
 
                 ImmediateUserInterfacePanel::layout(_Context);
+            }
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+                // background
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
+                    State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width()),
+                    _Context->m_Style.get_frames_radius(),
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
             }
         };
         
@@ -3306,7 +3329,7 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
             parent = _Context->m_Hierarchy.get_parent(parent);
         }
 
-        return gs_2dboxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
+        return clippingBox;
     };
 
     // main code
@@ -3337,8 +3360,7 @@ ImmediateUserInterfacePanel::~ImmediateUserInterfacePanel(){}
 
 void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr)
-        return;
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
@@ -3778,6 +3800,8 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
 
     // compute slider metrics
     {
+        gs_vec2f scaledPosition = Position * PositionScale;
+
         gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
@@ -3793,12 +3817,12 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
 
         if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
         {
-            if(sliderPosition.y >= State.BoundingBox.Min.y && sliderPosition.y < (State.BoundingBox.Max - scrollbarSliderLength).y)
+            if(sliderPosition.y >= State.BoundingBox.Min.y && sliderPosition.y <= (State.BoundingBox.Max - scrollbarSliderLength).y)
                 PositionScale = scrollbarSliderScale;
         }
         else
         {
-            if(sliderPosition.x >= State.BoundingBox.Min.x && sliderPosition.x < (State.BoundingBox.Max - scrollbarSliderLength).x)
+            if(sliderPosition.x >= State.BoundingBox.Min.x && sliderPosition.x <= (State.BoundingBox.Max - scrollbarSliderLength).x)
                 PositionScale = scrollbarSliderScale;
         }
 
@@ -3809,6 +3833,8 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
             scrollbarMaximumValue,
             contentArea->ContentView->State.ContentSize,
             0.f);
+
+        Position = gs_clamp(scaledPosition / PositionScale, gs_vec2f(0.f, 0.f), (State.BoundingBox.size() - UnconstrainedSize));
     }
 
     // manage horizontal scrollbar
@@ -3902,6 +3928,8 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
 
 bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceContextLayer* _Context)
 {
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+
     // resize
     if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
         !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
@@ -4673,6 +4701,8 @@ ImmediateUserInterfaceGridCell::~ImmediateUserInterfaceGridCell(){}
 
 void ImmediateUserInterfaceGridCell::render(ImmediateUserInterfaceContextLayer* _Context)
 {
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
     // outline
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min,
@@ -4791,13 +4821,14 @@ bool ImmediateUserInterfaceTable::create_contents(
         _Context->next_id("Table"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
+        _Context->next_minimum_size(gs_vec2f(0.f, GridCellSize.y));
         _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
-        _Context->next_content_padding(gs_vec4f(4.f, 0.f, 0.f, 4.f));
 
         // columns titles
         if(_Context->begin_horizontal_stack(_Context->next_id("Cols")))
         {
-            _Context->next_size(GridCellSize);
+            _Context->next_minimum_size(GridCellSize);
+            _Context->next_maximum_size(GridCellSize);
 
             if(_Context->begin_node<ImmediateUserInterfaceTableCornerPanel>(
                 _Context->next_id("Corner"),
@@ -4808,10 +4839,13 @@ bool ImmediateUserInterfaceTable::create_contents(
             }
 
             _Context->next_scroll_offset(ScrollOffset);
+            _Context->next_minimum_size(gs_vec2f(GridCellSize.x, GridCellSize.y));
+            _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
 
             if(_Context->begin_scrollarea(
                 _Context->next_id("Columns"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
             {
                 if(_Context->begin_grid(_Context->next_id("Grid"), 1, GridColsCount, &GridCellSize))
                 {
@@ -4830,11 +4864,13 @@ bool ImmediateUserInterfaceTable::create_contents(
         {
             // rows titles
             _Context->next_scroll_offset(ScrollOffset);
-            _Context->next_maximum_size(ScrollViewport.size());
+            _Context->next_minimum_size(gs_vec2f(GridCellSize.x, ScrollViewport.size().y));
+            _Context->next_maximum_size(gs_vec2f(GridCellSize.x, ScrollViewport.size().y));
 
             if(_Context->begin_scrollarea(
                 _Context->next_id("Rows"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
+                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
             {
                 if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, 1, &GridCellSize))
                 {
@@ -4848,10 +4884,6 @@ bool ImmediateUserInterfaceTable::create_contents(
             // cells
             if(_Context->begin_scrollarea(_Context->next_id("Cells")))
             {
-                ScrollOffset   = _Context->current_scroll_offset(false);
-                ScrollViewport = _Context->current_scroll_viewport();
-                GridClipper        = ImmediateUserInterfaceGridClipper(_Context->get_rendering_stack_top(), GridRowsCount, GridColsCount, GridCellSize);
-
                 if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, GridColsCount, &GridCellSize))
                 {
                     DataCells = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
@@ -4868,6 +4900,27 @@ bool ImmediateUserInterfaceTable::create_contents(
     }
 
     return true;
+}
+
+void ImmediateUserInterfaceTable::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    // layout children
+    ImmediateUserInterfacePanel::layout(_Context);
+
+    // layout self
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(DataCells);
+
+    ScrollOffset   = gs_vec2f(
+        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset(false).x : 0.f,
+        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(false).y   : 0.f);
+
+    ScrollViewport =
+        scrollArea != nullptr ?
+            scrollArea->ContentView->State.BoundingBox :
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+    
+    GridClipper    = ImmediateUserInterfaceGridClipper(scrollArea, GridRowsCount, GridColsCount, GridCellSize);
 }
 
 void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Child)
@@ -6799,10 +6852,10 @@ ImmediateUserInterfaceGridClipper::ImmediateUserInterfaceGridClipper(
     gs_vec2f scrollOffset = current_scrollbar_offset(scrollArea);
     gs_vec2f visibleSize  = scrollArea->State.BoundingBox.size();
 
-    SourceRow = gs_min((int)roundf(scrollOffset.y / _CellSize.y), _RowsCount);
-    TargetRow = gs_min((int)roundf((scrollOffset + visibleSize).y / _CellSize.y), _RowsCount);
-    SourceCol = gs_min((int)roundf(scrollOffset.x / _CellSize.x), _ColsCount);
-    TargetCol = gs_min((int)roundf((scrollOffset + visibleSize).x / _CellSize.x), _ColsCount);
+    SourceRow = gs_min(gs_max((int)roundf(scrollOffset.y / _CellSize.y) - 1, 0), _RowsCount - 1);
+    TargetRow = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).y / _CellSize.y) + 1, _RowsCount), _RowsCount);
+    SourceCol = gs_min(gs_max((int)roundf(scrollOffset.x / _CellSize.x) - 1, 0), _ColsCount - 1);
+    TargetCol = gs_min(gs_min((int)roundf((scrollOffset + visibleSize).x / _CellSize.x) + 1, _ColsCount), _ColsCount);
 }
 
 // ImmediateUserInterfaceContextLayer2

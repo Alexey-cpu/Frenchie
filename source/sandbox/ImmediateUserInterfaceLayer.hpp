@@ -930,7 +930,6 @@ namespace Frenchie
             // Corner title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
             bool begin_table_corner_title(const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_table_corner_title();
-            //------------------------------------------------------------------------------------------
 
             // UI widgets API
 
