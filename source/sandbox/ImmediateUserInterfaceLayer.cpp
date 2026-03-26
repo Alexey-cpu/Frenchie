@@ -33,11 +33,11 @@ namespace Frenchie
     namespace Application
     {
         // layouts
-        struct ImmediateUserInterfaceNodePanel : public ImmediateUserInterfaceNode
+        struct ImmediateUserInterfacePanel : public ImmediateUserInterfaceNode
         {
         public:
-            ImmediateUserInterfaceNodePanel(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceNodePanel();
+            ImmediateUserInterfacePanel(const std::string& _Name);
+            virtual ~ImmediateUserInterfacePanel();
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -63,7 +63,7 @@ namespace Frenchie
             // gs_vec2f ContentMargin  = gs_vec2f(0.f, 0.f); // creates border outside
         };
 
-        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceNodeVerticalStack : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name);
@@ -71,7 +71,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceNodeHorizontalStack : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name);
@@ -88,7 +88,7 @@ namespace Frenchie
             ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
         };
 
-        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel
         {
         public:
 
@@ -117,14 +117,14 @@ namespace Frenchie
             void calculate_content_padding(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*, gs_vec2f&);
         };
 
-        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name);
             virtual ~ImmediateUserInterfaceScrollAreaPanel();
         };
 
-        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceScrollAreaContent(const std::string& _Name);
@@ -133,7 +133,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name);
@@ -155,15 +155,15 @@ namespace Frenchie
         private:
 
             // info
-            gs_vec2f Position          = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale     = gs_vec2f(1.f, 1.f);
-            gs_vec2f PreviousPosition  = gs_vec2f(0.f, 0.f);
-            gs_vec2f ConstrainedSize   = gs_vec2f(0.f, 0.f);
-            gs_vec2f UnconstrainedSize = gs_vec2f(0.f, 0.f);
+            gs_vec2f Position           = gs_vec2f(0.f, 0.f);
+            gs_vec2f PositionScale      = gs_vec2f(1.f, 1.f);
+            gs_vec2f PreviousPosition   = gs_vec2f(0.f, 0.f);
+            gs_vec2f ConstrainedSize    = gs_vec2f(0.f, 0.f);
+            gs_vec2f UnconstrainedSize  = gs_vec2f(0.f, 0.f);
         };
 
         // menu
-        struct ImmediateUserInterfaceMenu : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceMenu : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceMenu(const std::string& _Name);
@@ -239,7 +239,7 @@ namespace Frenchie
         };
 
         // tree
-        struct ImmediateUserInterfaceTreeNode : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceTreeNode : public ImmediateUserInterfacePanel
         {
         public:
             ImmediateUserInterfaceTreeNode(const std::string& _Name);
@@ -260,14 +260,11 @@ namespace Frenchie
         };
 
         // grid
-        struct ImmediateUserInterfaceLayerGridCell;
-        struct ImmediateUserInterfaceLayerGrid;
-
-        struct ImmediateUserInterfaceLayerGridCell : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceGridCell : public ImmediateUserInterfacePanel
         {
         public:
-            ImmediateUserInterfaceLayerGridCell(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceLayerGridCell();
+            ImmediateUserInterfaceGridCell(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceGridCell();
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -277,11 +274,11 @@ namespace Frenchie
             int Column = 0;
         };
 
-        struct ImmediateUserInterfaceLayerGrid : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceGrid : public ImmediateUserInterfacePanel
         {
         public:
-            ImmediateUserInterfaceLayerGrid(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceLayerGrid();
+            ImmediateUserInterfaceGrid(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceGrid();
             
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
@@ -292,6 +289,71 @@ namespace Frenchie
             int       MaxCol   = 0;
         };
 
+        // table
+        struct ImmediateUserInterfaceTable : public ImmediateUserInterfacePanel
+        {
+        public:
+            ImmediateUserInterfaceTable(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTable();
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr);
+
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+
+            gs_2dboxf                         ScrollViewport {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_vec2f                          ScrollOffset   {gs_vec2f(0.f, 0.f)};
+            gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
+            int                               GridRowsCount  {0};
+            int                               GridColsCount  {0};
+            ImmediateUserInterfaceGridClipper GridClipper    {ImmediateUserInterfaceGridClipper()};
+
+        private:
+
+            ImmediateUserInterfaceGrid*  DataCells         {nullptr};
+            ImmediateUserInterfacePanel* CorenerHeader     {nullptr};
+            ImmediateUserInterfaceGrid*  VerticalHeaders   {nullptr};
+            ImmediateUserInterfaceGrid*  HorizontalHeaders {nullptr};
+        };
+        
+        struct ImmediateUserInterfaceTableCornerPanel : public ImmediateUserInterfacePanel
+        {
+        public:
+            ImmediateUserInterfaceTableCornerPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+            virtual ~ImmediateUserInterfaceTableCornerPanel(){}
+        };
+
+        struct ImmediateUserInterfaceTableVerticalHeader : public ImmediateUserInterfaceGridCell
+        {
+        public:
+            ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
+            virtual ~ImmediateUserInterfaceTableVerticalHeader(){}
+        };
+
+        struct ImmediateUserInterfaceTableHorizontalHeader : public ImmediateUserInterfaceGridCell
+        {
+        public:
+            ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
+            virtual ~ImmediateUserInterfaceTableHorizontalHeader(){}
+        };
+
+        struct ImmediateUserInterfaceTableCornerHeader : public ImmediateUserInterfacePanel
+        {
+        public:
+            ImmediateUserInterfaceTableCornerHeader(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+            virtual ~ImmediateUserInterfaceTableCornerHeader(){}
+            
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTable>(this));
+
+                ImmediateUserInterfacePanel::layout(_Context);
+            }
+        };
+        
         // windows
         struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNode
         {
@@ -429,9 +491,9 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfaceNodePanel
+        struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
         {
-            ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+            ImmediateUserInterfaceWindowCentralDocker(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
             virtual ~ImmediateUserInterfaceWindowCentralDocker(){}
         };
 
@@ -1409,10 +1471,10 @@ namespace Frenchie
             const ImmediateUserInterfaceInputScalarSettings& _Settings)
         {
             // nested types
-            struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfaceNodePanel
+            struct ImmediateUserInterfaceInputScalarPanel : public ImmediateUserInterfacePanel
             {
             public:
-                ImmediateUserInterfaceInputScalarPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name)
+                ImmediateUserInterfaceInputScalarPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name)
                 {
                     State.BoundingBox = gs_2dboxf(256.f, 64.f);
                 }
@@ -1423,7 +1485,7 @@ namespace Frenchie
                 {
                     IsEdited = is_edited(_Context, this);
 
-                    ImmediateUserInterfaceNodePanel::layout(_Context);
+                    ImmediateUserInterfacePanel::layout(_Context);
                 }
 
                 bool is_edited(ImmediateUserInterfaceContextLayer* _Context, const ImmediateUserInterfaceNode* _Node)
@@ -3270,10 +3332,10 @@ int ImmediateUserInterfaceNode::place_in_follow()
 }
 
 // ImmediateUserInterfaceNodePanel
-ImmediateUserInterfaceNodePanel::ImmediateUserInterfaceNodePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-ImmediateUserInterfaceNodePanel::~ImmediateUserInterfaceNodePanel(){}
+ImmediateUserInterfacePanel::ImmediateUserInterfacePanel(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfacePanel::~ImmediateUserInterfacePanel(){}
 
-void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePanel::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr)
         return;
@@ -3289,7 +3351,7 @@ void ImmediateUserInterfaceNodePanel::layout(ImmediateUserInterfaceContextLayer*
         [](const ImmediateUserInterfaceNode*){return true;});
 }
 
-void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfacePanel::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
@@ -3302,7 +3364,7 @@ void ImmediateUserInterfaceNodePanel::render(ImmediateUserInterfaceContextLayer*
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
-bool ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfacePanel::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr)
         return false;
@@ -3322,7 +3384,7 @@ bool ImmediateUserInterfaceNodePanel::events(ImmediateUserInterfaceContextLayer*
 }
 
 // ImmediateUserInterfaceNodeVerticalStack
-ImmediateUserInterfaceNodeVerticalStack::ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceNodeVerticalStack::ImmediateUserInterfaceNodeVerticalStack(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceNodeVerticalStack::~ImmediateUserInterfaceNodeVerticalStack(){}
 
 void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3342,7 +3404,7 @@ void ImmediateUserInterfaceNodeVerticalStack::layout(ImmediateUserInterfaceConte
 }
 
 // ImmediateUserInterfaceNodeHorizontalStack
-ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceNodeHorizontalStack::ImmediateUserInterfaceNodeHorizontalStack(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceNodeHorizontalStack::~ImmediateUserInterfaceNodeHorizontalStack(){}
 
 void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3362,7 +3424,7 @@ void ImmediateUserInterfaceNodeHorizontalStack::layout(ImmediateUserInterfaceCon
 }
 
 // ImmediateUserInterfaceScrollArea
-ImmediateUserInterfaceScrollArea::ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollArea::ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceScrollArea::~ImmediateUserInterfaceScrollArea(){}
 
 void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3520,18 +3582,18 @@ void ImmediateUserInterfaceScrollArea::calculate_content_padding(ImmediateUserIn
 {
     if(_Context == nullptr || _Node == nullptr) return;
 
-    if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(_Node) != nullptr)
-        _Padding += dynamic_cast<ImmediateUserInterfaceNodePanel*>(_Node)->ContentPadding;
+    if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) != nullptr)
+        _Padding += dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentPadding;
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
         calculate_content_padding(_Context, *it, _Padding);
 }
 
-ImmediateUserInterfaceScrollAreaPanel::ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollAreaPanel::ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceScrollAreaPanel::~ImmediateUserInterfaceScrollAreaPanel(){}
 
 // ImmediateUserInterfaceScrollAreaContent
-ImmediateUserInterfaceScrollAreaContent::ImmediateUserInterfaceScrollAreaContent(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollAreaContent::ImmediateUserInterfaceScrollAreaContent(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceScrollAreaContent::~ImmediateUserInterfaceScrollAreaContent(){}
 
 void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -3602,7 +3664,7 @@ void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceConte
 }
 
 // ImmediateUserInterfaceScrollAreaScrollBar
-ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceScrollAreaScrollBar::~ImmediateUserInterfaceScrollAreaScrollBar(){}
 
 gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset(const bool& _Scaled) const
@@ -4073,7 +4135,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::render(ImmediateUserInterfaceCon
 }
 
 // ImmediateUserInterfaceMenu
-ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
 
 void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -4085,7 +4147,7 @@ void ImmediateUserInterfaceMenu::layout(ImmediateUserInterfaceContextLayer* _Con
             State.BoundingBox.Min + InternalScrollArea->State.BoundingBox.size());
     }
 
-    ImmediateUserInterfaceNodePanel::layout(_Context);
+    ImmediateUserInterfacePanel::layout(_Context);
 }
 
 void ImmediateUserInterfaceMenu::render(ImmediateUserInterfaceContextLayer*){}
@@ -4401,7 +4463,7 @@ void ImmediateUserInterfaceComboboxScrollArea::render(ImmediateUserInterfaceCont
 }
 
 // ImmediateUserInterfaceTreeNode
-ImmediateUserInterfaceTreeNode::ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
+ImmediateUserInterfaceTreeNode::ImmediateUserInterfaceTreeNode(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceTreeNode::~ImmediateUserInterfaceTreeNode(){}
 
 void ImmediateUserInterfaceTreeNode::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4606,10 +4668,10 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
 }
 
 // ImmediateUserInterfaceLayerGridCell
-ImmediateUserInterfaceLayerGridCell::ImmediateUserInterfaceLayerGridCell(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-ImmediateUserInterfaceLayerGridCell::~ImmediateUserInterfaceLayerGridCell(){}
+ImmediateUserInterfaceGridCell::ImmediateUserInterfaceGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceGridCell::~ImmediateUserInterfaceGridCell(){}
 
-void ImmediateUserInterfaceLayerGridCell::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceGridCell::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     // outline
     _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -4628,12 +4690,12 @@ void ImmediateUserInterfaceLayerGridCell::render(ImmediateUserInterfaceContextLa
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
-void ImmediateUserInterfaceLayerGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceLayerGrid*>(
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceGrid*>(
         _Context->m_Hierarchy.get_parent(this)) != nullptr);
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
@@ -4647,13 +4709,13 @@ void ImmediateUserInterfaceLayerGridCell::layout(ImmediateUserInterfaceContextLa
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-bool ImmediateUserInterfaceLayerGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(!ImmediateUserInterfaceNodePanel::events(_Context))
+    if(!ImmediateUserInterfacePanel::events(_Context))
         return false;
 
-    ImmediateUserInterfaceLayerGrid * grid =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceLayerGrid>(this);
+    ImmediateUserInterfaceGrid * grid =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceGrid>(this);
 
     if(grid != nullptr && grid->CellSize != nullptr)
         *grid->CellSize = State.BoundingBox.size();
@@ -4662,13 +4724,13 @@ bool ImmediateUserInterfaceLayerGridCell::events(ImmediateUserInterfaceContextLa
 }
 
 // ImmediateUserInterfaceLayerGridNode
-ImmediateUserInterfaceLayerGrid::ImmediateUserInterfaceLayerGrid(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
-ImmediateUserInterfaceLayerGrid::~ImmediateUserInterfaceLayerGrid(){}
+ImmediateUserInterfaceGrid::ImmediateUserInterfaceGrid(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceGrid::~ImmediateUserInterfaceGrid(){}
 
-void ImmediateUserInterfaceLayerGrid::attach_child(ImmediateUserInterfaceNode* _Child)
+void ImmediateUserInterfaceGrid::attach_child(ImmediateUserInterfaceNode* _Child)
 {
-    ImmediateUserInterfaceLayerGridCell* cell =
-        dynamic_cast<ImmediateUserInterfaceLayerGridCell*>(_Child);
+    ImmediateUserInterfaceGridCell* cell =
+        dynamic_cast<ImmediateUserInterfaceGridCell*>(_Child);
 
     GS_ASSERT(cell != nullptr);
 
@@ -4678,7 +4740,7 @@ void ImmediateUserInterfaceLayerGrid::attach_child(ImmediateUserInterfaceNode* _
     cell->State.Parent = this;
 }
 
-void ImmediateUserInterfaceLayerGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
@@ -4693,8 +4755,8 @@ void ImmediateUserInterfaceLayerGrid::layout(ImmediateUserInterfaceContextLayer*
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        ImmediateUserInterfaceLayerGridCell* cell =
-            dynamic_cast<ImmediateUserInterfaceLayerGridCell*>(*it);
+        ImmediateUserInterfaceGridCell* cell =
+            dynamic_cast<ImmediateUserInterfaceGridCell*>(*it);
 
         if(cell == nullptr)
             continue;
@@ -4705,7 +4767,7 @@ void ImmediateUserInterfaceLayerGrid::layout(ImmediateUserInterfaceContextLayer*
     }
 }
 
-void ImmediateUserInterfaceLayerGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
@@ -4713,6 +4775,129 @@ void ImmediateUserInterfaceLayerGrid::measure(ImmediateUserInterfaceContextLayer
     gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
 
     State.ContentSize = cellSize * gs_vec2f((float)MaxCol, (float)MaxRow);
+}
+
+// ImmediateUserInterfaceTable
+ImmediateUserInterfaceTable::ImmediateUserInterfaceTable(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTable::~ImmediateUserInterfaceTable(){}
+
+bool ImmediateUserInterfaceTable::create_contents(
+    ImmediateUserInterfaceContextLayer*       _Context, 
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings,
+    bool*                                     _Render)
+{
+    if(_Context->begin_vertical_stack(
+        _Context->next_id("Table"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
+        _Context->next_content_padding(gs_vec4f(4.f, 0.f, 0.f, 4.f));
+
+        // columns titles
+        if(_Context->begin_horizontal_stack(_Context->next_id("Cols")))
+        {
+            _Context->next_size(GridCellSize);
+
+            if(_Context->begin_node<ImmediateUserInterfaceTableCornerPanel>(
+                _Context->next_id("Corner"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            {
+                CorenerHeader = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableCornerPanel>();
+                _Context->end_node<ImmediateUserInterfaceTableCornerPanel>();
+            }
+
+            _Context->next_scroll_offset(ScrollOffset);
+
+            if(_Context->begin_scrollarea(
+                _Context->next_id("Columns"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+            {
+                if(_Context->begin_grid(_Context->next_id("Grid"), 1, GridColsCount, &GridCellSize))
+                {
+                    HorizontalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                    _Context->end_grid();
+                }
+
+                _Context->end_scrollarea();
+            }
+
+            _Context->end_horizontal_stack();
+        }
+
+        // rows titles and cells
+        if(_Context->begin_horizontal_stack(_Context->next_id("Rows")))
+        {
+            // rows titles
+            _Context->next_scroll_offset(ScrollOffset);
+            _Context->next_maximum_size(ScrollViewport.size());
+
+            if(_Context->begin_scrollarea(
+                _Context->next_id("Rows"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+            {
+                if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, 1, &GridCellSize))
+                {
+                    VerticalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                    _Context->end_grid();
+                }
+
+                _Context->end_scrollarea();
+            }
+
+            // cells
+            if(_Context->begin_scrollarea(_Context->next_id("Cells")))
+            {
+                ScrollOffset   = _Context->current_scroll_offset(false);
+                ScrollViewport = _Context->current_scroll_viewport();
+                GridClipper        = ImmediateUserInterfaceGridClipper(_Context->get_rendering_stack_top(), GridRowsCount, GridColsCount, GridCellSize);
+
+                if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, GridColsCount, &GridCellSize))
+                {
+                    DataCells = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                    _Context->end_grid();
+                }
+
+                _Context->end_scrollarea();
+            }
+
+            _Context->end_horizontal_stack();
+        }
+    
+        _Context->end_vertical_stack();
+    }
+
+    return true;
+}
+
+void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if(dynamic_cast<ImmediateUserInterfaceTableVerticalHeader*>(_Child) && VerticalHeaders)
+    {
+        VerticalHeaders->attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceTableHorizontalHeader*>(_Child) && HorizontalHeaders)
+    {
+        HorizontalHeaders->attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceTableCornerHeader*>(_Child) && CorenerHeader)
+    {
+        CorenerHeader->attach_child(_Child);
+        return;
+    }
+
+    if(dynamic_cast<ImmediateUserInterfaceGridCell*>(_Child) && DataCells)
+    {
+        DataCells->attach_child(_Child);
+        return;
+    }
+
+    if(_Child)
+        _Child->State.Parent = this;
 }
 
 // ImmediateUserInterfaceWindow
@@ -6783,12 +6968,12 @@ void ImmediateUserInterfaceContextLayer::end_scrollarea()
 
 bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    return begin_node<ImmediateUserInterfaceNodePanel>(_ID, _Settings);
+    return begin_node<ImmediateUserInterfacePanel>(_ID, _Settings);
 }
 
 void ImmediateUserInterfaceContextLayer::end_panel()
 {
-    end_node<ImmediateUserInterfaceNodePanel>();
+    end_node<ImmediateUserInterfacePanel>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_vertical_stack(const std::string& _Name, const ImmediateUserInterfaceNodeSettings& _Settings)
@@ -7574,15 +7759,15 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
 void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfaceNodePanel
+    struct ImmediateUserInterfaceColorPickerRGBA : public ImmediateUserInterfacePanel
     {
     public:
-        ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        ImmediateUserInterfaceColorPickerRGBA(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
         virtual ~ImmediateUserInterfaceColorPickerRGBA(){}
 
         virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
         {
-            ImmediateUserInterfaceNodePanel::layout(_Context);
+            ImmediateUserInterfacePanel::layout(_Context);
 
             gs_vec2f gradientBoxSize = gs_vec2f(256.f, 256.f);
             gs_vec2f paletteBoxSize  = gs_vec2f(32.f, 256.f);
@@ -8069,10 +8254,10 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
 
 void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
 {
-    struct ImmediateUserInterfaceColorPickerHSVA : public ImmediateUserInterfaceNodePanel
+    struct ImmediateUserInterfaceColorPickerHSVA : public ImmediateUserInterfacePanel
     {
     public:
-        ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash) : ImmediateUserInterfaceNodePanel(_Hash){}
+        ImmediateUserInterfaceColorPickerHSVA(const std::string& _Hash) : ImmediateUserInterfacePanel(_Hash){}
         virtual ~ImmediateUserInterfaceColorPickerHSVA(){}
 
         virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
@@ -8785,12 +8970,12 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
 
 bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, gs_vec2f* _CellSize)
 {
-    if(begin_node<ImmediateUserInterfaceLayerGrid>(
+    if(begin_node<ImmediateUserInterfaceGrid>(
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
     {
-        ImmediateUserInterfaceLayerGrid* grid =
-            get_rendering_stack_top<ImmediateUserInterfaceLayerGrid>();
+        ImmediateUserInterfaceGrid* grid =
+            get_rendering_stack_top<ImmediateUserInterfaceGrid>();
 
         grid->CellSize = _CellSize;
         grid->MaxRow   = _RowsCount;
@@ -8804,17 +8989,17 @@ bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, cons
 
 void ImmediateUserInterfaceContextLayer::end_grid()
 {
-    end_node<ImmediateUserInterfaceLayerGrid>();
+    end_node<ImmediateUserInterfaceGrid>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceLayerGridCell>(
+    if(begin_node<ImmediateUserInterfaceGridCell>(
         next_id(std::string("Cell-").append(Frenchie::Core::String::to_string(_Row)).append("-").append(Frenchie::Core::String::to_string(_Column))),
         _Settings))
     {
-        ImmediateUserInterfaceLayerGridCell* cell =
-            get_rendering_stack_top<ImmediateUserInterfaceLayerGridCell>();
+        ImmediateUserInterfaceGridCell* cell =
+            get_rendering_stack_top<ImmediateUserInterfaceGridCell>();
 
         cell->Row    = _Row;
         cell->Column = _Column;
@@ -8827,7 +9012,84 @@ bool ImmediateUserInterfaceContextLayer::begin_grid_cell(const int& _Row, const 
 
 void ImmediateUserInterfaceContextLayer::end_grid_cell()
 {
-    end_node<ImmediateUserInterfaceLayerGridCell>();
+    end_node<ImmediateUserInterfaceGridCell>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceTable>(_ID, _Settings))
+    {
+        ImmediateUserInterfaceTable* grid =
+            get_rendering_stack_top<ImmediateUserInterfaceTable>();
+
+        grid->GridRowsCount = _RowsCount;
+        grid->GridColsCount = _ColumnsCount;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_table()
+{
+    end_node<ImmediateUserInterfaceTable>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_table_horizontal_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceTableHorizontalHeader>(
+        next_id(std::string("HorizontalTitle-").append(Frenchie::Core::String::to_string(0)).append("-").append(Frenchie::Core::String::to_string(_Index))),
+        _Settings))
+    {
+        ImmediateUserInterfaceTableHorizontalHeader* cell =
+            get_rendering_stack_top<ImmediateUserInterfaceTableHorizontalHeader>();
+
+        cell->Row    = 0;
+        cell->Column = _Index;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_table_horizontal_title()
+{
+    end_node<ImmediateUserInterfaceTableHorizontalHeader>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_table_vertical_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceTableVerticalHeader>(
+        next_id(std::string("VerticalTitle-").append(Frenchie::Core::String::to_string(_Index)).append("-").append(Frenchie::Core::String::to_string(0))),
+        _Settings))
+    {
+        ImmediateUserInterfaceTableVerticalHeader* cell =
+            get_rendering_stack_top<ImmediateUserInterfaceTableVerticalHeader>();
+
+        cell->Row    = _Index;
+        cell->Column = 0;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_table_vertical_title()
+{
+    end_node<ImmediateUserInterfaceTableVerticalHeader>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_table_corner_title(const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceTableCornerHeader>(next_id("Corner"), _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_table_corner_title()
+{
+    end_node<ImmediateUserInterfaceTableCornerHeader>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
@@ -9073,4 +9335,12 @@ gs_2dboxf ImmediateUserInterfaceContextLayer::current_bounding_box() const
     ImmediateUserInterfaceNode* node = get_rendered_stack_top();
 
     return node != nullptr ? node->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+}
+
+ImmediateUserInterfaceGridClipper ImmediateUserInterfaceContextLayer::current_table_grid_clipper() const
+{
+    ImmediateUserInterfaceTable* table =
+        get_rendering_stack_top<ImmediateUserInterfaceTable>();
+
+    return table != nullptr ? table->GridClipper : ImmediateUserInterfaceGridClipper();
 }

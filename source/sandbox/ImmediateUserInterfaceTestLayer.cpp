@@ -798,124 +798,186 @@ void ImmediateUserInterfaceTestLayer::develop_test()
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
-        // table
-        static gs_vec2f  scrollOffset   = gs_vec2f(0.f, 0.f);
-        static gs_2dboxf scrollViewport = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-        static gs_vec2f  gridCellSize   = gs_vec2f(256.f, 128.f);
-
-        int              rowsCount      = 10000;
-        int              colsCount      = 10000;
-
+        int rowsCount    = 10000;
+        int colsCount    = 10000;
         int cellSettings = 
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
-        if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("Table")))
+        
+        if(m_ImmediateUserInterface->begin_table(m_ImmediateUserInterface->next_id("Table"), rowsCount, colsCount))
         {
-            m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), gridCellSize.y));
-            m_ImmediateUserInterface->next_content_padding(gs_vec4f(4.f, 0.f, 0.f, 4.f));
+            ImmediateUserInterfaceGridClipper clipper = m_ImmediateUserInterface->current_table_grid_clipper();
+
+            // corner header
+            if(m_ImmediateUserInterface->begin_table_corner_title(cellSettings))
+            {
+                m_ImmediateUserInterface->label(
+                    m_ImmediateUserInterface->next_id("Dimintions"),
+                    Frenchie::Core::String::format("%dx%d", rowsCount, colsCount));
+
+                m_ImmediateUserInterface->end_table_corner_title();
+            }
 
             // columns titles
-            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Cols")))
+            for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
             {
-                m_ImmediateUserInterface->next_size(gridCellSize);
-                m_ImmediateUserInterface->empty_node(m_ImmediateUserInterface->next_id("Corner"));
-
-                m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
-
-                if(m_ImmediateUserInterface->begin_scrollarea(
-                    m_ImmediateUserInterface->next_id("Columns"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                if(m_ImmediateUserInterface->begin_table_horizontal_title(j, cellSettings))
                 {
-                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), 1, colsCount, gridCellSize);
-
-                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), 1, colsCount, &gridCellSize))
-                    {
-                        for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
-                        {
-                            if(m_ImmediateUserInterface->begin_grid_cell(0, j, cellSettings))
-                            {
-                                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
-                                m_ImmediateUserInterface->end_grid_cell();
-                            }
-                        }
-
-                        m_ImmediateUserInterface->end_grid();
-                    }
-
-                    m_ImmediateUserInterface->end_scrollarea();
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+                    m_ImmediateUserInterface->end_table_horizontal_title();
                 }
-
-                m_ImmediateUserInterface->end_horizontal_stack();
             }
 
-            if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Rows")))
+            // rows titles
+            for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
             {
-                // rows titles
-                m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
-                m_ImmediateUserInterface->next_maximum_size(scrollViewport.size());
-
-                if(m_ImmediateUserInterface->begin_scrollarea(
-                    m_ImmediateUserInterface->next_id("Rows"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+                if(m_ImmediateUserInterface->begin_table_vertical_title(j, cellSettings))
                 {
-                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, 1, gridCellSize);
-
-                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, 1, &gridCellSize))
-                    {
-                        for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
-                        {
-                            if(m_ImmediateUserInterface->begin_grid_cell(j, 0, cellSettings))
-                            {
-                                m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
-                                m_ImmediateUserInterface->end_grid_cell();
-                            }
-                        }
-
-                        m_ImmediateUserInterface->end_grid();
-                    }
-
-                    m_ImmediateUserInterface->end_scrollarea();
+                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+                    m_ImmediateUserInterface->end_table_vertical_title();
                 }
-
-                // cells
-                if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Cells")))
-                {
-                    scrollOffset   = m_ImmediateUserInterface->current_scroll_offset(false);
-                    scrollViewport = m_ImmediateUserInterface->current_scroll_viewport();
-
-                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, colsCount, gridCellSize);
-
-                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, colsCount, &gridCellSize))
-                    {
-                        for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
-                        { 
-                            for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
-                            {
-                                if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
-                                {
-                                    m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
-                                    m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Title"), gs_color_rgb(255, 255, 255));
-                                    m_ImmediateUserInterface->end_grid_cell();
-                                }
-                            }
-                        }
-
-                        m_ImmediateUserInterface->end_grid();
-                    }
-
-                    m_ImmediateUserInterface->end_scrollarea();
-                }
-
-                m_ImmediateUserInterface->end_horizontal_stack();
             }
-        
-            m_ImmediateUserInterface->end_vertical_stack();
+
+            for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
+            { 
+                for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+                {
+                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(8.f));
+
+                    if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
+                    {
+                        m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
+                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button", "Button"));
+                        m_ImmediateUserInterface->end_grid_cell();
+                    }
+                }
+            }
+
+            m_ImmediateUserInterface->end_table();
         }
 
-        // // cells
+        // // CUSTOM GRID TABLE
+        // // table
+        // static gs_vec2f  scrollOffset   = gs_vec2f(0.f, 0.f);
+        // static gs_2dboxf scrollViewport = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        // static gs_vec2f  gridCellSize   = gs_vec2f(256.f, 128.f);
+
+        // int              rowsCount      = 10000;
+        // int              colsCount      = 10000;
+
+        // int cellSettings = 
+        //       ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+        //     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+        //     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+        //     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+
+        // if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("Table")))
+        // {
+        //     m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), gridCellSize.y));
+        //     m_ImmediateUserInterface->next_content_padding(gs_vec4f(4.f, 0.f, 0.f, 4.f));
+
+        //     // columns titles
+        //     if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Cols")))
+        //     {
+        //         m_ImmediateUserInterface->next_size(gridCellSize);
+        //         m_ImmediateUserInterface->empty_node(m_ImmediateUserInterface->next_id("Corner"));
+
+        //         m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
+
+        //         if(m_ImmediateUserInterface->begin_scrollarea(
+        //             m_ImmediateUserInterface->next_id("Columns"),
+        //             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+        //         {
+        //             ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), 1, colsCount, gridCellSize);
+
+        //             if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), 1, colsCount, &gridCellSize))
+        //             {
+        //                 for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+        //                 {
+        //                     if(m_ImmediateUserInterface->begin_grid_cell(0, j, cellSettings))
+        //                     {
+        //                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+        //                         m_ImmediateUserInterface->end_grid_cell();
+        //                     }
+        //                 }
+
+        //                 m_ImmediateUserInterface->end_grid();
+        //             }
+
+        //             m_ImmediateUserInterface->end_scrollarea();
+        //         }
+
+        //         m_ImmediateUserInterface->end_horizontal_stack();
+        //     }
+
+        //     if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Rows")))
+        //     {
+        //         // rows titles
+        //         m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
+        //         m_ImmediateUserInterface->next_maximum_size(scrollViewport.size());
+
+        //         if(m_ImmediateUserInterface->begin_scrollarea(
+        //             m_ImmediateUserInterface->next_id("Rows"),
+        //             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        //         {
+        //             ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, 1, gridCellSize);
+
+        //             if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, 1, &gridCellSize))
+        //             {
+        //                 for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
+        //                 {
+        //                     if(m_ImmediateUserInterface->begin_grid_cell(j, 0, cellSettings))
+        //                     {
+        //                         m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+        //                         m_ImmediateUserInterface->end_grid_cell();
+        //                     }
+        //                 }
+
+        //                 m_ImmediateUserInterface->end_grid();
+        //             }
+
+        //             m_ImmediateUserInterface->end_scrollarea();
+        //         }
+
+        //         // cells
+        //         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Cells")))
+        //         {
+        //             scrollOffset   = m_ImmediateUserInterface->current_scroll_offset(false);
+        //             scrollViewport = m_ImmediateUserInterface->current_scroll_viewport();
+
+        //             ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, colsCount, gridCellSize);
+
+        //             if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, colsCount, &gridCellSize))
+        //             {
+        //                 for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
+        //                 { 
+        //                     for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+        //                     {
+        //                         if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
+        //                         {
+        //                             m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
+        //                             m_ImmediateUserInterface->image(m_ImmediateUserInterface->next_id("Title"), gs_color_rgb(255, 255, 255));
+        //                             m_ImmediateUserInterface->end_grid_cell();
+        //                         }
+        //                     }
+        //                 }
+
+        //                 m_ImmediateUserInterface->end_grid();
+        //             }
+
+        //             m_ImmediateUserInterface->end_scrollarea();
+        //         }
+
+        //         m_ImmediateUserInterface->end_horizontal_stack();
+        //     }
+        
+        //     m_ImmediateUserInterface->end_vertical_stack();
+        // }
+
+        // // DEFAULT GRID
         // if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Cells")))
         // {
         //     scrollOffset = m_ImmediateUserInterface->current_scrollbar_offset(false) / m_ImmediateUserInterface->get_rendering_stack_top()->State.BoundingBox.size();
