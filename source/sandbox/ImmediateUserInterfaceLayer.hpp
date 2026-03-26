@@ -664,10 +664,10 @@ namespace Frenchie
         struct ImmediateUserInterfaceGridClipper final
         {
             ImmediateUserInterfaceGridClipper(
-                const ImmediateUserInterfaceNode* _ScorllArea,
-                const int&                        _RowsCount,
-                const int&                        _ColumnsCount,
-                const gs_vec2f&                   _CellSize);
+                const ImmediateUserInterfaceNode* _ScorllArea   = nullptr,
+                const int&                        _RowsCount    = 0,
+                const int&                        _ColumnsCount = 0,
+                const gs_vec2f&                   _CellSize     = gs_vec2f(0.f, 0.f));
 
             int SourceRow = 0;
             int TargetRow = 0;
@@ -749,12 +749,12 @@ namespace Frenchie
                     }
 
                     // next content margin
-                    if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentMargin.has_value())
-                        dynamic_cast<ImmediateUserInterfaceNodePanel*>(node)->ContentMargin = controller->NextContentMargin.value();
+                    if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentMargin.has_value())
+                        dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentMargin = controller->NextContentMargin.value();
 
                     // next content padding
-                    if(dynamic_cast<ImmediateUserInterfaceNodePanel*>(node) && controller->NextContentPadding.has_value())
-                        dynamic_cast<ImmediateUserInterfaceNodePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
+                    if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentPadding.has_value())
+                        dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
 
                     // next content padding
                     if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
@@ -896,6 +896,41 @@ namespace Frenchie
             // Cells can be added only to grid. If you try to use cell outside the grid this function asserts.
             bool begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_grid_cell();
+
+            // This function creates table
+            // _ID           - unique ID
+            // _RowsCount    - number of rows
+            // _ColumnsCount - number of columns
+            // _Settings     - settings
+            // If you do not pass '_RowsCount' and '_ColumnsCount' they will be computed dynamically by the cells indexes.
+            // If you pass '_RowsCount' and '_ColumnsCount' you will be able to extract and use clipper (see current_table_grid_clipper())
+            bool begin_table(
+                const std::string&                        _ID,
+                const int&                                _RowsCount    = 0,
+                const int&                                _ColumnsCount = 0,
+                const ImmediateUserInterfaceNodeSettings& _Settings     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table();
+
+            // This function creates table horizontal title cell
+            // _Index    - index of the title column
+            // _Settings - cell settings
+            // Horizontal title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+            bool begin_table_horizontal_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_horizontal_title();
+
+            // This function creates table vertical title cell
+            // _Index    - index of the title row
+            // _Settings - cell settings
+            // Vertical title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+            bool begin_table_vertical_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_vertical_title();
+
+            // This function creates corner title cell
+            // _Settings - cell settings
+            // Corner title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
+            bool begin_table_corner_title(const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_corner_title();
+            //------------------------------------------------------------------------------------------
 
             // UI widgets API
 
@@ -1086,6 +1121,8 @@ namespace Frenchie
 
             // this function returns current node bounding box
             gs_2dboxf current_bounding_box() const;
+
+            ImmediateUserInterfaceGridClipper current_table_grid_clipper() const;
 
             // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const
