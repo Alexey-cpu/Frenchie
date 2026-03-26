@@ -266,7 +266,6 @@ namespace Frenchie
             ImmediateUserInterfaceGridCell(const std::string& _Name);
             virtual ~ImmediateUserInterfaceGridCell();
 
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
@@ -304,8 +303,6 @@ namespace Frenchie
 
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            gs_2dboxf                         ScrollViewport {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_vec2f                          ScrollOffset   {gs_vec2f(0.f, 0.f)};
             gs_vec2f                          GridCellSize   {gs_vec2f(256.f, 128.f)};
             int                               GridRowsCount  {0};
             int                               GridColsCount  {0};
@@ -322,57 +319,30 @@ namespace Frenchie
         struct ImmediateUserInterfaceTableCornerPanel : public ImmediateUserInterfacePanel
         {
         public:
-            ImmediateUserInterfaceTableCornerPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-            virtual ~ImmediateUserInterfaceTableCornerPanel(){}
+            ImmediateUserInterfaceTableCornerPanel(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTableCornerPanel();
         };
 
         struct ImmediateUserInterfaceTableVerticalHeader : public ImmediateUserInterfaceGridCell
         {
         public:
-            ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
-            virtual ~ImmediateUserInterfaceTableVerticalHeader(){}
+            ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTableVerticalHeader();
         };
 
         struct ImmediateUserInterfaceTableHorizontalHeader : public ImmediateUserInterfaceGridCell
         {
         public:
-            ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
-            virtual ~ImmediateUserInterfaceTableHorizontalHeader(){}
+            ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTableHorizontalHeader();
         };
 
         struct ImmediateUserInterfaceTableCornerHeader : public ImmediateUserInterfacePanel
         {
         public:
-            ImmediateUserInterfaceTableCornerHeader(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-            virtual ~ImmediateUserInterfaceTableCornerHeader(){}
-            
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTable>(this));
-
-                ImmediateUserInterfacePanel::layout(_Context);
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                // outline
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                // background
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
-                    State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width()),
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
+            ImmediateUserInterfaceTableCornerHeader(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTableCornerHeader(); 
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
         
         // windows
@@ -3327,7 +3297,7 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
             parent = _Context->m_Hierarchy.get_parent(parent);
         }
 
-        return clippingBox;
+        return gs_2dboxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
     };
 
     // main code
@@ -4693,64 +4663,6 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
     State.ContentSize = box.size();
 }
 
-// ImmediateUserInterfaceLayerGridCell
-ImmediateUserInterfaceGridCell::ImmediateUserInterfaceGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceGridCell::~ImmediateUserInterfaceGridCell(){}
-
-void ImmediateUserInterfaceGridCell::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // outline
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
-        State.BoundingBox.Max - gs_vec2f(_Context->m_Style.get_frames_width()),
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-}
-
-void ImmediateUserInterfaceGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr)
-        return;
-
-    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceGrid*>(
-        _Context->m_Hierarchy.get_parent(this)) != nullptr);
-
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-        _Context->m_Hierarchy.begin(this),
-        _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
-        State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
-        ContentPadding,
-        ContentMargin,
-        State.Settings,
-        [this](const ImmediateUserInterfaceNode* _Node){return true;});
-}
-
-bool ImmediateUserInterfaceGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(!ImmediateUserInterfacePanel::events(_Context))
-        return false;
-
-    ImmediateUserInterfaceGrid * grid =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceGrid>(this);
-
-    if(grid != nullptr && grid->CellSize != nullptr)
-        *grid->CellSize = State.BoundingBox.size();
-
-    return true;
-}
-
 // ImmediateUserInterfaceLayerGridNode
 ImmediateUserInterfaceGrid::ImmediateUserInterfaceGrid(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceGrid::~ImmediateUserInterfaceGrid(){}
@@ -4805,6 +4717,43 @@ void ImmediateUserInterfaceGrid::measure(ImmediateUserInterfaceContextLayer* _Co
     State.ContentSize = cellSize * gs_vec2f((float)MaxCol, (float)MaxRow);
 }
 
+// ImmediateUserInterfaceLayerGridCell
+ImmediateUserInterfaceGridCell::ImmediateUserInterfaceGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceGridCell::~ImmediateUserInterfaceGridCell(){}
+
+void ImmediateUserInterfaceGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceGrid*>(
+        _Context->m_Hierarchy.get_parent(this)) != nullptr);
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
+        State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
+        ContentPadding,
+        ContentMargin,
+        State.Settings,
+        [this](const ImmediateUserInterfaceNode* _Node){return true;});
+}
+
+bool ImmediateUserInterfaceGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(!ImmediateUserInterfacePanel::events(_Context))
+        return false;
+
+    ImmediateUserInterfaceGrid * grid =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceGrid>(this);
+
+    if(grid != nullptr && grid->CellSize != nullptr)
+        *grid->CellSize = State.BoundingBox.size();
+
+    return true;
+}
+
 // ImmediateUserInterfaceTable
 ImmediateUserInterfaceTable::ImmediateUserInterfaceTable(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceTable::~ImmediateUserInterfaceTable(){}
@@ -4819,16 +4768,11 @@ bool ImmediateUserInterfaceTable::create_contents(
     ImmediateUserInterfaceScrollArea* scrollArea =
         _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(DataCells);
 
-    ScrollOffset   = gs_vec2f(
+    gs_vec2f scrollOffset = gs_vec2f(
         scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset(false).x : 0.f,
         scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(false).y   : 0.f);
-
-    ScrollViewport =
-        scrollArea != nullptr ?
-            scrollArea->ContentView->State.BoundingBox :
-                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
     
-    GridClipper    = ImmediateUserInterfaceGridClipper(scrollArea, GridRowsCount, GridColsCount, GridCellSize);
+    GridClipper = ImmediateUserInterfaceGridClipper(scrollArea, GridRowsCount, GridColsCount, GridCellSize);
 
     if(_Context->begin_vertical_stack(
         _Context->next_id("Table"),
@@ -4839,7 +4783,9 @@ bool ImmediateUserInterfaceTable::create_contents(
         _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
 
         // columns titles
-        if(_Context->begin_horizontal_stack(_Context->next_id("Cols")))
+        if(_Context->begin_horizontal_stack(
+            _Context->next_id("Cols"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
             _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
 
@@ -4854,7 +4800,7 @@ bool ImmediateUserInterfaceTable::create_contents(
                 _Context->end_node<ImmediateUserInterfaceTableCornerPanel>();
             }
 
-            _Context->next_scroll_offset(gs_vec2f(ScrollOffset.x, 0.f));
+            _Context->next_scroll_offset(gs_vec2f(scrollOffset.x, 0.f));
             _Context->next_minimum_size(gs_vec2f(GridCellSize.x, GridCellSize.y));
             _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
 
@@ -4876,27 +4822,40 @@ bool ImmediateUserInterfaceTable::create_contents(
         }
 
         // rows titles and cells
-        if(_Context->begin_horizontal_stack(_Context->next_id("Rows")))
+        if(_Context->begin_horizontal_stack(
+            _Context->next_id("Rows"),
+            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
             _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
 
             // rows titles
-            _Context->next_scroll_offset(gs_vec2f(0.f, ScrollOffset.y));
-            _Context->next_minimum_size(gs_vec2f(GridCellSize.x, ScrollViewport.size().y));
-            _Context->next_maximum_size(gs_vec2f(GridCellSize.x, ScrollViewport.size().y));
+            _Context->next_minimum_size(gs_vec2f(GridCellSize.x, _Context->current_minimum_size().y));
+            _Context->next_maximum_size(gs_vec2f(GridCellSize.x, _Context->current_maximum_size().y));
 
-            if(_Context->begin_scrollarea(
+            if(_Context->begin_vertical_stack(
                 _Context->next_id("Rows"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
-                | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
-                if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, 1, &GridCellSize))
+                _Context->next_scroll_offset(gs_vec2f(0.f, scrollOffset.y));
+
+                if(_Context->begin_scrollarea(
+                    _Context->next_id("Rows"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
+                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
                 {
-                    VerticalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
-                    _Context->end_grid();
+                    if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, 1, &GridCellSize))
+                    {
+                        VerticalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                        _Context->end_grid();
+                    }
+
+                    _Context->end_scrollarea();
                 }
 
-                _Context->end_scrollarea();
+                _Context->next_size(gs_vec2f(GridCellSize.x, _Context->m_Style.get_scrollbar_width()));
+                _Context->empty_node(_Context->next_id("filler"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None);
+
+                _Context->end_vertical_stack();
             }
 
             // cells
@@ -4948,6 +4907,39 @@ void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Chil
 
     if(_Child)
         _Child->State.Parent = this;
+}
+
+// ImmediateUserInterfaceTableCornerPanel
+ImmediateUserInterfaceTableCornerPanel::ImmediateUserInterfaceTableCornerPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTableCornerPanel::~ImmediateUserInterfaceTableCornerPanel(){}
+
+// ImmediateUserInterfaceTableVerticalHeader
+ImmediateUserInterfaceTableVerticalHeader::ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
+ImmediateUserInterfaceTableVerticalHeader::~ImmediateUserInterfaceTableVerticalHeader(){}
+
+// ImmediateUserInterfaceTableHorizontalHeader
+ImmediateUserInterfaceTableHorizontalHeader::ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
+ImmediateUserInterfaceTableHorizontalHeader::~ImmediateUserInterfaceTableHorizontalHeader(){}
+
+// ImmediateUserInterfaceTableCornerHeader
+ImmediateUserInterfaceTableCornerHeader::ImmediateUserInterfaceTableCornerHeader(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTableCornerHeader::~ImmediateUserInterfaceTableCornerHeader(){}
+
+void ImmediateUserInterfaceTableCornerHeader::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    GS_ASSERT(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTable>(this));
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        State.BoundingBox.Min + gs_vec2f(_Context->m_Style.get_frames_width()),
+        State.BoundingBox.size() - gs_vec2f(_Context->m_Style.get_frames_width()) * 2.f,
+        ContentPadding,
+        ContentMargin,
+        State.Settings,
+        [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
 // ImmediateUserInterfaceWindow
@@ -7424,37 +7416,19 @@ void ImmediateUserInterfaceContextLayer::label(
 
             int depth = widget->Cache.Depth;
 
-            if((_Settings & ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_RenderFrame))
-            {
-                // outline
-                m_Renderer->push_rectangle_rounded_filled(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Max,
-                    m_Style.get_frames_radius(),
-                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                    m_Renderer->calculate_transform_matrix((float)depth++));
+            float x = widget->State.BoundingBox.Min.x;
 
-                // background
-                m_Renderer->push_rectangle_rounded_filled(
-                    widget->State.BoundingBox.Min + m_Style.get_frames_width(),
-                    widget->State.BoundingBox.Max - m_Style.get_frames_width(),
-                    m_Style.get_frames_radius(),
-                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    m_Renderer->calculate_transform_matrix((float)depth++));
-            }
-            else
-            {
-                // background
-                m_Renderer->push_rectangle_rounded_filled(
-                    widget->State.BoundingBox.Min,
-                    widget->State.BoundingBox.Max,
-                    m_Style.get_frames_radius(),
-                    m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    m_Renderer->calculate_transform_matrix((float)depth++));
-            }
+            if(_Settings & ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignLeft)
+                x = widget->State.BoundingBox.Min.x;
+            else if(_Settings & ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignRight)
+                x = widget->State.BoundingBox.Max.x - textSize.x;
+            else if(_Settings & ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter)
+                x = widget->State.BoundingBox.center().x - textSize.x * 0.5f;
 
             m_Renderer->push_text(
-                gs_vec2f(widget->State.BoundingBox.Min.x, widget->State.BoundingBox.center().y - textSize.y * 0.5f),
+                gs_vec2f(
+                    x,
+                    widget->State.BoundingBox.center().y - textSize.y * 0.5f),
                 _Text.begin(),
                 _Text.end(),
                 m_Style.get_font_size(),
@@ -9065,9 +9039,9 @@ void ImmediateUserInterfaceContextLayer::end_grid_cell()
     end_node<ImmediateUserInterfaceGridCell>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, const ImmediateUserInterfaceNodeSettings& _Settings)
+bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount)
 {
-    if(begin_node<ImmediateUserInterfaceTable>(_ID, _Settings))
+    if(begin_node<ImmediateUserInterfaceTable>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         ImmediateUserInterfaceTable* grid =
             get_rendering_stack_top<ImmediateUserInterfaceTable>();
@@ -9382,9 +9356,23 @@ gs_2dboxf ImmediateUserInterfaceContextLayer::current_scroll_viewport() const
 
 gs_2dboxf ImmediateUserInterfaceContextLayer::current_bounding_box() const
 {
-    ImmediateUserInterfaceNode* node = get_rendered_stack_top();
+    ImmediateUserInterfaceNode* node = get_rendering_stack_top();
 
     return node != nullptr ? node->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+}
+
+gs_vec2f ImmediateUserInterfaceContextLayer::current_maximum_size() const
+{
+    ImmediateUserInterfaceNode* node = get_rendering_stack_top();
+
+    return node != nullptr ? node->State.MaximumSize : gs_vec2f(0.f, 0.f);
+}
+
+gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size() const
+{
+    ImmediateUserInterfaceNode* node = get_rendering_stack_top();
+
+    return node != nullptr ? node->State.MinimumSize : gs_vec2f(0.f, 0.f);
 }
 
 ImmediateUserInterfaceGridClipper ImmediateUserInterfaceContextLayer::current_table_grid_clipper() const

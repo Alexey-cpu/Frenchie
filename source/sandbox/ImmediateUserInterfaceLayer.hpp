@@ -154,7 +154,9 @@ namespace Frenchie
         enum ImmediateUserInterfaceLabelSettings_ : int
         {
             ImmediateUserInterfaceLabelSettings_None        = 0,
-            ImmediateUserInterfaceLabelSettings_RenderFrame = 1 << 0, // if this is on the outline frame is rendered around text label
+            ImmediateUserInterfaceLabelSettings_AlignLeft   = 1 << 0, // aligns text left
+            ImmediateUserInterfaceLabelSettings_AlignRight  = 1 << 1, // aligns text right
+            ImmediateUserInterfaceLabelSettings_AlignCenter = 1 << 2, // aligns text center
         };
 
         // This enum declares tree node settings
@@ -907,8 +909,7 @@ namespace Frenchie
             bool begin_table(
                 const std::string&                        _ID,
                 const int&                                _RowsCount    = 0,
-                const int&                                _ColumnsCount = 0,
-                const ImmediateUserInterfaceNodeSettings& _Settings     = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+                const int&                                _ColumnsCount = 0);
             void end_table();
 
             // This function creates table horizontal title cell
@@ -1120,6 +1121,8 @@ namespace Frenchie
 
             // this function returns current node bounding box
             gs_2dboxf current_bounding_box() const;
+            gs_vec2f  current_maximum_size() const;
+            gs_vec2f  current_minimum_size() const;
 
             ImmediateUserInterfaceGridClipper current_table_grid_clipper() const;
 

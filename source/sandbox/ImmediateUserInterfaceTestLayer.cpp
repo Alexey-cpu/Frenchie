@@ -796,6 +796,8 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
+    static std::string input;
+
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
         int rowsCount    = 10000;
@@ -816,7 +818,8 @@ void ImmediateUserInterfaceTestLayer::develop_test()
             {
                 m_ImmediateUserInterface->label(
                     m_ImmediateUserInterface->next_id("Dimintions"),
-                    Frenchie::Core::String::format("%dx%d", rowsCount, colsCount));
+                    Frenchie::Core::String::format("%dx%d", rowsCount, colsCount),
+                    ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
 
                 m_ImmediateUserInterface->end_table_corner_title();
             }
@@ -826,7 +829,10 @@ void ImmediateUserInterfaceTestLayer::develop_test()
             {
                 if(m_ImmediateUserInterface->begin_table_horizontal_title(j, cellSettings))
                 {
-                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+                    m_ImmediateUserInterface->label(
+                        m_ImmediateUserInterface->next_id("Title"),
+                        Frenchie::Core::String::to_string(j),
+                        ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
                     m_ImmediateUserInterface->end_table_horizontal_title();
                 }
             }
@@ -836,7 +842,10 @@ void ImmediateUserInterfaceTestLayer::develop_test()
             {
                 if(m_ImmediateUserInterface->begin_table_vertical_title(j, cellSettings))
                 {
-                    m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("Title"), Frenchie::Core::String::to_string(j));
+                    m_ImmediateUserInterface->label(
+                        m_ImmediateUserInterface->next_id("Title"),
+                        Frenchie::Core::String::to_string(j),
+                        ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
                     m_ImmediateUserInterface->end_table_vertical_title();
                 }
             }
@@ -849,8 +858,15 @@ void ImmediateUserInterfaceTestLayer::develop_test()
 
                     if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
                     {
-                        m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
-                        m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button", "Button"));
+                        //m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
+                        
+                        m_ImmediateUserInterface->input_string_singleline(
+                            m_ImmediateUserInterface->next_id("String"),
+                            input
+                        );
+
+                        //m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button", "Button"));
+                        
                         m_ImmediateUserInterface->end_grid_cell();
                     }
                 }
