@@ -4834,12 +4834,15 @@ bool ImmediateUserInterfaceTable::create_contents(
         _Context->next_id("Table"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
+        _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
         _Context->next_minimum_size(gs_vec2f(0.f, GridCellSize.y));
         _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
 
         // columns titles
         if(_Context->begin_horizontal_stack(_Context->next_id("Cols")))
         {
+            _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
+
             _Context->next_minimum_size(GridCellSize);
             _Context->next_maximum_size(GridCellSize);
 
@@ -4851,7 +4854,7 @@ bool ImmediateUserInterfaceTable::create_contents(
                 _Context->end_node<ImmediateUserInterfaceTableCornerPanel>();
             }
 
-            _Context->next_scroll_offset(ScrollOffset);
+            _Context->next_scroll_offset(gs_vec2f(ScrollOffset.x, 0.f));
             _Context->next_minimum_size(gs_vec2f(GridCellSize.x, GridCellSize.y));
             _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
 
@@ -4875,8 +4878,10 @@ bool ImmediateUserInterfaceTable::create_contents(
         // rows titles and cells
         if(_Context->begin_horizontal_stack(_Context->next_id("Rows")))
         {
+            _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
+
             // rows titles
-            _Context->next_scroll_offset(ScrollOffset);
+            _Context->next_scroll_offset(gs_vec2f(0.f, ScrollOffset.y));
             _Context->next_minimum_size(gs_vec2f(GridCellSize.x, ScrollViewport.size().y));
             _Context->next_maximum_size(gs_vec2f(GridCellSize.x, ScrollViewport.size().y));
 
