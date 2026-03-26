@@ -302,8 +302,6 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings,
                 bool*                                     _Render = nullptr);
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
             gs_2dboxf                         ScrollViewport {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
@@ -4817,6 +4815,21 @@ bool ImmediateUserInterfaceTable::create_contents(
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
+    // layout self
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(DataCells);
+
+    ScrollOffset   = gs_vec2f(
+        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset(false).x : 0.f,
+        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(false).y   : 0.f);
+
+    ScrollViewport =
+        scrollArea != nullptr ?
+            scrollArea->ContentView->State.BoundingBox :
+                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+    
+    GridClipper    = ImmediateUserInterfaceGridClipper(scrollArea, GridRowsCount, GridColsCount, GridCellSize);
+
     if(_Context->begin_vertical_stack(
         _Context->next_id("Table"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -4900,27 +4913,6 @@ bool ImmediateUserInterfaceTable::create_contents(
     }
 
     return true;
-}
-
-void ImmediateUserInterfaceTable::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    // layout children
-    ImmediateUserInterfacePanel::layout(_Context);
-
-    // layout self
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(DataCells);
-
-    ScrollOffset   = gs_vec2f(
-        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset(false).x : 0.f,
-        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(false).y   : 0.f);
-
-    ScrollViewport =
-        scrollArea != nullptr ?
-            scrollArea->ContentView->State.BoundingBox :
-                gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
-    
-    GridClipper    = ImmediateUserInterfaceGridClipper(scrollArea, GridRowsCount, GridColsCount, GridCellSize);
 }
 
 void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Child)
