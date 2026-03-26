@@ -876,16 +876,16 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
             void end_tree_node();
 
-            // This function renders grid (table)
+            // This function renders grid of fixed size cells
             // _ID           - unique ID
             // _RowsCount    - number of rows within grid
             // _ColumnsCount - number of columns within grid
-            // _CellSize     - grid cell size
-            // The content size of grid is computed as Size = gs_vec2f(_RowsCount, _ColumnsCount) * _CellSize
+            // _CellSize     - grid cell size vector pointer
+            // The content size of grid is computed as Size = gs_vec2f(_RowsCount, _ColumnsCount) * (*_CellSize)
             // If the _RowsCount and _ColumnsCount are not passed then they are computed dynamically as the cells are added to the grid.
             // For large grids use scroll area plus ImmediateUserInterfaceGridClipper. Only grid cells can be added to the grid.
             // If you try to add some other UI element to grid the function asserts.
-            bool begin_grid(const std::string& _ID, const int& _RowsCount = 0, const int& _ColumnsCount = 0, const gs_vec2f _CellSize = gs_vec2f(256.f, 64.f));
+            bool begin_grid(const std::string& _ID, const int& _RowsCount = 0, const int& _ColumnsCount = 0, gs_vec2f* _CellSize = nullptr);
             void end_grid();
 
             // This function renders grid cell within grid
