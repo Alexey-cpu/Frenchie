@@ -271,6 +271,7 @@ namespace Frenchie
 
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             int Row    = 0;
             int Column = 0;
@@ -286,9 +287,9 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            gs_vec2f CellSize = gs_vec2f(256.f, 64.f);
-            int      MaxRow   = 0;
-            int      MaxCol   = 0;
+            gs_vec2f* CellSize = nullptr;
+            int       MaxRow   = 0;
+            int       MaxCol   = 0;
         };
 
         // windows
@@ -4646,6 +4647,20 @@ void ImmediateUserInterfaceLayerGridCell::layout(ImmediateUserInterfaceContextLa
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
+bool ImmediateUserInterfaceLayerGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(!ImmediateUserInterfaceNodePanel::events(_Context))
+        return false;
+
+    ImmediateUserInterfaceLayerGrid * grid =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceLayerGrid>(this);
+
+    if(grid != nullptr && grid->CellSize != nullptr)
+        *grid->CellSize = State.BoundingBox.size();
+
+    return true;
+}
+
 // ImmediateUserInterfaceLayerGridNode
 ImmediateUserInterfaceLayerGrid::ImmediateUserInterfaceLayerGrid(const std::string& _Name) : ImmediateUserInterfaceNodePanel(_Name){}
 ImmediateUserInterfaceLayerGrid::~ImmediateUserInterfaceLayerGrid(){}
@@ -4674,6 +4689,8 @@ void ImmediateUserInterfaceLayerGrid::layout(ImmediateUserInterfaceContextLayer*
         State.BoundingBox.Min + State.ContentSize);
 
     // layout children
+    gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
+
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
         ImmediateUserInterfaceLayerGridCell* cell =
@@ -4683,8 +4700,8 @@ void ImmediateUserInterfaceLayerGrid::layout(ImmediateUserInterfaceContextLayer*
             continue;
 
         cell->State.BoundingBox = gs_2dboxf(
-            State.BoundingBox.Min + CellSize * gs_vec2f((float)cell->Column, (float)cell->Row),
-            State.BoundingBox.Min + CellSize * gs_vec2f((float)cell->Column + 1.f, (float)cell->Row + 1.f));
+            State.BoundingBox.Min + cellSize * gs_vec2f((float)cell->Column, (float)cell->Row),
+            State.BoundingBox.Min + cellSize * gs_vec2f((float)cell->Column + 1.f, (float)cell->Row + 1.f));
     }
 }
 
@@ -4692,8 +4709,10 @@ void ImmediateUserInterfaceLayerGrid::measure(ImmediateUserInterfaceContextLayer
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
-    
-    State.ContentSize = CellSize * gs_vec2f((float)MaxCol, (float)MaxRow);
+
+    gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
+
+    State.ContentSize = cellSize * gs_vec2f((float)MaxCol, (float)MaxRow);
 }
 
 // ImmediateUserInterfaceWindow
@@ -8764,7 +8783,7 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, const gs_vec2f _CellSize)
+bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, gs_vec2f* _CellSize)
 {
     if(begin_node<ImmediateUserInterfaceLayerGrid>(
         _ID,

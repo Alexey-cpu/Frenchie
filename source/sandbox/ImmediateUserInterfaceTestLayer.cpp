@@ -801,10 +801,10 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         // table
         static gs_vec2f  scrollOffset   = gs_vec2f(0.f, 0.f);
         static gs_2dboxf scrollViewport = gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+        static gs_vec2f  gridCellSize   = gs_vec2f(256.f, 128.f);
 
         int              rowsCount      = 10000;
         int              colsCount      = 10000;
-        gs_vec2f         cellSize       = gs_vec2f(256.f, 128.f);
 
         int cellSettings = 
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
@@ -814,13 +814,13 @@ void ImmediateUserInterfaceTestLayer::develop_test()
 
         if(m_ImmediateUserInterface->begin_vertical_stack(m_ImmediateUserInterface->next_id("Table")))
         {
-            m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), cellSize.y));
+            m_ImmediateUserInterface->next_maximum_size(gs_vec2f(gs_huge<float>(), gridCellSize.y));
             m_ImmediateUserInterface->next_content_padding(gs_vec4f(4.f, 0.f, 0.f, 4.f));
 
             // columns titles
             if(m_ImmediateUserInterface->begin_horizontal_stack(m_ImmediateUserInterface->next_id("Cols")))
             {
-                m_ImmediateUserInterface->next_size(cellSize);
+                m_ImmediateUserInterface->next_size(gridCellSize);
                 m_ImmediateUserInterface->empty_node(m_ImmediateUserInterface->next_id("Corner"));
 
                 m_ImmediateUserInterface->next_scroll_offset(scrollOffset);
@@ -829,9 +829,9 @@ void ImmediateUserInterfaceTestLayer::develop_test()
                     m_ImmediateUserInterface->next_id("Columns"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
                 {
-                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), 1, colsCount, cellSize);
+                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), 1, colsCount, gridCellSize);
 
-                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), 1, colsCount, cellSize))
+                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), 1, colsCount, &gridCellSize))
                     {
                         for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
                         {
@@ -861,9 +861,9 @@ void ImmediateUserInterfaceTestLayer::develop_test()
                     m_ImmediateUserInterface->next_id("Rows"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
                 {
-                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, 1, cellSize);
+                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, 1, gridCellSize);
 
-                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, 1, cellSize))
+                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, 1, &gridCellSize))
                     {
                         for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
                         {
@@ -886,9 +886,9 @@ void ImmediateUserInterfaceTestLayer::develop_test()
                     scrollOffset   = m_ImmediateUserInterface->current_scroll_offset(false);
                     scrollViewport = m_ImmediateUserInterface->current_scroll_viewport();
 
-                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, colsCount, cellSize);
+                    ImmediateUserInterfaceGridClipper clipper(m_ImmediateUserInterface->get_rendering_stack_top(), rowsCount, colsCount, gridCellSize);
 
-                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, colsCount, cellSize))
+                    if(m_ImmediateUserInterface->begin_grid(m_ImmediateUserInterface->next_id("Grid"), rowsCount, colsCount, &gridCellSize))
                     {
                         for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
                         { 
