@@ -3510,12 +3510,10 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
                     settings))
                 {
                     scrollArea->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentMargin       = scrollArea->ContentMargin;
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->State.PlaceInFollow = scrollArea->State.PlaceInFollow;
                     
                     // reset self content padding as it's applied to content view
-                    scrollArea->ContentMargin  = gs_vec2f(0.f, 0.f);
                     scrollArea->ContentPadding = gs_vec2f(0.f, 0.f);
                     
                     _Context->end_node<ImmediateUserInterfaceScrollAreaContent>();
