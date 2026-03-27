@@ -1512,7 +1512,7 @@ namespace Frenchie
 
                 modified = input_string_internal(
                     _Context,
-                    std::string(_ID).append("/Input"),
+                    _Context->next_id("Input"),
                     panel->Buffer,
 
                     // input settings
@@ -3485,29 +3485,21 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
     ImmediateUserInterfaceNodeSettings settings   = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
     ImmediateUserInterfaceScrollArea*  scrollArea = this;
 
-    if(_Context->begin_node<ImmediateUserInterfaceScrollAreaPanel>(
-        std::string(_ID).append("/Panel"),
-        settings))
+    if(_Context->begin_node<ImmediateUserInterfaceScrollAreaPanel>(_Context->next_id("Root"), settings))
     {
         scrollArea->ContentPanel = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>();
 
-        if(_Context->begin_vertical_stack(
-            std::string(_ID).append("/Panel/VerticalStack"),
-            settings))
+        if(_Context->begin_vertical_stack(_Context->next_id("VerticalStack"), settings))
         {
             _Context->get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.PlaceInFollow = true;
 
             // vertical scrollbar area
-            if(_Context->begin_horizontal_stack(
-                std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea"),
-                settings))
+            if(_Context->begin_horizontal_stack(_Context->next_id("Content"), settings))
             {
                 _Context->get_rendering_stack_top<ImmediateUserInterfaceNodeHorizontalStack>()->State.PlaceInFollow = true;
 
                 // contents
-                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaContent>(
-                    std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/Contents"),
-                    settings))
+                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaContent>(_Context->next_id("Content"), settings))
                 {
                     scrollArea->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
@@ -3520,9 +3512,7 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
                 }
 
                 // vertical scrollbar
-                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                    std::string(_ID).append("/Panel/VerticalStack/VerticalScrollBarArea/VerticalScrollBar"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(_Context->next_id("VerticalScrollBar"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
                         ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
@@ -3536,9 +3526,7 @@ bool ImmediateUserInterfaceScrollArea::create_contents(
             }
 
             // horizontal scrollbar
-            if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(
-                std::string(_ID).append("/Panel/VerticalStack/HorizontalScrollBar"),
-                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(_Context->next_id("HorizontalScrollBar"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
                     ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
@@ -5250,9 +5238,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(
-        std::string(_ID).append("/CentralDockerView"),
-        settings))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(_Context->next_id("CentralDockerView"), settings))
     {
         if(!window->IsActive)
         {
@@ -5265,46 +5251,34 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
         window->DockerView->State.PlaceInFollow               = true;
         window->DockerView->State.OrderChildrenWhileRendering = true;
 
-        if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
-            std::string(_ID).append("/SnapperView"),
-            settings))
+        if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("SnapperView"), settings))
         {
             window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
 
             // top
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                std::string(_ID).append("/SnapperView/TopSnapperView"),
-                settings))
+            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("TopSnapperView"), settings))
             {
                 window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
                 _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
             }
 
             // center
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                std::string(_ID).append("/SnapperView/CentralSnapperView"),
-                settings))
+            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("CentralSnapperView"), settings))
             {
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView/LeftSnapperView"),
-                    settings))
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("LeftSnapperView"), settings))
                 {
                     window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
                     _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
                 }
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView/ContentView"),
-                    settings))
+                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("ContentView"), settings))
                 {
                     window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
                     _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
                 }
 
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                    std::string(_ID).append("/SnapperView/CentralSnapperView/RightSnapperView"),
-                    settings))
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("RightSnapperView"), settings))
                 {
                     window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
                     _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
@@ -5314,9 +5288,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             }
 
             // bottom
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(
-                std::string(_ID).append("/SnapperView/BottomSnapperView"),
-                settings))
+            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("BottomSnapperView"), settings))
             {
                 window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
                 _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
@@ -5570,7 +5542,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
         (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking);
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
-        std::string(ApplicationPlatformBackend::get_window_name()).append("###").append("DockingWorkspace"),
+        _Context->next_id(ApplicationPlatformBackend::get_window_name(), "DockingWorkspace"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup,
         &m_DockAreaOpened))
@@ -7626,7 +7598,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
-        if(begin_vertical_stack(std::string(_ID).append("/Stack")))
+        if(begin_vertical_stack(next_id("Editors")))
         {
             char longestLabel[] = "Alpha\t";
 
@@ -7643,22 +7615,22 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                 next_content_padding(padding);
 
-                if(begin_horizontal_stack(std::string(_ID).append("/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    label(std::string(_ID).append("/Contents/Editors/RGB/Label"), "RGB");
+                    label(next_id("Label"), "RGB");
 
-                    if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/RedValue"), picker->RGB.x, 0, 255, settings))
+                    if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.x = gs_color_rgba_get_r(_Color);
                     
-                    if(input_scalar<gs_color>(std::string(_ID).append("VerticalStack/RGB/GreenValue"), picker->RGB.y, 0, 255, settings))
+                    if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.y = gs_color_rgba_get_g(_Color);
                     
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Contents/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255, settings))
+                    if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.z = gs_color_rgba_get_b(_Color);
@@ -7674,24 +7646,24 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                 next_content_padding(padding);
 
-                if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
-                    label(std::string(_ID).append("/Editors/HSV/Label"), "HSV");
+                    label(next_id("Label"), "HSV");
 
                     bool hsvChanged = false;
 
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/HueValue"), picker->HSV.x, 0, 360, settings))
+                    if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                     
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100, settings))
+                    if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                     
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100, settings))
+                    if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
@@ -7718,24 +7690,24 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                 next_content_padding(padding);
 
-                if(begin_horizontal_stack(std::string(_ID).append("/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    label(std::string(_ID).append("/Editors/HSL/Label"), "HSL");
+                    label(next_id("Label"), "HSL");
 
                     bool hsvChanged = false;
 
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/HueValue"), picker->HSL.x, 0, 360, settings))
+                    if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                     
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100, settings))
+                    if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                     
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100, settings))
+                    if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
@@ -7762,12 +7734,12 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                 next_content_padding(padding);
 
-                if(begin_horizontal_stack(std::string(_ID).append("/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    label(std::string(_ID).append("/Editors/Alpha/Label"), "Alpha");
+                    label(next_id("Label"), "Alpha");
 
-                    if(input_scalar<gs_color>(std::string(_ID).append("/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255, settings))
+                    if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
                         _Color = gs_color_rgba(gs_color_rgba_get_r(_Color), gs_color_rgba_get_g(_Color), gs_color_rgba_get_b(_Color), picker->Alpha);
                     else
                         picker->Alpha = gs_color_rgba_get_a(_Color);
@@ -7783,7 +7755,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
-            image(std::string(_ID).append("/Image"), _Color);
+            image(next_id("Image"), _Color);
 
         end_node<ImmediateUserInterfaceInputColor>();
     }
@@ -8083,7 +8055,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // color picker
-        if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        if(begin_node<ImmediateUserInterfaceColorPickerRGBA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             end_node<ImmediateUserInterfaceColorPickerRGBA>();
 
         ImmediateUserInterfaceColorPickerRGBA* picker =
@@ -8113,7 +8085,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
 
-        if(begin_horizontal_stack(std::string(_ID).append("/Panel")))
+        if(begin_horizontal_stack(next_id("Root")))
         {
             gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
 
@@ -8122,7 +8094,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             // editors
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
-            if(begin_vertical_stack(std::string(_ID).append("/Panel/Editors")))
+            if(begin_vertical_stack(next_id("Editors")))
             {
                 // RGB
                 if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -8131,22 +8103,22 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(std::string(_ID).append("/Panel/Editors/RGB/Label"), "RGB");
+                        label(next_id("Label"), "RGB");
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/RGB/RedValue"), picker->RGB.x, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                             _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                         else
                             picker->RGB.x = gs_color_rgba_get_r(_Color);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/RGB/GreenValue"), picker->RGB.y, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
                             _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                         else
                             picker->RGB.y = gs_color_rgba_get_g(_Color);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
                             _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                         else
                             picker->RGB.z = gs_color_rgba_get_b(_Color);
@@ -8162,24 +8134,24 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
-                        label(std::string(_ID).append("/Panel/Editors/HSV/Label"), "HSV");
+                        label(next_id("Label"), "HSV");
 
                         bool hsvChanged = false;
 
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/HSV/HueValue"), picker->HSV.x, 0, 360, settings))
+                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                             hsvChanged = true;
                         else
                             picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f, settings);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
@@ -8206,24 +8178,24 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(std::string(_ID).append("/Panel/Editors/HSL/Label"), "HSL");
+                        label(next_id("Label"), "HSL");
 
                         bool hsvChanged = false;
 
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/HSL/HueValue"), picker->HSL.x, 0, 360, settings))
+                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                             hsvChanged = true;
                         else
                             picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
@@ -8250,12 +8222,12 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(std::string(_ID).append("/Panel/Editors/Alpha/Label"), "Alpha");
+                        label(next_id("Label"), "Alpha");
 
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
                             _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
                         else
                             picker->Alpha = gs_color_rgba_get_a(_Color);
@@ -8271,7 +8243,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
             if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
-                image(std::string(_ID).append("/Panel/Editors/Color"), _Color);
+                image(next_id("Image"), _Color);
 
             end_horizontal_stack();
         }
@@ -8573,7 +8545,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
     if(begin_vertical_stack(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         // color picker
-        if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(std::string(_ID).append("/ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        if(begin_node<ImmediateUserInterfaceColorPickerHSVA>(next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             end_node<ImmediateUserInterfaceColorPickerHSVA>();
 
         ImmediateUserInterfaceColorPickerHSVA* picker =
@@ -8603,7 +8575,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
 
-        if(begin_horizontal_stack(std::string(_ID).append("/Panel"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+        if(begin_horizontal_stack(next_id("Root"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
             gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
 
@@ -8612,7 +8584,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             // editors
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
-            if(begin_vertical_stack(std::string(_ID).append("/Panel/Editors"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+            if(begin_vertical_stack(next_id("Editors"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 // RGB
                 if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -8621,22 +8593,22 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("/Panel/Editors/RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(std::string(_ID).append("/Panel/Editors/RGB/Label"), "RGB");
+                        label(next_id("Label"), "RGB");
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/RGB/RedValue"), picker->RGB.x, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                             _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                         else
                             picker->RGB.x = gs_color_rgba_get_r(_Color);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/RGB/GreenValue"), picker->RGB.y, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
                             _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                         else
                             picker->RGB.y = gs_color_rgba_get_g(_Color);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("/Panel/Editors/RGB/BlueValue"), picker->RGB.z, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
                             _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                         else
                             picker->RGB.z = gs_color_rgba_get_b(_Color);
@@ -8652,24 +8624,24 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("Panel/Editors/HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
-                        label(std::string(_ID).append("Panel/Editors/HSV/Label"), "HSV");
+                        label(next_id("Label"), "HSV");
 
                         bool hsvChanged = false;
 
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/HSV/HueValue"), picker->HSV.x, 0, 360, settings))
+                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                             hsvChanged = true;
                         else
                             picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/HSV/SaturationValue"), picker->HSV.y, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/HSV/BrightnessValue"), picker->HSV.z, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSV.z = (gs_color)((float)gs_color_hsv_get_v(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
@@ -8696,24 +8668,24 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("Panel/Editors/HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(std::string(_ID).append("Panel/Editors/HSL/Label"), "HSL");
+                        label(next_id("Label"), "HSL");
 
                         bool hsvChanged = false;
 
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/HSL/HueValue"), picker->HSL.x, 0, 360, settings))
+                        if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                             hsvChanged = true;
                         else
                             picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/HSL/SaturationValue"), picker->HSL.y, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                         
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/HSL/BrightnessValue"), picker->HSL.z, 0, 100, settings))
+                        if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
                             hsvChanged = true;
                         else
                             picker->HSL.z = (gs_color)((float)gs_color_hsl_get_l(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
@@ -8740,12 +8712,12 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
                     next_maximum_size(gs_vec2f((float)INT_MAX, m_Style.get_font_size()));
                     next_content_padding(padding);
 
-                    if(begin_horizontal_stack(std::string(_ID).append("Panel/Editors/Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                        label(std::string(_ID).append("Panel/Editors/Alpha/Label"), "Alpha");
+                        label(next_id("Label"), "Alpha");
 
-                        if(input_scalar<gs_color>(std::string(_ID).append("Panel/Editors/Alpha/AlphaValue"), picker->Alpha, 0, 255, settings))
+                        if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
                             _Color = gs_color_rgba(gs_color_rgba_get_r(picker->Color), gs_color_rgba_get_g(picker->Color), gs_color_rgba_get_b(picker->Color), picker->Alpha);
                         else
                             picker->Alpha = gs_color_rgba_get_a(_Color);
@@ -8761,7 +8733,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
             next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
 
             if((_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor))
-                image(std::string(_ID).append("/Panel/Editors/Color"), _Color);
+                image(next_id("Image"), _Color);
 
             end_horizontal_stack();
         }
@@ -8925,7 +8897,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
 
         next_content_margin(gs_vec4f(m_Style.get_frames_width()));
 
-        if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(std::string(_ID).append("/ScrollArea"),
+        if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -9028,9 +9000,7 @@ void ImmediateUserInterfaceContextLayer::end_grid()
 
 bool ImmediateUserInterfaceContextLayer::begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceGridCell>(
-        next_id(std::string("Cell-").append(Frenchie::Core::String::to_string(_Row)).append("-").append(Frenchie::Core::String::to_string(_Column))),
-        _Settings))
+    if(begin_node<ImmediateUserInterfaceGridCell>(next_id(Frenchie::Core::String::format("Cell-%d-%d", _Row, _Column)), _Settings))
     {
         ImmediateUserInterfaceGridCell* cell =
             get_rendering_stack_top<ImmediateUserInterfaceGridCell>();
@@ -9072,9 +9042,7 @@ void ImmediateUserInterfaceContextLayer::end_table()
 
 bool ImmediateUserInterfaceContextLayer::begin_table_horizontal_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceTableHorizontalHeader>(
-        next_id(std::string("HorizontalTitle-").append(Frenchie::Core::String::to_string(0)).append("-").append(Frenchie::Core::String::to_string(_Index))),
-        _Settings))
+    if(begin_node<ImmediateUserInterfaceTableHorizontalHeader>(next_id(Frenchie::Core::String::format("HorizontalTitle-%d", _Index)), _Settings))
     {
         ImmediateUserInterfaceTableHorizontalHeader* cell =
             get_rendering_stack_top<ImmediateUserInterfaceTableHorizontalHeader>();
@@ -9095,9 +9063,7 @@ void ImmediateUserInterfaceContextLayer::end_table_horizontal_title()
 
 bool ImmediateUserInterfaceContextLayer::begin_table_vertical_title(const int& _Index, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
-    if(begin_node<ImmediateUserInterfaceTableVerticalHeader>(
-        next_id(std::string("VerticalTitle-").append(Frenchie::Core::String::to_string(_Index)).append("-").append(Frenchie::Core::String::to_string(0))),
-        _Settings))
+    if(begin_node<ImmediateUserInterfaceTableVerticalHeader>(next_id(Frenchie::Core::String::format("VerticalTitle-%d", _Index)), _Settings))
     {
         ImmediateUserInterfaceTableVerticalHeader* cell =
             get_rendering_stack_top<ImmediateUserInterfaceTableVerticalHeader>();
@@ -9137,16 +9103,15 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
     ImmedidateUserInterfaceMenusController* menusController =
         get_controller<ImmedidateUserInterfaceMenusController>();
 
-    if(begin_node<ImmediateUserInterfaceMenu>(
-        std::string(_ID).append("/Menu"),
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    if(begin_node<ImmediateUserInterfaceMenu>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
     {
         menu      = get_rendering_stack_top<ImmediateUserInterfaceMenu>();
         hasParent = m_Hierarchy.get_parent(menu) != nullptr;
 
         next_content_margin(gs_vec4f(m_Style.get_frames_width()));
 
-        if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Menu/InternalScrollArea"),
+        if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
+              next_id("InternalScrollArea"),
               ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -9166,7 +9131,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
             if(hasParent)
             {
                 if(begin_node<ImmediateUserInterfaceMenuItem>(
-                    _ID,
+                    next_id(_ID, "Entry"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     menuItem = get_rendering_stack_top<ImmediateUserInterfaceMenuItem>();
@@ -9195,7 +9160,8 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
         {
             next_content_margin(gs_vec4f(m_Style.get_frames_width()));
 
-            if(begin_node<ImmediateUserInterfaceMenuScrollArea>(std::string(_ID).append("/Main/ExternalScrollArea"),
+            if(begin_node<ImmediateUserInterfaceMenuScrollArea>(
+                  next_id("ExternalScrollArea"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar

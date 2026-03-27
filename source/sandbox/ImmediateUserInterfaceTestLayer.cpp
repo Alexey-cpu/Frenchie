@@ -254,6 +254,16 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
             if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
                 State.ShowContextSettings = true;
 
+            if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-1")))
+            {
+                m_ImmediateUserInterface->end_menu();
+            }
+
+            if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-2")))
+            {
+                m_ImmediateUserInterface->end_menu();
+            }
+
             m_ImmediateUserInterface->end_menu();
         }
 
