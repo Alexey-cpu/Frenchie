@@ -1119,9 +1119,13 @@ namespace Frenchie
             // This function returns current scrollarea viewport bounding box
             gs_2dboxf current_scroll_viewport() const;
 
-            // this function returns current node bounding box
+            // This function returns current node bounding box
             gs_2dboxf current_bounding_box() const;
+
+            // This function returns current node maximum size
             gs_vec2f  current_maximum_size() const;
+
+            // This function returns current node minimum size
             gs_vec2f  current_minimum_size() const;
 
             ImmediateUserInterfaceGridClipper current_table_grid_clipper() const;

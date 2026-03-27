@@ -95,6 +95,7 @@ namespace Frenchie
             ImmediateUserInterfaceScrollArea(const std::string& _Name);
             virtual ~ImmediateUserInterfaceScrollArea();
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
 
             virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
@@ -3422,10 +3423,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     // resize to contents
     State.MinimumSize = gs_vec2f(
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-            ContentView->State.ContentSize.x :
+            State.ContentSize.x :
                 State.MinimumSize.x,
         (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-            ContentView->State.ContentSize.y :
+            State.ContentSize.y :
                 State.MinimumSize.y);
     
     State.MaximumSize =
@@ -3447,6 +3448,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         ContentMargin,
         State.Settings,
         [](const ImmediateUserInterfaceNode*){return true;});
+}
+
+void ImmediateUserInterfaceScrollArea::measure(ImmediateUserInterfaceContextLayer* _Context)
+{
+    State.ContentSize = ContentView->State.ContentSize;
 }
 
 void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer*){}
@@ -3709,9 +3715,10 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     };
 
     // main code
-    ImmediateUserInterfaceScrollArea* contentArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
 
-    if(_Context == nullptr || contentArea == nullptr)
+    if(_Context == nullptr || scrollArea == nullptr)
         return;
 
     // calculate self maximum and minimum sizes
@@ -3720,14 +3727,14 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
             gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
                 gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), _Context->m_Style.get_scrollbar_width());
 
-    if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
+    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
         Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
     {
         State.MaximumSize.y = 0.f;
         State.MinimumSize = State.MaximumSize;
         State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
     }
-    else if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
+    else if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
         Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
     {
         State.MaximumSize.x =  0.f;
@@ -3758,7 +3765,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
                 gs_vec2f(State.BoundingBox.size().x, _Context->m_Style.get_scrollbar_width());
 
     // do not render scrollbar out of scrollarea
-    if(contentArea == nullptr)
+    if(scrollArea == nullptr)
     {
         do_not_render_scroll_bar(_Context);
         return;
@@ -3773,13 +3780,13 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
         gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            contentArea->ContentView->State.ContentSize + ConstrainedSize,
+            scrollArea->State.ContentSize + ConstrainedSize,
             minimumSliderSize);
 
         gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            contentArea->ContentView->State.ContentSize + ConstrainedSize);
+            scrollArea->State.ContentSize + ConstrainedSize);
 
         gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
 
@@ -3799,7 +3806,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
         UnconstrainedSize = calculate_scrollbar_length(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            contentArea->ContentView->State.ContentSize,
+            scrollArea->State.ContentSize,
             0.f);
 
         Position = gs_clamp(scaledPosition / PositionScale, gs_vec2f(0.f, 0.f), (State.BoundingBox.size() - UnconstrainedSize));
@@ -3808,7 +3815,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     // manage horizontal scrollbar
     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
     {
-        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
+        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
             do_not_render_scroll_bar(_Context);
             return;
@@ -3817,10 +3824,10 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
         gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            contentArea->ContentView->State.ContentSize,
+            scrollArea->State.ContentSize,
             minimumSliderSize);
 
-        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
+        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
         {
             if((int)gs_abs(scrollbarSliderLength.x - scrollbarMaximumValue.x) < _Context->m_Style.get_frames_width())
             {
@@ -3834,12 +3841,12 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
                 return;
             }
         }
-        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
+        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
         {
             do_not_render_scroll_bar(_Context);
             return;
         }
-        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
+        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
         {
         }
         else
@@ -3852,7 +3859,7 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
     // manage vertical scrollbar
     if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
     {
-        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
         {
             do_not_render_scroll_bar(_Context);
             return;
@@ -3861,10 +3868,10 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
         gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            contentArea->ContentView->State.ContentSize,
+            scrollArea->State.ContentSize,
             minimumSliderSize);
 
-        if((contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
+        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
         {
             if((int)gs_abs(scrollbarSliderLength.y - scrollbarMaximumValue.y) < _Context->m_Style.get_frames_width())
             {
@@ -3878,12 +3885,12 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
                 return;
             }
         }
-        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
+        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
         {
             do_not_render_scroll_bar(_Context);
             return;
         }
-        else if(contentArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
+        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
         {
         }
         else
