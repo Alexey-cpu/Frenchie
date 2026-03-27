@@ -911,8 +911,7 @@ namespace Frenchie
 
             _Context->next_content_margin(gs_vec4f(_Context->m_Style.get_frames_width()));
 
-            if(_Context->begin_node<ImmediateUserInterfaceInputString>(std::string(_ID).append("/ScrollArea"),
-                scrollAreaSettings))
+            if(_Context->begin_node<ImmediateUserInterfaceInputString>(std::string(_ID).append("/ScrollArea"), scrollAreaSettings))
             {
                 scrollArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputString>();
 
@@ -946,7 +945,9 @@ namespace Frenchie
                     {
                         _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
-                        int depth = widget->Cache.Depth;
+                        int   depth  = widget->Cache.Depth;
+                        float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
+                        float offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
 
                         // render text
                         {
@@ -975,22 +976,7 @@ namespace Frenchie
                                 _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
                                 _Context->m_Renderer->calculate_transform_matrix((float)depth++),
                                 _Context->m_Style.get_current_font(), false,
-                                RenderingQueue::DefaultSymbolProcessor(),
-                                inputStringCharacterChanger);
-                        }
-
-                        // render selection bounding box
-                        {
-                            _Context->m_Renderer->push_text(
-                                widget->State.BoundingBox.Min + gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f),
-                                _Text.begin(),
-                                _Text.end(),
-                                _Context->m_Style.get_font_size(),
-                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
-                                _Context->m_Style.get_current_font(),
-                                true,
-                                [_Context, widget, &inputStringRenderingData, &depth](
+                                [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
                                     const gs_2dboxf&    _CurrentSymbolBoundingBox,
                                     const gs_vec2f&     _CursorPosition,
                                     const int&          _Utf8IteratorPosition,
@@ -1003,10 +989,6 @@ namespace Frenchie
                                         inputStringRenderingData.TextBoundingBox.Max,
                                         _CurrentSymbolBoundingBox.Max);
 
-                                    // calculate mouse hovered symbol bounding box
-                                    float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
-                                    float offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
-
                                     if(gs_2dboxf(
                                         _CursorPosition - gs_vec2f(4.f, offset * 0.5f),
                                         _CursorPosition + gs_vec2f(4.f, offset * 0.5f) + _CurrentSymbolBoundingBox.size()).contains(_Context->m_Renderer->get_cursor_postion()))
@@ -1018,7 +1000,28 @@ namespace Frenchie
                                     // calculate cursor geometrical position
                                     if(widget->Utf8LeftCursorPosition == _Utf8IteratorPosition)
                                         inputStringRenderingData.CursorPosition = _CursorPosition;
+                                },
+                                inputStringCharacterChanger);
+                        }
 
+                        // render selection bounding box
+                        if(widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition)
+                        {
+                            _Context->m_Renderer->push_text(
+                                widget->State.BoundingBox.Min + gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f),
+                                _Text.begin(),
+                                _Text.end(),
+                                _Context->m_Style.get_font_size(),
+                                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                                _Context->m_Renderer->calculate_transform_matrix((float)depth++),
+                                _Context->m_Style.get_current_font(),
+                                true,
+                                [_Context, widget, &inputStringRenderingData, &depth, &scale, &offset](
+                                    const gs_2dboxf&    _CurrentSymbolBoundingBox,
+                                    const gs_vec2f&     _CursorPosition,
+                                    const int&          _Utf8IteratorPosition,
+                                    const unsigned int& _Symbol)
+                                {
                                     if(_Utf8IteratorPosition >= widget->Utf8LeftCursorPosition   &&
                                         _Utf8IteratorPosition <= widget->Utf8RightCursorPosition &&
                                         (widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition))
@@ -1513,7 +1516,7 @@ namespace Frenchie
                     panel->Buffer,
 
                     // input settings
-                    ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults
+                    0
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape   : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  : 0),
@@ -3780,13 +3783,13 @@ void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceCon
         gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            scrollArea->State.ContentSize + ConstrainedSize,
+            scrollArea->State.ContentSize,
             minimumSliderSize);
 
         gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
             scrollbarMinimumValue,
             scrollbarMaximumValue,
-            scrollArea->State.ContentSize + ConstrainedSize);
+            scrollArea->State.ContentSize);
 
         gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
 

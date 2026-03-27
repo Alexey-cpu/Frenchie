@@ -195,9 +195,9 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // input string function returns true when text is being edited
             ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, // input string function stops editing when escape key is pressed
             
-            ImmediateUserInterfaceInputStringSettings_Defaults          =
-                  ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
-                | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter
+            // ImmediateUserInterfaceInputStringSettings_Defaults          =
+            //       ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
+            //     | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter
         };
 
         // This enum declares input scalar widget settings
@@ -979,7 +979,7 @@ namespace Frenchie
             bool input_string_multiline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_StopEditOnEscape,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
             // This function creates editable singleline text widget
@@ -990,7 +990,7 @@ namespace Frenchie
             bool input_string_singleline(
                 const std::string&                               _ID,
                 std::string&                                     _Text,
-                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Defaults,
+                const ImmediateUserInterfaceInputStringSettings& _Settings                             = ImmediateUserInterfaceInputStringSettings_StopEditOnEscape | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter,
                 bool                                           (*_InputTextFilter)(const std::string&) = nullptr);
 
             // This function creates widget aimed at scalar values editing
