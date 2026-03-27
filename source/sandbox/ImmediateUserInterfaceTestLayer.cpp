@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    develop_test();
+    widgets_test();
+    //develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -256,11 +256,19 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
             if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-1")))
             {
+                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
+                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
+                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+
                 m_ImmediateUserInterface->end_menu();
             }
 
             if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-2")))
             {
+                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
+                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
+                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+
                 m_ImmediateUserInterface->end_menu();
             }
 
@@ -740,10 +748,19 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 {
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("SingleLineText"), "Single line text");
 
-                    m_ImmediateUserInterface->input_string_singleline(
+                    m_ImmediateUserInterface->next_maximum_size(gs_vec2f(256.f, 129.f));
+
+                    if(m_ImmediateUserInterface->begin_scrollarea(
                         m_ImmediateUserInterface->next_id("SingleLine"),
-                        State.SinglelineString,
-                        (State.RenderSingleLineAsPassword ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password : 0));
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
+                    {
+                        m_ImmediateUserInterface->input_string_singleline(
+                            m_ImmediateUserInterface->next_id("SingleLine"),
+                            State.SinglelineString,
+                            (State.RenderSingleLineAsPassword ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_Password : 0));
+
+                        m_ImmediateUserInterface->end_scrollarea();
+                    }
 
                     m_ImmediateUserInterface->indent(32.f);
                     m_ImmediateUserInterface->same_line();
@@ -759,9 +776,21 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                         m_ImmediateUserInterface->next_id("MultilineTextEditors"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
-                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), State.MultilineString);
+                        if(m_ImmediateUserInterface->begin_scrollarea(
+                            m_ImmediateUserInterface->next_id("Multiline"),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar))
+                        {
+                            m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), State.MultilineString);
+                            m_ImmediateUserInterface->end_scrollarea();
+                        }
 
-                        m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Buffer"), State.MultilineBuffer);
+                        if(m_ImmediateUserInterface->begin_scrollarea(
+                            m_ImmediateUserInterface->next_id("Buffer"),
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                        {
+                            m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Buffer"), State.MultilineBuffer);
+                            m_ImmediateUserInterface->end_scrollarea();
+                        }
 
                         m_ImmediateUserInterface->end_horizontal_stack();
                     }

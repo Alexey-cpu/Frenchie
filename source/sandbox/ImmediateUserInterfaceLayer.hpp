@@ -194,10 +194,6 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter = 1 << 4, // input string function returns true when enter key is pressed
             ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  = 1 << 5, // input string function returns true when text is being edited
             ImmediateUserInterfaceInputStringSettings_StopEditOnEscape  = 1 << 6, // input string function stops editing when escape key is pressed
-            
-            // ImmediateUserInterfaceInputStringSettings_Defaults          =
-            //       ImmediateUserInterfaceInputStringSettings_StopEditOnEscape
-            //     | ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter
         };
 
         // This enum declares input scalar widget settings
