@@ -204,6 +204,16 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
+        // menubar
+        struct ImmediateUserInterfaceMenuBar : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceMenuBar(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceMenuBar();
+
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+        };
+
         // combobox
         struct ImmediateUserInterfaceCombobox : public ImmediateUserInterfaceNode
         {
@@ -557,9 +567,10 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceLayoutController();
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            bool Dirty = true;
+            bool Dirty{true};
 
         private:
+
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
         };
 
@@ -684,13 +695,13 @@ namespace Frenchie
                     if(_Context == nullptr || _Context->m_Renderer == nullptr)
                         return;
 
-                    // // outline
-                    // _Context->m_Renderer->push_rectangle_rounded_filled(
-                    //     State.BoundingBox.Min,
-                    //     State.BoundingBox.Max,
-                    //     _Context->m_Style.get_frames_radius(),
-                    //     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                    //     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                    // outline
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        State.BoundingBox.Min,
+                        State.BoundingBox.Max,
+                        _Context->m_Style.get_frames_radius(),
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
                     // outline
                     _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -3443,7 +3454,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
 void ImmediateUserInterfaceScrollArea::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
-    State.ContentSize = ContentView->State.ContentSize;
+    State.ContentSize = ContentView->State.ContentSize + _Context->m_Style.get_frames_width() + _Context->m_Style.get_scrollbar_width() * 0.5f;
 }
 
 void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer*){}
@@ -4191,7 +4202,7 @@ void ImmediateUserInterfaceMenuAction::layout(ImmediateUserInterfaceContextLayer
 
     gs_vec2f size =
         _Context->m_Renderer->calculate_bounding_box(Name.begin(), Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() +
-        gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
+        gs_vec2f(_Context->m_Style.get_font_size(), _Context->m_Style.get_font_size() * 0.5f);
 
     State.MinimumSize = gs_vec2f(gs_min(size.x, State.MinimumSize.x), gs_min(size.y, State.MinimumSize.y));
     State.MaximumSize = gs_vec2f(gs_max(size.x, State.MaximumSize.x), gs_max(size.y, State.MaximumSize.y));
@@ -4278,6 +4289,8 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // triangle
+    if(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(this) != nullptr) return;
+
     float triangleWidth = _Context->m_Style.get_popup_menu_pointer_size();
 
     _Context->m_Renderer->push_triangle_filled(
@@ -4290,6 +4303,21 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
             gs_vec2f(
                 State.BoundingBox.Max.x - triangleWidth,
                 State.BoundingBox.center().y - triangleWidth * 0.5f)));
+}
+
+// ImmediateUserInterfaceMenuBar
+ImmediateUserInterfaceMenuBar::ImmediateUserInterfaceMenuBar(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+ImmediateUserInterfaceMenuBar::~ImmediateUserInterfaceMenuBar(){}
+
+void ImmediateUserInterfaceMenuBar::attach_child(ImmediateUserInterfaceNode* _Child)
+{
+    if(_Child != nullptr)
+    {
+        _Child->State.Indent   = 0.f;
+        _Child->State.NextLine = 0;
+    }
+
+    ImmediateUserInterfaceScrollArea::attach_child(_Child);
 }
 
 // ImmediateUserInterfaceCombobox
@@ -6652,13 +6680,12 @@ void ImmedidateUserInterfaceMenusController::detect_maximum_width(
         {
             if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
             {
-                gs_vec2f size =
-                    _Context->m_Renderer->calculate_bounding_box(
+                _MaximumWidth = gs_max(
+                    _MaximumWidth,
+                    (_Context->m_Renderer->calculate_bounding_box(
                         (*it)->Name.begin(),
                         (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
-                _MaximumWidth = gs_max(_MaximumWidth, size.x);
+                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size(), 0.f)).x);
             }
         }
     }
@@ -6683,16 +6710,10 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
         {
             if(dynamic_cast<ImmediateUserInterfaceMenuAction*>(*it) != nullptr)
             {
-                gs_vec2f size =
-                    _Context->m_Renderer->calculate_bounding_box(
-                        (*it)->Name.begin(),
-                        (*it)->Name.end(),
-                        _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).size() + gs_vec2f(_Context->m_Style.get_font_size() * 2.f, _Context->m_Style.get_font_size() * 0.5f);
-
                 (*it)->State.BoundingBox =
                     gs_2dboxf(
                         (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, size.y));
+                        (*it)->State.BoundingBox.Min + gs_vec2f(_MaximumWidth, _Context->m_Style.get_font_size()));
             }
         }
     }
@@ -9189,9 +9210,18 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
                 // calculate rect
                 gs_2dboxf box = menuItem->get_visible_rect(this);
                 
-                menu->ExternalScrollArea->State.BoundingBox = gs_2dboxf(
-                    gs_vec2f(box.Max.x, box.Min.y),
-                    gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                if(m_Hierarchy.get_parent<ImmediateUserInterfaceMenuBar>(menu))
+                {
+                    menu->ExternalScrollArea->State.BoundingBox = gs_2dboxf(
+                        gs_vec2f(box.Min.x, box.Max.y),
+                        gs_vec2f(box.Min.x, box.Max.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                }
+                else
+                {
+                    menu->ExternalScrollArea->State.BoundingBox = gs_2dboxf(
+                        gs_vec2f(box.Max.x, box.Min.y),
+                        gs_vec2f(box.Max.x, box.Min.y) + menu->ExternalScrollArea->State.BoundingBox.size());
+                }
 
                 end_node<ImmediateUserInterfaceMenuScrollArea>();
             }
@@ -9211,6 +9241,19 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
 void ImmediateUserInterfaceContextLayer::end_menu()
 {
     end_node<ImmediateUserInterfaceMenu>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_menubar(const std::string& _ID)
+{
+    return begin_node<ImmediateUserInterfaceMenuBar>(
+        _ID,
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
+        | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically);
+}
+
+void ImmediateUserInterfaceContextLayer::end_menubar()
+{
+    end_node<ImmediateUserInterfaceMenuBar>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
