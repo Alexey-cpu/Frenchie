@@ -940,9 +940,10 @@ namespace Frenchie
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
-                    int   depth  = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
-                    float scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
-                    float offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
+                    int      depth  = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
+                    float    scale  = _Context->m_Style.get_current_font().get_scale(_Context->m_Style.get_font_size());
+                    float    offset = _Context->m_Style.get_current_font().get_offset(_Context->m_Style.get_font_size());
+                    gs_vec2f textPadding = gs_vec2f(gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f), _Context->m_Style.get_frames_width());
 
                     // render text
                     {
@@ -959,7 +960,7 @@ namespace Frenchie
                         else
                         {
                             _Context->m_Renderer->push_text(
-                                widget->State.BoundingBox.Min + gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f),
+                                widget->State.BoundingBox.Min + textPadding,
                                 _Text.begin(),
                                 _Text.end(),
                                 _Context->m_Style.get_font_size(),
@@ -1005,7 +1006,7 @@ namespace Frenchie
                     if(widget->Utf8LeftCursorPosition != widget->Utf8RightCursorPosition && !_Text.empty())
                     {
                         _Context->m_Renderer->push_text(
-                            widget->State.BoundingBox.Min + gs_max(_Context->m_Style.get_frames_radius() * 0.5f, 4.f),
+                            widget->State.BoundingBox.Min + textPadding,
                             _Text.begin(),
                             _Text.end(),
                             _Context->m_Style.get_font_size(),
@@ -9004,30 +9005,6 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
 {
     end_node<ImmediateUserInterfaceTreeNode>();
 }
-
-// bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, gs_vec2f* _CellSize)
-// {
-//     if(begin_node<ImmediateUserInterfaceGrid>(
-//         _ID,
-//         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
-//     {
-//         ImmediateUserInterfaceGrid* grid =
-//             get_rendering_stack_top<ImmediateUserInterfaceGrid>();
-
-//         grid->CellSize = _CellSize;
-//         grid->MaxRow   = _RowsCount;
-//         grid->MaxCol   = _ColumnsCount;
-
-//         return true;
-//     }
-
-//     return false;
-// }
-
-// void ImmediateUserInterfaceContextLayer::end_grid()
-// {
-//     end_node<ImmediateUserInterfaceGrid>();
-// }
 
 bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount)
 {
