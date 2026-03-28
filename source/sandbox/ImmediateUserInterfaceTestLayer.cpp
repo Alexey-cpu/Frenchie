@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    develop_test();
+    widgets_test();
+    //develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -204,6 +204,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         }
     }
 
+    // UI context settings
     if(m_ImmediateUserInterface->begin_window(
         m_ImmediateUserInterface->next_id("Context settings", "ContextSettings"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
@@ -241,48 +242,81 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
             else
                 m_ImmediateUserInterface->m_Settings &= ~ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
+            // overlay
+            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("Show overlay", "ShowOverlay"), State.ShowContextOverlay);
+            m_ImmediateUserInterface->same_line();
+            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ShowOverlayLabel"), "Show overlay");
+
+
             m_ImmediateUserInterface->end_scrollarea();
         }
 
         m_ImmediateUserInterface->end_window();
     }
 
+    // main test window
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Test window", "Window")))
     {
-        if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu")))
+        if(m_ImmediateUserInterface->begin_menubar(m_ImmediateUserInterface->next_id("MenuBar")))
         {
-            if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
-                State.ShowContextSettings = true;
-
-            if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-1")))
+            for (int i = 0; i < 10; i++)
             {
-                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
-                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
-                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+                std::string id = Frenchie::Core::String::format("Menu-%d", i);
 
-                m_ImmediateUserInterface->end_menu();
+                if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id(id, id)))
+                {
+                    m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
+                    m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
+                    m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+
+                    m_ImmediateUserInterface->end_menu();
+                }
             }
 
-            if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-2")))
-            {
-                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
-                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
-                m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+            // if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Windows", "Windows")))
+            // {
+            //     if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
+            //         State.ShowContextSettings = true;
 
-                m_ImmediateUserInterface->end_menu();
-            }
+            //     m_ImmediateUserInterface->end_menu();
+            // }
 
-            m_ImmediateUserInterface->end_menu();
+            // if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("TestMenu", "TestMenu")))
+            // {
+            //     for (int i = 0; i < 40; i++)
+            //     {
+            //         std::string id = Frenchie::Core::String::format("Action-%d", i);
+            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id(id, id));
+            //     }
+
+            //     if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-1")))
+            //     {
+            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
+            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
+            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+
+            //         if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-2")))
+            //         {
+            //             m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
+            //             m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
+            //             m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
+
+            //             m_ImmediateUserInterface->end_menu();
+            //         }
+
+            //         m_ImmediateUserInterface->end_menu();
+            //     }
+
+            //     m_ImmediateUserInterface->end_menu();
+            // }
+
+            m_ImmediateUserInterface->end_menubar();
         }
 
         if(m_ImmediateUserInterface->begin_scrollarea(m_ImmediateUserInterface->next_id("Contents")))
         {
             float minimum = 0.f;
             float maximum = 128.f;
-
-            m_ImmediateUserInterface->check_button(m_ImmediateUserInterface->next_id("ShowOverlay"), State.ShowContextOverlay);
-            m_ImmediateUserInterface->same_line();
-            m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("ShowOverlayLabel"), "Show overlay");
 
             if(m_ImmediateUserInterface->begin_tree_node(m_ImmediateUserInterface->next_id("Layouts", "Layouts")))
             {

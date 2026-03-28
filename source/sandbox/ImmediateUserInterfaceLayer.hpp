@@ -847,9 +847,14 @@ namespace Frenchie
             void end_horizontal_stack();
 
             // This fuction creates popup menu that can be called by a right mouse click and that can play role of window menu.
-            // _Settings - settings
+            // _ID       - unique ID
             bool begin_menu(const std::string& _ID);
             void end_menu();
+
+            // This fuction creates window menubar.
+            // _ID       - unique ID
+            bool begin_menubar(const std::string& _ID);
+            void end_menubar();
 
             // this function creates combobox widget.
             // _ID      - unique ID
