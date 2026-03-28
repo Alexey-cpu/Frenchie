@@ -821,6 +821,11 @@ namespace Frenchie
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
 
+            bool begin_scrollarea1(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_scrollarea1();
+
             // This function creates UI panel that stretches it's content to fill all available space
             // _ID       - unique ID
             // _Settings - settings
