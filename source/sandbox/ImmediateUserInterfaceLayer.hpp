@@ -338,7 +338,7 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius         = 0.f;
+            float                            FramesRadius         = 32.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 32.f;
             float                            ScrollBarWidth       = 64.f;
