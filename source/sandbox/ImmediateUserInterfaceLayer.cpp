@@ -260,36 +260,11 @@ namespace Frenchie
             int                                TreeSettings  {0};
         };
 
-        // grid
-        struct ImmediateUserInterfaceGridCell : public ImmediateUserInterfacePanel
-        {
-        public:
-            ImmediateUserInterfaceGridCell(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceGridCell();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            int Row    = 0;
-            int Column = 0;
-        };
-
-        struct ImmediateUserInterfaceGrid : public ImmediateUserInterfacePanel
-        {
-        public:
-            ImmediateUserInterfaceGrid(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceGrid();
-            
-            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            gs_vec2f* CellSize = nullptr;
-            int       MaxRow   = 0;
-            int       MaxCol   = 0;
-        };
-
         // table
+        struct ImmediateUserInterfaceTable;
+        struct ImmediateUserInterfaceTableGrid;
+        struct ImmediateUserInterfaceTableGridCell;
+
         struct ImmediateUserInterfaceTable : public ImmediateUserInterfacePanel
         {
         public:
@@ -311,10 +286,38 @@ namespace Frenchie
 
         private:
 
-            ImmediateUserInterfaceGrid*  DataCells         {nullptr};
-            ImmediateUserInterfacePanel* CorenerHeader     {nullptr};
-            ImmediateUserInterfaceGrid*  VerticalHeaders   {nullptr};
-            ImmediateUserInterfaceGrid*  HorizontalHeaders {nullptr};
+            ImmediateUserInterfaceTableGrid*  DataCells         {nullptr};
+            ImmediateUserInterfacePanel*      CorenerHeader     {nullptr};
+            ImmediateUserInterfaceTableGrid*  VerticalHeaders   {nullptr};
+            ImmediateUserInterfaceTableGrid*  HorizontalHeaders {nullptr};
+        };
+
+        struct ImmediateUserInterfaceTableGrid : public ImmediateUserInterfacePanel
+        {
+        public:
+            ImmediateUserInterfaceTableGrid(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTableGrid();
+            
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_vec2f* CellSize = nullptr;
+            int       MaxRow   = 0;
+            int       MaxCol   = 0;
+        };
+
+        struct ImmediateUserInterfaceTableGridCell : public ImmediateUserInterfacePanel
+        {
+        public:
+            ImmediateUserInterfaceTableGridCell(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceTableGridCell();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            int Row    = 0;
+            int Column = 0;
         };
         
         struct ImmediateUserInterfaceTableCornerPanel : public ImmediateUserInterfacePanel
@@ -324,14 +327,14 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceTableCornerPanel();
         };
 
-        struct ImmediateUserInterfaceTableVerticalHeader : public ImmediateUserInterfaceGridCell
+        struct ImmediateUserInterfaceTableVerticalHeader : public ImmediateUserInterfaceTableGridCell
         {
         public:
             ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name);
             virtual ~ImmediateUserInterfaceTableVerticalHeader();
         };
 
-        struct ImmediateUserInterfaceTableHorizontalHeader : public ImmediateUserInterfaceGridCell
+        struct ImmediateUserInterfaceTableHorizontalHeader : public ImmediateUserInterfaceTableGridCell
         {
         public:
             ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name);
@@ -346,7 +349,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
         };
         
-        // windows
+        // window
         struct ImmediateUserInterfaceWindow : public ImmediateUserInterfaceNode
         {
         public:
@@ -554,6 +557,8 @@ namespace Frenchie
             virtual ~ImmedidateUserInterfaceLayoutController();
             virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
 
+            bool Dirty = true;
+
         private:
             void node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node);
         };
@@ -651,7 +656,6 @@ namespace Frenchie
             std::string&                                             _Text,
             const ImmediateUserInterfaceInputStringSettings&         _InputSettings,
             const ImmediateUserInterfaceInputStringInternalSettings& _InternalSettings,
-            const ImmediateUserInterfaceNodeSettings&                _NodeSettings,
             const SymbolFilter&                                      _InputTextFilter   = ImmedidateUserInterfaceDefaultInputTextFilter(),
             const InputTextCallback&                                 _InputTextCallback = ImmedidateUserInterfaceDefaultInputTextCallback())
         {
@@ -890,19 +894,12 @@ namespace Frenchie
 
             ImmediateUserInterfaceInputStringRenderingData inputStringRenderingData;
 
-            // gemerate scroll area settings
-            int scrollAreaSettings = _NodeSettings;
-            scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment;
-            scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment;
-            scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable;
-            scrollAreaSettings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
-
             // begin widgets
             ImmediateUserInterfaceScrollArea*         scrollArea = nullptr;
             ImmediateUserInterfaceInputStringContent* widget     = nullptr;
             bool                                      edited     = false;
 
-            if(_Context->begin_node<ImmediateUserInterfaceInputStringContent>(_ID, scrollAreaSettings))
+            if(_Context->begin_node<ImmediateUserInterfaceInputStringContent>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
                 widget = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
                 
@@ -928,7 +925,7 @@ namespace Frenchie
                 }
 
                 // render
-                if(!widget->Dirty)
+                if(!_Context->dirty_geomery())
                 {
                     _Context->m_Renderer->push_clip_box(widget->get_clipping_box(_Context));
 
@@ -1498,6 +1495,20 @@ namespace Frenchie
                 bool        IsEdited = false;
             };
 
+            // auxiliary lambdas
+            auto writeValueToBuffer = [](ImmediateUserInterfaceInputScalarPanel* _Panel, const Type& _Input, const std::string& _Format)
+            {
+                if(_Panel == nullptr) return;
+
+                std::string  currentValue = Frenchie::Core::String::format(_Format, _Input);
+                const size_t maximumSize  = 16;
+
+                if(currentValue.size() < maximumSize)
+                    _Panel->Buffer = currentValue;
+                else
+                    _Panel->Buffer = std::string(currentValue.c_str(), maximumSize);
+            };
+
             // main code
             bool modified = false;
 
@@ -1513,46 +1524,26 @@ namespace Frenchie
                     panel->Buffer,
 
                     // input settings
-                    0
-                    | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape   : 0)
+                      ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_StopEditOnEscape) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_StopEditOnEscape   : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter) ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEnter : 0)
                     | ((_Settings & ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit)  ? ImmediateUserInterfaceInputStringSettings_::ImmediateUserInterfaceInputStringSettings_ReturnTrueOnEdit  : 0),
                     
+                    // internal settings
                     ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
-
-                    // node settings
-                      ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
-                    | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar,
-                    [](const std::string&)->bool
+                    [](const std::string& _Input)->bool
                     {
                         return true;
-                    });
-
-                // auxiliary lambdas
-                auto writeValueToBuffer = [](ImmediateUserInterfaceInputScalarPanel* _Panel, const Type& _Input, const std::string& _Format)
-                {
-                    if(_Panel == nullptr) return;
-
-                    std::string  currentValue = Frenchie::Core::String::format(_Format, _Input);
-                    const size_t maximumSize  = 16;
-
-                    if(currentValue.size() < maximumSize)
-                        _Panel->Buffer = currentValue;
-                    else
-                        _Panel->Buffer = std::string(currentValue.c_str(), maximumSize);
-                };
+                    }
+                );
 
                 if(modified)
                 {
-                    _Input = Frenchie::Core::String::from_string<Type>(panel->Buffer);
-                    writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
+                    _Input = gs_clamp(Frenchie::Core::String::from_string<Type>(panel->Buffer), _Min, _Max);
+                    writeValueToBuffer(panel, _Input, _Format);
                 }
 
                 if(!panel->IsEdited)
-                    writeValueToBuffer(panel, _Input, _Format);
+                    writeValueToBuffer(panel, gs_clamp(_Input, _Min, _Max), _Format);
 
                 // calculate geometry
                 {
@@ -4662,13 +4653,13 @@ void ImmediateUserInterfaceTreeNode::measure(ImmediateUserInterfaceContextLayer*
 }
 
 // ImmediateUserInterfaceLayerGridNode
-ImmediateUserInterfaceGrid::ImmediateUserInterfaceGrid(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceGrid::~ImmediateUserInterfaceGrid(){}
+ImmediateUserInterfaceTableGrid::ImmediateUserInterfaceTableGrid(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTableGrid::~ImmediateUserInterfaceTableGrid(){}
 
-void ImmediateUserInterfaceGrid::attach_child(ImmediateUserInterfaceNode* _Child)
+void ImmediateUserInterfaceTableGrid::attach_child(ImmediateUserInterfaceNode* _Child)
 {
-    ImmediateUserInterfaceGridCell* cell =
-        dynamic_cast<ImmediateUserInterfaceGridCell*>(_Child);
+    ImmediateUserInterfaceTableGridCell* cell =
+        dynamic_cast<ImmediateUserInterfaceTableGridCell*>(_Child);
 
     GS_ASSERT(cell != nullptr);
 
@@ -4678,7 +4669,7 @@ void ImmediateUserInterfaceGrid::attach_child(ImmediateUserInterfaceNode* _Child
     cell->State.Parent = this;
 }
 
-void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableGrid::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
@@ -4693,8 +4684,8 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        ImmediateUserInterfaceGridCell* cell =
-            dynamic_cast<ImmediateUserInterfaceGridCell*>(*it);
+        ImmediateUserInterfaceTableGridCell* cell =
+            dynamic_cast<ImmediateUserInterfaceTableGridCell*>(*it);
 
         if(cell == nullptr)
             continue;
@@ -4705,7 +4696,7 @@ void ImmediateUserInterfaceGrid::layout(ImmediateUserInterfaceContextLayer* _Con
     }
 }
 
-void ImmediateUserInterfaceGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
@@ -4716,15 +4707,15 @@ void ImmediateUserInterfaceGrid::measure(ImmediateUserInterfaceContextLayer* _Co
 }
 
 // ImmediateUserInterfaceLayerGridCell
-ImmediateUserInterfaceGridCell::ImmediateUserInterfaceGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceGridCell::~ImmediateUserInterfaceGridCell(){}
+ImmediateUserInterfaceTableGridCell::ImmediateUserInterfaceTableGridCell(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+ImmediateUserInterfaceTableGridCell::~ImmediateUserInterfaceTableGridCell(){}
 
-void ImmediateUserInterfaceGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceTableGridCell::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceGrid*>(
+    GS_ASSERT(dynamic_cast<ImmediateUserInterfaceTableGrid*>(
         _Context->m_Hierarchy.get_parent(this)) != nullptr);
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
@@ -4738,13 +4729,13 @@ void ImmediateUserInterfaceGridCell::layout(ImmediateUserInterfaceContextLayer* 
         [this](const ImmediateUserInterfaceNode* _Node){return true;});
 }
 
-bool ImmediateUserInterfaceGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceTableGridCell::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(!ImmediateUserInterfacePanel::events(_Context))
         return false;
 
-    ImmediateUserInterfaceGrid * grid =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceGrid>(this);
+    ImmediateUserInterfaceTableGrid * grid =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceTableGrid>(this);
 
     if(grid != nullptr && grid->CellSize != nullptr)
         *grid->CellSize = State.BoundingBox.size();
@@ -4807,11 +4798,23 @@ bool ImmediateUserInterfaceTable::create_contents(
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
             {
-                if(_Context->begin_grid(_Context->next_id("Grid"), 1, GridColsCount, &GridCellSize))
+                if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
+                    _Context->next_id("Grid"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    HorizontalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
-                    _Context->end_grid();
+                    HorizontalHeaders           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                    HorizontalHeaders->MaxRow   = 1;
+                    HorizontalHeaders->MaxCol   = GridColsCount;
+                    HorizontalHeaders->CellSize = &GridCellSize;
+                    
+                    _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
+
+                // if(_Context->begin_grid(_Context->next_id("Grid"), 1, GridColsCount, &GridCellSize))
+                // {
+                //     HorizontalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                //     _Context->end_grid();
+                // }
 
                 _Context->end_scrollarea();
             }
@@ -4841,11 +4844,23 @@ bool ImmediateUserInterfaceTable::create_contents(
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar
                     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
                 {
-                    if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, 1, &GridCellSize))
+                    if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
+                        _Context->next_id("Grid"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
-                        VerticalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
-                        _Context->end_grid();
+                        VerticalHeaders           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                        VerticalHeaders->MaxRow   = GridRowsCount;
+                        VerticalHeaders->MaxCol   = 1;
+                        VerticalHeaders->CellSize = &GridCellSize;
+                        
+                        _Context->end_node<ImmediateUserInterfaceTableGrid>();
                     }
+
+                    // if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, 1, &GridCellSize))
+                    // {
+                    //     VerticalHeaders = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                    //     _Context->end_grid();
+                    // }
 
                     _Context->end_scrollarea();
                 }
@@ -4859,11 +4874,23 @@ bool ImmediateUserInterfaceTable::create_contents(
             // cells
             if(_Context->begin_scrollarea(_Context->next_id("Cells")))
             {
-                if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, GridColsCount, &GridCellSize))
+                if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
+                    _Context->next_id("Grid"),
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    DataCells = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
-                    _Context->end_grid();
+                    DataCells           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
+                    DataCells->MaxRow   = GridRowsCount;
+                    DataCells->MaxCol   = GridColsCount;
+                    DataCells->CellSize = &GridCellSize;
+                    
+                    _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
+
+                // if(_Context->begin_grid(_Context->next_id("Grid"), GridRowsCount, GridColsCount, &GridCellSize))
+                // {
+                //     DataCells = _Context->get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+                //     _Context->end_grid();
+                // }
 
                 _Context->end_scrollarea();
             }
@@ -4897,7 +4924,7 @@ void ImmediateUserInterfaceTable::attach_child(ImmediateUserInterfaceNode* _Chil
         return;
     }
 
-    if(dynamic_cast<ImmediateUserInterfaceGridCell*>(_Child) && DataCells)
+    if(dynamic_cast<ImmediateUserInterfaceTableGridCell*>(_Child) && DataCells)
     {
         DataCells->attach_child(_Child);
         return;
@@ -4912,11 +4939,11 @@ ImmediateUserInterfaceTableCornerPanel::ImmediateUserInterfaceTableCornerPanel(c
 ImmediateUserInterfaceTableCornerPanel::~ImmediateUserInterfaceTableCornerPanel(){}
 
 // ImmediateUserInterfaceTableVerticalHeader
-ImmediateUserInterfaceTableVerticalHeader::ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
+ImmediateUserInterfaceTableVerticalHeader::ImmediateUserInterfaceTableVerticalHeader(const std::string& _Name) : ImmediateUserInterfaceTableGridCell(_Name){}
 ImmediateUserInterfaceTableVerticalHeader::~ImmediateUserInterfaceTableVerticalHeader(){}
 
 // ImmediateUserInterfaceTableHorizontalHeader
-ImmediateUserInterfaceTableHorizontalHeader::ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name) : ImmediateUserInterfaceGridCell(_Name){}
+ImmediateUserInterfaceTableHorizontalHeader::ImmediateUserInterfaceTableHorizontalHeader(const std::string& _Name) : ImmediateUserInterfaceTableGridCell(_Name){}
 ImmediateUserInterfaceTableHorizontalHeader::~ImmediateUserInterfaceTableHorizontalHeader(){}
 
 // ImmediateUserInterfaceTableCornerHeader
@@ -6348,9 +6375,6 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
     }
 
     // catch events
-    if(eventNode != nullptr)
-        eventNode->Dirty = true;
-
     ImmediateUserInterfaceNode* eventCatcher = eventNode != nullptr ? eventNode : hoveredNode;
 
     if(eventCatcher != nullptr)
@@ -6422,9 +6446,9 @@ ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutControlle
 
 void ImmedidateUserInterfaceLayoutController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
 {
-    // layout
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
+    Dirty = false;
 }
 
 void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -6434,8 +6458,6 @@ void ImmedidateUserInterfaceLayoutController::node_layout(ImmediateUserInterface
 
     _Node->layout(_Context);
     _Node->measure(_Context);
-
-    _Node->Dirty = false;
 
     for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); ++it)
         node_layout(_Context, (*it));
@@ -7047,7 +7069,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         gs_vec2f textSize = m_Renderer->calculate_bounding_box(widget->Name.begin(), widget->Name.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
-        if(!widget->Dirty)
+        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -7138,7 +7160,7 @@ bool ImmediateUserInterfaceContextLayer::check_button(
         }
 
         // render
-        if(!widget->Dirty)
+        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -7392,7 +7414,7 @@ void ImmediateUserInterfaceContextLayer::label(
         gs_vec2f                     textSize = m_Renderer->calculate_bounding_box(_Text.begin(), _Text.end(), m_Style.get_font_size(), m_Style.get_current_font()).size();
 
         // render
-        if(!widget->Dirty)
+        if(!dirty_geomery())
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
@@ -7451,11 +7473,6 @@ bool ImmediateUserInterfaceContextLayer::input_string_multiline(
 
         // interanl settings
         0,
-
-        // widget settings
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar             |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar           |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment,
         [_InputTextFilter](const std::string& _Input)->bool{return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
@@ -7473,15 +7490,8 @@ bool ImmediateUserInterfaceContextLayer::input_string_singleline(
         // text input settings
         _Settings,
         
-        // interanl settings
+        // internal settings
         ImmediateUserInterfaceInputStringInternalSettings_::ImmediateUserInterfaceInputStringInternalSettings_NoMultiline,
-
-        // widget settgins
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically   |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar       |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar  |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar,
         [_InputTextFilter](const std::string& _Input)->bool{ return _InputTextFilter == nullptr || _InputTextFilter(_Input);});
 }
 
@@ -8974,50 +8984,29 @@ void ImmediateUserInterfaceContextLayer::end_tree_node()
     end_node<ImmediateUserInterfaceTreeNode>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, gs_vec2f* _CellSize)
-{
-    if(begin_node<ImmediateUserInterfaceGrid>(
-        _ID,
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
-    {
-        ImmediateUserInterfaceGrid* grid =
-            get_rendering_stack_top<ImmediateUserInterfaceGrid>();
+// bool ImmediateUserInterfaceContextLayer::begin_grid(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount, gs_vec2f* _CellSize)
+// {
+//     if(begin_node<ImmediateUserInterfaceGrid>(
+//         _ID,
+//         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+//     {
+//         ImmediateUserInterfaceGrid* grid =
+//             get_rendering_stack_top<ImmediateUserInterfaceGrid>();
 
-        grid->CellSize = _CellSize;
-        grid->MaxRow   = _RowsCount;
-        grid->MaxCol   = _ColumnsCount;
+//         grid->CellSize = _CellSize;
+//         grid->MaxRow   = _RowsCount;
+//         grid->MaxCol   = _ColumnsCount;
 
-        return true;
-    }
+//         return true;
+//     }
 
-    return false;
-}
+//     return false;
+// }
 
-void ImmediateUserInterfaceContextLayer::end_grid()
-{
-    end_node<ImmediateUserInterfaceGrid>();
-}
-
-bool ImmediateUserInterfaceContextLayer::begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    if(begin_node<ImmediateUserInterfaceGridCell>(next_id(Frenchie::Core::String::format("Cell-%d-%d", _Row, _Column)), _Settings))
-    {
-        ImmediateUserInterfaceGridCell* cell =
-            get_rendering_stack_top<ImmediateUserInterfaceGridCell>();
-
-        cell->Row    = _Row;
-        cell->Column = _Column;
-
-        return true;
-    }
-
-    return false;
-}
-
-void ImmediateUserInterfaceContextLayer::end_grid_cell()
-{
-    end_node<ImmediateUserInterfaceGridCell>();
-}
+// void ImmediateUserInterfaceContextLayer::end_grid()
+// {
+//     end_node<ImmediateUserInterfaceGrid>();
+// }
 
 bool ImmediateUserInterfaceContextLayer::begin_table(const std::string& _ID, const int& _RowsCount, const int& _ColumnsCount)
 {
@@ -9090,6 +9079,27 @@ bool ImmediateUserInterfaceContextLayer::begin_table_corner_title(const Immediat
 void ImmediateUserInterfaceContextLayer::end_table_corner_title()
 {
     end_node<ImmediateUserInterfaceTableCornerHeader>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_table_data_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    if(begin_node<ImmediateUserInterfaceTableGridCell>(next_id(Frenchie::Core::String::format("Cell-%d-%d", _Row, _Column)), _Settings))
+    {
+        ImmediateUserInterfaceTableGridCell* cell =
+            get_rendering_stack_top<ImmediateUserInterfaceTableGridCell>();
+
+        cell->Row    = _Row;
+        cell->Column = _Column;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_table_data_cell()
+{
+    end_node<ImmediateUserInterfaceTableGridCell>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
@@ -9351,10 +9361,18 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_minimum_size() const
     return node != nullptr ? node->State.MinimumSize : gs_vec2f(0.f, 0.f);
 }
 
-ImmediateUserInterfaceGridClipper ImmediateUserInterfaceContextLayer::current_table_grid_clipper() const
+ImmediateUserInterfaceGridClipper ImmediateUserInterfaceContextLayer::current_table_clipper() const
 {
     ImmediateUserInterfaceTable* table =
         get_rendering_stack_top<ImmediateUserInterfaceTable>();
 
     return table != nullptr ? table->GridClipper : ImmediateUserInterfaceGridClipper();
+}
+
+bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
+{
+    ImmedidateUserInterfaceLayoutController* layoutController =
+        get_controller<ImmedidateUserInterfaceLayoutController>();
+
+    return layoutController != nullptr && layoutController->Dirty;
 }

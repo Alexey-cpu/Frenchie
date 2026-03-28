@@ -471,8 +471,6 @@ namespace Frenchie
 
             Data State;
             Data Cache;
-            bool Loaded{false};
-            bool Dirty {true }; // indicates that geometry has not been yet computed
 
         //private:
             std::string Name  = "UINode";
@@ -800,7 +798,6 @@ namespace Frenchie
                 GS_ASSERT((dynamic_cast<Type*>(node) != nullptr));
 
                 m_NodesRenderedStack.push_back(node);
-                
                 m_NodesRenderingStack.pop_back();
             }
 
@@ -874,27 +871,6 @@ namespace Frenchie
                 const ApplicationRenderingBackendTexture&     _TextureClosed = ApplicationRenderingBackendTexture());
             void end_tree_node();
 
-            // This function renders grid of fixed size cells
-            // _ID           - unique ID
-            // _RowsCount    - number of rows within grid
-            // _ColumnsCount - number of columns within grid
-            // _CellSize     - grid cell size vector pointer
-            // The content size of grid is computed as Size = gs_vec2f(_RowsCount, _ColumnsCount) * (*_CellSize)
-            // If the _RowsCount and _ColumnsCount are not passed then they are computed dynamically as the cells are added to the grid.
-            // For large grids use scroll area plus ImmediateUserInterfaceGridClipper. Only grid cells can be added to the grid.
-            // If you try to add some other UI element to grid the function asserts.
-            bool begin_grid(const std::string& _ID, const int& _RowsCount = 0, const int& _ColumnsCount = 0, gs_vec2f* _CellSize = nullptr);
-            void end_grid();
-
-            // This function renders grid cell within grid
-            // _ID           - unique ID
-            // _RowsCount    - cell row number
-            // _ColumnsCount - cell column number
-            // Cells are essentially the panels, so you can add any content you want to cells.
-            // Cells can be added only to grid. If you try to use cell outside the grid this function asserts.
-            bool begin_grid_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_grid_cell();
-
             // This function creates table
             // _ID           - unique ID
             // _RowsCount    - number of rows
@@ -927,6 +903,15 @@ namespace Frenchie
             // Corner title cells can be used only within table. Function asserts if you try to use horizontal title cell outside table.
             bool begin_table_corner_title(const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_table_corner_title();
+
+            // This function renders grid cell within grid
+            // _ID           - unique ID
+            // _RowsCount    - cell row number
+            // _ColumnsCount - cell column number
+            // Cells are essentially the panels, so you can add any content you want to cells.
+            // Cells can be added only to grid. If you try to use cell outside the grid this function asserts.
+            bool begin_table_data_cell(const int& _Row, const int& _Column, const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
+            void end_table_data_cell();
 
             // UI widgets API
 
@@ -1124,7 +1109,11 @@ namespace Frenchie
             // This function returns current node minimum size
             gs_vec2f  current_minimum_size() const;
 
-            ImmediateUserInterfaceGridClipper current_table_grid_clipper() const;
+            // This function returns current table clipper
+            ImmediateUserInterfaceGridClipper current_table_clipper() const;
+
+            // This function shows that geometry has not been computed yet
+            bool dirty_geomery() const;
 
             // This function returns controller of a type 'Type'
             template<typename Type> Type* get_controller() const

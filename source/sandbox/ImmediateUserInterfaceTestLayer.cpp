@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    widgets_test();
-    //develop_test();
+    //widgets_test();
+    develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -559,7 +559,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("floatScalarLabel"), "float");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("floatScalarValue"), State.FloatScalar);
+                    m_ImmediateUserInterface->input_scalar<float>(m_ImmediateUserInterface->next_id("floatScalarValue"), State.FloatScalar, 0.f, 256.f);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<float>(m_ImmediateUserInterface->next_id("floatScalarSlider"), State.FloatScalar, 0.f, 256.f, 1);
@@ -569,7 +569,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("doubleScalarLabel"), "double");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("doubleScalarValue"), State.DoubleScalar);
+                    m_ImmediateUserInterface->input_scalar<double>(m_ImmediateUserInterface->next_id("doubleScalarValue"), State.DoubleScalar, 0.0, 256);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<double>(m_ImmediateUserInterface->next_id("doubleScalarSlider"), State.DoubleScalar, 0.0, 256.0, 1);
@@ -579,7 +579,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("longDoubleScalarLabel"), "long double");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("longDoubleScalarValue"), State.LongDoubleScalar);
+                    m_ImmediateUserInterface->input_scalar<long double>(m_ImmediateUserInterface->next_id("longDoubleScalarValue"), State.LongDoubleScalar, 0, 256);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<long double>(m_ImmediateUserInterface->next_id("longDoubleScalarSlider"), State.LongDoubleScalar, 0, 256, 1);
@@ -589,7 +589,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("intScalarLabel"), "int");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("intScalarValue"), State.IntScalar);
+                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("intScalarValue"), State.IntScalar, 0, 256);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<int>(m_ImmediateUserInterface->next_id("intScalarSlider"), State.IntScalar, 0, 256, 1);
@@ -599,7 +599,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("shortScalarLabel"), "short");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("shortScalarValue"), State.ShortScalar);
+                    m_ImmediateUserInterface->input_scalar<short>(m_ImmediateUserInterface->next_id("shortScalarValue"), State.ShortScalar, 0, 256);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<short>(m_ImmediateUserInterface->next_id("shortScalarSlider"), State.ShortScalar, 0, 256, 1);
@@ -610,7 +610,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("unsignedIntScalarLabel"), "unsigned int");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedIntScalarValue"), State.UnsignedIntScalar);
+                    m_ImmediateUserInterface->input_scalar<unsigned int>(m_ImmediateUserInterface->next_id("unsignedIntScalarValue"), State.UnsignedIntScalar, 0, 256);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<unsigned int>(m_ImmediateUserInterface->next_id("unsignedIntScalarSlider"), State.UnsignedIntScalar, 0, 256, 1);
@@ -620,7 +620,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id("unsignedShortScalarLabel"), "unsigned short");
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
-                    m_ImmediateUserInterface->input_scalar(m_ImmediateUserInterface->next_id("unsignedShortScalarValue"), State.UnsignedShortScalar);
+                    m_ImmediateUserInterface->input_scalar<unsigned short>(m_ImmediateUserInterface->next_id("unsignedShortScalarValue"), State.UnsignedShortScalar, 0, 256);
                     m_ImmediateUserInterface->same_line();
                     m_ImmediateUserInterface->indent();
                     m_ImmediateUserInterface->input_scalar_slider<unsigned short>(m_ImmediateUserInterface->next_id("UnsignedShortSlider"), State.UnsignedShortScalar, 0, 256, 1);
@@ -836,6 +836,7 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
     static std::string input;
+    static float       value;
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
@@ -852,7 +853,7 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         
         if(m_ImmediateUserInterface->begin_table(m_ImmediateUserInterface->next_id("Table"), rowsCount, colsCount))
         {
-            ImmediateUserInterfaceGridClipper clipper = m_ImmediateUserInterface->current_table_grid_clipper();
+            ImmediateUserInterfaceGridClipper clipper = m_ImmediateUserInterface->current_table_clipper();
 
             // corner header
             if(m_ImmediateUserInterface->begin_table_corner_title(cellSettings))
@@ -897,18 +898,17 @@ void ImmediateUserInterfaceTestLayer::develop_test()
                 {
                     m_ImmediateUserInterface->next_content_margin(gs_vec4f(8.f));
 
-                    if(m_ImmediateUserInterface->begin_grid_cell(i, j, cellSettings))
+                    if(m_ImmediateUserInterface->begin_table_data_cell(i, j, cellSettings))
                     {
                         //m_ImmediateUserInterface->next_size(gs_vec2f(64.f, 64.f));
                         
-                        m_ImmediateUserInterface->input_string_singleline(
+                        m_ImmediateUserInterface->input_scalar(
                             m_ImmediateUserInterface->next_id("String"),
-                            input
-                        );
+                            value);
 
                         //m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id("Button", "Button"));
                         
-                        m_ImmediateUserInterface->end_grid_cell();
+                        m_ImmediateUserInterface->end_table_data_cell();
                     }
                 }
             }
