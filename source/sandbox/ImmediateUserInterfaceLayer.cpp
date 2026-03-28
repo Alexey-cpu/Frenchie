@@ -3505,10 +3505,10 @@ void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLaye
         // resize to contents
         State.MinimumSize = gs_vec2f(
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-                State.ContentSize.x  + _Context->m_Style.get_scrollbar_width():
+                State.ContentSize.x  + HorizontalScrollBarBox.width():
                     State.MinimumSize.x,
             (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-                State.ContentSize.y  + _Context->m_Style.get_scrollbar_width():
+                State.ContentSize.y  + VerticalScrollBarBox.height():
                     State.MinimumSize.y);
         
         State.MaximumSize =
@@ -3533,7 +3533,7 @@ void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLaye
 
         VerticalScrollBar.recompute(
             gs_vec2f(0.f, 0.f),
-            gs_vec2f(_Context->m_Style.get_scrollbar_width(), VerticalScrollBarBox.height()),
+            gs_vec2f(VerticalScrollBarBox.width(), VerticalScrollBarBox.height()),
             State.ContentSize,
             _Context->m_Style.get_scrollbar_width());
         
@@ -3690,16 +3690,16 @@ void ImmediateUserInterfaceScrollArea1::render(ImmediateUserInterfaceContextLaye
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // vertical scrollbar
+    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this);
+    
     {
-        int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(this);
-
         // scrollbar
         _Context->m_Renderer->push_rectangle_rounded_filled(
             VerticalScrollBarBox.Min,
             VerticalScrollBarBox.Max,
             _Context->m_Style.get_frames_radius(),
             gs_color_rgb(0, 0, 0),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
         // slider
         _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -3707,7 +3707,7 @@ void ImmediateUserInterfaceScrollArea1::render(ImmediateUserInterfaceContextLaye
             VerticalScrollBarBox.Min + VerticalScrollBar.Position + VerticalScrollBar.ConstrainedSize,
             _Context->m_Style.get_frames_radius(),
             gs_color_rgb(32, 32, 32),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
     }
 
     // horizontal scrollbar
@@ -3720,7 +3720,7 @@ void ImmediateUserInterfaceScrollArea1::render(ImmediateUserInterfaceContextLaye
             HorizontalScrollBarBox.Max,
             _Context->m_Style.get_frames_radius(),
             gs_color_rgb(0, 0, 0),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
 
         // slider
         _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -3728,7 +3728,7 @@ void ImmediateUserInterfaceScrollArea1::render(ImmediateUserInterfaceContextLaye
             HorizontalScrollBarBox.Min + HorizontalScrollBar.Position + HorizontalScrollBar.ConstrainedSize,
             _Context->m_Style.get_frames_radius(),
             gs_color_rgb(32, 32, 32),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
     }
 }
 
@@ -7425,6 +7425,18 @@ bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID
 void ImmediateUserInterfaceContextLayer::end_scrollarea()
 {
     end_node<ImmediateUserInterfaceScrollArea>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_scrollarea1(
+    const std::string&                        _ID,
+    const ImmediateUserInterfaceNodeSettings& _Settings)
+{
+    return begin_node<ImmediateUserInterfaceScrollArea1>(_ID, _Settings);
+}
+
+void ImmediateUserInterfaceContextLayer::end_scrollarea1()
+{
+    end_node<ImmediateUserInterfaceScrollArea1>();
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
