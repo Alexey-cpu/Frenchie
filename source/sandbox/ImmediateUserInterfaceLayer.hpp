@@ -409,6 +409,7 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
+            virtual bool intercept(ImmediateUserInterfaceContextLayer* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
             virtual bool create_contents(

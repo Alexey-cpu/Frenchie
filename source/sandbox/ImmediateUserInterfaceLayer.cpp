@@ -1833,7 +1833,7 @@ namespace Frenchie
 
                 return gs_max(
                     _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.SelfThickness + 1,
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness + _Node->Cache.SelfThickness + 1,
                     _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
             }
 
@@ -3260,6 +3260,11 @@ bool ImmediateUserInterfaceNode::events(ImmediateUserInterfaceContextLayer* _Con
     return false;
 }
 
+bool ImmediateUserInterfaceNode::intercept(ImmediateUserInterfaceContextLayer* _Context)
+{
+    return false;
+}
+
 void ImmediateUserInterfaceNode::attach_child(ImmediateUserInterfaceNode* _Child)
 {
     if(_Child != nullptr)
@@ -3293,12 +3298,9 @@ gs_2dboxf ImmediateUserInterfaceNode::get_clipping_box(ImmediateUserInterfaceCon
 
         while (parent)
         {
-            clippingBox = gs_2dboxf(
-                gs_vec2f(gs_max(next->State.BoundingBox.Min.x, clippingBox.Min.x), gs_max(next->State.BoundingBox.Min.y, clippingBox.Min.y)),
-                gs_vec2f(gs_min(next->State.BoundingBox.Max.x, clippingBox.Max.x), gs_min(next->State.BoundingBox.Max.y, clippingBox.Max.y)));
-
-            next   = parent;
-            parent = _Context->m_Hierarchy.get_parent(parent);
+            next        = parent;
+            parent      = _Context->m_Hierarchy.get_parent(parent);
+            clippingBox = clippingBox.clip_with(next->State.BoundingBox);
         }
 
         return gs_2dboxf(clippingBox.Min - _Context->m_Style.get_frames_width(), clippingBox.Max + _Context->m_Style.get_frames_width());
