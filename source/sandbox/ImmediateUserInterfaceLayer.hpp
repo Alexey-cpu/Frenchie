@@ -338,10 +338,10 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius         = 32.f;
+            float                            FramesRadius         = 0.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 32.f;
-            float                            ScrollBarWidth       = 64.f;
+            float                            ScrollBarWidth       = 32.f;
             float                            PopupMenuPointerSize = 32.f;
             std::vector<gs_color>            Colors;
             ApplicationRenderingBackendFont  Font;
@@ -409,7 +409,6 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context);
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context);
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context);
-            virtual bool intercept(ImmediateUserInterfaceContextLayer* _Context);
             virtual void attach_child(ImmediateUserInterfaceNode* _Child);
 
             virtual bool create_contents(
@@ -422,9 +421,10 @@ namespace Frenchie
             virtual void save_state(ImmediateUserInterfaceContextLayer*);
 
             // getters
-            gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
-            gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
-            bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
+            virtual gs_2dboxf get_clipping_box(ImmediateUserInterfaceContextLayer*) const;
+            virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool      is_partially_visible(ImmediateUserInterfaceContextLayer*) const;
+            virtual bool      is_catching_event(ImmediateUserInterfaceContextLayer*) const;
 
             int place_in_follow();
 
@@ -1101,6 +1101,8 @@ namespace Frenchie
             // This function sets scroll offset of the next created scrollarea. The value is set every frame.
             // _Value - scroll offset {horizontal, vertical}
             void next_scroll_offset(const gs_vec2f& _Value);
+
+            void next_scroll_offset1(const gs_vec2f& _Value);
 
             // current node API
 
