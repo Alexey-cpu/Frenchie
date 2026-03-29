@@ -881,96 +881,118 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar;
 
-    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
+    if(m_ImmediateUserInterface->begin_menubar(m_ImmediateUserInterface->next_id("MenuBar")))
     {
-        if(m_ImmediateUserInterface->begin_scrollarea1(
-            m_ImmediateUserInterface->next_id("String"),
-            scrollSettings))
+        if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu-1")))
         {
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 5; j++)
-                {
-                    std::string name = Frenchie::Core::String::format("Label-%d-%d", i, j);
-                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id(name, name)); m_ImmediateUserInterface->same_line();
-                }
-
-                m_ImmediateUserInterface->next_line();
-            }
-            
-
-            m_ImmediateUserInterface->end_scrollarea1();
+            m_ImmediateUserInterface->end_menu();
         }
 
-        // int rowsCount    = 10000;
-        // int colsCount    = 10000;
-        // int cellSettings = 
-        //       ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-        //     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-        //     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-        //     | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+        m_ImmediateUserInterface->end_menubar();
+    }
+
+    // if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window-1")))
+    // {
+    //     if(m_ImmediateUserInterface->begin_scrollarea1(
+    //         m_ImmediateUserInterface->next_id("String"),
+    //         scrollSettings))
+    //     {
+    //         for (int i = 0; i < 5; i++)
+    //         {
+    //             for (int j = 0; j < 5; j++)
+    //             {
+    //                 std::string name = Frenchie::Core::String::format("Label-%d-%d", i, j);
+    //                 m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id(name, name)); m_ImmediateUserInterface->same_line();
+    //             }
+
+    //             m_ImmediateUserInterface->next_line();
+    //         }
+            
+
+    //         m_ImmediateUserInterface->end_scrollarea1();
+    //     }
+
+    //     m_ImmediateUserInterface->end_window();
+    // }
+
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
+    {
+        int rowsCount    = 1000;
+        int colsCount    = 1000;
+        int cellSettings = 
+              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
         
-        // if(m_ImmediateUserInterface->begin_table(m_ImmediateUserInterface->next_id("Table"), rowsCount, colsCount))
-        // {
-        //     ImmediateUserInterfaceGridClipper clipper = m_ImmediateUserInterface->current_table_clipper();
+        if(m_ImmediateUserInterface->begin_table(m_ImmediateUserInterface->next_id("Table"), rowsCount, colsCount))
+        {
+            ImmediateUserInterfaceGridClipper clipper = m_ImmediateUserInterface->current_table_clipper();
 
-        //     // corner header
-        //     if(m_ImmediateUserInterface->begin_table_corner_title(cellSettings))
-        //     {
-        //         m_ImmediateUserInterface->label(
-        //             m_ImmediateUserInterface->next_id("Dimintions"),
-        //             Frenchie::Core::String::format("%dx%d", rowsCount, colsCount),
-        //             ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+            // corner header
+            if(m_ImmediateUserInterface->begin_table_corner_title(cellSettings))
+            {
+                m_ImmediateUserInterface->label(
+                    m_ImmediateUserInterface->next_id("Dimintions"),
+                    Frenchie::Core::String::format("%dx%d", rowsCount, colsCount),
+                    ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
 
-        //         m_ImmediateUserInterface->end_table_corner_title();
-        //     }
+                m_ImmediateUserInterface->end_table_corner_title();
+            }
 
-        //     // columns titles
-        //     for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
-        //     {
-        //         if(m_ImmediateUserInterface->begin_table_horizontal_title(j, cellSettings))
-        //         {
-        //             m_ImmediateUserInterface->label(
-        //                 m_ImmediateUserInterface->next_id("Title"),
-        //                 Frenchie::Core::String::to_string(j),
-        //                 ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
-        //             m_ImmediateUserInterface->end_table_horizontal_title();
-        //         }
-        //     }
+            // columns titles
+            for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+            {
+                if(m_ImmediateUserInterface->begin_table_horizontal_title(j, cellSettings))
+                {
+                    m_ImmediateUserInterface->label(
+                        m_ImmediateUserInterface->next_id("Title"),
+                        Frenchie::Core::String::to_string(j),
+                        ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+                    m_ImmediateUserInterface->end_table_horizontal_title();
+                }
+            }
 
-        //     // rows titles
-        //     for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
-        //     {
-        //         if(m_ImmediateUserInterface->begin_table_vertical_title(j, cellSettings))
-        //         {
-        //             m_ImmediateUserInterface->label(
-        //                 m_ImmediateUserInterface->next_id("Title"),
-        //                 Frenchie::Core::String::to_string(j),
-        //                 ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
-        //             m_ImmediateUserInterface->end_table_vertical_title();
-        //         }
-        //     }
+            // rows titles
+            for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
+            {
+                if(m_ImmediateUserInterface->begin_table_vertical_title(j, cellSettings))
+                {
+                    m_ImmediateUserInterface->label(
+                        m_ImmediateUserInterface->next_id("Title"),
+                        Frenchie::Core::String::to_string(j),
+                        ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+                    m_ImmediateUserInterface->end_table_vertical_title();
+                }
+            }
 
-        //     for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
-        //     { 
-        //         for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
-        //         {
-        //             m_ImmediateUserInterface->next_content_margin(gs_vec4f(8.f));
+            for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
+            { 
+                for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+                {
+                    m_ImmediateUserInterface->next_content_margin(gs_vec4f(8.f));
 
-        //             if(m_ImmediateUserInterface->begin_table_data_cell(i, j, cellSettings))
-        //             {
-        //                 m_ImmediateUserInterface->input_scalar(
-        //                     m_ImmediateUserInterface->next_id("String"),
-        //                     value);
+                    if(m_ImmediateUserInterface->begin_table_data_cell(i, j, cellSettings))
+                    {
+                        // std::string id = Frenchie::Core::String::format("Label-%d-%d", i, j);
+
+                        // if(i == 0)
+                        //     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id(id), Frenchie::Core::String::to_string(j));
+                        // else if(j == 0)
+                        //     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id(id), Frenchie::Core::String::to_string(i));
+
+                        m_ImmediateUserInterface->input_scalar(
+                            m_ImmediateUserInterface->next_id("String"),
+                            value);
                         
-        //                 m_ImmediateUserInterface->end_table_data_cell();
-        //             }
-        //         }
-        //     }
+                        m_ImmediateUserInterface->end_table_data_cell();
+                    }
+                }
+            }
 
-        //     m_ImmediateUserInterface->end_table();
-        // }
+            m_ImmediateUserInterface->end_table();
+        }
 
         m_ImmediateUserInterface->end_window();
     }
