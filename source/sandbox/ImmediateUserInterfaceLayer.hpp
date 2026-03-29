@@ -338,7 +338,7 @@ namespace Frenchie
         private:
 
             // infos
-            float                            FramesRadius         = 0.f;
+            float                            FramesRadius         = 32.f;
             float                            FramesWidth          = 0.f;
             float                            FontSize             = 32.f;
             float                            ScrollBarWidth       = 32.f;
@@ -756,11 +756,8 @@ namespace Frenchie
                     // next content padding
                     if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
                     {
-                        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->HorizontalScrollBar)
-                            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->HorizontalScrollBar->set_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
-                        
-                        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->VerticalScrollBar)
-                            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->VerticalScrollBar->set_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
+                        dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
+                        dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
                     }
 
                     // reset next item controller
@@ -820,11 +817,6 @@ namespace Frenchie
                 const std::string&                        _ID,
                 const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
             void end_scrollarea();
-
-            bool begin_scrollarea1(
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults);
-            void end_scrollarea1();
 
             // This function creates UI panel that stretches it's content to fill all available space
             // _ID       - unique ID
@@ -1109,9 +1101,6 @@ namespace Frenchie
             // This function returns current scrollarea scrollbar offset
             // _Scaled - if true returns content relative scroll offset, if false returns scroll area size relative offset
             gs_vec2f  current_scroll_offset(const bool& _Scaled = true) const;
-
-            // This function returns current scrollarea viewport bounding box
-            gs_2dboxf current_scroll_viewport() const;
 
             // This function returns current node bounding box
             gs_2dboxf current_bounding_box() const;

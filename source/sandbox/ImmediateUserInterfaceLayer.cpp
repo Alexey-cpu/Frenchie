@@ -88,7 +88,7 @@ namespace Frenchie
             ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
         };
 
-        struct ImmediateUserInterfaceScrollArea1 : public ImmediateUserInterfacePanel
+        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel
         {
         public:
 
@@ -166,9 +166,9 @@ namespace Frenchie
             }
 
             // API
-            ImmediateUserInterfaceScrollArea1(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+            ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
             
-            virtual ~ImmediateUserInterfaceScrollArea1(){}
+            virtual ~ImmediateUserInterfaceScrollArea(){}
 
             virtual gs_2dboxf get_visible_rect(ImmediateUserInterfaceContextLayer* _Context) const override
             {
@@ -204,81 +204,6 @@ namespace Frenchie
             gs_2dboxf HorizontalScrollBarBox;
         };
 
-        struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel
-        {
-        public:
-
-            ImmediateUserInterfaceScrollArea(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollArea();
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            virtual void attach_child(ImmediateUserInterfaceNode*   _Child) override;
-
-            virtual bool create_contents(
-                ImmediateUserInterfaceContextLayer*       _Context, 
-                const std::string&                        _ID,
-                const ImmediateUserInterfaceNodeSettings& _Settings,
-                bool*                                     _Render = nullptr) override;
-
-            float get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
-            float get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer*) const;
-
-            ImmediateUserInterfaceNode*                ContentView         = nullptr;
-            ImmediateUserInterfaceNode*                ContentPanel        = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBar* VerticalScrollBar   = nullptr;
-            ImmediateUserInterfaceScrollAreaScrollBar* HorizontalScrollBar = nullptr;
-
-        private:
-            void calculate_content_padding(ImmediateUserInterfaceContextLayer*, ImmediateUserInterfaceNode*, gs_vec2f&);
-        };
-
-        struct ImmediateUserInterfaceScrollAreaPanel : public ImmediateUserInterfacePanel
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaPanel();
-        };
-
-        struct ImmediateUserInterfaceScrollAreaContent : public ImmediateUserInterfacePanel
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaContent(const std::string& _Name);
-            ~ImmediateUserInterfaceScrollAreaContent();
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-        };
-
-        struct ImmediateUserInterfaceScrollAreaScrollBar : public ImmediateUserInterfacePanel
-        {
-        public:
-            ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name);
-            virtual ~ImmediateUserInterfaceScrollAreaScrollBar();
-
-            // getters
-            gs_vec2f get_scroll_offset(const bool& = true) const;
-
-            // setters
-            void set_scroll_offset(const gs_vec2f _Value, const bool& _Relative = true);
-
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
-
-            ImmediateUserInterfaceScrollAreaScrollBarType_ Type =
-                ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
-
-        private:
-
-            // info
-            gs_vec2f Position           = gs_vec2f(0.f, 0.f);
-            gs_vec2f PositionScale      = gs_vec2f(1.f, 1.f);
-            gs_vec2f PreviousPosition   = gs_vec2f(0.f, 0.f);
-            gs_vec2f ConstrainedSize    = gs_vec2f(0.f, 0.f);
-            gs_vec2f UnconstrainedSize  = gs_vec2f(0.f, 0.f);
-        };
-
         // menu
         struct ImmediateUserInterfaceMenu : public ImmediateUserInterfacePanel
         {
@@ -290,11 +215,11 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            ImmediateUserInterfaceScrollArea1* InternalScrollArea = nullptr;
-            ImmediateUserInterfaceScrollArea1* ExternalScrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea* InternalScrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea* ExternalScrollArea = nullptr;
         };
     
-        struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea1
+        struct ImmediateUserInterfaceMenuScrollArea : public ImmediateUserInterfaceScrollArea
         {
         public:
             ImmediateUserInterfaceMenuScrollArea(const std::string& _Name);
@@ -321,7 +246,7 @@ namespace Frenchie
         };
 
         // menubar
-        struct ImmediateUserInterfaceMenuBar : public ImmediateUserInterfaceScrollArea1
+        struct ImmediateUserInterfaceMenuBar : public ImmediateUserInterfaceScrollArea
         {
         public:
             ImmediateUserInterfaceMenuBar(const std::string& _Name);
@@ -341,7 +266,7 @@ namespace Frenchie
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void attach_child(ImmediateUserInterfaceNode* _Child) override;
 
-            ImmediateUserInterfaceScrollArea1*             ScrollArea{nullptr};
+            ImmediateUserInterfaceScrollArea*             ScrollArea{nullptr};
             bool                                           Active    {false};
             bool                                           Hovered   {false};
             std::chrono::high_resolution_clock::time_point HoverTime {std::chrono::high_resolution_clock::time_point()};
@@ -357,7 +282,7 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
-        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea1
+        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
         {
         public:
             ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name);
@@ -428,9 +353,9 @@ namespace Frenchie
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void measure(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            gs_vec2f* CellSize = nullptr;
-            int       MaxRow   = 0;
-            int       MaxCol   = 0;
+            gs_vec2f* CellSize  = nullptr;
+            int       RowsCount = 0;
+            int       ColsCount = 0;
         };
 
         struct ImmediateUserInterfaceTableGridCell : public ImmediateUserInterfacePanel
@@ -981,36 +906,30 @@ namespace Frenchie
                 const ImmediateUserInterfaceInputStringRenderingData& _RenderingData)
             {
                 // move scroll bar if the text is behind visible area
-                if(!_Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.contains(_RenderingData.CursorPosition))
+                if(!_Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.contains(_RenderingData.CursorPosition) && _ScrollArea != nullptr)
                 {
                     // adjust horizontal scrollbar
-                    if(_ScrollArea != nullptr && _ScrollArea->HorizontalScrollBar != nullptr)
+                    if(_RenderingData.CursorPosition.x > _Context->m_Hierarchy.get_parent(_Contents)->Cache.BoundingBox.Max.x)
                     {
-                        if(_RenderingData.CursorPosition.x > _Context->m_Hierarchy.get_parent(_Contents)->Cache.BoundingBox.Max.x)
-                        {
-                            _ScrollArea->HorizontalScrollBar->set_scroll_offset(
-                                (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.x) + _Context->m_Style.get_font_size());
-                        }
-                        if(_RenderingData.CursorPosition.x < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x)
-                        {
-                            _ScrollArea->HorizontalScrollBar->set_scroll_offset(
-                                (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x) - _Context->m_Style.get_font_size());
-                        }
+                        _ScrollArea->set_horizontal_scroll_offset(
+                            (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.x) + _Context->m_Style.get_font_size());
+                    }
+                    if(_RenderingData.CursorPosition.x < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x)
+                    {
+                        _ScrollArea->set_horizontal_scroll_offset(
+                            (_RenderingData.CursorPosition.x - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.x) - _Context->m_Style.get_font_size());
                     }
 
                     // adjust vertical scrollbar position
-                    if(_ScrollArea != nullptr && _ScrollArea->VerticalScrollBar != nullptr)
+                    if(_RenderingData.CursorPosition.y > _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y)
                     {
-                        if(_RenderingData.CursorPosition.y > _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y)
-                        {
-                            _ScrollArea->VerticalScrollBar->set_scroll_offset(
-                                (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y) + _Context->m_Style.get_font_size());
-                        }
-                        if(_RenderingData.CursorPosition.y < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y)
-                        {
-                            _ScrollArea->VerticalScrollBar->set_scroll_offset(
-                                (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y) - _Context->m_Style.get_font_size());
-                        }
+                        _ScrollArea->set_vertical_scroll_offset(
+                            (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Max.y) + _Context->m_Style.get_font_size());
+                    }
+                    if(_RenderingData.CursorPosition.y < _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y)
+                    {
+                        _ScrollArea->set_vertical_scroll_offset(
+                            (_RenderingData.CursorPosition.y - _Context->m_Hierarchy.get_parent(_Contents)->State.BoundingBox.Min.y) - _Context->m_Style.get_font_size());
                     }
                 }
             };
@@ -1022,16 +941,16 @@ namespace Frenchie
             ImmediateUserInterfaceInputStringRenderingData inputStringRenderingData;
 
             // begin widgets
-            ImmediateUserInterfaceScrollArea*         scrollArea = nullptr;
+            ImmediateUserInterfaceScrollArea*        scrollArea = nullptr;
             ImmediateUserInterfaceInputStringContent* widget     = nullptr;
             bool                                      edited     = false;
 
             if(_Context->begin_node<ImmediateUserInterfaceInputStringContent>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
-                widget = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
-                
-                if(dynamic_cast<ImmediateUserInterfaceScrollAreaContent*>(_Context->m_Hierarchy.get_parent(widget)))
-                    scrollArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(widget);
+                widget     = _Context->get_rendering_stack_top<ImmediateUserInterfaceInputStringContent>();
+                scrollArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(widget);
+
+                if(scrollArea == nullptr) std::cout << scrollArea << "\n";
 
                 inputStringRenderingData.CursorPosition  = widget->State.BoundingBox.Min;
                 inputStringRenderingData.TextBoundingBox = gs_2dboxf(widget->State.BoundingBox.Min, widget->State.BoundingBox.Min);
@@ -1202,10 +1121,10 @@ namespace Frenchie
                     // adjust scrollbar
                     if(widget->State.Selected && _Context->m_Input.is_mouse_button_hold() && !_Context->m_Input.is_mouse_button_pressed())
                     {
-                        if(scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            scrollArea->HorizontalScrollBar->set_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
-                        if(scrollArea != nullptr && scrollArea->VerticalScrollBar != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
-                            scrollArea->VerticalScrollBar->set_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
+                        if(scrollArea != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                            scrollArea->set_horizontal_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
+                        if(scrollArea != nullptr && (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                            scrollArea->set_vertical_scroll_offset(gs_vector_normalize(_Context->m_Input.get_cusor_drag_delta()) * 4.f);
                     }
 
                     if(widget->State.Selected)
@@ -3541,7 +3460,7 @@ void ImmediateUserInterfaceHorizontalStack::layout(ImmediateUserInterfaceContext
 }
 
 // ImmediateUserInterfaceScrollArea1
-void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
@@ -3568,11 +3487,11 @@ void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLaye
 
     // layout scrollbars
     {
-        // manage vertical scrollbar
+        // calculate vertical scrollbar
         {
             VerticalScrollBarBox = gs_2dboxf(
                 gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y),
-                gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Max.y - HorizontalScrollBarBox.height()));
+                gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
 
             VerticalScrollBar.recompute(
                 gs_vec2f(0.f, 0.f),
@@ -3620,7 +3539,7 @@ void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLaye
             }
         }
 
-        // manage horizontal scrollbar
+        // calculate horizontal scrollbar
         {
             HorizontalScrollBarBox = gs_2dboxf(
                 gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()),
@@ -3674,7 +3593,7 @@ void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLaye
         // calculate content box
         ContentBox = gs_2dboxf(
             State.BoundingBox.Min,
-            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()));
+            State.BoundingBox.Max - gs_vec2f(VerticalScrollBarBox.width(), HorizontalScrollBarBox.height()) - gs_vec2f(_Context->m_Style.get_frames_width(), _Context->m_Style.get_frames_width()));
     }
 
     // layout children
@@ -3728,15 +3647,15 @@ void ImmediateUserInterfaceScrollArea1::layout(ImmediateUserInterfaceContextLaye
     }
 }
 
-void ImmediateUserInterfaceScrollArea1::render(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
-        get_clipping_box(_Context).Min,
-        get_clipping_box(_Context).Max,
+        ContentBox.Min,
+        ContentBox.Max,
         _Context->m_Style.get_frames_radius(),
-        gs_color_rgb(32, 32, 32),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     // vertical scrollbar
@@ -3806,7 +3725,7 @@ void ImmediateUserInterfaceScrollArea1::render(ImmediateUserInterfaceContextLaye
     }
 }
 
-bool ImmediateUserInterfaceScrollArea1::events(ImmediateUserInterfaceContextLayer* _Context)
+bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
 
@@ -3871,721 +3790,6 @@ bool ImmediateUserInterfaceScrollArea1::events(ImmediateUserInterfaceContextLaye
     return ImmediateUserInterfacePanel::events(_Context);
 }
 
-
-// ImmediateUserInterfaceScrollArea
-ImmediateUserInterfaceScrollArea::ImmediateUserInterfaceScrollArea(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceScrollArea::~ImmediateUserInterfaceScrollArea(){}
-
-void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    // resize to contents
-    State.MinimumSize = gs_vec2f(
-        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ?
-            State.ContentSize.x :
-                State.MinimumSize.x,
-        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ?
-            State.ContentSize.y :
-                State.MinimumSize.y);
-    
-    State.MaximumSize =
-     gs_vec2f(
-        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ? State.MinimumSize.x : State.MaximumSize.x,
-        (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ? State.MinimumSize.y : State.MaximumSize.y);
-    
-    State.BoundingBox = gs_2dboxf(
-        State.BoundingBox.Min,
-        State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
-
-    // default layout
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
-        _Context->m_Hierarchy.begin(this),
-        _Context->m_Hierarchy.end(this),
-        State.BoundingBox.Min,
-        State.BoundingBox.size(),
-        ContentPadding,
-        ContentMargin,
-        State.Settings,
-        [](const ImmediateUserInterfaceNode*){return true;});
-}
-
-void ImmediateUserInterfaceScrollArea::measure(ImmediateUserInterfaceContextLayer* _Context)
-{
-    State.ContentSize = ContentView->State.ContentSize + _Context->m_Style.get_frames_width() + _Context->m_Style.get_scrollbar_width() * 0.5f;
-}
-
-void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer*){}
-
-void ImmediateUserInterfaceScrollArea::attach_child(ImmediateUserInterfaceNode* _Child)
-{
-    if(_Child == nullptr) return;
-
-    if(dynamic_cast<ImmediateUserInterfaceScrollAreaPanel*>(_Child))
-    {
-        _Child->State.Parent = this;
-        return;
-    }
-
-    if(ContentView)
-        ContentView->attach_child(_Child);
-}
-
-bool ImmediateUserInterfaceScrollArea::create_contents(
-    ImmediateUserInterfaceContextLayer*       _Context, 
-    const std::string&                        _ID,
-    const ImmediateUserInterfaceNodeSettings& _Settings,
-    bool*                                     _Render)
-{
-    if(_Context == nullptr) return false;
-
-    ImmediateUserInterfaceNodeSettings settings   = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
-    ImmediateUserInterfaceScrollArea*  scrollArea = this;
-
-    if(_Context->begin_node<ImmediateUserInterfaceScrollAreaPanel>(_Context->next_id("Root"), settings))
-    {
-        scrollArea->ContentPanel = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaPanel>();
-
-        if(_Context->begin_vertical_stack(_Context->next_id("VerticalStack"), settings))
-        {
-            _Context->get_rendering_stack_top<ImmediateUserInterfaceNode>()->State.PlaceInFollow = true;
-
-            // vertical scrollbar area
-            if(_Context->begin_horizontal_stack(_Context->next_id("Content"), settings))
-            {
-                _Context->get_rendering_stack_top<ImmediateUserInterfaceHorizontalStack>()->State.PlaceInFollow = true;
-
-                // contents
-                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaContent>(_Context->next_id("Content"), settings))
-                {
-                    scrollArea->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>();
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->ContentPadding      = scrollArea->ContentPadding;
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaContent>()->State.PlaceInFollow = scrollArea->State.PlaceInFollow;
-                    
-                    // reset self content padding as it's applied to content view
-                    scrollArea->ContentPadding = gs_vec2f(0.f, 0.f);
-                    
-                    _Context->end_node<ImmediateUserInterfaceScrollAreaContent>();
-                }
-
-                // vertical scrollbar
-                if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(_Context->next_id("VerticalScrollBar"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-                {
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                        ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical;
-
-                    scrollArea->VerticalScrollBar = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
-
-                    _Context->end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-                }
-
-                _Context->end_horizontal_stack();
-            }
-
-            // horizontal scrollbar
-            if(_Context->begin_node<ImmediateUserInterfaceScrollAreaScrollBar>(_Context->next_id("HorizontalScrollBar"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
-            {
-                _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>()->Type =
-                    ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal;
-
-                scrollArea->HorizontalScrollBar = _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollAreaScrollBar>();
-
-                _Context->end_node<ImmediateUserInterfaceScrollAreaScrollBar>();
-            }
-
-            _Context->end_vertical_stack();
-        }
-    
-        _Context->end_node<ImmediateUserInterfaceScrollAreaPanel>();
-    }
-
-    return true;
-}
-
-float ImmediateUserInterfaceScrollArea::get_horizontal_scrollbar_width(ImmediateUserInterfaceContextLayer* _Context) const
-{
-    float horizontalScrollBarSize =
-        HorizontalScrollBar != nullptr ?
-            gs_min(HorizontalScrollBar->State.BoundingBox.size().x, HorizontalScrollBar->State.BoundingBox.size().y) :
-                0.f;
-
-    return horizontalScrollBarSize;
-}
-
-float ImmediateUserInterfaceScrollArea::get_vertical_scrollbar_width(ImmediateUserInterfaceContextLayer* _Context) const
-{
-    float verticalScrollBarSize =
-        VerticalScrollBar != nullptr ?
-            gs_min(VerticalScrollBar->State.BoundingBox.size().x, VerticalScrollBar->State.BoundingBox.size().y) :
-                0.f;
-    
-    return verticalScrollBarSize;
-}
-
-void ImmediateUserInterfaceScrollArea::calculate_content_padding(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, gs_vec2f& _Padding)
-{
-    if(_Context == nullptr || _Node == nullptr) return;
-
-    if(dynamic_cast<ImmediateUserInterfacePanel*>(_Node) != nullptr)
-        _Padding += dynamic_cast<ImmediateUserInterfacePanel*>(_Node)->ContentPadding;
-
-    for(auto it = _Context->m_Hierarchy.begin(_Node); it != _Context->m_Hierarchy.end(_Node); it++)
-        calculate_content_padding(_Context, *it, _Padding);
-}
-
-ImmediateUserInterfaceScrollAreaPanel::ImmediateUserInterfaceScrollAreaPanel(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceScrollAreaPanel::~ImmediateUserInterfaceScrollAreaPanel(){}
-
-// ImmediateUserInterfaceScrollAreaContent
-ImmediateUserInterfaceScrollAreaContent::ImmediateUserInterfaceScrollAreaContent(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceScrollAreaContent::~ImmediateUserInterfaceScrollAreaContent(){}
-
-void ImmediateUserInterfaceScrollAreaContent::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // extract scroll area
-    ImmediateUserInterfaceScrollArea* scrollArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
-    
-    // extract horizontal and vertical scrollbars
-    gs_vec2f horizontalScrollBarPosition =
-        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ?
-            scrollArea->HorizontalScrollBar->get_scroll_offset() :
-                gs_vec2f(0.f, 0.f);
-
-    gs_vec2f verticalScrollBarPosition =
-        scrollArea != nullptr && scrollArea->VerticalScrollBar != nullptr ?
-            scrollArea->VerticalScrollBar->get_scroll_offset() :
-                gs_vec2f(0.f, 0.f);
-
-    float indent =
-        scrollArea != nullptr && scrollArea->ContentPanel != nullptr ?
-            scrollArea->ContentPanel->State.Indent :
-                0.f; 
-
-    // layout
-
-    // extract padding
-    float topPadding    = ContentPadding.x;
-    float leftPadding   = ContentPadding.y;
-    float rightPadding  = ContentPadding.z;
-    float bottomPadding = ContentPadding.w;
-    
-    // extract margin
-    float topMargin     = ContentMargin.x;
-    float leftMargin    = ContentMargin.y;
-    float rightMargin   = ContentMargin.z;
-    float bottomMargin  = ContentMargin.w;
-
-    gs_2dboxf marginBox = gs_2dboxf(State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin), State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin) - gs_vec2f(rightMargin, bottomMargin) + State.BoundingBox.size());
-    gs_vec2f  position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(indent, 0.f);
-    gs_vec2f  start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
-    float     maxHeight = 0.f;
-
-    for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
-    {
-        (*it)->State.BoundingBox = gs_2dboxf(
-            position,
-            position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
-        maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
-
-        if((*it)->State.NextLine > 0)
-        {
-            position = gs_vec2f(
-                start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
-            
-            maxHeight = 0.f;
-        }
-        else
-        {
-            position += gs_vec2f(
-                (*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent,
-                0.f);
-        }
-    }
-}
-
-// ImmediateUserInterfaceScrollAreaScrollBar
-ImmediateUserInterfaceScrollAreaScrollBar::ImmediateUserInterfaceScrollAreaScrollBar(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
-ImmediateUserInterfaceScrollAreaScrollBar::~ImmediateUserInterfaceScrollAreaScrollBar(){}
-
-gs_vec2f ImmediateUserInterfaceScrollAreaScrollBar::get_scroll_offset(const bool& _Scaled) const
-{
-    return _Scaled ? Position * PositionScale : Position;
-}
-
-void ImmediateUserInterfaceScrollAreaScrollBar::set_scroll_offset(const gs_vec2f _Value, const bool& _Relative)
-{
-    if(gs_max(State.BoundingBox.size().x, State.BoundingBox.size().y) <= 0.f)
-        return;
-
-    if(_Relative)
-    {
-        PreviousPosition = Position;
-        Position         = gs_clamp(PreviousPosition + _Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
-    }
-    else
-    {
-        PreviousPosition = Position;
-        Position         = gs_clamp(_Value, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
-    }
-}
-
-void ImmediateUserInterfaceScrollAreaScrollBar::layout(ImmediateUserInterfaceContextLayer* _Context)
-{
-    // auxiliary lambdas
-    auto do_not_render_scroll_bar = [this](ImmediateUserInterfaceContextLayer* _Context)
-    {
-        // clamp self
-        State.MinimumSize = gs_vec2f(
-            Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal ? State.BoundingBox.size().x : 0.f,
-            Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ? State.BoundingBox.size().y : 0.f);
-
-        State.MaximumSize = State.MinimumSize;
-        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-
-        // reset slider
-        Position = gs_vec2f(0.f, 0.f);
-    };
-
-    auto calculate_scrollbar_length = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)->gs_vec2f
-    {
-        totalContentSize = gs_vec2f(gs_max(totalContentSize.x, 0.01f), gs_max(totalContentSize.y, 0.01f));
-
-        return gs_vec2f(
-            gs_min(gs_max(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * scrollbarMaximumValue.x, scrollbarMinimumSize.x), scrollbarMaximumValue.x),
-            gs_min(gs_max(gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * scrollbarMaximumValue.y, scrollbarMinimumSize.y), scrollbarMaximumValue.y));
-    };
-
-    auto calculate_scrollbar_slider_position_scale = [](gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)->gs_vec2f
-    {
-        gs_vec2f scale = gs_vec2f(gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x), gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
-        return gs_vec2f(gs_max(scale.x, 1.f), gs_max(scale.y, 1.f));
-    };
-
-    // main code
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
-
-    if(_Context == nullptr || scrollArea == nullptr)
-        return;
-
-    // calculate self maximum and minimum sizes
-    State.MaximumSize =
-        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-            gs_vec2f(_Context->m_Style.get_scrollbar_width(), (State.Parent != nullptr ? State.Parent->State.BoundingBox.size().y : 512.f)) :
-                gs_vec2f((State.Parent != nullptr ? State.Parent->State.BoundingBox.size().x : 512.f), _Context->m_Style.get_scrollbar_width());
-
-    if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar) &&
-        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
-    {
-        State.MaximumSize.y = 0.f;
-        State.MinimumSize = State.MaximumSize;
-        State.BoundingBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-    }
-    else if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar) &&
-        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-    {
-        State.MaximumSize.x =  0.f;
-        State.MinimumSize   = State.MaximumSize;
-        State.BoundingBox   = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min + State.MaximumSize);
-    }
-
-    State.MinimumSize = State.MaximumSize;
-
-    // calculate self bounding box
-    gs_vec2f offset =
-        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-            gs_vec2f(0.f, gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f) :
-                gs_vec2f(gs_abs(_Context->m_Style.get_frames_radius() * 2.f - _Context->m_Style.get_scrollbar_width()) * 0.5f, 0.f);
-
-    if(_Context->m_Style.get_frames_radius() <= 0.f)
-        offset = gs_vec2f(0.f, 0.f);
-
-    State.BoundingBox = gs_2dboxf(
-        State.BoundingBox.Min + offset,
-        State.BoundingBox.Min - (Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ? gs_vec2f(0.f, 0.f) : offset) + State.MaximumSize);
-
-    // calculate scrollbar metrics
-    gs_vec2f scrollbarMinimumValue = gs_vec2f(0.f, 0.f);
-    gs_vec2f scrollbarMaximumValue =
-        Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical ?
-            gs_vec2f(_Context->m_Style.get_scrollbar_width(), State.BoundingBox.size().y) :
-                gs_vec2f(State.BoundingBox.size().x, _Context->m_Style.get_scrollbar_width());
-
-    // do not render scrollbar out of scrollarea
-    if(scrollArea == nullptr)
-    {
-        do_not_render_scroll_bar(_Context);
-        return;
-    }
-
-    gs_vec2f minimumSliderSize = _Context->m_Style.get_scrollbar_width();
-
-    // compute slider metrics
-    {
-        gs_vec2f scaledPosition = Position * PositionScale;
-
-        gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-            scrollbarMinimumValue,
-            scrollbarMaximumValue,
-            scrollArea->State.ContentSize,
-            minimumSliderSize);
-
-        gs_vec2f scrollbarSliderScale = calculate_scrollbar_slider_position_scale(
-            scrollbarMinimumValue,
-            scrollbarMaximumValue,
-            scrollArea->State.ContentSize);
-
-        gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - scrollbarSliderLength);
-
-        if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-        {
-            if(sliderPosition.y >= State.BoundingBox.Min.y && sliderPosition.y <= (State.BoundingBox.Max - scrollbarSliderLength).y)
-                PositionScale = scrollbarSliderScale;
-        }
-        else
-        {
-            if(sliderPosition.x >= State.BoundingBox.Min.x && sliderPosition.x <= (State.BoundingBox.Max - scrollbarSliderLength).x)
-                PositionScale = scrollbarSliderScale;
-        }
-
-        ConstrainedSize   = scrollbarSliderLength;
-
-        UnconstrainedSize = calculate_scrollbar_length(
-            scrollbarMinimumValue,
-            scrollbarMaximumValue,
-            scrollArea->State.ContentSize,
-            0.f);
-
-        Position = gs_clamp(scaledPosition / PositionScale, gs_vec2f(0.f, 0.f), (State.BoundingBox.size() - UnconstrainedSize));
-    }
-
-    // manage horizontal scrollbar
-    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal)
-    {
-        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
-        {
-            do_not_render_scroll_bar(_Context);
-            return;
-        }
-
-        gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-            scrollbarMinimumValue,
-            scrollbarMaximumValue,
-            scrollArea->State.ContentSize,
-            minimumSliderSize);
-
-        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
-        {
-            if((int)gs_abs(scrollbarSliderLength.x - scrollbarMaximumValue.x) < _Context->m_Style.get_frames_width())
-            {
-                do_not_render_scroll_bar(_Context);
-                return;
-            }
-
-            if((int)scrollbarSliderLength.x >= (int)scrollbarMaximumValue.x)
-            {
-                do_not_render_scroll_bar(_Context);
-                return;
-            }
-        }
-        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar)
-        {
-            do_not_render_scroll_bar(_Context);
-            return;
-        }
-        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar)
-        {
-        }
-        else
-        {
-            do_not_render_scroll_bar(_Context);
-            return;
-        }
-    }
-
-    // manage vertical scrollbar
-    if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-    {
-        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
-        {
-            do_not_render_scroll_bar(_Context);
-            return;
-        }
-
-        gs_vec2f scrollbarSliderLength = calculate_scrollbar_length(
-            scrollbarMinimumValue,
-            scrollbarMaximumValue,
-            scrollArea->State.ContentSize,
-            minimumSliderSize);
-
-        if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
-        {
-            if((int)gs_abs(scrollbarSliderLength.y - scrollbarMaximumValue.y) < _Context->m_Style.get_frames_width())
-            {
-                do_not_render_scroll_bar(_Context);
-                return;
-            }
-
-            if((int)scrollbarSliderLength.y >= (int)scrollbarMaximumValue.y)
-            {
-                do_not_render_scroll_bar(_Context);
-                return;
-            }
-        }
-        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar)
-        {
-            do_not_render_scroll_bar(_Context);
-            return;
-        }
-        else if(scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysVerticalScrollBar)
-        {
-        }
-        else
-        {
-            do_not_render_scroll_bar(_Context);
-            return;
-        }
-    }
-}
-
-bool ImmediateUserInterfaceScrollAreaScrollBar::events(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
-
-    // resize
-    if(((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable) || _Context->m_Hierarchy.get_parent(this)) &&
-        !(State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-    {
-        auto scrollArea = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(this);
-
-        if(Type == ImmediateUserInterfaceScrollAreaScrollBarType_::ImmediateUserInterfaceScrollAreaScrollBarType_Vertical)
-        {
-            if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight) ||
-                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
-            {
-                ImmediateUserInterfaceNode* resizable =
-                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-
-                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-
-                // trigger event
-                if(resizable != nullptr)
-                {
-                    if(_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight;
-                        return true;
-                    }
-
-                    // execute event
-                    if(_Context->m_Input.is_mouse_button_down() &&
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight))
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight);
-                        return true;
-                    }
-                }
-            }
-            else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight) ||
-                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
-            {
-                ImmediateUserInterfaceNode* resizable =
-                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
-
-                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
-
-                // trigger event
-                if(resizable != nullptr)
-                {
-                    if(_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight;
-                        return true;
-                    }
-
-                    // execute event
-                    if(_Context->m_Input.is_mouse_button_down() &&
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight))
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight);
-                        return true;
-                    }
-                }
-            }
-            else if((scrollArea != nullptr && (int)scrollArea->get_horizontal_scrollbar_width(_Context) <= 0.f) &&
-                    ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                    (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-            {
-                ImmediateUserInterfaceNode* resizable =
-                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                // trigger event
-                if(resizable != nullptr)
-                {
-                    if(_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
-                        return true;
-                    }
-
-                    // execute event
-                    if(_Context->m_Input.is_mouse_button_down() &&
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-                        return true;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft) ||
-                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
-            {
-                ImmediateUserInterfaceNode* resizable =
-                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
-
-                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
-
-                // trigger event
-                if(resizable != nullptr)
-                {
-                    if(_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft;
-                        return true;
-                    }
-
-                    // execute event
-                    if(_Context->m_Input.is_mouse_button_down() &&
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft))
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft);
-                        return true;
-                    }
-                }
-            }
-            else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-            {
-                ImmediateUserInterfaceNode* resizable =
-                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-
-                // trigger event
-                if(resizable != nullptr)
-                {
-                    if(_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight;
-                        return true;
-                    }
-
-                    // execute event
-                    if(_Context->m_Input.is_mouse_button_down() &&
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight))
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight);
-                        return true;
-                    }
-                }
-            }
-            else if(ImmediateUserInterfaceContextLayerHelpers::check_cursor_intersection_with_resize_gizmo(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom) ||
-                (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
-            {
-                ImmediateUserInterfaceNode* resizable =
-                    ImmediateUserInterfaceContextLayerHelpers::find_resizable_node(_Context, this, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
-
-                ImmediateUserInterfaceContextLayerHelpers::render_resize_gizmo(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
-
-                // trigger event
-                if(resizable != nullptr)
-                {
-                    if(_Context->m_Input.is_mouse_button_pressed())
-                    {
-                        resizable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom;
-                        return true;
-                    }
-
-                    // execute event
-                    if(_Context->m_Input.is_mouse_button_down() &&
-                        (State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom))
-                    {
-                        ImmediateUserInterfaceContextLayerHelpers::resize_node(_Context, resizable, ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom);
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    // move slider on mouse press event
-    if(_Context->m_Input.is_mouse_button_pressed())
-    {
-        Position         = gs_clamp((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min) - ConstrainedSize * 0.5f, gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
-        PreviousPosition = Position;
-        State.Events    |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
-    }
-
-    // move slider on mouse drag event
-    if(_Context->m_Input.is_mouse_button_down())
-    {
-        Position      = gs_clamp(PreviousPosition + ApplicationPlatformBackend::get_window_cursor_dragdelta(), gs_vec2f(0.f, 0.f), State.BoundingBox.size() - UnconstrainedSize);
-        State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_Custom;
-    }
-
-    return true;
-}
-
-void ImmediateUserInterfaceScrollAreaScrollBar::render(ImmediateUserInterfaceContextLayer* _Context)
-{
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    // outline
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min,
-        State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // background
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    // slider
-    gs_vec2f sliderPosition = gs_clamp(State.BoundingBox.Min + Position, State.BoundingBox.Min, State.BoundingBox.Max - ConstrainedSize);
-
-    if(State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered)
-    {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
-            sliderPosition + ConstrainedSize - _Context->m_Style.get_frames_width() * 2.f,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
-    else
-    {
-        _Context->m_Renderer->push_rectangle_rounded_filled(
-            sliderPosition + _Context->m_Style.get_frames_width() * 2.f,
-            sliderPosition + ConstrainedSize - _Context->m_Style.get_frames_width() * 2.f,
-            _Context->m_Style.get_frames_radius(),
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    }
-}
-
 // ImmediateUserInterfaceMenu
 ImmediateUserInterfaceMenu::ImmediateUserInterfaceMenu(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceMenu::~ImmediateUserInterfaceMenu(){}
@@ -4627,7 +3831,7 @@ void ImmediateUserInterfaceMenu::attach_child(ImmediateUserInterfaceNode* _Child
 }
 
 // ImmediateUserInterfaceMenuScrollArea
-ImmediateUserInterfaceMenuScrollArea::ImmediateUserInterfaceMenuScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea1(_Name){}
+ImmediateUserInterfaceMenuScrollArea::ImmediateUserInterfaceMenuScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceMenuScrollArea::~ImmediateUserInterfaceMenuScrollArea(){}
 
 void ImmediateUserInterfaceMenuScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
@@ -4762,7 +3966,7 @@ void ImmediateUserInterfaceMenuItem::render(ImmediateUserInterfaceContextLayer* 
 }
 
 // ImmediateUserInterfaceMenuBar
-ImmediateUserInterfaceMenuBar::ImmediateUserInterfaceMenuBar(const std::string& _Name) : ImmediateUserInterfaceScrollArea1(_Name){}
+ImmediateUserInterfaceMenuBar::ImmediateUserInterfaceMenuBar(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceMenuBar::~ImmediateUserInterfaceMenuBar(){}
 
 void ImmediateUserInterfaceMenuBar::attach_child(ImmediateUserInterfaceNode* _Child)
@@ -4773,7 +3977,7 @@ void ImmediateUserInterfaceMenuBar::attach_child(ImmediateUserInterfaceNode* _Ch
         _Child->State.NextLine = 0;
     }
 
-    ImmediateUserInterfaceScrollArea1::attach_child(_Child);
+    ImmediateUserInterfaceScrollArea::attach_child(_Child);
 }
 
 // ImmediateUserInterfaceCombobox
@@ -4916,7 +4120,7 @@ void ImmediateUserInterfaceComboboxItem::render(ImmediateUserInterfaceContextLay
 }
 
 // ImmediateUserInterfaceComboboxItemScrollArea
-ImmediateUserInterfaceComboboxScrollArea::ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea1(_Name){}
+ImmediateUserInterfaceComboboxScrollArea::ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
 ImmediateUserInterfaceComboboxScrollArea::~ImmediateUserInterfaceComboboxScrollArea(){}
 void ImmediateUserInterfaceComboboxScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
 {
@@ -5147,8 +4351,8 @@ void ImmediateUserInterfaceTableGrid::attach_child(ImmediateUserInterfaceNode* _
 
     GS_ASSERT(cell != nullptr);
 
-    MaxRow = gs_max(MaxRow, cell->Row);
-    MaxCol = gs_max(MaxCol, cell->Column);
+    RowsCount = gs_max(RowsCount, cell->Row);
+    ColsCount = gs_max(ColsCount, cell->Column);
 
     cell->State.Parent = this;
 }
@@ -5187,7 +4391,7 @@ void ImmediateUserInterfaceTableGrid::measure(ImmediateUserInterfaceContextLayer
 
     gs_vec2f cellSize = CellSize != nullptr ? *CellSize : gs_vec2f(256.f, 128.f);
 
-    State.ContentSize = cellSize * gs_vec2f((float)MaxCol, (float)MaxRow);
+    State.ContentSize = cellSize * gs_vec2f((float)ColsCount, (float)RowsCount);
 }
 
 // ImmediateUserInterfaceLayerGridCell
@@ -5238,8 +4442,8 @@ bool ImmediateUserInterfaceTable::create_contents(
     bool*                                     _Render)
 {
     // layout self
-    ImmediateUserInterfaceScrollArea1* scrollArea =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea1>(DataCells);
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(DataCells);
 
     gs_vec2f scrollOffset = scrollArea != nullptr ? scrollArea->get_scroll_offset(false) : gs_vec2f(0.f, 0.f);
     
@@ -5258,8 +4462,8 @@ bool ImmediateUserInterfaceTable::create_contents(
             _Context->next_id("Cols"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
         {
+            // corner title box
             _Context->get_rendering_stack_top()->State.PlaceInFollow = true;
-
             _Context->next_minimum_size(GridCellSize);
             _Context->next_maximum_size(GridCellSize);
 
@@ -5271,30 +4475,31 @@ bool ImmediateUserInterfaceTable::create_contents(
                 _Context->end_node<ImmediateUserInterfaceTableCornerPanel>();
             }
 
+            // columns titles
             _Context->next_minimum_size(gs_vec2f(GridCellSize.x, GridCellSize.y));
             _Context->next_maximum_size(gs_vec2f(gs_huge<float>(), GridCellSize.y));
 
-            if(_Context->begin_scrollarea1(
+            if(_Context->begin_scrollarea(
                 _Context->next_id("Columns"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
             {
-                _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea1>()->set_horizontal_scroll_offset(gs_vec2f(scrollOffset.x, 0.f), false);
+                _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea>()->set_horizontal_scroll_offset(gs_vec2f(scrollOffset.x, 0.f), false);
 
                 if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
                     _Context->next_id("Grid"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     HorizontalHeaders           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                    HorizontalHeaders->MaxRow   = 1;
-                    HorizontalHeaders->MaxCol   = GridColsCount;
+                    HorizontalHeaders->RowsCount   = 1;
+                    HorizontalHeaders->ColsCount   = GridColsCount;
                     HorizontalHeaders->CellSize = &GridCellSize;
                     
                     _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
 
-                _Context->end_scrollarea1();
+                _Context->end_scrollarea();
             }
 
             _Context->end_horizontal_stack();
@@ -5315,27 +4520,27 @@ bool ImmediateUserInterfaceTable::create_contents(
                 _Context->next_id("Rows"),
                 ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
             {
-                if(_Context->begin_scrollarea1(
+                if(_Context->begin_scrollarea(
                     _Context->next_id("Rows"),
                   ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
                 {
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea1>()->set_vertical_scroll_offset(scrollOffset, false);
+                    _Context->get_rendering_stack_top<ImmediateUserInterfaceScrollArea>()->set_vertical_scroll_offset(scrollOffset, false);
 
                     if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
                         _Context->next_id("Grid"),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                     {
                         VerticalHeaders           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                        VerticalHeaders->MaxRow   = GridRowsCount;
-                        VerticalHeaders->MaxCol   = 1;
+                        VerticalHeaders->RowsCount   = GridRowsCount;
+                        VerticalHeaders->ColsCount   = 1;
                         VerticalHeaders->CellSize = &GridCellSize;
                         
                         _Context->end_node<ImmediateUserInterfaceTableGrid>();
                     }
 
-                    _Context->end_scrollarea1();
+                    _Context->end_scrollarea();
                 }
 
                 _Context->next_size(gs_vec2f(GridCellSize.x, _Context->m_Style.get_scrollbar_width()));
@@ -5345,21 +4550,21 @@ bool ImmediateUserInterfaceTable::create_contents(
             }
 
             // cells
-            if(_Context->begin_scrollarea1(_Context->next_id("Cells")))
+            if(_Context->begin_scrollarea(_Context->next_id("Cells")))
             {
                 if(_Context->begin_node<ImmediateUserInterfaceTableGrid>(
                     _Context->next_id("Grid"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     DataCells           = _Context->get_rendering_stack_top<ImmediateUserInterfaceTableGrid>();
-                    DataCells->MaxRow   = GridRowsCount;
-                    DataCells->MaxCol   = GridColsCount;
+                    DataCells->RowsCount   = GridRowsCount;
+                    DataCells->ColsCount   = GridColsCount;
                     DataCells->CellSize = &GridCellSize;
                     
                     _Context->end_node<ImmediateUserInterfaceTableGrid>();
                 }
 
-                _Context->end_scrollarea1();
+                _Context->end_scrollarea();
             }
 
             _Context->end_horizontal_stack();
@@ -7048,13 +6253,13 @@ void ImmedidateUserInterfaceMenusController::frame_finish(ImmediateUserInterface
         if(menu != nullptr)
         {
             // look for parental scroll bar
-            ImmediateUserInterfaceScrollArea1* scroll = nullptr;
-            ImmediateUserInterfaceScrollArea1* parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea1>(menu);
+            ImmediateUserInterfaceScrollArea* scroll = nullptr;
+            ImmediateUserInterfaceScrollArea* parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(menu);
 
             while (parent != nullptr)
             {
                 scroll = parent;
-                parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea1>(parent);
+                parent = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceScrollArea>(parent);
             }
             
             if(scroll != nullptr)
@@ -7110,8 +6315,8 @@ void ImmedidateUserInterfaceMenusController::detect_maximum_width(
 {
     if(_Context == nullptr) return;
 
-    ImmediateUserInterfaceScrollArea1* scrollArea =
-        dynamic_cast<ImmediateUserInterfaceScrollArea1*>(_Node);
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
 
     if(scrollArea != nullptr)
     {
@@ -7140,8 +6345,8 @@ void ImmedidateUserInterfaceMenusController::setup_maximum_with(
 {
     if(_Context == nullptr) return;
 
-    ImmediateUserInterfaceScrollArea1* scrollArea =
-        dynamic_cast<ImmediateUserInterfaceScrollArea1*>(_Node);
+    ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Node);
 
     if(scrollArea != nullptr)
     {
@@ -7205,78 +6410,60 @@ void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterf
     // adjust vertical scroll bar by mouse wheel
     if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment))
     {
-        ImmediateUserInterfaceScrollAreaScrollBar* verticalScrollBar =
-            scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
-
-        if(verticalScrollBar != nullptr)
+        if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
         {
-            if(gs_vector_length(_Context->m_Input.get_cusor_scroll_offset()) > 0.f)
-            {
-                verticalScrollBar->set_scroll_offset(
-                    _Context->m_Input.get_cusor_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
-            }
+            scrollArea->set_vertical_scroll_offset(
+                _Context->m_Input.get_cusor_scroll_offset() * (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f);
         }
     }
 
     // adjust vertical scrollbar by arrow keys
     if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment))
     {
-        ImmediateUserInterfaceScrollAreaScrollBar* verticalScrollBar =
-            scrollArea != nullptr ? scrollArea->VerticalScrollBar : nullptr; 
-
-        if(verticalScrollBar != nullptr)
+        if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ||
+            _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
         {
-            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ||
-                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow))
-            {
-                gs_vec2f offset =
-                    !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ?
-                        (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
-                            (-4.f);
+            gs_vec2f offset =
+                !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_UpArrow) ?
+                    (-1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
+                        (-4.f);
 
-                verticalScrollBar->set_scroll_offset(offset);
-            }
-            else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ||
-                    _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
-            {
-                gs_vec2f offset =
-                    !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ?
-                        (+1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
-                            (+4.f);
+            scrollArea->set_vertical_scroll_offset(offset);
+        }
+        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ||
+                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow))
+        {
+            gs_vec2f offset =
+                !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_DownArrow) ?
+                    (+1.f) * gs_min(scrollArea->State.ContentSize.y, scrollArea->State.BoundingBox.size().y) * 0.05f :
+                        (+4.f);
 
-                verticalScrollBar->set_scroll_offset(offset);
-            }
+            scrollArea->set_vertical_scroll_offset(offset);
         }
     }
 
     // adjust horizontal scrollbar by arrow keys
     if((scrollArea->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment))
     {
-        ImmediateUserInterfaceScrollAreaScrollBar* horizontalScrollBar =
-            scrollArea != nullptr ? scrollArea->HorizontalScrollBar : nullptr; 
-
-        if(horizontalScrollBar != nullptr)
+        if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ||
+            _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
         {
-            if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ||
-                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow))
-            {
-                gs_vec2f offset =
-                    !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ?
-                        (-1.f) * gs_min(scrollArea->State.ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f :
-                            (-4.f);
+            gs_vec2f offset =
+                !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftArrow) ?
+                    (-1.f) * gs_min(scrollArea->State.ContentSize.x, scrollArea->State.BoundingBox.size().x ) * 0.05f :
+                        (-4.f);
 
-                horizontalScrollBar->set_scroll_offset(offset);
-            }
-            else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
-                    _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
-            {
-                gs_vec2f offset =
-                    !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ?
-                        (+1.f) * gs_min(scrollArea->State.ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f :
-                            (+4.f);
+            scrollArea->set_horizontal_scroll_offset(offset);
+        }
+        else if(_Context->m_Input.is_key_clicked(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ||
+                _Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow))
+        {
+            gs_vec2f offset =
+                !_Context->m_Input.is_key_hold(ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightArrow) ?
+                    (+1.f) * gs_min(scrollArea->State.ContentSize.x, scrollArea->State.BoundingBox.size().x) * 0.05f :
+                        (+4.f);
 
-                horizontalScrollBar->set_scroll_offset(offset);
-            }
+            scrollArea->set_horizontal_scroll_offset(offset);
         }
     }
 }
@@ -7288,8 +6475,8 @@ ImmediateUserInterfaceGridClipper::ImmediateUserInterfaceGridClipper(
     const int&                        _ColsCount,
     const gs_vec2f&                   _CellSize)
 {
-    const ImmediateUserInterfaceScrollArea1* scrollArea =
-        dynamic_cast<const ImmediateUserInterfaceScrollArea1*>(_ScorllArea);
+    const ImmediateUserInterfaceScrollArea* scrollArea =
+        dynamic_cast<const ImmediateUserInterfaceScrollArea*>(_ScorllArea);
 
     if(scrollArea == nullptr)
         return;
@@ -7464,18 +6651,6 @@ void ImmediateUserInterfaceContextLayer::end_scrollarea()
     end_node<ImmediateUserInterfaceScrollArea>();
 }
 
-bool ImmediateUserInterfaceContextLayer::begin_scrollarea1(
-    const std::string&                        _ID,
-    const ImmediateUserInterfaceNodeSettings& _Settings)
-{
-    return begin_node<ImmediateUserInterfaceScrollArea1>(_ID, _Settings);
-}
-
-void ImmediateUserInterfaceContextLayer::end_scrollarea1()
-{
-    end_node<ImmediateUserInterfaceScrollArea1>();
-}
-
 bool ImmediateUserInterfaceContextLayer::begin_panel(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     return begin_node<ImmediateUserInterfacePanel>(_ID, _Settings);
@@ -7539,13 +6714,6 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
 
             int depth = widget->Cache.Depth;
             int init  = depth;
-
-            m_Renderer->push_rectangle_rounded_filled(
-                widget->get_clipping_box(this).Min,
-                widget->get_clipping_box(this).Max,
-                m_Style.get_frames_radius(),
-                gs_color_rgb(0, 255, 0),
-                m_Renderer->calculate_transform_matrix((float)depth++));
 
             // background
             m_Renderer->push_rectangle_rounded_filled(
@@ -9391,7 +8559,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
         {
-            widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea1>();
+            widget->ScrollArea                       = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
             widget->ScrollArea->State.MaximumSize    = gs_vec2f(256.f, 256.f);
             widget->ScrollArea->State.PlaceInFollow  = true;
             widget->ScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
@@ -9584,7 +8752,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft))
         {
-            menu->InternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea1>();
+            menu->InternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
             menu->InternalScrollArea->State.PlaceInFollow = true;
 
             // if menu is inside another menu we draw menu item
@@ -9631,7 +8799,7 @@ bool ImmediateUserInterfaceContextLayer::begin_menu(const std::string& _ID)
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally))
             {
-                menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea1>();
+                menu->ExternalScrollArea = get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
                 menu->ExternalScrollArea->State.MouseHover    |= ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered;
                 menu->ExternalScrollArea->State.PlaceInFollow  = true;
                 menu->ExternalScrollArea->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Popup;
@@ -9799,17 +8967,7 @@ gs_vec2f ImmediateUserInterfaceContextLayer::current_scroll_offset(const bool& _
     ImmediateUserInterfaceScrollArea* scrollArea =
         get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
 
-    return gs_vec2f(
-        scrollArea != nullptr && scrollArea->HorizontalScrollBar != nullptr ? scrollArea->HorizontalScrollBar->get_scroll_offset(_Scaled).x : 0.f,
-        scrollArea != nullptr && scrollArea->VerticalScrollBar   != nullptr ? scrollArea->VerticalScrollBar->get_scroll_offset(_Scaled).y   : 0.f);
-}
-
-gs_2dboxf ImmediateUserInterfaceContextLayer::current_scroll_viewport() const
-{
-    ImmediateUserInterfaceScrollArea* scrollArea =
-        get_rendering_stack_top<ImmediateUserInterfaceScrollArea>();
-
-    return scrollArea != nullptr ? scrollArea->ContentView->State.BoundingBox : gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f));
+    return scrollArea != nullptr ? scrollArea->get_scroll_offset(_Scaled) : gs_vec2f(0.f, 0.f);
 }
 
 gs_2dboxf ImmediateUserInterfaceContextLayer::current_bounding_box() const
