@@ -881,39 +881,29 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar |
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar;
 
-    if(m_ImmediateUserInterface->begin_menubar(m_ImmediateUserInterface->next_id("MenuBar")))
+    if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window-1")))
     {
-        if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu-1")))
+        if(m_ImmediateUserInterface->begin_scrollarea(
+            m_ImmediateUserInterface->next_id("String"),
+            scrollSettings))
         {
-            m_ImmediateUserInterface->end_menu();
-        }
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    std::string name = Frenchie::Core::String::format("Label-%d-%d", i, j);
+                    m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id(name, name)); m_ImmediateUserInterface->same_line();
+                }
 
-        m_ImmediateUserInterface->end_menubar();
-    }
-
-    // if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window-1")))
-    // {
-    //     if(m_ImmediateUserInterface->begin_scrollarea1(
-    //         m_ImmediateUserInterface->next_id("String"),
-    //         scrollSettings))
-    //     {
-    //         for (int i = 0; i < 5; i++)
-    //         {
-    //             for (int j = 0; j < 5; j++)
-    //             {
-    //                 std::string name = Frenchie::Core::String::format("Label-%d-%d", i, j);
-    //                 m_ImmediateUserInterface->push_button(m_ImmediateUserInterface->next_id(name, name)); m_ImmediateUserInterface->same_line();
-    //             }
-
-    //             m_ImmediateUserInterface->next_line();
-    //         }
+                m_ImmediateUserInterface->next_line();
+            }
             
 
-    //         m_ImmediateUserInterface->end_scrollarea1();
-    //     }
+            m_ImmediateUserInterface->end_scrollarea();
+        }
 
-    //     m_ImmediateUserInterface->end_window();
-    // }
+        m_ImmediateUserInterface->end_window();
+    }
 
     if(m_ImmediateUserInterface->begin_window(m_ImmediateUserInterface->next_id("Тестовое окно", "Window")))
     {
