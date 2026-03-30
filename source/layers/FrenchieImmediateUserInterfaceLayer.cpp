@@ -639,6 +639,623 @@ namespace Frenchie
         };
     
         // internal
+        // helpers
+        namespace ImmediateUserInterfaceContextLayerHelpers
+        {
+            class ImmedidateUserInterfaceMovedNodeSearcher
+            {
+            public:
+                template<typename FrameProcessor>
+                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
+                {
+                    if(_Context == nullptr)
+                        return nullptr;
+
+                    for(auto singleton : _Context->m_Hierarchy.Singletons)
+                    {
+                        if(!_Filter(singleton))
+                            continue;
+
+                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, singleton, _Filter);
+
+                        if(moved != nullptr)
+                            return moved;
+                    }
+
+                    return nullptr;
+                };
+
+            private:
+
+                template<typename FrameProcessor>
+                ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
+                {
+                    if(_Context == nullptr || _Moved == nullptr)
+                        return nullptr;
+
+                    // check self
+                    if((_Moved->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved) && _Filter(_Moved))
+                        return _Moved;
+
+                    // check children
+                    for(auto it = _Context->m_Hierarchy.begin(_Moved); it != _Context->m_Hierarchy.end(_Moved); it++)
+                    {
+                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, *it, _Filter);
+
+                        if(moved != nullptr)
+                            return moved;
+                    }
+
+                    return nullptr;
+                }
+            };
+
+            class ImmedidateUserInterfaceHoveredNodeSearcher
+            {
+            public:
+
+                template<typename FrameProcessor>
+                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
+                {
+                    // find top most hovered singleton window or a snapped window not equal to the moved one
+                    ImmediateUserInterfaceNode* hovered  = nullptr;
+
+                    for(auto singleton : _Context->m_Hierarchy.Singletons)
+                        search_recursive(_Context, singleton, &hovered, _Filter);
+
+                    return hovered;
+                };
+
+            private:
+
+                template<typename FrameProcessor>
+                void search_recursive(
+                    ImmediateUserInterfaceContextLayer* _Context,
+                    ImmediateUserInterfaceNode*         _Next,
+                    ImmediateUserInterfaceNode**        _Hovered,
+                    const FrameProcessor&               _Filter)
+                {
+                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()))
+                        return;
+
+                    // check self
+                    if(_Filter(_Next))
+                    {
+                        if(*_Hovered == nullptr || _Next->Cache.Depth > (*_Hovered)->Cache.Depth)
+                            *_Hovered = _Next;
+                    }
+
+                    // check children
+                    for(auto it = _Context->m_Hierarchy.begin(_Next); it != _Context->m_Hierarchy.end(_Next); it++)
+                        search_recursive(_Context, *it, _Hovered, _Filter);
+                }
+            };
+
+            // helper functions
+            int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Node == nullptr)
+                    return 0;
+
+                return gs_max(
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
+                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness + _Node->Cache.SelfThickness + 1,
+                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
+            }
+
+            int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
+            {
+                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
+            };
+
+            // layouting
+            gs_vec2f compute_aligned_position(const gs_2dboxf& marginBox, const gs_2dboxf& paddingBox, const int& _Settings)
+            {
+                float x = marginBox.Min.x;
+                float y = marginBox.Min.y;
+
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
+                    x = marginBox.Min.x;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
+                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
+                    x = marginBox.Max.x - paddingBox.size().x;
+                
+                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
+                    y = marginBox.Min.y;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
+                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
+                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
+                    y = marginBox.Max.y - paddingBox.size().y;
+
+                return gs_vec2f(x, y);
+            };
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_panel(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
+                const int&            _Settings,
+                const FrameProcessor& _Filter)
+            {
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // layout children
+                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                gs_2dboxf boundingBox = gs_2dboxf(position, position);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+                    boundingBox = gs_2dboxf(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within padding box
+                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+                }
+            }
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_vertical_stack(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
+            {
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // compute total size
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                int      childCount = 0;
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) != nullptr && _Filter(*it))
+                    {
+                        totalsize += (*it)->State.BoundingBox.size();
+                        childCount++;
+                    }
+                }
+
+                totalsize += gs_vec2f(0.f, (float)(childCount - 1) * (topPadding + bottomPadding) * 0.5f);
+
+                // layout children
+                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_vec2f  scale       = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                gs_2dboxf boundingBox = gs_2dboxf(position, position);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    gs_vec2f size = gs_vec2f(
+                        gs_clamp(paddingBox.width(), (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
+                        gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+
+                    position += gs_vec2f(0.f, size.y + (topPadding + bottomPadding) * 0.5f);
+
+                    boundingBox = gs_2dboxf(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within padding box
+                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+                    position += gs_vec2f(0.f, (*it)->State.BoundingBox.size().y + (topPadding + bottomPadding) * 0.5f);
+                }
+            }
+
+            template<typename Type, typename FrameProcessor>
+            void layout_nodes_as_horizontal_stack(
+                const Type&           _Begin,
+                const Type&           _End,
+                const gs_vec2f&       _Position,
+                const gs_vec2f&       _Size,
+                const gs_vec4f&       _Padding,
+                const gs_vec4f&       _Margin,
+                const int             _Settings,
+                const FrameProcessor& _Filter)
+            {
+                // extract padding
+                float topPadding    = _Padding.x;
+                float leftPadding   = _Padding.y;
+                float rightPadding  = _Padding.z;
+                float bottomPadding = _Padding.w;
+                
+                // extract margin
+                float topMargin     = _Margin.x;
+                float leftMargin    = _Margin.y;
+                float rightMargin   = _Margin.z;
+                float bottomMargin  = _Margin.w;
+
+                // compute total size
+                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
+                int      childCount = 0;
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) != nullptr && _Filter(*it))
+                    {
+                        totalsize += (*it)->State.BoundingBox.size();
+                        childCount++;
+                    }
+                }
+
+                totalsize += gs_vec2f((float)(childCount - 1) * (leftPadding + rightPadding) * 0.5f, 0.f);
+
+                // layout children
+                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
+                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
+                gs_vec2f  scale       = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
+                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
+                gs_2dboxf boundingBox = gs_2dboxf(position, position);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if(*it == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    gs_vec2f size = gs_vec2f(
+                        gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
+                        gs_clamp(paddingBox.height(), (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
+
+                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
+
+                    position += gs_vec2f(size.x + (leftPadding + rightPadding) * 0.5f, 0.f);
+
+                    boundingBox = gs_2dboxf(
+                        boundingBox.Min,
+                        boundingBox.Max,
+                        (*it)->State.BoundingBox.Min,
+                        (*it)->State.BoundingBox.Max);
+                }
+
+                // align children within padding box
+                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
+
+                for(auto it = _Begin; it != _End; ++it)
+                {
+                    if((*it) == nullptr || !_Filter(*it))
+                        continue;
+                    
+                    (*it)->State.BoundingBox = gs_2dboxf(
+                        position,
+                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
+
+                    position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding + rightPadding) * 0.5f, 0.f);
+                }
+            }
+
+            // gizmos
+            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min, WindowResizeAngleGizmoRadius);
+            }
+
+            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
+            }
+
+            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
+            };
+
+            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                float WindowResizeAngleGizmoRadius = 32.f;
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max, WindowResizeAngleGizmoRadius);
+            };
+
+            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), WindowResizeSideGizmoWidth));
+            };
+
+            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->get_visible_rect(_Context).height()));
+            };
+
+            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
+                    _Node->get_visible_rect(_Context).Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
+            };
+
+            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
+            {
+                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
+                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
+
+                return gs_2dboxf(
+                    _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
+                    _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
+            };
+        
+            void render_resize_gizmo(
+                ImmediateUserInterfaceContextLayer*     _Context,
+                ImmediateUserInterfaceNode*             _Node,
+                const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Context == nullptr || _Node == nullptr) return;
+
+                int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Node);
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+                {
+                    auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeTopLeft.Center,
+                        resizeTopLeft.Radius,
+                        resizeTopLeft.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                {
+                    auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeTopRight.Center,
+                        resizeTopRight.Radius,
+                        resizeTopRight.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                {
+                    auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeBottomLeft.Center,
+                        resizeBottomLeft.Radius,
+                        resizeBottomLeft.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                {
+                    auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
+
+                    _Context->m_Renderer->push_arc_filled(
+                        resizeBottomRight.Center,
+                        resizeBottomRight.Radius,
+                        resizeBottomRight.Radius,
+                        0.f,
+                        360.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                {
+                    auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeTop.Min,
+                        resizeTop.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                {
+                    auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeLeft.Min,
+                        resizeLeft.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                {
+                    auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeRight.Min,
+                        resizeRight.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                {
+                    auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node);
+
+                    _Context->m_Renderer->push_rectangle_rounded_filled(
+                        resizeBottom.Min,
+                        resizeBottom.Max,
+                        16.f,
+                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
+                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
+                    return;
+                }
+            };
+
+            bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Context == nullptr || _Node == nullptr) return false;
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+            
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
+                
+                return false;
+            };
+
+            ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Context == nullptr || _Node == nullptr) return nullptr;
+
+                // find resizable node
+                ImmediateUserInterfaceNode* resizable = _Node;
+
+                // pass event to a parent
+                while (_Context->m_Hierarchy.get_parent(resizable) &&
+                        check_cursor_intersection_with_resize_gizmo(_Context, _Context->m_Hierarchy.get_parent(resizable), _ResizeEventType))
+                    resizable = _Context->m_Hierarchy.get_parent(resizable);
+
+                return resizable;
+            };
+
+            void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
+            {
+                if(_Node == nullptr)
+                    return;
+
+                gs_2dboxf box = _Node->State.BoundingBox;
+
+                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
+                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
+                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
+
+                _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+            };
+        }
+
         struct ImmedidateUserInterfaceDefaultInputTextFilter
         {
             bool operator()(const std::string&) const{return true;}
@@ -1725,623 +2342,6 @@ namespace Frenchie
             }
 
             return true;
-        }
-
-        // helpers
-        namespace ImmediateUserInterfaceContextLayerHelpers
-        {
-            class ImmedidateUserInterfaceMovedNodeSearcher
-            {
-            public:
-                template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
-                {
-                    if(_Context == nullptr)
-                        return nullptr;
-
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
-                    {
-                        if(!_Filter(singleton))
-                            continue;
-
-                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, singleton, _Filter);
-
-                        if(moved != nullptr)
-                            return moved;
-                    }
-
-                    return nullptr;
-                };
-
-            private:
-
-                template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search_recursive(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Moved, const FrameProcessor& _Filter)
-                {
-                    if(_Context == nullptr || _Moved == nullptr)
-                        return nullptr;
-
-                    // check self
-                    if((_Moved->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved) && _Filter(_Moved))
-                        return _Moved;
-
-                    // check children
-                    for(auto it = _Context->m_Hierarchy.begin(_Moved); it != _Context->m_Hierarchy.end(_Moved); it++)
-                    {
-                        ImmediateUserInterfaceNode* moved = search_recursive(_Context, *it, _Filter);
-
-                        if(moved != nullptr)
-                            return moved;
-                    }
-
-                    return nullptr;
-                }
-            };
-
-            class ImmedidateUserInterfaceHoveredNodeSearcher
-            {
-            public:
-
-                template<typename FrameProcessor>
-                ImmediateUserInterfaceNode* search(ImmediateUserInterfaceContextLayer* _Context, const FrameProcessor& _Filter)
-                {
-                    // find top most hovered singleton window or a snapped window not equal to the moved one
-                    ImmediateUserInterfaceNode* hovered  = nullptr;
-
-                    for(auto singleton : _Context->m_Hierarchy.Singletons)
-                        search_recursive(_Context, singleton, &hovered, _Filter);
-
-                    return hovered;
-                };
-
-            private:
-
-                template<typename FrameProcessor>
-                void search_recursive(
-                    ImmediateUserInterfaceContextLayer* _Context,
-                    ImmediateUserInterfaceNode*         _Next,
-                    ImmediateUserInterfaceNode**        _Hovered,
-                    const FrameProcessor&               _Filter)
-                {
-                    if(_Context == nullptr || _Next == nullptr || !_Next->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()))
-                        return;
-
-                    // check self
-                    if(_Filter(_Next))
-                    {
-                        if(*_Hovered == nullptr || _Next->Cache.Depth > (*_Hovered)->Cache.Depth)
-                            *_Hovered = _Next;
-                    }
-
-                    // check children
-                    for(auto it = _Context->m_Hierarchy.begin(_Next); it != _Context->m_Hierarchy.end(_Next); it++)
-                        search_recursive(_Context, *it, _Hovered, _Filter);
-                }
-            };
-
-            // helper functions
-            int calculate_depth_over_node(const ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Node == nullptr)
-                    return 0;
-
-                return gs_max(
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness - _Node->Cache.Depth,
-                    _Node->Cache.MaximumChildDepth + _Node->Cache.MaximumChildThickness + _Node->Cache.SelfThickness + 1,
-                    _Node->Cache.Depth + _Node->Cache.SelfThickness + 1);
-            }
-
-            int calculate_layer_depth(ImmediateUserInterfaceContextLayer* _Context, int _Layer)
-            {
-                return (int)(_Layer * _Context->m_Renderer->get_far_plane() / (ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_End - ImmedidateUserInterfaceRenderingLayer_::ImmedidateUserInterfaceRenderingLayer_Begin));
-            };
-
-            // layouting
-            gs_vec2f compute_aligned_position(const gs_2dboxf& marginBox, const gs_2dboxf& paddingBox, const int& _Settings)
-            {
-                float x = marginBox.Min.x;
-                float y = marginBox.Min.y;
-
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentLeft)
-                    x = marginBox.Min.x;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter)
-                    x = marginBox.center().x - paddingBox.size().x * 0.5f;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentRight)
-                    x = marginBox.Max.x - paddingBox.size().x;
-                
-                if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop)
-                    y = marginBox.Min.y;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter)
-                    y = marginBox.center().y - paddingBox.size().y * 0.5f;
-                else if(_Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentBottom)
-                    y = marginBox.Max.y - paddingBox.size().y;
-
-                return gs_vec2f(x, y);
-            };
-
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_panel(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int&            _Settings,
-                const FrameProcessor& _Filter)
-            {
-                // extract padding
-                float topPadding    = _Padding.x;
-                float leftPadding   = _Padding.y;
-                float rightPadding  = _Padding.z;
-                float bottomPadding = _Padding.w;
-                
-                // extract margin
-                float topMargin     = _Margin.x;
-                float leftMargin    = _Margin.y;
-                float rightMargin   = _Margin.z;
-                float bottomMargin  = _Margin.w;
-
-                // layout children
-                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
-                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
-                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
-                gs_2dboxf boundingBox = gs_2dboxf(position, position);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position,
-                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
-                    boundingBox = gs_2dboxf(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
-                }
-
-                // align children within padding box
-                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position,
-                        position + gs_clamp(paddingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-                }
-            }
-
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_vertical_stack(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
-            {
-                // extract padding
-                float topPadding    = _Padding.x;
-                float leftPadding   = _Padding.y;
-                float rightPadding  = _Padding.z;
-                float bottomPadding = _Padding.w;
-                
-                // extract margin
-                float topMargin     = _Margin.x;
-                float leftMargin    = _Margin.y;
-                float rightMargin   = _Margin.z;
-                float bottomMargin  = _Margin.w;
-
-                // compute total size
-                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-                int      childCount = 0;
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) != nullptr && _Filter(*it))
-                    {
-                        totalsize += (*it)->State.BoundingBox.size();
-                        childCount++;
-                    }
-                }
-
-                totalsize += gs_vec2f(0.f, (float)(childCount - 1) * (topPadding + bottomPadding) * 0.5f);
-
-                // layout children
-                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
-                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
-                gs_vec2f  scale       = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
-                gs_2dboxf boundingBox = gs_2dboxf(position, position);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    gs_vec2f size = gs_vec2f(
-                        gs_clamp(paddingBox.width(), (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
-                        gs_clamp(((*it)->State.BoundingBox.size() * scale).y, (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                    position += gs_vec2f(0.f, size.y + (topPadding + bottomPadding) * 0.5f);
-
-                    boundingBox = gs_2dboxf(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
-                }
-
-                // align children within padding box
-                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position,
-                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
-                    position += gs_vec2f(0.f, (*it)->State.BoundingBox.size().y + (topPadding + bottomPadding) * 0.5f);
-                }
-            }
-
-            template<typename Type, typename FrameProcessor>
-            void layout_nodes_as_horizontal_stack(
-                const Type&           _Begin,
-                const Type&           _End,
-                const gs_vec2f&       _Position,
-                const gs_vec2f&       _Size,
-                const gs_vec4f&       _Padding,
-                const gs_vec4f&       _Margin,
-                const int             _Settings,
-                const FrameProcessor& _Filter)
-            {
-                // extract padding
-                float topPadding    = _Padding.x;
-                float leftPadding   = _Padding.y;
-                float rightPadding  = _Padding.z;
-                float bottomPadding = _Padding.w;
-                
-                // extract margin
-                float topMargin     = _Margin.x;
-                float leftMargin    = _Margin.y;
-                float rightMargin   = _Margin.z;
-                float bottomMargin  = _Margin.w;
-
-                // compute total size
-                gs_vec2f totalsize  = gs_vec2f(0.f, 0.f);
-                int      childCount = 0;
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) != nullptr && _Filter(*it))
-                    {
-                        totalsize += (*it)->State.BoundingBox.size();
-                        childCount++;
-                    }
-                }
-
-                totalsize += gs_vec2f((float)(childCount - 1) * (leftPadding + rightPadding) * 0.5f, 0.f);
-
-                // layout children
-                gs_2dboxf marginBox   = gs_2dboxf(_Position + gs_vec2f(leftMargin, topMargin), _Position - gs_vec2f(rightMargin, bottomMargin) + _Size);
-                gs_2dboxf paddingBox  = gs_2dboxf(marginBox.Min + gs_vec2f(leftPadding, topPadding), marginBox.Max - gs_vec2f(rightPadding, bottomPadding));
-                gs_vec2f  scale       = paddingBox.size() / gs_vec2f(gs_max(totalsize.x, 1.f), gs_max(totalsize.y, 1.f));
-                gs_vec2f  position    = compute_aligned_position(marginBox, paddingBox, _Settings) + gs_vec2f(leftPadding - rightPadding, topPadding - bottomPadding);
-                gs_2dboxf boundingBox = gs_2dboxf(position, position);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if(*it == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    gs_vec2f size = gs_vec2f(
-                        gs_clamp(((*it)->State.BoundingBox.size() * scale).x, (*it)->State.MinimumSize.x, (*it)->State.MaximumSize.x),
-                        gs_clamp(paddingBox.height(), (*it)->State.MinimumSize.y, (*it)->State.MaximumSize.y));
-
-                    (*it)->State.BoundingBox = gs_2dboxf(position, position + size);
-
-                    position += gs_vec2f(size.x + (leftPadding + rightPadding) * 0.5f, 0.f);
-
-                    boundingBox = gs_2dboxf(
-                        boundingBox.Min,
-                        boundingBox.Max,
-                        (*it)->State.BoundingBox.Min,
-                        (*it)->State.BoundingBox.Max);
-                }
-
-                // align children within padding box
-                position = compute_aligned_position(paddingBox, boundingBox, _Settings);
-
-                for(auto it = _Begin; it != _End; ++it)
-                {
-                    if((*it) == nullptr || !_Filter(*it))
-                        continue;
-                    
-                    (*it)->State.BoundingBox = gs_2dboxf(
-                        position,
-                        position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
-                    position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding + rightPadding) * 0.5f, 0.f);
-                }
-            }
-
-            // gizmos
-            gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min, WindowResizeAngleGizmoRadius);
-            }
-
-            gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
-            }
-
-            gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
-            };
-
-            gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
-                float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max, WindowResizeAngleGizmoRadius);
-            };
-
-            gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min - gs_vec2f(0.f, WindowResizeSideGizmoWidth),
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), WindowResizeSideGizmoWidth));
-            };
-
-            gs_2dboxf build_resize_left_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min - gs_vec2f(WindowResizeSideGizmoWidth, 0.f),
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(WindowResizeSideGizmoWidth, _Node->get_visible_rect(_Context).height()));
-            };
-
-            gs_2dboxf build_resize_right_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width() - WindowResizeSideGizmoWidth, 0.f),
-                    _Node->get_visible_rect(_Context).Max + gs_vec2f(WindowResizeSideGizmoWidth, 0.f));
-            };
-
-            gs_2dboxf build_resize_bottom_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
-            {
-                if(_Context == nullptr || _Node == nullptr) return gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(32.f, 32.f));
-                float WindowResizeSideGizmoWidth = gs_max(_Context->m_Style.get_frames_width() * 2.f, 16.f);
-
-                return gs_2dboxf(
-                    _Node->get_visible_rect(_Context).Min + gs_vec2f(0.f, _Node->get_visible_rect(_Context).height() - WindowResizeSideGizmoWidth),
-                    _Node->get_visible_rect(_Context).Max + gs_vec2f(0.f, WindowResizeSideGizmoWidth));
-            };
-        
-            void render_resize_gizmo(
-                ImmediateUserInterfaceContextLayer*     _Context,
-                ImmediateUserInterfaceNode*             _Node,
-                const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Context == nullptr || _Node == nullptr) return;
-
-                int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(_Node);
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                {
-                    auto resizeTopLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeTopLeft.Center,
-                        resizeTopLeft.Radius,
-                        resizeTopLeft.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                {
-                    auto resizeTopRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context,_Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeTopRight.Center,
-                        resizeTopRight.Radius,
-                        resizeTopRight.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                {
-                    auto resizeBottomLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context,_Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeBottomLeft.Center,
-                        resizeBottomLeft.Radius,
-                        resizeBottomLeft.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                {
-                    auto resizeBottomRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context,_Node);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        resizeBottomRight.Center,
-                        resizeBottomRight.Radius,
-                        resizeBottomRight.Radius,
-                        0.f,
-                        360.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                {
-                    auto resizeTop = ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeTop.Min,
-                        resizeTop.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                {
-                    auto resizeLeft = ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeLeft.Min,
-                        resizeLeft.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                {
-                    auto resizeRight = ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeRight.Min,
-                        resizeRight.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                {
-                    auto resizeBottom = ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node);
-
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        resizeBottom.Min,
-                        resizeBottom.Max,
-                        16.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos),
-                        _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
-                    return;
-                }
-            };
-
-            bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Context == nullptr || _Node == nullptr) return false;
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_left_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_right_ellipse(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_top_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_left_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_right_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-            
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                    return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
-                
-                return false;
-            };
-
-            ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Context == nullptr || _Node == nullptr) return nullptr;
-
-                // find resizable node
-                ImmediateUserInterfaceNode* resizable = _Node;
-
-                // pass event to a parent
-                while (_Context->m_Hierarchy.get_parent(resizable) &&
-                        check_cursor_intersection_with_resize_gizmo(_Context, _Context->m_Hierarchy.get_parent(resizable), _ResizeEventType))
-                    resizable = _Context->m_Hierarchy.get_parent(resizable);
-
-                return resizable;
-            };
-
-            void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
-            {
-                if(_Node == nullptr)
-                    return;
-
-                gs_2dboxf box = _Node->State.BoundingBox;
-
-                if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(), _Node->Cache.BoundingBox.Max);
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + ApplicationPlatformBackend::get_window_cursor_dragdelta());
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y), _Node->Cache.BoundingBox.Max);
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f), _Node->Cache.BoundingBox.Max);
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(ApplicationPlatformBackend::get_window_cursor_dragdelta().x, 0.f));
-                else if(_ResizeEventType & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)
-                    box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
-
-                _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
-            };
         }
     }
 }
@@ -8998,4 +8998,65 @@ bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
         get_controller<ImmedidateUserInterfaceLayoutController>();
 
     return layoutController != nullptr && layoutController->Dirty;
+}
+
+void ImmediateUserInterfaceContextLayer::process_next_node(ImmediateUserInterfaceNode* node)
+{
+    // setup next rendered node parameters
+    ImmedidateUserInterfaceNextNodeController* controller = get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+    {
+        // next line
+        if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
+            m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
+
+        // next indent
+        if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
+            m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
+
+        // next minimum size
+        if(controller->NextMinimumSize.has_value())
+            node->State.MinimumSize = controller->NextMinimumSize.value();
+
+        // next maximum size
+        if(controller->NextMaximumSize.has_value())
+            node->State.MaximumSize = controller->NextMaximumSize.value();
+
+        // next position
+        if(controller->NextPosition.has_value())
+        {
+            node->State.BoundingBox = gs_2dboxf(
+                controller->NextPosition.value(),
+                controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
+        }
+
+        // next content margin
+        if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentMargin.has_value())
+            dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentMargin = controller->NextContentMargin.value();
+
+        // next content padding
+        if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentPadding.has_value())
+            dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
+
+        // next content padding
+        if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
+        {
+            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
+            dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
+        }
+
+        // reset next item controller
+        controller->reset();
+    }
+}
+
+void ImmediateUserInterfaceContextLayer::reset_next_node()
+{
+    // reset next node controller
+    ImmedidateUserInterfaceNextNodeController* controller =
+        get_controller<ImmedidateUserInterfaceNextNodeController>();
+
+    if(controller != nullptr)
+        controller->reset();
 }
