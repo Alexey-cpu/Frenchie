@@ -14,7 +14,7 @@ namespace Frenchie
 {
     namespace Application
     {
-        class ApplicationInputHandler
+        class SDLApplicationInputHandler
         {
         public:
 
@@ -306,16 +306,16 @@ bool ApplicationPlatformBackend::awake()
 
     // configure context
     glfwMakeContextCurrent(reinterpret_cast<GLFWwindow*>(m_Context));
-    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_resize_callback);
-    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_resize_callback);
-    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_maximized_callback);
-    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_window_focused_callback);
-    glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_enter_callback);
-    glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_cursor_moved_callback);
-    glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_button_callback);
-    glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_mouse_sroll_offset_changed_callback);
-    glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_key_callback);
-    glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Context), ApplicationInputHandler::glfw_on_character_input_callback);
+    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_window_resize_callback);
+    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_window_resize_callback);
+    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_window_maximized_callback);
+    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_window_focused_callback);
+    glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_cursor_enter_callback);
+    glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_cursor_moved_callback);
+    glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_mouse_button_callback);
+    glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_mouse_sroll_offset_changed_callback);
+    glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_key_callback);
+    glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Context), SDLApplicationInputHandler::glfw_on_character_input_callback);
     // glfwSetWindowCloseCallback(vd->Window, ImGui_ImplGlfw_WindowCloseCallback);
     // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
@@ -328,7 +328,7 @@ bool ApplicationPlatformBackend::awake()
     }
 
     // call window maximize callback if the Window has been maximized
-    ApplicationInputHandler::glfw_on_window_maximized_callback(
+    SDLApplicationInputHandler::glfw_on_window_maximized_callback(
         reinterpret_cast<GLFWwindow*>(m_Context),
         glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Context), GLFW_MAXIMIZED));
 
