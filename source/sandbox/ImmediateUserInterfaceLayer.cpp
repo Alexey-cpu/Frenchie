@@ -3601,7 +3601,6 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     // extract horizontal and vertical scrollbars
     gs_vec2f horizontalScrollBarPosition = HorizontalScrollBar.Position * HorizontalScrollBar.PositionScale;
     gs_vec2f verticalScrollBarPosition   = VerticalScrollBar.Position * VerticalScrollBar.PositionScale;
-    float    indent                      = State.Indent; 
 
     // layout
 
@@ -3617,32 +3616,23 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     float rightMargin   = ContentMargin.z;
     float bottomMargin  = ContentMargin.w;
 
-    gs_2dboxf marginBox = gs_2dboxf(State.BoundingBox.Min + gs_vec2f(leftMargin, topMargin), State.BoundingBox.Max - gs_vec2f(rightMargin, bottomMargin));
-    gs_vec2f  position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + gs_vec2f(indent, 0.f);
+    gs_vec2f  position  = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
     gs_vec2f  start     = State.BoundingBox.Min - gs_vec2f(horizontalScrollBarPosition.x, verticalScrollBarPosition.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
     float     maxHeight = 0.f;
 
     for(auto it = _Context->m_Hierarchy.begin(this); it != _Context->m_Hierarchy.end(this); it++)
     {
-        (*it)->State.BoundingBox = gs_2dboxf(
-            position,
-            position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
-
+        (*it)->State.BoundingBox = gs_2dboxf(position, position + gs_clamp((*it)->State.BoundingBox.size(), (*it)->State.MinimumSize, (*it)->State.MaximumSize));
         maxHeight = gs_max(maxHeight, (*it)->State.BoundingBox.height());
 
         if((*it)->State.NextLine > 0)
         {
-            position = gs_vec2f(
-                start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
-            
+            position = gs_vec2f(start.x + (*it)->State.Indent, position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
         {
-            position += gs_vec2f(
-                (*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent,
-                0.f);
+            position += gs_vec2f((*it)->State.BoundingBox.size().x + (leftPadding - rightPadding) + (*it)->State.Indent, 0.f);
         }
     }
 }
