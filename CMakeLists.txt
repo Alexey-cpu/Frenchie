@@ -5,8 +5,6 @@ project(Frenchie VERSION 0.1.0 LANGUAGES C CXX)
 # project options
 #--------------------------------------------------------------
 option(PLATFORM_BACKEND_GLFW "Use GLFW as platform backend" ON)
-option(PLATFORM_BACKEND_SDL "Use SDL as platform backend" OFF)
-
 option(RENDERING_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
 
 #--------------------------------------------------------------
@@ -51,7 +49,7 @@ add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} "source/main.cpp")
 target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 
 #--------------------------------------------------------------
-# configure external librarires and tools
+# configure external libraries and tools
 #--------------------------------------------------------------
 if(PLATFORM_BACKEND_GLFW)
     target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
