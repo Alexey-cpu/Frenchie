@@ -9,7 +9,7 @@ option(PLATFORM_BACKEND_SDL "Use SDL as platform backend" OFF)
 
 option(RENDERING_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
 
-set(PLATFORM_BACKEND_GLFW ON CACHE BOOL "Build GLFW docs" FORCE)
+set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "Build GLFW docs" FORCE)
 set(PLATFORM_BACKEND_SDL ON CACHE BOOL "Build GLFW tests" FORCE)
 
 #--------------------------------------------------------------
