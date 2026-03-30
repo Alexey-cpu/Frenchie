@@ -21,8 +21,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
 
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
-    //widgets_test();
-    develop_test();
+    widgets_test();
+    //develop_test();
     //windows_test();
     //scrollarea_test();
     
@@ -786,6 +786,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                     if(m_ImmediateUserInterface->begin_scrollarea(
                         m_ImmediateUserInterface->next_id("SingleLine"),
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar  |
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar |
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
                     {
                         m_ImmediateUserInterface->input_string_singleline(
@@ -812,7 +814,7 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     {
                         if(m_ImmediateUserInterface->begin_scrollarea(
                             m_ImmediateUserInterface->next_id("Multiline"),
-                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AlwaysHorizontalScrollBar))
+                            ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
                         {
                             m_ImmediateUserInterface->input_string_multiline(m_ImmediateUserInterface->next_id("Multiline"), State.MultilineString);
                             m_ImmediateUserInterface->end_scrollarea();
