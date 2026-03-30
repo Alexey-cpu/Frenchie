@@ -703,69 +703,7 @@ namespace Frenchie
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
-
-                // setup node parameters
-                node->State.Settings       = _Settings;
-                node->State.RenderingIndex = (int)m_NodesRenderingList.size();
-
-                // build nodes hierarchy
-                if(!m_NodesRenderingStack.empty())
-                {
-                    if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
-                        m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
-                    node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
-                }
-
-                process_next_node(node);
-
-                // // setup next rendered node parameters
-                // ImmedidateUserInterfaceNextNodeController* controller = get_controller<ImmedidateUserInterfaceNextNodeController>();
-
-                // if(controller != nullptr)
-                // {
-                //     // next line
-                //     if(!m_NodesRenderedStack.empty() && controller->NextLine.has_value())
-                //         m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.NextLine = controller->NextLine.value();
-
-                //     // next indent
-                //     if(!m_NodesRenderedStack.empty() && controller->NextIndent.has_value())
-                //         m_NodesRenderedStack[m_NodesRenderedStack.size() - 1]->State.Indent = controller->NextIndent.value();
-
-                //     // next minimum size
-                //     if(controller->NextMinimumSize.has_value())
-                //         node->State.MinimumSize = controller->NextMinimumSize.value();
-
-                //     // next maximum size
-                //     if(controller->NextMaximumSize.has_value())
-                //         node->State.MaximumSize = controller->NextMaximumSize.value();
-
-                //     // next position
-                //     if(controller->NextPosition.has_value())
-                //     {
-                //         node->State.BoundingBox = gs_2dboxf(
-                //             controller->NextPosition.value(),
-                //             controller->NextPosition.value() + gs_clamp(node->State.BoundingBox.size(), node->State.MinimumSize, node->State.MaximumSize));
-                //     }
-
-                //     // next content margin
-                //     if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentMargin.has_value())
-                //         dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentMargin = controller->NextContentMargin.value();
-
-                //     // next content padding
-                //     if(dynamic_cast<ImmediateUserInterfacePanel*>(node) && controller->NextContentPadding.has_value())
-                //         dynamic_cast<ImmediateUserInterfacePanel*>(node)->ContentPadding = controller->NextContentPadding.value();
-
-                //     // next content padding
-                //     if(dynamic_cast<ImmediateUserInterfaceScrollArea*>(node) && controller->NextScrollOffset.has_value())
-                //     {
-                //         dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_horizontal_scroll_offset(gs_vec2f(controller->NextScrollOffset.value().x, 0.f), false);
-                //         dynamic_cast<ImmediateUserInterfaceScrollArea*>(node)->set_vertical_scroll_offset(gs_vec2f(0.f, controller->NextScrollOffset.value().y), false);
-                //     }
-
-                //     // reset next item controller
-                //     controller->reset();
-                // }
-
+                setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
@@ -776,13 +714,7 @@ namespace Frenchie
             template<typename Type>
             void end_node()
             {
-                reset_next_node();
-                // // reset next node controller
-                // ImmedidateUserInterfaceNextNodeController* controller =
-                //     get_controller<ImmedidateUserInterfaceNextNodeController>();
-
-                // if(controller != nullptr)
-                //     controller->reset();
+                restore_created_node();
 
                 // clean up rendering stack and filled rendered nodes stack
                 if(m_NodesRenderingStack.empty())
@@ -1231,8 +1163,8 @@ namespace Frenchie
                 return dynamic_cast<Type*>(node);
             }
 
-            void process_next_node(ImmediateUserInterfaceNode*);
-            void reset_next_node();
+            void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
+            void restore_created_node();
         };
     };
 }

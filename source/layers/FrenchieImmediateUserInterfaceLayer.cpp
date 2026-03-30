@@ -9000,8 +9000,22 @@ bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
     return layoutController != nullptr && layoutController->Dirty;
 }
 
-void ImmediateUserInterfaceContextLayer::process_next_node(ImmediateUserInterfaceNode* node)
+void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
+    if(node == nullptr) return;
+
+    // setup node parameters
+    node->State.Settings       = _Settings;
+    node->State.RenderingIndex = (int)m_NodesRenderingList.size();
+
+    // build nodes hierarchy
+    if(!m_NodesRenderingStack.empty())
+    {
+        if(!(node->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent))
+            m_NodesRenderingStack[m_NodesRenderingStack.size() - 1]->attach_child(node);
+        node->State.Scope = m_NodesRenderingStack[m_NodesRenderingStack.size() - 1];
+    }
+
     // setup next rendered node parameters
     ImmedidateUserInterfaceNextNodeController* controller = get_controller<ImmedidateUserInterfaceNextNodeController>();
 
@@ -9051,7 +9065,7 @@ void ImmediateUserInterfaceContextLayer::process_next_node(ImmediateUserInterfac
     }
 }
 
-void ImmediateUserInterfaceContextLayer::reset_next_node()
+void ImmediateUserInterfaceContextLayer::restore_created_node()
 {
     // reset next node controller
     ImmedidateUserInterfaceNextNodeController* controller =
