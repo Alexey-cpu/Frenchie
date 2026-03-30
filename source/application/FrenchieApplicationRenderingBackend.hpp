@@ -69,8 +69,6 @@ namespace Frenchie
         typedef int ApplicationRenderingBackendShaderType;
 
         // Enities
-        struct ApplicationRenderingBackendGraphicsApiState;
-
         struct ApplicationRenderingBackendTexture final
         {
             ApplicationRenderingBackendTexture(
@@ -204,6 +202,15 @@ namespace Frenchie
             }
         };
 
+        struct ApplicationRenderingBackendGraphicsApi
+        {
+            ApplicationRenderingBackendGraphicsApi(){}
+            virtual ~ApplicationRenderingBackendGraphicsApi(){}
+
+            mutable ApplicationRenderingBackendFont    m_DefaultFont;
+            mutable ApplicationRenderingBackendTexture m_DefaultTexture;
+        };
+
         class ApplicationRenderingBackend
         {
         public:
@@ -284,10 +291,15 @@ namespace Frenchie
             static void clear_color(const gs_color&);
             static void scissor_box(const gs_2dboxf&);
 
+            // A static member function that is also a template
+            template <typename T = ApplicationRenderingBackendGraphicsApi>
+            static std::shared_ptr<T> graphics_api()
+            {
+                return std::dynamic_pointer_cast<T>(m_Api);
+            }
+
         private:
-            static ApplicationRenderingBackendFont                              m_DefaultFont;
-            static ApplicationRenderingBackendTexture                           m_DefaultTexture;
-            static std::shared_ptr<ApplicationRenderingBackendGraphicsApiState> m_GraphicsApiState;
+            static std::shared_ptr<ApplicationRenderingBackendGraphicsApi> m_Api;
         };
     }
 }

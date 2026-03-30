@@ -14,13 +14,16 @@ namespace Frenchie
 {
     namespace Application
     {
-        struct ApplicationRenderingBackendGraphicsApiState
+        struct ApplicationRenderingBackendOpenGL : public ApplicationRenderingBackendGraphicsApi
         {
-            unsigned int m_VBO   {0};
-            unsigned int m_VAO   {0};
-            unsigned int m_EBO   {0};
-            unsigned int m_Shader{0};
-            bool         m_Ready {false};
+            ApplicationRenderingBackendOpenGL(){}
+            virtual ~ApplicationRenderingBackendOpenGL(){}
+
+            mutable unsigned int m_VBO   {0};
+            mutable unsigned int m_VAO   {0};
+            mutable unsigned int m_EBO   {0};
+            mutable unsigned int m_Shader{0};
+            mutable bool         m_Ready {false};
         };
     }
 }
@@ -84,20 +87,17 @@ bool ApplicationRenderingBackend::awake(Loader _Loader)
 
     // load backend API
     if(!gladLoadGLLoader((GLADloadproc)_Loader))
-    {
-        std::cout << "could not load OPENGL !!! \n";
         return false;
-    }
 
-    m_DefaultFont = construct_font(
+    m_Api = std::make_shared<ApplicationRenderingBackendOpenGL>();
+
+    graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont = construct_font(
         ApplicationRenderingBackendDefaultFont::BUFFER,
         ApplicationRenderingBackendDefaultFont::COMPRESSED_SIZE,
         128);
 
     // create openGL backend handles
-    m_GraphicsApiState = std::make_shared<ApplicationRenderingBackendGraphicsApiState>();
-
-    m_GraphicsApiState->m_Shader = construct_shader(
+    graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader = construct_shader(
         {
             // Vertex shader
             {
@@ -159,9 +159,9 @@ void main()
         }
     );    
 
-    glGenBuffers(1, &m_GraphicsApiState->m_VBO);
-    glGenBuffers(1, &m_GraphicsApiState->m_EBO);
-    glGenVertexArrays(1, &m_GraphicsApiState->m_VAO);
+    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
+    glGenBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
+    glGenVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
 
     // create default white pattern texture
     const int     height   = 4;
@@ -184,7 +184,7 @@ void main()
         }
     }
 
-    m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
+    graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultTexture = ApplicationRenderingBackend::construct_texture(image, width, height);
 
     return true;
 }
@@ -192,16 +192,16 @@ void main()
 void ApplicationRenderingBackend::quit()
 {
     // destroy default font ant texture
-    destroy_font(m_DefaultFont);
-    destroy_texture(m_DefaultTexture);
+    destroy_font(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultFont);
+    destroy_texture(graphics_api<ApplicationRenderingBackendOpenGL>()->m_DefaultTexture);
 
     // destroy OpenGL state
-    if(m_GraphicsApiState == nullptr) return;
+    if(m_Api == nullptr) return;
 
-    glDeleteBuffers(1, &m_GraphicsApiState->m_VBO);
-    glDeleteBuffers(1, &m_GraphicsApiState->m_EBO);
-    glDeleteVertexArrays(1, &m_GraphicsApiState->m_VAO);
-    glDeleteProgram(m_GraphicsApiState->m_Shader);
+    glDeleteBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
+    glDeleteBuffers(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
+    glDeleteVertexArrays(1, &graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
+    glDeleteProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
 }
 
 void ApplicationRenderingBackend::set_viewport(const gs_vec2f& _Position, const gs_vec2f& _Size)
@@ -341,7 +341,7 @@ void ApplicationRenderingBackend::destroy_texture(const ApplicationRenderingBack
 
 bool ApplicationRenderingBackend::begin_render()
 {
-    if(m_GraphicsApiState == nullptr) return false;
+    if(m_Api == nullptr) return false;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -353,13 +353,13 @@ bool ApplicationRenderingBackend::begin_render()
     glClear(GL_STENCIL_BUFFER_BIT);
 
     // mark we are not ready yet
-    m_GraphicsApiState->m_Ready = false;
+    graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready = false;
     
     // check that everything has been instantiated
-    return m_GraphicsApiState->m_VBO &&
-           m_GraphicsApiState->m_EBO &&
-           m_GraphicsApiState->m_VAO &&
-           m_GraphicsApiState->m_Shader;
+    return graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO &&
+           graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO &&
+           graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO &&
+           graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader;
 }
 
 void ApplicationRenderingBackend::render_mesh(
@@ -375,7 +375,7 @@ void ApplicationRenderingBackend::render_mesh(
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    if(m_GraphicsApiState == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+    if(m_Api == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
         return;
 
     // bind texture
@@ -383,21 +383,21 @@ void ApplicationRenderingBackend::render_mesh(
     glBindTexture(GL_TEXTURE_2D, _Texture.Ptr);
 
     // load mesh and bind shader
-    if(!m_GraphicsApiState->m_Ready)
+    if(!graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready)
     {
         // bind shader
-        glUseProgram(m_GraphicsApiState->m_Shader);
+        glUseProgram(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader);
 
         // load mesh
 
         // bind VAO to remember VBO/EBO configuration and layout
-        glBindVertexArray(m_GraphicsApiState->m_VAO);
+        glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
 
         // load vertexes and indexes on GPU
-        glBindBuffer(GL_ARRAY_BUFFER, m_GraphicsApiState->m_VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_VBO);
         glBufferData(GL_ARRAY_BUFFER, _VertexesCount * sizeof(ApplicationRenderingBackendVertex), _Vertexes, GL_DYNAMIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_GraphicsApiState->m_EBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, graphics_api<ApplicationRenderingBackendOpenGL>()->m_EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, _IndexesCount * sizeof(ApplicationRenderingBackendMeshVertexIndex), _Indexes, GL_DYNAMIC_DRAW);
 
         // setup attributes pointers
@@ -410,14 +410,14 @@ void ApplicationRenderingBackend::render_mesh(
         glEnableVertexAttribArray(2);
         glEnableVertexAttribArray(3);
 
-        m_GraphicsApiState->m_Ready = true;
+        graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready = true;
     }
 
-    glBindVertexArray(m_GraphicsApiState->m_VAO);
+    glBindVertexArray(graphics_api<ApplicationRenderingBackendOpenGL>()->m_VAO);
 
     // configure shader
-    glUniformMatrix4fv(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
-    glUniform1i(glGetUniformLocation(m_GraphicsApiState->m_Shader, "u_Texture"), 0);
+    glUniformMatrix4fv(glGetUniformLocation(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader, "u_ModelMatrix"), 1, GL_FALSE, &_MeshProjectionMatrix[0][0]);
+    glUniform1i(glGetUniformLocation(graphics_api<ApplicationRenderingBackendOpenGL>()->m_Shader, "u_Texture"), 0);
 
     // render mesh
     if((_MeshRenderHints & ApplicationRenderingBackendGraphicsApiRenderingHints_::ApplicationRenderingBackendGraphicsApiRenderingHints_Lines))
@@ -432,7 +432,7 @@ void ApplicationRenderingBackend::render_mesh(
 
 void ApplicationRenderingBackend::end_render()
 {
-    if(m_GraphicsApiState == nullptr) return;
+    if(m_Api == nullptr) return;
 
     // disable all tests
     glDisable(GL_BLEND);
@@ -447,7 +447,7 @@ void ApplicationRenderingBackend::end_render()
     glUseProgram(0);
 
     // mark we are not ready yet
-    m_GraphicsApiState->m_Ready = false;
+    graphics_api<ApplicationRenderingBackendOpenGL>()->m_Ready = false;
 }
 
 void ApplicationRenderingBackend::clear_color(const gs_color& _Color)

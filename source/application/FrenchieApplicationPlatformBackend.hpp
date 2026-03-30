@@ -349,7 +349,14 @@ namespace Frenchie
             gs_vec2f                               FrameBufferSize;
         };
 
-        struct FrenchieApplicationPlatformBackendState;
+        struct FrenchieApplicationPlatformApi
+        {
+            FrenchieApplicationPlatformApi(){}
+            virtual ~FrenchieApplicationPlatformApi(){}
+
+            void*                           m_Context = nullptr;
+            ApplicationPlatformBackendInput m_Input;
+        };
 
         class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
         {
@@ -400,15 +407,16 @@ namespace Frenchie
             static void set_window_name(const std::string&);
             static void set_clipboard_text(const std::string&);
 
+            template <typename T = FrenchieApplicationPlatformApi>
+            static std::shared_ptr<T> platform_api()
+            {
+                return std::dynamic_pointer_cast<T>(m_Api);
+            }
+
         private:
 
-            friend class ApplicationInstance;
-            friend class SDLApplicationInputHandler;
-
             // context
-            static void*                                                    m_Context;
-            static ApplicationPlatformBackendInput                          m_Input;
-            static std::shared_ptr<FrenchieApplicationPlatformBackendState> m_PlatformBackendState;
+            static std::shared_ptr<FrenchieApplicationPlatformApi> m_Api;
         };
     }
 }

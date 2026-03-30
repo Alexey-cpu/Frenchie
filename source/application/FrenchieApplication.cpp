@@ -71,44 +71,44 @@ void ApplicationInstance::ApplicationInstance::frame_start()
              mouseButton++)
     {
         if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime,
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].ReleaseTime,
             std::chrono::high_resolution_clock::now()) > KeyClicksCountResetTime)
         {
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks = 0;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Clicks = 0;
         }
 
-        if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Pressed)
+        if(ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Pressed)
         {
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Down      = true;
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime = Frenchie::Core::tic();
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Down      = true;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].PressTime = Frenchie::Core::tic();
 
-            ApplicationPlatformBackend::m_Input.MouseCursor.MousePressPosition = ApplicationPlatformBackend::m_Input.MouseCursor.Position;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.MousePressPosition = ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Position;
         }
         
-        if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Down)
+        if(ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Down)
         {
-            ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta =
-                ApplicationPlatformBackend::m_Input.MouseCursor.Position - ApplicationPlatformBackend::m_Input.MouseCursor.MousePressPosition;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.DragDelta =
+                ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Position - ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.MousePressPosition;
 
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Hold =
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Hold =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime,
+                    ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].PressTime,
                     Frenchie::Core::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
         }
 
-        if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released)
+        if(ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Released)
         {
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Down        = false;
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Hold        = false;
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime = Frenchie::Core::tic();
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Down        = false;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Hold        = false;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].ReleaseTime = Frenchie::Core::tic();
 
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked =
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Clicked =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime,
-                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime) < KeyClickDetectionTime;
+                    ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].PressTime,
+                    ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].ReleaseTime) < KeyClickDetectionTime;
 
-            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked =
-                ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked && ++ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks >= 2;
+            ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].DoubleClicked =
+                ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Clicked && ++ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Clicks >= 2;
         }        
     }
 
@@ -118,38 +118,38 @@ void ApplicationInstance::ApplicationInstance::frame_start()
              mouseButton++)
     {
         if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime,
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].ReleaseTime,
             std::chrono::high_resolution_clock::now()) > KeyClicksCountResetTime)
         {
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicks = 0;
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Clicks = 0;
         }
 
-        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Pressed)
+        if(ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Pressed)
         {
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down      = true;
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime = Frenchie::Core::tic();
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Down      = true;
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].PressTime = Frenchie::Core::tic();
         }
         
-        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down)
+        if(ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Down)
         {
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Hold =
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Hold =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
+                    ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].PressTime,
                     Frenchie::Core::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
         }
 
-        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Released)
+        if(ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Released)
         {
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down        = false;
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Hold        = false;
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime = Frenchie::Core::tic();
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Down        = false;
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Hold        = false;
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].ReleaseTime = Frenchie::Core::tic();
 
-            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicked =
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Clicked =
                 Frenchie::Core::elapsed<std::chrono::milliseconds>(
-                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
-                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime) < KeyClickDetectionTime;
+                    ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].PressTime,
+                    ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].ReleaseTime) < KeyClickDetectionTime;
 
-            ++ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicks;
+            ++ApplicationPlatformBackend::platform_api()->m_Input.Keys[mouseButton].Clicks;
         }
     }
 
@@ -157,34 +157,34 @@ void ApplicationInstance::ApplicationInstance::frame_start()
 
     // Ctrl (Command on MacOS)
 #ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
-    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
-        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftSuper].Down ||
-            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightSuper].Down;
+    ApplicationPlatformBackend::m_PlatformBackendState->m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::m_PlatformBackendState->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftSuper].Down ||
+            ApplicationPlatformBackend::m_PlatformBackendState->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightSuper].Down;
 #else
-    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
-        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl].Down ||
-            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl].Down;
+    ApplicationPlatformBackend::platform_api()->m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl].Down ||
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl].Down;
 #endif
 
     // Alt (Option on MacOS)
-    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Alt].Active =
-        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftAlt].Down ||
-            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightAlt].Down;
+    ApplicationPlatformBackend::platform_api()->m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Alt].Active =
+        ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftAlt].Down ||
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightAlt].Down;
 
     // Shift
-    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Shift].Active =
-        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftShift].Down ||
-            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightShift].Down;
+    ApplicationPlatformBackend::platform_api()->m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Shift].Active =
+        ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftShift].Down ||
+            ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightShift].Down;
 
     // character input
 
     // catch character '\n'
-    if(ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Enter].Pressed)
-        ApplicationPlatformBackend::m_Input.Character = '\n';
+    if(ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Enter].Pressed)
+        ApplicationPlatformBackend::platform_api()->m_Input.Character = '\n';
 
     // catch character '\t'
-    if(ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Tab].Pressed)
-        ApplicationPlatformBackend::m_Input.Character = '\t';
+    if(ApplicationPlatformBackend::platform_api()->m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Tab].Pressed)
+        ApplicationPlatformBackend::platform_api()->m_Input.Character = '\t';
 }
 
 void ApplicationInstance::ApplicationInstance::frame_update()
@@ -231,10 +231,10 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
              mouseButton < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
              mouseButton++)
     {
-        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released      = false;
-        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Pressed       = false;
-        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked       = false;
-        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Released      = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Pressed       = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].Clicked       = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[mouseButton].DoubleClicked = false;
     }
 
     // restore keys
@@ -242,9 +242,9 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
              key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
              key++)
     {
-        ApplicationPlatformBackend::m_Input.Keys[key].Released = false;
-        ApplicationPlatformBackend::m_Input.Keys[key].Pressed  = false;
-        ApplicationPlatformBackend::m_Input.Keys[key].Clicked  = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.Keys[key].Released = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.Keys[key].Pressed  = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.Keys[key].Clicked  = false;
     }
 
     // restore key modifiers
@@ -252,17 +252,17 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
              key < ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End;
              key++)
     {
-        ApplicationPlatformBackend::m_Input.Modifiers[key].Active = false;
+        ApplicationPlatformBackend::platform_api()->m_Input.Modifiers[key].Active = false;
     }
 
     // restore scroll position
-    ApplicationPlatformBackend::m_Input.MouseScrollOffset = gs_vec2f(0.f, 0.f);
+    ApplicationPlatformBackend::platform_api()->m_Input.MouseScrollOffset = gs_vec2f(0.f, 0.f);
 
     // restore cursor
-    ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
+    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
 
     // restore input character
-    ApplicationPlatformBackend::m_Input.Character.reset();
+    ApplicationPlatformBackend::platform_api()->m_Input.Character.reset();
 
     // execute backend
     ApplicationPlatformBackend::frame_finish();

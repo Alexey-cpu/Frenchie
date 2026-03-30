@@ -127,18 +127,16 @@ namespace Frenchie
     }
 }
 
-ApplicationRenderingBackendFont                              ApplicationRenderingBackend::m_DefaultFont;
-ApplicationRenderingBackendTexture                           ApplicationRenderingBackend::m_DefaultTexture;
-std::shared_ptr<ApplicationRenderingBackendGraphicsApiState> ApplicationRenderingBackend::m_GraphicsApiState = nullptr;
+std::shared_ptr<ApplicationRenderingBackendGraphicsApi> ApplicationRenderingBackend::m_Api = nullptr;
 
 ApplicationRenderingBackendFont ApplicationRenderingBackend::get_default_font()
 {
-    return m_DefaultFont;
+    return m_Api != nullptr ? m_Api->m_DefaultFont : ApplicationRenderingBackendFont();
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::get_default_texture()
 {
-    return m_DefaultTexture;
+    return m_Api != nullptr ? m_Api->m_DefaultTexture : ApplicationRenderingBackendTexture();
 }
 
 ApplicationRenderingBackendTexture ApplicationRenderingBackend::construct_texture(
