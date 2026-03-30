@@ -47,6 +47,9 @@
 			<trans-unit><source>ButtonHovered</source>
 				<target>Кнопка под курсором мыши</target>
 			</trans-unit>
+			<trans-unit><source>Buttons</source>
+				<target>Кнопки</target>
+			</trans-unit>
 			<trans-unit><source>Cancel</source>
 				<target>Отменить</target>
 			</trans-unit>
@@ -358,6 +361,9 @@
 			</trans-unit>
 			<trans-unit><source>TextSelectedBg</source>
 				<target>Задний фон выбранного текста</target>
+			</trans-unit>
+			<trans-unit><source>This column can't be filtered...</source>
+				<target>Эту колонку нельзя фильтровать...</target>
 			</trans-unit>
 			<trans-unit><source>TitleBg</source>
 				<target>Заголовок</target>

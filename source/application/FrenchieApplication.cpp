@@ -1,192 +1,198 @@
-#include <FrenchieApplication.hpp>
-#include <FrenchieCoreLogger.hpp>
-
-// ImGUI
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
-#include <imgui.h>
-#define GL_SILENCE_DEPRECATION
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-#define GLFW_INCLUDE_NONE
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-using namespace Frenchie::Application::OpenGL;
-
-// callbacks
-void OnWindowResize(GLFWwindow* _Window, int _Width, int _Height)
-{
-    (void)_Window;
-    glViewport(0, 0, _Width, _Height);
-}
-
-void OnWindowMaximizedCallback(GLFWwindow* _Window, int _Maximized)
-{
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(_Window, &width, &height);
-    glViewport(0, 0, width, height);
-}
-
 // Application
-Application::Application()
+#include <FrenchieApplication.hpp>
+#include <FrenchieApplicationPlatformBackend.hpp>
+
+// Core
+#include <FrenchieCoreSingleton.hpp>
+
+#include <iostream>
+
+using namespace Frenchie::Application;
+
+ApplicationInstance::ApplicationInstance()
 {
-    // initialize GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+}
 
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+ApplicationInstance::~ApplicationInstance()
+{
+}
 
-    // setup Window hints
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
-    glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+bool ApplicationInstance::awake()
+{
+    return ApplicationPlatformBackend::awake();
+}
 
-    if((m_Window = glfwCreateWindow(800, 600, m_Name.c_str(), nullptr, nullptr)) == nullptr)
+void ApplicationInstance::ApplicationInstance::frame_start()
+{
+    // execute backend
+    ApplicationPlatformBackend::frame_start();
+
+    // awake layers
+    for(auto it = m_Awakes.begin(); it != m_Awakes.end(); it++)
     {
-        glfwTerminate();
-        Frenchie::Core::Logger::instance()->error(fmt::format(
-            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_CREATE_WINDOW\n"));
-        return;
+        if((*it)->awake())
+            m_Layers.push_back((*it));
+    }
+    
+    m_Awakes.clear();
+
+    // remove layers that are closed
+    for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
+    {
+        if((*it)->is_closed())
+        {
+            (*it)->finish();
+            auto rm = it;
+            it++;
+            m_Layers.erase(rm);
+
+            if(it == m_Layers.end())
+                break;
+        }
     }
 
-    glfwMakeContextCurrent(m_Window);
-    glfwSwapInterval(1);
-
-    // setup callbacks
-    glfwSetWindowSizeCallback(m_Window, &OnWindowResize);
-    glfwSetFramebufferSizeCallback(m_Window, &OnWindowResize);
-    glfwSetWindowMaximizeCallback(m_Window, OnWindowMaximizedCallback);
-
-    // custom callbackcs
-    //glfwSetCursorPosCallback(get_window(), Application::mouse_callback);
-
-    // load OpenGL interface using GLAD
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        glfwTerminate();
-        m_Window = nullptr;
-        Frenchie::Core::Logger::instance()->error(fmt::format(
-            "FRENCHIE::OPENGL::APPLICATION::COULD_NOT_LOAD_GLAD\n"));
-    }
-
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::awake
-    //---------------------------------------------------------------------------------------------------
-    #ifdef __APPLE__
-        // GL 3.2 + GLSL 150
-        const char* glsl_version = "#version 150";
-    #else
-        const char* glsl_version = "#version 130";
-    #endif
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard |
-            ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad  |
-            ImGuiConfigFlags_::ImGuiConfigFlags_DockingEnable     |
-            ImGuiConfigFlags_::ImGuiConfigFlags_ViewportsEnable;
-    ImGui::StyleColorsDark();
-    ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
-    io.IniFilename = nullptr; // disable automatic .ini file save
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
-    ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-    //---------------------------------------------------------------------------------------------------
-}
-
-Application::~Application()
-{
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::finish
-    //---------------------------------------------------------------------------------------------------
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    //---------------------------------------------------------------------------------------------------
-
-    glfwDestroyWindow(m_Window);
-    glfwTerminate();
-    m_Layers.clear();
-}
-
-glm::u32vec2 Application::get_window_size() const
-{
-    int width  = 0;
-    int height = 0;
-    glfwGetWindowSize(m_Window, &width, &height);
-    return glm::u32vec2(width, height);
-}
-
-GLFWwindow* Application::get_window() const
-{
-    return m_Window;
-}
-
-void Application::set_window_size(const glm::u32vec2& _Value)
-{
-    glfwSetWindowSize(m_Window, _Value.x, _Value.y);
-}
-
-void Application::set_maximized(const bool& _Value)
-{
-    glfwMaximizeWindow(m_Window);
-}
-
-bool Application::awake()
-{
-    if(m_Window == nullptr) 
-        return false;
-
-    // call window callbacks
-    OnWindowMaximizedCallback(m_Window, glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED));
-
-    return true;
-}
-
-void Application::Application::frame_start()
-{
+    // execute layers
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden()) 
             layer->frame_start();
     }
 
-    //---------------------------------------------------------------------------------------------------
-    // OpenGL
-    //---------------------------------------------------------------------------------------------------
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glfwPollEvents();
+    // update application input input
 
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::frame_start
-    //---------------------------------------------------------------------------------------------------
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    // TODO: this MUST BE SETTINGS
+    const double KeyClicksCountResetTime = 200; // ms
+    const double KeyHoldDetectionTime    = 100; // ms
+    const double KeyClickDetectionTime   = 500; // ms
 
-    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-    //---------------------------------------------------------------------------------------------------
+    // handle mouse buttons events
+    for (int mouseButton = ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonBegin;
+             mouseButton < ApplicationPlatformBackendMouseButton::Button::ApplicationPlatformBackendMouseButtonEnd;
+             mouseButton++)
+    {
+        if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime,
+            std::chrono::high_resolution_clock::now()) > KeyClicksCountResetTime)
+        {
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks = 0;
+        }
+
+        if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Pressed)
+        {
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Down      = true;
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime = Frenchie::Core::tic();
+
+            ApplicationPlatformBackend::m_Input.MouseCursor.MousePressPosition = ApplicationPlatformBackend::m_Input.MouseCursor.Position;
+        }
+        
+        if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Down)
+        {
+            ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta =
+                ApplicationPlatformBackend::m_Input.MouseCursor.Position - ApplicationPlatformBackend::m_Input.MouseCursor.MousePressPosition;
+
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Hold =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime,
+                    Frenchie::Core::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
+        }
+
+        if(ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released)
+        {
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Down        = false;
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Hold        = false;
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime = Frenchie::Core::tic();
+
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].PressTime,
+                    ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].ReleaseTime) < KeyClickDetectionTime;
+
+            ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked =
+                ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked && ++ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicks >= 2;
+        }        
+    }
+
+    // handle keys events
+    for (int mouseButton = ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+             mouseButton < ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_NamedKey_END;
+             mouseButton++)
+    {
+        if(Frenchie::Core::elapsed<std::chrono::milliseconds>(
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime,
+            std::chrono::high_resolution_clock::now()) > KeyClicksCountResetTime)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicks = 0;
+        }
+
+        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Pressed)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down      = true;
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime = Frenchie::Core::tic();
+        }
+        
+        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Hold =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
+                    Frenchie::Core::tic()) > KeyHoldDetectionTime; // TODO: MUST BE A SETTING
+        }
+
+        if(ApplicationPlatformBackend::m_Input.Keys[mouseButton].Released)
+        {
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Down        = false;
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Hold        = false;
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime = Frenchie::Core::tic();
+
+            ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicked =
+                Frenchie::Core::elapsed<std::chrono::milliseconds>(
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].PressTime,
+                    ApplicationPlatformBackend::m_Input.Keys[mouseButton].ReleaseTime) < KeyClickDetectionTime;
+
+            ++ApplicationPlatformBackend::m_Input.Keys[mouseButton].Clicks;
+        }
+    }
+
+    // handle key modifiers
+
+    // Ctrl (Command on MacOS)
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftSuper].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightSuper].Down;
+#else
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightCtrl].Down;
+#endif
+
+    // Alt (Option on MacOS)
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Alt].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftAlt].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightAlt].Down;
+
+    // Shift
+    ApplicationPlatformBackend::m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Shift].Active =
+        ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftShift].Down ||
+            ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightShift].Down;
+
+    // character input
+
+    // catch character '\n'
+    if(ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Enter].Pressed)
+        ApplicationPlatformBackend::m_Input.Character = '\n';
+
+    // catch character '\t'
+    if(ApplicationPlatformBackend::m_Input.Keys[ApplicationPlatformBackendKey::Key::ApplicationPlatformBackendKey_Tab].Pressed)
+        ApplicationPlatformBackend::m_Input.Character = '\t';
 }
 
-void Application::Application::frame_update()
+void ApplicationInstance::ApplicationInstance::frame_update()
 {
+    // execute backend
+    ApplicationPlatformBackend::frame_update();
+
+    // execute layers
     for(auto layer : m_Layers) 
     {
         if(!layer->is_hidden())
@@ -194,119 +200,142 @@ void Application::Application::frame_update()
     }
 }
 
-void Application::Application::frame_finish()
+void ApplicationInstance::ApplicationInstance::frame_render()
 {
-    //---------------------------------------------------------------------------------------------------
-    // ImGui::frame_finish
-    //---------------------------------------------------------------------------------------------------
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(m_Window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    for(auto layer : m_Layers) 
     {
-        GLFWwindow* backup_current_context = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup_current_context);
-        gladLoadGL();
+        if(!layer->is_hidden())
+            layer->frame_render();
     }
-    //---------------------------------------------------------------------------------------------------
+}
 
+void ApplicationInstance::ApplicationInstance::frame_debug()
+{
+    for(auto layer : m_Layers) 
+    {
+        if(!layer->is_hidden())
+            layer->frame_input();
+    }
+}
+
+void ApplicationInstance::ApplicationInstance::frame_finish()
+{
     for(auto layer : m_Layers)
     {
         if(!layer->is_hidden())
             layer->frame_finish();
     }
 
-    glfwSwapBuffers(m_Window);
+    // restore mouse buttons
+    for (int mouseButton = ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonBegin;
+             mouseButton < ApplicationPlatformBackendMouseButton::ApplicationPlatformBackendMouseButtonEnd;
+             mouseButton++)
+    {
+        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Released      = false;
+        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Pressed       = false;
+        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].Clicked       = false;
+        ApplicationPlatformBackend::m_Input.MouseButtons[mouseButton].DoubleClicked = false;
+    }
+
+    // restore keys
+    for (int key = ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_BEGIN;
+             key < ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_NamedKey_END;
+             key++)
+    {
+        ApplicationPlatformBackend::m_Input.Keys[key].Released = false;
+        ApplicationPlatformBackend::m_Input.Keys[key].Pressed  = false;
+        ApplicationPlatformBackend::m_Input.Keys[key].Clicked  = false;
+    }
+
+    // restore key modifiers
+    for (int key = ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_Begin;
+             key < ApplicationPlatformBackendKeyModifier::ApplicationPlatformBackendKeyModifier_End;
+             key++)
+    {
+        ApplicationPlatformBackend::m_Input.Modifiers[key].Active = false;
+    }
+
+    // restore scroll position
+    ApplicationPlatformBackend::m_Input.MouseScrollOffset = gs_vec2f(0.f, 0.f);
+
+    // restore cursor
+    ApplicationPlatformBackend::m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
+
+    // restore input character
+    ApplicationPlatformBackend::m_Input.Character.reset();
+
+    // execute backend
+    ApplicationPlatformBackend::frame_finish();
 }
 
-void Application::Application::finish()
+void ApplicationInstance::ApplicationInstance::finish()
 {
-    // finish all layers execution
+    for(auto layer : m_Layers)
+        layer->finish();
+}
+
+void ApplicationInstance::ApplicationInstance::quit()
+{
+    // deinitialize all application layers
     for(auto layer : m_Layers) 
     {
         layer->close();
-        layer->finish();
+        layer->quit();
     }
 
-    // remove all layers
+    // remove all application layers
     m_Layers.clear();
+
+    // execute backend
+    ApplicationPlatformBackend::quit();
 }
 
-std::string Application::get_name() const
+bool ApplicationInstance::is_closed()
 {
-    return m_Name;
+    return ApplicationPlatformBackend::is_closed();
 }
 
-void Application::set_name(const std::string& _Name)
+void ApplicationInstance::close()
 {
-    m_Name = _Name;
+    ApplicationPlatformBackend::close();
 }
 
-bool Application::is_closed()
-{
-    return !m_Opened || glfwWindowShouldClose(m_Window);
-}
-
-void Application::close()
-{
-    m_Opened = false;
-}
-
-void Application::reload()
-{
-    ImGui_ImplOpenGL3_DestroyDeviceObjects();
-    ImGui_ImplOpenGL3_CreateDeviceObjects();
-}
-
-int Application::execute()
+int ApplicationInstance::execute()
 {
     if(!awake()) 
         return -1;
 
     while (!is_closed())
     {
-        // remove layers that are closed
-        for(auto it = m_Layers.begin(); it != m_Layers.end(); it++)
-        {
-            if((*it)->is_closed())
-            {
-                (*it)->finish();
-                auto rm = it;
-                it++;
-                m_Layers.erase(rm);
-
-                if(it == m_Layers.end())
-                    break;
-            }
-        }
-
         frame_start();
         frame_update();
+        frame_debug();
+        frame_render();
         frame_finish();
     }
 
     finish();
+    quit();
 
     return 1;
 }
 
-Application::const_iterator Application::begin() const
+ApplicationInstance::const_iterator ApplicationInstance::begin() const
 {
     return m_Layers.begin();
 }
 
-Application::const_iterator Application::end() const
+ApplicationInstance::const_iterator ApplicationInstance::end() const
 {
     return m_Layers.end();
 }
 
-size_t Application::size() const
+size_t ApplicationInstance::size() const
 {
     return m_Layers.size();
+}
+
+Frenchie::Application::ApplicationInstance* Frenchie::Application::application()
+{
+    return Frenchie::Core::Singleton<Frenchie::Application::ApplicationInstance>::instance();
 }

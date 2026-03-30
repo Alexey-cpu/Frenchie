@@ -1,28 +1,10 @@
 [submodule "tools/glfw"]
 	path = tools/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "build/tools/glm"]
-	path = tools/glm
-	url = https://github.com/g-truc/glm.git
-[submodule "tools/fmt"]
-	path = tools/fmt
-	url = https://github.com/Alexey-cpu/fmt.git
 [submodule "tools/imgui"]
 	path = tools/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
-[submodule "tools/spdlog"]
-	path = tools/spdlog
-	url = https://github.com/Alexey-cpu/spdlog.git
-[submodule "tools/pugixml"]
-	path = tools/pugixml
-	url = https://github.com/zeux/pugixml.git
-[submodule "tools/rapidjson"]
-	path = tools/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
-[submodule "tools/ryml"]
-	path = tools/ryml
-	url = https://github.com/biojppm/rapidyaml.git
-[submodule "tools/pcre2"]
-	path = tools/pcre2
-	url = https://github.com/PCRE2Project/pcre2.git
+[submodule "tools/glm"]
+	path = tools/glm
+	url = https://github.com/g-truc/glm.git

@@ -1,9 +1,7 @@
-// //---------------------------------------------------------------------------------------------------
-// // Editor
-// //---------------------------------------------------------------------------------------------------
-#include <FrenchieApplicationEditorLauncher.hpp>
+#include <ImmediateUserInterfaceTestLayer.hpp>
 
 int main(int argc, char *argv[])
 {
-    return Frenchie::Editor::Launcher::execute();
+    Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceTestLayer>();
+    return Frenchie::Application::application()->execute();
 }

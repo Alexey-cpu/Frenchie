@@ -1,0 +1,309 @@
+#pragma once
+
+// Core
+#include <FrenchieCoreMemoryChunkAllocator.hpp>
+#include <FrenchieCoreContainersObjectList.hpp>
+
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
+// STL
+#include <filesystem>
+#include <utility>
+#include <memory>
+#include <vector>
+#include <string>
+#include <set>
+
+namespace Frenchie
+{
+    namespace Application
+    {
+        enum PlatformRendererBackendContextHints_ : int
+        {
+            // tweaks
+            PlatformRendererBackendContextHints_None,
+            PlatformRendererBackendContextHints_Visible,
+            PlatformRendererBackendContextHints_Decorated,
+            PlatformRendererBackendContextHints_Resizable,
+            PlatformRendererBackendContextHints_Iconified,
+            PlatformRendererBackendContextHints_Focused,
+
+            // defaults
+            PlatformRendererBackendContextHints_Default =
+                PlatformRendererBackendContextHints_Visible   |
+                PlatformRendererBackendContextHints_Decorated |
+                PlatformRendererBackendContextHints_Resizable |
+                PlatformRendererBackendContextHints_Focused
+        };
+
+        enum PlatformRendererBackendHints_ : int
+        {
+            // tweaks
+            PlatformRendererBackendHints_None,
+            PlatformRendererBackendHints_ClearColorBuffer,
+            PlatformRendererBackendHints_ClearDepthBuffer,
+            PlatformRendererBackendHints_ClearStencilBuffer,
+            PlatformRendererBackendHints_PollEvents,
+
+            // defaults
+            PlatformRendererBackendHints_Default =
+                PlatformRendererBackendHints_ClearColorBuffer   |
+                PlatformRendererBackendHints_ClearDepthBuffer   |
+                PlatformRendererBackendHints_ClearStencilBuffer |
+                PlatformRendererBackendHints_PollEvents
+        };
+
+        enum PlatformRendererBackendTextureFormat_ : int
+        {
+            PlatformRendererBackendTextureFormat_ALPHA,
+            PlatformRendererBackendTextureFormat_RGB,
+            PlatformRendererBackendTextureFormat_RGBA,
+        };
+
+        enum PlatformRendererBackendTextureWrap_ : int
+        {
+            PlatformRendererBackendTextureWrap_Repeat,
+            PlatformRendererBackendTextureWrap_Mirrored,
+            PlatformRendererBackendTextureWrap_ClampToEdge,
+            PlatformRendererBackendTextureWrap_ClampToBorder
+        };
+
+        enum PlatformRendererBackendTextureMinFilter_ : int
+        {
+            PlatformRendererBackendTextureMinFilter_Linear,
+            PlatformRendererBackendTextureMinFilter_Nearest,
+            PlatformRendererBackendTextureMinFilter_NearestMipMapLinear,
+            PlatformRendererBackendTextureMinFilter_NearestMipMapNearest,
+            PlatformRendererBackendTextureMinFilter_LinearMipMapLinear,
+            PlatformRendererBackendTextureMinFilter_LinearMipMapNearest,
+        };
+
+        enum PlatformRendererBackendTextureMaxFilter_ : int
+        {
+            PlatformRendererBackendTextureMaxFilter_Linear,
+            PlatformRendererBackendTextureMaxFilter_Nearest,
+        };
+
+        enum PlatformRendererBackendShaderType_ : int
+        {
+            PlatformRendererBackendShaderType_Vertex,
+            PlatformRendererBackendShaderType_Fragment
+        };
+
+        enum PlatformRendererBackendMeshRenderingHints_ : int
+        {
+            PlatformRendererBackendMeshRenderingHints_Points,
+            PlatformRendererBackendMeshRenderingHints_Lines,
+            PlatformRendererBackendMeshRenderingHints_Triangles,
+
+            PlatformRendererBackendMeshRenderingHints_Default = PlatformRendererBackendMeshRenderingHints_Triangles
+        };
+
+        typedef int PlatformRendererBackendContextHints;
+        typedef int PlatformRendererBackendHints;
+        typedef int PlatformRendererBackendTextureFormat;
+        typedef int PlatformRendererBackendTextureWrap;
+        typedef int PlatformRendererBackendTextureMinFilter;
+        typedef int PlatformRendererBackendTextureMaxFilter;
+        typedef int PlatformRendererBackendShaderType;
+        typedef int PlatformRendererBackendMeshRenderingHints;
+
+        // enities
+        struct PlatformRendererBackendTexture final
+        {
+            PlatformRendererBackendTexture(
+                const unsigned int&                            _Ptr       = 0,
+                const int&                                     _Width     = 128,
+                const int&                                     _Height    = 128,
+                const PlatformRendererBackendTextureFormat&    _Format    = PlatformRendererBackendTextureFormat_RGBA,
+                const PlatformRendererBackendTextureWrap&      _Wrap      = PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_Repeat,
+                const PlatformRendererBackendTextureMinFilter& _MinFilter = PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Linear,
+                const PlatformRendererBackendTextureMaxFilter& _MaxFilter = PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Linear) : 
+            Width(_Width),
+            Height(_Height),
+            Ptr(_Ptr),
+            Format(_Format),
+            Wrap(_Wrap),
+            MinFilter(_MinFilter),
+            MaxFilter(_MaxFilter){}
+
+            // info
+            unsigned int                            Ptr       {+0};
+            int                                     Width     {-1};
+            int                                     Height    {-1};
+            PlatformRendererBackendTextureFormat    Format    {PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGBA};
+            PlatformRendererBackendTextureWrap      Wrap      {PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_Repeat};
+            PlatformRendererBackendTextureMinFilter MinFilter {PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Linear};
+            PlatformRendererBackendTextureMaxFilter MaxFilter {PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Linear};
+        };
+
+        struct PlatformRendererBackendShader final
+        {
+            PlatformRendererBackendShader(const unsigned int& _Ptr = 0) : Ptr(_Ptr){}
+
+            // info
+            unsigned int Ptr {0};
+        };
+
+        struct PlatformRendererBackendMesh final
+        {
+            PlatformRendererBackendMesh(
+                const unsigned int& _VBO = 0,
+                const unsigned int& _VAO = 0,
+                const unsigned int& _EBO = 0) :
+            VBO(_VBO),
+            VAO(_VAO),
+            EBO(_EBO){}
+
+            unsigned int VBO{0};
+            unsigned int VAO{0};
+            unsigned int EBO{0};
+        };
+
+        struct PlatformRendererBackendMeshVertex
+        {
+            PlatformRendererBackendMeshVertex(
+                const glm::vec3& _Position = glm::vec3(0),
+                const glm::vec3& _Normal   = glm::vec3(0),
+                const glm::vec2& _UV       = glm::vec2(0)) :
+            Position(_Position),
+            Normal(_Normal),
+            UV(_UV){}
+
+            glm::vec3 Position;
+            glm::vec3 Normal;
+            glm::vec2 UV;
+        };
+
+        class PlatformRendererBackend final
+        {
+        public:
+            PlatformRendererBackend();
+            ~PlatformRendererBackend();
+
+            // getters
+            void*     get_context() const;
+            glm::vec4 get_context_window_clear_color() const;
+            glm::vec2 get_context_window_position() const;
+            glm::vec2 get_context_window_size() const;
+
+            // setters
+            void set_context_window_clear_color(const glm::vec4&);
+            void set_context_window_position(const glm::vec2&);
+            void set_context_window_size(const glm::vec2&);
+
+            // API
+            bool awake(
+                const char*                         _Name        = "DefaultPlatformWindow",
+                void*                               _Share       = nullptr,
+                PlatformRendererBackendContextHints _WindowHints = PlatformRendererBackendContextHints_::PlatformRendererBackendContextHints_Default);
+
+            void frame_start(
+                const PlatformRendererBackendHints& _RendererHints = PlatformRendererBackendHints_Default);
+
+            void frame_update();
+            void frame_render();
+            void frame_finish();
+            void finish();
+            void quit();
+            bool is_closed() const;
+            void close();
+
+            // images API
+            PlatformRendererBackendTexture construct_image(
+                const unsigned char*                           _RawBuffer,
+                const int&                                     _Width,
+                const int&                                     _Height,
+                const PlatformRendererBackendTextureFormat&    _Format    = PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGBA,
+                const PlatformRendererBackendTextureWrap&      _Wrap      = PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_Repeat,
+                const PlatformRendererBackendTextureMinFilter& _MinFilter = PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Linear, 
+                const PlatformRendererBackendTextureMaxFilter& _MaxFilter = PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Linear) const;
+
+            PlatformRendererBackendTexture construct_image(
+                const std::filesystem::path&                   _FilePath,
+                const PlatformRendererBackendTextureFormat&    _Format    = PlatformRendererBackendTextureFormat_::PlatformRendererBackendTextureFormat_RGBA,
+                const PlatformRendererBackendTextureWrap&      _Wrap      = PlatformRendererBackendTextureWrap_::PlatformRendererBackendTextureWrap_Repeat,
+                const PlatformRendererBackendTextureMinFilter& _MinFilter = PlatformRendererBackendTextureMinFilter_::PlatformRendererBackendTextureMinFilter_Linear, 
+                const PlatformRendererBackendTextureMaxFilter& _MaxFilter = PlatformRendererBackendTextureMaxFilter_::PlatformRendererBackendTextureMaxFilter_Linear) const;
+
+            void bind_image(const PlatformRendererBackendTexture& _Texture);
+
+            void destroy_image(const PlatformRendererBackendTexture& _Texture);
+
+            // shaders API
+            PlatformRendererBackendShader construct_shader(
+                const std::vector<std::pair<std::string, PlatformRendererBackendShaderType>>& ShaderInfos =
+                    std::vector<std::pair<std::string, PlatformRendererBackendShaderType>>()) const;
+            
+            PlatformRendererBackendShader construct_shader(
+                const std::vector<std::filesystem::path>& _ShaderFilesPaths =
+                    std::vector<std::filesystem::path>()) const;
+
+            void begin_use_shader(const PlatformRendererBackendShader& _Shader);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const bool& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const int& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const float& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::vec2& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::vec3& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::vec4& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::mat2& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::mat3& _Value);
+            void set_shader_uniform(const PlatformRendererBackendShader& _Shader, const std::string& _Uniform, const glm::mat4& _Value);
+            void end_use_shader();
+            
+            void destroy_shader(const PlatformRendererBackendShader& _Shader);
+
+            // mesh
+            PlatformRendererBackendMesh construct_mesh(
+                const PlatformRendererBackendMeshVertex* _Vertexes,
+                const int&                               _VertexesCount,
+                const int*                               _Indexes,
+                const int&                               _IndexesCount);
+
+            void destroy_mesh(const PlatformRendererBackendMesh& _Mesh);
+           
+            void begin_render_mesh(
+                const PlatformRendererBackendMesh&        _Mesh,
+                PlatformRendererBackendMeshRenderingHints _MeshRenderHints);
+
+            void endup_render_mesh();
+
+        protected:
+
+            void*     m_Context   {nullptr};
+            glm::vec4 m_ClearColor{128, 128, 128, 255};
+        };
+
+        // immediate 2D renderer
+        // class PlatformImmediate2DRenderer
+        // {
+        // public:
+            
+        //     struct RendererCommand
+        //     {
+        //         RendererCommand(
+        //             const PlatformRendererBackendMesh&    _Mesh    = PlatformRendererBackendMesh(),
+        //             const PlatformRendererBackendShader&  _Shader  = PlatformRendererBackendShader(),
+        //             const PlatformRendererBackendTexture& _Texture = PlatformRendererBackendTexture()
+        //         ) : Mesh(_Mesh), Shader(_Shader), Texture(_Texture){}
+
+        //         PlatformRendererBackendMesh    Mesh;
+        //         PlatformRendererBackendShader  Shader;
+        //         PlatformRendererBackendTexture Texture;
+        //     };
+        
+        //     PlatformImmediate2DRenderer(PlatformRendererBackend& _Backend){}
+        //     ~PlatformImmediate2DRenderer(){}
+
+
+        // protected:
+
+        //     PlatformRendererBackend&     m_Backend;
+        //     std::vector<RendererCommand> m_Commands;
+        // };
+    }
+}
