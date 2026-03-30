@@ -5,8 +5,6 @@
 
 // STL
 #include <algorithm>
-#include <typeinfo>
-#include <typeindex>
 
 //#define IMMEDIATE_USER_INTERFACE_DEBUG
 
@@ -3503,6 +3501,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y),
                 gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
 
+            VerticalScrollBarBox = gs_2dboxf(
+                VerticalScrollBarBox.Min + gs_vec2f(0.f, _Context->m_Style.get_frames_radius() * 0.5f),
+                VerticalScrollBarBox.Max);
+
             VerticalScrollBar.recompute(
                 gs_vec2f(0.f, 0.f),
                 VerticalScrollBarBox.size(),
@@ -3555,6 +3557,10 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
                 gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()),
                 gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Max.y));
             
+            HorizontalScrollBarBox = gs_2dboxf(
+                HorizontalScrollBarBox.Min + gs_vec2f(_Context->m_Style.get_frames_radius() * 0.5f, 0.f),
+                HorizontalScrollBarBox.Max);
+
             HorizontalScrollBar.recompute(
                 gs_vec2f(0.f, 0.f),
                 HorizontalScrollBarBox.size(),
