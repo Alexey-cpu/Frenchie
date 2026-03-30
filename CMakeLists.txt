@@ -4,8 +4,13 @@ project(Frenchie VERSION 0.1.0 LANGUAGES C CXX)
 #--------------------------------------------------------------
 # project options
 #--------------------------------------------------------------
-option(PLATFORM_BACKEND_GLFW "Use GLFW as platform backend" ON)
+option(PLATFORM_BACKEND_GLFW "Use GLFW as platform backend" OFF)
+option(PLATFORM_BACKEND_SDL "Use SDL as platform backend" OFF)
+
 option(RENDERING_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
+
+set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "Build GLFW docs" FORCE)
+set(PLATFORM_BACKEND_SDL ON CACHE BOOL "Build GLFW tests" FORCE)
 
 #--------------------------------------------------------------
 # setup common project options
@@ -35,6 +40,9 @@ list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/applica
 if(PLATFORM_BACKEND_GLFW)
     include("tools/glfw.cmake")
     list(APPEND KERNEL "source/backends/GLFW")
+elseif(PLATFORM_BACKEND_SDL)
+    include("tools/sdl_3.4.x.cmake")
+    list(APPEND KERNEL "source/backends/SDL3")
 endif()
 
 if(RENDERING_BACKEND_OPENGL)
@@ -53,6 +61,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 #--------------------------------------------------------------
 if(PLATFORM_BACKEND_GLFW)
     target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+elseif(PLATFORM_BACKEND_SDL)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
+    target_include_directories(${PROJECT_NAME} PRIVATE "tools/sdl_3.4.x/include/SDL3")
 endif()
 
 if(RENDERING_BACKEND_OPENGL)

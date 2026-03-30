@@ -1,0 +1,1 @@
+add_subdirectory("tools/sdl_3.4.x/")

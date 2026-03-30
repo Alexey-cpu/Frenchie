@@ -6,6 +6,8 @@
 // GLAD
 #include <glad/glad.h>
 
+#include <iostream>
+
 using namespace Frenchie::Application;
 
 namespace Frenchie
@@ -82,7 +84,10 @@ bool ApplicationRenderingBackend::awake(Loader _Loader)
 
     // load backend API
     if(!gladLoadGLLoader((GLADloadproc)_Loader))
+    {
+        std::cout << "could not load OPENGL !!! \n";
         return false;
+    }
 
     m_DefaultFont = construct_font(
         ApplicationRenderingBackendDefaultFont::BUFFER,

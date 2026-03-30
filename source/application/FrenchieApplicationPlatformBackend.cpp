@@ -7,6 +7,7 @@ using namespace Frenchie::Application;
 
 ApplicationPlatformBackendInput ApplicationPlatformBackend::m_Input;
 void* ApplicationPlatformBackend::m_Context = nullptr;
+std::shared_ptr<FrenchieApplicationPlatformBackendState> ApplicationPlatformBackend::m_PlatformBackendState = nullptr;
 
 gs_vec2f ApplicationPlatformBackend::get_window_cursor_position()
 {

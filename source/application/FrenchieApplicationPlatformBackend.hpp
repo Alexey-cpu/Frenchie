@@ -8,6 +8,7 @@
 // STL
 #include <string>
 #include <vector>
+#include <memory>
 
 #if defined(unix) || defined(__unix) || defined(__unix__)
 #define FRENCHIE_APPLICATION_PLATFORM_IS_LINUX
@@ -348,6 +349,8 @@ namespace Frenchie
             gs_vec2f                               FrameBufferSize;
         };
 
+        struct FrenchieApplicationPlatformBackendState;
+
         class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
         {
         public:
@@ -400,11 +403,12 @@ namespace Frenchie
         private:
 
             friend class ApplicationInstance;
-            friend class ApplicationInputHandler;
+            friend class SDLApplicationInputHandler;
 
             // context
-            static void*                           m_Context;
-            static ApplicationPlatformBackendInput m_Input;
+            static void*                                                    m_Context;
+            static ApplicationPlatformBackendInput                          m_Input;
+            static std::shared_ptr<FrenchieApplicationPlatformBackendState> m_PlatformBackendState;
         };
     }
 }
