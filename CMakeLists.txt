@@ -1,9 +1,17 @@
-cmake_minimum_required(VERSION 3.10.0)
-project(OpenGL VERSION 0.1.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION ${CMAKE_VERSION})
+project(Frenchie VERSION 0.1.0 LANGUAGES C CXX)
 
-#==============================================================================================================
+#--------------------------------------------------------------
+# project options
+#--------------------------------------------------------------
+option(PLATFORM_BACKEND_GLFW "Use GLFW as platform backend" ON)
+option(PLATFORM_BACKEND_SDL "Use SDL as platform backend" OFF)
+
+option(RENDERING_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
+
+#--------------------------------------------------------------
 # setup common project options
-#==============================================================================================================
+#--------------------------------------------------------------
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,58 +19,47 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-message("===================================================")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3")
-# set(CMAKE_CX_FLAGS "${CMAKE_CXX_FLAGS} /O3")
-message(${CMAKE_C_COMPILER})
-message(${CMAKE_CXX_COMPILER})
-message(${CMAKE_MAKE_PROGRAM})
-
-message("===================================================")
+message("C compiler: ${CMAKE_C_COMPILER}")
+message("C++ compiler: ${CMAKE_CXX_COMPILER}")
+message("CMake: ${CMAKE_VERSION}")
+message("CMake generator: ${CMAKE_MAKE_PROGRAM}")
 
 #--------------------------------------------------------------
 # include CMake utilities
 #--------------------------------------------------------------
 include("cmake/collect_source_code_and_resources.cmake")
-include("tools/glfw.cmake")
 
 #--------------------------------------------------------------
 # add executable
 #--------------------------------------------------------------
-add_compile_definitions(IMGUI_DEFINE_MATH_OPERATORS)
-list(APPEND KERNEL 
+list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/application" "source/sandbox")
 
-"source/application" 
-"source/core"
-"source/rendering"
-"source/editor" 
-"source/vendor"
-"source/sandbox"
-)
+if(PLATFORM_BACKEND_GLFW)
+    include("tools/glfw.cmake")
+    list(APPEND KERNEL "source/backends/GLFW")
+endif()
+
+if(RENDERING_BACKEND_OPENGL)
+    list(APPEND KERNEL "source/backends/OpenGL")
+endif()
 
 set(PATHS "")
 list(APPEND PATHS ${KERNEL} ${TOOLS})
 cmake_language(CALL COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
-add_executable(
-    OpenGL
-    ${HEADERS} 
-    ${SOURCES}
 
-    "source/main.cpp"
-    )
-target_link_libraries(OpenGL glfw)
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} "source/main.cpp")
+target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 
-target_include_directories(
-    OpenGL 
-    PUBLIC ${DIRECTORIES} 
-    
-    #GLAD
-    "source/vendor/glad/include/"
-    "tools/glad/include/"
-    
-    #RAPIDJSON
-    "tools/rapidjson/include"
-    )
+#--------------------------------------------------------------
+# configure external librarires and tools
+#--------------------------------------------------------------
+if(PLATFORM_BACKEND_GLFW)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+endif()
+
+if(RENDERING_BACKEND_OPENGL)
+    target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/OpenGL/glad/include/")
+endif()
 
 #--------------------------------------------------------------
 # configure CPack

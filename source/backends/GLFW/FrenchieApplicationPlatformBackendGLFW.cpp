@@ -9,8 +9,6 @@ using namespace Frenchie::Application;
 // GLFW
 #include <GLFW/glfw3.h>
 
-#include <iostream>
-
 // helpers
 namespace Frenchie
 {
