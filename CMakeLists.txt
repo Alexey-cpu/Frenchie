@@ -9,8 +9,8 @@ option(PLATFORM_BACKEND_SDL "Use SDL as platform backend" OFF)
 
 option(RENDERING_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
 
-set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "Build GLFW docs" FORCE)
-set(PLATFORM_BACKEND_SDL ON CACHE BOOL "Build GLFW tests" FORCE)
+set(PLATFORM_BACKEND_GLFW ON CACHE BOOL "Build GLFW docs" FORCE)
+set(PLATFORM_BACKEND_SDL OFF CACHE BOOL "Build GLFW tests" FORCE)
 
 #--------------------------------------------------------------
 # setup common project options
@@ -62,8 +62,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 if(PLATFORM_BACKEND_GLFW)
     target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 elseif(PLATFORM_BACKEND_SDL)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
-    target_include_directories(${PROJECT_NAME} PRIVATE "tools/sdl_3.4.x/include/SDL3")
+    target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3)
+    target_include_directories(${PROJECT_NAME} PUBLIC "${SDL3_SOURCE_DIR}/include/")
 endif()
 
 if(RENDERING_BACKEND_OPENGL)
