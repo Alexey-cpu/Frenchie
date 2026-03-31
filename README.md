@@ -3,8 +3,8 @@
 - [Overview](#overview)
     - [Description](#description)
     - [Architecture](#architecture)
-    - [Supported platform backends](#supportedplatformbackends)
-    - [Supported graphics backends](#supportedgraphicsbackends)
+    - [Supported platform backends](#supported-platform-backends)
+    - [Supported graphics backends](#supported-graphics-backends)
 
 ## **Description**
 
