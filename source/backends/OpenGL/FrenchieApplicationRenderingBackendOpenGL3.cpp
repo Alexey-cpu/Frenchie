@@ -375,7 +375,7 @@ void ApplicationRenderingBackend::render_mesh(
     const gs_mat4f&                                             _MeshProjectionMatrix,
     const ApplicationRenderingBackendGraphicsApiRenderingHints& _MeshRenderHints)
 {
-    if(m_Api == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
+    if(m_Api == nullptr || _Vertexes == nullptr || _Indexes == nullptr || _VertexesCount <= 0 || _IndexesCount <= 0 || _MeshVertexesCount <= 0 || _MeshIndexesCount <= 0)
         return;
 
     // bind texture

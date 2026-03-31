@@ -233,11 +233,8 @@ bool ApplicationPlatformBackend::awake()
     if(!SDL_Init(SDL_INIT_VIDEO))
         return false;
 
+    // create platform API
     m_Api = std::make_shared<FrenchieApplicationPlatformSDL3>();
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     // create context
     m_Api->m_Context = SDL_CreateWindow("Application", 512, 256, SDL_WINDOW_OPENGL | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
@@ -263,8 +260,6 @@ bool ApplicationPlatformBackend::awake()
     // load rendering backend
     if(!ApplicationRenderingBackend::awake((ApplicationRenderingBackend::Loader)SDL_GL_GetProcAddress))
     {
-        std::cout << "SDL_GL_GetProcAddress QUITS !!! " << SDL_GetError() << "\n";
-
         SDL_Quit();
         return false;
     }
@@ -322,8 +317,6 @@ void ApplicationPlatformBackend::frame_start()
         }
         case SDL_EVENT_TEXT_INPUT:
         {
-            // TODO: this is not good !!!
-            // may be, convert this to UTF8 string input
             std::u32string utf32 = Frenchie::Core::String::convert_utf8_to_utf32(SDL3->Event.text.text);
 
             if(!utf32.empty())
@@ -348,25 +341,48 @@ void ApplicationPlatformBackend::frame_start()
         case SDL_EVENT_DISPLAY_MOVED:
         case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
         {
+            // TODO: add monitors update logic here
+            return;
         }
         case SDL_EVENT_WINDOW_MOUSE_ENTER:
         {
+            SDL3->m_Input.MouseCursor.Entered = true;
+            return;
         }
         case SDL_EVENT_WINDOW_MOUSE_LEAVE:
         {
+            SDL3->m_Input.MouseCursor.Entered = false;
+            return;
         }
         case SDL_EVENT_WINDOW_FOCUS_GAINED:
         case SDL_EVENT_WINDOW_FOCUS_LOST:
         {
+            SDL3->m_Input.Window.Focused = SDL3->Event.type == SDL_EVENT_WINDOW_FOCUS_GAINED;
+            return;
         }
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
         case SDL_EVENT_WINDOW_MOVED:
         case SDL_EVENT_WINDOW_RESIZED:
         {
+            if(SDL3->Event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            {
+                // TODO: add logic here
+            }
+            else if(SDL3->Event.type == SDL_EVENT_WINDOW_MOVED)
+            {
+                // TODO: add logic here
+            }
+            else if(SDL3->Event.type == SDL_EVENT_WINDOW_RESIZED)
+            {
+                // TODO: add logic here
+            }
+
+            return;
         }
         case SDL_EVENT_GAMEPAD_ADDED:
         case SDL_EVENT_GAMEPAD_REMOVED:
         {
+            return;
         }
         default:
             break;
