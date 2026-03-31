@@ -157,9 +157,9 @@ void ApplicationInstance::ApplicationInstance::frame_start()
 
     // Ctrl (Command on MacOS)
 #ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
-    ApplicationPlatformBackend::m_PlatformBackendState->m_Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
-        ApplicationPlatformBackend::m_PlatformBackendState->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftSuper].Down ||
-            ApplicationPlatformBackend::m_PlatformBackendState->m_Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightSuper].Down;
+    ApplicationPlatformBackend::platform_api()->Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
+        ApplicationPlatformBackend::platform_api()->Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftSuper].Down ||
+            ApplicationPlatformBackend::platform_api()->Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_RightSuper].Down;
 #else
     ApplicationPlatformBackend::platform_api()->Input.Modifiers[ApplicationPlatformBackendKeyModifier::Modifier::ApplicationPlatformBackendKeyModifier_Ctrl].Active =
         ApplicationPlatformBackend::platform_api()->Input.Keys[ApplicationPlatformBackendKey::ApplicationPlatformBackendKey_LeftCtrl].Down ||
