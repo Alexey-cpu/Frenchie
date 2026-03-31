@@ -1306,21 +1306,20 @@ namespace Frenchie
 
                 virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
                 {
-                    if(_Context == nullptr || _Context->m_Renderer == nullptr || dynamic_cast<ImmediateUserInterfaceScrollArea*>(_Context->m_Hierarchy.get_parent(this)))
+                    if(_Context == nullptr || _Context->m_Renderer == nullptr)
                         return;
 
                     // outline
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min,
-                        State.BoundingBox.Max,
+                        get_clipping_box(_Context).Min,
+                        get_clipping_box(_Context).Max,
                         _Context->m_Style.get_frames_radius(),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-                    // outline
                     _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                        get_clipping_box(_Context).Min + _Context->m_Style.get_frames_width(),
+                        get_clipping_box(_Context).Max - _Context->m_Style.get_frames_width(),
                         _Context->m_Style.get_frames_radius(),
                         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
                         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -2372,10 +2371,6 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     // scrollbar
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground]        = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered] = gs_color_rgba(72, 82, 72, 255);
-
-    // // comboboxes
-    // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ComboboxOutline]                  = gs_color_rgba(72, 72, 72, 255);
-    // Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ComboboxBackground]               = gs_color_rgba(32, 32, 32, 255);
 
     // gizmos
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos]                           = gs_color_rgba(50, 50, 100, 200);
@@ -3631,7 +3626,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     gs_vec2f verticalScrollOffset   = VerticalScrollBar.Position * VerticalScrollBar.PositionScale;
 
     // layout children
-    gs_vec2f  origin    = State.BoundingBox.Min - gs_vec2f(horizontalScrollOffset.x, verticalScrollOffset.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin) + _Context->m_Style.get_maximum_frames_radius() * 0.5f;
+    gs_vec2f  origin    = State.BoundingBox.Min - gs_vec2f(horizontalScrollOffset.x, verticalScrollOffset.y) + gs_vec2f(leftMargin - rightMargin, topMargin - bottomMargin);
     gs_vec2f  position  = origin;
     float     maxHeight = 0.f;
 
@@ -3659,13 +3654,6 @@ void ImmediateUserInterfaceScrollArea::render(ImmediateUserInterfaceContextLayer
     _Context->m_Renderer->push_rectangle_rounded_filled(
         State.BoundingBox.Min,
         State.BoundingBox.Max,
-        _Context->m_Style.get_frames_radius(),
-        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-    _Context->m_Renderer->push_rectangle_rounded_filled(
-        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
@@ -7232,7 +7220,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         float weight = 1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
 
-        gs_vec4f padding = gs_vec4f(0.f, m_Style.get_frames_width() * 2.f, 0.f, 0.f);
+        gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
 
         // editors
         next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
@@ -7725,7 +7713,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _I
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
 
-        gs_vec4f padding = gs_vec4f(0.f, m_Style.get_frames_width() * 2.f, 0.f, 0.f);
+        gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
 
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
@@ -8219,7 +8207,7 @@ void ImmediateUserInterfaceContextLayer::color_picker_hsva(const std::string& _I
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditHSL) +
              (float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditAlpha)) * m_Style.get_font_size();
 
-        gs_vec4f padding = gs_vec4f(0.f, m_Style.get_frames_width() * 2.f, 0.f, 0.f);
+        gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
 
         next_maximum_size(gs_vec2f(gs_huge<float>(), height));
         next_minimum_size(gs_vec2f(0.f, height));
