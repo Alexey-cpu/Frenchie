@@ -18,12 +18,12 @@ Platform backend abstracts system specific functions for context window creation
 
 ## **Supported platform backends**
 
-Platform backend implementation can use the following external libraries as platform backend:
-
 | Backend  | Support  |
 | -------- | ---------|
 | SDL3     | &#x2714; |
 | GLFW     | &#x2714; |
+
+Platform backend implementation can use SDL3 and GLFW libraries for platform specific system functions abstraction used for context window creation, manipulation and events catching..
 
 ## **Supported graphics backends**
 
