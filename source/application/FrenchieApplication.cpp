@@ -209,7 +209,7 @@ void ApplicationInstance::ApplicationInstance::frame_render()
     }
 }
 
-void ApplicationInstance::ApplicationInstance::frame_debug()
+void ApplicationInstance::ApplicationInstance::frame_input()
 {
     for(auto layer : m_Layers) 
     {
@@ -309,7 +309,7 @@ int ApplicationInstance::execute()
     {
         frame_start();
         frame_update();
-        frame_debug();
+        frame_input();
         frame_render();
         frame_finish();
     }

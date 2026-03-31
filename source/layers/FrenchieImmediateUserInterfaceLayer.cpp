@@ -530,7 +530,7 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowController();
             virtual ~ImmedidateUserInterfaceWindowController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
             std::vector<ImmediateUserInterfaceNode*>&
@@ -554,7 +554,7 @@ namespace Frenchie
         public:
             ImmedidateUserInterfaceInputController();
             virtual ~ImmedidateUserInterfaceInputController();
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
         };
     
         class ImmedidateUserInterfaceLayoutController : public ImmediateUserInterfaceContextController
@@ -562,7 +562,7 @@ namespace Frenchie
         public:
             ImmedidateUserInterfaceLayoutController();
             virtual ~ImmedidateUserInterfaceLayoutController();
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
 
             bool Dirty{true};
 
@@ -635,7 +635,7 @@ namespace Frenchie
         public:
             ImmediateUserInterfaceScrollBarsController();
             virtual ~ImmediateUserInterfaceScrollBarsController();
-            virtual void frame_debug(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
         };
     
         // internal
@@ -5235,7 +5235,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
     }
 }
 
-void ImmedidateUserInterfaceWindowController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceWindowController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     place_on_dockers(_Context);
 
@@ -5919,7 +5919,7 @@ std::vector<ImmediateUserInterfaceNode*>& ImmedidateUserInterfaceWindowControlle
 ImmedidateUserInterfaceInputController::ImmedidateUserInterfaceInputController(){}
 ImmedidateUserInterfaceInputController::~ImmedidateUserInterfaceInputController(){}
 
-void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceInputController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     // main code
     if(_Context == nullptr)
@@ -6094,7 +6094,7 @@ void ImmedidateUserInterfaceInputController::frame_debug(ImmediateUserInterfaceC
 ImmedidateUserInterfaceLayoutController::ImmedidateUserInterfaceLayoutController(){}
 ImmedidateUserInterfaceLayoutController::~ImmedidateUserInterfaceLayoutController(){}
 
-void ImmedidateUserInterfaceLayoutController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
+void ImmedidateUserInterfaceLayoutController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     for (auto& singleton : _Context->m_Hierarchy.Singletons)
         node_layout(_Context, singleton);
@@ -6367,7 +6367,7 @@ void ImmedidateUserInterfaceNextNodeController::reset()
 // ImmediateUserInterfaceScrollBarsController
 ImmediateUserInterfaceScrollBarsController::ImmediateUserInterfaceScrollBarsController(){}
 ImmediateUserInterfaceScrollBarsController::~ImmediateUserInterfaceScrollBarsController(){}
-void ImmediateUserInterfaceScrollBarsController::frame_debug(ImmediateUserInterfaceContextLayer* _Context)
+void ImmediateUserInterfaceScrollBarsController::frame_input(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr) return;
 
@@ -6545,7 +6545,7 @@ void ImmediateUserInterfaceContextLayer::frame_input()
 
     // execute controllers
     for(auto& controller : m_Controllers)
-        controller->frame_debug(this);
+        controller->frame_input(this);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_render()
