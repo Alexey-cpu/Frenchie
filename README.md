@@ -2,15 +2,15 @@
 
 - [Overview](#overview)
     - [Description](#description)
-    - [Archichecture](#archichecture)
-    - [Supported platform backends](#Supportedplatformbackends)
-    - [Supported graphics backends](#Supportedgraphicsbackends)
+    - [Architecture](#architecture)
+    - [Supported platform backends](#supported platform backends)
+    - [Supported graphics backends](#supported graphics backends)
 
 ## **Description**
 
 Frenchie is C++ micro framework for development applications with graphical user interface (GUI). The project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries. Although these libraries propose simple and straightforward way to build GUI applications they are quite challenging to start with for those who does not have much background in computer graphics and GUI applications development. The main aim of this project is to provide simple and robust way for building GUI applications.
 
-## **Archichecture**
+## **Architecture**
 
 Frenchie is layered appication loop that executes range of layer processing functions untill the application is closed. Every application layer is responsible for a limited scrope of functions and operations. Besides layers, application uses platform and graphics backends.
 
