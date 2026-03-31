@@ -7,21 +7,32 @@ macro(COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
     set(RESOURCES "")
 
     foreach(PATH IN LISTS PATHS)
+        
+        # add file
+        if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PATH} AND NOT IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
+            get_filename_component(EXTENTION ${PATH} EXT)
+            if(${EXTENTION} STREQUAL ".cpp" OR ${EXTENTION} STREQUAL ".c")
+                list(APPEND SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
+            elseif(${EXTENTION} STREQUAL ".hpp" OR ${EXTENTION} STREQUAL ".h")
+                list(APPEND HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
+            endif()
+        # add all files from path
+        else()
+            #retrieve source files
+            file(GLOB_RECURSE CPP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.cpp")
+            file(GLOB_RECURSE CC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.cc")
+            file(GLOB_RECURSE C_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.c")
+            foreach(file IN LISTS CPP_FILES CC_FILES C_FILES)
+            list(APPEND SOURCES ${file})
+            endforeach()
 
-        #retrieve source files
-        file(GLOB_RECURSE CPP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.cpp")
-        file(GLOB_RECURSE CC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.cc")
-        file(GLOB_RECURSE C_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.c")
-        foreach(file IN LISTS CPP_FILES CC_FILES C_FILES)
-        list(APPEND SOURCES ${file})
-        endforeach()
-
-        #retrieve header files
-        file(GLOB_RECURSE HPP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.hpp")
-        file(GLOB_RECURSE H_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.h")
-        foreach(file IN LISTS HPP_FILES H_FILES)
-        list(APPEND HEADERS ${file})
-        endforeach()
+            #retrieve header files
+            file(GLOB_RECURSE HPP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.hpp")
+            file(GLOB_RECURSE H_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${PATH}/*.h")
+            foreach(file IN LISTS HPP_FILES H_FILES)
+            list(APPEND HEADERS ${file})
+            endforeach()
+        endif()
 
         # retrieve directories that have to be added to include paths of the compiler
         foreach(file IN LISTS HEADERS)
@@ -42,5 +53,24 @@ macro(COLLECT_SOURCE_CODE_AND_RESOURCES PATHS)
         list(REMOVE_DUPLICATES QRC_FILES)
 
     endforeach()
+
+    message("\n")
+    message("Project c/c++ header files:")
+    foreach(FILE IN LISTS HEADERS)
+        message("${FILE}")
+    endforeach()
+
+    message("\n")
+    message("Project c/c++ source files:")
+    foreach(FILE IN LISTS SOURCES)
+        message("${FILE}")
+    endforeach()
+
+    message("\n")
+    message("Project c/c++ include directories:")
+    foreach(FILE IN LISTS DIRECTORIES)
+        message("${FILE}")
+    endforeach()
+    message("\n")
 
 endmacro()

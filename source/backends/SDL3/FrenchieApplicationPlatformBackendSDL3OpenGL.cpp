@@ -200,7 +200,7 @@ namespace Frenchie
 
 std::string ApplicationPlatformBackend::get_window_name()
 {
-    return std::string(SDL_GetWindowTitle(reinterpret_cast<SDL_Window*>(m_Api->m_Context)));
+    return std::string(SDL_GetWindowTitle(reinterpret_cast<SDL_Window*>(m_Api->Window)));
 }
 
 std::string ApplicationPlatformBackend::get_clipboard_text()
@@ -215,7 +215,7 @@ bool ApplicationPlatformBackend::has_clipboard_text()
 
 void ApplicationPlatformBackend::set_window_name(const std::string& _Value)
 {
-    SDL_SetWindowTitle(reinterpret_cast<SDL_Window*>(m_Api->m_Context), _Value.c_str());
+    SDL_SetWindowTitle(reinterpret_cast<SDL_Window*>(m_Api->Window), _Value.c_str());
 }
 
 void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
@@ -225,7 +225,7 @@ void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
 
 bool ApplicationPlatformBackend::awake()
 {
-    if(m_Api != nullptr && m_Api->m_Context != nullptr)
+    if(m_Api != nullptr && m_Api->Window != nullptr)
         return true;
 
     // initialization
@@ -235,26 +235,35 @@ bool ApplicationPlatformBackend::awake()
     // create platform API
     m_Api = std::make_shared<FrenchieApplicationPlatformSDL3>();
 
-    // create context
-    m_Api->m_Context = SDL_CreateWindow("Application", 512, 256, SDL_WINDOW_OPENGL | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
-    if(m_Api->m_Context == nullptr)
+    // create context
+    SDL3->Window =
+        SDL_CreateWindow("Application", 512, 256, SDL_WINDOW_OPENGL | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
+
+    if(m_Api->Window == nullptr)
     {
         SDL_Quit();
         return false;
     }
 
-    platform_api<FrenchieApplicationPlatformSDL3>()->Context =
-        SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(platform_api<FrenchieApplicationPlatformSDL3>()->m_Context));
+    SDL3->Context = SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(SDL3->Window));
 
-    if(platform_api<FrenchieApplicationPlatformSDL3>()->Context == nullptr)
+    if(SDL3->Context == nullptr)
+    {
+        SDL_DestroyWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
+        SDL_Quit();
         return false;
+    }
 
     // configure context
-    if(!SDL_GL_MakeCurrent(reinterpret_cast<SDL_Window*>(
-        platform_api<FrenchieApplicationPlatformSDL3>()->m_Context),
-        platform_api<FrenchieApplicationPlatformSDL3>()->Context))
+    if(!SDL_GL_MakeCurrent(reinterpret_cast<SDL_Window*>(SDL3->Window), SDL3->Context))
+    {
+        SDL_DestroyWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
+        SDL_GL_DestroyContext(SDL3->Context);
+        SDL_Quit();
         return false;
+    }
 
     // load rendering backend
     if(!ApplicationRenderingBackend::awake((ApplicationRenderingBackend::Loader)SDL_GL_GetProcAddress))
@@ -270,20 +279,23 @@ void ApplicationPlatformBackend::frame_start()
 {
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
+    if(SDL3 == nullptr)
+        return;
+
     // retrieve frame buffer size
     int x = 0;
     int y = 0;
 
-    SDL_GetWindowSizeInPixels(reinterpret_cast<SDL_Window*>(SDL3->m_Context), &x, &y);
-    SDL3->m_Input.FrameBufferSize = gs_vec2f(x, y);
+    SDL_GetWindowSizeInPixels(reinterpret_cast<SDL_Window*>(SDL3->Window), &x, &y);
+    SDL3->Input.FrameBufferSize = gs_vec2f(x, y);
 
     // retrieve window size
     SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(SDL3->Context), &x, &y);
-    SDL3->m_Input.WindowSize = gs_vec2f(x, y);
+    SDL3->Input.WindowSize = gs_vec2f(x, y);
 
     // retrieve window position
     SDL_GetWindowPosition(reinterpret_cast<SDL_Window*>(SDL3->Context), &x, &y);
-    SDL3->m_Input.WindowPosition = gs_vec2f(x, y);
+    SDL3->Input.WindowPosition = gs_vec2f(x, y);
 
     // poll events
     SDL_StartTextInput(reinterpret_cast<SDL_Window*>(SDL3->Context));
@@ -295,21 +307,21 @@ void ApplicationPlatformBackend::frame_start()
     {
         case SDL_EVENT_MOUSE_MOTION:
         {
-            SDL3->m_Input.MouseCursor.Position = gs_vec2f((float)SDL3->Event.motion.x, (float)SDL3->Event.motion.y);
+            SDL3->Input.MouseCursor.Position = gs_vec2f((float)SDL3->Event.motion.x, (float)SDL3->Event.motion.y);
             return;
         }
         case SDL_EVENT_MOUSE_WHEEL:
         {
-            SDL3->m_Input.MouseScrollOffset = gs_vec2f(SDL3->Event.wheel.x, SDL3->Event.wheel.y);
+            SDL3->Input.MouseScrollOffset = gs_vec2f(SDL3->Event.wheel.x, SDL3->Event.wheel.y);
             return;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP:
         {
-            SDL3->m_Input.MouseButtons[SDLApplicationInputHandler::glfw_mouse_button_to_application_mouse_button(SDL3->Event.button.button)].Pressed =
+            SDL3->Input.MouseButtons[SDLApplicationInputHandler::glfw_mouse_button_to_application_mouse_button(SDL3->Event.button.button)].Pressed =
                 SDL3->Event.type == SDL_EVENT_MOUSE_BUTTON_DOWN;
             
-            SDL3->m_Input.MouseButtons[SDLApplicationInputHandler::glfw_mouse_button_to_application_mouse_button(SDL3->Event.button.button)].Released =
+            SDL3->Input.MouseButtons[SDLApplicationInputHandler::glfw_mouse_button_to_application_mouse_button(SDL3->Event.button.button)].Released =
                 SDL3->Event.type == SDL_EVENT_MOUSE_BUTTON_UP;
 
             return;
@@ -319,17 +331,17 @@ void ApplicationPlatformBackend::frame_start()
             std::u32string utf32 = Frenchie::Core::String::convert_utf8_to_utf32(SDL3->Event.text.text);
 
             if(!utf32.empty())
-                SDL3->m_Input.Character = utf32[0];
+                SDL3->Input.Character = utf32[0];
 
             return;
         }
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
         {
-            SDL3->m_Input.Keys[SDLApplicationInputHandler::glfw_key_to_application_key(SDL3->Event.key.key, SDL3->Event.key.scancode)].Pressed =
+            SDL3->Input.Keys[SDLApplicationInputHandler::glfw_key_to_application_key(SDL3->Event.key.key, SDL3->Event.key.scancode)].Pressed =
                 SDL3->Event.type == SDL_EVENT_KEY_DOWN;
 
-            SDL3->m_Input.Keys[SDLApplicationInputHandler::glfw_key_to_application_key(SDL3->Event.key.key, SDL3->Event.key.scancode)].Released =
+            SDL3->Input.Keys[SDLApplicationInputHandler::glfw_key_to_application_key(SDL3->Event.key.key, SDL3->Event.key.scancode)].Released =
                 SDL3->Event.type == SDL_EVENT_KEY_UP;
 
             return;
@@ -345,18 +357,18 @@ void ApplicationPlatformBackend::frame_start()
         }
         case SDL_EVENT_WINDOW_MOUSE_ENTER:
         {
-            SDL3->m_Input.MouseCursor.Entered = true;
+            SDL3->Input.MouseCursor.Entered = true;
             return;
         }
         case SDL_EVENT_WINDOW_MOUSE_LEAVE:
         {
-            SDL3->m_Input.MouseCursor.Entered = false;
+            SDL3->Input.MouseCursor.Entered = false;
             return;
         }
         case SDL_EVENT_WINDOW_FOCUS_GAINED:
         case SDL_EVENT_WINDOW_FOCUS_LOST:
         {
-            SDL3->m_Input.Window.Focused = SDL3->Event.type == SDL_EVENT_WINDOW_FOCUS_GAINED;
+            SDL3->Input.Window.Focused = SDL3->Event.type == SDL_EVENT_WINDOW_FOCUS_GAINED;
             return;
         }
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -390,25 +402,39 @@ void ApplicationPlatformBackend::frame_start()
 
 void ApplicationPlatformBackend::frame_update()
 {
-    if(SDL_TextInputActive(reinterpret_cast<SDL_Window*>(platform_api<FrenchieApplicationPlatformSDL3>()->m_Context)))
-        SDL_StopTextInput(reinterpret_cast<SDL_Window*>(platform_api<FrenchieApplicationPlatformSDL3>()->m_Context));
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
+
+    if(SDL3 == nullptr)
+        return;
+
+    if(SDL_TextInputActive(reinterpret_cast<SDL_Window*>(SDL3->Window)))
+        SDL_StopTextInput(reinterpret_cast<SDL_Window*>(SDL3->Window));
 
     // adjust viewport
-    ApplicationRenderingBackend::set_viewport(
-        gs_vec2f(0, 0),
-        platform_api<FrenchieApplicationPlatformSDL3>()->m_Input.FrameBufferSize);
+    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), SDL3->Input.FrameBufferSize);
 }
 
 void ApplicationPlatformBackend::frame_finish()
 {
-    SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(platform_api<FrenchieApplicationPlatformSDL3>()->m_Context));
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
+
+    if(SDL3 == nullptr)
+        return;
+
+    SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
 }
 
 void ApplicationPlatformBackend::quit()
 {
     // terminate self
-    SDL_DestroyWindow(reinterpret_cast<SDL_Window*>(platform_api<FrenchieApplicationPlatformSDL3>()->m_Context));
-    SDL_GL_DestroyContext(platform_api<FrenchieApplicationPlatformSDL3>()->Context);
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
+
+    if(SDL3 != nullptr)
+    {
+        SDL_DestroyWindow(reinterpret_cast<SDL_Window*>(SDL3->Window));
+        SDL_GL_DestroyContext(SDL3->Context);
+    }
+
     SDL_Quit();
 
     // terminate rendering API
@@ -417,7 +443,9 @@ void ApplicationPlatformBackend::quit()
 
 bool ApplicationPlatformBackend::is_closed()
 {
-    return platform_api<FrenchieApplicationPlatformSDL3>()->Event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+    auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
+
+    return SDL3 == nullptr || SDL3->Event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 }
 
 void ApplicationPlatformBackend::close()

@@ -4,13 +4,26 @@ project(Frenchie VERSION 0.1.0 LANGUAGES C CXX)
 #--------------------------------------------------------------
 # project options
 #--------------------------------------------------------------
-option(PLATFORM_BACKEND_GLFW "Use GLFW as platform backend" OFF)
-option(PLATFORM_BACKEND_SDL "Use SDL as platform backend" OFF)
+option(PLATFORM_BACKEND_GLFW   "Use GLFW as platform backend"    OFF)
+option(PLATFORM_BACKEND_SDL    "Use SDL as platform backend"     OFF)
+option(GRAPHICS_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
 
-option(RENDERING_BACKEND_OPENGL "Use OpenGL as rendering backend" ON)
+set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "Use GLFW" FORCE)
+set(PLATFORM_BACKEND_SDL ON CACHE BOOL "Use SDL3" FORCE)
 
-set(PLATFORM_BACKEND_GLFW ON CACHE BOOL "Build GLFW docs" FORCE)
-set(PLATFORM_BACKEND_SDL OFF CACHE BOOL "Build GLFW tests" FORCE)
+if(PLATFORM_BACKEND_GLFW)
+    set(PLATFORM_BACKEND "GLFW")
+    set(PLATFORM_BACKEND_SDL OFF CACHE BOOL "" FORCE)
+endif()
+
+if(PLATFORM_BACKEND_SDL)
+    set(PLATFORM_BACKEND "SDL")
+    set(PLATFORM_BACKEND_GLFW OFF CACHE BOOL "" FORCE)
+endif()
+
+if(GRAPHICS_BACKEND_OPENGL)
+    set(GRAPHICS_BACKEND "OpenGL")
+endif()
 
 #--------------------------------------------------------------
 # setup common project options
@@ -22,10 +35,19 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-message("C compiler: ${CMAKE_C_COMPILER}")
-message("C++ compiler: ${CMAKE_CXX_COMPILER}")
-message("CMake: ${CMAKE_VERSION}")
-message("CMake generator: ${CMAKE_MAKE_PROGRAM}")
+message("\n")
+message("-- Build system parameters:")
+message("-- Toolchain        ${CMAKE_TOOLCHAIN_FILE}")
+message("-- C compiler       ${CMAKE_C_COMPILER}")
+message("-- C++ compiler     ${CMAKE_CXX_COMPILER}")
+message("-- CMake            ${CMAKE_VERSION}")
+message("-- CMake generator  ${CMAKE_MAKE_PROGRAM}")
+message("\n")
+message("-- Project parameters:")
+message("-- Name             ${PROJECT_NAME}")
+message("-- Platform backend ${PLATFORM_BACKEND}")
+message("-- Graphics backend ${GRAPHICS_BACKEND}")
+message("\n")
 
 #--------------------------------------------------------------
 # include CMake utilities
@@ -38,14 +60,16 @@ include("cmake/collect_source_code_and_resources.cmake")
 list(APPEND KERNEL "source/core" "source/layers" "source/vendor" "source/application" "source/sandbox")
 
 if(PLATFORM_BACKEND_GLFW)
-    include("tools/glfw.cmake")
-    list(APPEND KERNEL "source/backends/GLFW")
+    list(APPEND KERNEL "source/backends/GLFW/FrenchieApplicationPlatformBackendGLFW.cpp")
 elseif(PLATFORM_BACKEND_SDL)
-    include("tools/sdl3.cmake")
-    list(APPEND KERNEL "source/backends/SDL3")
+    if(GRAPHICS_BACKEND_OPENGL)
+        list(APPEND KERNEL "source/backends/SDL3/FrenchieApplicationPlatformBackendSDL3OpenGL.cpp")
+    else()
+        # TODO: support other graphics API (Vulkan, Metal, DirectX)
+    endif()
 endif()
 
-if(RENDERING_BACKEND_OPENGL)
+if(GRAPHICS_BACKEND_OPENGL)
     list(APPEND KERNEL "source/backends/OpenGL")
 endif()
 
@@ -60,13 +84,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${DIRECTORIES})
 # configure external libraries and tools
 #--------------------------------------------------------------
 if(PLATFORM_BACKEND_GLFW)
+    include("tools/glfw.cmake")
     target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 elseif(PLATFORM_BACKEND_SDL)
+    include("tools/sdl3.cmake")
     target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3)
     target_include_directories(${PROJECT_NAME} PUBLIC "${SDL3_SOURCE_DIR}/include/")
 endif()
 
-if(RENDERING_BACKEND_OPENGL)
+if(GRAPHICS_BACKEND_OPENGL)
     target_include_directories(${PROJECT_NAME} PRIVATE "source/backends/OpenGL/glad/include/")
 endif()
 
