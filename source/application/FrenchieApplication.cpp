@@ -259,9 +259,8 @@ void ApplicationInstance::ApplicationInstance::frame_finish()
     ApplicationPlatformBackend::platform_api()->m_Input.MouseScrollOffset = gs_vec2f(0.f, 0.f);
 
     // restore cursor
-    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.MousePressPosition = gs_vec2f(0.f, 0.f);
-    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.DragDelta          = gs_vec2f(0.f, 0.f);
-    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Entered            = false;
+    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.DragDelta = gs_vec2f(0.f, 0.f);
+    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Entered   = false;
 
     // restore input character
     ApplicationPlatformBackend::platform_api()->m_Input.Character.reset();

@@ -41,7 +41,7 @@ if(PLATFORM_BACKEND_GLFW)
     include("tools/glfw.cmake")
     list(APPEND KERNEL "source/backends/GLFW")
 elseif(PLATFORM_BACKEND_SDL)
-    include("tools/sdl_3.4.x.cmake")
+    include("tools/sdl3.cmake")
     list(APPEND KERNEL "source/backends/SDL3")
 endif()
 

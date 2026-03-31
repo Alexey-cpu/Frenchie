@@ -7,7 +7,6 @@
 using namespace Frenchie::Application;
 
 #include "SDL.h"
-#include <iostream>
 
 namespace Frenchie
 {
