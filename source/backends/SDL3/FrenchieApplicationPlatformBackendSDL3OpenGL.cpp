@@ -290,15 +290,15 @@ void ApplicationPlatformBackend::frame_start()
     SDL3->Input.FrameBufferSize = gs_vec2f(x, y);
 
     // retrieve window size
-    SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(SDL3->Context), &x, &y);
+    SDL_GetWindowSize(reinterpret_cast<SDL_Window*>(SDL3->Window), &x, &y);
     SDL3->Input.WindowSize = gs_vec2f(x, y);
 
     // retrieve window position
-    SDL_GetWindowPosition(reinterpret_cast<SDL_Window*>(SDL3->Context), &x, &y);
+    SDL_GetWindowPosition(reinterpret_cast<SDL_Window*>(SDL3->Window), &x, &y);
     SDL3->Input.WindowPosition = gs_vec2f(x, y);
 
     // poll events
-    SDL_StartTextInput(reinterpret_cast<SDL_Window*>(SDL3->Context));
+    SDL_StartTextInput(reinterpret_cast<SDL_Window*>(SDL3->Window));
     SDL_PollEvent(&SDL3->Event);
     SDL_GL_SetSwapInterval(1);
 
@@ -331,9 +331,10 @@ void ApplicationPlatformBackend::frame_start()
             std::u32string utf32 = Frenchie::Core::String::convert_utf8_to_utf32(SDL3->Event.text.text);
 
             if(!utf32.empty())
+            {
                 SDL3->Input.Character = utf32[0];
-
-            return;
+                return;
+            }
         }
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
@@ -398,6 +399,8 @@ void ApplicationPlatformBackend::frame_start()
         default:
             break;
     }
+
+
 }
 
 void ApplicationPlatformBackend::frame_update()
