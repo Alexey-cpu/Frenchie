@@ -281,7 +281,10 @@ bool ApplicationPlatformBackend::awake()
     // create platform API
     m_Api = std::make_shared<FrenchieApplicationPlatformApi>();
 
-#ifdef __APPLE__
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 

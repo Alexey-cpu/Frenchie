@@ -237,6 +237,11 @@ bool ApplicationPlatformBackend::awake()
 
     auto SDL3 = platform_api<FrenchieApplicationPlatformSDL3>();
 
+#ifdef FRENCHIE_APPLICATION_PLATFORM_IS_MACOS
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
+
     // create context
     SDL3->Window =
         SDL_CreateWindow("Application", 512, 256, SDL_WINDOW_OPENGL | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
