@@ -183,7 +183,7 @@ namespace Frenchie
 
             static void glfw_on_window_focused_callback(GLFWwindow* _Window, int _Focused)
             {
-                ApplicationPlatformBackend::platform_api()->m_Input.Window.Focused =
+                ApplicationPlatformBackend::platform_api()->Input.Window.Focused =
                     glfw_boolean_to_application_boolean(_Focused);;
             }
 
@@ -191,14 +191,14 @@ namespace Frenchie
             static void glfw_on_cursor_moved_callback(GLFWwindow* _Window, double _X, double _Y)
             {
                 (void)_Window;
-                if(ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Entered)
-                    ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Position = gs_vec2f(_X, _Y);
+                if(ApplicationPlatformBackend::platform_api()->Input.MouseCursor.Entered)
+                    ApplicationPlatformBackend::platform_api()->Input.MouseCursor.Position = gs_vec2f(_X, _Y);
             }
 
             static void glfw_on_cursor_enter_callback(GLFWwindow* _Window, int _Entered)
             {
                 (void)_Window;
-                ApplicationPlatformBackend::platform_api()->m_Input.MouseCursor.Entered =
+                ApplicationPlatformBackend::platform_api()->Input.MouseCursor.Entered =
                     glfw_boolean_to_application_boolean(_Entered);
             }
 
@@ -208,10 +208,10 @@ namespace Frenchie
                 (void)_Window;
 
                 // trigger mouse press event
-                ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Pressed  = action == GLFW_PRESS;
+                ApplicationPlatformBackend::platform_api()->Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Pressed  = action == GLFW_PRESS;
 
                 // trigger mouse release event
-                ApplicationPlatformBackend::platform_api()->m_Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Released = action == GLFW_RELEASE;
+                ApplicationPlatformBackend::platform_api()->Input.MouseButtons[glfw_mouse_button_to_application_mouse_button(button)].Released = action == GLFW_RELEASE;
             }
         
             // keys callbacks
@@ -221,24 +221,24 @@ namespace Frenchie
                 (void)_Mods;
 
                 // trigger mouse press event
-                ApplicationPlatformBackend::platform_api()->m_Input.Keys[glfw_key_to_application_key(_Keycode, _Scancode)].Pressed  = _Action == GLFW_PRESS;
+                ApplicationPlatformBackend::platform_api()->Input.Keys[glfw_key_to_application_key(_Keycode, _Scancode)].Pressed  = _Action == GLFW_PRESS;
 
                 // trigger mouse release event
-                ApplicationPlatformBackend::platform_api()->m_Input.Keys[glfw_key_to_application_key(_Keycode, _Scancode)].Released = _Action == GLFW_RELEASE;
+                ApplicationPlatformBackend::platform_api()->Input.Keys[glfw_key_to_application_key(_Keycode, _Scancode)].Released = _Action == GLFW_RELEASE;
             }
         
             // input callbacks
             static void glfw_on_character_input_callback(GLFWwindow* _Window, unsigned int _Character)
             {
                 (void)_Window;
-                ApplicationPlatformBackend::platform_api()->m_Input.Character = _Character;
+                ApplicationPlatformBackend::platform_api()->Input.Character = _Character;
             }
 
             // scroll callbacks
             static void glfw_on_mouse_sroll_offset_changed_callback(GLFWwindow* _Window, double _dX, double _dY)
             {
                 (void)_Window;
-                ApplicationPlatformBackend::platform_api()->m_Input.MouseScrollOffset = gs_vector_normalize(gs_vec2f(_dX, _dY));
+                ApplicationPlatformBackend::platform_api()->Input.MouseScrollOffset = gs_vector_normalize(gs_vec2f(_dX, _dY));
             }
         };
     }
@@ -246,32 +246,32 @@ namespace Frenchie
 
 std::string ApplicationPlatformBackend::get_window_name()
 {
-    return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Api->m_Context)));
+    return std::string(glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Api->Window)));
 }
 
 std::string ApplicationPlatformBackend::get_clipboard_text()
 {
-    return std::string(glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->m_Context)));
+    return std::string(glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->Window)));
 }
 
 bool ApplicationPlatformBackend::has_clipboard_text()
 {
-    return glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->m_Context)) != nullptr;
+    return glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->Window)) != nullptr;
 }
 
 void ApplicationPlatformBackend::set_window_name(const std::string& _Value)
 {
-    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), _Value.c_str());
+    glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(m_Api->Window), _Value.c_str());
 }
 
 void ApplicationPlatformBackend::set_clipboard_text(const std::string& _Value)
 {
-    glfwSetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), _Value.c_str());
+    glfwSetClipboardString(reinterpret_cast<GLFWwindow*>(m_Api->Window), _Value.c_str());
 }
 
 bool ApplicationPlatformBackend::awake()
 {
-    if(m_Api != nullptr && m_Api->m_Context != nullptr)
+    if(m_Api != nullptr && m_Api->Window != nullptr)
         return true;
 
     // initialization
@@ -292,29 +292,29 @@ bool ApplicationPlatformBackend::awake()
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 
     // create context
-    m_Api->m_Context = glfwCreateWindow(512, 256, "Application", nullptr, nullptr);
+    m_Api->Window = glfwCreateWindow(512, 256, "Application", nullptr, nullptr);
 
-    if(m_Api->m_Context == nullptr)
+    if(m_Api->Window == nullptr)
     {
         glfwTerminate();
         return false;
     }
 
     // maximize context window
-    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Api->m_Context));
+    glfwMaximizeWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
 
     // configure context
-    glfwMakeContextCurrent(reinterpret_cast<GLFWwindow*>(m_Api->m_Context));
-    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_window_resize_callback);
-    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_window_resize_callback);
-    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback);
-    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_window_focused_callback);
-    glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_cursor_enter_callback);
-    glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_cursor_moved_callback);
-    glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_mouse_button_callback);
-    glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_mouse_sroll_offset_changed_callback);
-    glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_key_callback);
-    glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), FrenchieApplicationGLFWInputHandler::glfw_on_character_input_callback);
+    glfwMakeContextCurrent(reinterpret_cast<GLFWwindow*>(m_Api->Window));
+    glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_window_resize_callback);
+    glfwSetFramebufferSizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_window_resize_callback);
+    glfwSetWindowMaximizeCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback);
+    glfwSetWindowFocusCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_window_focused_callback);
+    glfwSetCursorEnterCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_cursor_enter_callback);
+    glfwSetCursorPosCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_cursor_moved_callback);
+    glfwSetMouseButtonCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_mouse_button_callback);
+    glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_mouse_sroll_offset_changed_callback);
+    glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_key_callback);
+    glfwSetCharCallback(reinterpret_cast<GLFWwindow*>(m_Api->Window), FrenchieApplicationGLFWInputHandler::glfw_on_character_input_callback);
     // glfwSetWindowCloseCallback(vd->Window, ImGui_ImplGlfw_WindowCloseCallback);
     // glfwSetWindowPosCallback(vd->Window, ImGui_ImplGlfw_WindowPosCallback);
     // glfwSetWindowSizeCallback(vd->Window, ImGui_ImplGlfw_WindowSizeCallback);
@@ -328,8 +328,8 @@ bool ApplicationPlatformBackend::awake()
 
     // call window maximize callback if the Window has been maximized
     FrenchieApplicationGLFWInputHandler::glfw_on_window_maximized_callback(
-        reinterpret_cast<GLFWwindow*>(m_Api->m_Context),
-        glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), GLFW_MAXIMIZED));
+        reinterpret_cast<GLFWwindow*>(m_Api->Window),
+        glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(m_Api->Window), GLFW_MAXIMIZED));
 
     return true;
 }
@@ -339,16 +339,16 @@ void ApplicationPlatformBackend::frame_start()
     // retrieve frame buffer size
     int x = 0;
     int y = 0;
-    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), &x, &y);
-    m_Api->m_Input.FrameBufferSize = gs_vec2f(x, y);
+    glfwGetFramebufferSize(reinterpret_cast<GLFWwindow*>(m_Api->Window), &x, &y);
+    m_Api->Input.FrameBufferSize = gs_vec2f(x, y);
 
     // retrieve window size
-    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), &x, &y);
-    m_Api->m_Input.WindowSize = gs_vec2f(x, y);
+    glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(m_Api->Window), &x, &y);
+    m_Api->Input.WindowSize = gs_vec2f(x, y);
 
     // retrieve window position
-    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), &x, &y);
-    m_Api->m_Input.WindowPosition = gs_vec2f(x, y);
+    glfwGetWindowPos(reinterpret_cast<GLFWwindow*>(m_Api->Window), &x, &y);
+    m_Api->Input.WindowPosition = gs_vec2f(x, y);
 
     // execute backend
     glfwPollEvents();
@@ -358,20 +358,20 @@ void ApplicationPlatformBackend::frame_start()
 void ApplicationPlatformBackend::frame_update()
 {
     // adjust viewport
-    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), m_Api->m_Input.FrameBufferSize);
+    ApplicationRenderingBackend::set_viewport(gs_vec2f(0, 0), m_Api->Input.FrameBufferSize);
 }
 
 void ApplicationPlatformBackend::frame_finish()
 {
-    glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Api->m_Context));
+    glfwSwapBuffers(reinterpret_cast<GLFWwindow*>(m_Api->Window));
 }
 
 void ApplicationPlatformBackend::quit()
 {
     // terminate self
-    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Api->m_Context));
+    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_Api->Window));
     glfwTerminate();
-    m_Api->m_Context = nullptr;
+    m_Api->Window = nullptr;
 
     // terminate rendering API
     ApplicationRenderingBackend::quit();
@@ -379,10 +379,10 @@ void ApplicationPlatformBackend::quit()
 
 bool ApplicationPlatformBackend::is_closed()
 {
-    return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Api->m_Context));
+    return glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Api->Window));
 }
 
 void ApplicationPlatformBackend::close()
 {
-    glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Api->m_Context), GL_TRUE);
+    glfwSetWindowShouldClose(reinterpret_cast<GLFWwindow*>(m_Api->Window), GL_TRUE);
 }

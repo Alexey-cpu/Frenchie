@@ -354,8 +354,8 @@ namespace Frenchie
             FrenchieApplicationPlatformApi(){}
             virtual ~FrenchieApplicationPlatformApi(){}
 
-            void*                           m_Context = nullptr;
-            ApplicationPlatformBackendInput m_Input;
+            void*                           Window = nullptr;
+            ApplicationPlatformBackendInput Input;
         };
 
         class ApplicationPlatformBackend final // TODO: may be implement strategy pattern here ????
