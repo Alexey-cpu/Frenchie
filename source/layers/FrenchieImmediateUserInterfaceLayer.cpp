@@ -78,14 +78,6 @@ namespace Frenchie
         };
    
         // scroll area
-        struct ImmediateUserInterfaceScrollAreaScrollBar;
-
-        enum ImmediateUserInterfaceScrollAreaScrollBarType_
-        {
-            ImmediateUserInterfaceScrollAreaScrollBarType_Vertical,
-            ImmediateUserInterfaceScrollAreaScrollBarType_Horizontal,
-        };
-
         struct ImmediateUserInterfaceScrollArea : public ImmediateUserInterfacePanel
         {
         public:
@@ -234,6 +226,14 @@ namespace Frenchie
             bool                                           Active    {false};
             bool                                           Hovered   {false};
             std::chrono::high_resolution_clock::time_point HoverTime {std::chrono::high_resolution_clock::time_point()};
+        };
+
+        struct ImmediateUserInterfaceComboboxScrollArea : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceComboboxScrollArea();
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceComboboxItem : public ImmediateUserInterfaceNode
@@ -2364,6 +2364,7 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
 
     // menus
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline]                      = gs_color_rgba(72, 72, 72, 255);
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground]                   = gs_color_rgba(28, 28, 28, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground]             = gs_color_rgba(32, 32, 32, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered]      = gs_color_rgba(60, 72, 60, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed]      = gs_color_rgba(120, 128, 120, 255);
@@ -3838,12 +3839,27 @@ ImmediateUserInterfaceMenuScrollArea::~ImmediateUserInterfaceMenuScrollArea(){}
 
 void ImmediateUserInterfaceMenuScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
 {
-    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+    if( _Context             == nullptr ||
+        _Context->m_Renderer == nullptr ||
+        _Context->m_Hierarchy.get_parent(_Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this)) != nullptr)
+    {
+        return;
+    }
 
-    ImmediateUserInterfaceMenu* menu = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceMenu>(this);
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-    if(_Context->m_Hierarchy.get_parent(menu) == nullptr)
-        ImmediateUserInterfaceScrollArea::render(_Context);
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
 }
 
 // ImmediateUserInterfaceMenuAction
@@ -4056,6 +4072,32 @@ void ImmediateUserInterfaceCombobox::attach_child(ImmediateUserInterfaceNode* _C
 {
     if(ScrollArea != nullptr)
         ScrollArea->attach_child(_Child);
+}
+
+ImmediateUserInterfaceComboboxScrollArea::ImmediateUserInterfaceComboboxScrollArea(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+
+ImmediateUserInterfaceComboboxScrollArea::~ImmediateUserInterfaceComboboxScrollArea()
+{
+}
+
+void ImmediateUserInterfaceComboboxScrollArea::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr)
+        return;
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
 // ImmediateUserInterfaceComboboxItem
@@ -8530,7 +8572,7 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
             return false;
         }
 
-        if(begin_scrollarea(next_id("ScrollArea"),
+        if(begin_node<ImmediateUserInterfaceComboboxScrollArea>(next_id("ScrollArea"),
             ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup
             | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar
@@ -8563,7 +8605,11 @@ bool ImmediateUserInterfaceContextLayer::begin_combobox(const std::string& _ID, 
                 widget->Hovered = false;
             }
 
-            end_scrollarea();
+            // create an empty filler node
+            next_size(gs_vec2f(widget->State.BoundingBox.width(), 0.f));
+            empty_node(next_id("Filler"));
+
+            end_node<ImmediateUserInterfaceComboboxScrollArea>();
         }
     }
 
