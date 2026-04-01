@@ -76,6 +76,7 @@ namespace Frenchie
 
             // menus
             ImmediateUserInterfaceNodeColors_MenuOutline,                                               // menu outline
+            ImmediateUserInterfaceNodeColors_MenuBackground,                                            // menu outline
             ImmediateUserInterfaceNodeColors_MenuActionBackground,                                      // menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered,                               // hovered menu action background
             ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed,                               // hovered menu action background

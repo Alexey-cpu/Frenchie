@@ -3,12 +3,17 @@
 - [Overview](#overview)
     - [Description](#description)
     - [Architecture](#architecture)
+    - [Motivation and design goals](#motivation-and-design-goals)
     - [Supported platform backends](#supported-platform-backends)
     - [Supported graphics backends](#supported-graphics-backends)
 
 ## **Description**
 
-Frenchie is C++ micro framework for development applications with graphical user interface (GUI). The project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries. Although these libraries propose simple and straightforward way to build GUI applications they are quite challenging to start with for those who does not have much background in computer graphics and GUI applications development. The main aim of this project is to provide simple and robust way for building GUI applications.
+Frenchie is C++ micro framework for development applications with graphical user interface (GUI). The project has been inspired by Dear ImGUI (https://github.com/ocornut/imgui) and Nuklear (https://github.com/vurtun/nuklear) libraries that propose simple and straightforward way to build GUI applications on wide range of platforms.
+
+## **Motivation and design goals**
+
+Although libraries like Dear ImGUI and Nuklear propose simple and straightforward way to build GUI applications they are quite challenging to start with for those who does not have much background in computer graphics and GUI applications development. The main aim of this project is to provide simple and robust way for building GUI applications on wide range of platforms with as few specific background as possible.
 
 ## **Architecture**
 
