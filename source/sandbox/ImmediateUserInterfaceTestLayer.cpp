@@ -122,6 +122,31 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_UI->end_window();
     }
 
+    if(m_UI->begin_dialog(m_UI->next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.showColorPciker))
+    {
+        if(m_UI->push_button(m_UI->next_id("Open another dialog", "OpenAnotherDialog")))
+        {
+            State.openAnotherDialog = true;
+        }
+
+        if(m_UI->begin_dialog(m_UI->next_id("Another dialog"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.openAnotherDialog))
+        {
+            if(m_UI->push_button(m_UI->next_id("Open another dialog", "OpenAnotherDialog")))
+            {
+                State.openAnotherDialog1 = true;
+            }
+
+            if(m_UI->begin_dialog(m_UI->next_id("Another dialog"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.openAnotherDialog1))
+            {
+                m_UI->end_dialog();
+            }
+
+            m_UI->end_dialog();
+        }
+
+        m_UI->end_dialog();
+    }
+
     if(m_UI->begin_window(
         m_UI->next_id("Style Settings", "StyleSettings"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
@@ -694,123 +719,130 @@ void ImmediateUserInterfaceTestLayer::develop_test()
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWindowsDocking |
         ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_HighlighHoveredNodes;
 
-    static std::string input;
-    static float       value;
+    static bool showDialog = true;
 
-    int scrollSettings =
-
-
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar |
-        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar;
-
-    if(m_UI->begin_window(m_UI->next_id("Тестовое окно", "Window-1")))
+    if(m_UI->begin_dialog(m_UI->next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &showDialog))
     {
-        if(m_UI->begin_scrollarea(
-            m_UI->next_id("String"),
-            scrollSettings))
-        {
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 5; j++)
-                {
-                    std::string name = Frenchie::Core::String::format("Label-%d-%d", i, j);
-                    m_UI->push_button(m_UI->next_id(name, name)); m_UI->same_line();
-                }
+        m_UI->end_dialog();
+    }
 
-                m_UI->next_line();
-            }
+    // static std::string input;
+    // static float       value;
+
+    // int scrollSettings =
+
+
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalScrollBarArrowKeysAdjustment |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarArrowKeysAdjustment |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalScrollBarMouseWheelAdjustment |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar |
+    //     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar;
+
+    // if(m_UI->begin_window(m_UI->next_id("Тестовое окно", "Window-1")))
+    // {
+    //     if(m_UI->begin_scrollarea(
+    //         m_UI->next_id("String"),
+    //         scrollSettings))
+    //     {
+    //         for (int i = 0; i < 5; i++)
+    //         {
+    //             for (int j = 0; j < 5; j++)
+    //             {
+    //                 std::string name = Frenchie::Core::String::format("Label-%d-%d", i, j);
+    //                 m_UI->push_button(m_UI->next_id(name, name)); m_UI->same_line();
+    //             }
+
+    //             m_UI->next_line();
+    //         }
             
 
-            m_UI->end_scrollarea();
-        }
+    //         m_UI->end_scrollarea();
+    //     }
 
-        m_UI->end_window();
-    }
+    //     m_UI->end_window();
+    // }
 
-    if(m_UI->begin_window(m_UI->next_id("Тестовое окно", "Window")))
-    {
-        int rowsCount    = 1000;
-        int colsCount    = 1000;
-        int cellSettings = 
-              ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
-            | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+    // if(m_UI->begin_window(m_UI->next_id("Тестовое окно", "Window")))
+    // {
+    //     int rowsCount    = 1000;
+    //     int colsCount    = 1000;
+    //     int cellSettings = 
+    //           ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentCenter
+    //         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_HorizontalContentAlignmentCenter
+    //         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable
+    //         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
 
         
-        if(m_UI->begin_table(m_UI->next_id("Table"), rowsCount, colsCount))
-        {
-            ImmediateUserInterfaceGridClipper clipper = m_UI->current_table_clipper();
+    //     if(m_UI->begin_table(m_UI->next_id("Table"), rowsCount, colsCount))
+    //     {
+    //         ImmediateUserInterfaceGridClipper clipper = m_UI->current_table_clipper();
 
-            // corner header
-            if(m_UI->begin_table_corner_title(cellSettings))
-            {
-                m_UI->label(
-                    m_UI->next_id("Dimintions"),
-                    Frenchie::Core::String::format("%dx%d", rowsCount, colsCount),
-                    ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+    //         // corner header
+    //         if(m_UI->begin_table_corner_title(cellSettings))
+    //         {
+    //             m_UI->label(
+    //                 m_UI->next_id("Dimintions"),
+    //                 Frenchie::Core::String::format("%dx%d", rowsCount, colsCount),
+    //                 ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
 
-                m_UI->end_table_corner_title();
-            }
+    //             m_UI->end_table_corner_title();
+    //         }
 
-            // columns titles
-            for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
-            {
-                if(m_UI->begin_table_horizontal_title(j, cellSettings))
-                {
-                    m_UI->label(
-                        m_UI->next_id("Title"),
-                        Frenchie::Core::String::to_string(j),
-                        ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
-                    m_UI->end_table_horizontal_title();
-                }
-            }
+    //         // columns titles
+    //         for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+    //         {
+    //             if(m_UI->begin_table_horizontal_title(j, cellSettings))
+    //             {
+    //                 m_UI->label(
+    //                     m_UI->next_id("Title"),
+    //                     Frenchie::Core::String::to_string(j),
+    //                     ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+    //                 m_UI->end_table_horizontal_title();
+    //             }
+    //         }
 
-            // rows titles
-            for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
-            {
-                if(m_UI->begin_table_vertical_title(j, cellSettings))
-                {
-                    m_UI->label(
-                        m_UI->next_id("Title"),
-                        Frenchie::Core::String::to_string(j),
-                        ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
-                    m_UI->end_table_vertical_title();
-                }
-            }
+    //         // rows titles
+    //         for (int j = clipper.SourceRow; j < clipper.TargetRow; j++)
+    //         {
+    //             if(m_UI->begin_table_vertical_title(j, cellSettings))
+    //             {
+    //                 m_UI->label(
+    //                     m_UI->next_id("Title"),
+    //                     Frenchie::Core::String::to_string(j),
+    //                     ImmediateUserInterfaceLabelSettings_::ImmediateUserInterfaceLabelSettings_AlignCenter);
+    //                 m_UI->end_table_vertical_title();
+    //             }
+    //         }
 
-            for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
-            { 
-                for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
-                {
-                    m_UI->next_content_margin(gs_vec4f(8.f));
+    //         for (int i = clipper.SourceRow; i < clipper.TargetRow; i++)
+    //         { 
+    //             for (int j = clipper.SourceCol; j < clipper.TargetCol; j++)
+    //             {
+    //                 m_UI->next_content_margin(gs_vec4f(8.f));
 
-                    if(m_UI->begin_table_data_cell(i, j, cellSettings))
-                    {
-                        // std::string id = Frenchie::Core::String::format("Label-%d-%d", i, j);
+    //                 if(m_UI->begin_table_data_cell(i, j, cellSettings))
+    //                 {
+    //                     // std::string id = Frenchie::Core::String::format("Label-%d-%d", i, j);
 
-                        // if(i == 0)
-                        //     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id(id), Frenchie::Core::String::to_string(j));
-                        // else if(j == 0)
-                        //     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id(id), Frenchie::Core::String::to_string(i));
+    //                     // if(i == 0)
+    //                     //     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id(id), Frenchie::Core::String::to_string(j));
+    //                     // else if(j == 0)
+    //                     //     m_ImmediateUserInterface->label(m_ImmediateUserInterface->next_id(id), Frenchie::Core::String::to_string(i));
 
-                        m_UI->input_scalar(
-                            m_UI->next_id("String"),
-                            value);
+    //                     m_UI->input_scalar(
+    //                         m_UI->next_id("String"),
+    //                         value);
                         
-                        m_UI->end_table_data_cell();
-                    }
-                }
-            }
+    //                     m_UI->end_table_data_cell();
+    //                 }
+    //             }
+    //         }
 
-            m_UI->end_table();
-        }
+    //         m_UI->end_table();
+    //     }
 
-        m_UI->end_window();
-    }
+    //     m_UI->end_window();
+    // }
 
     // std::filesystem::path currentPath = std::filesystem::current_path();
 

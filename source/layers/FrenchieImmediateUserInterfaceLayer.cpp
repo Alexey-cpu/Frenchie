@@ -523,6 +523,89 @@ namespace Frenchie
             }
         };
 
+        // dialog
+        struct ImmediateUserInterfaceDialogContent : public ImmediateUserInterfaceNode
+        {
+            ImmediateUserInterfaceDialogContent(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceDialogContent();
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
+
+            gs_2dboxf FrameBox   {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            gs_2dboxf ContentBox {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            bool*     Opened     {nullptr};
+        };
+
+        struct ImmediateUserInterfaceDialog : public ImmediateUserInterfacePanel
+        {
+            ImmediateUserInterfaceDialog(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
+            virtual ~ImmediateUserInterfaceDialog(){}
+
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                // layout self
+                State.BoundingBox = gs_2dboxf(
+                    _Context->m_Renderer->current_viewport().Min - _Context->m_Style.get_frames_width(),
+                    _Context->m_Renderer->current_viewport().Max + _Context->m_Style.get_frames_width());
+            }
+
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
+            {
+                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+                // outline
+                _Context->m_Renderer->push_rectangle_rounded_filled(
+                    State.BoundingBox.Min,
+                    State.BoundingBox.Max,
+                    _Context->m_Style.get_frames_radius(),
+                    gs_color_rgba(128, 128, 128, 128),
+                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+            }
+
+            virtual void attach_child(ImmediateUserInterfaceNode* _Child) override
+            {
+                if(dynamic_cast<ImmediateUserInterfaceDialogContent*>(_Child))
+                {
+                    _Child->State.Parent = this;
+                    return;
+                }
+
+                if(Contents)
+                {
+                    Contents->attach_child(_Child);
+                }
+            }
+
+            virtual bool create_contents(
+                ImmediateUserInterfaceContextLayer*       _Context, 
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings,
+                bool*                                     _Render = nullptr) override
+            {
+                // disable self moving
+                State.Settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable;
+
+                int settings = _Settings;
+                settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+                settings &= ~ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup;
+
+                if(_Context->begin_node<ImmediateUserInterfaceDialogContent>(_Context->next_id("Panel"), settings))
+                {
+                    Contents = _Context->get_rendering_stack_top<ImmediateUserInterfaceDialogContent>();
+
+                    _Context->end_node<ImmediateUserInterfaceDialogContent>();
+                }
+
+                return true;
+            }
+
+            ImmediateUserInterfaceDialogContent* Contents = nullptr;
+        };
+
         // controllers
         class ImmedidateUserInterfaceWindowController : public ImmediateUserInterfaceContextController
         {
@@ -5275,6 +5358,129 @@ void ImmediateUserInterfaceWindowDockArea::render(ImmediateUserInterfaceContextL
     );
 }
 
+// ImmediateUserInterfaceDialogContent
+ImmediateUserInterfaceDialogContent::ImmediateUserInterfaceDialogContent(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceDialogContent::~ImmediateUserInterfaceDialogContent(){}
+
+void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    // compute self geometry
+    FrameBox = gs_2dboxf(
+        State.BoundingBox.Min,
+        gs_vec2f(
+            State.BoundingBox.Max.x,
+            State.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size(), 64.f)));
+
+    ContentBox = gs_2dboxf(gs_vec2f(FrameBox.Min.x, FrameBox.Max.y), State.BoundingBox.Max);
+
+    ContentBox = gs_2dboxf(
+        ContentBox.Min + _Context->m_Style.get_frames_width(),
+        ContentBox.Max - _Context->m_Style.get_frames_width());
+
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+        _Context->m_Hierarchy.begin(this),
+        _Context->m_Hierarchy.end(this),
+        ContentBox.Min,
+        ContentBox.size(),
+        gs_vec4f(0.f),
+        gs_vec4f(0.f),
+        State.Settings,
+        [this](const ImmediateUserInterfaceNode* _Node){return true;});
+}
+
+bool ImmediateUserInterfaceDialogContent::events(ImmediateUserInterfaceContextLayer* _Context)
+{                
+    return ImmediateUserInterfaceNode::events(_Context);
+}
+
+void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
+    {
+        if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
+            return gs_color_rgba(255, 0, 0, 255);
+
+        return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
+            gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
+            gs_color_rgba(64, 0, 0, 255);
+    };
+
+    auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box)
+    {
+        gs_2dboxf closeButtonBox = gs_2dboxf(
+            _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
+            _Box.Max - _Context->m_Style.get_frames_width() * 2.f);
+
+        _Context->m_Renderer->push_arc_filled(
+            closeButtonBox.center(),
+            closeButtonBox.size().x,
+            closeButtonBox.size().y,
+            0.f,
+            360.f,
+            close_button_color(_Context, closeButtonBox),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_line(
+            closeButtonBox.Min + gs_vec2f(+4.f, +4.f),
+            closeButtonBox.Max - gs_vec2f(+4.f, +4.f),
+            4.f,
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        _Context->m_Renderer->push_line(
+            gs_vec2f(closeButtonBox.Max.x, closeButtonBox.Min.y) + gs_vec2f(-4.f, +4.f),
+            gs_vec2f(closeButtonBox.Min.x, closeButtonBox.Max.y) + gs_vec2f(+4.f, -4.f),
+            4.f,
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    };
+
+    // outline
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    // frame
+    {
+        // framebox
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            FrameBox.Min,
+            FrameBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+        // close button
+        gs_2dboxf closeButtonBox  = gs_2dboxf(
+            gs_vec2f(FrameBox.Max.x - FrameBox.height() / 2.f, FrameBox.center().y) - FrameBox.height() / 4.f,
+            gs_vec2f(FrameBox.Max.x - FrameBox.height() / 2.f, FrameBox.center().y) + FrameBox.height() / 4.f);
+
+        render_close_button(_Context, closeButtonBox);
+
+        if(Opened != nullptr)
+            *Opened = !(closeButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_clicked());
+    }
+
+    // content
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            ContentBox.Min,
+            ContentBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+}
+
 // ImmedidateUserInterfaceWindowController
 ImmedidateUserInterfaceWindowController::ImmedidateUserInterfaceWindowController(){}
 ImmedidateUserInterfaceWindowController::~ImmedidateUserInterfaceWindowController(){}
@@ -8954,6 +9160,28 @@ bool ImmediateUserInterfaceContextLayer::begin_window(const std::string& _ID, co
 void ImmediateUserInterfaceContextLayer::end_window()
 {
     end_node<ImmediateUserInterfaceWindow>();
+}
+
+bool ImmediateUserInterfaceContextLayer::begin_dialog(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Opened)
+{
+    int settings = _Settings;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NullParent;
+    settings |= ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup;
+
+    if(begin_node<ImmediateUserInterfaceDialog>(_ID, settings, _Opened))
+    {
+        get_rendering_stack_top<ImmediateUserInterfaceDialog>()->State.RenderingOrder =
+            ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Modal;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ImmediateUserInterfaceContextLayer::end_dialog()
+{
+    end_node<ImmediateUserInterfaceDialog>();
 }
 
 std::string ImmediateUserInterfaceContextLayer::next_id(const std::string& _Name, const std::string& _Hash)
