@@ -13,7 +13,7 @@ namespace Frenchie
         {
             // context settings
             bool ShowContextSettings            = false;
-            bool ShowContextOverlay             = true;
+            bool ShowContextOverlay             = false;
             bool ContextWindowsDockingEnabled   = true;
             bool ContextWorkspaceDockingEnabled = true;
             bool ContextHighlightHoveredNodes   = true;
@@ -71,6 +71,7 @@ namespace Frenchie
             virtual ~ImmediateUserInterfaceTestLayer();
 
             virtual bool awake() override;
+            virtual void frame_start() override;
             virtual void frame_update() override;
             virtual void finish() override;
 

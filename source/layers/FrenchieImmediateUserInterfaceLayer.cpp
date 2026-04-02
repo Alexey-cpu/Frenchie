@@ -387,10 +387,13 @@ namespace Frenchie
             bool                        Activate          {false};
             bool                        ReattachChildren  {false};
 
-            gs_2dboxf                   FrameBox          {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            gs_2dboxf                   ContentBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            // gs_2dboxf                   FrameBox          {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
+            // gs_2dboxf                   ContentBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             bool*                       Opened            {nullptr};
             int                         DockingIndex      {-1};
+
+            // content
+            ImmediateUserInterfaceNode* RootView          {nullptr};
 
             // docking
             ImmediateUserInterfaceNode* DockerView        {nullptr};
@@ -405,69 +408,71 @@ namespace Frenchie
             // content
             ImmediateUserInterfaceNode* ContentView       {nullptr};
 
-            template<typename FrameProcessor>
-            void process_window_frame(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window, const FrameProcessor& _FrameProcessor)
-            {
-                if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
-                    return;
+            std::vector<ImmediateUserInterfaceNode*> DockedWindowsCache {std::vector<ImmediateUserInterfaceNode*>()};
 
-                // calculate total windows frames size and frames count
-                gs_vec2f totalFramesSize  = gs_vec2f(0.f, 0.f);
-                int      totalFramesCount = 0;
+            // template<typename FrameProcessor>
+            // void process_window_frame(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceWindow* _Window, const FrameProcessor& _FrameProcessor)
+            // {
+            //     if(_Context == nullptr || _Window == nullptr || _Window->Docker != nullptr)
+            //         return;
 
-                for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                         it != _Context->m_Hierarchy.end(_Window->DockerView);
-                         it++)
-                {
-                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
+            //     // calculate total windows frames size and frames count
+            //     gs_vec2f totalFramesSize  = gs_vec2f(0.f, 0.f);
+            //     int      totalFramesCount = 0;
 
-                    totalFramesSize += gs_vec2f(
-                        _Context->m_Renderer->calculate_bounding_box((*it)->Name.begin(), (*it)->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
-                        0.f);
-                    totalFramesCount++;
-                }
+            //     for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+            //              it != _Context->m_Hierarchy.end(_Window->DockerView);
+            //              it++)
+            //     {
+            //         if(dynamic_cast<ImmediateUserInterfaceWindow*>(*it) == nullptr) continue;
 
-                totalFramesSize += gs_vec2f(
-                    _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
-                    0.f);
-                totalFramesCount++;
+            //         totalFramesSize += gs_vec2f(
+            //             _Context->m_Renderer->calculate_bounding_box((*it)->Name.begin(), (*it)->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
+            //             0.f);
+            //         totalFramesCount++;
+            //     }
 
-                totalFramesSize = gs_vec2f(
-                    gs_min(totalFramesSize.x, _Window->FrameBox.width() * 0.8f), // TODO: 0.8f MUST BE A SETTING !!!
-                    _Window->FrameBox.height());
+            //     totalFramesSize += gs_vec2f(
+            //         _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).width(),
+            //         0.f);
+            //     totalFramesCount++;
 
-                // calculate frame unlocking and dragging panes
-                gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
+            //     totalFramesSize = gs_vec2f(
+            //         gs_min(totalFramesSize.x, _Window->FrameBox.width() * 0.8f), // TODO: 0.8f MUST BE A SETTING !!!
+            //         _Window->FrameBox.height());
 
-                // process frameboxes
-                gs_vec2f position = frameBoxUnlockingPane.Min;
-                gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
+            //     // calculate frame unlocking and dragging panes
+            //     gs_2dboxf frameBoxUnlockingPane = gs_2dboxf(_Window->FrameBox.Min, _Window->FrameBox.Min + totalFramesSize);
 
-                // process self frame
-                gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
-                _FrameProcessor(_Context, _Window->FrameBox, boundingBox, _Window);
-                position += gs_vec2f(size.x, 0.f);
+            //     // process frameboxes
+            //     gs_vec2f position = frameBoxUnlockingPane.Min;
+            //     gs_vec2f size     = gs_vec2f((frameBoxUnlockingPane.size() / (float)totalFramesCount).x, frameBoxUnlockingPane.size().y);
 
-                // process docked windows frames
-                for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
-                            it != _Context->m_Hierarchy.end(_Window->DockerView);
-                            it++)
-                {
-                    ImmediateUserInterfaceWindow* window =
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
+            //     // process self frame
+            //     gs_2dboxf boundingBox = gs_2dboxf(position, position + size);
+            //     _FrameProcessor(_Context, _Window->FrameBox, boundingBox, _Window);
+            //     position += gs_vec2f(size.x, 0.f);
 
-                    if(window == nullptr || window->Docker == nullptr)
-                        continue;
+            //     // process docked windows frames
+            //     for(auto it  = _Context->m_Hierarchy.begin(_Window->DockerView);
+            //                 it != _Context->m_Hierarchy.end(_Window->DockerView);
+            //                 it++)
+            //     {
+            //         ImmediateUserInterfaceWindow* window =
+            //             dynamic_cast<ImmediateUserInterfaceWindow*>(*it);
 
-                    _FrameProcessor(
-                        _Context,
-                        gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
-                        gs_2dboxf(position, position + size),
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+            //         if(window == nullptr || window->Docker == nullptr)
+            //             continue;
 
-                    position += gs_vec2f(size.x, 0.f);
-                }
-            }
+            //         _FrameProcessor(
+            //             _Context,
+            //             gs_2dboxf(gs_vec2f(0.f), gs_vec2f(0.f)),
+            //             gs_2dboxf(position, position + size),
+            //             dynamic_cast<ImmediateUserInterfaceWindow*>(*it));
+
+            //         position += gs_vec2f(size.x, 0.f);
+            //     }
+            // }
 
             static ImmediateUserInterfaceWindow* retrieve_docker_by_view(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _DockerView)
             {
@@ -491,6 +496,19 @@ namespace Frenchie
 
             virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+        };
+
+        struct ImmediateUserInterfaceWindowRoot : public ImmediateUserInterfaceVerticalStack
+        {
+            ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
+            virtual ~ImmediateUserInterfaceWindowRoot(){}
+        };
+
+        struct ImmediateUserInterfaceWindowFrame : public ImmediateUserInterfaceScrollArea
+        {
+        public:
+            ImmediateUserInterfaceWindowFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+            virtual ~ImmediateUserInterfaceWindowFrame(){}
         };
 
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
@@ -613,6 +631,7 @@ namespace Frenchie
             ImmedidateUserInterfaceWindowController();
             virtual ~ImmedidateUserInterfaceWindowController();
             virtual void frame_start(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void frame_update(ImmediateUserInterfaceContextLayer*) override;
             virtual void frame_input(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*) override;
 
@@ -4778,46 +4797,46 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr || _Context->m_Renderer == nullptr)
         return;
 
-    // auxiliary lambdas
-    auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
-    {
-        if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
-            return gs_color_rgba(255, 0, 0, 255);
+    // // auxiliary lambdas
+    // auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
+    // {
+    //     if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
+    //         return gs_color_rgba(255, 0, 0, 255);
 
-        return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
-            gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
-            gs_color_rgba(64, 0, 0, 255);
-    };
+    //     return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
+    //         gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
+    //         gs_color_rgba(64, 0, 0, 255);
+    // };
 
-    auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box)
-    {
-        gs_2dboxf closeButtonBox = gs_2dboxf(
-            _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
-            _Box.Max - _Context->m_Style.get_frames_width() * 2.f);
+    // auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box)
+    // {
+    //     gs_2dboxf closeButtonBox = gs_2dboxf(
+    //         _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
+    //         _Box.Max - _Context->m_Style.get_frames_width() * 2.f);
 
-        _Context->m_Renderer->push_arc_filled(
-            closeButtonBox.center(),
-            closeButtonBox.size().x,
-            closeButtonBox.size().y,
-            0.f,
-            360.f,
-            close_button_color(_Context, closeButtonBox),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    //     _Context->m_Renderer->push_arc_filled(
+    //         closeButtonBox.center(),
+    //         closeButtonBox.size().x,
+    //         closeButtonBox.size().y,
+    //         0.f,
+    //         360.f,
+    //         close_button_color(_Context, closeButtonBox),
+    //         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-        _Context->m_Renderer->push_line(
-            closeButtonBox.Min + gs_vec2f(+4.f, +4.f),
-            closeButtonBox.Max - gs_vec2f(+4.f, +4.f),
-            4.f,
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    //     _Context->m_Renderer->push_line(
+    //         closeButtonBox.Min + gs_vec2f(+4.f, +4.f),
+    //         closeButtonBox.Max - gs_vec2f(+4.f, +4.f),
+    //         4.f,
+    //         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+    //         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-        _Context->m_Renderer->push_line(
-            gs_vec2f(closeButtonBox.Max.x, closeButtonBox.Min.y) + gs_vec2f(-4.f, +4.f),
-            gs_vec2f(closeButtonBox.Min.x, closeButtonBox.Max.y) + gs_vec2f(+4.f, -4.f),
-            4.f,
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    };
+    //     _Context->m_Renderer->push_line(
+    //         gs_vec2f(closeButtonBox.Max.x, closeButtonBox.Min.y) + gs_vec2f(-4.f, +4.f),
+    //         gs_vec2f(closeButtonBox.Min.x, closeButtonBox.Max.y) + gs_vec2f(+4.f, -4.f),
+    //         4.f,
+    //         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+    //         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    // };
 
     // content background and outline frame
     _Context->m_Renderer->push_rectangle_rounded_filled(
@@ -4828,119 +4847,119 @@ void ImmediateUserInterfaceWindow::render(ImmediateUserInterfaceContextLayer* _C
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
-        FrameBox.Min + _Context->m_Style.get_frames_width(),
-        FrameBox.Max - _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-    // frame
-    process_window_frame(
-        _Context,
-        this,
+    // // frame
+    // process_window_frame(
+    //     _Context,
+    //     this,
 
-        // render self and child frames
-        [this, &render_close_button](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
-        {
-            ImmedidateUserInterfaceWindowController* windowsController =
-                _Context->get_controller<ImmedidateUserInterfaceWindowController>();
+    //     // render self and child frames
+    //     [this, &render_close_button](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
+    //     {
+    //         ImmedidateUserInterfaceWindowController* windowsController =
+    //             _Context->get_controller<ImmedidateUserInterfaceWindowController>();
 
-            // detect if we are active
-            bool active   = _Window->IsActive;
+    //         // detect if we are active
+    //         bool active   = _Window->IsActive;
 
-            bool isDocker = windowsController != nullptr && !windowsController->retrieve_docked_windows(
-                _Context,
-                _Window,
-                ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty();
+    //         bool isDocker = windowsController != nullptr && !windowsController->retrieve_docked_windows(
+    //             _Context,
+    //             _Window,
+    //             ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty();
 
-            // render frame
-            if(_Window->Docker == nullptr && !isDocker)
-            {
-                // frame
-                if(_Frame.contains(_Context->m_Input.get_cusor_position()) &&
-                    (_Window->TopSnapper    != nullptr ||
-                     _Window->LeftSnapper   != nullptr ||
-                     _Window->RightSnapper  != nullptr ||
-                     _Window->BottomSnapper != nullptr))
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.get_frames_width(),
-                        _Frame.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
+    //         // render frame
+    //         if(_Window->Docker == nullptr && !isDocker)
+    //         {
+    //             // frame
+    //             if(_Frame.contains(_Context->m_Input.get_cusor_position()) &&
+    //                 (_Window->TopSnapper    != nullptr ||
+    //                  _Window->LeftSnapper   != nullptr ||
+    //                  _Window->RightSnapper  != nullptr ||
+    //                  _Window->BottomSnapper != nullptr))
+    //             {
+    //                 _Context->m_Renderer->push_rectangle_rounded_filled(
+    //                     _Frame.Min + _Context->m_Style.get_frames_width(),
+    //                     _Frame.Max - _Context->m_Style.get_frames_width(),
+    //                     _Context->m_Style.get_frames_radius(),
+    //                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+    //                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    //             }
 
-                // close button
-                if(_Window->Opened != nullptr)
-                {
-                    gs_2dboxf closeButtonBox  = gs_2dboxf(
-                        gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) - _FrameBox.height() / 4.f,
-                        gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) + _FrameBox.height() / 4.f);
+    //             // close button
+    //             if(_Window->Opened != nullptr)
+    //             {
+    //                 gs_2dboxf closeButtonBox  = gs_2dboxf(
+    //                     gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) - _FrameBox.height() / 4.f,
+    //                     gs_vec2f(_FrameBox.Max.x - _FrameBox.height() / 2.f, _Frame.center().y) + _FrameBox.height() / 4.f);
 
-                    render_close_button(_Context, closeButtonBox);
+    //                 render_close_button(_Context, closeButtonBox);
 
-                    *_Window->Opened = !(closeButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_clicked());
-                }
-            }
-            else
-            {
-                // frame
-                if(active)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.get_frames_width(),
-                        _Frame.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                        true,
-                        true,
-                        false,
-                        false);
-                }
-                else if(_Frame.contains(_Context->m_Input.get_cusor_position()))
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.get_frames_width(),
-                        _Frame.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                        true,
-                        true,
-                        false,
-                        isDocker);
-                }
+    //                 *_Window->Opened = !(closeButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_clicked());
+    //             }
+    //         }
+    //         else
+    //         {
+    //             // frame
+    //             if(active)
+    //             {
+    //                 _Context->m_Renderer->push_rectangle_rounded_filled(
+    //                     _Frame.Min + _Context->m_Style.get_frames_width(),
+    //                     _Frame.Max - _Context->m_Style.get_frames_width(),
+    //                     _Context->m_Style.get_frames_radius(),
+    //                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+    //                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+    //                     true,
+    //                     true,
+    //                     false,
+    //                     false);
+    //             }
+    //             else if(_Frame.contains(_Context->m_Input.get_cusor_position()))
+    //             {
+    //                 _Context->m_Renderer->push_rectangle_rounded_filled(
+    //                     _Frame.Min + _Context->m_Style.get_frames_width(),
+    //                     _Frame.Max - _Context->m_Style.get_frames_width(),
+    //                     _Context->m_Style.get_frames_radius(),
+    //                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+    //                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+    //                     true,
+    //                     true,
+    //                     false,
+    //                     isDocker);
+    //             }
 
-                // close button
-                if(_Window->Opened != nullptr)
-                {
-                    if(active || _Frame.contains(_Context->m_Input.get_cusor_position()))
-                    {
-                        gs_2dboxf closeButtonBox  = gs_2dboxf(
-                            gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) - _Frame.height() / 4.f,
-                            gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) + _Frame.height() / 4.f);
+    //             // close button
+    //             if(_Window->Opened != nullptr)
+    //             {
+    //                 if(active || _Frame.contains(_Context->m_Input.get_cusor_position()))
+    //                 {
+    //                     gs_2dboxf closeButtonBox  = gs_2dboxf(
+    //                         gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) - _Frame.height() / 4.f,
+    //                         gs_vec2f(_Frame.Max.x - _Frame.height() / 2.f, _Frame.center().y) + _Frame.height() / 4.f);
 
-                        render_close_button(_Context, closeButtonBox);
+    //                     render_close_button(_Context, closeButtonBox);
 
-                        *_Window->Opened = !(closeButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_clicked());
-                    }
-                }
-            }
+    //                     *_Window->Opened = !(closeButtonBox.contains(_Context->m_Input.get_cusor_position()) && _Context->m_Input.is_mouse_button_clicked());
+    //                 }
+    //             }
+    //         }
 
-            // title
-            _Context->m_Renderer->push_text(
-                gs_vec2f(
-                    _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
-                _Window->Name.begin(),
-                _Window->Name.end(),
-                _Context->m_Style.get_font_size() * 0.6f,
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
-    );
+    //         // title
+    //         _Context->m_Renderer->push_text(
+    //             gs_vec2f(
+    //                 _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
+    //                 _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
+    //             _Window->Name.begin(),
+    //             _Window->Name.end(),
+    //             _Context->m_Style.get_font_size() * 0.6f,
+    //             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+    //             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    //     }
+    // );
 }
 
 void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _Context)
@@ -4948,26 +4967,26 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
     if(_Context == nullptr)
         return;
 
-    // compute self geometry
-    FrameBox = gs_2dboxf(
-        State.BoundingBox.Min,
-        gs_vec2f(
-            State.BoundingBox.Max.x,
-            State.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size(), 64.f)));
+    // // compute self geometry
+    // FrameBox = gs_2dboxf(
+    //     State.BoundingBox.Min,
+    //     gs_vec2f(
+    //         State.BoundingBox.Max.x,
+    //         State.BoundingBox.Min.y + gs_max(_Context->m_Style.get_font_size(), 64.f)));
 
-    ContentBox = gs_2dboxf(
-        (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
-        State.BoundingBox.Max);
+    // ContentBox = gs_2dboxf(
+    //     (Docker == nullptr ? gs_vec2f(FrameBox.Min.x, FrameBox.Max.y) : State.BoundingBox.Min),
+    //     State.BoundingBox.Max);
 
-    ContentBox = gs_2dboxf(
-        ContentBox.Min + _Context->m_Style.get_frames_width(),
-        ContentBox.Max - _Context->m_Style.get_frames_width());
+    // ContentBox = gs_2dboxf(
+    //     ContentBox.Min + _Context->m_Style.get_frames_width(),
+    //     ContentBox.Max - _Context->m_Style.get_frames_width());
 
     ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
-        ContentBox.Min,
-        ContentBox.size(),
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.size() - _Context->m_Style.get_frames_width() * 2.f,
         gs_vec4f(0.f),
         gs_vec4f(0.f),
         State.Settings,
@@ -4976,66 +4995,68 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
 
 bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context)
 {
-    bool defaultPipeline = true;
+    return ImmediateUserInterfaceNode::events(_Context);
 
-    // window frame events
-    process_window_frame(
-        _Context,
-        this,
+    // bool defaultPipeline = true;
 
-        // catch frame events
-        [this, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
-        {
-            // focus and activity
-            if(_Context->m_Input.is_mouse_button_pressed() && _Frame.contains(_Context->m_Input.get_cusor_position()))
-                _Window->Activate = true;
+    // // window frame events
+    // process_window_frame(
+    //     _Context,
+    //     this,
 
-            // move
-            if((_Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
-                !((_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
-                    (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
-            {
-                ImmediateUserInterfaceNode* movable = _Window;
+    //     // catch frame events
+    //     [this, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
+    //     {
+    //         // focus and activity
+    //         if(_Context->m_Input.is_mouse_button_pressed() && _Frame.contains(_Context->m_Input.get_cusor_position()))
+    //             _Window->Activate = true;
 
-                if(_Context->m_Input.is_mouse_button_pressed() &&
-                    gs_2dboxf(
-                        _Frame.Min + gs_vec2f(ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, this).Radius, 0.f),
-                        _Frame.Max - gs_vec2f(ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, this).Radius, 0.f)).contains(_Context->m_Input.get_cusor_position()))
-                {
-                    movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-                    defaultPipeline = false;
-                    return;
-                }
+    //         // move
+    //         if((_Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
+    //             !((_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
+    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
+    //         {
+    //             ImmediateUserInterfaceNode* movable = _Window;
 
-                if(_Context->m_Input.is_mouse_button_down() &&
-                    _Frame.contains(_Context->m_Input.get_cusor_position())   &&
-                    gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f &&
-                    (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-                {
-                    movable->State.BoundingBox = gs_2dboxf(
-                        movable->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(),
-                        movable->Cache.BoundingBox.Max + _Context->m_Input.get_cusor_drag_delta());
+    //             if(_Context->m_Input.is_mouse_button_pressed() &&
+    //                 gs_2dboxf(
+    //                     _Frame.Min + gs_vec2f(ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, this).Radius, 0.f),
+    //                     _Frame.Max - gs_vec2f(ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, this).Radius, 0.f)).contains(_Context->m_Input.get_cusor_position()))
+    //             {
+    //                 movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+    //                 defaultPipeline = false;
+    //                 return;
+    //             }
 
-                    if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable))
-                        dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->ReattachChildren = true;
+    //             if(_Context->m_Input.is_mouse_button_down() &&
+    //                 _Frame.contains(_Context->m_Input.get_cusor_position())   &&
+    //                 gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f &&
+    //                 (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
+    //             {
+    //                 movable->State.BoundingBox = gs_2dboxf(
+    //                     movable->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(),
+    //                     movable->Cache.BoundingBox.Max + _Context->m_Input.get_cusor_drag_delta());
 
-                    defaultPipeline = false;
-                    return;
-                }
-            }
-        });
+    //                 if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable))
+    //                     dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->ReattachChildren = true;
 
-    // default event pipeline
-    if(defaultPipeline)
-        return ImmediateUserInterfaceNode::events(_Context);
+    //                 defaultPipeline = false;
+    //                 return;
+    //             }
+    //         }
+    //     });
+
+    // // default event pipeline
+    // if(defaultPipeline)
+    //     return ImmediateUserInterfaceNode::events(_Context);
     
-    return !defaultPipeline;
+    // return !defaultPipeline;
 }
 
 void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Child)
@@ -5043,16 +5064,24 @@ void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Chi
     if(_Child == nullptr)
         return;
 
-    if( dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
-        dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
-        dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child))
+    if(dynamic_cast<ImmediateUserInterfaceWindowRoot*>(_Child))
     {
         _Child->State.Parent = this;
+        return;
     }
-    else
+
+    if( dynamic_cast<ImmediateUserInterfaceWindowHorizontalSnapper*>(_Child) ||
+        dynamic_cast<ImmediateUserInterfaceWindowVerticalSnapper*>(_Child)   ||
+        dynamic_cast<ImmediateUserInterfaceWindowCentralDocker*>(_Child)     ||
+        dynamic_cast<ImmediateUserInterfaceWindowFrame*>(_Child))
     {
-        _Child->State.Parent = ContentView;
+        if(RootView)
+            RootView->attach_child(_Child);
+        return;
     }
+
+    if(ContentView)
+        ContentView->attach_child(_Child);
 }
 
 bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContextLayer* _Context, 
@@ -5062,71 +5091,113 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 {
     if(_Context == nullptr) return false;
 
-    ImmediateUserInterfaceNodeSettings settings = _Settings & ~ImmediateUserInterfaceNodeSettings_NullParent;
+    ImmediateUserInterfaceNodeSettings settings = _Settings;
+    settings &= ~ImmediateUserInterfaceNodeSettings_NullParent;
 
     ImmediateUserInterfaceWindow* window = this;
     window->Opened                       = _Render;
 
-    if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(_Context->next_id("CentralDockerView"), settings))
+    if(_Context->begin_node<ImmediateUserInterfaceWindowRoot>(_Context->next_id("Root"), settings))
     {
-        window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
-        window->DockerView->State.PlaceInFollow               = true;
-        window->DockerView->State.OrderChildrenWhileRendering = true;
+        window->RootView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowRoot>();
 
-        if(!window->IsActive)
+        // frame
+        if(Docker == nullptr && _Context->m_Hierarchy.get_parent(this) == nullptr)
         {
+            _Context->next_minimum_size(gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f + _Context->m_Style.get_frames_width()));
+
+            _Context->next_maximum_size(
+                gs_vec2f(window->RootView->State.BoundingBox.width(), _Context->m_Style.get_font_size() * 2.f + _Context->m_Style.get_frames_width()));
+
+            if(_Context->begin_node<ImmediateUserInterfaceWindowFrame>(
+                _Context->next_id("Frame"),
+                ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults))
+            {
+                _Context->indent(32.f);
+
+                if(_Context->push_button(_Context->next_id(Name, "Name")))
+                    Activate = true;
+
+                for (int i = 0; i < (int)DockedWindowsCache.size(); i++)                
+                {
+                    if(DockedWindowsCache[i] == nullptr)
+                        continue;
+
+                    _Context->same_line();
+                    _Context->indent(32.f);
+                    
+                    if(_Context->push_button(_Context->next_id(DockedWindowsCache[i]->Name, Frenchie::Core::String::format("Name-%d", i))))
+                        dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i])->Activate = true;
+                }
+                
+                _Context->end_node<ImmediateUserInterfaceWindowFrame>();
+            }
+        }
+
+        if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(_Context->next_id("CentralDockerView"), settings))
+        {
+            window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
+            window->DockerView->State.PlaceInFollow               = true;
+            window->DockerView->State.OrderChildrenWhileRendering = true;
+
+            if(!window->IsActive)
+            {
+                _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+                _Context->end_node<ImmediateUserInterfaceWindowRoot>();
+                _Context->end_node<ImmediateUserInterfaceWindow>();
+                return false;
+            }
+
+            if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("SnapperView"), settings))
+            {
+                window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+
+                // top
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("TopSnapperView"), settings))
+                {
+                    window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                // center
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("CentralSnapperView"), settings))
+                {
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("LeftSnapperView"), settings))
+                    {
+                        window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                        _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    }
+
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("ContentView"), settings))
+                    {
+                        window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
+                        _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+                    }
+
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("RightSnapperView"), settings))
+                    {
+                        window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                        _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    }
+
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                // bottom
+                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("BottomSnapperView"), settings))
+                {
+                    window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
+                }
+
+                _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
+            }
+
             _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
-            _Context->end_node<ImmediateUserInterfaceWindow>();
-            return false;
         }
 
-        if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("SnapperView"), settings))
-        {
-            window->SnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-
-            // top
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("TopSnapperView"), settings))
-            {
-                window->TopSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-            }
-
-            // center
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("CentralSnapperView"), settings))
-            {
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("LeftSnapperView"), settings))
-                {
-                    window->LeftSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("ContentView"), settings))
-                {
-                    window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
-                    _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
-                }
-
-                if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("RightSnapperView"), settings))
-                {
-                    window->RightSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                    _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                }
-
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-            }
-
-            // bottom
-            if(_Context->begin_node<ImmediateUserInterfaceWindowHorizontalSnapper>(_Context->next_id("BottomSnapperView"), settings))
-            {
-                window->BottomSnapperView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowHorizontalSnapper>();
-                _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
-            }
-
-            _Context->end_node<ImmediateUserInterfaceWindowVerticalSnapper>();
-        }
-
-        _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
+        _Context->end_node<ImmediateUserInterfaceWindowRoot>();
     }
 
     return true;
@@ -5274,88 +5345,88 @@ void ImmediateUserInterfaceWindowDockArea::render(ImmediateUserInterfaceContextL
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
     _Context->m_Renderer->push_rectangle_rounded_filled(
-        FrameBox.Min + _Context->m_Style.get_frames_width() * 2.f,
-        FrameBox.Max - _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width() * 2.f,
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width() * 2.f,
         _Context->m_Style.get_frames_radius(),
         _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
-    // frame
-    process_window_frame(
-        _Context,
-        this,
+    // // frame
+    // process_window_frame(
+    //     _Context,
+    //     this,
 
-        // render self and child frames
-        [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
-        {
-            // detect if we are active
-            bool active = _Window->IsActive;
+    //     // render self and child frames
+    //     [this](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
+    //     {
+    //         // detect if we are active
+    //         bool active = _Window->IsActive;
 
-            // render frame
-            if(_Window->Docker == nullptr &&
-                _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
-                    _Context,
-                    _Window,
-                    ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
-            {
-                // frame
-                if(_Frame.contains(_Context->m_Input.get_cusor_position()) &&
-                    (_Window->TopSnapper    != nullptr ||
-                    _Window->LeftSnapper   != nullptr ||
-                    _Window->RightSnapper  != nullptr ||
-                    _Window->BottomSnapper != nullptr))
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.get_frames_width(),
-                        _Frame.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-            }
-            else
-            {
-                // frame
-                if(active)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.get_frames_width(),
-                        _Frame.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                        true,
-                        true,
-                        false,
-                        false);
-                }
-                else if(_Frame.contains(_Context->m_Input.get_cusor_position()))
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        _Frame.Min + _Context->m_Style.get_frames_width(),
-                        _Frame.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
-                        true,
-                        true,
-                        false,
-                        false);
-                }
-            }
+    //         // render frame
+    //         if(_Window->Docker == nullptr &&
+    //             _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
+    //                 _Context,
+    //                 _Window,
+    //                 ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center).empty())
+    //         {
+    //             // frame
+    //             if(_Frame.contains(_Context->m_Input.get_cusor_position()) &&
+    //                 (_Window->TopSnapper    != nullptr ||
+    //                 _Window->LeftSnapper   != nullptr ||
+    //                 _Window->RightSnapper  != nullptr ||
+    //                 _Window->BottomSnapper != nullptr))
+    //             {
+    //                 _Context->m_Renderer->push_rectangle_rounded_filled(
+    //                     _Frame.Min + _Context->m_Style.get_frames_width(),
+    //                     _Frame.Max - _Context->m_Style.get_frames_width(),
+    //                     _Context->m_Style.get_frames_radius(),
+    //                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+    //                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    //             }
+    //         }
+    //         else
+    //         {
+    //             // frame
+    //             if(active)
+    //             {
+    //                 _Context->m_Renderer->push_rectangle_rounded_filled(
+    //                     _Frame.Min + _Context->m_Style.get_frames_width(),
+    //                     _Frame.Max - _Context->m_Style.get_frames_width(),
+    //                     _Context->m_Style.get_frames_radius(),
+    //                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+    //                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+    //                     true,
+    //                     true,
+    //                     false,
+    //                     false);
+    //             }
+    //             else if(_Frame.contains(_Context->m_Input.get_cusor_position()))
+    //             {
+    //                 _Context->m_Renderer->push_rectangle_rounded_filled(
+    //                     _Frame.Min + _Context->m_Style.get_frames_width(),
+    //                     _Frame.Max - _Context->m_Style.get_frames_width(),
+    //                     _Context->m_Style.get_frames_radius(),
+    //                     _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered),
+    //                     _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()),
+    //                     true,
+    //                     true,
+    //                     false,
+    //                     false);
+    //             }
+    //         }
 
-            // title
-            _Context->m_Renderer->push_text(
-                gs_vec2f(
-                    _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
-                    _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
-                _Window->Name.begin(),
-                _Window->Name.end(),
-                _Context->m_Style.get_font_size() * 0.6f,
-                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-        }
-    );
+    //         // title
+    //         _Context->m_Renderer->push_text(
+    //             gs_vec2f(
+    //                 _Frame.Min.x + 16.f + _Context->m_Style.get_frames_width(),
+    //                 _Frame.center().y - _Context->m_Renderer->calculate_bounding_box(_Window->Name.begin(), _Window->Name.end(), _Context->m_Style.get_font_size(), _Context->m_Style.get_current_font()).height() * 0.6f * 0.5f),
+    //             _Window->Name.begin(),
+    //             _Window->Name.end(),
+    //             _Context->m_Style.get_font_size() * 0.6f,
+    //             _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+    //             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    //     }
+    // );
 }
 
 // ImmediateUserInterfaceDialogContent
@@ -5487,6 +5558,10 @@ ImmedidateUserInterfaceWindowController::~ImmedidateUserInterfaceWindowControlle
 
 void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterfaceContextLayer* _Context)
 {
+}
+
+void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfaceContextLayer* _Context)
+{
     if(_Context == nullptr) return;
 
     // create worksapce dockarea
@@ -5506,6 +5581,7 @@ void ImmedidateUserInterfaceWindowController::frame_start(ImmediateUserInterface
         m_WorkspaceDockArea->State.RenderingOrder =
             ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background;
 
+        // get docked windows
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
 }
@@ -5633,7 +5709,6 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
             openedWindows.insert(node);
     }
 
-    // detach all windows from closed window 
     for(auto node : _Context->m_NodesRenderingList)
     {
         ImmediateUserInterfaceWindow* window =
@@ -5642,6 +5717,7 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
         if(window == nullptr)
             continue;
         
+        // detach all windows from closed window
         ImmediateUserInterfaceWindow* docker = nullptr;
 
         if(window->Docker != nullptr)
@@ -5681,6 +5757,10 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
                     window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
             }
         }
+
+        // save docked windows cache
+        window->DockedWindowsCache =
+            retrieve_docked_windows(_Context, window, ImmedidateUserInterfaceDockingAnchor_::ImmedidateUserInterfaceDockingAnchor_Center);
     }
 }
 
@@ -5741,11 +5821,14 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
     if(gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) < 8.f)
         return;
 
-    // find moved node and detach it from a docker
-    ImmediateUserInterfaceWindow* moved = dynamic_cast<ImmediateUserInterfaceWindow*>(
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(
-            _Context,
-            [](const ImmediateUserInterfaceNode*)->bool{return true;}));
+    // find moved window and detach it from a docker
+    auto movedNode = ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceMovedNodeSearcher().search(_Context, [](const ImmediateUserInterfaceNode*)->bool{return true;});
+
+    ImmediateUserInterfaceWindow* moved =
+        dynamic_cast<ImmediateUserInterfaceWindow*>(movedNode);
+
+    if(moved == nullptr)
+        moved = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(movedNode);
 
     detach_from_docker(_Context, moved);
 
@@ -5754,11 +5837,16 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
     // find top most hovered node not equal to the moved one
     ImmediateUserInterfaceNode* hoveredNode = 
-        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(_Context, [moved](const ImmediateUserInterfaceNode* _Node)->bool{return _Node != moved;});
+        ImmediateUserInterfaceContextLayerHelpers::ImmedidateUserInterfaceHoveredNodeSearcher().search(
+            _Context,
+            [moved, _Context](const ImmediateUserInterfaceNode* _Node)->bool
+            {
+                return _Node != moved && _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(_Node) != moved;
+            }
+        );
 
     // detect hovered window
-    ImmediateUserInterfaceWindow* hovered =
-        _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(hoveredNode);
+    ImmediateUserInterfaceWindow* hovered = _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceWindow>(hoveredNode);
 
     if(hovered == nullptr || moved == nullptr)
         return;
@@ -5767,16 +5855,16 @@ void ImmedidateUserInterfaceWindowController::place_on_dockers(ImmediateUserInte
 
     // compute gizmos
     gs_2dboxf dockingGizmo = gs_2dboxf(
-        hovered->ContentBox.center() - gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f,
-        hovered->ContentBox.center() + gs_min(hovered->ContentBox.size().x, hovered->ContentBox.size().y) * 0.25f);
+        hovered->State.BoundingBox.center() - gs_min(hovered->State.BoundingBox.size().x, hovered->State.BoundingBox.size().y) * 0.25f,
+        hovered->State.BoundingBox.center() + gs_min(hovered->State.BoundingBox.size().x, hovered->State.BoundingBox.size().y) * 0.25f);
 
     dockingGizmo = gs_2dboxf(
         dockingGizmo.Min,
         dockingGizmo.Min + gs_min(dockingGizmo.size().x, 256.f));
 
     dockingGizmo = gs_2dboxf(
-        hovered->ContentBox.center() - dockingGizmo.size() * 0.5f,
-        hovered->ContentBox.center() + dockingGizmo.size() * 0.5f);
+        hovered->State.BoundingBox.center() - dockingGizmo.size() * 0.5f,
+        hovered->State.BoundingBox.center() + dockingGizmo.size() * 0.5f);
 
 
     gs_vec2f gizmoSize = dockingGizmo.size() * 0.333f;
@@ -6811,6 +6899,9 @@ void ImmediateUserInterfaceContextLayer::frame_start()
 
 void ImmediateUserInterfaceContextLayer::frame_update()
 {
+    // execute controllers
+    for(auto& controller : m_Controllers)
+        controller->frame_update(this);
 }
 
 void ImmediateUserInterfaceContextLayer::frame_input()
@@ -6962,7 +7053,7 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
         {
             m_Renderer->push_clip_box(widget->get_clipping_box(this));
 
-            int depth = widget->Cache.Depth;
+            int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(widget);
             int init  = depth;
 
             // background
@@ -9335,6 +9426,7 @@ void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfa
     // setup node parameters
     node->State.Settings       = _Settings;
     node->State.RenderingIndex = (int)m_NodesRenderingList.size();
+    node->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
 
     // build nodes hierarchy
     if(!m_NodesRenderingStack.empty())
