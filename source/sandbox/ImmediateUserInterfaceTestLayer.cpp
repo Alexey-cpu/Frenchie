@@ -122,61 +122,48 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_UI->end_window();
     }
 
+    if(m_UI->begin_window(
+        m_UI->next_id("Style Settings", "StyleSettings"),
+        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+        &State.ShowStyleSettings))
+    {
+        if(m_UI->begin_scrollarea(m_UI->next_id("ScrollArea")))
+        {
+            for (int i = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
+                    i < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
+                    i++)
+            {
+                m_UI->input_color(
+                    m_UI->next_id(Frenchie::Core::String::format("Color-%d", i)),
+                    m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)i),
+                    ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB | ImmediateUserInterfaceColorPickerSettings_PreviewColor);
+
+                m_UI->same_line();
+
+                m_UI->label(m_UI->next_id(Frenchie::Core::String::format("Label-%d", i)), m_UI->m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)i));
+            }
+
+            m_UI->end_scrollarea();
+        }        
+
+        m_UI->end_window();
+    }
+
     // main test window
     if(m_UI->begin_window(m_UI->next_id("Test window", "Window")))
     {
         if(m_UI->begin_menubar(m_UI->next_id("MenuBar")))
         {
-            for (int i = 0; i < 20; i++)
+            if(m_UI->begin_menu(m_UI->next_id("Windows", "Windows")))
             {
-                std::string id = Frenchie::Core::String::format("Menu-%d", i);
+                if(m_UI->menu_action(m_UI->next_id("Open context settings window", "OpenContextSettingsWindow")))
+                    State.ShowContextSettings = true;
 
-                if(m_UI->begin_menu(m_UI->next_id(id, id)))
-                {
-                    m_UI->menu_action(m_UI->next_id("Action-1", "Action-1"));
-                    m_UI->menu_action(m_UI->next_id("Action-2", "Action-2"));
-                    m_UI->menu_action(m_UI->next_id("Action-3", "Action-3"));
+                if(m_UI->menu_action(m_UI->next_id("Open style settings window", "OpenStyleSettingsWindow")))
+                    State.ShowStyleSettings = true;
 
-                    m_UI->end_menu();
-                }
+                m_UI->end_menu();
             }
-
-            // if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Windows", "Windows")))
-            // {
-            //     if(m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Open context settings window", "OpenWindow1")))
-            //         State.ShowContextSettings = true;
-
-            //     m_ImmediateUserInterface->end_menu();
-            // }
-
-            // if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("TestMenu", "TestMenu")))
-            // {
-            //     for (int i = 0; i < 40; i++)
-            //     {
-            //         std::string id = Frenchie::Core::String::format("Action-%d", i);
-            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id(id, id));
-            //     }
-
-            //     if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-1")))
-            //     {
-            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
-            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
-            //         m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
-
-            //         if(m_ImmediateUserInterface->begin_menu(m_ImmediateUserInterface->next_id("Menu", "Menu-2")))
-            //         {
-            //             m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-1", "Action-1"));
-            //             m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-2", "Action-2"));
-            //             m_ImmediateUserInterface->menu_action(m_ImmediateUserInterface->next_id("Action-3", "Action-3"));
-
-            //             m_ImmediateUserInterface->end_menu();
-            //         }
-
-            //         m_ImmediateUserInterface->end_menu();
-            //     }
-
-            //     m_ImmediateUserInterface->end_menu();
-            // }
 
             m_UI->end_menubar();
         }

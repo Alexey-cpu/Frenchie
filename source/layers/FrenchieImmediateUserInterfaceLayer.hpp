@@ -334,18 +334,20 @@ namespace Frenchie
             ApplicationRenderingBackendFont get_current_font() const;
 
             // color
-            gs_color get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
+            gs_color& get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
+
+            std::string style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color) const;
 
         private:
 
             // infos
-            float                            FramesRadius         = 32.f;
-            float                            FramesWidth          = 0.f;
-            float                            FontSize             = 32.f;
-            float                            ScrollBarWidth       = 32.f;
-            float                            PopupMenuPointerSize = 32.f;
-            std::vector<gs_color>            Colors;
-            ApplicationRenderingBackendFont  Font;
+            mutable float                            FramesRadius         = 32.f;
+            mutable float                            FramesWidth          = 0.f;
+            mutable float                            FontSize             = 32.f;
+            mutable float                            ScrollBarWidth       = 32.f;
+            mutable float                            PopupMenuPointerSize = 32.f;
+            mutable std::vector<gs_color>            Colors;
+            mutable ApplicationRenderingBackendFont  Font;
         };
 
         // This class plays role of input catcher for UI.
