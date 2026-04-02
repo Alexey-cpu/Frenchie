@@ -747,6 +747,12 @@ namespace Frenchie
                 bool*                                     _Opened   = nullptr);
             void end_window();
 
+            bool begin_dialog(
+                const std::string&                        _ID,
+                const ImmediateUserInterfaceNodeSettings& _Settings = ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults,
+                bool*                                     _Opened   = nullptr);
+            void end_dialog();
+
             // This function creates scrollable area that places it's contents one by one vertically unless
             // same_line(), next_line() or indent() functions are called (see appropriate functions descriptions)
             // _ID       - unique ID
