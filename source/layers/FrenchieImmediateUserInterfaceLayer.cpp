@@ -2453,9 +2453,36 @@ ApplicationRenderingBackendFont ImmedidateUserInterfaceStyle::get_current_font()
     return Font.is_null() ? ApplicationRenderingBackend::get_default_font() : Font;
 }
 
-gs_color ImmedidateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
+gs_color& ImmedidateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNodeColors_& _Color) const
 {
     return Colors[_Color];
+}
+
+std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color) const
+{
+    switch (_Color)
+    {
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground:                 return "Parent background";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered:          return "Parent background hovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground:                  return "Child background";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered:           return "Child background hovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline:                    return "Button outline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground:                 return "Button background";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered:          return "Button background hovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed:          return "Button background pressed";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground:        return "Scroll bar slider background";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered: return "Scroll bar slider background hovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline:                      return "Menu outline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground:                   return "Menu background";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground:             return "Menu action background";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered:      return "Menu action background hovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return "Menu action background pressed";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return "Gizmos";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return "Gizmos hovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return "Text";
+    }
+
+    return Frenchie::Core::String::format("Unknown color-%d", _Color);
 }
 
 // ImmedidateUserInterfaceInput
@@ -3638,7 +3665,7 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
         if((*it)->State.NextLine > 0)
         {
-            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + maxHeight * (*it)->State.NextLine + (topPadding - bottomPadding));
+            position = gs_vec2f(origin.x + (*it)->State.Indent, position.y + (maxHeight + _Context->m_Style.get_frames_width()) * (*it)->State.NextLine + (topPadding - bottomPadding));
             maxHeight = 0.f;
         }
         else
@@ -4301,7 +4328,7 @@ void ImmediateUserInterfaceTreeNode::layout(ImmediateUserInterfaceContextLayer* 
         {
             position = gs_vec2f(
                 start.x + (*it)->State.Indent,
-                position.y + maxHeight * (*it)->State.NextLine);
+                position.y + (maxHeight + _Context->m_Style.get_frames_width()) * (*it)->State.NextLine);
             
             maxHeight = 0.f;
         }
@@ -7260,7 +7287,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         gs_vec2f parentSize = get_rendering_stack_top()->State.BoundingBox.size();
 
-        float weight = 1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
+        float weight = (_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) ? 0.8f : 1.f;//1.f / ((float)(bool)(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor) + 1.f);
 
         gs_vec4f padding = gs_vec4f(m_Style.get_frames_width(), m_Style.get_frames_width() * 2.f, 0.f, m_Style.get_frames_width());
 
@@ -7421,7 +7448,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         }
 
         // preview color
-        next_size(gs_vec2f(parentSize.x * weight, parentSize.y));
+        next_size(gs_vec2f(parentSize.x * (1.f - weight), parentSize.y));
 
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
             image(next_id("Image"), _Color);

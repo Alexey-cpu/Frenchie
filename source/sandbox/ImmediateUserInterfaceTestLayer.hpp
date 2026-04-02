@@ -18,6 +18,9 @@ namespace Frenchie
             bool ContextWorkspaceDockingEnabled = true;
             bool ContextHighlightHoveredNodes   = true;
 
+            // style settings
+            bool ShowStyleSettings             = false;
+
             // layout configurator
             float       TopMargin                         = 0.f;
             float       LeftMargin                        = 0.f;
