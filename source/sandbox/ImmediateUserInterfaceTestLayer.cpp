@@ -14,6 +14,8 @@ bool ImmediateUserInterfaceTestLayer::awake()
     return true;
 }
 
+void ImmediateUserInterfaceTestLayer::frame_start(){}
+
 void ImmediateUserInterfaceTestLayer::frame_update()
 {
     widgets_test();

@@ -656,6 +656,7 @@ namespace Frenchie
 
             virtual bool awake(ImmediateUserInterfaceContextLayer*){return true;}
             virtual void frame_start(ImmediateUserInterfaceContextLayer*){}
+            virtual void frame_update(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_input(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_render(ImmediateUserInterfaceContextLayer*){}
             virtual void frame_finish(ImmediateUserInterfaceContextLayer*){}
