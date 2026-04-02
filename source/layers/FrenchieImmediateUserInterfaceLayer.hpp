@@ -867,6 +867,15 @@ namespace Frenchie
             // _ID - unique ID
             bool push_button(const std::string& _ID);
 
+            // This function creates image button
+            // _ID       - unique ID
+            // _Color    - mask color
+            // _Texture  - texture
+            bool image_button(
+                const std::string&                        _ID,
+                const gs_color&                           _Color,
+                const ApplicationRenderingBackendTexture& _Texture = ApplicationRenderingBackendTexture());
+
             // This function creates checkbutton that can be redered as checkbox, radiobutton or slider button depending on the settings.
             //  _ID      - unique ID
             // _Checked  - input boolean that defines checkbutton state, checkbutton may or may not change this variable depending on settings
@@ -976,7 +985,7 @@ namespace Frenchie
 
             // This function creates image display widget
             // _ID       - unique ID
-            // _Color    - image mask color
+            // _Color    - mask color
             // _Texture  - texture
             void image(
                 const std::string&                        _ID,

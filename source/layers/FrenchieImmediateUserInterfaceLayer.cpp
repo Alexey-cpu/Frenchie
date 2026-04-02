@@ -6822,6 +6822,41 @@ bool ImmediateUserInterfaceContextLayer::push_button(const std::string& _ID)
     return false;
 }
 
+bool ImmediateUserInterfaceContextLayer::image_button(
+    const std::string&                        _ID,
+    const gs_color&                           _Color,
+    const ApplicationRenderingBackendTexture& _Texture)
+{
+    if(begin_node<ImmediateUserInterfaceNode>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+    {
+        ImmediateUserInterfaceNode* widget = get_rendering_stack_top();
+
+        int depth = widget->Cache.Depth;
+
+        // render
+        {
+            m_Renderer->push_clip_box(widget->get_clipping_box(this));
+
+            m_Renderer->push_rectangle_filled(
+                widget->State.BoundingBox.Min,
+                widget->State.BoundingBox.Max,
+                (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_down() ?
+                    gs_color_rgb(gs_color_rgba_get_r(_Color) / 2, gs_color_rgba_get_g(_Color) / 2, gs_color_rgba_get_b(_Color) / 2) :
+                    _Color,
+                m_Renderer->calculate_transform_matrix((float)depth++),
+                _Texture);
+
+            m_Renderer->pop_clip_box();
+        }
+
+        end_node<ImmediateUserInterfaceNode>();
+
+        return (widget->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered) && m_Input.is_mouse_button_clicked();
+    }
+
+    return false;
+}
+
 bool ImmediateUserInterfaceContextLayer::check_button(
     const std::string&                               _ID,
     bool&                                            _Checked,
@@ -7269,6 +7304,8 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEdit |
         ImmediateUserInterfaceInputScalarSettings_::ImmediateUserInterfaceInputScalarSettings_ReturnTrueOnEnter;
 
+    bool colorButtonClicked = false;
+
     if(begin_node<ImmediateUserInterfaceInputColor>(
         _ID,
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -7451,12 +7488,14 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
         next_size(gs_vec2f(parentSize.x * (1.f - weight), parentSize.y));
 
         if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_PreviewColor)
-            image(next_id("Image"), _Color);
+        {
+            colorButtonClicked = image_button(next_id("Image"), _Color);
+        }
 
         end_node<ImmediateUserInterfaceInputColor>();
     }
 
-    return true;
+    return colorButtonClicked;
 }
 
 void ImmediateUserInterfaceContextLayer::color_picker_rgba(const std::string& _ID, gs_color& _Color, const ImmediateUserInterfaceColorPickerSettings& _Settings)
