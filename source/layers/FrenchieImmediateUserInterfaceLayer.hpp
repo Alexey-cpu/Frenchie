@@ -437,7 +437,7 @@ namespace Frenchie
                 int                                            Depth                       {0};     // depth along Z-axis
                 int                                            SelfThickness               {0};     // thickness of rendered content
                 int                                            RenderingIndex              {0};     // index of the node within context rendering list
-                int                                            RenderingOrder              {0};     // index of the node while rendering
+                int                                            RenderingOrder              {-1};     // index of the node while rendering
                 int                                            MaximumChildDepth           {0};     // depth of the deepest child
                 int                                            MaximumChildThickness       {0};     // thickness of the 'fattest' child
                 bool                                           PlaceInFollow               {false}; // shows if the node places it's children in follow along Z-axis
@@ -699,7 +699,11 @@ namespace Frenchie
             // _Settings - node settings
             // _Render   - boolean that defines if to push the node within rendering queue or not
             template<typename Type>
-            bool begin_node(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings, bool* _Render = nullptr)
+            bool begin_node(
+                const std::string&                           _ID,
+                const ImmediateUserInterfaceNodeSettings&    _Settings,
+                bool*                                        _Render = nullptr,
+                const ImmedidateUserInterfaceRenderingOrder& _Order  = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main)
             {
                 // check if we need to render the node
                 if(_Render != nullptr && !(*_Render))
@@ -707,7 +711,7 @@ namespace Frenchie
 
                 // create node (output is never nullptr)
                 ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
-                setup_created_node(node, _Settings);
+                setup_created_node(node, _Settings, _Order);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
@@ -1182,7 +1186,7 @@ namespace Frenchie
                 return dynamic_cast<Type*>(node);
             }
 
-            void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
+            void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&, const ImmedidateUserInterfaceRenderingOrder&);
             void restore_created_node();
         };
     };
