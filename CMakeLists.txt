@@ -47,6 +47,7 @@ message("-- Project parameters:")
 message("-- Name             ${PROJECT_NAME}")
 message("-- Platform backend ${PLATFORM_BACKEND}")
 message("-- Graphics backend ${GRAPHICS_BACKEND}")
+message("-- Build type       ${CMAKE_BUILD_TYPE}")
 message("\n")
 
 #--------------------------------------------------------------
