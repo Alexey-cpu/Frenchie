@@ -202,6 +202,10 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
 
                 if(m_UI->begin_menu(m_UI->next_id(menuID, menuID)))
                 {
+                    m_UI->menu_action(m_UI->next_id("Action-1"));
+                    m_UI->menu_action(m_UI->next_id("Action-2"));
+                    m_UI->menu_action(m_UI->next_id("Action-3"));
+
                     m_UI->end_menu();
                 }
             }
