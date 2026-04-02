@@ -130,15 +130,19 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         if(m_UI->begin_scrollarea(m_UI->next_id("ScrollArea")))
         {
             for (int i = ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Begin;
-                    i < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
-                    i++)
+                     i < ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End;
+                     i++)
             {
-                m_UI->input_color(
+                if(m_UI->input_color(
                     m_UI->next_id(Frenchie::Core::String::format("Color-%d", i)),
                     m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)i),
-                    ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB | ImmediateUserInterfaceColorPickerSettings_PreviewColor);
+                    ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB | ImmediateUserInterfaceColorPickerSettings_PreviewColor))
+                {
+                    State.showColorPciker = true;
+                }
 
                 m_UI->same_line();
+                m_UI->indent(32.f);
 
                 m_UI->label(m_UI->next_id(Frenchie::Core::String::format("Label-%d", i)), m_UI->m_Style.style_color_to_string((ImmediateUserInterfaceNodeColors_)i));
             }

@@ -20,6 +20,7 @@ namespace Frenchie
 
             // style settings
             bool ShowStyleSettings             = false;
+            bool showColorPciker               = false;
 
             // layout configurator
             float       TopMargin                         = 0.f;
