@@ -194,6 +194,16 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                 m_UI->end_menu();
             }
 
+            for (int i = 0; i < 20; i++)
+            {
+                auto menuID = Frenchie::Core::String::format("Menu-%d", i);
+
+                if(m_UI->begin_menu(m_UI->next_id(menuID, menuID)))
+                {
+                    m_UI->end_menu();
+                }
+            }
+
             m_UI->end_menubar();
         }
 

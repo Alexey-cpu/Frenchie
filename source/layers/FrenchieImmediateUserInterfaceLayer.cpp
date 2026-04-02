@@ -5069,16 +5069,16 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowCentralDocker>(_Context->next_id("CentralDockerView"), settings))
     {
+        window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
+        window->DockerView->State.PlaceInFollow               = true;
+        window->DockerView->State.OrderChildrenWhileRendering = true;
+
         if(!window->IsActive)
         {
             _Context->end_node<ImmediateUserInterfaceWindowCentralDocker>();
             _Context->end_node<ImmediateUserInterfaceWindow>();
             return false;
         }
-
-        window->DockerView                                    = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowCentralDocker>();
-        window->DockerView->State.PlaceInFollow               = true;
-        window->DockerView->State.OrderChildrenWhileRendering = true;
 
         if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("SnapperView"), settings))
         {
