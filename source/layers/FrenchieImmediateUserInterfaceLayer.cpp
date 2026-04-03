@@ -459,8 +459,9 @@ namespace Frenchie
             virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
             virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
-            ImmediateUserInterfaceWindow* Window         = nullptr;
-            gs_2dboxf                     CloseButtonBox = gs_2dboxf();
+            ImmediateUserInterfaceWindow* Window         {nullptr};
+            gs_2dboxf                     CloseButtonBox {gs_2dboxf()};
+            bool                          Pressed        {false};
         };
 
         struct ImmediateUserInterfaceWindowCentralDocker : public ImmediateUserInterfacePanel
@@ -4761,67 +4762,6 @@ void ImmediateUserInterfaceWindow::layout(ImmediateUserInterfaceContextLayer* _C
 bool ImmediateUserInterfaceWindow::events(ImmediateUserInterfaceContextLayer* _Context)
 {
     return ImmediateUserInterfaceNode::events(_Context);
-
-    // bool defaultPipeline = true;
-
-    // // window frame events
-    // process_window_frame(
-    //     _Context,
-    //     this,
-
-    //     // catch frame events
-    //     [this, &defaultPipeline](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _FrameBox, const gs_2dboxf& _Frame, ImmediateUserInterfaceWindow* _Window)
-    //     {
-    //         // focus and activity
-    //         if(_Context->m_Input.is_mouse_button_pressed() && _Frame.contains(_Context->m_Input.get_cusor_position()))
-    //             _Window->Activate = true;
-
-    //         // move
-    //         if((_Window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Movable) &&
-    //             !((_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTop)           ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedLeft)        ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedRight)       ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottom)      ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomLeft)  ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedBottomRight) ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopLeft)     ||
-    //                 (_Window->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsResizedTopRight)))
-    //         {
-    //             ImmediateUserInterfaceNode* movable = _Window;
-
-    //             if(_Context->m_Input.is_mouse_button_pressed() &&
-    //                 gs_2dboxf(
-    //                     _Frame.Min + gs_vec2f(ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, this).Radius, 0.f),
-    //                     _Frame.Max - gs_vec2f(ImmediateUserInterfaceContextLayerHelpers::build_resize_top_left_ellipse(_Context, this).Radius, 0.f)).contains(_Context->m_Input.get_cusor_position()))
-    //             {
-    //                 movable->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-    //                 defaultPipeline = false;
-    //                 return;
-    //             }
-
-    //             if(_Context->m_Input.is_mouse_button_down() &&
-    //                 _Frame.contains(_Context->m_Input.get_cusor_position())   &&
-    //                 gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f &&
-    //                 (movable->State.Events & ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved))
-    //             {
-    //                 movable->State.BoundingBox = gs_2dboxf(
-    //                     movable->Cache.BoundingBox.Min + _Context->m_Input.get_cusor_drag_delta(),
-    //                     movable->Cache.BoundingBox.Max + _Context->m_Input.get_cusor_drag_delta());
-
-    //                 if(dynamic_cast<ImmediateUserInterfaceWindow*>(movable))
-    //                     dynamic_cast<ImmediateUserInterfaceWindow*>(movable)->ReattachChildren = true;
-
-    //                 defaultPipeline = false;
-    //                 return;
-    //             }
-    //         }
-    //     });
-
-    // // default event pipeline
-    // if(defaultPipeline)
-    //     return ImmediateUserInterfaceNode::events(_Context);
-    
-    // return !defaultPipeline;
 }
 
 void ImmediateUserInterfaceWindow::attach_child(ImmediateUserInterfaceNode* _Child)
@@ -5264,6 +5204,7 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
         return true;
     }
 
+    // activate window
     if(_Context->m_Input.is_mouse_button_clicked())
     {
         if(Window)
@@ -5271,7 +5212,12 @@ bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceConte
     }
 
     // move window
-    if(gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f)
+    if(_Context->m_Input.is_mouse_button_pressed())
+        Pressed = true;
+    else if(!_Context->m_Input.is_mouse_button_down())
+        Pressed = false;
+
+    if(Pressed && gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f)
     {
         if(Window)
             Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
@@ -5455,19 +5401,19 @@ void ImmedidateUserInterfaceWindowController::frame_update(ImmediateUserInterfac
     if(_Context == nullptr) return;
 
     // create worksapce dockarea
-    m_DockAreaOpened =
-        (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking);
+    m_DockAreaOpened = (_Context->m_Settings & ImmediateUserInterfaceContextSettings_::ImmediateUserInterfaceContextSettings_EnableWorkspaceDocking);
+
+    if(!m_DockAreaOpened) return;
 
     if(_Context->begin_node<ImmediateUserInterfaceWindowDockArea>(
         _Context->next_id(ApplicationPlatformBackend::get_window_name(), "DockingWorkspace"),
         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults
         | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup,
-        &m_DockAreaOpened,
+        nullptr,
         ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Background))
     {
         // retrieve window
-        m_WorkspaceDockArea         = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
-        m_WorkspaceDockArea->Opened = &m_DockAreaOpened;
+        m_WorkspaceDockArea = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindow>();
 
         _Context->end_node<ImmediateUserInterfaceWindowDockArea>();
     }
@@ -5618,7 +5564,9 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
         else if(window->BottomSnapper != nullptr)
             docker = ImmediateUserInterfaceWindow::retrieve_docker_by_view(_Context, window->BottomSnapper);
 
-        if(docker != nullptr && openedWindows.find(docker) == openedWindows.end())
+        if(
+            (docker != nullptr && openedWindows.find(docker) == openedWindows.end()) ||
+            (docker != nullptr && docker->Opened != nullptr && !(*docker->Opened)))
         {
             auto& dockedWindows = _Context->get_controller<ImmedidateUserInterfaceWindowController>()->retrieve_docked_windows(
                 _Context,
@@ -5643,6 +5591,14 @@ void ImmedidateUserInterfaceWindowController::frame_finish(ImmediateUserInterfac
                 if(!(window->State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup))
                     window->State.RenderingOrder = ImmedidateUserInterfaceRenderingOrder_::ImmedidateUserInterfaceRenderingOrder_Main;
             }
+        }
+
+        // setup active window in docker if we are closed
+        if(
+            (openedWindows.find(window) == openedWindows.end()) ||
+            (window->Opened != nullptr && window->Opened != nullptr && !(*window->Opened)))
+        {
+            detach_from_docker(_Context, window);
         }
 
         // save docked windows cache
