@@ -130,6 +130,9 @@ namespace Frenchie
             // ordering
             ImmediateUserInterfaceNodeSettings_ManualRenderingOrderSetup              = 1 << 22, // declares that the rendering order of the node is setup manually so it won't be changed by focus pass and other events
 
+            // blur
+            ImmediateUserInterfaceNodeSettings_ShowBlur                               = 1 << 23, // enables blured background for dialogs
+
             ImmediateUserInterfaceNodeSettings_AllowedModificationsDefaults           = 
                 ImmediateUserInterfaceNodeSettings_Movable |
                 ImmediateUserInterfaceNodeSettings_Resizable,

@@ -21,8 +21,7 @@ namespace Frenchie
             // style settings
             bool ShowStyleSettings             = false;
             bool showColorPciker               = false;
-            bool openAnotherDialog               = false;
-            bool openAnotherDialog1               = false;
+            int  colorPickerStyleColor         = 0;
 
             // layout configurator
             float       TopMargin                         = 0.f;
