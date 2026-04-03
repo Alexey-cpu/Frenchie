@@ -124,28 +124,12 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
         m_UI->end_window();
     }
 
-    if(m_UI->begin_dialog(m_UI->next_id("ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.showColorPciker))
+    if(m_UI->begin_dialog(m_UI->next_id("Color picker dialog", "ColorPicker"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.showColorPciker))
     {
-        if(m_UI->push_button(m_UI->next_id("Open another dialog", "OpenAnotherDialog")))
-        {
-            State.openAnotherDialog = true;
-        }
-
-        if(m_UI->begin_dialog(m_UI->next_id("Another dialog"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.openAnotherDialog))
-        {
-            if(m_UI->push_button(m_UI->next_id("Open another dialog", "OpenAnotherDialog")))
-            {
-                State.openAnotherDialog1 = true;
-            }
-
-            if(m_UI->begin_dialog(m_UI->next_id("Another dialog"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Defaults, &State.openAnotherDialog1))
-            {
-                m_UI->end_dialog();
-            }
-
-            m_UI->end_dialog();
-        }
-
+        m_UI->color_picker_rgba(
+            m_UI->next_id("ColorPicker"),
+            m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)State.ColorPickerColor));
+        
         m_UI->end_dialog();
     }
 
@@ -165,7 +149,8 @@ void ImmediateUserInterfaceTestLayer::widgets_test()
                     m_UI->m_Style.get_color((ImmediateUserInterfaceNodeColors_)i),
                     ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB | ImmediateUserInterfaceColorPickerSettings_PreviewColor))
                 {
-                    State.showColorPciker = true;
+                    State.showColorPciker  = true;
+                    State.ColorPickerColor = i;
                 }
 
                 m_UI->same_line();
