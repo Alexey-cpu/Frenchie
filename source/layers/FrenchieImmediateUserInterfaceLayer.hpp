@@ -59,10 +59,9 @@ namespace Frenchie
             ImmediateUserInterfaceNodeColors_Begin            = 0,
 
             // layouts/windows e.t.c
-            ImmediateUserInterfaceNodeColors_ParentBackground = ImmediateUserInterfaceNodeColors_Begin, // parent UI elements background color
+            ImmediateUserInterfaceNodeColors_ChildBackground = ImmediateUserInterfaceNodeColors_Begin,  // child UI elements background color
+            ImmediateUserInterfaceNodeColors_ParentBackground,                                          // parent UI elements background color
             ImmediateUserInterfaceNodeColors_ParentBackgroundHovered,                                   // hovered parent UI elements background color
-            ImmediateUserInterfaceNodeColors_ChildBackground,                                           // child UI elements background color
-            ImmediateUserInterfaceNodeColors_ChildBackgroundHovered,                                    // hovered child UI elements background color
 
             // buttons
             ImmediateUserInterfaceNodeColors_ButtonOutline,                                             // push button, check button, radio button, slider button, combobox, input text outline color
@@ -313,33 +312,32 @@ namespace Frenchie
             // frames radius
             float get_minimum_frames_radius() const;
             float get_maximum_frames_radius() const;
-            float get_frames_radius() const;
+            float& get_frames_radius() const;
 
             // frames width
             float get_minimum_frames_width() const;
             float get_maximum_frames_width() const;
-            float get_frames_width() const;
+            float& get_frames_width() const;
 
             // font size
             float get_minimum_font_size() const;
             float get_maximum_font_size() const;
-            float get_font_size() const;
+            float& get_font_size() const;
 
             // scrollbar width
             float get_minimum_scrollbar_width() const;
             float get_maximum_scrollbar_width() const;
-            float get_scrollbar_width() const;
+            float& get_scrollbar_width() const;
 
             // menu pointer size
-            float get_popup_menu_pointer_size() const;
+            float& get_popup_menu_pointer_size() const;
 
             // current font
             ApplicationRenderingBackendFont get_current_font() const;
 
             // color
-            gs_color& get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
-
-            std::string style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color) const;
+            gs_color&   get_color(const ImmediateUserInterfaceNodeColors_& _Color) const;
+            std::string style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel = false) const;
 
         private:
 
@@ -694,6 +692,7 @@ namespace Frenchie
             virtual void frame_render() override;
             virtual void frame_finish() override;
             virtual void finish() override;
+            virtual bool allows_multiple_instances() const override;
 
             // UI scoped elements API
 
@@ -1177,7 +1176,14 @@ namespace Frenchie
                     ((hashable + sharpCount) < _ID.size() ? _ID.size()  - (hashable + sharpCount) : _ID.size()));
 
                 if(m_Cache.find(m_CurrentHash) == m_Cache.end())
+                {
+                    // cache node
                     m_Cache[m_CurrentHash] = std::make_unique<Type>(m_CurrentHash);
+
+                    // setup rendering order once
+                    m_Cache[m_CurrentHash]->State.RenderingOrder = _Order;
+                }
+
                 ImmediateUserInterfaceNode* node = m_Cache[m_CurrentHash].get();
                 GS_ASSERT((++node->Count) <= 1);
 
@@ -1185,9 +1191,6 @@ namespace Frenchie
                 m_CurrentName.append(_ID.c_str(), _ID.c_str() + hashable);
                 if(node->Name != m_CurrentName)
                     node->Name = m_CurrentName;
-
-                // setup rendering order
-                node->State.RenderingOrder = _Order;
 
                 return dynamic_cast<Type*>(node);
             }

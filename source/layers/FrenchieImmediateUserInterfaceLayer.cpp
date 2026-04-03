@@ -389,8 +389,6 @@ namespace Frenchie
             bool                        Activate          {false};
             bool                        ReattachChildren  {false};
 
-            // gs_2dboxf                   FrameBox          {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
-            // gs_2dboxf                   ContentBox        {gs_2dboxf(gs_vec2f(0.f, 0.f), gs_vec2f(0.f, 0.f))};
             bool*                       Opened            {nullptr};
             int                         DockingIndex      {-1};
 
@@ -438,168 +436,28 @@ namespace Frenchie
 
         struct ImmediateUserInterfaceWindowRoot : public ImmediateUserInterfaceVerticalStack
         {
-            ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
-            virtual ~ImmediateUserInterfaceWindowRoot(){}
+            ImmediateUserInterfaceWindowRoot(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindowRoot();
         };
 
         struct ImmediateUserInterfaceWindowFrame : public ImmediateUserInterfaceScrollArea
         {
         public:
-            ImmediateUserInterfaceWindowFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
-            virtual ~ImmediateUserInterfaceWindowFrame(){}
+            ImmediateUserInterfaceWindowFrame(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindowFrame();
 
-            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min,
-                    State.BoundingBox.Max,
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                _Context->m_Renderer->push_rectangle_rounded_filled(
-                    State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                    State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                    _Context->m_Style.get_frames_radius(),
-                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                    _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-            }
+            virtual void render_background(ImmediateUserInterfaceContextLayer* _Context) override;
         };
 
         struct ImmediateUserInterfaceWindowFrameButton : public ImmediateUserInterfaceNode
         {
         public:
-            ImmediateUserInterfaceWindowFrameButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
-            virtual ~ImmediateUserInterfaceWindowFrameButton(){}
+            ImmediateUserInterfaceWindowFrameButton(const std::string& _Name);
+            virtual ~ImmediateUserInterfaceWindowFrameButton();
 
-            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                // layout self
-                State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
-                State.MaximumSize = gs_vec2f(
-                    Window != nullptr ?
-                        gs_vec2f(gs_max(_Context->m_Renderer->calculate_bounding_box(Window->Name.begin(), Window->Name.end(), _Context->m_Style.get_font_size(),  _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size() * 2.f, 256.f), _Context->m_Style.get_font_size() * 2.f) :
-                            gs_vec2f(256.f, _Context->m_Style.get_font_size() * 2.f),
-                    _Context->m_Style.get_font_size());
-
-                // layout close button
-                CloseButtonBox  = gs_2dboxf(
-                    gs_vec2f(State.BoundingBox.Max.x - 32.f - _Context->m_Style.get_frames_radius() * 0.5f, State.BoundingBox.Min.y + 16.f),
-                    gs_vec2f(State.BoundingBox.Max.x - 32.f - _Context->m_Style.get_frames_radius() * 0.5f, State.BoundingBox.Min.y + 16.f) + gs_vec2f(32.f, 32.f));
-            }
-
-            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                // auxiliary lambdas
-                auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
-                {
-                    if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
-                        return gs_color_rgba(255, 0, 0, 255);
-
-                    return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
-                        gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
-                        gs_color_rgba(64, 0, 0, 255);
-                };
-
-                auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box)
-                {
-                    gs_2dboxf closeButtonBox = gs_2dboxf(
-                        _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
-                        _Box.Max - _Context->m_Style.get_frames_width() * 2.f);
-
-                    _Context->m_Renderer->push_arc_filled(
-                        closeButtonBox.center(),
-                        closeButtonBox.size().x,
-                        closeButtonBox.size().y,
-                        0.f,
-                        360.f,
-                        close_button_color(_Context, closeButtonBox),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    _Context->m_Renderer->push_line(
-                        closeButtonBox.Min + gs_vec2f(+4.f, +4.f),
-                        closeButtonBox.Max - gs_vec2f(+4.f, +4.f),
-                        4.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                    _Context->m_Renderer->push_line(
-                        gs_vec2f(closeButtonBox.Max.x, closeButtonBox.Min.y) + gs_vec2f(-4.f, +4.f),
-                        gs_vec2f(closeButtonBox.Min.x, closeButtonBox.Max.y) + gs_vec2f(+4.f, -4.f),
-                        4.f,
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                };
-
-                if(Window && (!Window->DockedWindowsCache.empty() || Window->Docker != nullptr))
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min,
-                        State.BoundingBox.Max,
-                        _Context->m_Style.get_frames_radius(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
-                }
-
-                if(Window && !Window->IsActive)
-                {
-                    _Context->m_Renderer->push_rectangle_rounded_filled(
-                        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                        _Context->m_Style.get_frames_radius(),
-                        State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered ?
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
-                }
-
-                if(Window != nullptr)
-                {
-                    _Context->m_Renderer->push_text(
-                        gs_vec2f(State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f, State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
-                        Window->Name.begin(),
-                        Window->Name.end(),
-                        _Context->m_Style.get_font_size(),
-                        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-                        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                }
-
-                if(Window != nullptr && Window->Opened)
-                    render_close_button(_Context, CloseButtonBox);
-            }
-
-            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-            {
-                if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
-
-                // close
-                if(_Context->m_Input.is_mouse_button_clicked() && CloseButtonBox.contains(_Context->m_Input.get_cusor_position()))
-                {
-                    if(Window && Window->Opened)
-                        *Window->Opened = false;
-
-                    return true;
-                }
-
-                if(_Context->m_Input.is_mouse_button_clicked())
-                {
-                    if(Window)
-                        Window->Activate = true;
-                }
-
-                // move window
-                if(gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f)
-                {
-                    if(Window)
-                        Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
-
-                    return true;
-                }
-
-                return ImmediateUserInterfaceNode::events(_Context);
-            }
+            virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual void render(ImmediateUserInterfaceContextLayer* _Context) override;
+            virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override;
 
             ImmediateUserInterfaceWindow* Window         = nullptr;
             gs_2dboxf                     CloseButtonBox = gs_2dboxf();
@@ -785,6 +643,7 @@ namespace Frenchie
         };
     
         // internal
+
         // helpers
         namespace ImmediateUserInterfaceContextLayerHelpers
         {
@@ -1145,27 +1004,27 @@ namespace Frenchie
                 
                 float WindowResizeAngleGizmoRadius = 32.f;
                 
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + _Context->m_Style.get_frames_radius() * 0.5f, WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + _Context->m_Style.get_frames_radius() * 0.25f, WindowResizeAngleGizmoRadius);
             }
 
             gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(-_Context->m_Style.get_frames_radius() * 0.5f, _Context->m_Style.get_frames_radius() * 0.5f), WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(-_Context->m_Style.get_frames_radius() * 0.25f, _Context->m_Style.get_frames_radius() * 0.25f), WindowResizeAngleGizmoRadius);
             }
 
             gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(_Context->m_Style.get_frames_radius() * 0.5f, - _Context->m_Style.get_frames_radius() * 0.5f), WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(_Context->m_Style.get_frames_radius() * 0.25f, - _Context->m_Style.get_frames_radius() * 0.25f), WindowResizeAngleGizmoRadius);
             };
 
             gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->m_Style.get_frames_radius() * 0.5f, WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->m_Style.get_frames_radius() * 0.25f, WindowResizeAngleGizmoRadius);
             };
 
             gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -1328,7 +1187,7 @@ namespace Frenchie
                         _Context->m_Renderer->calculate_transform_matrix((float)(depth)));
                     return;
                 }
-            };
+            }
 
             bool check_cursor_intersection_with_resize_gizmo(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
@@ -1359,7 +1218,7 @@ namespace Frenchie
                     return ImmediateUserInterfaceContextLayerHelpers::build_resize_bottom_box(_Context, _Node).contains(_Context->m_Input.get_cusor_position());
                 
                 return false;
-            };
+            }
 
             ImmediateUserInterfaceNode* find_resizable_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
@@ -1374,7 +1233,7 @@ namespace Frenchie
                     resizable = _Context->m_Hierarchy.get_parent(resizable);
 
                 return resizable;
-            };
+            }
 
             void resize_node(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const ImmediateUserInterfaceNodeEvents& _ResizeEventType)
             {
@@ -1401,6 +1260,44 @@ namespace Frenchie
                     box = gs_2dboxf(_Node->Cache.BoundingBox.Min, _Node->Cache.BoundingBox.Max + gs_vec2f(0.f, ApplicationPlatformBackend::get_window_cursor_dragdelta().y));
 
                 _Node->State.BoundingBox = gs_2dboxf(box.Min, box.Min + gs_clamp(box.size(), _Node->State.MinimumSize, _Node->State.MaximumSize));
+            }
+
+            gs_color close_button_color(ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
+            {
+                if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
+                    return gs_color_rgba(255, 0, 0, 255);
+
+                return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
+                    gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
+                    gs_color_rgba(64, 0, 0, 255);
+            };
+
+            void render_close_button(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node, const gs_2dboxf& _Box)
+            {
+                if(_Node == nullptr) return;
+
+                _Context->m_Renderer->push_arc_filled(
+                    _Box.center(),
+                    _Box.size().x,
+                    _Box.size().y,
+                    0.f,
+                    360.f,
+                    close_button_color(_Context, _Box),
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                _Context->m_Renderer->push_line(
+                    _Box.Min + gs_vec2f(+4.f, +4.f),
+                    _Box.Max - gs_vec2f(+4.f, +4.f),
+                    4.f,
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
+
+                _Context->m_Renderer->push_line(
+                    gs_vec2f(_Box.Max.x, _Box.Min.y) + gs_vec2f(-4.f, +4.f),
+                    gs_vec2f(_Box.Min.x, _Box.Max.y) + gs_vec2f(+4.f, -4.f),
+                    4.f,
+                    _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+                    _Context->m_Renderer->calculate_transform_matrix((float)_Node->place_in_follow()));
             };
         }
 
@@ -2363,92 +2260,16 @@ namespace Frenchie
 
                 virtual ~ImmediateUserInterfaceInputScalarSlider(){}
 
-                virtual void render(ImmediateUserInterfaceContextLayer* _Context) override
-                {
-                    // render slider box
-                    {
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            State.BoundingBox.Min,
-                            State.BoundingBox.Max,
-                            _Context->m_Style.get_frames_radius(),
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+                virtual void render(ImmediateUserInterfaceContextLayer*) override{}
 
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
-                            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
-                            _Context->m_Style.get_frames_radius(),
-                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                    }
-
-                    // render slider
-                    {
-                        // palette slider
-                        gs_2dboxf paletteSlider = gs_2dboxf(
-                            State.BoundingBox.Min + gs_vec2f(SliderPosition, 0.f) * State.BoundingBox.size() * 0.9f,
-                            State.BoundingBox.Min + gs_vec2f(SliderPosition, 0.f) * State.BoundingBox.size() * 0.9f + gs_vec2f(State.BoundingBox.width() * 0.1f, State.BoundingBox.height()));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            paletteSlider.Min,
-                            paletteSlider.Max,
-                            _Context->m_Style.get_frames_radius(),
-                            gs_color_rgba(0, 0, 0, 255),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-                        _Context->m_Renderer->push_rectangle_rounded_filled(
-                            paletteSlider.Min + gs_vec2f(4.f),
-                            paletteSlider.Max - gs_vec2f(4.f),
-                            _Context->m_Style.get_frames_radius(),
-                            gs_color_rgba(255, 255, 255, 255),
-                            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-                    }
-                }
-
-                virtual bool events(ImmediateUserInterfaceContextLayer* _Context) override
-                {
-                    if(_Context == nullptr || _Context->m_Renderer == nullptr)
-                        return false;
-
-                    if(!_Context->m_Input.is_mouse_button_down())
-                    {
-                        SliderIsMoving = false;
-                        Edited         = false;
-                        return false;
-                    }
-
-                    // catch vertical color palette event
-                    if((State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || SliderIsMoving)
-                    {
-                        if(_Context->m_Input.is_mouse_button_pressed())
-                        {
-                            SliderPosition = gs_clamp(
-                                ceil(((_Context->m_Input.get_cusor_position() - State.BoundingBox.Min - State.BoundingBox.size() * 0.1f * 0.5f) / State.BoundingBox.size() / 0.9f).x * 100.f / (float)Delta),
-                                1.f / (float)Delta,
-                                100.f) * (float)Delta / 100.f;
-                            
-                            SliderPreviousPosition = SliderPosition;
-                        }
-
-                        SliderPosition = gs_clamp(
-                            SliderPreviousPosition + gs_clamp(
-                                ceil( (_Context->m_Input.get_cusor_drag_delta() / State.BoundingBox.size() / 0.9f).x * 100.f / (float)Delta),
-                                -100.f,
-                                +100.f) * (float)Delta / 100.f,
-                            0.f,
-                            1.f);
-                        
-                        SliderIsMoving = true;
-                        Edited         = true;
-
-                        return true;
-                    }
-                    
+                virtual bool events(ImmediateUserInterfaceContextLayer*) override
+                {                    
                     return false;
                 }
                 
                 virtual void layout(ImmediateUserInterfaceContextLayer* _Context) override
                 {
+                    // layout self
                     State.MinimumSize = gs_vec2f(
                         State.MinimumSize.x,
                         _Context->m_Style.get_font_size());
@@ -2460,13 +2281,18 @@ namespace Frenchie
                     State.BoundingBox = gs_2dboxf(
                         State.BoundingBox.Min,
                         State.BoundingBox.Min + gs_clamp(State.BoundingBox.size(), State.MinimumSize, State.MaximumSize));
+
+                    // layout elements
                 }
 
                 float SliderPosition         {0.f};
                 float SliderPreviousPosition {0.f};
-                int   Delta                  {1};
                 bool  SliderIsMoving         {false};
                 bool  Edited                 {false};
+
+                gs_2dboxf SliderBox;
+                gs_2dboxf PlusButtonBox;
+                gs_2dboxf MinusButtonBox;
             };
 
             if(_Context->begin_node<ImmediateUserInterfaceInputScalarSlider>(_ID, ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
@@ -2474,16 +2300,93 @@ namespace Frenchie
                 ImmediateUserInterfaceInputScalarSlider* slider =
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceInputScalarSlider>();
 
-                slider->Delta = _Delta;
+                // render
+                {
+                    _Context->m_Renderer->push_clip_box(slider->get_clipping_box(_Context));
+
+                    int depth = ImmediateUserInterfaceContextLayerHelpers::calculate_depth_over_node(slider);
+
+                    // render slider box
+                    {
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            slider->State.BoundingBox.Min,
+                            slider->State.BoundingBox.Max,
+                            _Context->m_Style.get_frames_radius(),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline),
+                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            slider->State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+                            slider->State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+                            _Context->m_Style.get_frames_radius(),
+                            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground),
+                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                    }
+
+                    // render slider
+                    {
+                        // palette slider
+                        gs_2dboxf paletteSlider = gs_2dboxf(
+                            slider->State.BoundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * slider->State.BoundingBox.size() * 0.9f,
+                            slider->State.BoundingBox.Min + gs_vec2f(slider->SliderPosition, 0.f) * slider->State.BoundingBox.size() * 0.9f + gs_vec2f(slider->State.BoundingBox.width() * 0.1f, slider->State.BoundingBox.height()));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            paletteSlider.Min,
+                            paletteSlider.Max,
+                            _Context->m_Style.get_frames_radius(),
+                            gs_color_rgba(0, 0, 0, 255),
+                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+
+                        _Context->m_Renderer->push_rectangle_rounded_filled(
+                            paletteSlider.Min + gs_vec2f(4.f),
+                            paletteSlider.Max - gs_vec2f(4.f),
+                            _Context->m_Style.get_frames_radius(),
+                            gs_color_rgba(255, 255, 255, 255),
+                            _Context->m_Renderer->calculate_transform_matrix((float)depth++));
+                    }
+
+                    _Context->m_Renderer->pop_clip_box();
+                }
+
+                // event processing
+                {
+                    // stop catching event
+                    if(!_Context->m_Input.is_mouse_button_down())
+                    {
+                        slider->SliderIsMoving = false;
+                        slider->Edited         = false;
+                    }
+                    // catch vertical color palette event
+                    else if((slider->State.BoundingBox.contains(_Context->m_Input.get_cusor_position()) &&_Context->m_Input.is_mouse_button_pressed()) || slider->SliderIsMoving)
+                    {
+                        if(_Context->m_Input.is_mouse_button_pressed() &&
+                            (slider->State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered))
+                        {
+                            slider->SliderPosition = gs_clamp(
+                                ceil(((_Context->m_Input.get_cusor_position() - slider->State.BoundingBox.Min - slider->State.BoundingBox.size() * 0.1f * 0.5f) / slider->State.BoundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                1.f / (float)_Delta,
+                                100.f) * (float)_Delta / 100.f;
+                            
+                            slider->SliderPreviousPosition = slider->SliderPosition;
+                        }
+
+                        slider->SliderPosition = gs_clamp(
+                            slider->SliderPreviousPosition + gs_clamp(
+                                ceil( (_Context->m_Input.get_cusor_drag_delta() / slider->State.BoundingBox.size() / 0.9f).x * 100.f / (float)_Delta),
+                                -100.f,
+                                +100.f) * (float)_Delta / 100.f,
+                            0.f,
+                            1.f);
+                        
+                        slider->SliderIsMoving = true;
+                        slider->Edited         = true;
+                    }
+                }
 
                 if(slider->Edited)
-                {
                     _Input = (Type)((float)_Min + (float)(_Max - _Min) * slider->SliderPosition);
-                }
                 else
-                {
-                    slider->SliderPosition = (float)_Input / (float)(_Max - _Min);
-                }
+                    slider->SliderPosition = gs_clamp<float>((float)(_Input - _Min) / (float)(_Max - _Min), 0.f, 1.f);
 
                 _Context->end_node<ImmediateUserInterfaceInputScalarSlider>();
             }
@@ -2499,10 +2402,9 @@ ImmedidateUserInterfaceStyle::ImmedidateUserInterfaceStyle()
     Colors.resize(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_End);
 
     // general ui elements
+    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                  = gs_color_rgba(72, 72, 72, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground]                 = gs_color_rgba(28, 28, 28, 255);
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered]          = gs_color_rgba(72, 82, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground]                  = gs_color_rgba(72, 72, 72, 255);
-    Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered]           = gs_color_rgba(72, 82, 72, 255);
     
     // push button
     Colors[ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline]                    = gs_color_rgba(72, 72, 72, 255);
@@ -2541,9 +2443,10 @@ float ImmedidateUserInterfaceStyle::get_maximum_frames_radius() const
     return 32.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_frames_radius() const
+float& ImmedidateUserInterfaceStyle::get_frames_radius() const
 {
-    return gs_clamp(FramesRadius, get_minimum_frames_radius(), get_maximum_frames_radius());
+    FramesRadius = gs_clamp(FramesRadius, get_minimum_frames_radius(), get_maximum_frames_radius());
+    return FramesRadius;
 }
 
 float ImmedidateUserInterfaceStyle::get_minimum_frames_width() const
@@ -2553,12 +2456,13 @@ float ImmedidateUserInterfaceStyle::get_minimum_frames_width() const
 
 float ImmedidateUserInterfaceStyle::get_maximum_frames_width() const
 {
-    return 16.f;
+    return 8.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_frames_width() const
+float& ImmedidateUserInterfaceStyle::get_frames_width() const
 {
-    return gs_clamp(FramesWidth, get_minimum_frames_width(), get_maximum_frames_width());
+    FramesWidth = gs_clamp(FramesWidth, get_minimum_frames_width(), get_maximum_frames_width());
+    return FramesWidth;
 }
 
 float ImmedidateUserInterfaceStyle::get_minimum_font_size() const
@@ -2571,9 +2475,10 @@ float ImmedidateUserInterfaceStyle::get_maximum_font_size() const
     return 128.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_font_size() const
+float& ImmedidateUserInterfaceStyle::get_font_size() const
 {
-    return gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size());
+    FontSize = gs_clamp(FontSize, get_minimum_font_size(), get_maximum_font_size());
+    return FontSize;
 }
 
 float ImmedidateUserInterfaceStyle::get_minimum_scrollbar_width() const
@@ -2586,14 +2491,17 @@ float ImmedidateUserInterfaceStyle::get_maximum_scrollbar_width() const
     return get_maximum_frames_radius() * 2.f;
 }
 
-float ImmedidateUserInterfaceStyle::get_scrollbar_width() const
+float& ImmedidateUserInterfaceStyle::get_scrollbar_width() const
 {
-    return gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width());
+    ScrollBarWidth = gs_clamp(ScrollBarWidth, get_minimum_scrollbar_width(), get_maximum_scrollbar_width());
+    return ScrollBarWidth;
 }
 
-float ImmedidateUserInterfaceStyle::get_popup_menu_pointer_size() const
+float& ImmedidateUserInterfaceStyle::get_popup_menu_pointer_size() const
 {
-    return gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
+    PopupMenuPointerSize = gs_min(gs_max(PopupMenuPointerSize, 32.f), get_font_size() - 2.f * get_frames_width());
+
+    return PopupMenuPointerSize;
 }
 
 ApplicationRenderingBackendFont ImmedidateUserInterfaceStyle::get_current_font() const
@@ -2606,28 +2514,27 @@ gs_color& ImmedidateUserInterfaceStyle::get_color(const ImmediateUserInterfaceNo
     return Colors[_Color];
 }
 
-std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color) const
+std::string ImmedidateUserInterfaceStyle::style_color_to_string(const ImmediateUserInterfaceNodeColors_& _Color, bool _Camel) const
 {
     switch (_Color)
     {
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground:                 return "Parent background";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered:          return "Parent background hovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground:                  return "Child background";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackgroundHovered:           return "Child background hovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline:                    return "Button outline";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground:                 return "Button background";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered:          return "Button background hovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed:          return "Button background pressed";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground:        return "Scroll bar slider background";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered: return "Scroll bar slider background hovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline:                      return "Menu outline";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground:                   return "Menu background";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground:             return "Menu action background";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered:      return "Menu action background hovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return "Menu action background pressed";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return "Gizmos";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return "Gizmos hovered";
-        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return "Text";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground:                  return _Camel ? "Child background"                     : "ChildBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground:                 return _Camel ? "Parent background"                    : "ParentBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered:          return _Camel ? "Parent background hovered"            : "ParentBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonOutline:                    return _Camel ? "Button outline"                       : "ButtonOutline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackground:                 return _Camel ? "Button background"                    : "ButtonBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundHovered:          return _Camel ? "Button background hovered"            : "ButtonBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ButtonBackgroundPressed:          return _Camel ? "Button background pressed"            : "ButtonBackgroundPressed";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackground:        return _Camel ? "Scroll bar slider background"         : "ScrollBarSliderBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ScrollBarSliderBackgroundHovered: return _Camel ? "Scroll bar slider background hovered" : "ScrollBarSliderBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuOutline:                      return _Camel ? "Menu outline"                         : "MenuOutline";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuBackground:                   return _Camel ? "Menu background"                      : "MenuBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackground:             return _Camel ? "Menu action background"               : "MenuActionBackground";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundHovered:      return _Camel ? "Menu action background hovered"       : "MenuActionBackgroundHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_MenuActionBackgroundPressed:      return _Camel ? "Menu action background pressed"       : "MenuActionBackgroundPressed";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Gizmos:                           return _Camel ? "Gizmos"                               : "Gizmos";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_GizmosHovered:                    return _Camel ? "Gizmos hovered"                       : "GizmosHovered";
+        case ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text:                             return _Camel ? "Text"                                 : "Text";
     }
 
     return Frenchie::Core::String::format("Unknown color-%d", _Color);
@@ -3665,11 +3572,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
         {
             VerticalScrollBarBox = gs_2dboxf(
                 gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y),
-                gs_vec2f(State.BoundingBox.Max.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()));
+                State.BoundingBox.Max);
 
             VerticalScrollBarBox = gs_2dboxf(
-                VerticalScrollBarBox.Min + gs_vec2f(0.f, _Context->m_Style.get_frames_radius() * 0.5f),
-                VerticalScrollBarBox.Max);
+                VerticalScrollBarBox.Min,
+                VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
 
             VerticalScrollBar.recompute(
                 gs_vec2f(0.f, 0.f),
@@ -3686,22 +3593,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleVerticalScrollBar))
             {
                 VerticalScrollBarBox = gs_2dboxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Min + gs_vec2f(0.f, VerticalScrollBarBox.height()));
-
-                VerticalScrollBar.recompute(
-                    gs_vec2f(0.f, 0.f),
-                    VerticalScrollBarBox.size(),
-                    State.ContentSize,
-                    _Context->m_Style.get_scrollbar_width());
+                VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveVerticalScrollBar))
             {
-                if((int)gs_abs(VerticalScrollBar.ConstrainedSize.y - VerticalScrollBarBox.height()) < _Context->m_Style.get_frames_width())
-                {
-                    VerticalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                    VerticalScrollBar.reset();
-                }
-
-                else if((int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height())
+                if((int)VerticalScrollBar.ConstrainedSize.y >= (int)VerticalScrollBarBox.height())
                 {
                     VerticalScrollBarBox = gs_2dboxf(State.BoundingBox.Min.x, State.BoundingBox.Min.x);
                     VerticalScrollBar.reset();
@@ -3719,19 +3615,8 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
         // calculate horizontal scrollbar
         {
-            HorizontalScrollBarBox = gs_2dboxf(
-                gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()),
-                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Max.y));
-            
-            HorizontalScrollBarBox = gs_2dboxf(
-                HorizontalScrollBarBox.Min + gs_vec2f(_Context->m_Style.get_frames_radius() * 0.5f, 0.f),
-                HorizontalScrollBarBox.Max);
-
-            HorizontalScrollBar.recompute(
-                gs_vec2f(0.f, 0.f),
-                HorizontalScrollBarBox.size(),
-                State.ContentSize,
-                _Context->m_Style.get_scrollbar_width());
+            HorizontalScrollBarBox = gs_2dboxf(gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()), State.BoundingBox.Max);
+            HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
 
             if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
                 (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
@@ -3742,21 +3627,11 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_InvisibleHorizontalScrollBar))
             {
                 HorizontalScrollBarBox = gs_2dboxf(HorizontalScrollBarBox.Min, HorizontalScrollBarBox.Min + gs_vec2f(HorizontalScrollBarBox.width(), 0.f));
-
-                HorizontalScrollBar.recompute(
-                    gs_vec2f(0.f, 0.f),
-                    HorizontalScrollBarBox.size(),
-                    State.ContentSize,
-                    _Context->m_Style.get_scrollbar_width());
+                HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
             }
             else if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar))
             {
-                if((int)gs_abs(HorizontalScrollBar.ConstrainedSize.x - HorizontalScrollBarBox.width()) < _Context->m_Style.get_frames_width())
-                {
-                    HorizontalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
-                    HorizontalScrollBar.reset();
-                }
-                else if((int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width())
+                if((int)HorizontalScrollBar.ConstrainedSize.x >= (int)HorizontalScrollBarBox.width())
                 {
                     HorizontalScrollBarBox = gs_2dboxf(State.BoundingBox.Min, State.BoundingBox.Min);
                     HorizontalScrollBar.reset();
@@ -4979,9 +4854,6 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
     const ImmediateUserInterfaceNodeSettings& _Settings,
     bool*                                     _Render)
 {
-    // nested types
-
-
     // code
     if(_Context == nullptr) return false;
 
@@ -5006,15 +4878,44 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_AdaptiveHorizontalScrollBar
                 | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically))
             {
+                float maxWidth = 0.f;
+
+                maxWidth = gs_max(
+                    _Context->m_Renderer->calculate_bounding_box(
+                        Name.begin(),
+                        Name.end(),
+                        _Context->m_Style.get_font_size(),
+                        _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size() * 2.f + _Context->m_Style.get_frames_radius(),
+                    maxWidth);
+
+                for (int i = 0; i < (int)DockedWindowsCache.size(); i++)
+                {
+                    maxWidth = gs_max(
+                        _Context->m_Renderer->calculate_bounding_box(
+                            DockedWindowsCache[i]->Name.begin(),
+                            DockedWindowsCache[i]->Name.end(),
+                            _Context->m_Style.get_font_size(),
+                            _Context->m_Style.get_current_font()).size().x + _Context->m_Style.get_font_size() * 2.f + _Context->m_Style.get_frames_radius(),
+                        maxWidth);
+                }
+
+                if(DockedWindowsCache.empty())
+                    maxWidth = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrame>()->State.BoundingBox.width();
+
                 if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
                     _Context->next_id("Self"),
                     ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                 {
-                    _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = this;
+                    ImmediateUserInterfaceWindowFrameButton* frameButton =
+                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
+
+                    frameButton->Window = this;
+                    frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                 }
 
-                for (int i = 0; i < (int)DockedWindowsCache.size(); i++)                
+                for (int i = 0; i < (int)DockedWindowsCache.size(); i++)
                 {
                     if(DockedWindowsCache[i] == nullptr)
                         continue;
@@ -5026,7 +4927,12 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
                         ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                     {
-                        _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
+                        ImmediateUserInterfaceWindowFrameButton* frameButton =
+                            _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>();
+
+                        frameButton->Window            = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
+                        frameButton->State.BoundingBox = gs_2dboxf(frameButton->State.BoundingBox.Min, frameButton->State.BoundingBox.Min + gs_vec2f(maxWidth, frameButton->State.BoundingBox.height()));
+
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
                     }
                 }
@@ -5069,7 +4975,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
                         _Context->end_node<ImmediateUserInterfaceWindowHorizontalSnapper>();
                     }
 
-                    if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("ContentView"), settings))
+                    if(_Context->begin_node<ImmediateUserInterfaceWindowVerticalSnapper>(_Context->next_id("ContentView"), settings | ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_VerticalContentAlignmentTop))
                     {
                         window->ContentView = _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>();
                         _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowVerticalSnapper>()->ContentPadding = _Context->m_Style.get_frames_width();
@@ -5253,6 +5159,129 @@ void ImmediateUserInterfaceWindowDockArea::render(ImmediateUserInterfaceContextL
         _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 }
 
+// ImmediateUserInterfaceWindowRoot
+ImmediateUserInterfaceWindowRoot::ImmediateUserInterfaceWindowRoot(const std::string& _Name) : ImmediateUserInterfaceVerticalStack(_Name){}
+ImmediateUserInterfaceWindowRoot::~ImmediateUserInterfaceWindowRoot(){}
+
+// ImmediateUserInterfaceWindowFrame
+ImmediateUserInterfaceWindowFrame::ImmediateUserInterfaceWindowFrame(const std::string& _Name) : ImmediateUserInterfaceScrollArea(_Name){}
+ImmediateUserInterfaceWindowFrame::~ImmediateUserInterfaceWindowFrame(){}
+
+void ImmediateUserInterfaceWindowFrame::render_background(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min,
+        State.BoundingBox.Max,
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+
+    _Context->m_Renderer->push_rectangle_rounded_filled(
+        State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+        State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+        _Context->m_Style.get_frames_radius(),
+        _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+        _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+}
+
+// ImmediateUserInterfaceWindowFrameButton
+ImmediateUserInterfaceWindowFrameButton::ImmediateUserInterfaceWindowFrameButton(const std::string& _Name) : ImmediateUserInterfaceNode(_Name){}
+ImmediateUserInterfaceWindowFrameButton::~ImmediateUserInterfaceWindowFrameButton(){}
+
+void ImmediateUserInterfaceWindowFrameButton::layout(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    auto parent = _Context->m_Hierarchy.get_parent(this);
+
+    float maxWidth = parent != nullptr ? parent->State.BoundingBox.width() : 256.f;
+
+    // layout self
+    State.MinimumSize = gs_vec2f(0.f, _Context->m_Style.get_font_size() * 2.f);
+    State.MaximumSize = gs_vec2f(gs_huge<float>(), _Context->m_Style.get_font_size() * 2.f);
+
+    // layout close button
+    float buttonSize = _Context->m_Style.get_font_size() * 0.5f;
+
+    CloseButtonBox  = gs_2dboxf(
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f),
+        gs_vec2f(State.BoundingBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, State.BoundingBox.center().y - buttonSize * 0.5f) + buttonSize);
+}
+
+void ImmediateUserInterfaceWindowFrameButton::render(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
+
+    if(Window && (!Window->DockedWindowsCache.empty() || Window->Docker != nullptr))
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min,
+            State.BoundingBox.Max,
+            _Context->m_Style.get_frames_radius(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ChildBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+    }
+
+    if(Window && !Window->IsActive)
+    {
+        _Context->m_Renderer->push_rectangle_rounded_filled(
+            State.BoundingBox.Min + _Context->m_Style.get_frames_width(),
+            State.BoundingBox.Max - _Context->m_Style.get_frames_width(),
+            _Context->m_Style.get_frames_radius(),
+            State.MouseHover & ImmediateUserInterfaceNodeMouseHover_::ImmediateUserInterfaceNodeMouseHover_MouseHovered ?
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackgroundHovered) :
+                _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_ParentBackground),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()), true, true, false, false);
+    }
+
+    if(Window != nullptr)
+    {
+        _Context->m_Renderer->push_text(
+            gs_vec2f(State.BoundingBox.Min.x + _Context->m_Style.get_font_size() * 0.5f, State.BoundingBox.center().y - _Context->m_Style.get_font_size() * 0.5f),
+            Window->Name.begin(),
+            Window->Name.end(),
+            _Context->m_Style.get_font_size(),
+            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
+            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
+    }
+
+    if(Window != nullptr && Window->Opened)
+        ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, CloseButtonBox);
+}
+
+bool ImmediateUserInterfaceWindowFrameButton::events(ImmediateUserInterfaceContextLayer* _Context)
+{
+    if(_Context == nullptr || _Context->m_Renderer == nullptr) return false;
+
+    // close
+    if(_Context->m_Input.is_mouse_button_clicked() && CloseButtonBox.contains(_Context->m_Input.get_cusor_position()))
+    {
+        if(Window && Window->Opened)
+            *Window->Opened = false;
+
+        return true;
+    }
+
+    if(_Context->m_Input.is_mouse_button_clicked())
+    {
+        if(Window)
+            Window->Activate = true;
+    }
+
+    // move window
+    if(gs_vector_length(_Context->m_Input.get_cusor_drag_delta()) > 8.f)
+    {
+        if(Window)
+            Window->State.Events |= ImmediateUserInterfaceNodeEvents_::ImmediateUserInterfaceNodeEvents_IsMoved;
+
+        return true;
+    }
+
+    return ImmediateUserInterfaceNode::events(_Context);
+}
+
 // ImmediateUserInterfaceDialog
 ImmediateUserInterfaceDialog::ImmediateUserInterfaceDialog(const std::string& _Name) : ImmediateUserInterfacePanel(_Name){}
 ImmediateUserInterfaceDialog::~ImmediateUserInterfaceDialog(){}
@@ -5334,7 +5363,7 @@ void ImmediateUserInterfaceDialogContent::layout(ImmediateUserInterfaceContextLa
         ContentBox.Min + _Context->m_Style.get_frames_width(),
         ContentBox.Max - _Context->m_Style.get_frames_width());
 
-    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_panel(
+    ImmediateUserInterfaceContextLayerHelpers::layout_nodes_as_vertical_stack(
         _Context->m_Hierarchy.begin(this),
         _Context->m_Hierarchy.end(this),
         ContentBox.Min,
@@ -5353,46 +5382,6 @@ bool ImmediateUserInterfaceDialogContent::events(ImmediateUserInterfaceContextLa
 void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLayer* _Context)
 {
     if(_Context == nullptr || _Context->m_Renderer == nullptr) return;
-
-    auto close_button_color = [](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& closeButtonBox)
-    {
-        if(_Context->m_Input.is_mouse_button_down() && closeButtonBox.contains(_Context->m_Input.get_cusor_position()))
-            return gs_color_rgba(255, 0, 0, 255);
-
-        return closeButtonBox.contains(_Context->m_Input.get_cusor_position()) ?
-            gs_color_rgba(128, 0, 0, 255) : // TODO: this MUST BE a setting
-            gs_color_rgba(64, 0, 0, 255);
-    };
-
-    auto render_close_button = [this, &close_button_color](ImmediateUserInterfaceContextLayer* _Context, const gs_2dboxf& _Box)
-    {
-        gs_2dboxf closeButtonBox = gs_2dboxf(
-            _Box.Min + _Context->m_Style.get_frames_width() * 2.f,
-            _Box.Max - _Context->m_Style.get_frames_width() * 2.f);
-
-        _Context->m_Renderer->push_arc_filled(
-            closeButtonBox.center(),
-            closeButtonBox.size().x,
-            closeButtonBox.size().y,
-            0.f,
-            360.f,
-            close_button_color(_Context, closeButtonBox),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-        _Context->m_Renderer->push_line(
-            closeButtonBox.Min + gs_vec2f(+4.f, +4.f),
-            closeButtonBox.Max - gs_vec2f(+4.f, +4.f),
-            4.f,
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-
-        _Context->m_Renderer->push_line(
-            gs_vec2f(closeButtonBox.Max.x, closeButtonBox.Min.y) + gs_vec2f(-4.f, +4.f),
-            gs_vec2f(closeButtonBox.Min.x, closeButtonBox.Max.y) + gs_vec2f(+4.f, -4.f),
-            4.f,
-            _Context->m_Style.get_color(ImmediateUserInterfaceNodeColors_::ImmediateUserInterfaceNodeColors_Text),
-            _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
-    };
 
     // outline
     {
@@ -5415,11 +5404,13 @@ void ImmediateUserInterfaceDialogContent::render(ImmediateUserInterfaceContextLa
             _Context->m_Renderer->calculate_transform_matrix((float)place_in_follow()));
 
         // close button
-        gs_2dboxf closeButtonBox  = gs_2dboxf(
-            gs_vec2f(FrameBox.Max.x - 32.f, FrameBox.center().y) - 16.f,
-            gs_vec2f(FrameBox.Max.x - 32.f, FrameBox.center().y) + 16.f);
+        float buttonSize = _Context->m_Style.get_font_size() * 0.5f;
 
-        render_close_button(_Context, closeButtonBox);
+        gs_2dboxf closeButtonBox  = gs_2dboxf(
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f),
+            gs_vec2f(FrameBox.Max.x - buttonSize - _Context->m_Style.get_frames_radius() - _Context->m_Style.get_frames_width() * 2.f, FrameBox.center().y - buttonSize * 0.5f) + buttonSize);
+
+        ImmediateUserInterfaceContextLayerHelpers::render_close_button(_Context, this, closeButtonBox);
 
         ImmediateUserInterfaceDialog* dialog =
             _Context->m_Hierarchy.get_parent<ImmediateUserInterfaceDialog>(this);
@@ -6885,6 +6876,11 @@ void ImmediateUserInterfaceContextLayer::finish()
     // close renderer
     if(m_Renderer != nullptr)
         m_Renderer->close();
+}
+
+bool ImmediateUserInterfaceContextLayer::allows_multiple_instances() const
+{
+    return false;
 }
 
 bool ImmediateUserInterfaceContextLayer::begin_scrollarea(const std::string& _ID, const ImmediateUserInterfaceNodeSettings& _Settings)
