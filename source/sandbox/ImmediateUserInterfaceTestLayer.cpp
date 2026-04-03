@@ -11,7 +11,7 @@ bool ImmediateUserInterfaceTestLayer::awake()
 {
     if(m_UI == nullptr)
         m_UI = Frenchie::Application::application()->push_layer<Frenchie::Application::ImmediateUserInterfaceContextLayer>();
-    return true;
+    return m_UI != nullptr;
 }
 
 void ImmediateUserInterfaceTestLayer::frame_start(){}
@@ -37,8 +37,6 @@ void ImmediateUserInterfaceTestLayer::frame_update()
 
 void ImmediateUserInterfaceTestLayer::finish()
 {
-    if(m_UI != nullptr)
-        m_UI->close();
 }
 
 void ImmediateUserInterfaceTestLayer::widgets_test()
