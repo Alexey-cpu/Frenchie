@@ -598,7 +598,7 @@ namespace Frenchie
                     return true;
                 }
 
-                return false;
+                return ImmediateUserInterfaceNode::events(_Context);
             }
 
             ImmediateUserInterfaceWindow* Window         = nullptr;
@@ -1142,28 +1142,30 @@ namespace Frenchie
             gs_2d_ellipsef build_resize_top_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
+                
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min, WindowResizeAngleGizmoRadius);
+                
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + _Context->m_Style.get_frames_radius() * 0.5f, WindowResizeAngleGizmoRadius);
             }
 
             gs_2d_ellipsef build_resize_top_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Min + gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(-_Context->m_Style.get_frames_radius() * 0.5f, _Context->m_Style.get_frames_radius() * 0.5f), WindowResizeAngleGizmoRadius);
             }
 
             gs_2d_ellipsef build_resize_bottom_left_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f), WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - gs_vec2f(_Node->get_visible_rect(_Context).width(), 0.f) + gs_vec2f(_Context->m_Style.get_frames_radius() * 0.5f, - _Context->m_Style.get_frames_radius() * 0.5f), WindowResizeAngleGizmoRadius);
             };
 
             gs_2d_ellipsef build_resize_bottom_right_ellipse(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
             {
                 if(_Context == nullptr || _Node == nullptr) return gs_2d_ellipsef(gs_vec2f(0.f, 0.f), 32.f);
                 float WindowResizeAngleGizmoRadius = 32.f;
-                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max, WindowResizeAngleGizmoRadius);
+                return gs_2d_ellipsef(_Node->get_visible_rect(_Context).Max - _Context->m_Style.get_frames_radius() * 0.5f, WindowResizeAngleGizmoRadius);
             };
 
             gs_2dboxf build_resize_top_box(ImmediateUserInterfaceContextLayer* _Context, ImmediateUserInterfaceNode* _Node)
@@ -3926,6 +3928,8 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
 
             VerticalScrollBar.PreviousPosition = VerticalScrollBar.Position;
             VerticalScrollIsMoving             = true;
+
+            return true;
         }
 
         if((_Context->m_Input.is_mouse_button_down()) && VerticalScrollIsMoving)
@@ -3934,9 +3938,11 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
                 VerticalScrollBar.PreviousPosition + _Context->m_Input.get_cusor_drag_delta(),
                 gs_vec2f(0.f, 0.f),
                 gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
+
+            return true;
         }
 
-        return true;
+        return ImmediateUserInterfacePanel::events(_Context);
     }
 
     // process vertical scrollbar
@@ -3952,6 +3958,7 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
 
             HorizontalScrollBar.PreviousPosition = HorizontalScrollBar.Position;
             HorizontalScrollIsMoving             = true;
+            return true;
         }
 
         if((_Context->m_Input.is_mouse_button_down()) && HorizontalScrollIsMoving)
@@ -3960,9 +3967,10 @@ bool ImmediateUserInterfaceScrollArea::events(ImmediateUserInterfaceContextLayer
                 HorizontalScrollBar.PreviousPosition + _Context->m_Input.get_cusor_drag_delta(),
                 gs_vec2f(0.f, 0.f),
                 gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
+            return true;
         }
 
-        return true;
+        return ImmediateUserInterfacePanel::events(_Context);
     }
 
     return ImmediateUserInterfacePanel::events(_Context);
@@ -5000,7 +5008,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
             {
                 if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
                     _Context->next_id("Self"),
-                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                    ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                 {
                     _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = this;
                     _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
@@ -5016,7 +5024,7 @@ bool ImmediateUserInterfaceWindow::create_contents(ImmediateUserInterfaceContext
 
                     if(_Context->begin_node<ImmediateUserInterfaceWindowFrameButton>(
                         _Context->next_id(Frenchie::Core::String::format("CenterDockChild-%d", i)),
-                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
+                        ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_Resizable))
                     {
                         _Context->get_rendering_stack_top<ImmediateUserInterfaceWindowFrameButton>()->Window = dynamic_cast<ImmediateUserInterfaceWindow*>(DockedWindowsCache[i]);
                         _Context->end_node<ImmediateUserInterfaceWindowFrameButton>();
@@ -7527,13 +7535,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
         if(begin_vertical_stack(next_id("Editors")))
         {
-            char longestLabel[] = "Alpha\t";
-
-            float labelWidth    = m_Renderer->calculate_bounding_box(
-                &longestLabel[0],
-                &longestLabel[sizeof(longestLabel) / sizeof(char)],
-                m_Style.get_font_size(),
-                m_Style.get_current_font()).width();
+            float labelWidth = m_Style.get_font_size();
 
             // RGB
             if(_Settings & ImmediateUserInterfaceColorPickerSettings_::ImmediateUserInterfaceColorPickerSettings_EditRGB)
@@ -7545,18 +7547,24 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 if(begin_horizontal_stack(next_id("RGB"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    label(next_id("Label"), "RGB");
+                    label(next_id("R"), "R");
 
                     if(input_scalar<gs_color>(next_id("RedValue"), picker->RGB.x, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.x = gs_color_rgba_get_r(_Color);
                     
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    label(next_id("G"), "G");
+
                     if(input_scalar<gs_color>(next_id("GreenValue"), picker->RGB.y, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
                         picker->RGB.y = gs_color_rgba_get_g(_Color);
                     
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
+                    label(next_id("B"), "B");
+
                     if(input_scalar<gs_color>(next_id("BlueValue"), picker->RGB.z, 0, 255, settings))
                         _Color = gs_color_rgba(picker->RGB.x, picker->RGB.y, picker->RGB.z, picker->Alpha);
                     else
@@ -7575,21 +7583,27 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
                 if(begin_horizontal_stack(next_id("HSV"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
-                    label(next_id("Label"), "HSV");
-
                     bool hsvChanged = false;
+
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(next_id("H"), "H");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSV.x, 0, 360, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.x = (gs_color)((float)gs_color_hsv_get_h(gs_color_rgb_to_hsv(_Color)) / 255.f * 360.f);
                     
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(next_id("S"), "S");
+
                     if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSV.y, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSV.y = (gs_color)((float)gs_color_hsv_get_s(gs_color_rgb_to_hsv(_Color)) / 255.f * 100.f);
                     
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(next_id("V"), "V");
+
                     if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSV.z, 0, 100, settings))
                         hsvChanged = true;
                     else
@@ -7619,21 +7633,27 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
 
                 if(begin_horizontal_stack(next_id("HSL"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
-                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    label(next_id("Label"), "HSL");
-
                     bool hsvChanged = false;
+
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(next_id("H"), "H");
 
                     if(input_scalar<gs_color>(next_id("HueValue"), picker->HSL.x, 0, 360, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.x = (gs_color)((float)gs_color_hsl_get_h(gs_color_rgb_to_hsl(_Color)) / 255.f * 360.f);
                     
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(next_id("S"), "S");
+
                     if(input_scalar<gs_color>(next_id("SaturationValue"), picker->HSL.y, 0, 100, settings))
                         hsvChanged = true;
                     else
                         picker->HSL.y = (gs_color)((float)gs_color_hsl_get_s(gs_color_rgb_to_hsl(_Color)) / 255.f * 100.f);
                     
+                    next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));   
+                    label(next_id("L"), "L");
+
                     if(input_scalar<gs_color>(next_id("BrightnessValue"), picker->HSL.z, 0, 100, settings))
                         hsvChanged = true;
                     else
@@ -7664,7 +7684,7 @@ bool ImmediateUserInterfaceContextLayer::input_color(const std::string& _ID, gs_
                 if(begin_horizontal_stack(next_id("Alpha"), ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_None))
                 {
                     next_size(gs_vec2f(labelWidth, m_Style.get_font_size()));
-                    label(next_id("Label"), "Alpha");
+                    label(next_id("A"), "A");
 
                     if(input_scalar<gs_color>(next_id("AlphaValue"), picker->Alpha, 0, 255, settings))
                         _Color = gs_color_rgba(gs_color_rgba_get_r(_Color), gs_color_rgba_get_g(_Color), gs_color_rgba_get_b(_Color), picker->Alpha);
@@ -9318,14 +9338,13 @@ bool ImmediateUserInterfaceContextLayer::dirty_geomery() const
     return layoutController != nullptr && layoutController->Dirty;
 }
 
-void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings, const ImmedidateUserInterfaceRenderingOrder& _Order)
+void ImmediateUserInterfaceContextLayer::setup_created_node(ImmediateUserInterfaceNode* node, const ImmediateUserInterfaceNodeSettings& _Settings)
 {
     if(node == nullptr) return;
 
     // setup node parameters
     node->State.Settings       = _Settings;
     node->State.RenderingIndex = (int)m_NodesRenderingList.size();
-    if(node->State.RenderingOrder < 0)node->State.RenderingOrder = _Order;
 
     // build nodes hierarchy
     if(!m_NodesRenderingStack.empty())
