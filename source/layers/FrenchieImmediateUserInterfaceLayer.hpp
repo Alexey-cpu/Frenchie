@@ -713,8 +713,8 @@ namespace Frenchie
                     return false;
 
                 // create node (output is never nullptr)
-                ImmediateUserInterfaceNode* node = create_node<Type>(_ID);
-                setup_created_node(node, _Settings, _Order);
+                ImmediateUserInterfaceNode* node = create_node<Type>(_ID, _Order);
+                setup_created_node(node, _Settings);
                 m_NodesRenderingList.push_back(node);
                 m_NodesRenderingStack.push_back(node);
 
@@ -1148,7 +1148,7 @@ namespace Frenchie
             // Both hashable and naming parts are separated by sequence '###' as follows {Name}###Hash
             // _ID - the unique ID of the node
             template<typename Type>
-            Type* create_node(const std::string& _ID)
+            Type* create_node(const std::string& _ID, const ImmedidateUserInterfaceRenderingOrder& _Order)
             {
                 // clean-up hash and name buffers
                 m_CurrentHash.clear();
@@ -1186,10 +1186,13 @@ namespace Frenchie
                 if(node->Name != m_CurrentName)
                     node->Name = m_CurrentName;
 
+                // setup rendering order
+                node->State.RenderingOrder = _Order;
+
                 return dynamic_cast<Type*>(node);
             }
 
-            void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&, const ImmedidateUserInterfaceRenderingOrder&);
+            void setup_created_node(ImmediateUserInterfaceNode*, const ImmediateUserInterfaceNodeSettings&);
             void restore_created_node();
         };
     };
