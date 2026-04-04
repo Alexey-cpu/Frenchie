@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION ${CMAKE_VERSION})
-project(FrenchieTestProject VERSION 0.1.0 LANGUAGES C CXX)
+project(FrenchieTestProject VERSION 1.0.0 LANGUAGES C CXX)
 
 #--------------------------------------------------------------
 # setup common project options
