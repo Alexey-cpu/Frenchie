@@ -85,11 +85,11 @@ namespace Frenchie
             // nested types
             struct ScrollBar
             {
-                void recompute(gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)
+                void recompute(gs_vec2f _ScrollbarMinimumValue, gs_vec2f _ScrollbarMaximumValue, gs_vec2f _TotalContentSize, gs_vec2f _ScrollbarMinimumSize)
                 {
-                    PositionScale     = calculate_scrollbar_slider_position_scale(scrollbarMinimumValue, scrollbarMaximumValue, totalContentSize);
-                    ConstrainedSize   = calculate_scrollbar_length(scrollbarMinimumValue, scrollbarMaximumValue, totalContentSize, scrollbarMinimumSize);
-                    UnconstrainedSize = calculate_scrollbar_length(scrollbarMinimumValue, scrollbarMaximumValue, totalContentSize, gs_vec2f(0.f, 0.f));
+                    PositionScale     = calculate_scrollbar_slider_position_scale(_ScrollbarMinimumValue, _ScrollbarMaximumValue, _TotalContentSize);
+                    ConstrainedSize   = calculate_scrollbar_length(_ScrollbarMinimumValue, _ScrollbarMaximumValue, _TotalContentSize, _ScrollbarMinimumSize);
+                    UnconstrainedSize = calculate_scrollbar_length(_ScrollbarMinimumValue, _ScrollbarMaximumValue, _TotalContentSize, gs_vec2f(0.f, 0.f));
                 }
 
                 void reset()
@@ -110,18 +110,23 @@ namespace Frenchie
 
             private:
 
-                gs_vec2f calculate_scrollbar_length(gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize, gs_vec2f scrollbarMinimumSize)
+                gs_vec2f calculate_scrollbar_length(gs_vec2f _ScrollbarMinimumValue, gs_vec2f _ScrollbarMaximumValue, gs_vec2f _TotalContentSize, gs_vec2f _ScrollbarMinimumSize)
                 {
-                    totalContentSize = gs_vec2f(gs_max(totalContentSize.x, 0.01f), gs_max(totalContentSize.y, 0.01f));
+                    gs_vec2f totalContentSize = gs_vec2f(gs_max(_TotalContentSize.x, 0.01f), gs_max(_TotalContentSize.y, 0.01f));
 
                     return gs_vec2f(
-                        gs_min(gs_max(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * scrollbarMaximumValue.x, scrollbarMinimumSize.x), scrollbarMaximumValue.x),
-                        gs_min(gs_max(gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * scrollbarMaximumValue.y, scrollbarMinimumSize.y), scrollbarMaximumValue.y));
+                        gs_min(gs_max(gs_abs(_ScrollbarMaximumValue.x - _ScrollbarMinimumValue.x) / gs_abs(totalContentSize.x) * _ScrollbarMaximumValue.x, _ScrollbarMinimumSize.x), _ScrollbarMaximumValue.x),
+                        gs_min(gs_max(gs_abs(_ScrollbarMaximumValue.y - _ScrollbarMinimumValue.y) / gs_abs(totalContentSize.y) * _ScrollbarMaximumValue.y, _ScrollbarMinimumSize.y), _ScrollbarMaximumValue.y));
                 };
 
-                gs_vec2f calculate_scrollbar_slider_position_scale(gs_vec2f scrollbarMinimumValue, gs_vec2f scrollbarMaximumValue, gs_vec2f totalContentSize)
+                gs_vec2f calculate_scrollbar_slider_position_scale(gs_vec2f _ScrollbarMinimumValue, gs_vec2f _ScrollbarMaximumValue, gs_vec2f _TotalContentSize)
                 {
-                    gs_vec2f scale = gs_vec2f(gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(scrollbarMaximumValue.x - scrollbarMinimumValue.x), gs_abs(scrollbarMaximumValue.y - scrollbarMinimumValue.y));
+                    gs_vec2f totalContentSize = gs_vec2f(gs_max(_TotalContentSize.x, 0.01f), gs_max(_TotalContentSize.y, 0.01f));
+                    
+                    gs_vec2f scale = gs_vec2f(
+                        gs_abs(totalContentSize.x), gs_abs(totalContentSize.y)) / gs_vec2f(gs_abs(_ScrollbarMaximumValue.x - _ScrollbarMinimumValue.x),
+                        gs_abs(_ScrollbarMaximumValue.y - _ScrollbarMinimumValue.y));
+
                     return gs_vec2f(gs_max(scale.x, 1.f), gs_max(scale.y, 1.f));
                 };
             };
@@ -3566,19 +3571,17 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
     {
         // calculate vertical scrollbar
         {
-            VerticalScrollBarBox = gs_2dboxf(
-                gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y),
-                State.BoundingBox.Max);
+            gs_vec2f prevSize = gs_vec2f(gs_max(VerticalScrollBarBox.width(), 1.f), gs_max(VerticalScrollBarBox.height(), 1.f));
+            gs_vec2f prevPos  = VerticalScrollBar.Position;
 
-            VerticalScrollBarBox = gs_2dboxf(
-                VerticalScrollBarBox.Min,
-                VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
-
-            VerticalScrollBar.recompute(
+            VerticalScrollBarBox = gs_2dboxf(gs_vec2f(State.BoundingBox.Max.x - _Context->m_Style.get_scrollbar_width(), State.BoundingBox.Min.y), State.BoundingBox.Max);
+            VerticalScrollBarBox = gs_2dboxf(VerticalScrollBarBox.Min, VerticalScrollBarBox.Max - gs_vec2f(0.f, _Context->m_Style.get_scrollbar_width()));
+            VerticalScrollBar.recompute(gs_vec2f(0.f, 0.f), VerticalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+            
+            VerticalScrollBar.Position = gs_clamp(
+                VerticalScrollBarBox.size() * prevPos / prevSize,
                 gs_vec2f(0.f, 0.f),
-                VerticalScrollBarBox.size(),
-                State.ContentSize,
-                _Context->m_Style.get_scrollbar_width());
+                gs_vec2f(0.f, VerticalScrollBarBox.size().y - VerticalScrollBar.UnconstrainedSize.y));
 
             if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsVertically) ||
                 (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverVerticalScrollBar))
@@ -3611,8 +3614,16 @@ void ImmediateUserInterfaceScrollArea::layout(ImmediateUserInterfaceContextLayer
 
         // calculate horizontal scrollbar
         {
+            gs_vec2f prevSize = gs_vec2f(gs_max(HorizontalScrollBarBox.width(), 1.f), gs_max(HorizontalScrollBarBox.height(), 1.f));
+            gs_vec2f prevPos  = HorizontalScrollBar.Position;
+
             HorizontalScrollBarBox = gs_2dboxf(gs_vec2f(State.BoundingBox.Min.x, State.BoundingBox.Max.y - _Context->m_Style.get_scrollbar_width()), State.BoundingBox.Max);
             HorizontalScrollBar.recompute(gs_vec2f(0.f, 0.f), HorizontalScrollBarBox.size(), State.ContentSize, _Context->m_Style.get_scrollbar_width());
+
+            HorizontalScrollBar.Position = gs_clamp(
+                HorizontalScrollBarBox.size() * prevPos / prevSize,
+                gs_vec2f(0.f, 0.f),
+                gs_vec2f(HorizontalScrollBarBox.size().x - HorizontalScrollBar.UnconstrainedSize.x, 0.f));
 
             if((State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_ResizeToContentsHorizontally) ||
                 (State.Settings & ImmediateUserInterfaceNodeSettings_::ImmediateUserInterfaceNodeSettings_NeverHorizontalScrollBar))
